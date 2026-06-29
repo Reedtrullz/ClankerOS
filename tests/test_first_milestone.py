@@ -5088,9 +5088,50 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "<a href='#first-run-create-project'>Create Project</a>"
     ) in root.body
     assert "first_run_next_step_safety: same-page guidance only" in root.body
+    assert "First Run Checklist" in root.body
+    assert "data-first-run-checklist='true'" in root.body
+    assert "data-first-run-checklist-storage-key='clankeros-first-run-checklist'" in root.body
+    assert "data-first-run-checklist-list='true'" in root.body
+    assert root.body.count("data-first-run-checklist-item='true'") == 5
+    assert "data-first-run-checklist-step='create_project'" in root.body
+    assert "data-first-run-checklist-state='current'" in root.body
+    assert "data-first-run-checklist-step='create_first_goal'" in root.body
+    assert "data-first-run-checklist-state='waiting_for_project'" in root.body
+    assert "data-first-run-checklist-toggle='create_project'" in root.body
+    assert "data-first-run-checklist-note='true'" in root.body
+    assert "data-first-run-checklist-reset='true'>Reset checklist</button>" in root.body
+    assert (
+        "data-first-run-checklist-status='true'>"
+        "State: 0/5 complete; operator checks: 0/5.</p>"
+    ) in root.body
+    assert "data-first-run-checklist-view-status='true'>View: default</span>" in root.body
+    assert "data-first-run-checklist-evidence='true'" in root.body
+    assert "first_run_checklist_status</dt><dd>active" in root.body
+    assert "first_run_checklist_current_step</dt><dd>create_project" in root.body
+    assert "first_run_checklist_state_done_count</dt><dd>0" in root.body
+    assert "first_run_checklist_state_current_count</dt><dd>1" in root.body
+    assert "first_run_checklist_state_waiting_count</dt><dd>4" in root.body
+    assert "first_run_checklist_operator_storage</dt><dd>localStorage:clankeros-first-run-checklist" in root.body
+    assert "first_run_checklist_operator_fields</dt><dd>checked note" in root.body
+    assert "first_run_checklist_write_on_get</dt><dd>false" in root.body
+    assert "first_run_checklist_network_actions_taken</dt><dd>0" in root.body
+    assert "first_run_checklist_external_effects_created</dt><dd>false" in root.body
+    assert (
+        "first_run_checklist_item: create_project state=current "
+        "action=Register ClankerOS project"
+    ) in root.body
+    assert "first_run_checklist_view_memory: restores operator checks and note from browser storage" in root.body
+    assert (
+        "first_run_checklist_safety: browser-local checklist only; real progress comes from "
+        "ClankerOS state"
+    ) in root.body
+    assert "function updateFirstRunChecklistState" in root.body
+    assert "window.localStorage.setItem(firstRunChecklistStorageKey(root)" in root.body
+    assert "window.localStorage.removeItem(firstRunChecklistStorageKey(root))" in root.body
     assert root.body.index("First Run Command Bar") < root.body.index("First Run Launchpad")
     assert root.body.index("First Run Launchpad") < root.body.index("First Run Next Step")
-    assert root.body.index("First Run Next Step") < root.body.index("First Run Progress")
+    assert root.body.index("First Run Next Step") < root.body.index("First Run Checklist")
+    assert root.body.index("First Run Checklist") < root.body.index("First Run Progress")
     assert (
         "first_run_guided_path</dt><dd>Create project -&gt; Create first goal -&gt; "
         "Create first delegation -&gt; Generate context pack -&gt; Run first delegation"
@@ -6516,9 +6557,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 23
+    assert workspace.body.count("class='workspace-view-memory-card") == 24
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
+    assert "data-workspace-view-memory-card='first-run'" in workspace.body
     assert "data-workspace-view-memory-card='goal-board'" in workspace.body
     assert "data-workspace-view-memory-card='home-goal-board'" in workspace.body
     assert "data-workspace-view-memory-card='recent-items'" in workspace.body
@@ -6542,6 +6584,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-card='today-decisions'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-theme'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-focus-mode'" in workspace.body
+    assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-first-run-checklist'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-goal-board-view'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-home-goal-board-view'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-recent-items-filter'" in workspace.body
@@ -6567,8 +6610,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>23" in workspace.body
-    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-home-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-today-goal-queue-view, clankeros-today-decision-filter, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>24" in workspace.body
+    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-first-run-checklist, clankeros-goal-board-view, clankeros-home-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-today-goal-queue-view, clankeros-today-decision-filter, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
     assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-section-finder:, clankeros-goal-decision-filter:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:, clankeros-goal-note-draft:, clankeros-action-form-draft:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
@@ -6579,6 +6622,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_external_effects_created</dt><dd>false" in workspace.body
     assert "workspace_view_memory_raw_filesystem_browsing</dt><dd>false" in workspace.body
     assert "workspace_view_memory_card: theme mode=exact key=clankeros-theme" in workspace.body
+    assert "workspace_view_memory_card: first-run mode=exact key=clankeros-first-run-checklist" in workspace.body
     assert "workspace_view_memory_card: home-goal-board mode=exact key=clankeros-home-goal-board-view" in workspace.body
     assert "workspace_view_memory_card: recent-items mode=exact key=clankeros-recent-items-filter" in workspace.body
     assert "workspace_view_memory_card: route-history mode=exact key=clankeros-route-history" in workspace.body
@@ -6596,7 +6640,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: approvals mode=exact key=clankeros-approval-queue-filter" in workspace.body
     assert "workspace_view_memory_card: inbox mode=exact key=clankeros-inbox-queue-filter" in workspace.body
     assert "workspace_view_memory_card: profiles mode=exact key=clankeros-profile-routing-filter" in workspace.body
-    assert "workspace_view_memory_reset_scope: theme focus board home-goal-board recent route-history today-goals today-decisions open-panels scroll-position search timeline goal-sections decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
+    assert "workspace_view_memory_reset_scope: theme focus first-run board home-goal-board recent route-history today-goals today-decisions open-panels scroll-position search timeline goal-sections decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
     assert "window.localStorage.removeItem(key)" in workspace.body
     assert "candidate.indexOf(key) === 0" in workspace.body
     assert "delete document.documentElement.dataset.theme" in workspace.body

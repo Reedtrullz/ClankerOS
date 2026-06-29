@@ -311,6 +311,7 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   timeline lanes, Goal section searches, Today Goal Queue view, artifact
   filters, Today and Goal decision filters, notes filters, note drafts, setup
   and workflow form drafts, Memory Bank filters, Skills Inventory filters,
+  First Run Checklist checks/notes,
   Approval Queue filters, Inbox Queue filters, and Profile Routing filters, and
   can clear those browser-local
   values after explicit operator clicks without writing
@@ -1058,7 +1059,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   right browser path without reading docs first. It then shows a read-only
   `First Run Next Step` panel with one primary same-page action plus setup,
   handoff, resume, and safety cards, so the current click is obvious before the
-  operator reads the full checklist. It then shows a read-only
+  operator reads the full checklist. It then shows a browser-local
+  `First Run Checklist` that lets operators mark setup checks and keep a short
+  return note in `localStorage:clankeros-first-run-checklist`, while the real
+  Project, Goal, Delegation, Context, and Run statuses still come from
+  ClankerOS state and the page keeps GET rendering read-only. It then shows a
+  read-only
   `First Run Progress` strip with a progress bar and five step cards for
   Project, Goal, Delegation, Context, and Run, keeping detailed status evidence
   collapsed and preserving no-write/provider/network/external-effect

@@ -75,6 +75,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   guide also renders `First Run Next Step` between the launchpad and progress
   strip, turning the current setup or delegation gate into one primary
   same-page browser action with setup, handoff, resume, and safety cards.
+  A browser-local `First Run Checklist` follows the next-step panel so an
+  operator can mark setup checks and keep a short return note in
+  `localStorage:clankeros-first-run-checklist`, while real progress remains
+  derived from ClankerOS state and GET rendering stays read-only.
   Active first-run Goal pages also show a read-only `Goal First Run Rail`
   between Attention and the Goal Command Bar, keeping Project, Goal,
   Delegation, Context, and Run visible on the Goal page and routing the
@@ -674,7 +678,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   focus mode, Goal board view, open panels, scroll position, search lanes,
   timeline lanes, Goal section searches, Today Goal Queue view, Today and Goal
   decision filters, artifact filters, notes filters, note drafts, setup form
-  drafts, Memory Bank filters, and Skills Inventory filters with
+  drafts, Memory Bank filters, Skills Inventory filters, and First Run
+  Checklist checks/notes with
   Refresh plus reset controls. It only clears
   browser-local view memory after explicit clicks and does not write
   `.clanker/app/workspace.json`. The read-only `Workspace Daily Brief` and `Workspace Workflow Map`

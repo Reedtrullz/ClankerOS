@@ -1,5 +1,42 @@
 # Status
 
+## 2026-06-29 First Run Checklist View Memory UX
+
+- Added a state-aware `First Run Checklist` between `First Run Next Step` and
+  `First Run Progress` so a fresh operator can mark setup checks and keep a
+  short return note while walking Project -> Goal -> Delegation -> Context ->
+  Run.
+- The checklist keeps only operator marks and the note in browser-local
+  `localStorage:clankeros-first-run-checklist`; real step state still comes
+  from ClankerOS progress and is rendered as current/done/waiting without
+  trusting the browser checklist as canonical progress.
+- `/workspace#workspace-view-memory` now includes a first-class `First Run
+  Checklist` exact-key card, raising the visible view-memory inventory to 24
+  cards and allowing the setup checks/note to be inspected or cleared alongside
+  the rest of the browser-local view state.
+- Updated README, local app docs, operating summary, docs status, and focused
+  first-milestone assertions for the new checklist, persistence key, workspace
+  reset surface, and zero-effect evidence.
+- Safety: browser-local checklist memory only; read-only GET rendering with no
+  approval, execution, push, PR, deploy, provider call, network action, server
+  write, GitHub polling, or external mutation authority added.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed; focused
+  local-app pytest passed with `2 passed in 54.98s`.
+- Browser verification: Playwright against a throwaway first-run app at
+  `http://127.0.0.1:62104` confirmed the checklist defaulted to
+  `State: 0/5 complete; operator checks: 0/5.`, saving project/goal checks
+  plus note `Resume by creating the first project.` wrote
+  `{"checked":["create_project","create_first_goal"],"note":"Resume by creating the first project."}`,
+  reload restored both checks and the note with `View: restored`, Workspace
+  View Memory showed 24 cards plus the `first-run` exact-key card for
+  `clankeros-first-run-checklist`, its Reset cleared the storage key, mobile
+  `390x844` had no horizontal overflow, and console warnings/errors were zero.
+- Non-claims: this does not make first-run setup execute work, create projects
+  or goals, approve decisions, call providers, fetch GitHub, push, create PRs,
+  deploy, mutate external systems, or write `.clanker/app/workspace.json` from
+  GET rendering.
+
 ## 2026-06-29 Today Goal Queue Filter UX
 
 - Reworked `/today#today-goal-queue` into a scan-first daily goal switcher

@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The first-run guide now includes a browser-local `First Run Checklist`
+  between `First Run Next Step` and `First Run Progress`. It lets operators
+  mark setup checks and save a short return note in
+  `localStorage:clankeros-first-run-checklist`, exposes that state in
+  `/workspace#workspace-view-memory`, and keeps real progress derived from
+  ClankerOS state with no server write, provider call, network action,
+  approval, execution, push, PR, deploy, or external effect on GET.
 - `/today#today-goal-queue` now has a browser-local Find box, All / Active /
   Paused / Completed lane buttons, live match count, first-match link,
   no-match state, visible View status, and reload persistence via

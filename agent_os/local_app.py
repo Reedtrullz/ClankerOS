@@ -7409,6 +7409,13 @@ def _workspace_view_memory_panel() -> str:
             "Reduced chrome while working",
         ),
         (
+            "first-run",
+            "First Run Checklist",
+            "exact",
+            "clankeros-first-run-checklist",
+            "Day-one setup checks and note",
+        ),
+        (
             "goal-board",
             "Goal Board",
             "exact",
@@ -7620,7 +7627,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus board home-goal-board recent route-history today-goals today-decisions open-panels scroll-position search timeline goal-sections decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles",
+                    "workspace_view_memory_reset_scope: theme focus first-run board home-goal-board recent route-history today-goals today-decisions open-panels scroll-position search timeline goal-sections decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles",
                 ]
             ),
             "</details>",
@@ -10786,6 +10793,220 @@ def _first_run_next_step(progress: dict[str, Any]) -> str:
     )
 
 
+def _first_run_checklist(progress: dict[str, Any]) -> str:
+    statuses = {
+        step: _first_run_step_status(progress, step)
+        for step, _label, _action in _FIRST_RUN_STEPS
+    }
+    done_count = sum(1 for status in statuses.values() if status == "done")
+    current_count = sum(1 for status in statuses.values() if status == "current")
+    waiting_count = len(_FIRST_RUN_STEPS) - done_count - current_count
+    current_step = str(progress["current_step"])
+    items: list[str] = []
+    evidence_lines: list[str] = []
+    for index, (step, label, action) in enumerate(_FIRST_RUN_STEPS, start=1):
+        status = statuses[step]
+        href = _first_run_step_href(progress, step)
+        state_label = status.replace("_", " ")
+        evidence_lines.append(
+            f"first_run_checklist_item: {step} state={status} action={action}"
+        )
+        items.append(
+            "".join(
+                [
+                    (
+                        "<li class='first-run-checklist-item' "
+                        "data-first-run-checklist-item='true' "
+                        f"data-first-run-checklist-step='{_e(step)}' "
+                        f"data-first-run-checklist-state='{_e(status)}'>"
+                    ),
+                    "<label class='first-run-checklist-main'>",
+                    (
+                        "<input type='checkbox' "
+                        f"data-first-run-checklist-toggle='{_e(step)}' "
+                        f"aria-label='Mark {_e(label)} reviewed'>"
+                    ),
+                    "<span>",
+                    f"<strong>{index}. {_e(label)}</strong>",
+                    f"<span>{_e(action)}</span>",
+                    "</span>",
+                    f"<em>{_e(state_label)}</em>",
+                    "</label>",
+                    (
+                        f"<a class='first-run-checklist-link' href='{_e(href)}'>"
+                        f"{_e('Open' if status == 'done' else ('Continue' if status == 'current' else 'Waiting'))}</a>"
+                    ),
+                    "</li>",
+                ]
+            )
+        )
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("first_run_checklist_status", "complete" if progress["complete"] else "active"),
+        ("first_run_checklist_current_step", current_step),
+        ("first_run_checklist_next_action", progress["next_action"]),
+        ("first_run_checklist_next_reason", progress["next_reason"]),
+        ("first_run_checklist_state_done_count", str(done_count)),
+        ("first_run_checklist_state_current_count", str(current_count)),
+        ("first_run_checklist_state_waiting_count", str(waiting_count)),
+        ("first_run_checklist_total_steps", str(len(_FIRST_RUN_STEPS))),
+        ("first_run_checklist_operator_storage", "localStorage:clankeros-first-run-checklist"),
+        ("first_run_checklist_operator_fields", "checked note"),
+        ("first_run_checklist_truth_source", "ClankerOS state"),
+        ("first_run_checklist_operator_marks_source", "browser localStorage"),
+        ("first_run_checklist_reset", "available"),
+        ("first_run_checklist_write_on_get", "false"),
+        ("first_run_checklist_provider_calls_taken", "0"),
+        ("first_run_checklist_network_actions_taken", "0"),
+        ("first_run_checklist_external_effects_created", "false"),
+    ]
+    return "".join(
+        [
+            (
+                "<section id='first-run-checklist' class='panel first-run-checklist' "
+                "data-first-run-checklist='true' "
+                "data-first-run-checklist-storage-key='clankeros-first-run-checklist' "
+                f"data-first-run-checklist-state-done-count='{done_count}' "
+                f"data-first-run-checklist-total='{len(_FIRST_RUN_STEPS)}'>"
+            ),
+            "<h3>First Run Checklist</h3>",
+            "<p class='muted'>A browser-local setup checklist for the day-one path; real progress still comes from ClankerOS state.</p>",
+            "<div class='first-run-checklist-toolbar'>",
+            (
+                f"<p class='muted' data-first-run-checklist-status='true'>"
+                f"State: {done_count}/{len(_FIRST_RUN_STEPS)} complete; operator checks: 0/{len(_FIRST_RUN_STEPS)}.</p>"
+            ),
+            "<span class='first-run-checklist-view-status' data-first-run-checklist-view-status='true'>View: default</span>",
+            "<button type='button' class='first-run-checklist-reset' data-first-run-checklist-reset='true'>Reset checklist</button>",
+            "</div>",
+            "<ul class='first-run-checklist-list' data-first-run-checklist-list='true'>",
+            "".join(items),
+            "</ul>",
+            "<label class='first-run-checklist-note'>Operator note",
+            "<textarea rows='2' data-first-run-checklist-note='true' placeholder='What should I remember when I come back?'></textarea>",
+            "</label>",
+            "<details class='first-run-checklist-evidence' data-first-run-checklist-evidence='true'>",
+            "<summary>First run checklist evidence</summary>",
+            _kv(rows),
+            _ul(
+                evidence_lines
+                + [
+                    "first_run_checklist_view_memory: restores operator checks and note from browser storage",
+                    "first_run_checklist_safety: browser-local checklist only; real progress comes from ClankerOS state",
+                ]
+            ),
+            "</details>",
+            _first_run_checklist_script(),
+            "</section>",
+        ]
+    )
+
+
+def _first_run_checklist_script() -> str:
+    return """<script>
+(function () {
+  function firstRunChecklistStorageKey(root) {
+    return root ? root.getAttribute("data-first-run-checklist-storage-key") || "clankeros-first-run-checklist" : "clankeros-first-run-checklist";
+  }
+  function setFirstRunChecklistViewStatus(root, message) {
+    var status = root ? root.querySelector("[data-first-run-checklist-view-status='true']") : null;
+    if (status) status.textContent = message;
+  }
+  function firstRunChecklistItems(root) {
+    return root ? Array.prototype.slice.call(root.querySelectorAll("[data-first-run-checklist-item]")) : [];
+  }
+  function firstRunChecklistToggles(root) {
+    return root ? Array.prototype.slice.call(root.querySelectorAll("[data-first-run-checklist-toggle]")) : [];
+  }
+  function updateFirstRunChecklistState(root, options) {
+    if (!root) return;
+    var toggles = firstRunChecklistToggles(root);
+    var checked = toggles
+      .filter(function (toggle) { return toggle.checked; })
+      .map(function (toggle) { return toggle.getAttribute("data-first-run-checklist-toggle") || ""; })
+      .filter(Boolean);
+    var note = root.querySelector("[data-first-run-checklist-note='true']");
+    var stateDone = parseInt(root.getAttribute("data-first-run-checklist-state-done-count") || "0", 10) || 0;
+    var total = parseInt(root.getAttribute("data-first-run-checklist-total") || String(toggles.length), 10) || toggles.length;
+    var status = root.querySelector("[data-first-run-checklist-status='true']");
+    if (status) {
+      status.textContent = "State: " + stateDone + "/" + total + " complete; operator checks: " + checked.length + "/" + total + ".";
+    }
+    if (options && options.save === false) return;
+    if (!window.localStorage) {
+      setFirstRunChecklistViewStatus(root, "View: local only");
+      return;
+    }
+    try {
+      window.localStorage.setItem(firstRunChecklistStorageKey(root), JSON.stringify({
+        checked: checked,
+        note: note && note.value ? note.value.slice(0, 1000) : ""
+      }));
+      setFirstRunChecklistViewStatus(root, "View: saved");
+    } catch (error) {
+      setFirstRunChecklistViewStatus(root, "View: local only");
+    }
+  }
+  function restoreFirstRunChecklistState(root) {
+    if (!root || !window.localStorage) return false;
+    try {
+      var raw = window.localStorage.getItem(firstRunChecklistStorageKey(root));
+      if (!raw) return false;
+      var saved = JSON.parse(raw);
+      var checked = Array.isArray(saved.checked) ? saved.checked : [];
+      firstRunChecklistToggles(root).forEach(function (toggle) {
+        var step = toggle.getAttribute("data-first-run-checklist-toggle") || "";
+        toggle.checked = checked.indexOf(step) !== -1;
+      });
+      var note = root.querySelector("[data-first-run-checklist-note='true']");
+      if (note && typeof saved.note === "string") note.value = saved.note.slice(0, 1000);
+      setFirstRunChecklistViewStatus(root, "View: restored");
+      updateFirstRunChecklistState(root, { save: false });
+      return true;
+    } catch (error) {
+      setFirstRunChecklistViewStatus(root, "View: default");
+      return false;
+    }
+  }
+  function clearFirstRunChecklistState(root) {
+    firstRunChecklistToggles(root).forEach(function (toggle) { toggle.checked = false; });
+    var note = root.querySelector("[data-first-run-checklist-note='true']");
+    if (note) note.value = "";
+    if (window.localStorage) {
+      try { window.localStorage.removeItem(firstRunChecklistStorageKey(root)); } catch (error) {}
+    }
+    updateFirstRunChecklistState(root, { save: false });
+    setFirstRunChecklistViewStatus(root, "View: reset");
+  }
+  function initializeFirstRunChecklist(root) {
+    if (!root || root.getAttribute("data-first-run-checklist-ready") === "true") return;
+    root.setAttribute("data-first-run-checklist-ready", "true");
+    firstRunChecklistToggles(root).forEach(function (toggle) {
+      toggle.addEventListener("change", function () { updateFirstRunChecklistState(root, {}); });
+    });
+    var note = root.querySelector("[data-first-run-checklist-note='true']");
+    if (note) note.addEventListener("input", function () { updateFirstRunChecklistState(root, {}); });
+    var reset = root.querySelector("[data-first-run-checklist-reset='true']");
+    if (reset) reset.addEventListener("click", function (event) {
+      event.preventDefault();
+      clearFirstRunChecklistState(root);
+    });
+    if (!restoreFirstRunChecklistState(root)) {
+      updateFirstRunChecklistState(root, { save: false });
+      setFirstRunChecklistViewStatus(root, "View: default");
+    }
+  }
+  function initFirstRunChecklists() {
+    Array.prototype.slice.call(document.querySelectorAll("[data-first-run-checklist='true']")).forEach(initializeFirstRunChecklist);
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initFirstRunChecklists, { once: true });
+  } else {
+    initFirstRunChecklists();
+  }
+})();
+</script>"""
+
+
 def _first_run_panel(root: Path, storage: Storage) -> str:
     progress = _first_run_progress(root, storage)
     default_project = progress["default_project"]
@@ -10796,6 +11017,7 @@ def _first_run_panel(root: Path, storage: Storage) -> str:
             _first_run_command_bar(root, storage, progress),
             _first_run_launchpad(progress),
             _first_run_next_step(progress),
+            _first_run_checklist(progress),
             _first_run_progress_strip(progress),
             _kv(
                 [
@@ -41120,6 +41342,24 @@ def _html_page(
     .first-run-next-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .first-run-next-evidence summary {{ cursor:pointer; font-weight:700; }}
     .first-run-next-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .first-run-checklist {{ border-left:4px solid var(--accent); }}
+    .first-run-checklist-toolbar {{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:10px 0; }}
+    .first-run-checklist-toolbar p {{ margin:0; }}
+    .first-run-checklist-view-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .first-run-checklist-reset {{ min-height:34px; }}
+    .first-run-checklist-list {{ list-style:none; padding:0; display:grid; gap:8px; margin:12px 0; }}
+    .first-run-checklist-item {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:10px; display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:10px; align-items:center; }}
+    .first-run-checklist-main {{ display:grid; grid-template-columns:auto minmax(0, 1fr) auto; gap:10px; align-items:center; margin:0; }}
+    .first-run-checklist-main span {{ display:grid; gap:3px; min-width:0; }}
+    .first-run-checklist-main strong, .first-run-checklist-main span span, .first-run-checklist-main em {{ overflow-wrap:anywhere; }}
+    .first-run-checklist-main em {{ color:var(--muted); font-style:normal; }}
+    .first-run-checklist-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .first-run-checklist-item[data-first-run-checklist-state='current'] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .first-run-checklist-note {{ display:grid; gap:6px; margin-top:10px; color:var(--muted); font-weight:700; }}
+    .first-run-checklist-note textarea {{ min-height:64px; }}
+    .first-run-checklist-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .first-run-checklist-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .first-run-checklist-evidence:not([open]) > :not(summary) {{ display:none; }}
     .first-run-progress-strip {{ border-left:4px solid var(--accent); }}
     .first-run-progress-bar-row {{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:10px 0 12px; color:var(--muted); }}
     .first-run-progress-bar-row progress {{ flex:1 1 220px; min-width:160px; height:14px; accent-color:var(--accent); }}
@@ -41759,6 +41999,7 @@ def _html_page(
     @media (max-width: 640px) {{ .inbox-filter-button, .inbox-filter-reset, .inbox-filter-search, .inbox-filter-search input {{ width:100%; }} .inbox-filter-controls {{ align-items:stretch; }} .inbox-filter-memory-status {{ width:100%; }} }}
     @media (max-width: 640px) {{ .profile-filter-button, .profile-filter-reset, .profile-filter-search, .profile-filter-search input {{ width:100%; }} .profile-filter-controls {{ align-items:stretch; }} .profile-filter-memory-status {{ width:100%; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .run-evidence-map dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 640px) {{ #first-run-checklist {{ scroll-margin-top:260px; }} .first-run-checklist-item, .first-run-checklist-main {{ grid-template-columns:1fr; }} .first-run-checklist-link, .first-run-checklist-reset, .first-run-checklist-view-status {{ width:100%; justify-content:center; }} .first-run-checklist-toolbar {{ align-items:stretch; }} }}
   </style>
 </head>
 <body data-open-panel-memory='true' data-open-panel-memory-storage-prefix='clankeros-open-panels:' data-open-panel-memory-write-on-get='false' data-open-panel-memory-provider-calls-taken='0' data-open-panel-memory-network-actions-taken='0' data-open-panel-memory-external-effects-created='false' data-scroll-position-memory='true' data-scroll-position-memory-storage-prefix='clankeros-scroll-position:' data-scroll-position-memory-write-on-get='false' data-scroll-position-memory-provider-calls-taken='0' data-scroll-position-memory-network-actions-taken='0' data-scroll-position-memory-external-effects-created='false'>

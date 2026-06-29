@@ -153,7 +153,11 @@ populated demo, inspect workflow, review verification proof, or check health
 and safety. A visible `First Run Next Step` panel follows with one primary
 same-page action, setup/handoff/resume/safety cards, confirmation posture, and
 zero-effect counters, making the current click obvious before the checklist. A
-visible `First Run Progress` strip follows with a progress bar and five step
+browser-local `First Run Checklist` then lets the operator mark setup checks
+and keep a short return note in `localStorage:clankeros-first-run-checklist`;
+the real step state still comes from ClankerOS progress and GET rendering
+stays read-only. A visible `First Run Progress` strip follows with a progress
+bar and five step
 cards for Project, Goal, Delegation, Context, and Run, while detailed status
 evidence stays collapsed and read-only. Active first-run Goal pages also show
 a read-only `Goal First Run Rail` between Attention and the Goal Command Bar,
@@ -290,7 +294,8 @@ inspect and clear browser-local view state such as theme, focus mode, Goal
 board filters, open panels, scroll position, search lanes, timeline lanes,
 Goal section searches, Today Goal Queue view, Today and Goal decision filters,
 artifact filters, notes filters, note drafts, setup and workflow form drafts,
-Memory Bank filters, and Skills Inventory filters from `localStorage` without
+Memory Bank filters, Skills Inventory filters, and the First Run Checklist
+from `localStorage` without
 changing `.clanker/app/workspace.json`.
 The read-only
 `Workspace Daily Brief` and `Workspace Workflow Map` then follow with the
@@ -659,8 +664,9 @@ without switching to CLI commands. The guide tracks whether
 the project, goal, first delegation, and context pack exist, then points to
 the current surface, the confirmed local `run-delegation` action, or its exact
 CLI fallback command. It also renders `First Run Next Step` plus the
-`First Run Progress` strip so the operator sees the immediate browser action,
-five-step path, and current gate before the forms.
+browser-local `First Run Checklist` plus the `First Run Progress` strip so the
+operator sees the immediate browser action, resumable setup checks, five-step
+path, and current gate before the forms.
 After a confirmed `register-project` action, the
 `Action Result Details` page also renders a first-run continuation with an
 inline confirmed `create-goal` form plus Home and Today fallback links, so the
