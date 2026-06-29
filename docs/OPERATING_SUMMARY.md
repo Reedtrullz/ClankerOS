@@ -114,6 +114,11 @@ Core layers for the bootstrap:
   the current goal or first-run step, latest activity, recorded CI proof, and
   workspace resume posture so the operator can act from the browser return
   brief without reading the whole evidence table.
+  A read-only `Today Activity Digest` follows with Now, Window, Artifacts,
+  Notes, and Safety cards plus a compact recent timeline list for the lead Goal
+  or current first-run step, preserving source, item-count, latest-event,
+  artifact, operator-note, and zero-effect evidence in a collapsed details
+  block before the denser reused activity inventory.
   A read-only `Today Operator Workbench` follows with do/check/unblock/finish
   cards for the current action, timeline/evidence review, first blocker, and
   finish-today resume save target. A read-only `Today Workflow Map` follows

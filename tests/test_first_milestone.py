@@ -4580,6 +4580,47 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_session_now: Register ClankerOS project" in today.body
     assert "today_session_click: <a href='#first-run-create-project'>Create Project</a>" in today.body
     assert "today_session_safety: read-only local summary" in today.body
+    assert "Today Activity Digest" in today.body
+    assert "data-today-activity-digest='true'" in today.body
+    assert "data-today-activity-actions='true'" in today.body
+    assert "data-today-activity-now='true'" in today.body
+    assert "data-today-activity-window='true'" in today.body
+    assert "data-today-activity-artifacts='true'" in today.body
+    assert "data-today-activity-notes='true'" in today.body
+    assert "data-today-activity-safety='true'" in today.body
+    assert "data-today-activity-list='true'" in today.body
+    assert "data-today-activity-evidence='true'" in today.body
+    assert today.body.index("data-today-session-summary='true'") < today.body.index(
+        "data-today-activity-digest='true'"
+    )
+    assert today.body.index("data-today-activity-digest='true'") < today.body.index(
+        "data-today-operator-workbench='true'"
+    )
+    assert "today_activity_digest_status</dt><dd>first_run" in today.body
+    assert "today_activity_digest_source</dt><dd>first_run_progress" in today.body
+    assert "today_activity_digest_goal</dt><dd>none" in today.body
+    assert "today_activity_digest_project</dt><dd>clankeros" in today.body
+    assert "today_activity_digest_phase</dt><dd>First run" in today.body
+    assert "today_activity_digest_item_count</dt><dd>1" in today.body
+    assert "today_activity_digest_total_items</dt><dd>1" in today.body
+    assert "today_activity_digest_latest_kind</dt><dd>first_run" in today.body
+    assert "today_activity_digest_latest_at</dt><dd>none" in today.body
+    assert "today_activity_digest_latest_message</dt><dd>Register ClankerOS project" in today.body
+    assert (
+        "today_activity_digest_latest_surface</dt><dd><a href='#first-run-create-project'>"
+        "#first-run-create-project</a>"
+    ) in today.body
+    assert "today_activity_digest_artifacts</dt><dd>0" in today.body
+    assert "today_activity_digest_latest_artifact</dt><dd>none" in today.body
+    assert "today_activity_digest_operator_notes</dt><dd>0" in today.body
+    assert "today_activity_digest_write_on_get</dt><dd>false" in today.body
+    assert "today_activity_digest_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_activity_digest_network_actions_taken</dt><dd>0" in today.body
+    assert "today_activity_digest_external_effects_created</dt><dd>false" in today.body
+    assert "today_activity_now: Register ClankerOS project" in today.body
+    assert "today_activity_click: <a href='#first-run-create-project'>#first-run-create-project</a>" in today.body
+    assert "today_activity_window: <a href='#today-activity-list'>Today digest</a>" in today.body
+    assert "today_activity_safety: read-only goal timeline on daily cockpit" in today.body
     assert "Today Operator Workbench" in today.body
     assert "data-today-operator-workbench='true'" in today.body
     assert "data-today-workbench-evidence='true'" in today.body
@@ -9981,6 +10022,43 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_session_click: <a href='#today-current-action'>Today Current Action</a>" in today.body
     assert "today_session_ci: direct_public_snapshot/success" in today.body
     assert "today_session_safety: read-only local summary" in today.body
+    assert "Today Activity Digest" in today.body
+    assert "data-today-activity-digest='true'" in today.body
+    assert "data-today-activity-actions='true'" in today.body
+    assert "data-today-activity-now='true'" in today.body
+    assert "data-today-activity-window='true'" in today.body
+    assert "data-today-activity-artifacts='true'" in today.body
+    assert "data-today-activity-notes='true'" in today.body
+    assert "data-today-activity-safety='true'" in today.body
+    assert "data-today-activity-list='true'" in today.body
+    assert "data-today-activity-evidence='true'" in today.body
+    assert today.body.index("data-today-session-summary='true'") < today.body.index(
+        "data-today-activity-digest='true'"
+    )
+    assert today.body.index("data-today-activity-digest='true'") < today.body.index(
+        "data-today-operator-workbench='true'"
+    )
+    assert "today_activity_digest_status</dt><dd>available" in today.body
+    assert "today_activity_digest_source</dt><dd>goal_timeline_items" in today.body
+    assert f"today_activity_digest_goal</dt><dd><a href='/goals/{result.goal_id}'" in today.body
+    assert f"today_activity_digest_project</dt><dd><a href='/projects/{result.project_id}'" in today.body
+    assert "today_activity_digest_phase</dt><dd>Ready to commit" in today.body
+    assert "today_activity_digest_item_count</dt><dd>" in today.body
+    assert "today_activity_digest_total_items</dt><dd>" in today.body
+    assert "today_activity_digest_latest_kind</dt><dd>" in today.body
+    assert "today_activity_digest_latest_at</dt><dd>" in today.body
+    assert "today_activity_digest_latest_message</dt><dd>" in today.body
+    assert "today_activity_digest_latest_surface</dt><dd><a href=" in today.body
+    assert "today_activity_digest_window_surface</dt><dd><a href='/goals/" in today.body
+    assert "today_activity_digest_artifacts</dt><dd>" in today.body
+    assert "today_activity_digest_operator_notes</dt><dd>" in today.body
+    assert "today_activity_digest_write_on_get</dt><dd>false" in today.body
+    assert "today_activity_digest_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_activity_digest_network_actions_taken</dt><dd>0" in today.body
+    assert "today_activity_digest_external_effects_created</dt><dd>false" in today.body
+    assert "today_activity_window: <a href='/goals/" in today.body
+    assert "Goal activity log</a>" in today.body
+    assert "today_activity_safety: read-only goal timeline on daily cockpit" in today.body
     assert "Today Operator Workbench" in today.body
     assert "data-today-operator-workbench='true'" in today.body
     assert "data-today-workbench-evidence='true'" in today.body

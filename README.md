@@ -175,7 +175,11 @@ goal state without adding action authority. A read-only
 Continue, Latest, Proof, and Resume cards before the detailed readback. The
 cards point at the current goal or first-run step, latest activity, recorded
 CI proof, and workspace resume posture so the operator can act from the brief
-without reading the whole evidence table.
+without reading the whole evidence table. A read-only `Today Activity Digest`
+follows with Now, Window, Artifacts, Notes, and Safety cards plus a compact
+recent timeline list for the lead Goal or current first-run step, so the daily
+cockpit carries enough context to regain the thread without opening the full
+Goal timeline.
 A read-only `Today Operator Workbench` follows with four obvious moves for the
 day: do the current action, check timeline/evidence, clear the first blocker,
 and save the resume point. A read-only `Today Workflow Map` follows with the whole first-run

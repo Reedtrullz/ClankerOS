@@ -1627,6 +1627,7 @@ def _today_page(root: Path) -> str:
             lead_goal=lead_goal,
         ),
         _today_session_summary(root, storage, lead_goal),
+        _today_activity_digest(root, storage, lead_goal),
         _today_operator_workbench(root, storage, lead_goal),
         _today_workflow_map(root, storage, lead_goal),
         _today_ci_handoff(root),
@@ -1909,6 +1910,156 @@ def _today_session_summary(
                     "today_session_safety: read-only local summary; confirmed actions remain on target surfaces",
                 ]
             ),
+            "</section>",
+        ]
+    )
+
+
+def _today_activity_digest(
+    root: Path,
+    storage: Storage,
+    lead_goal: sqlite3.Row | None,
+) -> str:
+    if lead_goal is None:
+        progress = _first_run_progress(root, storage)
+        target_href, target_label = _today_first_run_target(progress)
+        latest_message = str(progress["next_action"])
+        items = [
+            {
+                "at": "",
+                "message": latest_message,
+                "href": target_href,
+                "kind": "first_run",
+            }
+        ]
+        status = "first_run"
+        source = "first_run_progress"
+        phase = "First run"
+        goal_value: str | SafeHtml = "none"
+        project_value: str | SafeHtml = str(progress["default_project"])
+        window_href = "#today-activity-list"
+        window_label = "Today digest"
+        artifact_href = target_href
+        artifact_label = target_label
+        note_href = "#first-run-guide"
+        note_label = "First Run Guide"
+        recent_heading = "First Run Movement"
+        total_item_count = len(items)
+        artifact_items: list[dict[str, str]] = []
+        operator_notes = 0
+    else:
+        goal_id = str(lead_goal["id"])
+        state = _goal_state(root, storage, goal_id)
+        goal = state["goal"]
+        label = str(lead_goal["title"] or lead_goal["description"] or goal_id)
+        timeline = _goal_timeline_items(root, state)
+        items = timeline[-6:]
+        status = "available" if items else "empty"
+        source = "goal_timeline_items"
+        phase = _goal_current_phase(state)
+        goal_value = SafeHtml(
+            f"<a href='/goals/{quote(goal_id)}'>{_e(_compact_label(label, 72))}</a>"
+        )
+        project_value = SafeHtml(
+            f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a>"
+        )
+        window_href = f"/goals/{quote(goal_id)}#goal-activity-log"
+        window_label = "Goal activity log"
+        note_href = f"/goals/{quote(goal_id)}#goal-operator-notes"
+        note_label = "Operator notes"
+        recent_heading = "Recent Goal Movement"
+        total_item_count = len(timeline)
+        artifact_items = [
+            item
+            for item in items
+            if _timeline_item_family(item) == "artifact"
+            or str(item.get("href") or "").startswith("/artifacts?path=")
+        ]
+        operator_notes = sum(
+            1 for item in items if _timeline_item_family(item) == "operator_note"
+        )
+        artifact_href = (
+            artifact_items[-1].get("href")
+            if artifact_items
+            else f"/goals/{quote(goal_id)}#goal-artifacts"
+        )
+        artifact_label = "Open latest artifact" if artifact_items else "Goal artifacts"
+
+    latest = items[-1] if items else {}
+    latest_href = latest.get("href") or (
+        f"/goals/{quote(str(lead_goal['id']))}" if lead_goal is not None else "#first-run-guide"
+    )
+    latest_message = latest.get("message") or "No activity recorded yet"
+    latest_kind = _timeline_item_family(latest) if latest else "none"
+    latest_at = _format_time(latest.get("at") or "") if latest else "none"
+    if status == "first_run":
+        latest_at = "none"
+    latest_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>")
+    artifact_surface: str | SafeHtml = "none"
+    if artifact_items:
+        artifact_surface = SafeHtml(
+            f"<a href='{_e(artifact_items[-1].get('href') or '')}'>{_e(artifact_items[-1].get('message') or artifact_label)}</a>"
+        )
+    window_surface = SafeHtml(f"<a href='{_e(window_href)}'>{_e(window_label)}</a>")
+    note_surface = SafeHtml(f"<a href='{_e(note_href)}'>{_e(note_label)}</a>")
+    artifact_surface_card = SafeHtml(
+        f"<a class='today-activity-link' href='{_e(artifact_href)}'>{_e(artifact_label)}</a>"
+    )
+    activity_lines = [_timeline_line(item) for item in items]
+
+    return "".join(
+        [
+            "<section id='today-activity-digest' class='panel today-activity-digest' data-today-activity-digest='true'><h2>Today Activity Digest</h2>",
+            "<p class='muted'>Recent movement for the lead Goal before the full reused activity inventory.</p>",
+            "<div class='today-activity-grid' data-today-activity-actions='true'>",
+            "<article class='today-activity-card today-activity-primary' data-today-activity-now='true'><h3>Now</h3>",
+            f"<p>{_e(latest_message)}</p><a class='today-activity-action' data-today-activity-primary='true' href='{_e(latest_href)}'>Open latest</a></article>",
+            "<article class='today-activity-card' data-today-activity-window='true'><h3>Window</h3>",
+            f"<p>{len(items)} recent event{'s' if len(items) != 1 else ''} · {total_item_count} total</p><a class='today-activity-link' href='{_e(window_href)}'>{_e(window_label)}</a></article>",
+            "<article class='today-activity-card' data-today-activity-artifacts='true'><h3>Artifacts</h3>",
+            f"<p>{len(artifact_items)} in this digest</p>{artifact_surface_card}</article>",
+            "<article class='today-activity-card' data-today-activity-notes='true'><h3>Notes</h3>",
+            f"<p>{operator_notes} operator note{'s' if operator_notes != 1 else ''}</p><a class='today-activity-link' href='{_e(note_href)}'>{_e(note_label)}</a></article>",
+            "<article class='today-activity-card' data-today-activity-safety='true'><h3>Safety</h3>",
+            "<p>Read-only local digest; no writes, provider calls, network actions, or external effects.</p><a class='today-activity-link' href='#today-activity-evidence'>Evidence</a></article>",
+            "</div>",
+            f"<div id='today-activity-list' class='today-activity-list' data-today-activity-list='true'><h3>{_e(recent_heading)}</h3>",
+            _ul(activity_lines),
+            "</div>",
+            "<details id='today-activity-evidence' class='today-activity-evidence' data-today-activity-evidence='true'><summary>Today activity digest evidence</summary>",
+            _kv(
+                [
+                    ("today_activity_digest_status", status),
+                    ("today_activity_digest_source", source),
+                    ("today_activity_digest_goal", goal_value),
+                    ("today_activity_digest_project", project_value),
+                    ("today_activity_digest_phase", phase),
+                    ("today_activity_digest_item_count", str(len(items))),
+                    ("today_activity_digest_total_items", str(total_item_count)),
+                    ("today_activity_digest_latest_kind", latest_kind),
+                    ("today_activity_digest_latest_at", latest_at),
+                    ("today_activity_digest_latest_message", latest_message),
+                    ("today_activity_digest_latest_surface", latest_surface),
+                    ("today_activity_digest_window_surface", window_surface),
+                    ("today_activity_digest_artifacts", str(len(artifact_items))),
+                    ("today_activity_digest_latest_artifact", artifact_surface),
+                    ("today_activity_digest_operator_notes", str(operator_notes)),
+                    ("today_activity_digest_notes_surface", note_surface),
+                    ("today_activity_digest_write_on_get", "false"),
+                    ("today_activity_digest_provider_calls_taken", "0"),
+                    ("today_activity_digest_network_actions_taken", "0"),
+                    ("today_activity_digest_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"today_activity_now: {_e(latest_message)}",
+                    f"today_activity_click: <a href='{_e(latest_href)}'>{_e(latest_href)}</a>",
+                    f"today_activity_window: <a href='{_e(window_href)}'>{_e(window_label)}</a>",
+                    "today_activity_safety: read-only goal timeline on daily cockpit",
+                ]
+            ),
+            "</details>",
             "</section>",
         ]
     )
@@ -34637,9 +34788,9 @@ def _html_page(
     .today-command-action, .today-command-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .today-command-action {{ background:var(--accent); color:#fff; }}
     .today-command-link {{ background:var(--surface); color:var(--accent); }}
-    .today-state-details, .today-command-evidence, .today-workbench-evidence, .today-note-details, .today-pause-details, .today-finish-details {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .today-state-details summary, .today-command-evidence summary, .today-workbench-evidence summary, .today-note-details summary, .today-pause-details summary, .today-finish-details summary {{ cursor:pointer; font-weight:700; }}
-    .today-state-details:not([open]) > :not(summary), .today-command-evidence:not([open]) > :not(summary), .today-workbench-evidence:not([open]) > :not(summary), .today-note-details:not([open]) > :not(summary), .today-pause-details:not([open]) > :not(summary), .today-finish-details:not([open]) > :not(summary) {{ display:none; }}
+    .today-state-details, .today-command-evidence, .today-activity-evidence, .today-workbench-evidence, .today-note-details, .today-pause-details, .today-finish-details {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .today-state-details summary, .today-command-evidence summary, .today-activity-evidence summary, .today-workbench-evidence summary, .today-note-details summary, .today-pause-details summary, .today-finish-details summary {{ cursor:pointer; font-weight:700; }}
+    .today-state-details:not([open]) > :not(summary), .today-command-evidence:not([open]) > :not(summary), .today-activity-evidence:not([open]) > :not(summary), .today-workbench-evidence:not([open]) > :not(summary), .today-note-details:not([open]) > :not(summary), .today-pause-details:not([open]) > :not(summary), .today-finish-details:not([open]) > :not(summary) {{ display:none; }}
     .today-note-details > section, .today-pause-details > section, .today-finish-details > section {{ margin:10px 0 0; padding:0; border-bottom:0; }}
     .today-session-summary {{ border-left:4px solid var(--ok); }}
     .today-session-summary dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
@@ -34653,6 +34804,19 @@ def _html_page(
     .today-session-action, .today-session-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .today-session-action {{ background:var(--accent); color:#fff; }}
     .today-session-link {{ background:var(--surface); color:var(--accent); }}
+    .today-activity-digest {{ border-left:4px solid var(--accent); }}
+    .today-activity-digest dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .today-activity-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(4, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .today-activity-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .today-activity-card h3, .today-activity-list h3 {{ margin-top:0; }}
+    .today-activity-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .today-activity-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .today-activity-action, .today-activity-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .today-activity-action {{ background:var(--accent); color:#fff; }}
+    .today-activity-link {{ background:var(--surface); color:var(--accent); }}
+    .today-activity-list {{ margin:12px 0; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .today-activity-list ul {{ list-style:none; padding:0; margin:8px 0 0; display:grid; gap:6px; }}
+    .today-activity-list li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .today-operator-workbench {{ border-left:4px solid var(--accent); }}
     .today-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .today-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
@@ -35368,7 +35532,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #goal-attention-digest {{ scroll-margin-top:260px; }} .goal-attention-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-attention-grid {{ grid-template-columns:1fr; }} }}

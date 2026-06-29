@@ -1,5 +1,30 @@
 # Status
 
+## 2026-06-29 Today Activity Digest UX
+
+- Added a read-only `Today Activity Digest` immediately after `Today Session
+  Summary` on `/today`.
+- The digest gives the daily cockpit visible Now, Window, Artifacts, Notes, and
+  Safety cards plus a compact recent timeline list for the lead Goal or current
+  first-run step.
+- Collapsed digest evidence records source, Goal/project, phase, item counts,
+  latest event, linked activity window, artifact count/latest artifact,
+  operator-note count, no write on GET, and no-provider/no-network/no-external
+  counters.
+- Updated README, local app docs, operating summary, and docs status so the
+  daily cockpit docs describe the new regain-context panel.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 60.32s`; `python3 -m compileall -q agent_os
+  tests`; bounded temp-root `app-smoke-test`; bounded temp-root
+  `app-demo-smoke-test`; `git diff --check`.
+- Non-claims: no new action authority, no write on GET, no provider calls, no
+  non-loopback network actions, no push, no PR, no deploy, and no external
+  mutation from the app.
+
 ## 2026-06-29 Action Resume Receipt UX
 
 - Added a read-only `Action Resume Receipt` immediately after the

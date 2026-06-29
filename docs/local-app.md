@@ -91,7 +91,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Today Session Summary` follows with the current goal or first-run step,
   current gate, next surface, latest activity, latest artifact, workspace
   resume posture, and recorded CI proof in a single return-to-work brief. A
-  read-only `Today Operator Workbench` follows with do/check/unblock/finish
+  read-only `Today Activity Digest` then exposes Now, Window, Artifacts, Notes,
+  and Safety cards plus a compact chronological list from the lead Goal timeline
+  or first-run progress, giving the operator enough recent context to continue
+  from `/today` without opening the full Goal page. A read-only
+  `Today Operator Workbench` follows with do/check/unblock/finish
   cards for the current action, timeline/evidence review, first blocker, and
   finish-today resume save target. A read-only `Today Workflow Map` follows
   with the first-run gate rail when no Goal exists, or the lead Goal's local
