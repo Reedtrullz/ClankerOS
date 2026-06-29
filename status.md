@@ -1,5 +1,40 @@
 # Status
 
+## 2026-06-29 Browser-Local Note Drafts
+
+- Added browser-local draft memory for confirmed Goal and Today
+  `save-goal-note` forms, backed by per-Goal
+  `localStorage:clankeros-goal-note-draft:<goal_id>` entries.
+- The note capture form is now multiline, saves unsent text after operator
+  typing, restores it after local reloads, tracks saved/restored/submitted
+  status in the DOM, and exposes a `Clear draft` button. Confirmed
+  `save-goal-note` action-result pages now clear the submitted draft key after
+  the local note append succeeds.
+- `/workspace#workspace-view-memory` now includes a `Note Drafts` prefix card
+  and reset scope, so unsent operator note drafts can be inspected or cleared
+  with the other browser-local view state.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `python3 -m compileall -q agent_os
+  tests` passed; `git diff --check` passed; focused route/demo pytest passed
+  with `2 passed, 514 deselected in 71.76s`; bounded scratch-root
+  `app-smoke-test` passed across core routes with provider/network/external
+  mutation counters at zero; bounded scratch-root `app-demo-smoke-test` passed
+  across fixture-backed routes with the same zero-effect counters; Chrome
+  Playwright against throwaway demo Goal
+  `http://127.0.0.1:61905/goals/goal_edb089ed670d` confirmed draft save to
+  `clankeros-goal-note-draft:goal_edb089ed670d`, reload restore of a multiline
+  draft, Workspace View Memory reset removing the draft, default empty reload
+  after reset, submitted draft state before confirmation, action-result cleanup
+  clearing the key after confirmed note append, saved note text visible on the
+  Goal page, mobile viewport `390px` with no horizontal overflow, and no
+  unexpected console warnings/errors. The only ignored browser console line
+  was the intentional `409 Conflict` confirmation response.
+- Non-claims: note draft memory is browser-local unsent text only. It does not
+  write `.clanker/app/workspace.json`, append notes without explicit
+  confirmation, bypass the confirmed action review page, record workflow
+  memory, approve or execute work, call providers, fetch GitHub, push, create
+  PRs, deploy, or mutate external systems.
+
 ## 2026-06-29 Browser-Local Scroll Position
 
 - Added shared browser-local scroll-position memory to the app shell, backed by

@@ -574,8 +574,10 @@ follows it with already-rendered note cards, text search, per-Goal browser-local
 view memory in `localStorage:clankeros-goal-notes-filter:<goal_id>`, and Reset
 notes; it reads only the goal-scoped `operator-notes.md` artifact and does not
 open arbitrary filesystem paths. The confirmed `save-goal-note` form remains
-the local write path and appends resume context to the artifact without
-overwriting earlier notes.
+the local write path, now uses a multiline capture box, and keeps unsent draft
+text in browser-local `localStorage:clankeros-goal-note-draft:<goal_id>` until
+the operator clears it or a confirmed note write updates the artifact. It
+appends resume context to the artifact without overwriting earlier notes.
 The Goal Resume Snapshot reads `.clanker/app/workspace.json` and opens with
 visible Now, Current, Saved, Artifact, and Safety cards before collapsed
 resume evidence, collapsed `Goal Workspace Restore State`, and a collapsed

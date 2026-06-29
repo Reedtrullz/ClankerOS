@@ -5517,6 +5517,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "window.localStorage.setItem(scrollPositionMemoryStorageKey(), JSON.stringify({" in root.body
     assert 'window.addEventListener("scroll", scheduleSaveScrollPositionMemoryState' in root.body
     assert 'updateScrollPositionMemoryAttributes("hash-skip"' in root.body
+    assert "function initializeGoalNoteDraftState()" in root.body
+    assert "window.localStorage.setItem(key, JSON.stringify(state))" in root.body
+    assert "window.localStorage.removeItem(key)" in root.body
     assert "data-command-palette-route-history='true'" in root.body
     assert "data-command-palette-route-history-storage-key='clankeros-route-history'" in root.body
     assert "data-command-palette-route-history-list='true'" in root.body
@@ -6459,7 +6462,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 16
+    assert workspace.body.count("class='workspace-view-memory-card") == 17
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
     assert "data-workspace-view-memory-card='goal-board'" in workspace.body
@@ -6471,6 +6474,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-card='timeline'" in workspace.body
     assert "data-workspace-view-memory-card='artifacts'" in workspace.body
     assert "data-workspace-view-memory-card='notes'" in workspace.body
+    assert "data-workspace-view-memory-card='note-drafts'" in workspace.body
     assert "data-workspace-view-memory-card='memory'" in workspace.body
     assert "data-workspace-view-memory-card='skills'" in workspace.body
     assert "data-workspace-view-memory-card='approvals'" in workspace.body
@@ -6492,13 +6496,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-timeline-lane:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-artifact-filter:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-notes-filter:'" in workspace.body
+    assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-note-draft:'" in workspace.body
     assert "data-workspace-view-memory-reset='true'>Reset" in workspace.body
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>16" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>17" in workspace.body
     assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
-    assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:" in workspace.body
+    assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:, clankeros-goal-note-draft:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
     assert "workspace_view_memory_workspace_json_write</dt><dd>false" in workspace.body
@@ -6513,12 +6518,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: open-panels mode=prefix key=clankeros-open-panels:" in workspace.body
     assert "workspace_view_memory_card: scroll-position mode=prefix key=clankeros-scroll-position:" in workspace.body
     assert "workspace_view_memory_card: search mode=prefix key=clankeros-search-result-lane:" in workspace.body
+    assert "workspace_view_memory_card: note-drafts mode=prefix key=clankeros-goal-note-draft:" in workspace.body
     assert "workspace_view_memory_card: memory mode=exact key=clankeros-memory-inventory-filter" in workspace.body
     assert "workspace_view_memory_card: skills mode=exact key=clankeros-skills-inventory-filter" in workspace.body
     assert "workspace_view_memory_card: approvals mode=exact key=clankeros-approval-queue-filter" in workspace.body
     assert "workspace_view_memory_card: inbox mode=exact key=clankeros-inbox-queue-filter" in workspace.body
     assert "workspace_view_memory_card: profiles mode=exact key=clankeros-profile-routing-filter" in workspace.body
-    assert "workspace_view_memory_reset_scope: theme focus board recent route-history open-panels scroll-position search timeline artifacts notes memory skills approvals inbox profiles" in workspace.body
+    assert "workspace_view_memory_reset_scope: theme focus board recent route-history open-panels scroll-position search timeline artifacts notes note-drafts memory skills approvals inbox profiles" in workspace.body
     assert "window.localStorage.removeItem(key)" in workspace.body
     assert "candidate.indexOf(key) === 0" in workspace.body
     assert "delete document.documentElement.dataset.theme" in workspace.body
@@ -7317,6 +7323,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert note_result.status == 200
     assert "goal_operator_note_saved" in note_result.body
     assert "note_path" in note_result.body
+    assert "data-action-result-note-draft-cleanup='true'" in note_result.body
+    assert f"data-action-result-note-draft-key='clankeros-goal-note-draft:{created_goal_id}'" in note_result.body
+    assert "data-action-result-note-draft-status='true'>Clearing submitted browser-local note draft." in note_result.body
+    assert "data-action-result-note-draft-evidence='true'" in note_result.body
+    assert f"action_result_note_draft_storage</dt><dd>localStorage:clankeros-goal-note-draft:{created_goal_id}" in note_result.body
+    assert "action_result_note_draft_write_on_get</dt><dd>false" in note_result.body
+    assert "window.localStorage.removeItem(key)" in note_result.body
     note_path = (
         tmp_path
         / ".clanker"
@@ -7541,6 +7554,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "goal_operator_notes_filter_external_effects_created</dt><dd>false" in noted_goal_page.body
     assert "window.localStorage.setItem(storageKey(), JSON.stringify({ query:" in noted_goal_page.body
     assert "window.localStorage.removeItem(storageKey())" in noted_goal_page.body
+    assert "data-goal-note-draft-form='true'" in noted_goal_page.body
+    assert "data-goal-note-draft-context='goal'" in noted_goal_page.body
+    assert f"data-goal-note-draft-goal='{created_goal_id}'" in noted_goal_page.body
+    assert f"data-goal-note-draft-storage-key='clankeros-goal-note-draft:{created_goal_id}'" in noted_goal_page.body
+    assert "data-goal-note-draft-note-updated-at='" in noted_goal_page.body
+    assert "data-goal-note-draft-input='true'" in noted_goal_page.body
+    assert "data-goal-note-draft-status='true'>Draft: default" in noted_goal_page.body
+    assert "data-goal-note-draft-reset='true'>Clear draft" in noted_goal_page.body
+    assert "data-goal-note-draft-evidence='true'" in noted_goal_page.body
+    assert f"goal_note_draft_memory_storage</dt><dd>localStorage:clankeros-goal-note-draft:{created_goal_id}" in noted_goal_page.body
+    assert "goal_note_draft_note_updated_at</dt><dd>" in noted_goal_page.body
+    assert "goal_note_draft_safety: unsent operator note text stays in browser localStorage" in noted_goal_page.body
     assert "operator_notes_status: available" in noted_goal_page.body
     assert "operator_note_entries: 1" in noted_goal_page.body
     assert f".clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md" in noted_goal_page.body
@@ -13729,6 +13754,22 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_operator_notes_safety: confirmed local append only" in goal.body
     assert "id='goal-operator-note-form'" in goal.body
     assert "save-goal-note" in goal.body
+    assert "data-goal-note-draft-form='true'" in goal.body
+    assert "data-goal-note-draft-context='goal'" in goal.body
+    assert f"data-goal-note-draft-goal='{result.goal_id}'" in goal.body
+    assert f"data-goal-note-draft-storage-key='clankeros-goal-note-draft:{result.goal_id}'" in goal.body
+    assert "data-goal-note-draft-input='true'" in goal.body
+    assert "data-goal-note-draft-toolbar='true'" in goal.body
+    assert "data-goal-note-draft-status='true'>Draft: default" in goal.body
+    assert "data-goal-note-draft-reset='true'>Clear draft" in goal.body
+    assert "data-goal-note-draft-evidence='true'" in goal.body
+    assert f"goal_note_draft_memory_storage</dt><dd>localStorage:clankeros-goal-note-draft:{result.goal_id}" in goal.body
+    assert "goal_note_draft_memory_fields</dt><dd>note, updatedAt, submittedAt" in goal.body
+    assert "goal_note_draft_confirmation_required</dt><dd>true" in goal.body
+    assert "goal_note_draft_write_on_get</dt><dd>false" in goal.body
+    assert "goal_note_draft_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_note_draft_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_note_draft_external_effects_created</dt><dd>false" in goal.body
     assert "note_append_form_available: true" in goal.body
     assert "Goal Remaining Work Command Bar" in goal.body
     assert "data-goal-remaining-work-command-bar='true'" in goal.body

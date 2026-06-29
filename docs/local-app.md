@@ -398,7 +398,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `localStorage:clankeros-goal-notes-filter:<goal_id>`, and Reset notes while
   keeping GET read-only and avoiding raw filesystem browsing. The confirmed
   `save-goal-note` form appends local resume context to
-  `.clanker/projects/<project>/goals/<goal>/operator-notes.md`; it does not
+  `.clanker/projects/<project>/goals/<goal>/operator-notes.md`; it now uses a
+  multiline capture box with browser-local draft memory in
+  `localStorage:clankeros-goal-note-draft:<goal_id>` and clears submitted
+  drafts after the confirmed note write updates the artifact. It does not
   overwrite previous notes. Saved operator notes also appear as linked
   `Operator note saved` entries in the Goal timeline and recent Activity Log,
   with a read-only `Goal Activity Command Bar` exposing visible Now, Latest,

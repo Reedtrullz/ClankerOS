@@ -547,6 +547,7 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-scroll-position-memory='true'",
                 "data-scroll-position-memory-storage-prefix='clankeros-scroll-position:'",
                 "function initializeScrollPositionMemoryState()",
+                "function initializeGoalNoteDraftState()",
                 "data-command-palette-route-history='true'",
                 "data-command-palette-route-history-storage-key='clankeros-route-history'",
                 "function syncPaletteFilter()",
@@ -970,6 +971,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-operator-notes-filter-evidence='true'",
                 "data-goal-operator-notes-list='true'",
                 "data-goal-operator-notes-form='true'",
+                "data-goal-note-draft-form='true'",
+                "data-goal-note-draft-input='true'",
+                "data-goal-note-draft-reset='true'",
                 "data-goal-task-closeout='true'",
                 "data-goal-task-closeout-actions='true'",
                 "data-goal-task-closeout-evidence='true'",
@@ -1045,6 +1049,8 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-workspace-view-memory-key='clankeros-open-panels:'",
                 "data-workspace-view-memory-card='scroll-position'",
                 "data-workspace-view-memory-key='clankeros-scroll-position:'",
+                "data-workspace-view-memory-card='note-drafts'",
+                "data-workspace-view-memory-key='clankeros-goal-note-draft:'",
                 "workspace_view_memory_status</dt><dd>available",
                 "data-workspace-save-details='true'",
                 "save-workspace",
@@ -3608,11 +3614,75 @@ def _today_note_form(root: Path, state: dict[str, Any]) -> str:
                     ("today_note_external_effects_created", "false"),
                 ]
             ),
-            _input_form(
-                "save-goal-note",
-                {"goal_id": goal.id, "author": "operator"},
-                {"note": "What should future me know about this goal?"},
+            _goal_note_capture_form(root, goal, context="today"),
+        ]
+    )
+
+
+def _goal_note_capture_form(root: Path, goal: Any, *, context: str) -> str:
+    note_path = _goal_operator_notes_path(goal)
+    storage_key = f"clankeros-goal-note-draft:{goal.id}"
+    note_updated_at = _artifact_time(root, note_path.as_posix()) or ""
+    hidden_inputs = "".join(
+        [
+            f"<input type='hidden' name='goal_id' value='{_e(goal.id)}'>",
+            "<input type='hidden' name='author' value='operator'>",
+        ]
+    )
+    return "".join(
+        [
+            (
+                "<form method='post' action='/actions/save-goal-note' "
+                "class='goal-note-draft-form' data-goal-note-draft-form='true' "
+                f"data-goal-note-draft-context='{_e(context)}' "
+                f"data-goal-note-draft-goal='{_e(goal.id)}' "
+                f"data-goal-note-draft-project='{_e(goal.project_id)}' "
+                f"data-goal-note-draft-storage-key='{_e(storage_key)}' "
+                f"data-goal-note-draft-note-updated-at='{_e(note_updated_at)}' "
+                "data-goal-note-draft-write-on-get='false' "
+                "data-goal-note-draft-provider-calls-taken='0' "
+                "data-goal-note-draft-network-actions-taken='0' "
+                "data-goal-note-draft-external-effects-created='false'>"
             ),
+            hidden_inputs,
+            "<label class='goal-note-draft-label'>note ",
+            (
+                "<textarea name='note' rows='5' spellcheck='true' "
+                "data-goal-note-draft-input='true' "
+                "placeholder='What should future me know about this goal?'></textarea>"
+            ),
+            "</label>",
+            "<div class='goal-note-draft-toolbar' data-goal-note-draft-toolbar='true'>",
+            "<span class='goal-note-draft-status' data-goal-note-draft-status='true'>Draft: default</span>",
+            "<button type='button' class='goal-note-draft-reset' data-goal-note-draft-reset='true'>Clear draft</button>",
+            "</div>",
+            "<details class='goal-note-draft-evidence' data-goal-note-draft-evidence='true'><summary>Goal note draft evidence</summary>",
+            _kv(
+                [
+                    ("goal_note_draft_status", "browser_local_ready"),
+                    ("goal_note_draft_context", context),
+                    ("goal_note_draft_goal", goal.id),
+                    ("goal_note_draft_project", goal.project_id),
+                    ("goal_note_draft_memory_storage", f"localStorage:{storage_key}"),
+                    ("goal_note_draft_memory_fields", "note, updatedAt, submittedAt"),
+                    ("goal_note_draft_note_updated_at", note_updated_at or "none"),
+                    ("goal_note_draft_confirmation_required", "true"),
+                    ("goal_note_draft_write_on_get", "false"),
+                    ("goal_note_draft_provider_calls_taken", "0"),
+                    ("goal_note_draft_network_actions_taken", "0"),
+                    ("goal_note_draft_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "goal_note_draft_persistence: browser-local per Goal",
+                    "goal_note_draft_reset: clear draft button or Workspace View Memory",
+                    "goal_note_draft_safety: unsent operator note text stays in browser localStorage",
+                ]
+            ),
+            "</details>",
+            "<button type='submit'>save-goal-note</button>",
+            "</form>",
         ]
     )
 
@@ -6855,6 +6925,13 @@ def _workspace_view_memory_panel() -> str:
             "Per-Goal operator-note text filters",
         ),
         (
+            "note-drafts",
+            "Note Drafts",
+            "prefix",
+            "clankeros-goal-note-draft:",
+            "Per-Goal unsent operator note drafts",
+        ),
+        (
             "memory",
             "Memory Filters",
             "exact",
@@ -6954,7 +7031,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus board recent route-history open-panels scroll-position search timeline artifacts notes memory skills approvals inbox profiles",
+                    "workspace_view_memory_reset_scope: theme focus board recent route-history open-panels scroll-position search timeline artifacts notes note-drafts memory skills approvals inbox profiles",
                 ]
             ),
             "</details>",
@@ -20677,11 +20754,7 @@ def _goal_operator_notes_section(root: Path, state: dict[str, Any]) -> str:
             _ul(_goal_operator_note_lines(root, state)),
             "</details>",
             "<div id='goal-operator-note-form' data-goal-operator-notes-form='true'>",
-            _input_form(
-                "save-goal-note",
-                {"goal_id": goal.id, "author": "operator"},
-                {"note": "What should future me know about this goal?"},
-            ),
+            _goal_note_capture_form(root, goal, context="goal"),
             "</div>",
             "</section>",
         ]
@@ -34746,6 +34819,7 @@ def _action_result_page(
                 location=safe_location,
                 next_href=next_href,
             ),
+            _action_result_goal_note_draft_cleanup(action, result),
             "<section id='action-result-details'><h2>Action Result Details</h2>",
             "<p>Action completed. Review the local result before continuing.</p>",
             _non_claim_banner(),
@@ -34763,6 +34837,61 @@ def _action_result_page(
             _action_result_continuation_section(root, safe_location, message),
             _action_result_workflow_map_section(root),
             "<p class='muted'>This page is a local readback only. Follow the next-page link after checking the payload, artifacts, and safety boundary.</p>",
+            "</section>",
+        ]
+    )
+
+
+def _action_result_goal_note_draft_cleanup(action: str, result: Any) -> str:
+    if action != "save-goal-note" or not isinstance(result, dict):
+        return ""
+    goal_id = str(result.get("goal_id") or "").strip()
+    if not goal_id:
+        return ""
+    storage_key = f"clankeros-goal-note-draft:{goal_id}"
+    return "".join(
+        [
+            (
+                "<section id='action-result-note-draft-cleanup' "
+                "class='panel action-result-note-draft-cleanup' "
+                "data-action-result-note-draft-cleanup='true' "
+                f"data-action-result-note-draft-key='{_e(storage_key)}'>"
+            ),
+            "<h2>Note Draft Cleared</h2>",
+            "<p class='muted' data-action-result-note-draft-status='true'>Clearing submitted browser-local note draft.</p>",
+            "<details data-action-result-note-draft-evidence='true'><summary>Note draft cleanup evidence</summary>",
+            _kv(
+                [
+                    ("action_result_note_draft_status", "ready_to_clear"),
+                    ("action_result_note_draft_goal", goal_id),
+                    ("action_result_note_draft_storage", f"localStorage:{storage_key}"),
+                    ("action_result_note_draft_write_on_get", "false"),
+                    ("action_result_note_draft_provider_calls_taken", "0"),
+                    ("action_result_note_draft_network_actions_taken", "0"),
+                    ("action_result_note_draft_external_effects_created", "false"),
+                ]
+            ),
+            "</details>",
+            """<script>
+(function () {
+  var root = document.querySelector("[data-action-result-note-draft-cleanup='true']");
+  if (!root) return;
+  var key = root.getAttribute("data-action-result-note-draft-key") || "";
+  var status = root.querySelector("[data-action-result-note-draft-status='true']");
+  if (!window.localStorage || !key) {
+    if (status) status.textContent = "Draft cleanup unavailable in this browser.";
+    return;
+  }
+  try {
+    window.localStorage.removeItem(key);
+    root.setAttribute("data-action-result-note-draft-status-value", "cleared");
+    if (status) status.textContent = "Submitted browser-local note draft cleared.";
+  } catch (error) {
+    root.setAttribute("data-action-result-note-draft-status-value", "local-only");
+    if (status) status.textContent = "Draft cleanup was blocked by this browser.";
+  }
+})();
+</script>""",
             "</section>",
         ]
     )
@@ -39448,12 +39577,21 @@ def _html_page(
     .goal-operator-note-meta strong, .goal-operator-note-meta span {{ overflow-wrap:anywhere; }}
     .goal-operator-note-body {{ white-space:pre-wrap; margin:10px 0 0; overflow-wrap:anywhere; }}
     .goal-operator-note-empty h3 {{ margin-top:0; }}
+    .goal-note-draft-form {{ display:grid; gap:10px; margin:10px 0; }}
+    .goal-note-draft-label {{ display:grid; gap:6px; color:var(--muted); }}
+    .goal-note-draft-label textarea {{ width:100%; min-height:130px; resize:vertical; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:8px; }}
+    .goal-note-draft-toolbar {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }}
+    .goal-note-draft-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .goal-note-draft-reset {{ min-height:32px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 10px; }}
+    .goal-note-draft-evidence {{ margin-top:0; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-note-draft-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-note-draft-evidence:not([open]) > :not(summary) {{ display:none; }}
     .goal-operator-notes-evidence, .goal-operator-notes-filter-evidence, .goal-operator-notes-list {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-operator-notes-evidence summary, .goal-operator-notes-filter-evidence summary, .goal-operator-notes-list summary {{ cursor:pointer; font-weight:700; }}
     .goal-operator-notes-evidence:not([open]) > :not(summary), .goal-operator-notes-filter-evidence:not([open]) > :not(summary), .goal-operator-notes-list:not([open]) > :not(summary) {{ display:none; }}
     .goal-operator-notes-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-operator-notes-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
-    @media (max-width: 640px) {{ .goal-operator-notes-filter-row {{ grid-template-columns:1fr; }} .goal-operator-notes-filter-count {{ white-space:normal; }} .goal-operator-notes-filter-reset {{ width:100%; }} .goal-operator-notes-filter-memory {{ align-items:stretch; }} .goal-operator-notes-filter-memory-status {{ width:100%; }} }}
+    @media (max-width: 640px) {{ .goal-operator-notes-filter-row {{ grid-template-columns:1fr; }} .goal-operator-notes-filter-count {{ white-space:normal; }} .goal-operator-notes-filter-reset, .goal-note-draft-reset {{ width:100%; }} .goal-operator-notes-filter-memory, .goal-note-draft-toolbar {{ align-items:stretch; }} .goal-operator-notes-filter-memory-status, .goal-note-draft-status {{ width:100%; }} }}
     .goal-remaining-work-command-bar {{ border-left:4px solid var(--warn); }}
     .goal-remaining-work-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-remaining-work-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -42069,6 +42207,138 @@ def _html_page(
       window.addEventListener("scroll", scheduleSaveScrollPositionMemoryState, {{ passive: true }});
       window.addEventListener("beforeunload", saveScrollPositionMemoryState);
     }}
+    function goalNoteDraftForms() {{
+      return Array.prototype.slice.call(document.querySelectorAll("[data-goal-note-draft-form='true']"));
+    }}
+    function goalNoteDraftStorageKey(form) {{
+      return form ? (form.getAttribute("data-goal-note-draft-storage-key") || "") : "";
+    }}
+    function goalNoteDraftInput(form) {{
+      return form ? form.querySelector("[data-goal-note-draft-input='true']") : null;
+    }}
+    function setGoalNoteDraftStatus(form, status, message) {{
+      if (!form) {{ return; }}
+      var input = goalNoteDraftInput(form);
+      var text = input ? input.value || "" : "";
+      form.setAttribute("data-goal-note-draft-status-value", status);
+      form.setAttribute("data-goal-note-draft-char-count", String(text.length));
+      var statusNode = form.querySelector("[data-goal-note-draft-status='true']");
+      if (statusNode) {{ statusNode.textContent = message || ("Draft: " + status); }}
+    }}
+    function goalNoteDraftTime(value) {{
+      var parsed = Date.parse(value || "");
+      return isFinite(parsed) ? parsed : 0;
+    }}
+    function loadGoalNoteDraftState(form) {{
+      var key = goalNoteDraftStorageKey(form);
+      if (!window.localStorage || !key) {{ return null; }}
+      try {{
+        var raw = window.localStorage.getItem(key);
+        if (!raw) {{ return null; }}
+        var state = JSON.parse(raw);
+        if (!state || typeof state !== "object") {{ return null; }}
+        return {{
+          note: typeof state.note === "string" ? state.note : "",
+          updatedAt: typeof state.updatedAt === "string" ? state.updatedAt : "",
+          submittedAt: typeof state.submittedAt === "string" ? state.submittedAt : ""
+        }};
+      }} catch (error) {{
+        return null;
+      }}
+    }}
+    function removeGoalNoteDraftState(form, status, message) {{
+      var key = goalNoteDraftStorageKey(form);
+      if (window.localStorage && key) {{
+        try {{ window.localStorage.removeItem(key); }} catch (error) {{}}
+      }}
+      setGoalNoteDraftStatus(form, status || "reset", message || "Draft: reset");
+    }}
+    function saveGoalNoteDraftState(form, options) {{
+      options = options || {{}};
+      var input = goalNoteDraftInput(form);
+      if (!input) {{ return; }}
+      var note = input.value || "";
+      if (!note.trim() && !options.submitted) {{
+        removeGoalNoteDraftState(form, "empty", "Draft: empty");
+        return;
+      }}
+      var key = goalNoteDraftStorageKey(form);
+      setGoalNoteDraftStatus(form, window.localStorage ? (options.submitted ? "submitted" : "saved") : "unavailable", options.submitted ? "Draft: submitted for confirmation" : "Draft: saved");
+      if (!window.localStorage || !key) {{ return; }}
+      try {{
+        var now = new Date().toISOString();
+        var state = {{
+          goal: form.getAttribute("data-goal-note-draft-goal") || "",
+          project: form.getAttribute("data-goal-note-draft-project") || "",
+          context: form.getAttribute("data-goal-note-draft-context") || "",
+          note: note,
+          updatedAt: now
+        }};
+        if (options.submitted) {{ state.submittedAt = now; }}
+        window.localStorage.setItem(key, JSON.stringify(state));
+      }} catch (error) {{
+        setGoalNoteDraftStatus(form, "local-only", "Draft: local only");
+      }}
+    }}
+    function scheduleGoalNoteDraftSave(form) {{
+      if (!form) {{ return; }}
+      if (form._goalNoteDraftTimer) {{
+        window.clearTimeout(form._goalNoteDraftTimer);
+      }}
+      form._goalNoteDraftTimer = window.setTimeout(function() {{
+        form._goalNoteDraftTimer = null;
+        saveGoalNoteDraftState(form);
+      }}, 180);
+    }}
+    function restoreGoalNoteDraftState(form) {{
+      var input = goalNoteDraftInput(form);
+      if (!input) {{ return; }}
+      if (!window.localStorage) {{
+        setGoalNoteDraftStatus(form, "unavailable", "Draft: unavailable");
+        return;
+      }}
+      var state = loadGoalNoteDraftState(form);
+      if (!state || !state.note) {{
+        setGoalNoteDraftStatus(form, "default", "Draft: default");
+        return;
+      }}
+      var submittedAt = goalNoteDraftTime(state.submittedAt);
+      var noteUpdatedAt = goalNoteDraftTime(form.getAttribute("data-goal-note-draft-note-updated-at") || "");
+      var submittedNote = (state.note || "").trim();
+      var submittedNoteSaved = false;
+      if (submittedAt && submittedNote) {{
+        submittedNoteSaved = Array.prototype.slice.call(document.querySelectorAll("[data-goal-operator-note-item='true']")).some(function(item) {{
+          return (item.textContent || "").indexOf(submittedNote) !== -1;
+        }});
+      }}
+      if (submittedAt && (submittedNoteSaved || (noteUpdatedAt && (noteUpdatedAt + 1000) >= submittedAt))) {{
+        input.value = "";
+        removeGoalNoteDraftState(form, "confirmed", "Draft: saved note cleared");
+        return;
+      }}
+      input.value = state.note;
+      setGoalNoteDraftStatus(form, state.submittedAt ? "submitted" : "restored", state.submittedAt ? "Draft: submitted for confirmation" : "Draft: restored");
+    }}
+    function initializeGoalNoteDraftState() {{
+      goalNoteDraftForms().forEach(function(form) {{
+        restoreGoalNoteDraftState(form);
+        var input = goalNoteDraftInput(form);
+        if (input) {{
+          input.addEventListener("input", function() {{ scheduleGoalNoteDraftSave(form); }});
+        }}
+        var reset = form.querySelector("[data-goal-note-draft-reset='true']");
+        if (reset) {{
+          reset.addEventListener("click", function(event) {{
+            event.preventDefault();
+            if (input) {{ input.value = ""; }}
+            removeGoalNoteDraftState(form, "reset", "Draft: reset");
+          }});
+        }}
+        form.addEventListener("submit", function() {{
+          saveGoalNoteDraftState(form, {{ submitted: true }});
+        }});
+      }});
+    }}
     if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
     if (paletteSearch) {{ paletteSearch.addEventListener("input", syncPaletteFilter); }}
     if (nextActionOpen) {{ nextActionOpen.addEventListener("click", openNextAction); }}
@@ -42297,6 +42567,7 @@ def _html_page(
     restoreWorkspacePanels();
     initializeOpenPanelMemoryState();
     initializeScrollPositionMemoryState();
+    initializeGoalNoteDraftState();
     window.addEventListener("hashchange", function() {{
       openCurrentHashDetails();
       rememberCurrentRoute();

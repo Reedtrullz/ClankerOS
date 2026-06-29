@@ -666,13 +666,15 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   boundaries. Command evidence and note details stay collapsed and preserve
   the goal-scoped path, timestamped entry count, artifact size, workspace
   resume-anchor posture, one review or capture target, and safety counters.
-  The confirmed note form appends local
-  operator resume context to the artifact; saved operator notes also become
-  linked `Operator note saved` entries in the Goal timeline and recent
-  Activity Log with zero external effects, and the confirmed note action now
-  refreshes saved workspace state to the operator-notes artifact so `/resume`,
-  Home, and `/workspace` return to the note context without a separate manual
-  save. They also include a confirmed `delegate`
+  The confirmed note form is multiline and keeps unsent text in browser-local
+  `localStorage:clankeros-goal-note-draft:<goal_id>` until the operator clears
+  it or a confirmed note write updates the artifact. The confirmed note action
+  appends local operator resume context to the artifact; saved operator notes
+  also become linked `Operator note saved` entries in the Goal timeline and
+  recent Activity Log with zero external effects, and the confirmed note action
+  now refreshes saved workspace state to the operator-notes artifact so
+  `/resume`, Home, and `/workspace` return to the note context without a
+  separate manual save. They also include a confirmed `delegate`
   next-action form when a goal has planned tasks but no delegation yet. If a
   goal needs to be shelved, the Goal Daily Loop and `/today` expose confirmed
   `pause-goal`; if a goal is explicitly paused, the Goal page shows a `Paused`

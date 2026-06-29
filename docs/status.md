@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal and Today operator note capture now uses a multiline confirmed
+  `save-goal-note` form with browser-local draft memory in
+  `localStorage:clankeros-goal-note-draft:<goal_id>`, so unsent notes survive
+  local reloads until cleared or until a confirmed note write updates the
+  operator-notes artifact. `/workspace#workspace-view-memory` can inspect and
+  reset these draft entries with the other browser-local view state.
 - The shared app shell now remembers route-scoped scroll position in
   browser-local `localStorage:clankeros-scroll-position:<route>` after operator
   scrolling, restores long pages near the same working position on return, and
@@ -78,13 +84,13 @@ Latest status focus:
   and keeps GET rendering read-only with no memory writes, provider calls,
   network actions, raw filesystem browsing, or external effects.
 - `/workspace#workspace-view-memory` now exposes browser-local view memory
-  for theme, focus mode, Goal board view, search lanes, timeline lanes,
-  artifact filters, notes filters, Memory Bank filters, Skills Inventory
-  filters, Approval Queue filters, Inbox Queue filters, and Profile Routing
-  filters. It can refresh or clear those `localStorage` values after explicit
-  clicks while preserving read-only GET behavior, `.clanker/app/workspace.json`,
-  no raw filesystem browsing, and no-provider/no-network/no-external-effect
-  boundaries.
+  for theme, focus mode, Goal board view, open panels, scroll position, search
+  lanes, timeline lanes, artifact filters, notes filters, note drafts, Memory
+  Bank filters, Skills Inventory filters, Approval Queue filters, Inbox Queue
+  filters, and Profile Routing filters. It can refresh or clear those
+  `localStorage` values after explicit clicks while preserving read-only GET
+  behavior, `.clanker/app/workspace.json`, no raw filesystem browsing, and
+  no-provider/no-network/no-external-effect boundaries.
 - `/goals/<goal_id>#goal-operator-notes-browser` now renders existing
   `operator-notes.md` sections as scan-first note cards with local text search,
   visible View status, per-Goal browser-local query memory in
