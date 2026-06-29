@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The First Run Guide now includes a read-only `First Run Next Step` panel
+  between the launchpad and progress strip. It gives fresh operators one
+  primary same-page action for the current first-run gate, plus setup,
+  handoff, resume, safety, confirmation, and zero-effect evidence.
 - The shared browser shell now makes Finish Today route-aware. The header
   `Finish` control, `f` shortcut, Operator Ribbon, and command-palette Quick
   Switch open `#today-finish` on `/today`, `#goal-finish-today` on

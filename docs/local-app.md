@@ -66,7 +66,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `First Run Command Bar` that names the next first-run action, target
   surface, form surface, Goal/delegation context, and zero-effect counters; once
   a Goal exists, it can render the same confirmed local next-action form inline
-  for the scout delegation, context-pack, and first delegation run gates.
+  for the scout delegation, context-pack, and first delegation run gates. The
+  guide also renders `First Run Next Step` between the launchpad and progress
+  strip, turning the current setup or delegation gate into one primary
+  same-page browser action with setup, handoff, resume, and safety cards.
   Confirmed
   `register-project` and `create-goal` browser actions also update
   `.clanker/app/workspace.json`, so `/resume` can restore the new project or

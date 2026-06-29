@@ -140,9 +140,12 @@ so scout delegation, context-pack generation, and first delegation execution
 can continue from the guide. The command bar is followed by a visible
 `First Run Launchpad` with five browser choices: continue guided setup, open a
 populated demo, inspect workflow, review verification proof, or check health
-and safety. A visible `First Run Progress` strip follows with a progress bar
-and five step cards for Project, Goal, Delegation, Context, and Run, while
-detailed status evidence stays collapsed and read-only. Confirmed browser
+and safety. A visible `First Run Next Step` panel follows with one primary
+same-page action, setup/handoff/resume/safety cards, confirmation posture, and
+zero-effect counters, making the current click obvious before the checklist. A
+visible `First Run Progress` strip follows with a progress bar and five step
+cards for Project, Goal, Delegation, Context, and Run, while detailed status
+evidence stays collapsed and read-only. Confirmed browser
 project registration and goal creation also update the saved workspace, so
 `/resume` already knows the first project/goal after those actions. When a
 lead goal exists, Home also shows an explicit
@@ -552,8 +555,9 @@ renders a state-aware First Run Guide plus confirmed local forms for
 and first goal without switching to CLI commands. The guide tracks whether
 the project, goal, first delegation, and context pack exist, then points to
 the current surface, the confirmed local `run-delegation` action, or its exact
-CLI fallback command. It also renders the `First Run Progress` strip so the
-operator sees the five-step browser path and current gate before the forms.
+CLI fallback command. It also renders `First Run Next Step` plus the
+`First Run Progress` strip so the operator sees the immediate browser action,
+five-step path, and current gate before the forms.
 After a confirmed `register-project` action, the
 `Action Result Details` page also renders a first-run continuation with an
 inline confirmed `create-goal` form plus Home and Today fallback links, so the

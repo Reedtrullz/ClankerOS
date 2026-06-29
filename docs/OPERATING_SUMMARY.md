@@ -904,6 +904,9 @@ Core layers for the bootstrap:
   `First Run Launchpad` with guided setup, demo, workflow, verification, and
   health cards before the progress strip, so fresh operators can choose the
   right browser path without reading docs first. It then shows a read-only
+  `First Run Next Step` panel with one primary same-page action plus setup,
+  handoff, resume, and safety cards, so the current click is obvious before the
+  operator reads the full checklist. It then shows a read-only
   `First Run Progress` strip with a progress bar and five step cards for
   Project, Goal, Delegation, Context, and Run, keeping detailed status evidence
   collapsed and preserving no-write/provider/network/external-effect

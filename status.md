@@ -1,5 +1,32 @@
 # Status
 
+## 2026-06-29 First Run Next Step UX
+
+- Added a visible read-only `First Run Next Step` panel to the First Run Guide
+  between the launchpad and progress strip.
+- The panel turns the current first-run gate into one primary same-page browser
+  action, with compact Setup, Handoff, Resume, and Safety cards around it.
+- Collapsed evidence records current step, next action, route surface, target
+  surface, setup/handoff status, project, goal, delegation, context-pack
+  readiness, confirmation requirement, and zero-effect counters.
+- The panel reuses existing confirmed first-run forms and inline goal next
+  action forms; it does not introduce another write path, execution path,
+  provider call, GitHub action, PR, deploy, approval, or external effect.
+- Updated README, local app docs, operating summary, docs status, and focused
+  first-run route assertions for empty checkout, registered-project/no-goal,
+  created-goal, delegation-created, and context-pack-ready states.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; `git diff --check`; focused pytest
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  first_run_browser_actions_persist_resume_workspace" --tb=short` passed with
+  `2 passed, 514 deselected in 25.54s`; bounded temp-root `app-smoke-test`;
+  bounded temp-root `app-demo-smoke-test`.
+- Non-claims: no full local pytest suite for this slice, no browser
+  screenshot/Playwright interaction proof, no new action authority, no write on
+  GET, no provider calls, no non-loopback network actions, no approval, no
+  execution, no push, no PR, no deploy, and no external mutation from the app.
+
 ## 2026-06-29 Route-Aware Finish Today UX
 
 - Made the shared Finish Today target route-aware across the browser shell.

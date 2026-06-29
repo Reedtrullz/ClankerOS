@@ -4837,8 +4837,46 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert (
         "first_run_launchpad_safety: read-only first-run launchpad; confirmed forms own writes"
     ) in root.body
+    assert "First Run Next Step" in root.body
+    assert "data-first-run-next-step='true'" in root.body
+    assert "data-first-run-next-cards='true'" in root.body
+    assert root.body.count("class='first-run-next-card") == 5
+    assert (
+        "data-first-run-next-primary='true' href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "first_run_next_step_status</dt><dd>active" in root.body
+    assert "first_run_next_step_current_step</dt><dd>create_project" in root.body
+    assert "first_run_next_step_action</dt><dd>Register ClankerOS project" in root.body
+    assert "first_run_next_step_reason</dt><dd>no_project_registered" in root.body
+    assert (
+        "first_run_next_step_target_surface</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "first_run_next_step_route_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "first_run_next_step_form_available</dt><dd>true" in root.body
+    assert "first_run_next_step_confirmation_required</dt><dd>true" in root.body
+    assert "first_run_next_step_project</dt><dd>clankeros" in root.body
+    assert "first_run_next_step_setup_status</dt><dd>empty" in root.body
+    assert "first_run_next_step_goal</dt><dd>none" in root.body
+    assert "first_run_next_step_delegation</dt><dd>none" in root.body
+    assert "first_run_next_step_handoff_status</dt><dd>none" in root.body
+    assert "first_run_next_step_context_pack_ready</dt><dd>false" in root.body
+    assert "first_run_next_step_delegation_completed</dt><dd>false" in root.body
+    assert "first_run_next_step_resume_surface</dt><dd><a href='/resume'>/resume</a>" in root.body
+    assert "first_run_next_step_card_count</dt><dd>5" in root.body
+    assert "first_run_next_step_write_on_get</dt><dd>false" in root.body
+    assert "first_run_next_step_provider_calls_taken</dt><dd>0" in root.body
+    assert "first_run_next_step_network_actions_taken</dt><dd>0" in root.body
+    assert "first_run_next_step_external_effects_created</dt><dd>false" in root.body
+    assert (
+        "first_run_next_step_now: Register ClankerOS project -&gt; "
+        "<a href='#first-run-create-project'>Create Project</a>"
+    ) in root.body
+    assert "first_run_next_step_safety: same-page guidance only" in root.body
     assert root.body.index("First Run Command Bar") < root.body.index("First Run Launchpad")
-    assert root.body.index("First Run Launchpad") < root.body.index("First Run Progress")
+    assert root.body.index("First Run Launchpad") < root.body.index("First Run Next Step")
+    assert root.body.index("First Run Next Step") < root.body.index("First Run Progress")
     assert (
         "first_run_guided_path</dt><dd>Create project -&gt; Create first goal -&gt; "
         "Create first delegation -&gt; Generate context pack -&gt; Run first delegation"
@@ -6412,6 +6450,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     ) in registered_goals.body
     assert "first_run_command_action_form_available</dt><dd>true" in registered_goals.body
     assert "first_run_command_inline_action_form_available</dt><dd>false" in registered_goals.body
+    assert "first_run_next_step_current_step</dt><dd>create_first_goal" in registered_goals.body
+    assert "first_run_next_step_action</dt><dd>Create first goal" in registered_goals.body
+    assert (
+        "first_run_next_step_target_surface</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in registered_goals.body
+    assert "first_run_next_step_setup_status</dt><dd>project_registered" in registered_goals.body
+    assert "first_run_next_step_form_available</dt><dd>true" in registered_goals.body
     assert "goal_board_workbench_status</dt><dd>first_run" in registered_goals.body
     assert "goal_board_workbench_current_step</dt><dd>create_first_goal" in registered_goals.body
     assert "goal_board_workbench_primary_action</dt><dd>Create first goal" in registered_goals.body
@@ -6604,6 +6650,21 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-first-run-command-action='true'" in goals_after_first_goal.body
     assert "Run First-Run Action" in goals_after_first_goal.body
     assert "action='/actions/delegate'" in goals_after_first_goal.body
+    assert (
+        "first_run_next_step_current_step</dt><dd>create_first_delegation"
+        in goals_after_first_goal.body
+    )
+    assert (
+        "first_run_next_step_action</dt><dd>Open goal to create scout delegation"
+        in goals_after_first_goal.body
+    )
+    assert (
+        "first_run_next_step_target_surface</dt><dd><a href='#first-run-command-action'>"
+        "Run First-Run Action</a>"
+    ) in goals_after_first_goal.body
+    assert "first_run_next_step_setup_status</dt><dd>goal_created" in goals_after_first_goal.body
+    assert "first_run_next_step_handoff_status</dt><dd>goal_ready" in goals_after_first_goal.body
+    assert "first_run_next_step_form_available</dt><dd>true" in goals_after_first_goal.body
     assert "Goal Board Workbench" in goals_after_first_goal.body
     assert "goal_board_workbench_status</dt><dd>available" in goals_after_first_goal.body
     assert "goal_board_workbench_source</dt><dd>saved_goal" in goals_after_first_goal.body
@@ -7022,6 +7083,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_command_inline_action_form_available</dt><dd>true" in goals_after_delegation.body
     assert "data-first-run-command-action='true'" in goals_after_delegation.body
     assert "action='/actions/context-pack'" in goals_after_delegation.body
+    assert "first_run_next_step_current_step</dt><dd>generate_context_pack" in goals_after_delegation.body
+    assert "first_run_next_step_action</dt><dd>Generate context pack" in goals_after_delegation.body
+    assert (
+        "first_run_next_step_target_surface</dt><dd><a href='#first-run-command-action'>"
+        "Run First-Run Action</a>"
+    ) in goals_after_delegation.body
+    assert "first_run_next_step_handoff_status</dt><dd>delegation_created" in goals_after_delegation.body
+    assert "first_run_next_step_context_pack_ready</dt><dd>false" in goals_after_delegation.body
     context_pack_confirmation = render_local_app_route(
         tmp_path,
         "/actions/context-pack",
@@ -7084,6 +7153,26 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_command_inline_action_form_available</dt><dd>true" in home_after_delegate.body
     assert "data-first-run-command-action='true'" in home_after_delegate.body
     assert "action='/actions/run-delegation'" in home_after_delegate.body
+    assert "First Run Next Step" in home_after_delegate.body
+    assert "data-first-run-next-step='true'" in home_after_delegate.body
+    assert "first_run_next_step_current_step</dt><dd>run_first_delegation" in home_after_delegate.body
+    assert "first_run_next_step_action</dt><dd>Run delegation" in home_after_delegate.body
+    assert "first_run_next_step_reason</dt><dd>context_pack_ready" in home_after_delegate.body
+    assert (
+        "first_run_next_step_target_surface</dt><dd><a href='#first-run-command-action'>"
+        "Run First-Run Action</a>"
+    ) in home_after_delegate.body
+    assert "first_run_next_step_route_surface</dt><dd><a href='/goals/" in home_after_delegate.body
+    assert "first_run_next_step_form_available</dt><dd>true" in home_after_delegate.body
+    assert "first_run_next_step_confirmation_required</dt><dd>true" in home_after_delegate.body
+    assert "first_run_next_step_setup_status</dt><dd>goal_created" in home_after_delegate.body
+    assert "first_run_next_step_handoff_status</dt><dd>context_pack_ready" in home_after_delegate.body
+    assert "first_run_next_step_context_pack_ready</dt><dd>true" in home_after_delegate.body
+    assert "first_run_next_step_delegation_completed</dt><dd>false" in home_after_delegate.body
+    assert (
+        "first_run_next_step_now: Run delegation -&gt; "
+        "<a href='#first-run-command-action'>Run First-Run Action</a>"
+    ) in home_after_delegate.body
     assert created_goal_id in home_after_delegate.body
     created_goals = render_local_app_route(tmp_path, "/goals")
     assert "first-target" in created_goals.body
@@ -8298,6 +8387,14 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "first_run_progress_current_count</dt><dd>1" in register_home.body
     assert "first_run_progress_waiting_count</dt><dd>3" in register_home.body
     assert "first_run_progress_next_action</dt><dd>Create first goal" in register_home.body
+    assert "data-first-run-next-step='true'" in register_home.body
+    assert "first_run_next_step_current_step</dt><dd>create_first_goal" in register_home.body
+    assert "first_run_next_step_action</dt><dd>Create first goal" in register_home.body
+    assert (
+        "first_run_next_step_target_surface</dt><dd><a href='#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in register_home.body
+    assert "first_run_next_step_setup_status</dt><dd>project_registered" in register_home.body
     register_workspace = render_local_app_route(tmp_path, "/workspace")
     assert "workspace_daily_status</dt><dd>first_run" in register_workspace.body
     assert "workspace_daily_project</dt><dd><a href='/projects/clankeros'>clankeros</a>" in register_workspace.body
