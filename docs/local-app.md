@@ -611,10 +611,15 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `pin-memory` actions. It opens with a visible `Memory Operator Workbench`
   before shared route/focus diagnostics and command readback, with cards for
   the next memory action, proposed pins, operator notes, and `/resume` or goal
-  context. Memory state, workbench evidence, and command evidence stay
-  collapsed by default while preserving memory counts, the first proposed
-  memory or fallback resume target, saved workspace context, and
-  write-on-GET/provider/network/external-effect boundaries in the DOM.
+  context, then a `Memory Pinboard` and browser-local
+  `Memory Inventory Filter`. The filter narrows already-rendered rows by lane
+  or text, remembers lane/query in
+  `localStorage:clankeros-memory-inventory-filter`, and resets without
+  changing memory records. Memory state, workbench, pinboard, filter, and
+  command evidence stay collapsed by default while preserving memory counts,
+  the first proposed memory or fallback resume target, saved workspace
+  context, view-memory, and write-on-GET/provider/network/external-effect
+  boundaries in the DOM.
 - `/skills` - available/generated skill records with usage count, last-used
   readback, and projects using them. It now opens with a visible
   `Skills Operator Workbench` before shared route/focus diagnostics or

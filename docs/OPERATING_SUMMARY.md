@@ -289,8 +289,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   versus suggested return state explicit before the
   read-only `Workspace View Memory` panel. That panel inventories browser
   `localStorage` view state for theme, focus mode, Goal board, search lanes,
-  timeline lanes, artifact filters, and notes filters, and can clear those
-  browser-local values after explicit operator clicks without writing
+  timeline lanes, artifact filters, notes filters, and the Memory Bank
+  inventory filter, and can clear those browser-local values after explicit
+  operator clicks without writing
   `.clanker/app/workspace.json`, calling providers, using the network, or
   mutating external systems. It sits before the
   read-only `Workspace Daily Brief` and `Workspace Workflow Map` for the saved
@@ -309,9 +310,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   command readback, with cards for the next memory action, proposed pins,
   operator notes, and `/resume` or goal context. A visible read-only
   `Memory Pinboard` follows with Active Pins, Proposed Pins, Project, Global,
-  Generated, Operator Notes, and Future Work lanes before the longer memory
-  inventory. Memory state, pinboard, workbench evidence, and command evidence
-  stay collapsed by default while preserving entry counts, first proposed pin
+  Generated, Operator Notes, and Future Work lanes. A browser-local
+  `Memory Inventory Filter` then narrows already-rendered memory rows by lane
+  or text and restores lane/query from
+  `localStorage:clankeros-memory-inventory-filter` before the longer memory
+  inventory. Memory state, pinboard, filter, workbench evidence, and command
+  evidence stay collapsed by default while preserving entry counts, first proposed pin
   or fallback resume target, saved workspace context, and
   no-write/provider/network/external-effect boundaries in the DOM; `/skills`
   for available/generated skill records with usage counts. It is action-first

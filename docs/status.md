@@ -4,9 +4,15 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/memory#memory-inventory-filter` now narrows already-rendered Memory Bank
+  rows by all, proposed, active pins, project, global, generated, notes, or
+  future-work lanes plus local text search. It remembers lane/query view state
+  in `localStorage:clankeros-memory-inventory-filter`, exposes Reset filter,
+  and keeps GET rendering read-only with no memory writes, provider calls,
+  network actions, raw filesystem browsing, or external effects.
 - `/workspace#workspace-view-memory` now exposes browser-local view memory
   for theme, focus mode, Goal board view, search lanes, timeline lanes,
-  artifact filters, and notes filters. It can refresh or clear those
+  artifact filters, notes filters, and Memory Bank filters. It can refresh or clear those
   `localStorage` values after explicit clicks while preserving read-only GET
   behavior, `.clanker/app/workspace.json`, no raw filesystem browsing, and
   no-provider/no-network/no-external-effect boundaries.
@@ -452,9 +458,10 @@ Latest status focus:
   before shared route/focus diagnostics and command readback, shows visible
   Now, Pin, Notes, and Resume cards, then follows with a `Memory Pinboard` for
   Active Pins, Proposed Pins, Project, Global, Generated, Operator Notes, and
-  Future Work before the dense inventory. Memory state, pinboard, workbench
-  evidence, and command evidence stay collapsed by default while preserving
-  pin, resume, workspace, and zero-effect proof in the DOM.
+  Future Work plus a browser-local `Memory Inventory Filter` before the dense
+  inventory. Memory state, pinboard, filter, workbench evidence, and command
+  evidence stay collapsed by default while preserving pin, resume, workspace,
+  view-memory, and zero-effect proof in the DOM.
 - `/search` is now content-first and search-action-first: it opens with the
   `Search Operator Workbench` before shared route/focus diagnostics, shows
   visible Query, Open, Results, and Resume cards, then follows with a

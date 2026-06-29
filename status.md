@@ -1,5 +1,45 @@
 # Status
 
+## 2026-06-29 Memory Inventory Filter UX
+
+- Added a browser-local `Memory Inventory Filter` to
+  `/memory#memory-inventory-filter` after the Memory Pinboard and before the
+  Memory Command Bar.
+- Operators can narrow already-rendered memory rows by All, Proposed, Active
+  Pins, Project, Global, Generated, Notes, or Future Work, plus local text
+  search across id, project, scope, status, key, value, source, note path, and
+  future-work summary metadata.
+- The selected lane/query view is remembered in
+  `localStorage:clankeros-memory-inventory-filter` and cleared with
+  `Reset filter`; the visible status reports `View: default`, `View: saved`,
+  `View: restored`, or `View: reset`.
+- Memory rows now expose stable `data-memory-inventory-item`, lane, status,
+  and text metadata so the filter can hide unmatched rendered rows without
+  changing server-side memory records or pin authority.
+- Workspace View Memory now includes the Memory Bank filter key, so
+  `/workspace#workspace-view-memory` can inspect and reset it with the rest of
+  the browser-local view state.
+- The behavior is browser-local display filtering only: no write on GET, no
+  memory write, no provider calls, no network actions, no execution, no
+  approval, no push, no PR, no deploy, no raw filesystem browsing, and no
+  external mutation.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused route/demo pytest `python3 -m
+  pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 62.01s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55619` with two seeded proposed memory rows showed the
+  Memory Inventory Filter with 5 rendered inventory rows, Proposed + text
+  `handoff` filtering to 1 visible row and 4 hidden rows, reload restoring the
+  same view with `View: restored`, Reset filter returning All with `Showing 5
+  of 5 memory rows`, reload after reset staying default, mobile `390x844`
+  stacking lane buttons, query, and Reset filter at `329px` width inside a
+  `358px` panel, no horizontal overflow, no framework overlay, and no console
+  warnings/errors.
+
 ## 2026-06-29 Workspace View Memory UX
 
 - Added a visible `Workspace View Memory` panel to

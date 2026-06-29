@@ -261,7 +261,8 @@ title-first when possible, while still retaining exact saved Goal id and route
 evidence for restoration. A read-only `Workspace View Memory` panel follows to
 inspect and clear browser-local view state such as theme, focus mode, Goal
 board filters, search lanes, timeline lanes, artifact filters, and notes
-filters from `localStorage` without changing `.clanker/app/workspace.json`.
+filters, and Memory Bank filters from `localStorage` without changing
+`.clanker/app/workspace.json`.
 The read-only
 `Workspace Daily Brief` and `Workspace Workflow Map` then follow with the
 saved goal's current gate, gate counts, and finish posture, while saved-state
@@ -646,7 +647,11 @@ has a `Workspace Operator Workbench` beside the editable state form, and
 `/resume` and `/workspace` both expose the saved goal's workflow gate map, so changing saved
 context does not hide the current gate.
 Use the goal page note form for day-to-day operator breadcrumbs, then find the
-same note artifact again from `/memory`.
+same note artifact again from `/memory`. The Memory Bank opens with a
+workbench, pinboard, and browser-local `Memory Inventory Filter`, so you can
+narrow already-rendered proposed, active, project, global, generated, note, or
+future-work rows by lane/text and restore that view from
+`localStorage:clankeros-memory-inventory-filter` without writing memory state.
 Use `/search` for bounded global search across indexed goals, projects,
 delegations, known artifacts, incidents, recommendations, memory, runs, and
 approvals. Goal search results include live local phase, one next action, and

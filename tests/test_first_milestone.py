@@ -6246,7 +6246,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 7
+    assert workspace.body.count("class='workspace-view-memory-card") == 8
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
     assert "data-workspace-view-memory-card='goal-board'" in workspace.body
@@ -6254,9 +6254,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-card='timeline'" in workspace.body
     assert "data-workspace-view-memory-card='artifacts'" in workspace.body
     assert "data-workspace-view-memory-card='notes'" in workspace.body
+    assert "data-workspace-view-memory-card='memory'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-theme'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-focus-mode'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-goal-board-view'" in workspace.body
+    assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-memory-inventory-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-search-result-lane:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-timeline-lane:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-artifact-filter:'" in workspace.body
@@ -6265,8 +6267,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>7" in workspace.body
-    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>8" in workspace.body
+    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-memory-inventory-filter" in workspace.body
     assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
@@ -6278,7 +6280,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_raw_filesystem_browsing</dt><dd>false" in workspace.body
     assert "workspace_view_memory_card: theme mode=exact key=clankeros-theme" in workspace.body
     assert "workspace_view_memory_card: search mode=prefix key=clankeros-search-result-lane:" in workspace.body
-    assert "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes" in workspace.body
+    assert "workspace_view_memory_card: memory mode=exact key=clankeros-memory-inventory-filter" in workspace.body
+    assert "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory" in workspace.body
     assert "window.localStorage.removeItem(key)" in workspace.body
     assert "candidate.indexOf(key) === 0" in workspace.body
     assert "delete document.documentElement.dataset.theme" in workspace.body
@@ -7086,12 +7089,45 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-memory-pinboard-lane='proposed' data-memory-pinboard-status='ready'" in memory_before_pin.body
     assert "data-memory-pinboard-lane='active' data-memory-pinboard-status='empty'" in memory_before_pin.body
     assert "data-memory-pinboard-evidence='true'" in memory_before_pin.body
+    assert "Memory Inventory Filter" in memory_before_pin.body
+    assert "data-memory-inventory-filter='true'" in memory_before_pin.body
+    assert "data-memory-inventory-filter-storage-key='clankeros-memory-inventory-filter'" in memory_before_pin.body
+    assert "data-memory-inventory-filter-controls='true'" in memory_before_pin.body
+    assert "data-memory-inventory-filter-kind='all' aria-pressed='true'>All" in memory_before_pin.body
+    assert "data-memory-inventory-filter-kind='proposed'" in memory_before_pin.body
+    assert "data-memory-inventory-filter-kind='active'" in memory_before_pin.body
+    assert "data-memory-inventory-filter-kind='notes'" in memory_before_pin.body
+    assert "data-memory-inventory-filter-query='true'" in memory_before_pin.body
+    assert "data-memory-inventory-filter-reset='true'>Reset filter" in memory_before_pin.body
+    assert "data-memory-inventory-filter-view-status='true'>View: default" in memory_before_pin.body
+    assert "data-memory-inventory-filter-status='true'>Showing 3 of 3 memory rows." in memory_before_pin.body
+    assert "data-memory-inventory-filter-empty='true' hidden" in memory_before_pin.body
+    assert "data-memory-inventory-filter-evidence='true'" in memory_before_pin.body
+    assert memory_before_pin.body.count("<span data-memory-inventory-item='true'") == 3
+    assert "data-memory-inventory-lane='proposed' data-memory-inventory-status='proposed'" in memory_before_pin.body
+    assert "data-memory-inventory-lane='project' data-memory-inventory-status='proposed'" in memory_before_pin.body
+    assert "data-memory-inventory-lane='notes' data-memory-inventory-status='available'" in memory_before_pin.body
+    assert "memory_inventory_filter_total_rows</dt><dd>3" in memory_before_pin.body
+    assert "memory_inventory_filter_persistence</dt><dd>browser_local_view_memory" in memory_before_pin.body
+    assert "memory_inventory_filter_memory_storage</dt><dd>localStorage:clankeros-memory-inventory-filter" in memory_before_pin.body
+    assert "memory_inventory_filter_memory_fields</dt><dd>lane query" in memory_before_pin.body
+    assert "memory_inventory_filter_write_on_get</dt><dd>false" in memory_before_pin.body
+    assert "memory_inventory_filter_network_actions_taken</dt><dd>0" in memory_before_pin.body
+    assert "memory_inventory_filter_external_effects_created</dt><dd>false" in memory_before_pin.body
+    assert "window.localStorage.setItem(memoryInventoryStorageKey(filterPanel), JSON.stringify(state))" in memory_before_pin.body
+    assert "window.localStorage.removeItem(memoryInventoryStorageKey(filterPanel))" in memory_before_pin.body
     assert "data-memory-command-evidence='true'" in memory_before_pin.body
     assert memory_before_pin.body.index("data-memory-operator-workbench") < memory_before_pin.body.index("data-route-context")
     assert memory_before_pin.body.index("data-memory-operator-workbench") < memory_before_pin.body.index(
         "data-memory-pinboard='true'"
     )
     assert memory_before_pin.body.index("data-memory-pinboard='true'") < memory_before_pin.body.index(
+        "data-memory-command-bar"
+    )
+    assert memory_before_pin.body.index("data-memory-pinboard='true'") < memory_before_pin.body.index(
+        "data-memory-inventory-filter='true'"
+    )
+    assert memory_before_pin.body.index("data-memory-inventory-filter='true'") < memory_before_pin.body.index(
         "data-memory-command-bar"
     )
     assert memory_before_pin.body.index("data-memory-operator-workbench") < memory_before_pin.body.index("data-memory-command-bar")
@@ -13328,10 +13364,32 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-memory-pinboard-lane='active' data-memory-pinboard-status='empty'" in memory.body
     assert "data-memory-pinboard-lane='proposed' data-memory-pinboard-status='empty'" in memory.body
     assert "data-memory-pinboard-evidence='true'" in memory.body
+    assert "Memory Inventory Filter" in memory.body
+    assert "data-memory-inventory-filter='true'" in memory.body
+    assert "data-memory-inventory-filter-storage-key='clankeros-memory-inventory-filter'" in memory.body
+    assert "data-memory-inventory-filter-controls='true'" in memory.body
+    assert "data-memory-inventory-filter-kind='all' aria-pressed='true'>All" in memory.body
+    assert "data-memory-inventory-filter-kind='future'" in memory.body
+    assert "data-memory-inventory-filter-query='true'" in memory.body
+    assert "data-memory-inventory-filter-reset='true'>Reset filter" in memory.body
+    assert "data-memory-inventory-filter-view-status='true'>View: default" in memory.body
+    assert "data-memory-inventory-filter-status='true'>Showing 0 of 0 memory rows." in memory.body
+    assert "data-memory-inventory-filter-empty='true' hidden" in memory.body
+    assert "data-memory-inventory-filter-evidence='true'" in memory.body
+    assert "memory_inventory_filter_total_rows</dt><dd>0" in memory.body
+    assert "memory_inventory_filter_lanes</dt><dd>all proposed active project global generated notes future" in memory.body
+    assert "memory_inventory_filter_memory_storage</dt><dd>localStorage:clankeros-memory-inventory-filter" in memory.body
+    assert "memory_inventory_filter_memory_fields</dt><dd>lane query" in memory.body
+    assert "memory_inventory_filter_write_on_get</dt><dd>false" in memory.body
+    assert "memory_inventory_filter_provider_calls_taken</dt><dd>0" in memory.body
+    assert "memory_inventory_filter_network_actions_taken</dt><dd>0" in memory.body
+    assert "memory_inventory_filter_external_effects_created</dt><dd>false" in memory.body
     assert "data-memory-command-evidence='true'" in memory.body
     assert memory.body.index("data-memory-operator-workbench") < memory.body.index("data-route-context")
     assert memory.body.index("data-memory-operator-workbench") < memory.body.index("data-memory-pinboard='true'")
     assert memory.body.index("data-memory-pinboard='true'") < memory.body.index("data-memory-command-bar")
+    assert memory.body.index("data-memory-pinboard='true'") < memory.body.index("data-memory-inventory-filter='true'")
+    assert memory.body.index("data-memory-inventory-filter='true'") < memory.body.index("data-memory-command-bar")
     assert memory.body.index("data-memory-operator-workbench") < memory.body.index("data-memory-command-bar")
     assert "memory_workbench_status</dt><dd>empty" in memory.body
     assert "memory_workbench_next_action</dt><dd>Create goal context" in memory.body

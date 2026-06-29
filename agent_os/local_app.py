@@ -1013,6 +1013,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-memory-pinboard='true'",
                 "data-memory-pinboard-cards='true'",
                 "data-memory-pinboard-evidence='true'",
+                "Memory Inventory Filter",
+                "data-memory-inventory-filter='true'",
+                "data-memory-inventory-filter-evidence='true'",
                 "data-memory-command-evidence='true'",
                 "Project Memories",
                 "Generated Memories",
@@ -6484,6 +6487,13 @@ def _workspace_view_memory_panel() -> str:
             "clankeros-goal-notes-filter:",
             "Per-Goal operator-note text filters",
         ),
+        (
+            "memory",
+            "Memory Filters",
+            "exact",
+            "clankeros-memory-inventory-filter",
+            "Memory Bank lane and text filter",
+        ),
     ]
     card_html = []
     evidence_lines = []
@@ -6549,7 +6559,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes",
+                    "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory",
                 ]
             ),
             "</details>",
@@ -7618,6 +7628,14 @@ def _memory_page(root: Path) -> str:
     proposed = [entry for entry in entries if entry.status == "proposed"]
     operator_notes = _operator_note_paths(root)
     future_work = storage.list_recent_task_recommendations(limit=20)
+    inventory_item_count = (
+        len(proposed)
+        + len(project_memories)
+        + len(global_memories)
+        + len(generated)
+        + len(operator_notes)
+        + len(future_work)
+    )
     return "".join(
         [
             "<section class='hero memory-hero'><h1>Memory Bank</h1>",
@@ -7655,6 +7673,7 @@ def _memory_page(root: Path) -> str:
                 operator_notes=operator_notes,
                 future_work=future_work,
             ),
+            _memory_inventory_filter(inventory_item_count),
             _memory_command_bar(
                 root,
                 entries=entries,
@@ -7667,32 +7686,32 @@ def _memory_page(root: Path) -> str:
             ),
             _list_section(
                 "Proposed Memories",
-                [_memory_line(entry) for entry in proposed],
+                [_memory_inventory_entry_line(entry, "proposed") for entry in proposed],
                 anchor_id="memory-proposed",
             ),
             _list_section(
                 "Project Memories",
-                [_memory_line(entry) for entry in project_memories],
+                [_memory_inventory_entry_line(entry, "project") for entry in project_memories],
                 anchor_id="memory-project",
             ),
             _list_section(
                 "Global Memories",
-                [_memory_line(entry) for entry in global_memories],
+                [_memory_inventory_entry_line(entry, "global") for entry in global_memories],
                 anchor_id="memory-global",
             ),
             _list_section(
                 "Generated Memories",
-                [_memory_line(entry) for entry in generated],
+                [_memory_inventory_entry_line(entry, "generated") for entry in generated],
                 anchor_id="memory-generated",
             ),
             _list_section(
                 "Operator Notes",
-                [f"operator_note: {_artifact_link(path)}" for path in operator_notes],
+                [_memory_inventory_note_line(path) for path in operator_notes],
                 anchor_id="memory-operator-notes",
             ),
             _list_section(
                 "Future Work",
-                [_task_recommendation_line(item) for item in future_work],
+                [_memory_inventory_future_work_line(item) for item in future_work],
                 anchor_id="memory-future-work",
             ),
             _non_claim_banner(),
@@ -7953,6 +7972,79 @@ def _memory_pinboard(
     )
 
 
+def _memory_inventory_filter(total_items: int) -> str:
+    lanes = [
+        ("all", "All"),
+        ("proposed", "Proposed"),
+        ("active", "Active Pins"),
+        ("project", "Project"),
+        ("global", "Global"),
+        ("generated", "Generated"),
+        ("notes", "Notes"),
+        ("future", "Future Work"),
+    ]
+    buttons = "".join(
+        [
+            (
+                f"<button type='button' class='memory-inventory-filter-button' "
+                f"data-memory-inventory-filter-kind='{_e(key)}' "
+                f"aria-pressed='{'true' if key == 'all' else 'false'}'>{_e(label)}</button>"
+            )
+            for key, label in lanes
+        ]
+    )
+    return "".join(
+        [
+            "<section id='memory-inventory-filter' class='panel memory-inventory-filter' "
+            "data-memory-inventory-filter='true' "
+            "data-memory-inventory-filter-storage-key='clankeros-memory-inventory-filter'>",
+            "<h2>Memory Inventory Filter</h2>",
+            "<p class='muted'>Narrow the rendered Memory Bank rows by lane or text without changing memory records.</p>",
+            "<div class='memory-inventory-filter-controls' data-memory-inventory-filter-controls='true'>",
+            buttons,
+            "<label class='memory-inventory-filter-search'>Find "
+            "<input type='search' data-memory-inventory-filter-query='true' placeholder='note, project, key, artifact...'></label>",
+            "<button type='button' class='memory-inventory-filter-reset' data-memory-inventory-filter-reset='true'>Reset filter</button>",
+            "<span class='memory-inventory-filter-memory-status' data-memory-inventory-filter-view-status='true'>View: default</span>",
+            "</div>",
+            (
+                f"<p class='muted' data-memory-inventory-filter-status='true'>"
+                f"Showing {total_items} of {total_items} memory rows.</p>"
+            ),
+            "<p class='muted' data-memory-inventory-filter-empty='true' hidden>No memory rows match this filter.</p>",
+            "<details class='memory-inventory-filter-evidence' data-memory-inventory-filter-evidence='true'>"
+            "<summary>Memory inventory filter evidence</summary>",
+            _kv(
+                [
+                    ("memory_inventory_filter_status", "available"),
+                    ("memory_inventory_filter_total_rows", str(total_items)),
+                    ("memory_inventory_filter_lanes", "all proposed active project global generated notes future"),
+                    ("memory_inventory_filter_persistence", "browser_local_view_memory"),
+                    ("memory_inventory_filter_memory_storage", "localStorage:clankeros-memory-inventory-filter"),
+                    ("memory_inventory_filter_memory_fields", "lane query"),
+                    ("memory_inventory_filter_default", "all"),
+                    ("memory_inventory_filter_reset", "available"),
+                    ("memory_inventory_filter_pin_memory_form_authority", "unchanged"),
+                    ("memory_inventory_filter_raw_filesystem_browsing", "false"),
+                    ("memory_inventory_filter_write_on_get", "false"),
+                    ("memory_inventory_filter_provider_calls_taken", "0"),
+                    ("memory_inventory_filter_network_actions_taken", "0"),
+                    ("memory_inventory_filter_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "memory_inventory_filter: filters already-rendered rows only",
+                    "memory_inventory_filter: restores lane and query from browser storage",
+                    "memory_inventory_filter_safety: no memory write, no provider call, no network action",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
 def _memory_entry_anchor(entry: Any) -> str:
     if entry.status == "proposed":
         return "#memory-proposed"
@@ -8090,6 +8182,48 @@ def _memory_line(entry: Any) -> str:
         f"{_e(entry.id)}: project={_e(entry.project_id)} scope={_e(entry.scope)} "
         f"status={_e(entry.status)} key={_e(entry.key)} value={_e(entry.value)} "
         f"artifact={_artifact_link(entry.artifact_path)}{pin}"
+    )
+
+
+def _memory_inventory_entry_line(entry: Any, lane: str) -> str:
+    text = " ".join(
+        [
+            str(entry.id),
+            str(entry.project_id),
+            str(entry.scope),
+            str(entry.status),
+            str(entry.key),
+            str(entry.value),
+            str(entry.source_type),
+            str(entry.artifact_path),
+        ]
+    ).lower()
+    return (
+        f"<span data-memory-inventory-item='true' "
+        f"data-memory-inventory-lane='{_e(lane)}' "
+        f"data-memory-inventory-status='{_e(entry.status)}' "
+        f"data-memory-inventory-text='{_e(text)}'>{_memory_line(entry)}</span>"
+    )
+
+
+def _memory_inventory_note_line(path: str) -> str:
+    text = f"operator_note notes {path}".lower()
+    return (
+        f"<span data-memory-inventory-item='true' "
+        "data-memory-inventory-lane='notes' "
+        "data-memory-inventory-status='available' "
+        f"data-memory-inventory-text='{_e(text)}'>operator_note: {_artifact_link(path)}</span>"
+    )
+
+
+def _memory_inventory_future_work_line(item: Any) -> str:
+    summary = _task_recommendation_summary(item)
+    text = f"future work {summary} {_task_recommendation_line(item)}".lower()
+    return (
+        f"<span data-memory-inventory-item='true' "
+        "data-memory-inventory-lane='future' "
+        "data-memory-inventory-status='available' "
+        f"data-memory-inventory-text='{_e(text)}'>{_task_recommendation_line(item)}</span>"
     )
 
 
@@ -38173,9 +38307,17 @@ def _html_page(
     .memory-pinboard-action, .memory-pinboard-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .memory-pinboard-action {{ background:var(--accent); color:#fff; }}
     .memory-pinboard-link {{ background:var(--surface); color:var(--accent); }}
-    .memory-state-details, .memory-workbench-evidence, .memory-command-evidence, .memory-pinboard-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .memory-state-details summary, .memory-workbench-evidence summary, .memory-command-evidence summary, .memory-pinboard-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .memory-state-details:not([open]) > :not(summary), .memory-workbench-evidence:not([open]) > :not(summary), .memory-command-evidence:not([open]) > :not(summary), .memory-pinboard-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .memory-inventory-filter {{ border-left:4px solid var(--ok); }}
+    .memory-inventory-filter-controls {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0; }}
+    .memory-inventory-filter-button, .memory-inventory-filter-reset {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border:1px solid var(--line); background:var(--surface); color:var(--text); }}
+    .memory-inventory-filter-button[aria-pressed="true"] {{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }}
+    .memory-inventory-filter-search {{ display:inline-flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:min(100%, 260px); }}
+    .memory-inventory-filter-search input {{ min-width:min(100%, 220px); }}
+    .memory-inventory-filter-memory-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .memory-state-details, .memory-workbench-evidence, .memory-command-evidence, .memory-pinboard-evidence, .memory-inventory-filter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .memory-state-details summary, .memory-workbench-evidence summary, .memory-command-evidence summary, .memory-pinboard-evidence summary, .memory-inventory-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .memory-state-details:not([open]) > :not(summary), .memory-workbench-evidence:not([open]) > :not(summary), .memory-command-evidence:not([open]) > :not(summary), .memory-pinboard-evidence:not([open]) > :not(summary), .memory-inventory-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
+    @media (max-width: 640px) {{ .memory-inventory-filter-button, .memory-inventory-filter-reset, .memory-inventory-filter-search, .memory-inventory-filter-search input {{ width:100%; }} .memory-inventory-filter-controls {{ align-items:stretch; }} .memory-inventory-filter-memory-status {{ width:100%; }} }}
     .skills-operator-workbench {{ border-left:4px solid var(--accent); }}
     .skills-operator-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .skills-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
@@ -38874,6 +39016,123 @@ def _html_page(
         setTimelineLaneViewStatus(filterPanel, "View: default");
       }}
     }}
+    function memoryInventoryStorageKey(filterPanel) {{
+      var key = filterPanel ? filterPanel.getAttribute("data-memory-inventory-filter-storage-key") : "";
+      return key || "clankeros-memory-inventory-filter";
+    }}
+    function setMemoryInventoryViewStatus(filterPanel, message) {{
+      var status = filterPanel ? filterPanel.querySelector("[data-memory-inventory-filter-view-status='true']") : null;
+      if (status) {{ status.textContent = message; }}
+    }}
+    function normalizeMemoryInventoryLane(filterPanel, lane) {{
+      var normalized = lane || "all";
+      var buttons = filterPanel ? Array.prototype.slice.call(filterPanel.querySelectorAll("[data-memory-inventory-filter-kind]")) : [];
+      var found = buttons.some(function(button) {{
+        return (button.getAttribute("data-memory-inventory-filter-kind") || "all") === normalized;
+      }});
+      return found ? normalized : "all";
+    }}
+    function selectedMemoryInventoryLane(filterPanel) {{
+      var active = filterPanel ? filterPanel.querySelector("[data-memory-inventory-filter-kind][aria-pressed='true']") : null;
+      return active ? active.getAttribute("data-memory-inventory-filter-kind") || "all" : "all";
+    }}
+    function saveMemoryInventoryFilterState(filterPanel, state) {{
+      if (!window.localStorage || !filterPanel) {{ return; }}
+      try {{
+        window.localStorage.setItem(memoryInventoryStorageKey(filterPanel), JSON.stringify(state));
+        setMemoryInventoryViewStatus(filterPanel, "View: saved");
+      }} catch (error) {{
+        setMemoryInventoryViewStatus(filterPanel, "View: local only");
+      }}
+    }}
+    function restoreMemoryInventoryFilterState() {{
+      var filterPanel = document.querySelector("[data-memory-inventory-filter='true']");
+      if (!filterPanel) {{ return; }}
+      if (!window.localStorage) {{
+        setMemoryInventoryViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+      try {{
+        var raw = window.localStorage.getItem(memoryInventoryStorageKey(filterPanel));
+        if (!raw) {{
+          setMemoryInventoryViewStatus(filterPanel, "View: default");
+          return false;
+        }}
+        var saved = JSON.parse(raw);
+        updateMemoryInventoryFilter({{
+          lane: saved && typeof saved.lane === "string" ? saved.lane : "all",
+          query: saved && typeof saved.query === "string" ? saved.query : "",
+          save: false
+        }});
+        setMemoryInventoryViewStatus(filterPanel, "View: restored");
+        return true;
+      }} catch (error) {{
+        setMemoryInventoryViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+    }}
+    function clearMemoryInventoryFilterState() {{
+      var filterPanel = document.querySelector("[data-memory-inventory-filter='true']");
+      if (filterPanel && window.localStorage) {{
+        try {{ window.localStorage.removeItem(memoryInventoryStorageKey(filterPanel)); }} catch (error) {{}}
+      }}
+      updateMemoryInventoryFilter({{ lane: "all", query: "", save: false }});
+      setMemoryInventoryViewStatus(filterPanel, "View: reset");
+    }}
+    function updateMemoryInventoryFilter(options) {{
+      var filterPanel = document.querySelector("[data-memory-inventory-filter='true']");
+      if (!filterPanel) {{ return; }}
+      options = options || {{}};
+      var queryInput = filterPanel.querySelector("[data-memory-inventory-filter-query='true']");
+      var lane = normalizeMemoryInventoryLane(filterPanel, Object.prototype.hasOwnProperty.call(options, "lane") ? options.lane : selectedMemoryInventoryLane(filterPanel));
+      var query = Object.prototype.hasOwnProperty.call(options, "query") ? String(options.query || "") : (queryInput ? queryInput.value || "" : "");
+      if (queryInput && queryInput.value !== query) {{ queryInput.value = query; }}
+      var queryText = query.toLowerCase().trim();
+      var rows = Array.prototype.slice.call(document.querySelectorAll("[data-memory-inventory-item='true']"));
+      var shown = 0;
+      rows.forEach(function(item) {{
+        var itemLane = item.getAttribute("data-memory-inventory-lane") || "project";
+        var itemStatus = item.getAttribute("data-memory-inventory-status") || "";
+        var itemText = item.getAttribute("data-memory-inventory-text") || item.textContent.toLowerCase();
+        var laneMatch = lane === "all" || itemLane === lane || (lane === "active" && itemStatus === "active");
+        var textMatch = !queryText || itemText.indexOf(queryText) !== -1;
+        var match = laneMatch && textMatch;
+        var listItem = item.closest ? item.closest("li") : item.parentElement;
+        if (listItem) {{ listItem.hidden = !match; }}
+        item.hidden = !match;
+        if (match) {{ shown += 1; }}
+      }});
+      Array.prototype.slice.call(filterPanel.querySelectorAll("[data-memory-inventory-filter-kind]")).forEach(function(button) {{
+        var active = (button.getAttribute("data-memory-inventory-filter-kind") || "all") === lane;
+        if (active) {{
+          button.setAttribute("data-memory-inventory-filter-active", "true");
+          button.setAttribute("aria-pressed", "true");
+        }} else {{
+          button.removeAttribute("data-memory-inventory-filter-active");
+          button.setAttribute("aria-pressed", "false");
+        }}
+      }});
+      var status = filterPanel.querySelector("[data-memory-inventory-filter-status='true']");
+      if (status) {{
+        var parts = [];
+        if (lane !== "all") {{ parts.push("lane " + lane.replace("_", " ")); }}
+        if (queryText) {{ parts.push("text " + queryText); }}
+        status.textContent = "Showing " + shown + " of " + rows.length + " memory rows" + (parts.length ? " matching " + parts.join(", ") : "") + ".";
+      }}
+      var empty = filterPanel.querySelector("[data-memory-inventory-filter-empty='true']");
+      if (empty) {{ empty.hidden = shown !== 0; }}
+      if (options.save !== false) {{
+        saveMemoryInventoryFilterState(filterPanel, {{ lane: lane, query: query }});
+      }}
+    }}
+    function initializeMemoryInventoryFilterState() {{
+      var filterPanel = document.querySelector("[data-memory-inventory-filter='true']");
+      if (!filterPanel) {{ return; }}
+      if (!restoreMemoryInventoryFilterState()) {{
+        updateMemoryInventoryFilter({{ lane: "all", query: "", save: false }});
+        setMemoryInventoryViewStatus(filterPanel, "View: default");
+      }}
+    }}
     if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
     if (paletteSearch) {{ paletteSearch.addEventListener("input", syncPaletteFilter); }}
     if (nextActionOpen) {{ nextActionOpen.addEventListener("click", openNextAction); }}
@@ -38937,6 +39196,18 @@ def _html_page(
         updateTimelineLane(timelineFilterButton.getAttribute("data-goal-timeline-filter-kind") || "all");
         return;
       }}
+      var memoryFilterReset = target.closest ? target.closest("[data-memory-inventory-filter-reset='true']") : null;
+      if (memoryFilterReset) {{
+        event.preventDefault();
+        clearMemoryInventoryFilterState();
+        return;
+      }}
+      var memoryFilterButton = target.closest ? target.closest("[data-memory-inventory-filter-kind]") : null;
+      if (memoryFilterButton) {{
+        event.preventDefault();
+        updateMemoryInventoryFilter({{ lane: memoryFilterButton.getAttribute("data-memory-inventory-filter-kind") || "all" }});
+        return;
+      }}
       var opener = target.closest ? target.closest("[data-open-details='true']") : null;
       if (!opener) {{ return; }}
       var href = opener.getAttribute("href") || "";
@@ -38951,6 +39222,10 @@ def _html_page(
       var artifactFilterQuery = target.closest ? target.closest("[data-goal-artifact-filter-query='true']") : null;
       if (artifactFilterQuery) {{
         updateGoalArtifactFilter({{ query: artifactFilterQuery.value || "" }});
+      }}
+      var memoryFilterQuery = target.closest ? target.closest("[data-memory-inventory-filter-query='true']") : null;
+      if (memoryFilterQuery) {{
+        updateMemoryInventoryFilter({{ query: memoryFilterQuery.value || "" }});
       }}
     }});
     document.addEventListener("change", function(event) {{
@@ -38996,6 +39271,7 @@ def _html_page(
     initializeSearchResultLaneState();
     initializeGoalArtifactFilterState();
     initializeTimelineLaneState();
+    initializeMemoryInventoryFilterState();
     restoreWorkspacePanels();
     window.addEventListener("hashchange", openCurrentHashDetails);
     document.addEventListener("keydown", function(event) {{
