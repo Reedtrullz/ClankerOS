@@ -1,5 +1,35 @@
 # Status
 
+## 2026-06-29 Browser-Local Viewed Pages
+
+- Added a shared browser-local `Viewed Pages` panel to the app shell, backed by
+  `localStorage:clankeros-route-history`.
+- The panel records local app routes visited in the current browser, dedupes by
+  href, caps the history at 12 entries, shows the entries in the Recent Items
+  sidebar, and exposes a click-only clear action.
+- The command palette now includes a `Viewed Pages` section and appends those
+  browser-local route entries as searchable palette results after localStorage
+  readback, so recent route hops can be reopened from the keyboard launcher.
+- `/workspace#workspace-view-memory` now includes the
+  `clankeros-route-history` key in the browser-local view-memory inspector and
+  reset scope.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed; focused
+  route/demo pytest passed with `2 passed, 514 deselected in 61.98s`;
+  bounded scratch-root `app-smoke-test` passed across core routes with
+  provider/network/external mutation counters at zero; bounded scratch-root
+  `app-demo-smoke-test` passed across fixture-backed routes with the same
+  zero-effect counters; Playwright against throwaway demo root at
+  `http://127.0.0.1:61891` visited `/`, `/today`,
+  `/goals/goal_365146bc8752`, and `/workspace`, confirmed four stored
+  route-history entries, four sidebar rows, four palette rows, no desktop or
+  mobile horizontal overflow, mobile palette width `358px` at `390x844`, and
+  zero console warnings/errors.
+- Non-claims: the route history is browser-local view state only. It does not
+  write `.clanker/app/workspace.json` on GET, record workflow memory, approve
+  or execute work, call providers, fetch GitHub, push, create PRs, deploy, or
+  mutate external systems.
+
 ## 2026-06-29 Today Decision Queue
 
 - Added a read-only `Today Decision Queue` to `/today` after the Today

@@ -775,7 +775,11 @@ The recent-items sidebar now starts with a read-only `Recent Items
 Command Bar` plus a visible return dock for Recent, Workspace, Action, and
 Artifact, so the operator can reopen the latest surface, saved project/Goal,
 last action notice, or saved artifact without expanding the longer shortcut
-list. A browser-local `Find Recent` filter narrows the already-rendered
+list. It also includes a browser-local `Viewed Pages` panel backed by
+`localStorage:clankeros-route-history`, which records the local app pages
+visited in this browser, dedupes them by route, caps the list at 12 entries,
+and can be cleared with an explicit click without touching server state. A
+browser-local `Find Recent` filter narrows the already-rendered
 shortcut rows by text, remembers the query in
 `localStorage:clankeros-recent-items-filter`, and resets without writing server
 state. When an exact saved `resume_surface` exists, the Workspace card opens
@@ -798,7 +802,9 @@ current Goal action, jump to search, resume the saved workspace, or stay on the
 current page. The search box also narrows a visible `Palette Results` list of
 local routes, recent work, and the focused Goal's core section anchors as you
 type, so `timeline`, `approval`, `artifact`, `memory`, `git`, or `remaining`
-can jump straight into the Goal page without scanning. A no-match state leaves
+can jump straight into the Goal page without scanning. Browser-local viewed
+pages are appended to the same palette results after localStorage readback, so
+recent route hops are searchable from `/` without a server write. A no-match state leaves
 the existing Search button available for full indexed search. It also includes a
 visible `Quick Switch` dock for Continue, Workspace, Action, Artifact, and
 Finish so the palette can recover the current Goal, exact saved workspace

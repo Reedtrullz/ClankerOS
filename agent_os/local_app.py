@@ -539,7 +539,12 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-command-palette-filter='true'",
                 "data-command-palette-result-list='true'",
                 "data-command-palette-empty='true'",
+                "data-browser-route-history='true'",
+                "data-browser-route-history-storage-key='clankeros-route-history'",
+                "data-command-palette-route-history='true'",
+                "data-command-palette-route-history-storage-key='clankeros-route-history'",
                 "function syncPaletteFilter()",
+                "function rememberCurrentRoute()",
                 "Demo Operator Workbench",
                 "data-demo-operator-workbench='true'",
                 "data-demo-workbench-primary='true'",
@@ -6791,6 +6796,13 @@ def _workspace_view_memory_panel() -> str:
             "Shared recent shortcut text filter",
         ),
         (
+            "route-history",
+            "Viewed Pages",
+            "exact",
+            "clankeros-route-history",
+            "Browser-local route history",
+        ),
+        (
             "search",
             "Search Lanes",
             "prefix",
@@ -6918,7 +6930,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus board recent search timeline artifacts notes memory skills approvals inbox profiles",
+                    "workspace_view_memory_reset_scope: theme focus board recent route-history search timeline artifacts notes memory skills approvals inbox profiles",
                 ]
             ),
             "</details>",
@@ -36728,6 +36740,7 @@ def _recent_items_panel(root: Path) -> str:
             "<aside class='operator-side' data-recent-items='true'>",
             "<h2>Recent Items</h2>",
             _recent_items_command_bar(root, items, used_defaults=used_defaults),
+            _browser_route_history_panel(),
             _recent_items_filter_panel(items=items, used_defaults=used_defaults),
             f"<details class='recent-items-list-details' data-recent-items-list-details='true'><summary>Recent shortcuts ({len(items)})</summary>",
             "<ul class='recent-items-list' data-recent-items-list='true'>",
@@ -36738,6 +36751,53 @@ def _recent_items_panel(root: Path) -> str:
         ]
     )
     return body
+
+
+def _browser_route_history_panel() -> str:
+    return "".join(
+        [
+            "<section class='browser-route-history' data-browser-route-history='true' "
+            "data-browser-route-history-storage-key='clankeros-route-history' "
+            "data-browser-route-history-write-on-get='false' "
+            "data-browser-route-history-provider-calls-taken='0' "
+            "data-browser-route-history-network-actions-taken='0' "
+            "data-browser-route-history-external-effects-created='false'>",
+            "<h3>Viewed Pages</h3>",
+            "<p class='muted'>Browser-local pages visited in this app session.</p>",
+            "<div class='browser-route-history-actions'>",
+            "<button type='button' class='browser-route-history-clear' data-browser-route-history-clear='true'>Clear viewed pages</button>",
+            "<span class='browser-route-history-status' data-browser-route-history-status='true'>No viewed pages yet.</span>",
+            "</div>",
+            "<ul class='browser-route-history-list' data-browser-route-history-list='true'></ul>",
+            "<p class='muted browser-route-history-empty' data-browser-route-history-empty='true'>No viewed pages recorded in this browser yet.</p>",
+            "<details class='browser-route-history-evidence' data-browser-route-history-evidence='true'>",
+            "<summary>Viewed pages evidence</summary>",
+            _kv(
+                [
+                    ("browser_route_history_status", "browser_local_pending"),
+                    ("browser_route_history_storage", "localStorage:clankeros-route-history"),
+                    ("browser_route_history_max_entries", "12"),
+                    ("browser_route_history_dedupe", "by_href"),
+                    ("browser_route_history_palette_integration", "true"),
+                    ("browser_route_history_clear_requires_click", "true"),
+                    ("browser_route_history_workspace_json_write", "false"),
+                    ("browser_route_history_write_on_get", "false"),
+                    ("browser_route_history_provider_calls_taken", "0"),
+                    ("browser_route_history_network_actions_taken", "0"),
+                    ("browser_route_history_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "browser_route_history_action: records only local app routes in browser localStorage",
+                    "browser_route_history_palette: viewed pages are appended to Palette Results",
+                    "browser_route_history_safety: no server state writes, provider calls, network actions, or external mutation",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
 
 
 def _recent_items_filter_panel(
@@ -37807,12 +37867,14 @@ def _command_palette(
                 [
                     "palette_filter_action: type in command-palette-search",
                     *goal_section_context["lines"],
+                    "palette_filter_route_history: browser-local viewed pages are added after localStorage readback",
                     "palette_filter_empty_state: show local no-match message",
                     "palette_filter_safety: client-side filtering only",
                 ]
             ),
             "</details>",
             "</section>",
+            _command_palette_route_history_panel(),
             _command_palette_quick_switch(root, focus_context, current_path),
             _command_palette_continue(focus_context),
             "<details class='palette-evidence' data-command-palette-evidence='true'>",
@@ -37826,6 +37888,45 @@ def _command_palette(
             "</ul>",
             "</details>",
             "</dialog>",
+        ]
+    )
+
+
+def _command_palette_route_history_panel() -> str:
+    return "".join(
+        [
+            "<section class='palette-route-history' data-command-palette-route-history='true' "
+            "data-command-palette-route-history-storage-key='clankeros-route-history' "
+            "data-command-palette-route-history-write-on-get='false' "
+            "data-command-palette-route-history-provider-calls-taken='0' "
+            "data-command-palette-route-history-network-actions-taken='0' "
+            "data-command-palette-route-history-external-effects-created='false'>",
+            "<h3>Viewed Pages</h3>",
+            "<p class='muted' data-command-palette-route-history-status='true'>Browser-local viewed pages will appear after the page loads.</p>",
+            "<ul class='palette-route-history-list' data-command-palette-route-history-list='true'></ul>",
+            "<p class='muted palette-route-history-empty' data-command-palette-route-history-empty='true'>No viewed pages recorded in this browser yet.</p>",
+            "<details class='palette-route-history-evidence' data-command-palette-route-history-evidence='true'>",
+            "<summary>Palette viewed-page evidence</summary>",
+            _kv(
+                [
+                    ("palette_route_history_status", "browser_local_pending"),
+                    ("palette_route_history_storage", "localStorage:clankeros-route-history"),
+                    ("palette_route_history_max_entries", "12"),
+                    ("palette_route_history_result_integration", "data-palette-result"),
+                    ("palette_route_history_write_on_get", "false"),
+                    ("palette_route_history_provider_calls_taken", "0"),
+                    ("palette_route_history_network_actions_taken", "0"),
+                    ("palette_route_history_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "palette_route_history_action: use the palette search box to filter viewed pages",
+                    "palette_route_history_safety: browser-local navigation only",
+                ]
+            ),
+            "</details>",
+            "</section>",
         ]
     )
 
@@ -38766,6 +38867,19 @@ def _html_page(
     .recent-items-card-link {{ background:var(--surface); color:var(--accent); }}
     .recent-items-details summary {{ cursor:pointer; font-weight:700; }}
     .recent-items-details:not([open]) > :not(summary) {{ display:none; }}
+    .browser-route-history {{ border:1px solid var(--line); border-left:4px solid var(--accent); background:var(--surface); padding:9px; margin:10px 0; display:grid; gap:8px; }}
+    .browser-route-history h3 {{ margin:0; }}
+    .browser-route-history-actions {{ display:grid; gap:6px; }}
+    .browser-route-history-clear {{ min-height:32px; width:100%; border:1px solid var(--line); background:var(--surface); color:var(--ink); }}
+    .browser-route-history-status {{ color:var(--muted); min-height:24px; display:inline-flex; align-items:center; }}
+    .browser-route-history-list {{ display:grid; gap:7px; margin:0; }}
+    .browser-route-history-list li {{ min-width:0; border:1px solid var(--line); background:var(--panel); padding:7px; overflow-wrap:anywhere; }}
+    .browser-route-history-list a {{ font-weight:700; }}
+    .browser-route-history-empty {{ margin:0; }}
+    .browser-route-history-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .browser-route-history-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .browser-route-history dl {{ grid-template-columns:1fr; gap:4px; }}
+    .browser-route-history ul {{ margin-top:8px; }}
     .recent-items-filter {{ border:1px solid var(--line); border-left:4px solid var(--warn); background:var(--surface); padding:9px; margin:10px 0; display:grid; gap:8px; }}
     .recent-items-filter h3 {{ margin:0; }}
     .recent-items-filter-search {{ display:grid; gap:5px; color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
@@ -38785,8 +38899,8 @@ def _html_page(
     .recent-items-command-bar ul {{ margin-top:8px; }}
     .recent-items-command-bar li {{ border:1px solid var(--line); background:var(--panel); padding:6px 7px; overflow-wrap:anywhere; }}
     .recent-items-list {{ margin-top:10px; }}
-    .palette-focus, .palette-results, .palette-route-context, .palette-continue {{ border:1px solid var(--line); background:var(--panel); padding:10px; margin:10px 0; }}
-    .palette-focus h3, .palette-results h3, .palette-route-context h3, .palette-continue h3 {{ margin-top:0; }}
+    .palette-focus, .palette-results, .palette-route-history, .palette-route-context, .palette-continue {{ border:1px solid var(--line); background:var(--panel); padding:10px; margin:10px 0; }}
+    .palette-focus h3, .palette-results h3, .palette-route-history h3, .palette-route-context h3, .palette-continue h3 {{ margin-top:0; }}
     .palette-focus-grid {{ display:grid; grid-template-columns:minmax(220px, 1.35fr) repeat(3, minmax(140px, 1fr)); gap:8px; align-items:stretch; margin:10px 0; }}
     .palette-focus-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; display:grid; gap:6px; align-content:start; }}
     .palette-focus-card-primary {{ background:var(--panel); border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
@@ -38802,6 +38916,11 @@ def _html_page(
     .palette-result-item a {{ font-weight:700; }}
     .palette-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
     .palette-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .palette-route-history-list {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:8px; margin:10px 0; }}
+    .palette-route-history-list li {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; display:grid; gap:4px; align-content:start; overflow-wrap:anywhere; }}
+    .palette-route-history-list a {{ font-weight:700; }}
+    .palette-route-history-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .palette-route-history-evidence:not([open]) > :not(summary) {{ display:none; }}
     .palette-route-context dl {{ grid-template-columns:minmax(160px, 210px) 1fr; }}
     .palette-route-context ul {{ list-style:none; padding:0; margin:10px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
     .palette-route-context li {{ min-width:0; padding:7px 9px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -40438,7 +40557,11 @@ def _html_page(
     var focusToggle = document.getElementById("focus-toggle");
     var nextActionOpen = document.getElementById("next-action-open");
     var finishTodayOpen = document.getElementById("finish-today-open");
+    function refreshPaletteResults() {{
+      paletteResults = palette ? Array.prototype.slice.call(palette.querySelectorAll("[data-palette-result='true']")) : [];
+    }}
     function syncPaletteFilter() {{
+      refreshPaletteResults();
       if (!paletteSearch || !paletteResults.length) {{ return; }}
       var query = String(paletteSearch.value || "").trim().toLowerCase();
       var shown = 0;
@@ -40488,6 +40611,136 @@ def _html_page(
       var href = finishTodayOpen ? finishTodayOpen.getAttribute("data-finish-today-href") : "";
       if (!href) {{ href = "/workspace#save-workspace"; }}
       window.location.href = href;
+    }}
+    function browserRouteHistoryStorageKey() {{
+      var panel = document.querySelector("[data-browser-route-history='true']");
+      var key = panel ? panel.getAttribute("data-browser-route-history-storage-key") : "";
+      return key || "clankeros-route-history";
+    }}
+    function compactRouteHistoryLabel(value) {{
+      value = String(value || "").replace(/\\s+/g, " ").trim();
+      if (!value) {{ return "Untitled page"; }}
+      return value.length > 72 ? value.slice(0, 69) + "..." : value;
+    }}
+    function currentRouteHistoryEntry() {{
+      var href = window.location.pathname + window.location.search + window.location.hash;
+      if (!href || href === "/favicon.ico") {{ return null; }}
+      var label = document.title || href;
+      label = label.replace(/\\s+-\\s+ClankerOS Local Operator\\s*$/, "");
+      return {{ href: href, label: compactRouteHistoryLabel(label || href), at: new Date().toISOString() }};
+    }}
+    function normalizeRouteHistoryEntry(entry) {{
+      if (!entry || typeof entry !== "object") {{ return null; }}
+      var href = String(entry.href || "").trim();
+      if (!href || href.charAt(0) !== "/" || href.indexOf("//") === 0) {{ return null; }}
+      return {{
+        href: href,
+        label: compactRouteHistoryLabel(entry.label || href),
+        at: String(entry.at || "")
+      }};
+    }}
+    function loadBrowserRouteHistory() {{
+      if (!window.localStorage) {{ return []; }}
+      try {{
+        var raw = window.localStorage.getItem(browserRouteHistoryStorageKey());
+        if (!raw) {{ return []; }}
+        var parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) {{ return []; }}
+        return parsed.map(normalizeRouteHistoryEntry).filter(Boolean).slice(0, 12);
+      }} catch (error) {{
+        return [];
+      }}
+    }}
+    function saveBrowserRouteHistory(entries) {{
+      if (!window.localStorage) {{ return false; }}
+      try {{
+        window.localStorage.setItem(browserRouteHistoryStorageKey(), JSON.stringify(entries.slice(0, 12)));
+        return true;
+      }} catch (error) {{
+        return false;
+      }}
+    }}
+    function setBrowserRouteHistoryStatus(message) {{
+      Array.prototype.slice.call(document.querySelectorAll("[data-browser-route-history-status='true'], [data-command-palette-route-history-status='true']")).forEach(function(status) {{
+        status.textContent = message;
+      }});
+    }}
+    function makeBrowserRouteHistoryItem(entry) {{
+      var li = document.createElement("li");
+      li.setAttribute("data-browser-route-history-item", "true");
+      li.setAttribute("data-browser-route-history-href", entry.href);
+      li.setAttribute("data-browser-route-history-label", entry.label);
+      var link = document.createElement("a");
+      link.href = entry.href;
+      link.textContent = entry.label;
+      var meta = document.createElement("span");
+      meta.className = "muted";
+      meta.textContent = entry.href;
+      li.appendChild(link);
+      li.appendChild(document.createElement("br"));
+      li.appendChild(meta);
+      return li;
+    }}
+    function makePaletteRouteHistoryItem(entry) {{
+      var li = document.createElement("li");
+      li.className = "palette-result-item";
+      li.setAttribute("data-palette-result", "true");
+      li.setAttribute("data-command-palette-route-history-item", "true");
+      li.setAttribute("data-palette-search-text", (entry.label + " " + entry.href + " viewed page route history").toLowerCase());
+      var link = document.createElement("a");
+      link.href = entry.href;
+      link.textContent = entry.label;
+      var meta = document.createElement("span");
+      meta.className = "muted";
+      meta.textContent = "viewed page · " + entry.href;
+      li.appendChild(link);
+      li.appendChild(meta);
+      return li;
+    }}
+    function renderBrowserRouteHistory() {{
+      var entries = loadBrowserRouteHistory();
+      var message = window.localStorage
+        ? ("Viewed pages: " + entries.length + " saved route" + (entries.length === 1 ? "" : "s") + ".")
+        : "Viewed pages unavailable because localStorage is unavailable.";
+      setBrowserRouteHistoryStatus(message);
+      Array.prototype.slice.call(document.querySelectorAll("[data-browser-route-history='true'], [data-command-palette-route-history='true']")).forEach(function(panel) {{
+        panel.setAttribute("data-browser-route-history-count", String(entries.length));
+        panel.setAttribute("data-command-palette-route-history-count", String(entries.length));
+      }});
+      Array.prototype.slice.call(document.querySelectorAll("[data-browser-route-history-list='true']")).forEach(function(list) {{
+        list.textContent = "";
+        entries.forEach(function(entry) {{ list.appendChild(makeBrowserRouteHistoryItem(entry)); }});
+      }});
+      Array.prototype.slice.call(document.querySelectorAll("[data-command-palette-route-history-list='true']")).forEach(function(list) {{
+        list.textContent = "";
+        entries.forEach(function(entry) {{ list.appendChild(makePaletteRouteHistoryItem(entry)); }});
+      }});
+      Array.prototype.slice.call(document.querySelectorAll("[data-browser-route-history-empty='true'], [data-command-palette-route-history-empty='true']")).forEach(function(empty) {{
+        empty.hidden = entries.length !== 0;
+      }});
+      refreshPaletteResults();
+      syncPaletteFilter();
+    }}
+    function rememberCurrentRoute() {{
+      if (!window.localStorage) {{
+        renderBrowserRouteHistory();
+        return;
+      }}
+      var entry = currentRouteHistoryEntry();
+      if (!entry) {{
+        renderBrowserRouteHistory();
+        return;
+      }}
+      var entries = loadBrowserRouteHistory().filter(function(item) {{ return item.href !== entry.href; }});
+      entries.unshift(entry);
+      saveBrowserRouteHistory(entries);
+      renderBrowserRouteHistory();
+    }}
+    function clearBrowserRouteHistory() {{
+      if (window.localStorage) {{
+        try {{ window.localStorage.removeItem(browserRouteHistoryStorageKey()); }} catch (error) {{}}
+      }}
+      renderBrowserRouteHistory();
     }}
     function setClipboardStatus(message) {{
       var status = document.querySelector("[data-clipboard-status='true']");
@@ -41600,6 +41853,12 @@ def _html_page(
         clearRecentItemsFilterState();
         return;
       }}
+      var browserRouteHistoryClear = target.closest ? target.closest("[data-browser-route-history-clear='true']") : null;
+      if (browserRouteHistoryClear) {{
+        event.preventDefault();
+        clearBrowserRouteHistory();
+        return;
+      }}
       var searchFilterReset = target.closest ? target.closest("[data-search-result-filter-reset='true']") : null;
       if (searchFilterReset) {{
         event.preventDefault();
@@ -41776,6 +42035,7 @@ def _html_page(
       }}
     }}
     openCurrentHashDetails();
+    rememberCurrentRoute();
     initializeRecentItemsFilterState();
     initializeSearchResultLaneState();
     initializeGoalArtifactFilterState();
@@ -41786,7 +42046,10 @@ def _html_page(
     initializeInboxFilterState();
     initializeProfileFilterState();
     restoreWorkspacePanels();
-    window.addEventListener("hashchange", openCurrentHashDetails);
+    window.addEventListener("hashchange", function() {{
+      openCurrentHashDetails();
+      rememberCurrentRoute();
+    }});
     document.addEventListener("keydown", function(event) {{
       var target = event.target || {{}};
       var tag = String(target.tagName || "").toLowerCase();

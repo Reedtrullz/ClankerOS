@@ -889,7 +889,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   surfaces otherwise, while workspace/goal/delegation/run counts, saved
   workspace project/goal/artifact context, last-action context, and zero-effect
   boundaries stay inside collapsed evidence with the longer recent-link list
-  in a second collapsed disclosure.
+  in a second collapsed disclosure. A browser-local `Viewed Pages` panel
+  records local app routes in `localStorage:clankeros-route-history`, dedupes
+  by href, keeps the 12 most recent entries, exposes a clear button, and adds
+  those viewed routes to the command palette after localStorage readback
+  without writing server state.
   The command palette now also includes a visible `Quick Switch` dock for
   Continue, Workspace, Action, Artifact, and Finish, so the keyboard launcher
   can reopen the current Goal, saved workspace, latest local action target,

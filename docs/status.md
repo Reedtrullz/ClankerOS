@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared app shell now includes a browser-local `Viewed Pages` panel and
+  palette integration backed by `localStorage:clankeros-route-history`, so
+  operator route hops are searchable and reopenable without server writes,
+  provider calls, network actions, or external effects.
 - `/today` now includes a read-only `Today Decision Queue` after the Today
   Operator Workbench, showing exact daily rows for the current action plus
   pending approvals, incidents, recommendations, or blocked tasks while linking

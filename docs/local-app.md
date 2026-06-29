@@ -534,7 +534,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   reopen action plus `/resume`, then keeps workspace/goal/delegation/run
   counts, saved project/goal/artifact context, the last confirmed action, and
   write/provider/network/external-effect counters inside collapsed evidence.
-  A browser-local `Find Recent` filter narrows the already-rendered shortcut
+  A browser-local `Viewed Pages` panel records local app routes in
+  `localStorage:clankeros-route-history`, dedupes by href, keeps the 12 most
+  recent entries, surfaces them in the sidebar, and exposes a clear button
+  without writing server state. A browser-local `Find Recent` filter narrows the already-rendered shortcut
   rows by text, remembers the query in
   `localStorage:clankeros-recent-items-filter`, and resets without writing
   server state, with the remaining recent shortcuts in a second collapsed
@@ -553,7 +556,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   search box now narrows a visible `Palette Results` list of local routes and
   recent work as the operator types, and it now adds the focused Goal's core
   section anchors so queries like `timeline`, `approval`, `artifact`, `memory`,
-  `git`, or `remaining` can jump straight to the Goal page. The existing
+  `git`, or `remaining` can jump straight to the Goal page. Browser-local
+  viewed pages are appended to the palette results after localStorage readback,
+  so recent route hops can be reopened from the keyboard launcher. The existing
   Search button still opens full indexed `/search` results. The
   route-aware `Current Page` readback, keyboard shortcuts, long open list, and
   route-aware Finish Today target stay available inside collapsed
