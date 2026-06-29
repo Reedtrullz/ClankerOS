@@ -342,7 +342,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Recommendation section explains
   whether the Goal is following an open task recommendation or deriving the
   action from current phase and local goal records, then names the target
-  local surface and zero-effect boundary without writing on GET. Skills Used
+  local surface and zero-effect boundary without writing on GET. When an open
+  task recommendation already includes `recommended_commands`, the same Goal
+  page now renders copy-only `Goal Recovery Commands` cards with clipboard
+  buttons, recommendation evidence links, and explicit no-execute/no-retry/
+  no-replan/no-write counters. Skills Used
   starts with a read-only `Goal Skills Command Bar` that summarizes task skill
   tags, matching generated or available skill records, usage and project
   counts, delegation profile usage, one `/skills` or `/profiles` review

@@ -540,7 +540,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   first-class `Next Recommendation` section that identifies whether the current
   recommendation came from an open task recommendation or was derived from
   current phase and local goal records, points at the target local surface, and
-  records write-on-GET and external-effect boundaries. They also include a
+  records write-on-GET and external-effect boundaries. Open task
+  recommendations with stored `recommended_commands` now render copy-only
+  `Goal Recovery Commands` cards with clipboard buttons, evidence links, and
+  explicit no-execute/no-retry/no-replan/no-write counters. They also include a
   first-class `Goal Live State` surface that opens with visible Now, Phase,
   Refresh, Pause Rules, and Safety cards, including a local `Refresh now`
   control and collapsed detailed refresh evidence. Its five-second local page

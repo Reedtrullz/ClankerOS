@@ -439,7 +439,10 @@ present, refreshed `TASKS.md`/`PLAN.md`, workspace resume point, and timeline
 event without running fresh verification or taking external action. The Next Recommendation
 section names whether the recommendation
 comes from an open task recommendation or from current phase plus local goal
-records, then points at the local target surface without writing on GET.
+records, then points at the local target surface without writing on GET. When
+an open task recommendation includes `recommended_commands`, the Goal page
+also shows copy-only `Goal Recovery Commands` cards with clipboard buttons,
+evidence links, and explicit no-execute/no-retry/no-replan/no-write counters.
 The in-flow Goal Jump Bar keeps the most-used in-page anchors one click or
 one keypress away without covering later controls. The in-flow Goal Action
 Dock keeps the current action, gate, proof, and resume route visible near the

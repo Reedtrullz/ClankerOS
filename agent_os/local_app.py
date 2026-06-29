@@ -13024,6 +13024,7 @@ def _goal_next_recommendation_section(
     )
     if recommendation is not None:
         evidence_path = str(recommendation["evidence_path"] or "")
+        recovery_commands = _goal_recovery_command_cards(recommendation)
         rows: list[tuple[str, str | SafeHtml]] = [
             ("next_recommendation_status", "open_task_recommendation"),
             ("next_recommendation_source", "task_recommendations"),
@@ -13041,6 +13042,7 @@ def _goal_next_recommendation_section(
             ("next_recommendation_external_effects_created", "false"),
         ]
     else:
+        recovery_commands = ""
         rows = [
             ("next_recommendation_status", "derived_from_goal_state"),
             ("next_recommendation_source", "current_phase_and_goal_records"),
@@ -13058,8 +13060,96 @@ def _goal_next_recommendation_section(
         "<section id='goal-next-recommendation'><h2>Next Recommendation</h2>"
         "<p class='muted'>Explains why this goal is pointing at the current action.</p>"
         + _kv(rows)
+        + recovery_commands
         + "</section>"
     )
+
+
+def _goal_recovery_command_cards(recommendation: Any) -> str:
+    commands = _recommended_commands(recommendation)
+    if not commands:
+        return ""
+    recommendation_id = str(_recommendation_value(recommendation, "id", "unknown"))
+    task_id = str(_recommendation_value(recommendation, "task_id", "unknown"))
+    evidence_path = str(_recommendation_value(recommendation, "evidence_path", "") or "")
+    evidence_surface: str | SafeHtml = (
+        SafeHtml(_artifact_link(evidence_path)) if evidence_path else "missing"
+    )
+    cards = []
+    for index, command in enumerate(commands, start=1):
+        cards.append(
+            "<article class='goal-recovery-command-card' data-goal-recovery-command-card='true'>"
+            f"<span class='goal-recovery-command-label'>Command {index}</span>"
+            f"<code>{_e(command)}</code>"
+            f"<button type='button' data-copy-text='{_e(command)}' "
+            f"data-copy-label='goal recovery command {index}'>Copy</button>"
+            "</article>"
+        )
+    return "".join(
+        [
+            "<section id='goal-recovery-commands' class='goal-recovery-commands' data-goal-recovery-commands='true'>",
+            "<h3>Goal Recovery Commands</h3>",
+            "<p class='muted'>Copy-only local commands from the open task recommendation. Nothing runs from this page.</p>",
+            "<div class='goal-recovery-command-list' data-goal-recovery-command-list='true'>",
+            "".join(cards),
+            "</div>",
+            "<p class='muted' data-clipboard-status='true' aria-live='polite'></p>",
+            "<details class='goal-recovery-command-evidence' data-goal-recovery-commands-evidence='true'><summary>Goal recovery command evidence</summary>",
+            _kv(
+                [
+                    ("goal_recovery_commands_status", "available"),
+                    (
+                        "goal_recovery_commands_source",
+                        "task_recommendations.recommended_commands",
+                    ),
+                    ("goal_recovery_commands_recommendation_id", recommendation_id),
+                    ("goal_recovery_commands_task_id", task_id),
+                    ("goal_recovery_commands_count", str(len(commands))),
+                    ("goal_recovery_commands_evidence", evidence_surface),
+                    ("goal_recovery_commands_copy_only", "true"),
+                    ("goal_recovery_commands_execute_on_get", "false"),
+                    ("goal_recovery_commands_retry_on_get", "false"),
+                    ("goal_recovery_commands_replan_on_get", "false"),
+                    ("goal_recovery_commands_write_on_get", "false"),
+                    ("goal_recovery_commands_provider_calls_taken", "0"),
+                    ("goal_recovery_commands_network_actions_taken", "0"),
+                    ("goal_recovery_commands_external_effects_created", "false"),
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _recommended_commands(recommendation: Any) -> list[str]:
+    raw = _recommendation_value(recommendation, "recommended_commands", [])
+    if isinstance(raw, (list, tuple)):
+        return [str(command).strip() for command in raw if str(command).strip()]
+    if not isinstance(raw, str):
+        return []
+    text = raw.strip()
+    if not text:
+        return []
+    try:
+        decoded = json.loads(text)
+    except json.JSONDecodeError:
+        decoded = None
+    if isinstance(decoded, list):
+        return [str(command).strip() for command in decoded if str(command).strip()]
+    return [line.strip() for line in text.splitlines() if line.strip()]
+
+
+def _recommendation_value(
+    recommendation: Any,
+    key: str,
+    default: object = "",
+) -> object:
+    if isinstance(recommendation, sqlite3.Row):
+        return recommendation[key] if key in recommendation.keys() else default
+    if isinstance(recommendation, dict):
+        return recommendation.get(key, default)
+    return getattr(recommendation, key, default)
 
 
 def _goal_resume_form(state: dict[str, Any]) -> str:
@@ -35558,6 +35648,16 @@ def _html_page(
     .goal-next-action-details summary {{ cursor:pointer; font-weight:700; }}
     .goal-next-action-details:not([open]) > :not(summary) {{ display:none; }}
     .goal-next-action-details dl {{ margin-top:10px; }}
+    .goal-recovery-commands {{ border:1px solid var(--line); border-left:4px solid var(--warn); background:var(--panel); padding:12px; margin-top:12px; }}
+    .goal-recovery-commands h3 {{ margin:0 0 6px; }}
+    .goal-recovery-command-list {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-recovery-command-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:10px; display:grid; gap:8px; align-content:start; }}
+    .goal-recovery-command-label {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .goal-recovery-command-card code {{ display:block; white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.45; }}
+    .goal-recovery-command-card button {{ width:max-content; max-width:100%; }}
+    .goal-recovery-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
+    .goal-recovery-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-recovery-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .goal-operator-workbench {{ border:1px solid var(--line); border-left:4px solid var(--accent); background:var(--panel); padding:14px; }}
     .goal-operator-workbench dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}

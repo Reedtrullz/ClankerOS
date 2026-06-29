@@ -1,5 +1,26 @@
 # Status
 
+## 2026-06-29 Goal Recovery Command Cards UX
+
+- Added copy-only `Goal Recovery Commands` cards inside `/goals/<goal_id>`
+  `Next Recommendation` whenever the open task recommendation has stored
+  `recommended_commands`.
+- Each command renders as wrapped code with a clipboard copy button, plus a
+  collapsed evidence ledger linking to the recommendation artifact and
+  recording no-execute/no-retry/no-replan/no-write boundaries.
+- This keeps task recovery available from the Goal page without making GET
+  requests execute commands, reset tasks, replan, call providers, use the
+  network, push, create PRs, deploy, or mutate external systems.
+- Updated README, local app docs, operating summary, docs status, and a
+  fixture-backed blocked-task recommendation regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  task_recommendations_surfaces_blocked_planned_task` passed with `1 passed,
+  515 deselected`; `python3 -m compileall -q agent_os tests`; bounded
+  temp-root `app-smoke-test`; bounded temp-root `app-demo-smoke-test`; `git
+  diff --check`.
+
 ## 2026-06-29 Goal Timeline Lane Filter UX
 
 - Added a browser-local `Timeline Lane Filter` to the Goal timeline after the

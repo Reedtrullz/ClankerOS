@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals/<goal_id>` now promotes open task recommendation commands into
+  copy-only `Goal Recovery Commands` cards inside `Next Recommendation`.
+  Operators can copy the stored `recommended_commands`, open the evidence
+  artifact, and see explicit no-execute/no-retry/no-replan/no-write counters
+  without leaving the Goal page.
 - Goal Timeline now includes a browser-local `Timeline Lane Filter` after the
   digest and before metadata/the full list. It filters already-rendered
   `data-timeline-kind` rows by all, artifact, approval, delegation, run, task,

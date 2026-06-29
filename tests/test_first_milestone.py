@@ -1,3 +1,4 @@
+import html
 import json
 import sqlite3
 import subprocess
@@ -1157,6 +1158,36 @@ def test_task_recommendations_surfaces_blocked_planned_task(
     report = (tmp_path / "docs" / "task-recommendations.md").read_text(encoding="utf-8")
     assert "blocked_planned_task_replan" in report
     assert "Does not retry, reset, replan, or dispatch tasks automatically." in report
+
+    goal_page = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert goal_page.status == 200
+    assert "Next Recommendation" in goal_page.body
+    assert "next_recommendation_status</dt><dd>open_task_recommendation" in goal_page.body
+    assert "next_recommendation_source</dt><dd>task_recommendations" in goal_page.body
+    assert f"next_recommendation_id</dt><dd>{recommendation.id}" in goal_page.body
+    assert "Goal Recovery Commands" in goal_page.body
+    assert "data-goal-recovery-commands='true'" in goal_page.body
+    assert "data-goal-recovery-command-list='true'" in goal_page.body
+    assert goal_page.body.count("data-goal-recovery-command-card='true'") == 3
+    assert "data-clipboard-status='true'" in goal_page.body
+    for command in recommendation.recommended_commands:
+        escaped_command = html.escape(command, quote=True)
+        assert f"data-copy-text='{escaped_command}'" in goal_page.body
+        assert f"<code>{escaped_command}</code>" in goal_page.body
+    assert "data-goal-recovery-commands-evidence='true'" in goal_page.body
+    assert "goal_recovery_commands_status</dt><dd>available" in goal_page.body
+    assert "goal_recovery_commands_source</dt><dd>task_recommendations.recommended_commands" in goal_page.body
+    assert f"goal_recovery_commands_recommendation_id</dt><dd>{recommendation.id}" in goal_page.body
+    assert f"goal_recovery_commands_task_id</dt><dd>{task_id}" in goal_page.body
+    assert "goal_recovery_commands_count</dt><dd>3" in goal_page.body
+    assert "goal_recovery_commands_copy_only</dt><dd>true" in goal_page.body
+    assert "goal_recovery_commands_execute_on_get</dt><dd>false" in goal_page.body
+    assert "goal_recovery_commands_retry_on_get</dt><dd>false" in goal_page.body
+    assert "goal_recovery_commands_replan_on_get</dt><dd>false" in goal_page.body
+    assert "goal_recovery_commands_write_on_get</dt><dd>false" in goal_page.body
+    assert "goal_recovery_commands_provider_calls_taken</dt><dd>0" in goal_page.body
+    assert "goal_recovery_commands_network_actions_taken</dt><dd>0" in goal_page.body
+    assert "goal_recovery_commands_external_effects_created</dt><dd>false" in goal_page.body
 
     incidents_page = render_local_app_route(tmp_path, "/incidents")
     assert incidents_page.status == 200
