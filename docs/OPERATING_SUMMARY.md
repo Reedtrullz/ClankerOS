@@ -441,6 +441,9 @@ Core layers for the bootstrap:
   operator-note/artifact counts, and zero-effect boundaries in the DOM. Goal
   activity sections keep the matching command-bar pattern for latest
   human-readable event, target surface, counts, and safety evidence. Goal detail pages also include a
+  read-only `Goal Attention Digest` after the progress meter with visible Now,
+  Approvals, Incidents, Recommendations, Open Work, and Safety cards before the
+  deeper command surfaces. The page also includes a
   read-only `Goal Command Bar` near the top that opens with visible Now,
   Phase, Progress, Proof, and Resume cards while keeping phase, one primary
   action, target local surface, progress, waiting counts, `/resume`, latest

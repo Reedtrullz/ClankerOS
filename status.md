@@ -166,6 +166,32 @@
   execution on GET, no app-side GitHub polling, no provider calls, no external
   mutation, no PR creation, and no deploy from ClankerOS itself.
 
+## 2026-06-29 Goal Attention Digest UX
+
+- Added a visible read-only `Goal Attention Digest` to `/goals/<goal_id>` after
+  the Goal Progress Meter and before the Goal Command Bar.
+- The digest turns the immediate Goal queues into six cards: Now, Approvals,
+  Incidents, Recommendations, Open Work, and Safety.
+- It ranks the first waiting queue across incidents, approvals,
+  recommendations, blocked work, and open work while routing the primary next
+  click to the existing confirmed Goal action form when available.
+- Collapsed digest evidence records the current phase/gate, primary surface,
+  first queue surface, approval counts, incidents, recommendations, open tasks,
+  workflow gates, waiting items, and no-write/no-provider/no-network/
+  no-external-effect counters.
+- Updated README, local app docs, operating summary, current status focus,
+  app-demo smoke markers, responsive mobile layout, scroll-margin behavior, and
+  fixture-backed Goal route assertions.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  focused `tests/test_first_milestone.py` demo route coverage
+  (`1 passed, 515 deselected in 38.17s`),
+  `python3 -m compileall -q agent_os tests`, bounded `app-smoke-test`,
+  bounded `app-demo-smoke-test`, and `git diff --check`.
+- Non-claims: no browser QA for this slice, no write on GET, no approval or
+  execution on GET, no app-side GitHub polling, no provider calls, no external
+  mutation, no PR creation, and no deploy from ClankerOS itself.
+
 ## 2026-06-29 Goal Detail Content-First UX
 
 - Made `/goals/<goal_id>` content-first in the shared app shell.

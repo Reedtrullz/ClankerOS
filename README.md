@@ -304,8 +304,8 @@ so an operator can add the next goal for a registered project without
 switching to the CLI.
 Use `/goals/<goal_id>` as the
 goal-centered workbench: the page is now content-first, so the Goal summary,
-large Current Phase banner, jump bar, action dock, and progress meter appear
-before shared route/focus diagnostics. The summary itself is title-first: it
+large Current Phase banner, jump bar, action dock, progress meter, and
+attention digest appear before shared route/focus diagnostics. The summary itself is title-first: it
 uses the human Goal title/intent as the page heading, keeps the Goal id as
 metadata instead of the headline, and preserves the project, status, phase,
 and local refresh posture in the readback. Shared Goal navigation now follows
@@ -320,7 +320,10 @@ target, and resume route near the top of the workbench while jumping directly
 to the existing confirmed Goal action form when one is available. A read-only
 `Goal Progress Meter` follows with task and workflow progress bars, waiting
 operator work, latest proof state, and the next confirmed browser action before
-deeper command evidence. The dock and meter precede the Goal Command Bar, Goal
+deeper command evidence. A read-only `Goal Attention Digest` follows the meter
+with Now, Approvals, Incidents, Recommendations, Open Work, and Safety cards so
+the first waiting queue and safe next click are visible before deeper command
+evidence. The dock, meter, and digest precede the Goal Command Bar, Goal
 Operator Workbench, Goal Daily Loop, Goal Return Brief, Goal Session Digest,
 Goal Continuation Rail,
 next action, next recommendation, Goal Workflow Map, Goal Coder Handoff

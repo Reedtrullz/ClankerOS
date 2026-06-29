@@ -10360,9 +10360,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert goal_phase_position < goal.body.index("id='goal-action-dock'")
     assert goal.body.index("id='goal-jump-bar'") < goal.body.index("id='goal-action-dock'")
     assert goal.body.index("id='goal-action-dock'") < goal.body.index("id='goal-progress-meter'")
-    assert goal.body.index("id='goal-progress-meter'") < goal.body.index("id='goal-command-bar'")
+    assert goal.body.index("id='goal-progress-meter'") < goal.body.index("id='goal-attention-digest'")
+    assert goal.body.index("id='goal-attention-digest'") < goal.body.index("id='goal-command-bar'")
     assert goal_phase_position < goal.body.index("id='goal-command-bar'")
     assert goal_phase_position < goal.body.index("id='goal-progress-meter'")
+    assert goal_phase_position < goal.body.index("id='goal-attention-digest'")
     assert goal_phase_position < goal.body.index("id='goal-operator-workbench'")
     assert goal_phase_position < goal.body.index("id='goal-next-action'")
     assert goal_phase_position < goal.body.index("id='goal-section-index'")
@@ -10479,6 +10481,51 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_progress_meter_proof: status=success source=direct_public_snapshot" in goal.body
     assert "goal_progress_meter_next: <a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
     assert "goal_progress_meter_safety: read-only visual progress; confirmed forms own writes" in goal.body
+    assert "Goal Attention Digest" in goal.body
+    assert "id='goal-attention-digest'" in goal.body
+    assert "data-goal-attention-digest='true'" in goal.body
+    assert "data-goal-attention-actions='true'" in goal.body
+    assert "data-goal-attention-primary='true'" in goal.body
+    assert "data-goal-attention-approvals='true'" in goal.body
+    assert "data-goal-attention-incidents='true'" in goal.body
+    assert "data-goal-attention-recommendations='true'" in goal.body
+    assert "data-goal-attention-open-work='true'" in goal.body
+    assert "data-goal-attention-safety='true'" in goal.body
+    assert "data-goal-attention-evidence='true'" in goal.body
+    assert "data-goal-attention-primary='true' href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_attention_digest_status</dt><dd>waiting_on_operator" in goal.body
+    assert f"goal_attention_digest_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_attention_digest_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_attention_digest_phase</dt><dd>Ready to commit" in goal.body
+    assert "goal_attention_digest_current_gate</dt><dd>commit_request" in goal.body
+    assert "goal_attention_digest_next_action</dt><dd>Create commit request" in goal.body
+    assert "goal_attention_digest_primary_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_attention_digest_action_form_available</dt><dd>true" in goal.body
+    assert "goal_attention_digest_first_queue_kind</dt><dd>worktree_approval" in goal.body
+    assert f"goal_attention_digest_first_queue_surface</dt><dd><a href='/approvals?goal_id={result.goal_id}'>Review worktree approval</a>" in goal.body
+    assert "goal_attention_digest_pending_approvals</dt><dd>1" in goal.body
+    assert "goal_attention_digest_pending_worktree_approvals</dt><dd>1" in goal.body
+    assert "goal_attention_digest_pending_commit_approvals</dt><dd>0" in goal.body
+    assert "goal_attention_digest_pending_publication_approvals</dt><dd>0" in goal.body
+    assert "goal_attention_digest_approved_approvals</dt><dd>1" in goal.body
+    assert "goal_attention_digest_open_incidents</dt><dd>0" in goal.body
+    assert "goal_attention_digest_open_recommendations</dt><dd>0" in goal.body
+    assert "goal_attention_digest_open_tasks</dt><dd>1" in goal.body
+    assert "goal_attention_digest_blocked_or_failed_tasks</dt><dd>0" in goal.body
+    assert "goal_attention_digest_waiting_items</dt><dd>1" in goal.body
+    assert "goal_attention_digest_workflow_gates</dt><dd>15" in goal.body
+    assert "goal_attention_digest_source</dt><dd>goal_state_waiting_queues_and_next_action" in goal.body
+    assert "goal_attention_digest_write_on_get</dt><dd>false" in goal.body
+    assert "goal_attention_digest_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_attention_digest_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_attention_digest_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_attention_now: Create commit request status=waiting_on_operator" in goal.body
+    assert f"goal_attention_queue: worktree_approval <a href='/approvals?goal_id={result.goal_id}'>Review worktree approval</a>" in goal.body
+    assert "goal_attention_approvals: pending=1 approved=1" in goal.body
+    assert "goal_attention_incidents: open=0 blocked_tasks=0" in goal.body
+    assert "goal_attention_recommendations: open=0" in goal.body
+    assert "goal_attention_open_work: tasks=1 waiting=1" in goal.body
+    assert "goal_attention_safety: read-only local queue digest; confirmed forms own writes" in goal.body
     assert "goal_section_index_status</dt><dd>available" in goal.body
     assert "goal_section_count</dt><dd>" in goal.body
     assert "data-goal-section-index-actions='true'" in goal.body
@@ -10508,6 +10555,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-current-phase'" in goal.body
     assert "href='#goal-action-dock'" in goal.body
     assert "href='#goal-progress-meter'" in goal.body
+    assert "href='#goal-attention-digest'" in goal.body
     assert "href='#goal-command-bar'" in goal.body
     assert "href='#goal-operator-workbench'" in goal.body
     assert "href='#goal-return-brief'" in goal.body
@@ -10539,6 +10587,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-remaining-work-command-bar'" in goal.body
     assert "href='#goal-remaining-work'" in goal.body
     assert "id='goal-summary'" in goal.body
+    assert "id='goal-attention-digest'" in goal.body
     assert "id='goal-command-bar'" in goal.body
     assert "id='goal-operator-workbench'" in goal.body
     assert "id='goal-daily-loop'" in goal.body
@@ -10570,7 +10619,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>55" in goal.body
+    assert "goal_section_count</dt><dd>56" in goal.body
     assert "data-goal-section-index-evidence='true'" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "data-goal-command-strip='true'" in goal.body
