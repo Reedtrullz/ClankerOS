@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/profiles#profile-routing-filter` now narrows already-rendered profile
+  routing rows/cards by all, Planning, Coding, Review, Docs, Cheap Model,
+  Frontier Model, Storage, Configured, or local text search. It remembers
+  lane/query view state in `localStorage:clankeros-profile-routing-filter`,
+  exposes Reset filter, and keeps provider routing, model routing, writes,
+  provider calls, network actions, push, PR, deploy, and external effects
+  inactive.
 - `/inbox#inbox-queue-filter` now narrows already-rendered inbox rows by all,
   attention, decisions, work, publication, scoped Goal, scoped run, or local
   text search. It remembers lane/query view state in
@@ -31,10 +38,11 @@ Latest status focus:
 - `/workspace#workspace-view-memory` now exposes browser-local view memory
   for theme, focus mode, Goal board view, search lanes, timeline lanes,
   artifact filters, notes filters, Memory Bank filters, Skills Inventory
-  filters, Approval Queue filters, and Inbox Queue filters. It can refresh or
-  clear those `localStorage` values after explicit clicks while preserving
-  read-only GET behavior, `.clanker/app/workspace.json`, no raw filesystem
-  browsing, and no-provider/no-network/no-external-effect boundaries.
+  filters, Approval Queue filters, Inbox Queue filters, and Profile Routing
+  filters. It can refresh or clear those `localStorage` values after explicit
+  clicks while preserving read-only GET behavior, `.clanker/app/workspace.json`,
+  no raw filesystem browsing, and no-provider/no-network/no-external-effect
+  boundaries.
 - `/goals/<goal_id>#goal-operator-notes-browser` now renders existing
   `operator-notes.md` sections as scan-first note cards with local text search,
   visible View status, per-Goal browser-local query memory in

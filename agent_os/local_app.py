@@ -1056,6 +1056,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-profiles-workbench-primary='true'",
                 "data-profiles-state-details='true'",
                 "data-profiles-workbench-evidence='true'",
+                "Profile Routing Filter",
+                "data-profile-routing-filter='true'",
+                "data-profile-routing-filter-evidence='true'",
                 "data-profiles-command-evidence='true'",
                 "provider_routing_active",
                 "provider_calls_taken",
@@ -6531,6 +6534,13 @@ def _workspace_view_memory_panel() -> str:
             "clankeros-inbox-queue-filter",
             "Inbox queue lane and text filter",
         ),
+        (
+            "profiles",
+            "Profile Filters",
+            "exact",
+            "clankeros-profile-routing-filter",
+            "Profile routing lane and text filter",
+        ),
     ]
     card_html = []
     evidence_lines = []
@@ -6596,7 +6606,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory skills approvals inbox",
+                    "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory skills approvals inbox profiles",
                 ]
             ),
             "</details>",
@@ -8780,6 +8790,65 @@ def _profiles_page(root: Path) -> str:
         f"{spec['label']}: inactive provider-routing placeholder"
         for spec in lane_specs
     ]
+    configured_lines = [
+        _profile_filter_line(
+            "configured",
+            "configured_profile",
+            _profile_config_line(name),
+            status="configured",
+            extra=name,
+        )
+        for name in configured_profiles
+    ]
+    storage_lines = [
+        _profile_filter_line(
+            "storage",
+            "storage_profile",
+            _storage_profile_line(profile),
+            status="enabled" if profile.enabled else "disabled",
+            cost=str(profile.cost_tier),
+            extra=" ".join(
+                [
+                    str(profile.name),
+                    str(profile.label),
+                    str(profile.mode),
+                    str(profile.model),
+                    " ".join(str(item) for item in profile.use_for_json),
+                ]
+            ),
+        )
+        for profile in storage_profiles
+    ] or [
+        _profile_filter_line(
+            "storage",
+            "storage_profile",
+            "none_recorded_yet provider_routing_active=false provider_calls_taken=0",
+            status="none",
+        )
+    ]
+    future_lines = [
+        _profile_filter_line(
+            str(spec["key"]),
+            "future_lane",
+            f"{spec['label']}: inactive provider-routing placeholder",
+            status="placeholder",
+            cost=str(spec["cost"]),
+            extra=" ".join(
+                [
+                    str(spec["summary"]),
+                    " ".join(str(item) for item in spec["use_for"]),
+                    " ".join(str(item) for item in spec["profiles"]),
+                ]
+            ),
+        )
+        for spec in lane_specs
+    ]
+    total_filter_items = (
+        len(lane_specs)
+        + len(configured_lines)
+        + len(storage_lines)
+        + len(future_lines)
+    )
     return "".join(
         [
             "<section><h1>Profiles And Routing</h1>",
@@ -8815,18 +8884,24 @@ def _profiles_page(root: Path) -> str:
                 storage_profiles=storage_profiles,
                 lane_specs=lane_specs,
             ),
+            _profile_routing_filter(
+                total_filter_items=total_filter_items,
+                matrix_count=len(lane_specs),
+                configured_count=len(configured_lines),
+                storage_count=len(storage_lines),
+                future_count=len(future_lines),
+            ),
             _list_section(
                 "Configured Profiles",
-                [_profile_config_line(name) for name in configured_profiles],
+                configured_lines,
                 anchor_id="profiles-configured",
             ),
             _list_section(
                 "Storage Profiles",
-                [_storage_profile_line(profile) for profile in storage_profiles]
-                or ["none_recorded_yet provider_routing_active=false provider_calls_taken=0"],
+                storage_lines,
                 anchor_id="profiles-storage",
             ),
-            _list_section("Future Profile Lanes", prepared, anchor_id="profiles-future"),
+            _list_section("Future Profile Lanes", future_lines, anchor_id="profiles-future"),
             _non_claim_banner(),
         ]
     )
@@ -8922,10 +8997,29 @@ def _profiles_routing_matrix(
             target_label = "Future Profile Lanes"
             profile_summary = "none stored yet"
         use_for = ", ".join(str(item) for item in spec["use_for"])
+        filter_text = " ".join(
+            [
+                str(spec["key"]),
+                str(spec["label"]),
+                str(spec["summary"]),
+                use_for,
+                " ".join(profile_names),
+                str(spec["cost"]),
+                readiness,
+                profile_summary,
+                "inactive provider routing provider inactive",
+            ]
+        ).lower()
         lane_cards.append(
             "".join(
                 [
-                    f"<article class='profiles-matrix-card' data-profile-lane-key='{_e(spec['key'])}' data-profile-lane-status='{_e(readiness)}' data-profile-lane-provider-active='false'>",
+                    f"<article class='profiles-matrix-card' data-profile-lane-key='{_e(spec['key'])}' data-profile-lane-status='{_e(readiness)}' data-profile-lane-provider-active='false' "
+                    "data-profile-filter-item='true' "
+                    f"data-profile-filter-lane='{_e(spec['key'])}' "
+                    "data-profile-filter-kind='matrix_lane' "
+                    f"data-profile-filter-readiness='{_e(readiness)}' "
+                    f"data-profile-filter-cost='{_e(str(spec['cost']))}' "
+                    f"data-profile-filter-text='{_e(filter_text)}'>",
                     f"<h3>{_e(spec['label'])}</h3>",
                     f"<p>{_e(spec['summary'])}</p>",
                     f"<p><strong>Status:</strong> inactive provider routing; {_e(readiness.replace('_', ' '))}.</p>",
@@ -8960,6 +9054,115 @@ def _profiles_routing_matrix(
                 [
                     f"profiles_matrix_lane: {_e(str(spec['label']))} provider_routing_active=false model_routing_enabled=false"
                     for spec in lane_specs
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _profile_filter_line(
+    lane: str,
+    kind: str,
+    rendered: str,
+    *,
+    status: str = "unknown",
+    cost: str = "unknown",
+    extra: str = "",
+) -> str:
+    rendered_text = re.sub(r"<[^>]+>", " ", rendered)
+    text = " ".join([lane, kind, status, cost, extra, rendered_text, "provider inactive"]).lower()
+    return (
+        f"<span data-profile-filter-item='true' "
+        f"data-profile-filter-lane='{_e(lane)}' "
+        f"data-profile-filter-kind='{_e(kind)}' "
+        f"data-profile-filter-readiness='{_e(status)}' "
+        f"data-profile-filter-cost='{_e(cost)}' "
+        f"data-profile-filter-text='{_e(text)}'>{rendered}</span>"
+    )
+
+
+def _profile_routing_filter(
+    *,
+    total_filter_items: int,
+    matrix_count: int,
+    configured_count: int,
+    storage_count: int,
+    future_count: int,
+) -> str:
+    lanes = [
+        ("all", "All"),
+        ("planning", "Planning"),
+        ("coding", "Coding"),
+        ("review", "Review"),
+        ("docs", "Docs"),
+        ("cheap-model", "Cheap"),
+        ("frontier-model", "Frontier"),
+        ("storage", "Storage"),
+        ("configured", "Configured"),
+    ]
+    buttons = "".join(
+        [
+            (
+                f"<button type='button' class='profile-filter-button' "
+                f"data-profile-filter-kind='{_e(key)}' "
+                f"aria-pressed='{'true' if key == 'all' else 'false'}'>{_e(label)}</button>"
+            )
+            for key, label in lanes
+        ]
+    )
+    return "".join(
+        [
+            "<section id='profile-routing-filter' class='panel profile-routing-filter' "
+            "data-profile-routing-filter='true' "
+            "data-profile-routing-filter-storage-key='clankeros-profile-routing-filter'>",
+            "<h2>Profile Routing Filter</h2>",
+            "<p class='muted'>Narrow the inactive profile-routing matrix and profile rows without activating providers.</p>",
+            "<div class='profile-filter-controls' data-profile-filter-controls='true'>",
+            buttons,
+            "<label class='profile-filter-search'>Find "
+            "<input type='search' data-profile-filter-query='true' placeholder='profile, lane, cost, use case...'></label>",
+            "<button type='button' class='profile-filter-reset' data-profile-filter-reset='true'>Reset filter</button>",
+            "<span class='profile-filter-memory-status' data-profile-filter-view-status='true'>View: default</span>",
+            "</div>",
+            (
+                f"<p class='muted' data-profile-filter-status='true'>"
+                f"Showing {total_filter_items} of {total_filter_items} profile rows.</p>"
+            ),
+            "<p class='muted' data-profile-filter-empty='true' hidden>No profile rows match this filter.</p>",
+            "<details class='profile-filter-evidence' data-profile-routing-filter-evidence='true'>"
+            "<summary>Profile routing filter evidence</summary>",
+            _kv(
+                [
+                    ("profile_filter_status", "available"),
+                    ("profile_filter_total_rendered_rows", str(total_filter_items)),
+                    ("profile_filter_matrix_rows", str(matrix_count)),
+                    ("profile_filter_configured_rows", str(configured_count)),
+                    ("profile_filter_storage_rows", str(storage_count)),
+                    ("profile_filter_future_rows", str(future_count)),
+                    ("profile_filter_lanes", "all planning coding review docs cheap-model frontier-model storage configured"),
+                    ("profile_filter_persistence", "browser_local_view_memory"),
+                    ("profile_filter_memory_storage", "localStorage:clankeros-profile-routing-filter"),
+                    ("profile_filter_memory_fields", "lane query"),
+                    ("profile_filter_default", "all"),
+                    ("profile_filter_reset", "available"),
+                    ("profile_filter_provider_routing_active", "false"),
+                    ("profile_filter_model_routing_enabled", "false"),
+                    ("profile_filter_write_on_get", "false"),
+                    ("profile_filter_provider_calls_taken", "0"),
+                    ("profile_filter_network_actions_taken", "0"),
+                    ("profile_filter_external_effects_created", "false"),
+                    ("profile_filter_push_created", "false"),
+                    ("profile_filter_pr_created", "false"),
+                    ("profile_filter_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "profile_filter: filters already-rendered local profile rows and matrix cards only",
+                    "profile_filter: restores lane and query from browser storage",
+                    "profile_filter_safety: no provider, model routing, execution, push, PR, deploy, or external mutation",
                 ]
             ),
             "</details>",
@@ -39018,9 +39221,16 @@ def _html_page(
     .profiles-matrix-card h3 {{ margin-top:0; }}
     .profiles-matrix-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
     .profiles-matrix-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--warn); overflow-wrap:anywhere; text-decoration:none; background:var(--surface); color:var(--ink); }}
-    .profiles-state-details, .profiles-workbench-evidence, .profiles-command-evidence, .profiles-matrix-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .profiles-state-details summary, .profiles-workbench-evidence summary, .profiles-command-evidence summary, .profiles-matrix-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .profiles-state-details:not([open]) > :not(summary), .profiles-workbench-evidence:not([open]) > :not(summary), .profiles-command-evidence:not([open]) > :not(summary), .profiles-matrix-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .profile-routing-filter {{ border-left:4px solid var(--warn); }}
+    .profile-filter-controls {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0; }}
+    .profile-filter-button, .profile-filter-reset {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border:1px solid var(--line); background:var(--surface); color:var(--text); }}
+    .profile-filter-button[aria-pressed="true"] {{ border-color:var(--warn); background:var(--panel); color:var(--ink); }}
+    .profile-filter-search {{ display:inline-flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:min(100%, 280px); }}
+    .profile-filter-search input {{ min-width:min(100%, 230px); }}
+    .profile-filter-memory-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .profiles-state-details, .profiles-workbench-evidence, .profiles-command-evidence, .profiles-matrix-evidence, .profile-filter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .profiles-state-details summary, .profiles-workbench-evidence summary, .profiles-command-evidence summary, .profiles-matrix-evidence summary, .profile-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .profiles-state-details:not([open]) > :not(summary), .profiles-workbench-evidence:not([open]) > :not(summary), .profiles-command-evidence:not([open]) > :not(summary), .profiles-matrix-evidence:not([open]) > :not(summary), .profile-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
     .profiles-command-bar {{ border-left:4px solid var(--warn); }}
     .profiles-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .profiles-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -39229,6 +39439,7 @@ def _html_page(
     @media (max-width: 860px) {{ .approval-decision-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 640px) {{ .approval-filter-button, .approval-filter-reset, .approval-filter-search, .approval-filter-search input {{ width:100%; }} .approval-filter-controls {{ align-items:stretch; }} .approval-filter-memory-status {{ width:100%; }} }}
     @media (max-width: 640px) {{ .inbox-filter-button, .inbox-filter-reset, .inbox-filter-search, .inbox-filter-search input {{ width:100%; }} .inbox-filter-controls {{ align-items:stretch; }} .inbox-filter-memory-status {{ width:100%; }} }}
+    @media (max-width: 640px) {{ .profile-filter-button, .profile-filter-reset, .profile-filter-search, .profile-filter-search input {{ width:100%; }} .profile-filter-controls {{ align-items:stretch; }} .profile-filter-memory-status {{ width:100%; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .run-evidence-map dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
@@ -40199,6 +40410,125 @@ def _html_page(
         setInboxFilterViewStatus(filterPanel, "View: default");
       }}
     }}
+    function profileFilterStorageKey(filterPanel) {{
+      var key = filterPanel ? filterPanel.getAttribute("data-profile-routing-filter-storage-key") : "";
+      return key || "clankeros-profile-routing-filter";
+    }}
+    function setProfileFilterViewStatus(filterPanel, message) {{
+      var status = filterPanel ? filterPanel.querySelector("[data-profile-filter-view-status='true']") : null;
+      if (status) {{ status.textContent = message; }}
+    }}
+    function normalizeProfileFilterLane(filterPanel, lane) {{
+      var normalized = lane || "all";
+      var buttons = filterPanel ? Array.prototype.slice.call(filterPanel.querySelectorAll("[data-profile-filter-kind]")) : [];
+      var found = buttons.some(function(button) {{
+        return (button.getAttribute("data-profile-filter-kind") || "all") === normalized;
+      }});
+      return found ? normalized : "all";
+    }}
+    function selectedProfileFilterLane(filterPanel) {{
+      var active = filterPanel ? filterPanel.querySelector("[data-profile-filter-kind][aria-pressed='true']") : null;
+      return active ? active.getAttribute("data-profile-filter-kind") || "all" : "all";
+    }}
+    function saveProfileFilterState(filterPanel, state) {{
+      if (!window.localStorage || !filterPanel) {{ return; }}
+      try {{
+        window.localStorage.setItem(profileFilterStorageKey(filterPanel), JSON.stringify(state));
+        setProfileFilterViewStatus(filterPanel, "View: saved");
+      }} catch (error) {{
+        setProfileFilterViewStatus(filterPanel, "View: local only");
+      }}
+    }}
+    function restoreProfileFilterState() {{
+      var filterPanel = document.querySelector("[data-profile-routing-filter='true']");
+      if (!filterPanel) {{ return; }}
+      if (!window.localStorage) {{
+        setProfileFilterViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+      try {{
+        var raw = window.localStorage.getItem(profileFilterStorageKey(filterPanel));
+        if (!raw) {{
+          setProfileFilterViewStatus(filterPanel, "View: default");
+          return false;
+        }}
+        var saved = JSON.parse(raw);
+        updateProfileFilter({{
+          lane: saved && typeof saved.lane === "string" ? saved.lane : "all",
+          query: saved && typeof saved.query === "string" ? saved.query : "",
+          save: false
+        }});
+        setProfileFilterViewStatus(filterPanel, "View: restored");
+        return true;
+      }} catch (error) {{
+        setProfileFilterViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+    }}
+    function clearProfileFilterState() {{
+      var filterPanel = document.querySelector("[data-profile-routing-filter='true']");
+      if (filterPanel && window.localStorage) {{
+        try {{ window.localStorage.removeItem(profileFilterStorageKey(filterPanel)); }} catch (error) {{}}
+      }}
+      updateProfileFilter({{ lane: "all", query: "", save: false }});
+      setProfileFilterViewStatus(filterPanel, "View: reset");
+    }}
+    function updateProfileFilter(options) {{
+      var filterPanel = document.querySelector("[data-profile-routing-filter='true']");
+      if (!filterPanel) {{ return; }}
+      options = options || {{}};
+      var queryInput = filterPanel.querySelector("[data-profile-filter-query='true']");
+      var lane = normalizeProfileFilterLane(filterPanel, Object.prototype.hasOwnProperty.call(options, "lane") ? options.lane : selectedProfileFilterLane(filterPanel));
+      var query = Object.prototype.hasOwnProperty.call(options, "query") ? String(options.query || "") : (queryInput ? queryInput.value || "" : "");
+      if (queryInput && queryInput.value !== query) {{ queryInput.value = query; }}
+      var queryText = query.toLowerCase().trim();
+      var rows = Array.prototype.slice.call(document.querySelectorAll("[data-profile-filter-item='true']"));
+      var shown = 0;
+      rows.forEach(function(item) {{
+        var itemLane = item.getAttribute("data-profile-filter-lane") || "";
+        var itemKind = item.getAttribute("data-profile-filter-kind") || "";
+        var itemText = item.getAttribute("data-profile-filter-text") || item.textContent.toLowerCase();
+        var laneMatch = lane === "all"
+          || itemLane === lane
+          || itemKind === lane;
+        var textMatch = !queryText || itemText.indexOf(queryText) !== -1;
+        var match = laneMatch && textMatch;
+        var container = item.closest ? (item.closest("li") || item) : item;
+        if (container) {{ container.hidden = !match; }}
+        item.hidden = !match;
+        if (match) {{ shown += 1; }}
+      }});
+      Array.prototype.slice.call(filterPanel.querySelectorAll("[data-profile-filter-kind]")).forEach(function(button) {{
+        var active = (button.getAttribute("data-profile-filter-kind") || "all") === lane;
+        if (active) {{
+          button.setAttribute("data-profile-filter-active", "true");
+          button.setAttribute("aria-pressed", "true");
+        }} else {{
+          button.removeAttribute("data-profile-filter-active");
+          button.setAttribute("aria-pressed", "false");
+        }}
+      }});
+      var status = filterPanel.querySelector("[data-profile-filter-status='true']");
+      if (status) {{
+        var parts = [];
+        if (lane !== "all") {{ parts.push("lane " + lane.replace("-", " ")); }}
+        if (queryText) {{ parts.push("text " + queryText); }}
+        status.textContent = "Showing " + shown + " of " + rows.length + " profile rows" + (parts.length ? " matching " + parts.join(", ") : "") + ".";
+      }}
+      var empty = filterPanel.querySelector("[data-profile-filter-empty='true']");
+      if (empty) {{ empty.hidden = shown !== 0; }}
+      if (options.save !== false) {{
+        saveProfileFilterState(filterPanel, {{ lane: lane, query: query }});
+      }}
+    }}
+    function initializeProfileFilterState() {{
+      var filterPanel = document.querySelector("[data-profile-routing-filter='true']");
+      if (!filterPanel) {{ return; }}
+      if (!restoreProfileFilterState()) {{
+        updateProfileFilter({{ lane: "all", query: "", save: false }});
+        setProfileFilterViewStatus(filterPanel, "View: default");
+      }}
+    }}
     if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
     if (paletteSearch) {{ paletteSearch.addEventListener("input", syncPaletteFilter); }}
     if (nextActionOpen) {{ nextActionOpen.addEventListener("click", openNextAction); }}
@@ -40310,6 +40640,18 @@ def _html_page(
         updateInboxFilter({{ lane: inboxFilterButton.getAttribute("data-inbox-filter-kind") || "all" }});
         return;
       }}
+      var profileFilterReset = target.closest ? target.closest("[data-profile-filter-reset='true']") : null;
+      if (profileFilterReset) {{
+        event.preventDefault();
+        clearProfileFilterState();
+        return;
+      }}
+      var profileFilterButton = target.closest ? target.closest("[data-profile-filter-kind]") : null;
+      if (profileFilterButton) {{
+        event.preventDefault();
+        updateProfileFilter({{ lane: profileFilterButton.getAttribute("data-profile-filter-kind") || "all" }});
+        return;
+      }}
       var opener = target.closest ? target.closest("[data-open-details='true']") : null;
       if (!opener) {{ return; }}
       var href = opener.getAttribute("href") || "";
@@ -40340,6 +40682,10 @@ def _html_page(
       var inboxFilterQuery = target.closest ? target.closest("[data-inbox-filter-query='true']") : null;
       if (inboxFilterQuery) {{
         updateInboxFilter({{ query: inboxFilterQuery.value || "" }});
+      }}
+      var profileFilterQuery = target.closest ? target.closest("[data-profile-filter-query='true']") : null;
+      if (profileFilterQuery) {{
+        updateProfileFilter({{ query: profileFilterQuery.value || "" }});
       }}
     }});
     document.addEventListener("change", function(event) {{
@@ -40389,6 +40735,7 @@ def _html_page(
     initializeSkillsInventoryFilterState();
     initializeApprovalFilterState();
     initializeInboxFilterState();
+    initializeProfileFilterState();
     restoreWorkspacePanels();
     window.addEventListener("hashchange", openCurrentHashDetails);
     document.addEventListener("keydown", function(event) {{

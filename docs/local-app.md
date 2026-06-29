@@ -548,7 +548,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `provider_calls_taken=0`. A read-only `Profiles Command Bar` summarizes
   configured, storage, enabled, disabled, future-lane, adapter, write-posture,
   and `use_for` counts, points at the first storage/configured/future profile
-  review target, and keeps provider/model routing disabled.
+  review target, and keeps provider/model routing disabled. A browser-local
+  `Profile Routing Filter` narrows the already-rendered matrix cards and
+  profile rows by routing lane, storage/configured posture, or text, remembers
+  lane/query in `localStorage:clankeros-profile-routing-filter`, and resets
+  without enabling providers or model routing.
 - `/search` - bounded global search over indexed goals, projects, delegations,
   known artifacts, incidents, recommendations, memory, runs, approvals, and
   skill records. Goal results include live local phase, one next action, and

@@ -1,5 +1,52 @@
 # Status
 
+## 2026-06-29 Profile Routing Filter UX
+
+- Added a browser-local `Profile Routing Filter` to
+  `/profiles#profile-routing-filter` after the Profile Routing Matrix and
+  before configured/storage/future profile lists.
+- Operators can narrow already-rendered matrix cards and profile rows by All,
+  Planning, Coding, Review, Docs, Cheap Model, Frontier Model, Storage,
+  Configured, or local text search across lane, readiness, profile name,
+  label, mode, model placeholder, cost tier, `use_for`, write posture, adapter
+  posture, and inactive provider metadata.
+- The selected lane/query view is remembered in
+  `localStorage:clankeros-profile-routing-filter` and cleared with
+  `Reset filter`.
+- Profile matrix cards and list rows now expose stable
+  `data-profile-filter-item`, lane, kind, readiness, cost, and text metadata
+  so the filter can hide unmatched rendered rows without changing profile
+  records or enabling provider/model routing.
+- Workspace View Memory now includes the Profile Routing filter key, so
+  `/workspace#workspace-view-memory` can inspect and reset it with the rest of
+  the browser-local view state.
+- The behavior is browser-local display filtering only: no write on GET, no
+  provider routing activation, no model routing, no execution, no provider
+  calls, no network actions, no push, no PR, no deploy, and no external
+  mutation.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused profile pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  "profiles_route_reads_storage_profiles_without_enabling_providers"
+  --tb=short` passed with `1 passed, 515 deselected in 12.80s`; focused
+  route/demo pytest `python3 -m pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 52.47s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55623` showed `/profiles` rendering 22 filterable rows
+  with no desktop overflow, Cheap Model + text `failure_summary` filtering to
+  two visible rows, reload restoring that saved view, Storage +
+  `failure_summary` filtering to one visible storage profile row, Configured +
+  `failure_summary` showing the empty state with zero visible rows, Reset
+  filter returning All with 22 visible rows and staying default after reload,
+  mobile `390x844` stacking lane buttons, query, Reset filter, and status at
+  `329px` width inside a `358px` panel, Storage + `tester` filtering to one
+  visible row, no horizontal overflow, no console warnings/errors, and the
+  browser viewport reset after QA. GitHub Actions proof remains pending after
+  push.
+
 ## 2026-06-29 Inbox Queue Filter UX
 
 - Added a browser-local `Inbox Queue Filter` to

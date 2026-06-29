@@ -3067,6 +3067,51 @@ def test_profiles_route_reads_storage_profiles_without_enabling_providers(
     assert "profiles_matrix_provider_calls_taken</dt><dd>0" in profiles.body
     assert "profiles_matrix_network_actions_taken</dt><dd>0" in profiles.body
     assert "profiles_matrix_external_effects_created</dt><dd>false" in profiles.body
+    assert "Profile Routing Filter" in profiles.body
+    assert "data-profile-routing-filter='true'" in profiles.body
+    assert "data-profile-routing-filter-storage-key='clankeros-profile-routing-filter'" in profiles.body
+    assert "data-profile-filter-controls='true'" in profiles.body
+    assert "data-profile-filter-kind='all' aria-pressed='true'>All" in profiles.body
+    assert "data-profile-filter-kind='planning'" in profiles.body
+    assert "data-profile-filter-kind='coding'" in profiles.body
+    assert "data-profile-filter-kind='review'" in profiles.body
+    assert "data-profile-filter-kind='docs'" in profiles.body
+    assert "data-profile-filter-kind='cheap-model'" in profiles.body
+    assert "data-profile-filter-kind='frontier-model'" in profiles.body
+    assert "data-profile-filter-kind='storage'" in profiles.body
+    assert "data-profile-filter-kind='configured'" in profiles.body
+    assert "data-profile-filter-query='true'" in profiles.body
+    assert "data-profile-filter-reset='true'>Reset filter" in profiles.body
+    assert "data-profile-filter-view-status='true'>View: default" in profiles.body
+    assert "data-profile-filter-status='true'>Showing 22 of 22 profile rows." in profiles.body
+    assert "data-profile-filter-empty='true' hidden" in profiles.body
+    assert "data-profile-routing-filter-evidence='true'" in profiles.body
+    assert "data-profile-filter-lane='planning' data-profile-filter-kind='matrix_lane'" in profiles.body
+    assert "data-profile-filter-lane='configured' data-profile-filter-kind='configured_profile'" in profiles.body
+    assert "data-profile-filter-lane='storage' data-profile-filter-kind='storage_profile'" in profiles.body
+    assert "data-profile-filter-lane='cheap-model' data-profile-filter-kind='future_lane'" in profiles.body
+    assert "profile_filter_total_rendered_rows</dt><dd>22" in profiles.body
+    assert "profile_filter_matrix_rows</dt><dd>6" in profiles.body
+    assert "profile_filter_configured_rows</dt><dd>5" in profiles.body
+    assert "profile_filter_storage_rows</dt><dd>5" in profiles.body
+    assert "profile_filter_future_rows</dt><dd>6" in profiles.body
+    assert "profile_filter_lanes</dt><dd>all planning coding review docs cheap-model frontier-model storage configured" in profiles.body
+    assert "profile_filter_memory_storage</dt><dd>localStorage:clankeros-profile-routing-filter" in profiles.body
+    assert "profile_filter_memory_fields</dt><dd>lane query" in profiles.body
+    assert "profile_filter_provider_routing_active</dt><dd>false" in profiles.body
+    assert "profile_filter_model_routing_enabled</dt><dd>false" in profiles.body
+    assert "profile_filter_write_on_get</dt><dd>false" in profiles.body
+    assert "profile_filter_provider_calls_taken</dt><dd>0" in profiles.body
+    assert "profile_filter_network_actions_taken</dt><dd>0" in profiles.body
+    assert "profile_filter_external_effects_created</dt><dd>false" in profiles.body
+    assert "window.localStorage.setItem(profileFilterStorageKey(filterPanel), JSON.stringify(state))" in profiles.body
+    assert "window.localStorage.removeItem(profileFilterStorageKey(filterPanel))" in profiles.body
+    assert profiles.body.index("data-profiles-routing-matrix='true'") < profiles.body.index(
+        "data-profile-routing-filter='true'"
+    )
+    assert profiles.body.index("data-profile-routing-filter='true'") < profiles.body.index(
+        "id='profiles-configured'"
+    )
     assert "Break ambiguous goals into milestones" in profiles.body
     assert "Route repeatable search, triage, and failure-summary work" in profiles.body
     assert "Profiles Command Bar" in profiles.body
@@ -6284,7 +6329,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 11
+    assert workspace.body.count("class='workspace-view-memory-card") == 12
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
     assert "data-workspace-view-memory-card='goal-board'" in workspace.body
@@ -6296,6 +6341,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-card='skills'" in workspace.body
     assert "data-workspace-view-memory-card='approvals'" in workspace.body
     assert "data-workspace-view-memory-card='inbox'" in workspace.body
+    assert "data-workspace-view-memory-card='profiles'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-theme'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-focus-mode'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-goal-board-view'" in workspace.body
@@ -6303,6 +6349,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-skills-inventory-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-approval-queue-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-inbox-queue-filter'" in workspace.body
+    assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-profile-routing-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-search-result-lane:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-timeline-lane:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-artifact-filter:'" in workspace.body
@@ -6311,8 +6358,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>11" in workspace.body
-    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>12" in workspace.body
+    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
     assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
@@ -6328,7 +6375,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: skills mode=exact key=clankeros-skills-inventory-filter" in workspace.body
     assert "workspace_view_memory_card: approvals mode=exact key=clankeros-approval-queue-filter" in workspace.body
     assert "workspace_view_memory_card: inbox mode=exact key=clankeros-inbox-queue-filter" in workspace.body
-    assert "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory skills approvals inbox" in workspace.body
+    assert "workspace_view_memory_card: profiles mode=exact key=clankeros-profile-routing-filter" in workspace.body
+    assert "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory skills approvals inbox profiles" in workspace.body
     assert "window.localStorage.removeItem(key)" in workspace.body
     assert "candidate.indexOf(key) === 0" in workspace.body
     assert "delete document.documentElement.dataset.theme" in workspace.body
@@ -13752,6 +13800,31 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "profiles_matrix_provider_calls_taken</dt><dd>0" in profiles.body
     assert "profiles_matrix_network_actions_taken</dt><dd>0" in profiles.body
     assert "profiles_matrix_external_effects_created</dt><dd>false" in profiles.body
+    assert "Profile Routing Filter" in profiles.body
+    assert "data-profile-routing-filter='true'" in profiles.body
+    assert "data-profile-routing-filter-storage-key='clankeros-profile-routing-filter'" in profiles.body
+    assert "data-profile-filter-status='true'>Showing 13 of 13 profile rows." in profiles.body
+    assert "data-profile-filter-view-status='true'>View: default" in profiles.body
+    assert "data-profile-filter-empty='true' hidden" in profiles.body
+    assert "data-profile-routing-filter-evidence='true'" in profiles.body
+    assert "data-profile-filter-lane='planning' data-profile-filter-kind='matrix_lane'" in profiles.body
+    assert "data-profile-filter-lane='storage' data-profile-filter-kind='storage_profile'" in profiles.body
+    assert "data-profile-filter-lane='frontier-model' data-profile-filter-kind='future_lane'" in profiles.body
+    assert "profile_filter_total_rendered_rows</dt><dd>13" in profiles.body
+    assert "profile_filter_matrix_rows</dt><dd>6" in profiles.body
+    assert "profile_filter_configured_rows</dt><dd>0" in profiles.body
+    assert "profile_filter_storage_rows</dt><dd>1" in profiles.body
+    assert "profile_filter_future_rows</dt><dd>6" in profiles.body
+    assert "profile_filter_memory_storage</dt><dd>localStorage:clankeros-profile-routing-filter" in profiles.body
+    assert "profile_filter_provider_routing_active</dt><dd>false" in profiles.body
+    assert "profile_filter_network_actions_taken</dt><dd>0" in profiles.body
+    assert "profile_filter_external_effects_created</dt><dd>false" in profiles.body
+    assert profiles.body.index("data-profiles-routing-matrix='true'") < profiles.body.index(
+        "data-profile-routing-filter='true'"
+    )
+    assert profiles.body.index("data-profile-routing-filter='true'") < profiles.body.index(
+        "id='profiles-configured'"
+    )
     assert "Reserve expensive reasoning for architecture, risky coding, and hard reviews" in profiles.body
     assert "Profiles Command Bar" in profiles.body
     assert "data-profiles-command-bar='true'" in profiles.body
