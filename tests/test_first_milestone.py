@@ -6090,7 +6090,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_restore_map_open_goal_saved</dt><dd>true" in workspace_saved.body
     assert "workspace_restore_map_resume_hub_surface</dt><dd><a href='/resume'>/resume</a>" in workspace_saved.body
     resume_saved = render_local_app_route(tmp_path, "/resume")
-    assert "Open saved surface /goals/goal_demo#goal-timeline-command-bar" in resume_saved.body
+    assert "Open saved surface for goal_demo" in resume_saved.body
     assert (
         "resume_saved_surface</dt><dd><a href='/goals/goal_demo#goal-timeline-command-bar'>"
         "/goals/goal_demo#goal-timeline-command-bar</a>"
@@ -6098,6 +6098,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     home_with_workspace = render_local_app_route(tmp_path, "/")
     assert "Home Resume Workspace" in home_with_workspace.body
     assert "resume_goal: <a href='/goals/goal_demo'>goal_demo</a>" in home_with_workspace.body
+    assert "resume_goal_id: goal_demo" in home_with_workspace.body
+    assert "resume_goal_label_source: id_fallback" in home_with_workspace.body
     assert "resume_project: <a href='/projects/first-app'>first-app</a>" in home_with_workspace.body
     assert (
         "resume_surface: <a href='/goals/goal_demo#goal-timeline-command-bar'>"
@@ -8303,8 +8305,14 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert goal_workspace["updated_by"] == "create-goal"
     resume = render_local_app_route(tmp_path, "/resume")
     assert "resume_workspace_available</dt><dd>true" in resume.body
-    assert f"resume_goal: <a href='/goals/{created_goal_id}'>{created_goal_id}</a>" in resume.body
-    assert f"Open saved surface /goals/{created_goal_id}" in resume.body
+    assert (
+        f"resume_goal: <a href='/goals/{created_goal_id}'>"
+        "Create a browser-first first-run workflow</a>"
+        in resume.body
+    )
+    assert f"resume_goal_id: {created_goal_id}" in resume.body
+    assert "resume_goal_label_source: title" in resume.body
+    assert "Open saved surface for Create a browser-first first-run workflow" in resume.body
     assert "Resume Operator Workbench" in resume.body
     assert "data-resume-state-details='true'" in resume.body
     assert "data-resume-workbench-primary='true'" in resume.body
@@ -8320,7 +8328,14 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "resume_workbench_ready</dt><dd>false" in resume.body
     assert "resume_workbench_readiness_status</dt><dd>partial" in resume.body
     assert "resume_workbench_project</dt><dd><a href='/projects/clankeros'>clankeros</a>" in resume.body
-    assert f"resume_workbench_goal</dt><dd><a href='/goals/{created_goal_id}'>{created_goal_id}</a>" in resume.body
+    assert f"resume_workbench_goal_id</dt><dd>{created_goal_id}" in resume.body
+    assert "resume_workbench_goal_label</dt><dd>Create a browser-first first-run workflow" in resume.body
+    assert "resume_workbench_goal_label_source</dt><dd>title" in resume.body
+    assert (
+        f"resume_workbench_goal</dt><dd><a href='/goals/{created_goal_id}'>"
+        "Create a browser-first first-run workflow</a>"
+        in resume.body
+    )
     assert "resume_workbench_phase</dt><dd>Ready for delegation" in resume.body
     assert "resume_workbench_next_action</dt><dd>Create scout delegation" in resume.body
     assert "resume_workbench_primary_surface</dt><dd><a href='#resume-action-form'>Use resume action form</a>" in resume.body
@@ -8340,7 +8355,13 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "resume_current_phase</dt><dd>Ready for delegation" in resume.body
     assert "resume_next_action</dt><dd>Create scout delegation" in resume.body
     home = render_local_app_route(tmp_path, "/")
-    assert f"resume_goal: <a href='/goals/{created_goal_id}'>{created_goal_id}</a>" in home.body
+    assert (
+        f"resume_goal: <a href='/goals/{created_goal_id}'>"
+        "Create a browser-first first-run workflow</a>"
+        in home.body
+    )
+    assert f"resume_goal_id: {created_goal_id}" in home.body
+    assert "resume_goal_label_source: title" in home.body
     assert "home_resume_next_action: Create scout delegation" in home.body
 
 
@@ -9141,6 +9162,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in workspace_with_demo.body
     assert "workspace_restore_map_project</dt><dd>local-app-demo" in workspace_with_demo.body
     assert f"workspace_restore_map_goal</dt><dd>{result.goal_id}" in workspace_with_demo.body
+    assert (
+        "workspace_restore_map_goal_label</dt><dd>"
+        "Demo the ClankerOS local operator app with fixture-backed state"
+        in workspace_with_demo.body
+    )
+    assert "workspace_restore_map_goal_label_source</dt><dd>title" in workspace_with_demo.body
     assert result.review_path.relative_to(tmp_path).as_posix() in workspace_with_demo.body
     assert "workspace_restore_map_filters_status</dt><dd>suggested" in workspace_with_demo.body
     assert "workspace_restore_map_panels_status</dt><dd>suggested" in workspace_with_demo.body
@@ -12341,6 +12368,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workspace_workbench_ready</dt><dd>true" in restored_workspace.body
     assert "workspace_workbench_readiness_status</dt><dd>ready" in restored_workspace.body
     assert f"workspace_workbench_project</dt><dd><a href='/projects/{result.project_id}'" in restored_workspace.body
+    assert f"workspace_workbench_goal_id</dt><dd>{result.goal_id}" in restored_workspace.body
+    assert (
+        "workspace_workbench_goal_label</dt><dd>"
+        "Demo the ClankerOS local operator app with fixture-backed state"
+        in restored_workspace.body
+    )
+    assert "workspace_workbench_goal_label_source</dt><dd>title" in restored_workspace.body
     assert f"workspace_workbench_goal</dt><dd><a href='/goals/{result.goal_id}'" in restored_workspace.body
     assert "workspace_workbench_phase</dt><dd>Ready to commit" in restored_workspace.body
     assert "workspace_workbench_current_gate</dt><dd>commit_request" in restored_workspace.body
@@ -12464,7 +12498,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_operator_board_waiting_items</dt><dd>1" in restored_home.body
     assert "home_operator_board_click: <a href='#home-resume-action-form'>Use Home action form</a>" in restored_home.body
     assert "Home Resume Workspace" in restored_home.body
-    assert f"resume_goal: <a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in restored_home.body
+    assert (
+        f"resume_goal: <a href='/goals/{result.goal_id}'>"
+        "Demo the ClankerOS local operator app with fixture-backed state</a>"
+        in restored_home.body
+    )
+    assert f"resume_goal_id: {result.goal_id}" in restored_home.body
+    assert "resume_goal_label_source: title" in restored_home.body
     assert f"resume_project: <a href='/projects/{result.project_id}'>{result.project_id}</a>" in restored_home.body
     assert (
         f"resume_surface: <a href='/goals/{result.goal_id}'>/goals/{result.goal_id}</a>"
@@ -12545,6 +12585,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "resume_command_ready</dt><dd>true" in resume.body
     assert "resume_command_readiness_status</dt><dd>ready" in resume.body
     assert f"resume_command_project</dt><dd><a href='/projects/{result.project_id}'" in resume.body
+    assert f"resume_command_goal_id</dt><dd>{result.goal_id}" in resume.body
+    assert (
+        "resume_command_goal_label</dt><dd>"
+        "Demo the ClankerOS local operator app with fixture-backed state"
+        in resume.body
+    )
+    assert "resume_command_goal_label_source</dt><dd>title" in resume.body
     assert f"resume_command_goal</dt><dd><a href='/goals/{result.goal_id}'" in resume.body
     assert "resume_command_current_phase</dt><dd>Ready to commit" in resume.body
     assert "resume_command_current_gate</dt><dd>commit_request" in resume.body
@@ -12568,7 +12615,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "[project] -&gt; [goal] -&gt; [filters/panels] -&gt; [artifact] -&gt; [next action]" in resume.body
     assert "resume_readiness_write_on_get</dt><dd>false" in resume.body
     assert "resume_readiness_external_effects_created</dt><dd>false" in resume.body
-    assert f"resume_goal: <a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in resume.body
+    assert (
+        f"resume_goal: <a href='/goals/{result.goal_id}'>"
+        "Demo the ClankerOS local operator app with fixture-backed state</a>"
+        in resume.body
+    )
+    assert f"resume_goal_id: {result.goal_id}" in resume.body
+    assert "resume_goal_label_source: title" in resume.body
     assert f"resume_project: <a href='/projects/{result.project_id}'>{result.project_id}</a>" in resume.body
     assert "resume_artifact" in resume.body
     assert resume_artifact in resume.body
@@ -12578,7 +12631,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"resume_saved_surface</dt><dd><a href='/goals/{result.goal_id}'>"
         f"/goals/{result.goal_id}</a>"
     ) in resume.body
-    assert f"Open saved surface /goals/{result.goal_id}" in resume.body
+    assert "Open saved surface for Demo the ClankerOS local operator app with fixture-backed state" in resume.body
     assert "Resume Next Action" in resume.body
     assert "resume_current_phase</dt><dd>Ready to commit" in resume.body
     assert "resume_next_action</dt><dd>Create commit request" in resume.body

@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Saved workspace and return-to-work surfaces are now Goal title-first: Home,
+  `/resume`, `/workspace`, Workspace Restore Map, and the Goal resume snapshot
+  show human Goal titles for visible saved Goal links while retaining raw Goal
+  ids plus label-source fields in collapsed evidence.
 - `/inbox` and `/approvals` queue Goal links are now title-first: Inbox Next
   Item Brief, Inbox Operator Workbench, and Approval Operator Workbench show
   the human Goal title in visible Goal cards and links while retaining raw Goal

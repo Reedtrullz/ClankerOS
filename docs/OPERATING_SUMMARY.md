@@ -146,7 +146,10 @@ Core layers for the bootstrap:
   available, readiness repair, blocker routing, last-artifact readback, and the
   existing `/workspace#save-workspace` finish surface. When `resume_surface`
   exists, `/resume` opens that exact local route as the primary return target
-  before falling back to the saved Goal or project. A read-only
+  before falling back to the saved Goal or project. Saved Goal links on Home,
+  `/resume`, `/workspace`, and the Goal resume snapshot are title-first when a
+  title exists, while exact Goal ids and label-source fields remain in
+  collapsed evidence for review and automation. A read-only
   `Resume Command Bar` follows with readiness,
   current phase/gate, one next action, target surface, action-form
   availability, last artifact, and zero-effect counters inside collapsed

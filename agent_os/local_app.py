@@ -3973,7 +3973,10 @@ def _home_resume_workspace(root: Path, lead_goal: sqlite3.Row | None) -> str:
         f"workspace_expanded_panels: {_e(expanded or 'none')}",
     ]
     if open_goal:
-        lines.append(f"resume_goal: <a href='/goals/{quote(open_goal)}'>{_e(open_goal)}</a>")
+        _goal_href, _goal_label, goal_label_source, goal_surface = _goal_display_link(root, open_goal)
+        lines.append(f"resume_goal: {goal_surface}")
+        lines.append(f"resume_goal_id: {_e(open_goal)}")
+        lines.append(f"resume_goal_label_source: {_e(goal_label_source)}")
     if open_project:
         lines.append(f"resume_project: <a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>")
     if last_artifact:
@@ -4865,8 +4868,11 @@ def _resume_page(root: Path) -> str:
     )
 
     targets: list[str] = []
+    goal_href, goal_label, goal_label_source, goal_surface = _goal_display_link(root, open_goal)
     if open_goal:
-        targets.append(f"resume_goal: <a href='/goals/{quote(open_goal)}'>{_e(open_goal)}</a>")
+        targets.append(f"resume_goal: {goal_surface}")
+        targets.append(f"resume_goal_id: {_e(open_goal)}")
+        targets.append(f"resume_goal_label_source: {_e(goal_label_source)}")
     if open_project:
         targets.append(f"resume_project: <a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>")
     if last_artifact:
@@ -4898,10 +4904,10 @@ def _resume_page(root: Path) -> str:
     next_label = str(first_run_context["target_label"]) if first_run_context else "Open Goal Cockpit"
     if resume_surface:
         next_href = resume_surface
-        next_label = f"Open saved surface {resume_surface}"
+        next_label = f"Open saved surface for {goal_label}" if open_goal else f"Open saved surface {resume_surface}"
     elif open_goal:
-        next_href = f"/goals/{quote(open_goal)}"
-        next_label = f"Open saved goal {open_goal}"
+        next_href = goal_href
+        next_label = f"Open saved goal {goal_label}"
     elif first_run_context is None and open_project:
         next_href = f"/projects/{quote(open_project)}"
         next_label = f"Open saved project {open_project}"
@@ -5036,8 +5042,10 @@ def _resume_command_bar(
             f"<a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>"
         )
     goal_value: str | SafeHtml = "none"
+    goal_label = ""
+    goal_label_source = "none"
     if open_goal:
-        goal_value = SafeHtml(f"<a href='/goals/{quote(open_goal)}'>{_e(open_goal)}</a>")
+        _goal_href, goal_label, goal_label_source, goal_value = _goal_display_link(root, open_goal)
     artifact_value: str | SafeHtml = "none"
     if last_artifact:
         artifact_value = SafeHtml(_artifact_link(last_artifact))
@@ -5048,6 +5056,9 @@ def _resume_command_bar(
         ("resume_command_ready", "true" if readiness["ready"] else "false"),
         ("resume_command_readiness_status", str(readiness["status"])),
         ("resume_command_project", project_value),
+        ("resume_command_goal_id", open_goal or "none"),
+        ("resume_command_goal_label", goal_label or "none"),
+        ("resume_command_goal_label_source", goal_label_source),
         ("resume_command_goal", goal_value),
         ("resume_command_current_phase", phase),
         ("resume_command_current_gate", current_gate),
@@ -5251,10 +5262,10 @@ def _resume_operator_workbench(
             f"<a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>"
         )
     goal_surface: str | SafeHtml = "none"
+    goal_label = ""
+    goal_label_source = "none"
     if open_goal:
-        goal_surface = SafeHtml(
-            f"<a href='/goals/{quote(open_goal)}'>{_e(open_goal)}</a>"
-        )
+        _goal_href, goal_label, goal_label_source, goal_surface = _goal_display_link(root, open_goal)
     artifact_surface: str | SafeHtml = "none"
     if last_artifact:
         artifact_surface = SafeHtml(_artifact_link(last_artifact))
@@ -5296,6 +5307,9 @@ def _resume_operator_workbench(
                     ("resume_workbench_ready", "true" if readiness["ready"] else "false"),
                     ("resume_workbench_readiness_status", str(readiness["status"])),
                     ("resume_workbench_project", project_surface),
+                    ("resume_workbench_goal_id", open_goal or "none"),
+                    ("resume_workbench_goal_label", goal_label or "none"),
+                    ("resume_workbench_goal_label_source", goal_label_source),
                     ("resume_workbench_goal", goal_surface),
                     ("resume_workbench_phase", phase),
                     ("resume_workbench_current_gate", current_gate),
@@ -5711,10 +5725,13 @@ def _workspace_page(root: Path) -> str:
     resume_surface = _safe_local_return_path(state.get("resume_surface")) or ""
     save_defaults = _workspace_save_defaults(root, state)
     restore_links = []
+    _goal_href, _goal_label, goal_label_source, goal_surface = _goal_display_link(root, open_goal)
     if open_project:
         restore_links.append(f"open_project: <a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>")
     if open_goal:
-        restore_links.append(f"open_goal: <a href='/goals/{quote(open_goal)}'>{_e(open_goal)}</a>")
+        restore_links.append(f"open_goal: {goal_surface}")
+        restore_links.append(f"open_goal_id: {_e(open_goal)}")
+        restore_links.append(f"open_goal_label_source: {_e(goal_label_source)}")
     if last_artifact:
         restore_links.append(f"last_viewed_artifact: {_artifact_link(last_artifact)}")
     if resume_surface:
@@ -5959,7 +5976,11 @@ def _workspace_restore_map(
     panel_status = "saved" if expanded else ("suggested" if save_defaults["expanded_panels"] else "missing")
 
     goal_href = f"/goals/{quote(goal_id)}" if goal_id else "/goals"
-    goal_label = goal_id or "/goals"
+    goal_label = "/goals"
+    goal_label_source = "none"
+    goal_surface: str | SafeHtml = SafeHtml("<a href='/goals'>/goals</a>")
+    if goal_id:
+        goal_href, goal_label, goal_label_source, goal_surface = _goal_display_link(root, goal_id)
     artifact_href = f"/artifacts?path={quote(artifact_path)}" if artifact_path else "#save-workspace"
     artifact_label = "Last artifact" if artifact_path else "No artifact saved"
     preferences_text = f"filters={filter_status} panels={panel_status}"
@@ -6054,6 +6075,9 @@ def _workspace_restore_map(
                     ),
                     ("workspace_restore_map_project", project_id or "none"),
                     ("workspace_restore_map_goal", goal_id or "none"),
+                    ("workspace_restore_map_goal_label", goal_label if goal_id else "none"),
+                    ("workspace_restore_map_goal_label_source", goal_label_source),
+                    ("workspace_restore_map_goal_surface", goal_surface if goal_id else "none"),
                     (
                         "workspace_restore_map_last_artifact",
                         SafeHtml(_artifact_link(artifact_path)) if artifact_path else "none",
@@ -6442,10 +6466,10 @@ def _workspace_operator_workbench(
             f"<a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>"
         )
     goal_surface: str | SafeHtml = "none"
+    goal_label = ""
+    goal_label_source = "none"
     if open_goal:
-        goal_surface = SafeHtml(
-            f"<a href='/goals/{quote(open_goal)}'>{_e(open_goal)}</a>"
-        )
+        _goal_href, goal_label, goal_label_source, goal_surface = _goal_display_link(root, open_goal)
     artifact_surface: str | SafeHtml = "none"
     if last_artifact:
         artifact_surface = SafeHtml(_artifact_link(last_artifact))
@@ -6487,6 +6511,9 @@ def _workspace_operator_workbench(
                     ("workspace_workbench_ready", "true" if readiness["ready"] else "false"),
                     ("workspace_workbench_readiness_status", str(readiness["status"])),
                     ("workspace_workbench_project", project_surface),
+                    ("workspace_workbench_goal_id", open_goal or "none"),
+                    ("workspace_workbench_goal_label", goal_label or "none"),
+                    ("workspace_workbench_goal_label_source", goal_label_source),
                     ("workspace_workbench_goal", goal_surface),
                     ("workspace_workbench_phase", phase),
                     ("workspace_workbench_current_gate", current_gate),
@@ -8747,6 +8774,15 @@ def _goal_display_label(root: Path, goal_id: str) -> tuple[str, str]:
         return title, source
     except Exception:
         return goal_id, "id_fallback"
+
+
+def _goal_display_link(root: Path, goal_id: str) -> tuple[str, str, str, str | SafeHtml]:
+    goal_id = str(goal_id or "").strip()
+    if not goal_id:
+        return "/goals", "/goals", "none", SafeHtml("<a href='/goals'>/goals</a>")
+    label, source = _goal_display_label(root, goal_id)
+    href = f"/goals/{quote(goal_id)}"
+    return href, label, source, SafeHtml(f"<a href='{_e(href)}'>{_e(label)}</a>")
 
 
 def _goals(root: Path) -> str:
@@ -13383,11 +13419,16 @@ def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
     workspace_available = any([saved_goal, saved_project, saved_filters, saved_panels, saved_artifact])
     goal_matches = saved_goal == goal.id
     project_matches = saved_project == goal.project_id
-    saved_goal_link = (
-        SafeHtml(f"<a href='/goals/{quote(saved_goal)}'>{_e(saved_goal)}</a>")
-        if saved_goal
-        else "none"
+    current_goal_href, current_goal_label, current_goal_label_source, current_goal_link = _goal_display_link(
+        root, goal.id
     )
+    saved_goal_label = ""
+    saved_goal_label_source = "none"
+    saved_goal_link: str | SafeHtml = "none"
+    if saved_goal:
+        _saved_goal_href, saved_goal_label, saved_goal_label_source, saved_goal_link = _goal_display_link(
+            root, saved_goal
+        )
     saved_project_link = (
         SafeHtml(f"<a href='/projects/{quote(saved_project)}'>{_e(saved_project)}</a>")
         if saved_project
@@ -13420,7 +13461,7 @@ def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
             "</article>",
             "<article class='goal-resume-card' data-goal-resume-current='true'>"
             "<h3>Current</h3>"
-            f"<p>{_e(goal.project_id)} · {_e(goal.id)}</p>"
+            f"<p>{_e(goal.project_id)} · {_e(current_goal_label)}</p>"
             "<a class='goal-resume-link' href='#goal-current-phase'>Phase</a>"
             "</article>",
             "<article class='goal-resume-card' data-goal-resume-saved='true'>"
@@ -13442,9 +13483,13 @@ def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
             "<details class='goal-resume-evidence' data-goal-resume-evidence='true'><summary>Goal resume evidence</summary>",
             _kv(
                 [
-                    ("goal_resume_current_goal", SafeHtml(f"<a href='/goals/{quote(goal.id)}'>{_e(goal.id)}</a>")),
+                    ("goal_resume_current_goal", current_goal_link),
+                    ("goal_resume_current_goal_id", goal.id),
+                    ("goal_resume_current_goal_label_source", current_goal_label_source),
                     ("goal_resume_current_project", SafeHtml(f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a>")),
                     ("saved_workspace_goal", saved_goal_link),
+                    ("saved_workspace_goal_id", saved_goal or "none"),
+                    ("saved_workspace_goal_label_source", saved_goal_label_source),
                     ("saved_workspace_project", saved_project_link),
                     ("workspace_goal_matches_current", "true" if goal_matches else "false"),
                     ("workspace_updated_at", workspace.get("updated_at", "never") or "never"),

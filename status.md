@@ -1,5 +1,31 @@
 # Status
 
+## 2026-06-29 Saved Workspace Goal Title-First UX
+
+- Made saved workspace and return-to-work Goal identity title-first.
+- Home Resume Workspace, `/resume` targets, `Resume Command Bar`,
+  `Resume Operator Workbench`, `/workspace` restore links, Workspace Restore
+  Map, Workspace Operator Workbench, and the Goal resume snapshot now render
+  visible saved Goal links with the human Goal title when one exists.
+- Raw Goal ids remain available through explicit `*_goal_id` fields, and
+  label-source fields record whether the visible label came from `title` or a
+  fallback.
+- `/resume` now labels its primary saved-surface action as
+  `Open saved surface for <Goal title>` when a saved Goal is present, while
+  retaining the exact saved `resume_surface` route in evidence.
+- Updated README, local app docs, operating summary, current status focus, and
+  first-run/demo route assertions for the return-to-work title-first contract.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `python3 -m compileall -q agent_os tests`, focused
+  `tests/test_first_milestone.py` route/demo coverage
+  (`2 passed, 514 deselected in 49.21s`), bounded `app-smoke-test`, bounded
+  `app-demo-smoke-test`, and `git diff --check`.
+- Non-claims: no browser screenshot QA for this slice, no write on GET, no
+  workspace save without confirmation, no approval or execution on GET, no
+  app-side GitHub polling, no provider calls, no external mutation, no PR
+  creation, and no deploy from ClankerOS itself.
+
 ## 2026-06-29 Queue Goal Title-First UX
 
 - Made `/inbox` and `/approvals` queue Goal links title-first.

@@ -117,7 +117,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Resume Operator Workbench` before shared route/focus diagnostics or command
   readback, links the saved goal, project, and last artifact, preserves filters
   and expanded panel readbacks, and keeps saved-state, command, and workbench
-  evidence collapsed by default. The workbench turns the saved context into
+  evidence collapsed by default. Saved Goal links on Home, `/resume`,
+  `/workspace`, and the Goal resume snapshot are title-first when a title
+  exists, while raw Goal ids and label-source fields remain available in
+  collapsed evidence for review and automation. The workbench turns the saved context into
   do/check/unblock/finish cards, same-page action-form routing, blocker
   routing, last-artifact readback, and a `/workspace#save-workspace` finish
   surface. A read-only `Resume Command Bar` follows with readiness, current
@@ -502,7 +505,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   saved-state evidence, so saved workspace pages lead with do/check/unblock/
   finish cards, same-page action-form routing, blocker routing, last-artifact
   readback, and a Finish Today link that opens the collapsed `save-workspace`
-  form. The read-only `Workspace Daily Brief` and `Workspace Workflow Map`
+  form. The read-only `Workspace Restore Map` uses the human Goal title for
+  the visible Goal card when available, while retaining the exact saved Goal
+  id, label source, and route evidence. The read-only `Workspace Daily Brief` and `Workspace Workflow Map`
   follow with the saved goal's current gate, lifecycle progress, next surface,
   and zero-effect counters, while saved-state and restore-link readbacks stay
   inside collapsed evidence. Before a saved Goal exists, the same daily brief,
