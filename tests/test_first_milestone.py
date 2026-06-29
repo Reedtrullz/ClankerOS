@@ -10727,6 +10727,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-board-sort='open_work' aria-pressed='false'" in goals.body
     assert "data-goal-board-sort='progress' aria-pressed='false'" in goals.body
     assert "data-goal-board-sort='title' aria-pressed='false'" in goals.body
+    assert "data-goal-board-view-memory='true'" in goals.body
+    assert "data-goal-board-view-status='true'>View: default</span>" in goals.body
+    assert "data-goal-board-view-reset='true'>Reset view</button>" in goals.body
     assert "data-goal-board-filter-empty='true' hidden" in goals.body
     assert "goal_board_filter_status</dt><dd>available" in goals.body
     assert "goal_board_filter_total_goals</dt><dd>1" in goals.body
@@ -10738,6 +10741,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_board_sort_modes</dt><dd>updated waiting open_work progress title" in goals.body
     assert "goal_board_sort_default</dt><dd>updated" in goals.body
     assert "goal_board_sort_scope</dt><dd>browser-local card reorder within existing lanes" in goals.body
+    assert "goal_board_view_memory_status</dt><dd>available" in goals.body
+    assert "goal_board_view_memory_storage</dt><dd>localStorage:clankeros-goal-board-view" in goals.body
+    assert "goal_board_view_memory_fields</dt><dd>query mode sort" in goals.body
+    assert "goal_board_view_memory_reset</dt><dd>available" in goals.body
+    assert "goal_board_view_memory_write_on_get</dt><dd>false" in goals.body
     assert "goal_board_filter_write_on_get</dt><dd>false" in goals.body
     assert "goal_board_filter_network_actions_taken</dt><dd>0" in goals.body
     assert "goal_board_filter_external_effects_created</dt><dd>false" in goals.body
@@ -10745,6 +10753,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_board_filter_mode: active -> 1 goals" in goals.body
     assert "goal_board_sort_default: updated -> newest Goal cards first" in goals.body
     assert "goal_board_sort: waiting open_work progress title are browser-local only" in goals.body
+    assert "goal_board_view_memory: restores query mode sort from browser storage" in goals.body
+    assert "goal_board_view_reset: clears browser-local Goal board view" in goals.body
     assert "goal_board_filter_safety: browser-local row filtering only" in goals.body
     assert goals.body.index("id='goal-start-another'") < goals.body.index(
         "id='goal-board-filter'"
@@ -10774,10 +10784,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-board-search='" in goals.body
     assert "demo the clankeros local operator app with fixture-backed state" in goals.body
     assert "ready to commit" in goals.body
-    assert "document.addEventListener(\"DOMContentLoaded\", update" in goals.body
+    assert "document.addEventListener(\"DOMContentLoaded\", function () {" in goals.body
     assert "rows.forEach(function (row)" in goals.body
     assert "var sortMode = \"updated\"" in goals.body
+    assert "var storageKey = \"clankeros-goal-board-view\"" in goals.body
     assert "function applySort(rows)" in goals.body
+    assert "function restoreViewState()" in goals.body
+    assert "window.localStorage.setItem(storageKey" in goals.body
+    assert "window.localStorage.removeItem(storageKey)" in goals.body
+    assert "update({ save: false })" in goals.body
     assert "data-goal-board-sort" in goals.body
     assert "visible.length + \" of \" + rows.length + \" goals\"" in goals.body
     assert result.goal_id in goals.body

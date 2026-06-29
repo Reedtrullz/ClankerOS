@@ -391,7 +391,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   jump, and explicit no-write/no-provider/no-network/no-external-effect
   evidence before the longer lane lists. The same browser-local helper sorts
   already-rendered Goal cards within each lane by updated time, waiting items,
-  open work, progress, or title without changing state or running commands.
+  open work, progress, or title without changing state or running commands, and
+  restores query, lane mode, and sort from
+  `localStorage:clankeros-goal-board-view` across reloads until Reset view
+  clears the browser-local board state.
   Goal rows in those lanes render as
   scan-first cards with direct Goal, project, and next-action links plus phase,
   progress, waiting, and open-work readbacks while preserving the legacy

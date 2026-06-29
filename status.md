@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-29 Goal Board View Memory UX
+
+- Added browser-local view memory to `/goals#goal-board-filter` so the Goal
+  board restores the operator's query, active/paused/completed mode, and sort
+  mode across reloads from `localStorage:clankeros-goal-board-view`.
+- Added a visible `Reset view` control that clears the browser-local board
+  state, resets the search box, returns the lane mode to All, returns sort to
+  Updated, and leaves the default view intact after the next reload.
+- Preserved the existing server-rendered default board, filter/sort controls,
+  first-match routing, and no-results behavior. The view memory writes only to
+  browser local storage after browser interaction; GET rendering remains
+  read-only.
+- Tightened the hidden first-match link CSS so the no-match affordance does
+  not render as a button when there is no visible match.
+- The behavior is browser-local view restoration only: no write on GET, no
+  provider calls, no network actions, no execution, no approval, no push, no
+  PR, no deploy, and no external mutation.
+- Updated README, local app docs, operating summary, docs status, and the
+  fixture-backed Goal board regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state --tb=short` passed with
+  `1 passed, 515 deselected in 40.00s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55613` showed `commit` + Paused + Waiting persisted
+  after reload with `View: restored` and `0 of 1 goals`, Reset view returned
+  All + Updated + empty query with `1 of 1 goals` and stayed default after
+  reload, mobile `390x844` showed Title sort saved, Reset view `329px` wide,
+  card width `358px`, no horizontal overflow, and no console warnings/errors.
+
 ## 2026-06-29 Goal Board Sort UX
 
 - Added browser-local sort controls to `/goals#goal-board-filter` so the

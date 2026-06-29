@@ -9655,6 +9655,10 @@ def _goal_board_filter(
             "<button type='button' class='goal-board-filter-sort-button' data-goal-board-sort='progress' aria-pressed='false'>Progress</button>",
             "<button type='button' class='goal-board-filter-sort-button' data-goal-board-sort='title' aria-pressed='false'>Title</button>",
             "</div>",
+            "<div class='goal-board-filter-memory' data-goal-board-view-memory='true'>",
+            "<span class='goal-board-filter-memory-status' data-goal-board-view-status='true'>View: default</span>",
+            "<button type='button' class='goal-board-filter-reset' data-goal-board-view-reset='true'>Reset view</button>",
+            "</div>",
             "<p class='muted goal-board-filter-empty' data-goal-board-filter-empty='true' hidden>No matching goals.</p>",
             "<details class='goal-board-filter-evidence' data-goal-board-filter-evidence='true'><summary>Goal board filter evidence</summary>",
             _kv(
@@ -9671,6 +9675,11 @@ def _goal_board_filter(
                     ("goal_board_sort_modes", "updated waiting open_work progress title"),
                     ("goal_board_sort_default", "updated"),
                     ("goal_board_sort_scope", "browser-local card reorder within existing lanes"),
+                    ("goal_board_view_memory_status", "available"),
+                    ("goal_board_view_memory_storage", "localStorage:clankeros-goal-board-view"),
+                    ("goal_board_view_memory_fields", "query mode sort"),
+                    ("goal_board_view_memory_reset", "available"),
+                    ("goal_board_view_memory_write_on_get", "false"),
                     ("goal_board_filter_write_on_get", "false"),
                     ("goal_board_filter_provider_calls_taken", "0"),
                     ("goal_board_filter_network_actions_taken", "0"),
@@ -9685,6 +9694,8 @@ def _goal_board_filter(
                     f"goal_board_filter_mode: completed -> {len(completed)} goals",
                     "goal_board_sort_default: updated -> newest Goal cards first",
                     "goal_board_sort: waiting open_work progress title are browser-local only",
+                    "goal_board_view_memory: restores query mode sort from browser storage",
+                    "goal_board_view_reset: clears browser-local Goal board view",
                     "goal_board_filter_safety: browser-local row filtering only",
                 ]
             ),
@@ -9699,8 +9710,71 @@ def _goal_board_filter(
   var empty = root.querySelector("[data-goal-board-filter-empty='true']");
   var modes = Array.prototype.slice.call(root.querySelectorAll("[data-goal-board-filter-mode]"));
   var sortButtons = Array.prototype.slice.call(root.querySelectorAll("[data-goal-board-sort]"));
+  var viewStatus = root.querySelector("[data-goal-board-view-status='true']");
+  var resetView = root.querySelector("[data-goal-board-view-reset='true']");
+  var storageKey = "clankeros-goal-board-view";
   var mode = "all";
   var sortMode = "updated";
+  function setMode(nextMode) {
+    mode = nextMode || "all";
+    if (!modes.some(function (button) { return button.getAttribute("data-goal-board-filter-mode") === mode; })) {
+      mode = "all";
+    }
+    modes.forEach(function (candidate) {
+      candidate.setAttribute("aria-pressed", (candidate.getAttribute("data-goal-board-filter-mode") || "all") === mode ? "true" : "false");
+    });
+  }
+  function setSortMode(nextSortMode) {
+    sortMode = nextSortMode || "updated";
+    if (!sortButtons.some(function (button) { return button.getAttribute("data-goal-board-sort") === sortMode; })) {
+      sortMode = "updated";
+    }
+    sortButtons.forEach(function (candidate) {
+      candidate.setAttribute("aria-pressed", (candidate.getAttribute("data-goal-board-sort") || "updated") === sortMode ? "true" : "false");
+    });
+  }
+  function setViewStatus(text) {
+    if (viewStatus) viewStatus.textContent = text;
+  }
+  function saveViewState() {
+    if (!window.localStorage) return;
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify({
+        query: input && input.value ? input.value : "",
+        mode: mode,
+        sort: sortMode
+      }));
+      setViewStatus("View: saved");
+    } catch (error) {
+      setViewStatus("View: local only");
+    }
+  }
+  function restoreViewState() {
+    if (!window.localStorage) return false;
+    try {
+      var raw = window.localStorage.getItem(storageKey);
+      if (!raw) return false;
+      var saved = JSON.parse(raw);
+      if (input && typeof saved.query === "string") input.value = saved.query.slice(0, 200);
+      setMode(saved.mode || "all");
+      setSortMode(saved.sort || "updated");
+      setViewStatus("View: restored");
+      return true;
+    } catch (error) {
+      setViewStatus("View: default");
+      return false;
+    }
+  }
+  function clearViewState() {
+    if (input) input.value = "";
+    setMode("all");
+    setSortMode("updated");
+    if (window.localStorage) {
+      try { window.localStorage.removeItem(storageKey); } catch (error) {}
+    }
+    setViewStatus("View: reset");
+    update({ save: false });
+  }
   function numberValue(row, name) {
     var value = Number(row.getAttribute("data-goal-board-" + name) || "0");
     return Number.isFinite(value) ? value : 0;
@@ -9750,7 +9824,7 @@ def _goal_board_filter(
         });
     });
   }
-  function update() {
+  function update(options) {
     var rows = Array.prototype.slice.call(document.querySelectorAll("[data-goal-board-row='true']"));
     var query = input && input.value ? input.value.trim().toLowerCase() : "";
     rows.forEach(function (row) {
@@ -9779,30 +9853,38 @@ def _goal_board_filter(
         first.textContent = "No match";
       }
     }
+    if (!options || options.save !== false) saveViewState();
   }
   modes.forEach(function (button) {
     button.addEventListener("click", function () {
-      mode = button.getAttribute("data-goal-board-filter-mode") || "all";
-      modes.forEach(function (candidate) {
-        candidate.setAttribute("aria-pressed", candidate === button ? "true" : "false");
-      });
+      setMode(button.getAttribute("data-goal-board-filter-mode") || "all");
       update();
     });
   });
   sortButtons.forEach(function (button) {
     button.addEventListener("click", function () {
-      sortMode = button.getAttribute("data-goal-board-sort") || "updated";
-      sortButtons.forEach(function (candidate) {
-        candidate.setAttribute("aria-pressed", candidate === button ? "true" : "false");
-      });
+      setSortMode(button.getAttribute("data-goal-board-sort") || "updated");
       update();
     });
   });
   if (input) input.addEventListener("input", update);
+  if (resetView) resetView.addEventListener("click", clearViewState);
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", update, { once: true });
+    document.addEventListener("DOMContentLoaded", function () {
+      if (!restoreViewState()) {
+        setMode("all");
+        setSortMode("updated");
+        setViewStatus("View: default");
+      }
+      update({ save: false });
+    }, { once: true });
   } else {
-    update();
+    if (!restoreViewState()) {
+      setMode("all");
+      setSortMode("updated");
+      setViewStatus("View: default");
+    }
+    update({ save: false });
   }
 })();
 </script>""",
@@ -36398,10 +36480,14 @@ def _html_page(
     .goal-board-filter-input {{ min-height:36px; min-width:0; width:100%; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:7px 10px; }}
     .goal-board-filter-count {{ color:var(--muted); white-space:nowrap; }}
     .goal-board-filter-first {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:#fff; overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-board-filter-first[hidden] {{ display:none; }}
     .goal-board-filter-modes, .goal-board-filter-sort {{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 0; align-items:center; }}
     .goal-board-filter-sort {{ padding-top:10px; border-top:1px solid var(--line); }}
     .goal-board-filter-mode, .goal-board-filter-sort-button {{ min-height:32px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 10px; }}
     .goal-board-filter-mode[aria-pressed='true'], .goal-board-filter-sort-button[aria-pressed='true'] {{ border-color:var(--accent); background:var(--accent); color:#fff; }}
+    .goal-board-filter-memory {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:10px; }}
+    .goal-board-filter-memory-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .goal-board-filter-reset {{ min-height:32px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 10px; }}
     .goal-board-filter-empty {{ margin:10px 0 0; }}
     .goal-board-filter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-board-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
@@ -36421,7 +36507,7 @@ def _html_page(
     .goal-index-metrics {{ display:grid; grid-template-columns:minmax(70px, auto) minmax(0, 1fr); gap:4px 8px; margin:0; border:0; background:transparent; }}
     .goal-index-metrics dt {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
     .goal-index-metrics dd {{ margin:0; overflow-wrap:anywhere; }}
-    @media (max-width: 640px) {{ .goal-board-filter-row, .goal-index-row {{ grid-template-columns:1fr; }} .goal-board-filter-label, .goal-board-filter-count {{ white-space:normal; }} .goal-board-filter-first, .goal-board-filter-sort-button, .goal-index-action, .goal-index-link {{ width:100%; }} }}
+    @media (max-width: 640px) {{ .goal-board-filter-row, .goal-index-row {{ grid-template-columns:1fr; }} .goal-board-filter-label, .goal-board-filter-count {{ white-space:normal; }} .goal-board-filter-first, .goal-board-filter-sort-button, .goal-board-filter-reset, .goal-index-action, .goal-index-link {{ width:100%; }} }}
     .goal-board-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-cockpit-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-cockpit-evidence summary {{ cursor:pointer; font-weight:700; }}

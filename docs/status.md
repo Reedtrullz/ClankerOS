@@ -12,6 +12,9 @@ Latest status focus:
   already-rendered Goal cards. Operators can reorder each lane by updated time,
   waiting items, open work, progress, or title while preserving read-only
   GET behavior and no-provider/no-network/no-external-effect boundaries.
+- `/goals` also remembers the Goal Board query, active/paused/completed mode,
+  and sort in `localStorage:clankeros-goal-board-view` across reloads, with a
+  Reset view button for clearing that browser-local board state.
 - `/goals` now includes a browser-local `Goal Board Filter` after the goal
   creation form and before the active/paused/completed lanes. It filters
   rendered Goal rows by title, project, phase, status, next action, progress,

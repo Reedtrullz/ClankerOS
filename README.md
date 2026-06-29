@@ -322,7 +322,9 @@ project, phase, status, next action, progress, or remaining work, with a live
 count, mode buttons, first-match jump, and no-write/no-network evidence. It
 also sorts the already-rendered Goal cards locally by updated time, waiting
 items, open work, progress, or title, so a busy day can be re-prioritized
-without running commands or changing state. The
+without running commands or changing state. The board view remembers its
+query, lane mode, and sort in browser-local storage across reloads, with a
+Reset view control for returning to the default board. The
 cockpit also includes a confirmed local
 `Start Another Goal` form backed by the existing `create-goal` action,
 so an operator can add the next goal for a registered project without
