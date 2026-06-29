@@ -1,5 +1,47 @@
 # Status
 
+## 2026-06-30 Guide Operator Recipes UX
+
+- Added a read-only `Operator Recipes` panel to `/guide` between the Guide
+  Command Panel and the Daily Loop.
+- The panel gives seven intent cards for Start The Day, Set Up Or Select Goal,
+  Do The Next Thing, Unblock Work, Check Proof, Finish Today, and Resume
+  Tomorrow. Each card routes to an existing browser surface or existing
+  confirmed form instead of introducing a new action path.
+- The recipe evidence records mode, phase, first-run step, primary action,
+  action-form availability, waiting queue counts, proof status, workspace
+  resume state, and zero-effect counters.
+- Kept the product's one-next-action posture by making `next_action` the only
+  primary recipe card in first-run state.
+- Updated README, local app docs, operating summary, and latest-status docs so
+  the guide now describes both the command form and the intent-recipe layer.
+- Stabilized the focused demo smoke after GitHub Actions exposed stale
+  assertions: the palette section count now compares rendered evidence fields,
+  the section-finder preview asserts the current first-eight targets, and the
+  artifact reader preview count now counts actual preview articles instead of
+  JavaScript selector references.
+- Verification: `df -h /System/Volumes/Data` showed 81Gi free before work;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  passed; `git diff --check` passed; focused pytest
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health` passed with `1 passed,
+  515 deselected in 34.68s`; focused pytest
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state` passed with `1 passed, 515
+  deselected in 40.52s`; `python3 -m agent_os.cli app-smoke-test` passed with
+  all route markers matched and provider/network/external-mutation counters at
+  0.
+- Browser verification: Playwright against throwaway empty root
+  `http://127.0.0.1:62113/guide` confirmed the recipe panel, seven recipe
+  cards, exactly one primary card (`next_action`), setup routing to
+  `/today#first-run-create-project`, next action routing to
+  `#guide-command-panel`, recipe evidence present, no desktop overflow at
+  `1280px`, no mobile overflow at `390x844`, and zero console warnings/errors.
+  Screenshot: `.playwright-cli/page-2026-06-29T22-41-50-971Z.png`.
+- Non-claims: this does not create projects, goals, delegations, context
+  packs, runs, approvals, execution, pushes, PRs, deploys, provider calls,
+  non-loopback network actions, server writes on GET, or external mutations.
+
 ## 2026-06-30 Goal Artifact Reader UX
 
 - Added a browser-local `Goal Artifact Reader` to the Goal page after the

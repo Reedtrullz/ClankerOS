@@ -1966,6 +1966,19 @@ def _guide_page(root: Path) -> str:
                 primary_action=primary_action,
                 phase=phase,
             ),
+            _guide_operator_recipes(
+                root,
+                focus=focus,
+                first_run=first_run,
+                mode=mode,
+                phase=phase,
+                primary_href=primary_href,
+                primary_label=primary_label,
+                primary_action=primary_action,
+                action_form_available=action_form_available == "true",
+                latest_ci_label=latest_ci_label,
+                workspace_surface=workspace_surface,
+            ),
             "<section id='guide-daily-loop' class='panel guide-daily-loop' data-guide-daily-loop='true'><h2>Daily Loop</h2>",
             "<p class='muted'>Use these in order when you want ClankerOS to feel like the main operator surface.</p>",
             "<div class='guide-grid' data-guide-daily-loop-cards='true'>",
@@ -1989,6 +2002,217 @@ def _guide_page(root: Path) -> str:
             "</details>",
             "</section>",
             _non_claim_banner(),
+        ]
+    )
+
+
+def _guide_operator_recipes(
+    root: Path,
+    *,
+    focus: dict[str, Any],
+    first_run: dict[str, Any],
+    mode: str,
+    phase: str,
+    primary_href: str,
+    primary_label: str,
+    primary_action: str,
+    action_form_available: bool,
+    latest_ci_label: str,
+    workspace_surface: str,
+) -> str:
+    inbox = collect_inbox_items(root)
+    pending_approvals = (
+        len(inbox["pending_approvals"])
+        + len(inbox["coder_worktree_approvals"])
+        + len(inbox["coder_worktree_commit_approvals"])
+        + len(inbox["coder_publication_requests"])
+    )
+    open_incidents = len(inbox["open_incidents"])
+    open_recommendations = len(_storage(root).list_recent_task_recommendations(limit=20))
+    inbox_items = int(inbox["count"])
+    waiting_items = pending_approvals + open_incidents + open_recommendations
+    first_run_step = str(first_run.get("current_step") or "unknown")
+
+    if open_incidents:
+        unblock_href = "/incidents"
+        unblock_label = "Open incidents"
+        unblock_body = f"{open_incidents} incident(s) need review before the day is clean."
+        unblock_reason = "open_incidents"
+    elif pending_approvals:
+        unblock_href = "/approvals"
+        unblock_label = "Open approvals"
+        unblock_body = f"{pending_approvals} approval item(s) are waiting for an operator decision."
+        unblock_reason = "pending_approvals"
+    elif open_recommendations:
+        unblock_href = "/inbox"
+        unblock_label = "Open inbox"
+        unblock_body = f"{open_recommendations} recommendation(s) need triage from the local queue."
+        unblock_reason = "recommendations"
+    elif inbox_items:
+        unblock_href = "/inbox"
+        unblock_label = "Open inbox"
+        unblock_body = f"{inbox_items} local queue item(s) are ready to inspect."
+        unblock_reason = "inbox_items"
+    else:
+        unblock_href = primary_href
+        unblock_label = primary_label
+        unblock_body = "No blocker queue is visible; stay on the current action."
+        unblock_reason = "no_blockers"
+
+    if bool(first_run.get("complete")):
+        setup_href = "/goals"
+        setup_label = "Open Goals"
+        setup_body = "First run is complete; use Goals as the operating object."
+    else:
+        setup_href = primary_href
+        setup_label = primary_label
+        setup_body = f"Continue first-run setup at {first_run_step.replace('_', ' ')}."
+
+    next_href = "#guide-command-panel" if action_form_available else primary_href
+    next_label = "Use command form" if action_form_available else primary_label
+    cards = [
+        (
+            "start_today",
+            "Start The Day",
+            "Open the daily command center, check attention, and pick one action.",
+            "/today",
+            "Open Today",
+            False,
+        ),
+        (
+            "setup",
+            "Set Up Or Select Goal",
+            setup_body,
+            setup_href,
+            setup_label,
+            False,
+        ),
+        (
+            "next_action",
+            "Do The Next Thing",
+            f"{phase}: {primary_action}",
+            next_href,
+            next_label,
+            True,
+        ),
+        (
+            "unblock",
+            "Unblock Work",
+            unblock_body,
+            unblock_href,
+            unblock_label,
+            bool(waiting_items),
+        ),
+        (
+            "proof",
+            "Check Proof",
+            f"Current recorded CI proof: {latest_ci_label}.",
+            "/verification",
+            "Open Proof",
+            False,
+        ),
+        (
+            "finish",
+            "Finish Today",
+            "Save the project, Goal, filters, panels, and latest artifact as a return point.",
+            "/workspace#save-workspace",
+            "Save workspace",
+            False,
+        ),
+        (
+            "resume",
+            "Resume Tomorrow",
+            f"Current saved surface: {workspace_surface}.",
+            "/resume",
+            "Open Resume",
+            False,
+        ),
+    ]
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("guide_recipes_status", "available"),
+        ("guide_recipes_mode", mode),
+        ("guide_recipes_phase", phase),
+        ("guide_recipes_count", str(len(cards))),
+        ("guide_recipes_first_run_step", first_run_step),
+        ("guide_recipes_primary_action", primary_action),
+        (
+            "guide_recipes_primary_surface",
+            SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+        ),
+        ("guide_recipes_action_form_available", str(action_form_available).lower()),
+        ("guide_recipes_waiting_items", str(waiting_items)),
+        ("guide_recipes_pending_approvals", str(pending_approvals)),
+        ("guide_recipes_open_incidents", str(open_incidents)),
+        ("guide_recipes_open_recommendations", str(open_recommendations)),
+        ("guide_recipes_inbox_items", str(inbox_items)),
+        (
+            "guide_recipes_unblock_surface",
+            SafeHtml(f"<a href='{_e(unblock_href)}'>{_e(unblock_label)}</a>"),
+        ),
+        ("guide_recipes_unblock_reason", unblock_reason),
+        ("guide_recipes_latest_ci_status", latest_ci_label),
+        ("guide_recipes_workspace_surface", workspace_surface),
+        ("guide_recipes_write_on_get", "false"),
+        ("guide_recipes_provider_calls_taken", "0"),
+        ("guide_recipes_network_actions_taken", "0"),
+        ("guide_recipes_external_effects_created", "false"),
+    ]
+    lines = [
+        "guide_recipe_path: start_today -> setup -> next_action -> unblock -> proof -> finish -> resume",
+        f"guide_recipe_next_action: <a href='{_e(next_href)}'>{_e(next_label)}</a>",
+        f"guide_recipe_unblock: <a href='{_e(unblock_href)}'>{_e(unblock_label)}</a>",
+        "guide_recipe_safety: read-only intent recipes; existing confirmed forms own writes",
+    ]
+    return "".join(
+        [
+            "<section id='guide-operator-recipes' class='panel guide-recipes' data-guide-recipes='true'><h2>Operator Recipes</h2>",
+            "<p class='muted'>Choose the browser path that matches your intent instead of remembering CLI commands.</p>",
+            "<div class='guide-recipes-grid' data-guide-recipes-grid='true'>",
+            "".join(
+                _guide_recipe_card(
+                    key,
+                    title,
+                    body,
+                    href,
+                    label,
+                    primary=primary,
+                )
+                for key, title, body, href, label, primary in cards
+            ),
+            "</div>",
+            "<details class='guide-recipes-evidence' data-guide-recipes-evidence='true'><summary>Operator recipe evidence</summary>",
+            _kv(rows),
+            _ul(lines),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _guide_recipe_card(
+    key: str,
+    title: str,
+    body: str,
+    href: str,
+    label: str,
+    *,
+    primary: bool = False,
+) -> str:
+    classes = ["guide-card", "guide-recipe-card"]
+    if primary:
+        classes.append("guide-primary")
+    return "".join(
+        [
+            (
+                f"<article class='{_e(' '.join(classes))}' data-guide-recipe-card='true' "
+                f"data-guide-recipe-key='{_e(key)}' "
+                f"data-guide-recipe-primary='{str(primary).lower()}'>"
+            ),
+            f"<span class='guide-card-kicker'>{_e(key.replace('_', ' '))}</span>",
+            f"<h3>{_e(title)}</h3>",
+            f"<p>{_e(body)}</p>",
+            f"<a class='guide-link' href='{_e(href)}'>{_e(label)}</a>",
+            "</article>",
         ]
     )
 
@@ -41200,8 +41424,8 @@ def _html_page(
     .workspace-panel-restore li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--panel); overflow-wrap:anywhere; }}
     .guide-hero {{ border-left:4px solid var(--accent); }}
     .guide-loop-art {{ margin:12px 0 0; padding:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); white-space:pre-wrap; overflow-wrap:anywhere; text-align:center; font-size:15px; line-height:1.55; }}
-    .guide-command-panel, .guide-daily-loop, .guide-first-run-path, .guide-safety-boundary {{ border-left:4px solid var(--accent); }}
-    .guide-grid, .guide-command-grid, .guide-first-run-grid, .guide-safety-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:12px 0; align-items:stretch; }}
+    .guide-command-panel, .guide-recipes, .guide-daily-loop, .guide-first-run-path, .guide-safety-boundary {{ border-left:4px solid var(--accent); }}
+    .guide-grid, .guide-command-grid, .guide-recipes-grid, .guide-first-run-grid, .guide-safety-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:12px 0; align-items:stretch; }}
     .guide-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; display:grid; gap:8px; align-content:start; }}
     .guide-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .guide-card-kicker {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
@@ -41211,12 +41435,12 @@ def _html_page(
     .guide-action, .guide-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; width:100%; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
     .guide-action {{ background:var(--accent); color:#fff; }}
     .guide-link {{ background:var(--surface); color:var(--accent); }}
-    .guide-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .guide-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .guide-evidence:not([open]) > :not(summary) {{ display:none; }}
-    .guide-evidence dl {{ grid-template-columns:minmax(190px, 260px) 1fr; }}
-    .guide-evidence ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
-    .guide-evidence li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .guide-evidence, .guide-recipes-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .guide-evidence summary, .guide-recipes-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .guide-evidence:not([open]) > :not(summary), .guide-recipes-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .guide-evidence dl, .guide-recipes-evidence dl {{ grid-template-columns:minmax(190px, 260px) 1fr; }}
+    .guide-evidence ul, .guide-recipes-evidence ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .guide-evidence li, .guide-recipes-evidence li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .guide-command-form {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:12px; }}
     .guide-command-panel form {{ margin-top:0; }}
     .guide-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}

@@ -10,8 +10,11 @@ Latest status focus:
   checkouts to the first-run browser path, points active work to the current
   Goal action form, and now opens with a `Guide Command Panel` that embeds the
   existing confirmed first-run or current Goal action form when available. It
+  now follows with a read-only `Operator Recipes` panel for Start The Day, Set
+  Up Or Select Goal, Do The Next Thing, Unblock Work, Check Proof, Finish
+  Today, and Resume Tomorrow, each routed to existing browser surfaces. It
   shows evidence for route state, counts, workspace resume state, confirmation
-  requirements, and zero-effect safety on GET.
+  requirements, recipe routing, and zero-effect safety on GET.
 - The First Run Guide now includes a visible `First Run Empty State Map`:
   a text-only `Project -> Goal -> Delegation -> Context -> Run` illustration
   plus step cards between Next Step and Checklist, keeping empty checkouts

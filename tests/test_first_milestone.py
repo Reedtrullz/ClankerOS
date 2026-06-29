@@ -4490,6 +4490,42 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "guide_command_external_effects_created</dt><dd>false" in guide.body
     assert "guide_command_form: action=register-project available=true" in guide.body
     assert "guide_command_safety: existing confirmed local forms own writes" in guide.body
+    assert "Operator Recipes" in guide.body
+    assert "id='guide-operator-recipes'" in guide.body
+    assert "data-guide-recipes='true'" in guide.body
+    assert "data-guide-recipes-grid='true'" in guide.body
+    assert guide.body.count("data-guide-recipe-card='true'") == 7
+    assert "data-guide-recipe-key='start_today'" in guide.body
+    assert "data-guide-recipe-key='setup'" in guide.body
+    assert "data-guide-recipe-key='next_action'" in guide.body
+    assert "data-guide-recipe-key='unblock'" in guide.body
+    assert "data-guide-recipe-key='proof'" in guide.body
+    assert "data-guide-recipe-key='finish'" in guide.body
+    assert "data-guide-recipe-key='resume'" in guide.body
+    assert "data-guide-recipe-key='next_action' data-guide-recipe-primary='true'" in guide.body
+    assert "data-guide-recipe-key='setup' data-guide-recipe-primary='false'" in guide.body
+    assert "href='/today#first-run-create-project'>Create Project</a>" in guide.body
+    assert "href='#guide-command-panel'>Use command form</a>" in guide.body
+    assert "data-guide-recipes-evidence='true'" in guide.body
+    assert "guide_recipes_status</dt><dd>available" in guide.body
+    assert "guide_recipes_mode</dt><dd>first_run" in guide.body
+    assert "guide_recipes_phase</dt><dd>First run" in guide.body
+    assert "guide_recipes_count</dt><dd>7" in guide.body
+    assert "guide_recipes_first_run_step</dt><dd>create_project" in guide.body
+    assert "guide_recipes_primary_action</dt><dd>Register ClankerOS project" in guide.body
+    assert "guide_recipes_primary_surface</dt><dd><a href='/today#first-run-create-project'>Create Project</a>" in guide.body
+    assert "guide_recipes_action_form_available</dt><dd>true" in guide.body
+    assert "guide_recipes_waiting_items</dt><dd>0" in guide.body
+    assert "guide_recipes_unblock_reason</dt><dd>no_blockers" in guide.body
+    assert "guide_recipes_latest_ci_status</dt><dd>success" in guide.body
+    assert "guide_recipes_workspace_surface</dt><dd>none" in guide.body
+    assert "guide_recipes_write_on_get</dt><dd>false" in guide.body
+    assert "guide_recipes_provider_calls_taken</dt><dd>0" in guide.body
+    assert "guide_recipes_network_actions_taken</dt><dd>0" in guide.body
+    assert "guide_recipes_external_effects_created</dt><dd>false" in guide.body
+    assert "guide_recipe_path: start_today -> setup -> next_action -> unblock -> proof -> finish -> resume" in guide.body
+    assert "guide_recipe_next_action: <a href='#guide-command-panel'>Use command form</a>" in guide.body
+    assert "guide_recipe_safety: read-only intent recipes; existing confirmed forms own writes" in guide.body
     assert "data-guide-daily-loop='true'" in guide.body
     assert "data-guide-daily-loop-cards='true'" in guide.body
     assert guide.body.count("data-guide-step='true'") == 6
@@ -4525,11 +4561,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "guide_loop: Today -> Goal -> Action -> Proof -> Finish -> Resume" in guide.body
     assert "guide_safety: read-only browser guide; existing confirmed forms own writes" in guide.body
     assert ".guide-grid" in guide.body
+    assert ".guide-recipes-grid" in guide.body
     assert ".guide-action" in guide.body
     assert guide.body.index("data-guide-page='true'") < guide.body.index(
         "data-route-context='true'"
     )
     assert guide.body.index("data-guide-command-panel='true'") < guide.body.index(
+        "data-guide-recipes='true'"
+    )
+    assert guide.body.index("data-guide-recipes='true'") < guide.body.index(
         "data-guide-daily-loop='true'"
     )
     assert guide.body.index("data-guide-daily-loop='true'") < guide.body.index(
@@ -12030,7 +12070,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-command-palette-result-list='true'" in goal.body
     assert "data-palette-result='true'" in goal.body
     assert "palette_filter_source</dt><dd>nav_recent_goal_and_today_sections" in goal.body
-    assert "palette_filter_goal_section_count</dt><dd>14" in goal.body
+    palette_goal_section_count = goal.body.split(
+        "palette_filter_goal_section_count</dt><dd>",
+        1,
+    )[1].split("<", 1)[0]
+    rendered_goal_section_count = goal.body.split("goal_section_count</dt><dd>", 1)[1].split(
+        "<",
+        1,
+    )[0]
+    assert palette_goal_section_count == rendered_goal_section_count
+    assert int(palette_goal_section_count) >= 14
     assert "palette_filter_today_section_count</dt><dd>0" in goal.body
     assert "palette_filter_goal_section_source</dt><dd>current_route" in goal.body
     assert f"palette_filter_goal_section_goal</dt><dd>{result.goal_id}" in goal.body
@@ -12683,7 +12732,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_section_finder_target: Summary -> #goal-summary" in goal.body
     assert "goal_section_finder_target: Decision queue -> #goal-decision-queue" in goal.body
     assert "goal_section_finder_target: Decision filter -> #goal-decision-filter" in goal.body
-    assert "goal_section_finder_target: Artifact reader -> #goal-artifact-reader" in goal.body
+    assert "goal_section_finder_target: First-run rail -> #goal-first-run-rail" in goal.body
     assert "goal_section_finder_memory: restores section query for this Goal" in goal.body
     assert "goal_section_switchboard_safety: read-only local anchor navigation" in goal.body
     assert goal.body.index("data-goal-section-index-actions='true'") < goal.body.index(
@@ -13955,7 +14004,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-artifact-reader-reset='true'>Reset reader</button>" in goal.body
     assert "data-goal-artifact-reader-evidence='true'" in goal.body
     assert "data-goal-artifact-reader-previews='true'" in goal.body
-    assert goal.body.count("data-goal-artifact-preview='true'") == 21
+    assert (
+        goal.body.count("<article class='goal-artifact-preview' data-goal-artifact-preview='true'")
+        == 21
+    )
     assert f"goal_artifact_reader_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_artifact_reader_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_artifact_reader_status</dt><dd>available" in goal.body
