@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/skills#skills-inventory-filter` now narrows already-rendered Skills
+  Inventory rows by all, available, generated, active, proposed, used, or
+  unused lanes plus local text search. It remembers lane/query view state in
+  `localStorage:clankeros-skills-inventory-filter`, exposes Reset filter, and
+  keeps GET rendering read-only with no skill install, execution, provider
+  calls, network actions, raw filesystem browsing, or external effects.
 - `/memory#memory-inventory-filter` now narrows already-rendered Memory Bank
   rows by all, proposed, active pins, project, global, generated, notes, or
   future-work lanes plus local text search. It remembers lane/query view state
@@ -12,7 +18,8 @@ Latest status focus:
   network actions, raw filesystem browsing, or external effects.
 - `/workspace#workspace-view-memory` now exposes browser-local view memory
   for theme, focus mode, Goal board view, search lanes, timeline lanes,
-  artifact filters, notes filters, and Memory Bank filters. It can refresh or clear those
+  artifact filters, notes filters, Memory Bank filters, and Skills Inventory
+  filters. It can refresh or clear those
   `localStorage` values after explicit clicks while preserving read-only GET
   behavior, `.clanker/app/workspace.json`, no raw filesystem browsing, and
   no-provider/no-network/no-external-effect boundaries.
@@ -450,10 +457,11 @@ Latest status focus:
   model-routing-disabled, and zero-effect proof in the DOM.
 - `/skills` is now action-first: it opens with the `Skills Operator
   Workbench` before shared route/focus diagnostics or command readback, shows
-  visible Now, Generated, Usage, and Resume cards, and keeps skills state,
-  workbench evidence, and command evidence collapsed by default while
-  preserving generated-skill, usage, artifact, and zero-effect proof in the
-  DOM.
+  visible Now, Generated, Usage, and Resume cards, then follows with the
+  `Skills Usage Map` and browser-local `Skills Inventory Filter`. Skills
+  state, usage-map, filter, workbench evidence, and command evidence stay
+  collapsed by default while preserving generated-skill, usage, artifact,
+  view-memory, and zero-effect proof in the DOM.
 - `/memory` is now action-first: it opens with the `Memory Operator Workbench`
   before shared route/focus diagnostics and command readback, shows visible
   Now, Pin, Notes, and Resume cards, then follows with a `Memory Pinboard` for

@@ -261,8 +261,8 @@ title-first when possible, while still retaining exact saved Goal id and route
 evidence for restoration. A read-only `Workspace View Memory` panel follows to
 inspect and clear browser-local view state such as theme, focus mode, Goal
 board filters, search lanes, timeline lanes, artifact filters, and notes
-filters, and Memory Bank filters from `localStorage` without changing
-`.clanker/app/workspace.json`.
+filters, Memory Bank filters, and Skills Inventory filters from
+`localStorage` without changing `.clanker/app/workspace.json`.
 The read-only
 `Workspace Daily Brief` and `Workspace Workflow Map` then follow with the
 saved goal's current gate, gate counts, and finish posture, while saved-state
@@ -686,11 +686,16 @@ proposed-memory pin posture, saved workspace context, and
 no-write/provider/network/external-effect boundaries in the DOM. `/skills`
 is now action-first and opens with a visible `Skills Operator Workbench` before
 shared route/focus diagnostics or command readback, turning generated-skill
-review, usage review, and resume context into browser cards. Skills state,
-usage-map, workbench evidence, and command evidence stay collapsed by default
-while preserving skill counts, generated-skill posture, usage/project counts,
-last-used posture, the first bounded skill artifact, and no execution/install/
-provider/network effects in the DOM.
+review, usage review, and resume context into browser cards. It now follows
+the usage map with a browser-local `Skills Inventory Filter`, so you can narrow
+already-rendered available, generated, active, proposed, used, or unused skill
+rows by lane/text and restore that view from
+`localStorage:clankeros-skills-inventory-filter` without installing or
+executing skills. Skills state, usage-map, filter, workbench evidence, and
+command evidence stay collapsed by default while preserving skill counts,
+generated-skill posture, usage/project counts, last-used posture, the first
+bounded skill artifact, and no execution/install/provider/network effects in
+the DOM.
 `/profiles` is also action-first: it opens with a visible
 `Profiles Operator Workbench` before shared route/focus diagnostics or command
 readback, turning storage-profile review, future-lane review, and resume

@@ -6246,7 +6246,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 8
+    assert workspace.body.count("class='workspace-view-memory-card") == 9
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
     assert "data-workspace-view-memory-card='goal-board'" in workspace.body
@@ -6255,10 +6255,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-card='artifacts'" in workspace.body
     assert "data-workspace-view-memory-card='notes'" in workspace.body
     assert "data-workspace-view-memory-card='memory'" in workspace.body
+    assert "data-workspace-view-memory-card='skills'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-theme'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-focus-mode'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-goal-board-view'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-memory-inventory-filter'" in workspace.body
+    assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-skills-inventory-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-search-result-lane:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-timeline-lane:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-artifact-filter:'" in workspace.body
@@ -6267,8 +6269,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>8" in workspace.body
-    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-memory-inventory-filter" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>9" in workspace.body
+    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter" in workspace.body
     assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
@@ -6281,7 +6283,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: theme mode=exact key=clankeros-theme" in workspace.body
     assert "workspace_view_memory_card: search mode=prefix key=clankeros-search-result-lane:" in workspace.body
     assert "workspace_view_memory_card: memory mode=exact key=clankeros-memory-inventory-filter" in workspace.body
-    assert "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory" in workspace.body
+    assert "workspace_view_memory_card: skills mode=exact key=clankeros-skills-inventory-filter" in workspace.body
+    assert "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory skills" in workspace.body
     assert "window.localStorage.removeItem(key)" in workspace.body
     assert "candidate.indexOf(key) === 0" in workspace.body
     assert "delete document.documentElement.dataset.theme" in workspace.body
@@ -6583,8 +6586,36 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-skills-usage-card='primary'" in skills_empty.body
     assert "data-skills-usage-primary='true' href='/goals'>Create goal context</a>" in skills_empty.body
     assert "data-skills-usage-evidence='true'" in skills_empty.body
+    assert "Skills Inventory Filter" in skills_empty.body
+    assert "data-skills-inventory-filter='true'" in skills_empty.body
+    assert "data-skills-inventory-filter-storage-key='clankeros-skills-inventory-filter'" in skills_empty.body
+    assert "data-skills-inventory-filter-controls='true'" in skills_empty.body
+    assert "data-skills-inventory-filter-kind='all' aria-pressed='true'>All" in skills_empty.body
+    assert "data-skills-inventory-filter-kind='generated'" in skills_empty.body
+    assert "data-skills-inventory-filter-kind='used'" in skills_empty.body
+    assert "data-skills-inventory-filter-query='true'" in skills_empty.body
+    assert "data-skills-inventory-filter-reset='true'>Reset filter" in skills_empty.body
+    assert "data-skills-inventory-filter-view-status='true'>View: default" in skills_empty.body
+    assert "data-skills-inventory-filter-status='true'>Showing 0 of 0 skill rows." in skills_empty.body
+    assert "data-skills-inventory-filter-empty='true' hidden" in skills_empty.body
+    assert "data-skills-inventory-filter-evidence='true'" in skills_empty.body
+    assert "skills_inventory_filter_total_rows</dt><dd>0" in skills_empty.body
+    assert "skills_inventory_filter_lanes</dt><dd>all available generated active proposed used unused" in skills_empty.body
+    assert "skills_inventory_filter_memory_storage</dt><dd>localStorage:clankeros-skills-inventory-filter" in skills_empty.body
+    assert "skills_inventory_filter_memory_fields</dt><dd>lane query" in skills_empty.body
+    assert "skills_inventory_filter_install_available</dt><dd>false" in skills_empty.body
+    assert "skills_inventory_filter_execution_available</dt><dd>false" in skills_empty.body
+    assert "skills_inventory_filter_write_on_get</dt><dd>false" in skills_empty.body
+    assert "skills_inventory_filter_network_actions_taken</dt><dd>0" in skills_empty.body
+    assert "skills_inventory_filter_external_effects_created</dt><dd>false" in skills_empty.body
     assert skills_empty.body.index("data-skills-operator-workbench") < skills_empty.body.index(
         "data-skills-usage-map='true'"
+    )
+    assert skills_empty.body.index("data-skills-usage-map='true'") < skills_empty.body.index(
+        "data-skills-inventory-filter='true'"
+    )
+    assert skills_empty.body.index("data-skills-inventory-filter='true'") < skills_empty.body.index(
+        "data-skills-command-bar"
     )
     assert skills_empty.body.index("data-skills-usage-map='true'") < skills_empty.body.index(
         "data-skills-command-bar"
@@ -13449,9 +13480,45 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in skills.body
     )
     assert "data-skills-usage-evidence='true'" in skills.body
+    assert "Skills Inventory Filter" in skills.body
+    assert "data-skills-inventory-filter='true'" in skills.body
+    assert "data-skills-inventory-filter-storage-key='clankeros-skills-inventory-filter'" in skills.body
+    assert "data-skills-inventory-filter-controls='true'" in skills.body
+    assert "data-skills-inventory-filter-kind='all' aria-pressed='true'>All" in skills.body
+    assert "data-skills-inventory-filter-kind='available'" in skills.body
+    assert "data-skills-inventory-filter-kind='generated'" in skills.body
+    assert "data-skills-inventory-filter-kind='active'" in skills.body
+    assert "data-skills-inventory-filter-kind='used'" in skills.body
+    assert "data-skills-inventory-filter-query='true'" in skills.body
+    assert "data-skills-inventory-filter-reset='true'>Reset filter" in skills.body
+    assert "data-skills-inventory-filter-view-status='true'>View: default" in skills.body
+    assert "data-skills-inventory-filter-status='true'>Showing 2 of 2 skill rows." in skills.body
+    assert "data-skills-inventory-filter-empty='true' hidden" in skills.body
+    assert "data-skills-inventory-filter-evidence='true'" in skills.body
+    assert skills.body.count("<span data-skills-inventory-item='true'") == 2
+    assert "data-skills-inventory-lane='available' data-skills-inventory-status='active'" in skills.body
+    assert "data-skills-inventory-lane='generated' data-skills-inventory-status='active'" in skills.body
+    assert "data-skills-inventory-usage-count='1'" in skills.body
+    assert "data-skills-inventory-generated='true'" in skills.body
+    assert "skills_inventory_filter_total_rows</dt><dd>2" in skills.body
+    assert "skills_inventory_filter_persistence</dt><dd>browser_local_view_memory" in skills.body
+    assert "skills_inventory_filter_memory_storage</dt><dd>localStorage:clankeros-skills-inventory-filter" in skills.body
+    assert "skills_inventory_filter_memory_fields</dt><dd>lane query" in skills.body
+    assert "skills_inventory_filter_install_available</dt><dd>false" in skills.body
+    assert "skills_inventory_filter_execution_available</dt><dd>false" in skills.body
+    assert "skills_inventory_filter_write_on_get</dt><dd>false" in skills.body
+    assert "skills_inventory_filter_provider_calls_taken</dt><dd>0" in skills.body
+    assert "skills_inventory_filter_network_actions_taken</dt><dd>0" in skills.body
+    assert "skills_inventory_filter_external_effects_created</dt><dd>false" in skills.body
+    assert "window.localStorage.setItem(skillsInventoryStorageKey(filterPanel), JSON.stringify(state))" in skills.body
+    assert "window.localStorage.removeItem(skillsInventoryStorageKey(filterPanel))" in skills.body
     assert "data-skills-command-evidence='true'" in skills.body
     assert skills.body.index("data-skills-operator-workbench") < skills.body.index("data-route-context")
     assert skills.body.index("data-skills-operator-workbench") < skills.body.index("data-skills-usage-map='true'")
+    assert skills.body.index("data-skills-usage-map='true'") < skills.body.index(
+        "data-skills-inventory-filter='true'"
+    )
+    assert skills.body.index("data-skills-inventory-filter='true'") < skills.body.index("data-skills-command-bar")
     assert skills.body.index("data-skills-usage-map='true'") < skills.body.index("data-skills-command-bar")
     assert skills.body.index("data-skills-operator-workbench") < skills.body.index("data-skills-command-bar")
     assert "skills_workbench_status</dt><dd>generated_ready" in skills.body

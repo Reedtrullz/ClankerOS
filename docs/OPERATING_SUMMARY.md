@@ -323,11 +323,13 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   route/focus diagnostics or command readback, with cards for the next skill
   review, generated skills, usage, and `/resume` or Goal context. A visible
   `Skills Usage Map` follows with Now, Available, Generated, Usage, Projects,
-  and Safety cards before the dense inventory. Skills state, usage-map,
-  workbench evidence, and command evidence stay collapsed by default while
-  preserving record, generated, usage, project-usage, last-used, first-artifact,
-  no-execution/no-install/provider/network, and zero-effect readbacks in the
-  DOM; `/approvals` as an action-first
+  and Safety cards. A browser-local `Skills Inventory Filter` then narrows
+  already-rendered skill rows by lane or text and restores lane/query from
+  `localStorage:clankeros-skills-inventory-filter` before the dense inventory.
+  Skills state, usage-map, filter, workbench evidence, and command evidence
+  stay collapsed by default while preserving record, generated, usage,
+  project-usage, last-used, first-artifact, no-execution/no-install/provider/
+  network, and zero-effect readbacks in the DOM; `/approvals` as an action-first
   local decision queue with a visible `Approval Operator Workbench` before
   shared route/focus diagnostics or command readback. It shows
   do/inspect/Goal/finish cards, parent Goal routing, request/evidence

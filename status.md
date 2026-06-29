@@ -1,5 +1,42 @@
 # Status
 
+## 2026-06-29 Skills Inventory Filter UX
+
+- Added a browser-local `Skills Inventory Filter` to
+  `/skills#skills-inventory-filter` after the Skills Usage Map and before the
+  Skills Command Bar.
+- Operators can narrow already-rendered skill rows by All, Available,
+  Generated, Active, Proposed, Used, or Unused, plus local text search across
+  skill id, name, status, project, usage count, last-used timestamp, artifact
+  path, and generated/available posture.
+- The selected lane/query view is remembered in
+  `localStorage:clankeros-skills-inventory-filter` and cleared with
+  `Reset filter`; the visible status reports `View: default`, `View: saved`,
+  `View: restored`, or `View: reset`.
+- Skill rows now expose stable `data-skills-inventory-item`, lane, status,
+  usage-count, generated, and text metadata so the filter can hide unmatched
+  rendered rows without changing server-side skill records or granting install
+  or execution authority.
+- Workspace View Memory now includes the Skills Inventory filter key, so
+  `/workspace#workspace-view-memory` can inspect and reset it with the rest of
+  the browser-local view state.
+- The Skills Usage Map now uses an auto-fitting grid so the six summary cards
+  do not force horizontal scrolling in the standard desktop content lane.
+- The behavior is browser-local display filtering only: no write on GET, no
+  skill install, no skill execution, no provider calls, no network actions, no
+  approval, no deploy, no raw filesystem browsing, and no external mutation.
+- Verification:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `python3 -m compileall -q agent_os tests`, `git diff --check`,
+  focused `pytest` for the local app route/demo tests,
+  `python3 -m agent_os.cli app-smoke-test`, and
+  `python3 -m agent_os.cli app-demo-smoke-test` all passed.
+- Browser QA at `http://127.0.0.1:55620/skills` proved the fresh demo state
+  starts with two rows and no desktop overflow, `Generated` + `local-files`
+  narrows to one visible row, reload restores the saved view, reset returns to
+  default, and mobile 390x844 keeps controls inside the panel with no console
+  warnings/errors and no horizontal overflow.
+
 ## 2026-06-29 Memory Inventory Filter UX
 
 - Added a browser-local `Memory Inventory Filter` to

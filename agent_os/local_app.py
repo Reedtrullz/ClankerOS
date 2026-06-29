@@ -1030,6 +1030,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-skills-workbench-primary='true'",
                 "data-skills-state-details='true'",
                 "data-skills-workbench-evidence='true'",
+                "Skills Inventory Filter",
+                "data-skills-inventory-filter='true'",
+                "data-skills-inventory-filter-evidence='true'",
                 "data-skills-command-evidence='true'",
                 "skills_workbench_status</dt><dd>generated_ready",
                 "skills_workbench_next_action</dt><dd>Review generated skill",
@@ -6494,6 +6497,13 @@ def _workspace_view_memory_panel() -> str:
             "clankeros-memory-inventory-filter",
             "Memory Bank lane and text filter",
         ),
+        (
+            "skills",
+            "Skills Filters",
+            "exact",
+            "clankeros-skills-inventory-filter",
+            "Skills Inventory lane and text filter",
+        ),
     ]
     card_html = []
     evidence_lines = []
@@ -6559,7 +6569,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory",
+                    "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory skills",
                 ]
             ),
             "</details>",
@@ -8241,8 +8251,10 @@ def _skills_page(root: Path) -> str:
     storage = _storage(root)
     skills = storage.list_skills(limit=100)
     usage = _skill_usage(storage)
-    available_lines = [_skill_line(root, skill, usage) for skill in skills]
-    generated_lines = [_skill_line(root, skill, usage) for skill in skills if skill.source_run_id]
+    generated = [skill for skill in skills if skill.source_run_id]
+    available_lines = [_skill_inventory_line(root, skill, usage, "available") for skill in skills]
+    generated_lines = [_skill_inventory_line(root, skill, usage, "generated") for skill in generated]
+    inventory_item_count = len(available_lines) + len(generated_lines)
     return "".join(
         [
             "<section><h1>Skills Inventory</h1>",
@@ -8259,6 +8271,7 @@ def _skills_page(root: Path) -> str:
             "</section>",
             _skills_operator_workbench(root, skills=skills, usage=usage),
             _skills_usage_map(root, skills=skills, usage=usage),
+            _skills_inventory_filter(inventory_item_count),
             _skills_command_bar(root, skills=skills, usage=usage),
             _list_section(
                 "Available Skills",
@@ -8271,6 +8284,79 @@ def _skills_page(root: Path) -> str:
                 anchor_id="skills-generated",
             ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _skills_inventory_filter(total_items: int) -> str:
+    lanes = [
+        ("all", "All"),
+        ("available", "Available"),
+        ("generated", "Generated"),
+        ("active", "Active"),
+        ("proposed", "Proposed"),
+        ("used", "Used"),
+        ("unused", "Unused"),
+    ]
+    buttons = "".join(
+        [
+            (
+                f"<button type='button' class='skills-inventory-filter-button' "
+                f"data-skills-inventory-filter-kind='{_e(key)}' "
+                f"aria-pressed='{'true' if key == 'all' else 'false'}'>{_e(label)}</button>"
+            )
+            for key, label in lanes
+        ]
+    )
+    return "".join(
+        [
+            "<section id='skills-inventory-filter' class='panel skills-inventory-filter' "
+            "data-skills-inventory-filter='true' "
+            "data-skills-inventory-filter-storage-key='clankeros-skills-inventory-filter'>",
+            "<h2>Skills Inventory Filter</h2>",
+            "<p class='muted'>Narrow the rendered skill rows by lane or text without installing or executing skills.</p>",
+            "<div class='skills-inventory-filter-controls' data-skills-inventory-filter-controls='true'>",
+            buttons,
+            "<label class='skills-inventory-filter-search'>Find "
+            "<input type='search' data-skills-inventory-filter-query='true' placeholder='skill, project, status, artifact...'></label>",
+            "<button type='button' class='skills-inventory-filter-reset' data-skills-inventory-filter-reset='true'>Reset filter</button>",
+            "<span class='skills-inventory-filter-memory-status' data-skills-inventory-filter-view-status='true'>View: default</span>",
+            "</div>",
+            (
+                f"<p class='muted' data-skills-inventory-filter-status='true'>"
+                f"Showing {total_items} of {total_items} skill rows.</p>"
+            ),
+            "<p class='muted' data-skills-inventory-filter-empty='true' hidden>No skill rows match this filter.</p>",
+            "<details class='skills-inventory-filter-evidence' data-skills-inventory-filter-evidence='true'>"
+            "<summary>Skills inventory filter evidence</summary>",
+            _kv(
+                [
+                    ("skills_inventory_filter_status", "available"),
+                    ("skills_inventory_filter_total_rows", str(total_items)),
+                    ("skills_inventory_filter_lanes", "all available generated active proposed used unused"),
+                    ("skills_inventory_filter_persistence", "browser_local_view_memory"),
+                    ("skills_inventory_filter_memory_storage", "localStorage:clankeros-skills-inventory-filter"),
+                    ("skills_inventory_filter_memory_fields", "lane query"),
+                    ("skills_inventory_filter_default", "all"),
+                    ("skills_inventory_filter_reset", "available"),
+                    ("skills_inventory_filter_install_available", "false"),
+                    ("skills_inventory_filter_execution_available", "false"),
+                    ("skills_inventory_filter_raw_filesystem_browsing", "false"),
+                    ("skills_inventory_filter_write_on_get", "false"),
+                    ("skills_inventory_filter_provider_calls_taken", "0"),
+                    ("skills_inventory_filter_network_actions_taken", "0"),
+                    ("skills_inventory_filter_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "skills_inventory_filter: filters already-rendered rows only",
+                    "skills_inventory_filter: restores lane and query from browser storage",
+                    "skills_inventory_filter_safety: no install, no execution, no provider call, no network action",
+                ]
+            ),
+            "</details>",
+            "</section>",
         ]
     )
 
@@ -8625,6 +8711,34 @@ def _skill_line(root: Path, skill: Any, usage: dict[str, dict[str, Any]]) -> str
         f"{_e(skill.id)}: name={_e(skill.name)} status={_e(skill.status)} "
         f"usage_count={data['count']} last_used={_e(skill.last_used_at or skill.updated_at)} "
         f"projects_using={_e(projects)} path={_artifact_link(_repo_relative_artifact_path(root, skill.path))}"
+    )
+
+
+def _skill_inventory_line(root: Path, skill: Any, usage: dict[str, dict[str, Any]], lane: str) -> str:
+    data = usage.get(skill.name, {"count": 0, "projects": set()})
+    usage_count = int(data.get("count", 0))
+    projects = ", ".join(sorted(data["projects"])) if data["projects"] else (skill.project_id or "none")
+    artifact_path = _repo_relative_artifact_path(root, skill.path)
+    text = " ".join(
+        [
+            str(skill.id),
+            str(skill.name),
+            str(skill.status),
+            str(skill.project_id or ""),
+            str(projects),
+            str(usage_count),
+            str(skill.last_used_at or skill.updated_at or ""),
+            str(artifact_path),
+            "generated" if skill.source_run_id else "available",
+        ]
+    ).lower()
+    return (
+        f"<span data-skills-inventory-item='true' "
+        f"data-skills-inventory-lane='{_e(lane)}' "
+        f"data-skills-inventory-status='{_e(skill.status)}' "
+        f"data-skills-inventory-usage-count='{_e(str(usage_count))}' "
+        f"data-skills-inventory-generated='{str(bool(skill.source_run_id)).lower()}' "
+        f"data-skills-inventory-text='{_e(text)}'>{_skill_line(root, skill, usage)}</span>"
     )
 
 
@@ -38331,7 +38445,7 @@ def _html_page(
     .skills-workbench-action {{ background:var(--accent); color:#fff; }}
     .skills-workbench-link {{ background:var(--surface); color:var(--accent); }}
     .skills-usage-map {{ border-left:4px solid var(--accent); }}
-    .skills-usage-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(5, minmax(150px, 1fr)); gap:10px; margin:12px 0; }}
+    .skills-usage-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap:10px; margin:12px 0; }}
     .skills-usage-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
     .skills-usage-card h3 {{ margin-top:0; }}
     .skills-usage-card p {{ margin:0 0 10px; color:var(--muted); }}
@@ -38339,9 +38453,17 @@ def _html_page(
     .skills-usage-action, .skills-usage-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .skills-usage-action {{ background:var(--accent); color:#fff; }}
     .skills-usage-link {{ background:var(--surface); color:var(--accent); }}
-    .skills-state-details, .skills-workbench-evidence, .skills-command-evidence, .skills-usage-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .skills-state-details summary, .skills-workbench-evidence summary, .skills-command-evidence summary, .skills-usage-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .skills-state-details:not([open]) > :not(summary), .skills-workbench-evidence:not([open]) > :not(summary), .skills-command-evidence:not([open]) > :not(summary), .skills-usage-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .skills-inventory-filter {{ border-left:4px solid var(--ok); }}
+    .skills-inventory-filter-controls {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0; }}
+    .skills-inventory-filter-button, .skills-inventory-filter-reset {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border:1px solid var(--line); background:var(--surface); color:var(--text); }}
+    .skills-inventory-filter-button[aria-pressed="true"] {{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }}
+    .skills-inventory-filter-search {{ display:inline-flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:min(100%, 260px); }}
+    .skills-inventory-filter-search input {{ min-width:min(100%, 220px); }}
+    .skills-inventory-filter-memory-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .skills-state-details, .skills-workbench-evidence, .skills-command-evidence, .skills-usage-evidence, .skills-inventory-filter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .skills-state-details summary, .skills-workbench-evidence summary, .skills-command-evidence summary, .skills-usage-evidence summary, .skills-inventory-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .skills-state-details:not([open]) > :not(summary), .skills-workbench-evidence:not([open]) > :not(summary), .skills-command-evidence:not([open]) > :not(summary), .skills-usage-evidence:not([open]) > :not(summary), .skills-inventory-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
+    @media (max-width: 640px) {{ .skills-inventory-filter-button, .skills-inventory-filter-reset, .skills-inventory-filter-search, .skills-inventory-filter-search input {{ width:100%; }} .skills-inventory-filter-controls {{ align-items:stretch; }} .skills-inventory-filter-memory-status {{ width:100%; }} }}
     .skills-command-bar {{ border-left:4px solid var(--accent); }}
     .skills-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .skills-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -39133,6 +39255,129 @@ def _html_page(
         setMemoryInventoryViewStatus(filterPanel, "View: default");
       }}
     }}
+    function skillsInventoryStorageKey(filterPanel) {{
+      var key = filterPanel ? filterPanel.getAttribute("data-skills-inventory-filter-storage-key") : "";
+      return key || "clankeros-skills-inventory-filter";
+    }}
+    function setSkillsInventoryViewStatus(filterPanel, message) {{
+      var status = filterPanel ? filterPanel.querySelector("[data-skills-inventory-filter-view-status='true']") : null;
+      if (status) {{ status.textContent = message; }}
+    }}
+    function normalizeSkillsInventoryLane(filterPanel, lane) {{
+      var normalized = lane || "all";
+      var buttons = filterPanel ? Array.prototype.slice.call(filterPanel.querySelectorAll("[data-skills-inventory-filter-kind]")) : [];
+      var found = buttons.some(function(button) {{
+        return (button.getAttribute("data-skills-inventory-filter-kind") || "all") === normalized;
+      }});
+      return found ? normalized : "all";
+    }}
+    function selectedSkillsInventoryLane(filterPanel) {{
+      var active = filterPanel ? filterPanel.querySelector("[data-skills-inventory-filter-kind][aria-pressed='true']") : null;
+      return active ? active.getAttribute("data-skills-inventory-filter-kind") || "all" : "all";
+    }}
+    function saveSkillsInventoryFilterState(filterPanel, state) {{
+      if (!window.localStorage || !filterPanel) {{ return; }}
+      try {{
+        window.localStorage.setItem(skillsInventoryStorageKey(filterPanel), JSON.stringify(state));
+        setSkillsInventoryViewStatus(filterPanel, "View: saved");
+      }} catch (error) {{
+        setSkillsInventoryViewStatus(filterPanel, "View: local only");
+      }}
+    }}
+    function restoreSkillsInventoryFilterState() {{
+      var filterPanel = document.querySelector("[data-skills-inventory-filter='true']");
+      if (!filterPanel) {{ return; }}
+      if (!window.localStorage) {{
+        setSkillsInventoryViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+      try {{
+        var raw = window.localStorage.getItem(skillsInventoryStorageKey(filterPanel));
+        if (!raw) {{
+          setSkillsInventoryViewStatus(filterPanel, "View: default");
+          return false;
+        }}
+        var saved = JSON.parse(raw);
+        updateSkillsInventoryFilter({{
+          lane: saved && typeof saved.lane === "string" ? saved.lane : "all",
+          query: saved && typeof saved.query === "string" ? saved.query : "",
+          save: false
+        }});
+        setSkillsInventoryViewStatus(filterPanel, "View: restored");
+        return true;
+      }} catch (error) {{
+        setSkillsInventoryViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+    }}
+    function clearSkillsInventoryFilterState() {{
+      var filterPanel = document.querySelector("[data-skills-inventory-filter='true']");
+      if (filterPanel && window.localStorage) {{
+        try {{ window.localStorage.removeItem(skillsInventoryStorageKey(filterPanel)); }} catch (error) {{}}
+      }}
+      updateSkillsInventoryFilter({{ lane: "all", query: "", save: false }});
+      setSkillsInventoryViewStatus(filterPanel, "View: reset");
+    }}
+    function updateSkillsInventoryFilter(options) {{
+      var filterPanel = document.querySelector("[data-skills-inventory-filter='true']");
+      if (!filterPanel) {{ return; }}
+      options = options || {{}};
+      var queryInput = filterPanel.querySelector("[data-skills-inventory-filter-query='true']");
+      var lane = normalizeSkillsInventoryLane(filterPanel, Object.prototype.hasOwnProperty.call(options, "lane") ? options.lane : selectedSkillsInventoryLane(filterPanel));
+      var query = Object.prototype.hasOwnProperty.call(options, "query") ? String(options.query || "") : (queryInput ? queryInput.value || "" : "");
+      if (queryInput && queryInput.value !== query) {{ queryInput.value = query; }}
+      var queryText = query.toLowerCase().trim();
+      var rows = Array.prototype.slice.call(document.querySelectorAll("[data-skills-inventory-item='true']"));
+      var shown = 0;
+      rows.forEach(function(item) {{
+        var itemLane = item.getAttribute("data-skills-inventory-lane") || "available";
+        var itemStatus = item.getAttribute("data-skills-inventory-status") || "";
+        var usageCount = parseInt(item.getAttribute("data-skills-inventory-usage-count") || "0", 10) || 0;
+        var itemText = item.getAttribute("data-skills-inventory-text") || item.textContent.toLowerCase();
+        var laneMatch = lane === "all"
+          || itemLane === lane
+          || (lane === "active" && itemStatus === "active")
+          || (lane === "proposed" && itemStatus === "proposed")
+          || (lane === "used" && usageCount > 0)
+          || (lane === "unused" && usageCount === 0);
+        var textMatch = !queryText || itemText.indexOf(queryText) !== -1;
+        var match = laneMatch && textMatch;
+        var listItem = item.closest ? item.closest("li") : item.parentElement;
+        if (listItem) {{ listItem.hidden = !match; }}
+        item.hidden = !match;
+        if (match) {{ shown += 1; }}
+      }});
+      Array.prototype.slice.call(filterPanel.querySelectorAll("[data-skills-inventory-filter-kind]")).forEach(function(button) {{
+        var active = (button.getAttribute("data-skills-inventory-filter-kind") || "all") === lane;
+        if (active) {{
+          button.setAttribute("data-skills-inventory-filter-active", "true");
+          button.setAttribute("aria-pressed", "true");
+        }} else {{
+          button.removeAttribute("data-skills-inventory-filter-active");
+          button.setAttribute("aria-pressed", "false");
+        }}
+      }});
+      var status = filterPanel.querySelector("[data-skills-inventory-filter-status='true']");
+      if (status) {{
+        var parts = [];
+        if (lane !== "all") {{ parts.push("lane " + lane.replace("_", " ")); }}
+        if (queryText) {{ parts.push("text " + queryText); }}
+        status.textContent = "Showing " + shown + " of " + rows.length + " skill rows" + (parts.length ? " matching " + parts.join(", ") : "") + ".";
+      }}
+      var empty = filterPanel.querySelector("[data-skills-inventory-filter-empty='true']");
+      if (empty) {{ empty.hidden = shown !== 0; }}
+      if (options.save !== false) {{
+        saveSkillsInventoryFilterState(filterPanel, {{ lane: lane, query: query }});
+      }}
+    }}
+    function initializeSkillsInventoryFilterState() {{
+      var filterPanel = document.querySelector("[data-skills-inventory-filter='true']");
+      if (!filterPanel) {{ return; }}
+      if (!restoreSkillsInventoryFilterState()) {{
+        updateSkillsInventoryFilter({{ lane: "all", query: "", save: false }});
+        setSkillsInventoryViewStatus(filterPanel, "View: default");
+      }}
+    }}
     if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
     if (paletteSearch) {{ paletteSearch.addEventListener("input", syncPaletteFilter); }}
     if (nextActionOpen) {{ nextActionOpen.addEventListener("click", openNextAction); }}
@@ -39208,6 +39453,18 @@ def _html_page(
         updateMemoryInventoryFilter({{ lane: memoryFilterButton.getAttribute("data-memory-inventory-filter-kind") || "all" }});
         return;
       }}
+      var skillsFilterReset = target.closest ? target.closest("[data-skills-inventory-filter-reset='true']") : null;
+      if (skillsFilterReset) {{
+        event.preventDefault();
+        clearSkillsInventoryFilterState();
+        return;
+      }}
+      var skillsFilterButton = target.closest ? target.closest("[data-skills-inventory-filter-kind]") : null;
+      if (skillsFilterButton) {{
+        event.preventDefault();
+        updateSkillsInventoryFilter({{ lane: skillsFilterButton.getAttribute("data-skills-inventory-filter-kind") || "all" }});
+        return;
+      }}
       var opener = target.closest ? target.closest("[data-open-details='true']") : null;
       if (!opener) {{ return; }}
       var href = opener.getAttribute("href") || "";
@@ -39226,6 +39483,10 @@ def _html_page(
       var memoryFilterQuery = target.closest ? target.closest("[data-memory-inventory-filter-query='true']") : null;
       if (memoryFilterQuery) {{
         updateMemoryInventoryFilter({{ query: memoryFilterQuery.value || "" }});
+      }}
+      var skillsFilterQuery = target.closest ? target.closest("[data-skills-inventory-filter-query='true']") : null;
+      if (skillsFilterQuery) {{
+        updateSkillsInventoryFilter({{ query: skillsFilterQuery.value || "" }});
       }}
     }});
     document.addEventListener("change", function(event) {{
@@ -39272,6 +39533,7 @@ def _html_page(
     initializeGoalArtifactFilterState();
     initializeTimelineLaneState();
     initializeMemoryInventoryFilterState();
+    initializeSkillsInventoryFilterState();
     restoreWorkspacePanels();
     window.addEventListener("hashchange", openCurrentHashDetails);
     document.addEventListener("keydown", function(event) {{

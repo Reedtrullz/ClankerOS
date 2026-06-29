@@ -591,7 +591,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   id, label source, and route evidence. A read-only `Workspace View Memory`
   panel follows, showing browser-local `localStorage` view state for theme,
   focus mode, Goal board view, search lanes, timeline lanes, artifact filters,
-  and notes filters with Refresh plus reset controls. It only clears
+  notes filters, Memory Bank filters, and Skills Inventory filters with
+  Refresh plus reset controls. It only clears
   browser-local view memory after explicit clicks and does not write
   `.clanker/app/workspace.json`. The read-only `Workspace Daily Brief` and `Workspace Workflow Map`
   follow with the saved goal's current gate, lifecycle progress, next surface,
@@ -624,10 +625,14 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   readback, and projects using them. It now opens with a visible
   `Skills Operator Workbench` before shared route/focus diagnostics or
   command readback, with cards for the next skill review, generated skills,
-  usage, and `/resume` or Goal context. Skills state, workbench evidence, and
-  command evidence stay collapsed by default while preserving total, active,
-  proposed, archived, generated, used-skill, project-usage, first-artifact,
-  and zero-effect readbacks in the DOM.
+  usage, and `/resume` or Goal context, then a `Skills Usage Map` and
+  browser-local `Skills Inventory Filter`. The filter narrows already-rendered
+  rows by lane or text, remembers lane/query in
+  `localStorage:clankeros-skills-inventory-filter`, and resets without
+  installing or executing skills. Skills state, workbench, usage-map, filter,
+  and command evidence stay collapsed by default while preserving total,
+  active, proposed, archived, generated, used-skill, project-usage,
+  first-artifact, view-memory, and zero-effect readbacks in the DOM.
 - `/profiles` - inactive future provider-routing surface. It reads
   `.clanker/profiles.yml` when present and opens with a visible
   `Profiles Operator Workbench` before shared route/focus diagnostics or
