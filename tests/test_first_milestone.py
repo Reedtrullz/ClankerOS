@@ -5346,6 +5346,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert 'data-next-action-provider-calls-taken="0"' in root.body
     assert 'data-next-action-network-actions-taken="0"' in root.body
     assert 'data-next-action-external-effects-created="false"' in root.body
+    assert 'id="finish-today-open"' in root.body
+    assert 'aria-keyshortcuts="f"' in root.body
+    assert 'data-finish-today-button="true"' in root.body
+    assert 'data-finish-today-href="/workspace#save-workspace"' in root.body
+    assert 'data-finish-today-label="Finish Today"' in root.body
+    assert 'data-finish-today-source="workspace_save_form"' in root.body
+    assert 'data-finish-today-surface="workspace_save_form"' in root.body
+    assert 'data-finish-today-confirmation-required="true"' in root.body
+    assert 'data-finish-today-write-on-get="false"' in root.body
+    assert 'data-finish-today-provider-calls-taken="0"' in root.body
+    assert 'data-finish-today-network-actions-taken="0"' in root.body
+    assert 'data-finish-today-external-effects-created="false"' in root.body
     assert "Keyboard shortcuts: slash opens command palette" in root.body
     assert "n opens next action" in root.body
     assert "w opens workspace; f opens Finish Today" in root.body
@@ -5382,11 +5394,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "paletteEmpty.hidden = shown !== 0;" in root.body
     assert 'if (event.key === "Escape") { closePalette(); return; }' in root.body
     assert 'if (nextActionOpen) { nextActionOpen.addEventListener("click", openNextAction); }' in root.body
+    assert 'if (finishTodayOpen) { finishTodayOpen.addEventListener("click", openFinishToday); }' in root.body
     assert 'if (event.key === "n") { event.preventDefault(); openNextAction(); }' in root.body
     assert 'if (event.key === "r") { event.preventDefault(); window.location.href = "/resume"; }' in root.body
     assert 'if (event.key === "s") { event.preventDefault(); window.location.href = "/search"; }' in root.body
     assert 'if (event.key === "w") { event.preventDefault(); window.location.href = "/workspace"; }' in root.body
-    assert 'if (event.key === "f") { event.preventDefault(); window.location.href = "/workspace#save-workspace"; }' in root.body
+    assert 'if (event.key === "f") { event.preventDefault(); openFinishToday(); }' in root.body
     assert 'if (event.key === "y") { event.preventDefault(); window.location.href = "/today"; }' in root.body
     assert 'if (event.key === "m") { event.preventDefault(); toggleFocusMode(); }' in root.body
     assert 'if (event.key === "t") { event.preventDefault(); toggleTheme(); }' in root.body
@@ -10235,6 +10248,29 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_workbench_unblock_surface</dt><dd><a href='/approvals'>/approvals</a>" in today.body
     assert "today_workbench_finish_status</dt><dd>needs_workspace_save" in today.body
     assert "today_workbench_finish_surface</dt><dd><a href='#today-finish'>Finish Today</a>" in today.body
+    assert 'data-finish-today-href="#today-finish"' in today.body
+    assert 'data-finish-today-source="today_finish_form"' in today.body
+    assert 'data-finish-today-target="Today local finish form"' in today.body
+    assert 'data-finish-today-surface="route_local_form"' in today.body
+    assert (
+        "operator_ribbon_finish_surface</dt><dd><a href='#today-finish'>"
+        "Finish Today</a>"
+    ) in today.body
+    assert "operator_ribbon_finish_source</dt><dd>today_finish_form" in today.body
+    assert "operator_ribbon_finish_target</dt><dd>Today local finish form" in today.body
+    assert "operator_ribbon_finish: <a href='#today-finish'>Finish Today</a>" in today.body
+    assert (
+        "data-command-palette-quick-finish='true' href='#today-finish'>"
+        "Finish Today</a>"
+    ) in today.body
+    assert (
+        "palette_quick_switch_finish_surface</dt><dd><a href='#today-finish'>"
+        "#today-finish</a>"
+    ) in today.body
+    assert "palette_quick_switch_finish_source</dt><dd>today_finish_form" in today.body
+    assert "palette_quick_switch_finish_target</dt><dd>Today local finish form" in today.body
+    assert "palette_quick_switch_finish_route_surface</dt><dd>route_local_form" in today.body
+    assert "palette_quick_switch_finish: <a href='#today-finish'>Finish Today</a>" in today.body
     assert "today_workbench_action_form_available</dt><dd>true" in today.body
     assert "today_workbench_first_run_form_available</dt><dd>false" in today.body
     assert "today_workbench_note_form_available</dt><dd>true" in today.body
@@ -10455,6 +10491,23 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert 'data-focus-mode-provider-calls-taken="0"' in goal.body
     assert 'data-focus-mode-network-actions-taken="0"' in goal.body
     assert 'data-focus-mode-external-effects-created="false"' in goal.body
+    assert 'id="finish-today-open"' in goal.body
+    assert 'aria-keyshortcuts="f"' in goal.body
+    assert 'data-finish-today-button="true"' in goal.body
+    assert 'data-finish-today-href="#goal-finish-today"' in goal.body
+    assert 'data-finish-today-source="goal_finish_form"' in goal.body
+    assert 'data-finish-today-target="Goal local finish form"' in goal.body
+    assert 'data-finish-today-surface="route_local_form"' in goal.body
+    assert (
+        "operator_ribbon_finish_surface</dt><dd><a href='#goal-finish-today'>"
+        "Finish Today</a>"
+    ) in goal.body
+    assert "operator_ribbon_finish_source</dt><dd>goal_finish_form" in goal.body
+    assert "operator_ribbon_finish_target</dt><dd>Goal local finish form" in goal.body
+    assert (
+        "operator_ribbon_finish: <a href='#goal-finish-today'>"
+        "Finish Today</a>"
+    ) in goal.body
     assert 'aria-keyshortcuts="m"' in goal.body
     assert 'if (event.key === "m") { event.preventDefault(); toggleFocusMode(); }' in goal.body
     assert "data-command-palette='true'" in goal.body
@@ -10514,7 +10567,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in goal.body
     assert "data-command-palette-quick-artifact='true' href='/artifacts?path=" in goal.body
     assert (
-        "data-command-palette-quick-finish='true' href='/workspace#save-workspace'>"
+        "data-command-palette-quick-finish='true' href='#goal-finish-today'>"
         "Finish Today</a>"
     ) in goal.body
     assert "palette_quick_switch_status</dt><dd>available" in goal.body
@@ -10527,13 +10580,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in goal.body
     assert "palette_quick_switch_action_label</dt><dd>Create commit request" in goal.body
     assert "palette_quick_switch_artifact_source</dt><dd>current_goal_latest" in goal.body
-    assert "palette_quick_switch_finish_source</dt><dd>lead_goal" in goal.body
+    assert "palette_quick_switch_finish_source</dt><dd>goal_finish_form" in goal.body
     assert (
-        "palette_quick_switch_finish_surface</dt><dd><a href='/workspace#save-workspace'>"
-        "/workspace#save-workspace</a>"
+        "palette_quick_switch_finish_surface</dt><dd><a href='#goal-finish-today'>"
+        "#goal-finish-today</a>"
     ) in goal.body
-    assert f"palette_quick_switch_finish_target</dt><dd>{result.goal_id}" in goal.body
+    assert "palette_quick_switch_finish_target</dt><dd>Goal local finish form" in goal.body
+    assert "palette_quick_switch_finish_route_surface</dt><dd>route_local_form" in goal.body
     assert "palette_quick_switch_finish_confirmation_required</dt><dd>true" in goal.body
+    assert (
+        "palette_quick_switch_finish: <a href='#goal-finish-today'>"
+        "Finish Today</a>"
+    ) in goal.body
     assert "palette_quick_switch_card_count</dt><dd>5" in goal.body
     assert "palette_quick_switch_write_on_get</dt><dd>false" in goal.body
     assert "data-command-palette-evidence='true'" in goal.body

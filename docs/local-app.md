@@ -459,7 +459,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - Every app page includes a shared operator shell with a global
   `Operator Focus` strip, a read-only `Route Context` breadcrumb strip, recent
   local items, a command palette, local Focus mode, a dark/light theme toggle,
-  and keyboard shortcuts for home, goals, and palette search. Focus mode uses
+  and keyboard shortcuts for home, goals, and palette search. The header
+  includes a visible `Finish` control and the `f` shortcut resolves to the
+  route-local Finish Today form on `/today` (`#today-finish`) and
+  `/goals/<goal_id>` (`#goal-finish-today`), falling back to
+  `/workspace#save-workspace` on other routes. Focus mode uses
   the header `Focus` button or `m` shortcut to collapse Recent Items, Route
   Context, Operator Focus, and Last Action strips while keeping the Operator
   Ribbon and current page body visible. It is persisted only in
@@ -492,8 +496,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   search box now narrows a visible `Palette Results` list of local routes and
   recent work as the operator types, while the existing Search button still
   opens full indexed `/search` results. The
-  route-aware `Current Page` readback, keyboard shortcuts, and long open list
-  stay available inside collapsed `Palette evidence and shortcuts`; the
+  route-aware `Current Page` readback, keyboard shortcuts, long open list, and
+  route-aware Finish Today target stay available inside collapsed
+  `Palette evidence and shortcuts`; the
   goal-aware `Continue Current Goal` block, compact Goal continuation readback,
   and confirmed local action form remain directly below search. These controls
   only navigate local routes or submit existing local forms after confirmation.

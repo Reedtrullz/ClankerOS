@@ -666,10 +666,12 @@ Core layers for the bootstrap:
   The shared browser shell now exposes accessible shortcut metadata for Home,
   Today, Resume, Goals, Search, Workspace, Finish Today, palette, and theme
   controls, plus a global next-action shortcut. `n` opens the current
-  recommended next-action target, `w` opens `/workspace`, `f` opens
-  `/workspace#save-workspace`, and the palette can be closed with Escape even
-  while the search input is focused; the shortcut layer remains local-only and
-  creates no server writes.
+  recommended next-action target, `w` opens `/workspace`, and `f` opens the
+  route-local Finish Today form on `/today` (`#today-finish`) or
+  `/goals/<goal_id>` (`#goal-finish-today`) before falling back to
+  `/workspace#save-workspace` elsewhere. The palette can be closed with Escape
+  even while the search input is focused; the shortcut layer remains
+  local-only and creates no server writes.
   The command palette also
   starts with a route-aware `Current Page` block that mirrors the current
   path, parent surface, resolved Goal/Project/run context, focus target,
@@ -788,7 +790,7 @@ Core layers for the bootstrap:
   The command palette now also includes a visible `Quick Switch` dock for
   Continue, Workspace, Action, Artifact, and Finish, so the keyboard launcher
   can reopen the current Goal, saved workspace, latest local action target,
-  latest artifact, or `/workspace#save-workspace` handoff without expanding
+  latest artifact, or the route-aware Finish Today handoff without expanding
   the sidebar. The visible `Palette Results` list filters local routes and
   recent work on input before falling back to full `/search`. It also starts with the same
   current-page route context, parent link, resolved Goal/Project/run context,

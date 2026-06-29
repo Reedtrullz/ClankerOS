@@ -658,12 +658,16 @@ toggle on every page. Focus mode uses the header `Focus` button or `m`
 shortcut to hide Recent Items, Route Context, Operator Focus, and Last Action
 strips while keeping the Operator Ribbon and page body visible. It is stored in
 `localStorage:clankeros-focus-mode` only and does not write server state. The
-shared shortcut layer now includes `w` for `/workspace` and `f` for
-`/workspace#save-workspace`, plus `n` for the current recommended next action,
-so return-to-work, Finish Today, and the main next click are available without
-opening the palette. If a browser-confirmed action form is available, `n` opens
-that existing form details panel; it never submits the form or writes state on
-its own. The ribbon sits above the sidebar and page body with visible Now, Goal,
+shared shortcut layer now includes `w` for `/workspace` and a route-aware `f`
+for Finish Today: Today opens `#today-finish`, Goal pages open
+`#goal-finish-today`, and other routes fall back to
+`/workspace#save-workspace`. `n` still opens the current recommended next
+action, so return-to-work, Finish Today, and the main next click are available
+without opening the palette. If a browser-confirmed action form is available,
+`n` opens that existing form details panel; it never submits the form or writes
+state on its own. The header also exposes a visible `Finish` control backed by
+the same route-aware target. The ribbon sits above the sidebar and page body
+with visible Now, Goal,
 Attention, Finish, Resume, and Search cards, so every route immediately shows
 the current or lead Goal, one recommended click, waiting-review posture,
 end-of-day save routing, resume state, and collapsed no-write/no-provider/

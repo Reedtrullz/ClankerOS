@@ -33077,6 +33077,48 @@ def _next_action_shortcut_context(focus_context: dict[str, Any]) -> dict[str, st
     }
 
 
+def _finish_today_shortcut_context(current_path: str) -> dict[str, str]:
+    route_path = urlparse(current_path or "/").path or "/"
+    if route_path == "/today":
+        return {
+            "href": "#today-finish",
+            "label": "Finish Today",
+            "source": "today_finish_form",
+            "target": "Today local finish form",
+            "surface": "route_local_form",
+            "confirmation_required": "true",
+            "write_on_get": "false",
+            "provider_calls_taken": "0",
+            "network_actions_taken": "0",
+            "external_effects_created": "false",
+        }
+    if route_path.startswith("/goals/"):
+        return {
+            "href": "#goal-finish-today",
+            "label": "Finish Today",
+            "source": "goal_finish_form",
+            "target": "Goal local finish form",
+            "surface": "route_local_form",
+            "confirmation_required": "true",
+            "write_on_get": "false",
+            "provider_calls_taken": "0",
+            "network_actions_taken": "0",
+            "external_effects_created": "false",
+        }
+    return {
+        "href": "/workspace#save-workspace",
+        "label": "Finish Today",
+        "source": "workspace_save_form",
+        "target": "Workspace save form",
+        "surface": "workspace_save_form",
+        "confirmation_required": "true",
+        "write_on_get": "false",
+        "provider_calls_taken": "0",
+        "network_actions_taken": "0",
+        "external_effects_created": "false",
+    }
+
+
 def _operator_ribbon_card(
     label: str,
     value: str,
@@ -33208,8 +33250,9 @@ def _operator_status_ribbon(
 
     resume_label = "Open resume"
     resume_href = "/resume"
-    finish_href = "/workspace#save-workspace"
-    finish_label = "Finish Today"
+    finish_target = _finish_today_shortcut_context(current_path)
+    finish_href = finish_target["href"]
+    finish_label = finish_target["label"]
     search_href = "/search"
     route_label = title or route_path
     rows: list[tuple[str, str | SafeHtml]] = [
@@ -33253,8 +33296,10 @@ def _operator_status_ribbon(
         ("operator_ribbon_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
         (
             "operator_ribbon_finish_surface",
-            SafeHtml("<a href='/workspace#save-workspace'>Finish Today</a>"),
+            SafeHtml(f"<a href='{_e(finish_href)}'>{_e(finish_label)}</a>"),
         ),
+        ("operator_ribbon_finish_source", finish_target["source"]),
+        ("operator_ribbon_finish_target", finish_target["target"]),
         ("operator_ribbon_finish_action", "save workspace for tomorrow"),
         ("operator_ribbon_finish_confirmation_required", "true"),
         ("operator_ribbon_search_surface", SafeHtml("<a href='/search'>/search</a>")),
@@ -33269,7 +33314,7 @@ def _operator_status_ribbon(
         f"operator_ribbon_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
         f"operator_ribbon_attention: {_e(attention_status)} -> <a href='{_e(attention_href)}'>{_e(attention_href)}</a>",
         f"operator_ribbon_resume: status={_e(resume_status)} surface=<a href='/resume'>/resume</a>",
-        "operator_ribbon_finish: <a href='/workspace#save-workspace'>Finish Today</a>",
+        f"operator_ribbon_finish: <a href='{_e(finish_href)}'>{_e(finish_label)}</a>",
         "operator_ribbon_palette: <a href='#command-palette'>Command Palette</a>",
         "operator_ribbon_safety: read-only global operator orientation",
     ]
@@ -33659,7 +33704,7 @@ def _command_palette(
             ),
             "</details>",
             "</section>",
-            _command_palette_quick_switch(root, focus_context),
+            _command_palette_quick_switch(root, focus_context, current_path),
             _command_palette_continue(focus_context),
             "<details class='palette-evidence' data-command-palette-evidence='true'>",
             "<summary data-command-palette-evidence-summary='true'>Palette evidence and shortcuts</summary>",
@@ -33676,7 +33721,11 @@ def _command_palette(
     )
 
 
-def _command_palette_quick_switch(root: Path, focus_context: dict[str, Any]) -> str:
+def _command_palette_quick_switch(
+    root: Path,
+    focus_context: dict[str, Any],
+    current_path: str,
+) -> str:
     state = _load_workspace_state(root)
     saved_project = str(state.get("open_project") or "").strip()
     saved_goal = str(state.get("open_goal") or "").strip()
@@ -33753,7 +33802,11 @@ def _command_palette_quick_switch(root: Path, focus_context: dict[str, Any]) -> 
     finish_source = finish_defaults["source"]
     finish_target = finish_defaults["open_goal"] or finish_defaults["open_project"] or "No saved workspace"
     finish_action = "Finish Today"
-    finish_href = "/workspace#save-workspace"
+    finish_shortcut = _finish_today_shortcut_context(current_path)
+    finish_href = finish_shortcut["href"]
+    if finish_shortcut["surface"] == "route_local_form":
+        finish_source = finish_shortcut["source"]
+        finish_target = finish_shortcut["target"]
     recent_count = len(_recent_operator_links(root, limit=6))
     rows: list[tuple[str, str | SafeHtml]] = [
         ("palette_quick_switch_status", status),
@@ -33785,6 +33838,7 @@ def _command_palette_quick_switch(root: Path, focus_context: dict[str, Any]) -> 
             SafeHtml(f"<a href='{_e(finish_href)}'>{_e(finish_href)}</a>"),
         ),
         ("palette_quick_switch_finish_target", finish_target),
+        ("palette_quick_switch_finish_route_surface", finish_shortcut["surface"]),
         ("palette_quick_switch_finish_confirmation_required", "true"),
         ("palette_quick_switch_saved_project", saved_project or "none"),
         ("palette_quick_switch_saved_goal", saved_goal or "none"),
@@ -34469,6 +34523,7 @@ def _html_page(
     recent_panel = _recent_items_panel(root)
     focus_context = _operator_focus_context(root, current_path)
     next_shortcut = _next_action_shortcut_context(focus_context)
+    finish_shortcut = _finish_today_shortcut_context(current_path)
     operator_ribbon = _operator_status_ribbon(root, focus_context, current_path, title)
     breadcrumbs = _breadcrumbs(root, current_path, title, focus_context)
     focus_strip = _operator_focus_strip(focus_context)
@@ -35943,10 +35998,11 @@ def _html_page(
   <header>
     <strong>ClankerOS Local Operator</strong>
     <nav>{nav}</nav>
-    <div class="header-actions" data-keyboard-shortcuts="true" data-focus-mode-supported="true" data-focus-mode-storage="localStorage:clankeros-focus-mode" data-focus-mode-write-on-get="false" data-focus-mode-provider-calls-taken="0" data-focus-mode-network-actions-taken="0" data-focus-mode-external-effects-created="false" data-next-action-href="{_e(next_shortcut['href'])}" data-next-action-label="{_e(next_shortcut['label'])}" data-next-action-status="{_e(next_shortcut['status'])}" data-next-action-source="{_e(next_shortcut['source'])}" data-next-action-form-available="{_e(next_shortcut['form_available'])}" data-next-action-confirmation-required="{_e(next_shortcut['confirmation_required'])}" data-next-action-write-on-get="{_e(next_shortcut['write_on_get'])}" data-next-action-provider-calls-taken="{_e(next_shortcut['provider_calls_taken'])}" data-next-action-network-actions-taken="{_e(next_shortcut['network_actions_taken'])}" data-next-action-external-effects-created="{_e(next_shortcut['external_effects_created'])}">
+    <div class="header-actions" data-keyboard-shortcuts="true" data-focus-mode-supported="true" data-focus-mode-storage="localStorage:clankeros-focus-mode" data-focus-mode-write-on-get="false" data-focus-mode-provider-calls-taken="0" data-focus-mode-network-actions-taken="0" data-focus-mode-external-effects-created="false" data-next-action-href="{_e(next_shortcut['href'])}" data-next-action-label="{_e(next_shortcut['label'])}" data-next-action-status="{_e(next_shortcut['status'])}" data-next-action-source="{_e(next_shortcut['source'])}" data-next-action-form-available="{_e(next_shortcut['form_available'])}" data-next-action-confirmation-required="{_e(next_shortcut['confirmation_required'])}" data-next-action-write-on-get="{_e(next_shortcut['write_on_get'])}" data-next-action-provider-calls-taken="{_e(next_shortcut['provider_calls_taken'])}" data-next-action-network-actions-taken="{_e(next_shortcut['network_actions_taken'])}" data-next-action-external-effects-created="{_e(next_shortcut['external_effects_created'])}" data-finish-today-href="{_e(finish_shortcut['href'])}" data-finish-today-label="{_e(finish_shortcut['label'])}" data-finish-today-source="{_e(finish_shortcut['source'])}" data-finish-today-target="{_e(finish_shortcut['target'])}" data-finish-today-surface="{_e(finish_shortcut['surface'])}" data-finish-today-confirmation-required="{_e(finish_shortcut['confirmation_required'])}" data-finish-today-write-on-get="{_e(finish_shortcut['write_on_get'])}" data-finish-today-provider-calls-taken="{_e(finish_shortcut['provider_calls_taken'])}" data-finish-today-network-actions-taken="{_e(finish_shortcut['network_actions_taken'])}" data-finish-today-external-effects-created="{_e(finish_shortcut['external_effects_created'])}">
       <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: slash opens command palette; Escape closes it; n opens next action; h opens home; y opens today; g opens goals; r opens resume; s opens search; w opens workspace; f opens Finish Today; m toggles focus mode; t toggles theme.</span>
       <button class="icon-button" id="palette-open" type="button" data-shortcut="/" aria-keyshortcuts="/" aria-describedby="keyboard-shortcuts-help" title="Open command palette (/)">Palette</button>
       <button class="icon-button" id="next-action-open" type="button" data-shortcut="n" aria-keyshortcuts="n" aria-describedby="keyboard-shortcuts-help" data-next-action-button="true" data-next-action-href="{_e(next_shortcut['href'])}" title="Open next action (n)">Next</button>
+      <button class="icon-button" id="finish-today-open" type="button" data-shortcut="f" aria-keyshortcuts="f" aria-describedby="keyboard-shortcuts-help" data-finish-today-button="true" data-finish-today-href="{_e(finish_shortcut['href'])}" title="Open Finish Today (f)">Finish</button>
       <button class="icon-button" id="focus-toggle" type="button" data-shortcut="m" aria-keyshortcuts="m" aria-pressed="false" aria-describedby="keyboard-shortcuts-help" data-focus-mode-toggle="true" title="Toggle focus mode (m)">Focus</button>
       <button class="icon-button" id="theme-toggle" type="button" data-shortcut="t" aria-keyshortcuts="t" aria-describedby="keyboard-shortcuts-help" title="Toggle theme (t)">Theme</button>
     </div>
@@ -35977,6 +36033,7 @@ def _html_page(
     var themeToggle = document.getElementById("theme-toggle");
     var focusToggle = document.getElementById("focus-toggle");
     var nextActionOpen = document.getElementById("next-action-open");
+    var finishTodayOpen = document.getElementById("finish-today-open");
     function syncPaletteFilter() {{
       if (!paletteSearch || !paletteResults.length) {{ return; }}
       var query = String(paletteSearch.value || "").trim().toLowerCase();
@@ -36023,9 +36080,15 @@ def _html_page(
       if (!href) {{ return; }}
       window.location.href = href;
     }}
+    function openFinishToday() {{
+      var href = finishTodayOpen ? finishTodayOpen.getAttribute("data-finish-today-href") : "";
+      if (!href) {{ href = "/workspace#save-workspace"; }}
+      window.location.href = href;
+    }}
     if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
     if (paletteSearch) {{ paletteSearch.addEventListener("input", syncPaletteFilter); }}
     if (nextActionOpen) {{ nextActionOpen.addEventListener("click", openNextAction); }}
+    if (finishTodayOpen) {{ finishTodayOpen.addEventListener("click", openFinishToday); }}
     if (themeToggle) {{ themeToggle.addEventListener("click", toggleTheme); }}
     if (focusToggle) {{ focusToggle.addEventListener("click", toggleFocusMode); }}
     syncFocusModeButton();
@@ -36063,7 +36126,7 @@ def _html_page(
       if (event.key === "r") {{ event.preventDefault(); window.location.href = "/resume"; }}
       if (event.key === "s") {{ event.preventDefault(); window.location.href = "/search"; }}
       if (event.key === "w") {{ event.preventDefault(); window.location.href = "/workspace"; }}
-      if (event.key === "f") {{ event.preventDefault(); window.location.href = "/workspace#save-workspace"; }}
+      if (event.key === "f") {{ event.preventDefault(); openFinishToday(); }}
       if (event.key === "y") {{ event.preventDefault(); window.location.href = "/today"; }}
       if (event.key === "m") {{ event.preventDefault(); toggleFocusMode(); }}
       if (event.key === "t") {{ event.preventDefault(); toggleTheme(); }}

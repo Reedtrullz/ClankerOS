@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared browser shell now makes Finish Today route-aware. The header
+  `Finish` control, `f` shortcut, Operator Ribbon, and command-palette Quick
+  Switch open `#today-finish` on `/today`, `#goal-finish-today` on
+  `/goals/<goal_id>`, and `/workspace#save-workspace` elsewhere. All routes
+  still require the existing confirmed local `save-workspace` form before any
+  write.
 - `/resume` and `/workspace` now render same-page first-run continuation forms
   when no saved Goal exists. Fresh checkouts can register the project directly
   from Resume/Workspace, and registered-project/no-goal states can create the
@@ -122,7 +128,8 @@ Latest status focus:
   `Operator Focus` details panel instead of submitting it, preserving the
   no-write/no-provider/no-network/no-external-effect GET boundary.
 - The shared browser shell now has keyboard-first Workspace and Finish Today
-  navigation: `w` opens `/workspace`, and `f` opens
+  navigation: `w` opens `/workspace`, and `f` opens the route-local Finish
+  Today form on Today/Goal pages before falling back to
   `/workspace#save-workspace`. Both shortcuts are discoverable in the command
   palette help and remain navigation-only; the actual workspace save still
   requires the existing confirmed form.
@@ -133,9 +140,10 @@ Latest status focus:
   clean-surface and last-action links, and preserves no-write/no-provider/
   no-network/no-external-effect boundaries on GET.
 - The command palette `Quick Switch` now includes a fifth `Finish` card that
-  opens `/workspace#save-workspace`, reports finish source/target/confirmation
-  evidence, and keeps the launcher read-only until the existing confirmed
-  workspace save form is submitted.
+  uses the same route-aware Finish Today target as the header and Operator
+  Ribbon, reports finish source/target/confirmation evidence, and keeps the
+  launcher read-only until the existing confirmed workspace save form is
+  submitted.
 - `/workspace#save-workspace` now exposes first-class `Workspace save defaults`
   evidence. Empty first-run checkouts stay blank and read-only, saved
   workspaces stay authoritative, and fixture/lead-goal states prefill the

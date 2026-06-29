@@ -1,5 +1,35 @@
 # Status
 
+## 2026-06-29 Route-Aware Finish Today UX
+
+- Made the shared Finish Today target route-aware across the browser shell.
+  `/today` now points the header `Finish` control, `f` shortcut, Operator
+  Ribbon, and command-palette Quick Switch to `#today-finish`; Goal detail
+  pages point them to `#goal-finish-today`; every other route still falls back
+  to `/workspace#save-workspace`.
+- Added finish-target metadata to the shared header and finish evidence to the
+  ribbon/palette so the operator can see whether the current end-of-day handoff
+  is a route-local confirmed form or the generic workspace save surface.
+- The behavior is navigation-only on GET. The actual resume write still
+  requires the existing confirmed local `save-workspace` form, with no provider
+  calls, external mutation, approval, execution, push, PR, or deploy from the
+  app.
+- Updated README, local app docs, operating summary, docs status, and focused
+  rendered-shell assertions for root fallback, Today local finish, and Goal
+  local finish.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 62.38s`; `python3 -m compileall -q agent_os
+  tests`; bounded temp-root `app-smoke-test`; bounded temp-root
+  `app-demo-smoke-test`; `git diff --check`.
+- Non-claims: no browser screenshot/Playwright interaction proof for this
+  slice, no new action authority, no write on GET, no provider calls, no
+  non-loopback network actions, no approval, no execution, no push, no PR, no
+  deploy, and no external mutation from the app.
+
 ## 2026-06-29 First-Run Return Surface UX
 
 - Added same-page `Resume First-Run Action` and `Workspace First-Run Action`
