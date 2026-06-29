@@ -499,8 +499,11 @@ Core layers for the bootstrap:
   Remaining Work, goal-scoped approvals, CI handoff, and Finish Today save
   form, while the detailed lifecycle rail, each gate's eventual local operator
   surface, manual publish boundary, and zero-effect counters stay in collapsed
-  workflow evidence. A read-only `Goal CI Handoff`
-  follows it with visible Check GitHub, Record Proof, Current Proof, Full
+  workflow evidence. A read-only `Goal Coder Handoff Digest` follows it with
+  visible Now, Handoff, Prep, Execute, Ship, and Safety cards over the selected
+  delegation, context-pack, implementation-handoff, coder-prep/worktree,
+  commit, and publication posture. A read-only `Goal CI Handoff`
+  follows that with visible Check GitHub, Record Proof, Current Proof, Full
   Suite, and Finish Today cards, project-scoped proof status, latest
   operator-recorded GitHub Actions evidence, exact `gh run list` /
   `gh run view` command templates, and a same-page proof-recording target

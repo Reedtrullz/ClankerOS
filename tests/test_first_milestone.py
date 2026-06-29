@@ -10367,7 +10367,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert goal_phase_position < goal.body.index("id='goal-next-action'")
     assert goal_phase_position < goal.body.index("id='goal-section-index'")
     assert goal.body.index("id='goal-next-action'") < goal.body.index("id='goal-workflow-map'")
-    assert goal.body.index("id='goal-workflow-map'") < goal.body.index("id='goal-live-state'")
+    assert goal.body.index("id='goal-workflow-map'") < goal.body.index("id='goal-coder-handoff-digest'")
+    assert goal.body.index("id='goal-coder-handoff-digest'") < goal.body.index("id='goal-live-state'")
     assert "Goal Section Index" in goal.body
     assert "Goal Jump Bar" in goal.body
     assert "data-goal-jump-bar='true'" in goal.body
@@ -10491,10 +10492,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_section_switchboard_card_count</dt><dd>5" in goal.body
     assert "goal_section_switchboard_primary</dt><dd>goal-next-action" in goal.body
     assert "goal_section_switchboard_proof_surface</dt><dd>goal-verification-command-bar" in goal.body
-    assert "goal_section_switchboard_work_surface</dt><dd>goal-delegation-command-bar" in goal.body
+    assert "goal_section_switchboard_work_surface</dt><dd>goal-coder-handoff-digest" in goal.body
     assert "goal_section_switchboard_knowledge_surface</dt><dd>goal-artifact-command-bar" in goal.body
     assert "goal_section_switchboard_finish_surface</dt><dd>goal-completion-readiness" in goal.body
     assert "goal_section_switchboard_proof: <a href='#goal-verification-command-bar'>Verification</a>" in goal.body
+    assert "goal_section_switchboard_work: <a href='#goal-coder-handoff-digest'>Coder handoff</a>" in goal.body
     assert "goal_section_switchboard_finish: <a href='#goal-completion-readiness'>Completion</a>" in goal.body
     assert "goal_section_switchboard_safety: read-only local anchor navigation" in goal.body
     assert goal.body.index("data-goal-section-index-actions='true'") < goal.body.index(
@@ -10512,6 +10514,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-session-digest'" in goal.body
     assert "href='#goal-continuation-rail'" in goal.body
     assert "href='#goal-workflow-map'" in goal.body
+    assert "href='#goal-coder-handoff-digest'" in goal.body
     assert "href='#goal-next-action'" in goal.body
     assert "href='#goal-next-recommendation'" in goal.body
     assert "href='#goal-overview-command-bar'" in goal.body
@@ -10541,6 +10544,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-daily-loop'" in goal.body
     assert "id='goal-session-digest'" in goal.body
     assert "id='goal-workflow-map'" in goal.body
+    assert "id='goal-coder-handoff-digest'" in goal.body
     assert "id='goal-ci-handoff'" in goal.body
     assert "id='goal-current-phase'" in goal.body
     assert "id='goal-overview-command-bar'" in goal.body
@@ -10566,7 +10570,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>54" in goal.body
+    assert "goal_section_count</dt><dd>55" in goal.body
     assert "data-goal-section-index-evidence='true'" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "data-goal-command-strip='true'" in goal.body
@@ -10855,7 +10859,62 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-workflow-gate='manual_publish' data-gate-status='waiting' data-gate-marker='waiting' data-gate-action='Manual publish outside ClankerOS'" in goal.body
     assert "workflow_map_gate: manual_publish status=waiting marker=waiting action=Manual publish outside ClankerOS surface=outside_clankeros" in goal.body
     assert "workflow_map_safety: read-only full workflow action guide" in goal.body
-    assert goal.body.index("id='goal-workflow-map'") < goal.body.index("id='goal-ci-handoff'")
+    assert "Goal Coder Handoff Digest" in goal.body
+    assert "data-goal-coder-handoff-digest='true'" in goal.body
+    assert "data-goal-coder-handoff-actions='true'" in goal.body
+    assert "data-goal-coder-handoff-now='true'" in goal.body
+    assert "data-goal-coder-handoff-primary='true'" in goal.body
+    assert "data-goal-coder-handoff-handoff='true'" in goal.body
+    assert "data-goal-coder-handoff-prep='true'" in goal.body
+    assert "data-goal-coder-handoff-execute='true'" in goal.body
+    assert "data-goal-coder-handoff-ship='true'" in goal.body
+    assert "data-goal-coder-handoff-safety='true'" in goal.body
+    assert "data-goal-coder-handoff-evidence='true'" in goal.body
+    assert "data-goal-coder-handoff-primary='true' href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert f"href='/delegations/{result.delegation_id}'>Open delegation</a>" in goal.body
+    assert f"href='/workflow?delegation_id={result.delegation_id}'>Workflow</a>" in goal.body
+    assert f"goal_coder_handoff_digest_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_coder_handoff_digest_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_coder_handoff_digest_status</dt><dd>ready_for_commit_request" in goal.body
+    assert "goal_coder_handoff_digest_token</dt><dd>request_commit_for_reviewed_run" in goal.body
+    assert f"goal_coder_handoff_selected_delegation</dt><dd>{result.delegation_id}" in goal.body
+    assert "goal_coder_handoff_total_delegations</dt><dd>1" in goal.body
+    assert "goal_coder_handoff_context_packs_ready</dt><dd>1" in goal.body
+    assert "goal_coder_handoff_implementation_handoffs_ready</dt><dd>1" in goal.body
+    assert "goal_coder_handoff_coder_prep_packets</dt><dd>1" in goal.body
+    assert "goal_coder_handoff_worktree_plans</dt><dd>1" in goal.body
+    assert "goal_coder_handoff_worktree_pending_approvals</dt><dd>1" in goal.body
+    assert "goal_coder_handoff_worktree_approved_approvals</dt><dd>1" in goal.body
+    assert "goal_coder_handoff_worktree_runs</dt><dd>1" in goal.body
+    assert "goal_coder_handoff_completed_worktree_runs</dt><dd>1" in goal.body
+    assert "goal_coder_handoff_reviewed_worktree_runs</dt><dd>1" in goal.body
+    assert "goal_coder_handoff_commit_pending_approvals</dt><dd>0" in goal.body
+    assert "goal_coder_handoff_commit_approved_approvals</dt><dd>0" in goal.body
+    assert "goal_coder_handoff_committed_commits</dt><dd>0" in goal.body
+    assert "goal_coder_handoff_publication_pending_approvals</dt><dd>0" in goal.body
+    assert "goal_coder_handoff_publication_approved</dt><dd>0" in goal.body
+    assert "goal_coder_handoff_publication_handoffs_ready</dt><dd>0" in goal.body
+    assert "goal_coder_handoff_next_action</dt><dd>Create commit request" in goal.body
+    assert "goal_coder_handoff_primary_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_coder_handoff_action_form_available</dt><dd>true" in goal.body
+    assert f"goal_coder_handoff_delegation_surface</dt><dd><a href='/delegations/{result.delegation_id}'" in goal.body
+    assert f"goal_coder_handoff_workflow_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'" in goal.body
+    assert f"goal_coder_handoff_run_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert f"goal_coder_handoff_approval_surface</dt><dd><a href='/approvals?goal_id={result.goal_id}'" in goal.body
+    assert "goal_coder_handoff_ship_surface</dt><dd><a href='#goal-ci-handoff'>Review CI handoff</a>" in goal.body
+    assert "goal_coder_handoff_source</dt><dd>delegations_context_prep_worktree_commit_publication_state" in goal.body
+    assert "goal_coder_handoff_write_on_get</dt><dd>false" in goal.body
+    assert "goal_coder_handoff_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_coder_handoff_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_coder_handoff_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_coder_handoff_now: Create commit request status=ready_for_commit_request token=request_commit_for_reviewed_run" in goal.body
+    assert "goal_coder_handoff_handoff: context=1 handoff=1" in goal.body
+    assert "goal_coder_handoff_prep: prep=1 plan=1" in goal.body
+    assert "goal_coder_handoff_execute: approvals=2 runs=1 reviewed=1" in goal.body
+    assert "goal_coder_handoff_ship: committed=0 publication_ready=0" in goal.body
+    assert "goal_coder_handoff_safety: read-only local coder handoff digest" in goal.body
+    assert goal.body.index("id='goal-workflow-map'") < goal.body.index("id='goal-coder-handoff-digest'")
+    assert goal.body.index("id='goal-coder-handoff-digest'") < goal.body.index("id='goal-ci-handoff'")
     assert goal.body.index("id='goal-ci-handoff'") < goal.body.index("id='goal-live-state'")
     assert "Goal CI Handoff" in goal.body
     assert "data-goal-ci-handoff='true'" in goal.body

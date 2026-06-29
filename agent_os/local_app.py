@@ -760,6 +760,17 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-workflow-map-finish='true'",
                 "data-goal-workflow-map-evidence='true'",
                 "workflow_map_current_gate</dt><dd>commit_request",
+                "Goal Coder Handoff Digest",
+                "data-goal-coder-handoff-digest='true'",
+                "data-goal-coder-handoff-actions='true'",
+                "data-goal-coder-handoff-primary='true'",
+                "data-goal-coder-handoff-handoff='true'",
+                "data-goal-coder-handoff-prep='true'",
+                "data-goal-coder-handoff-execute='true'",
+                "data-goal-coder-handoff-ship='true'",
+                "data-goal-coder-handoff-safety='true'",
+                "data-goal-coder-handoff-evidence='true'",
+                "goal_coder_handoff_digest_status</dt><dd>ready_for_commit_request",
                 "Goal CI Handoff",
                 "data-goal-ci-handoff-actions='true'",
                 "data-goal-ci-handoff-check='true'",
@@ -9358,6 +9369,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_next_action_card(state, next_action),
             _goal_next_recommendation_section(state, next_action),
             _goal_workflow_map(root, state, next_action),
+            _goal_coder_handoff_digest(root, state, next_action),
             _goal_ci_handoff(root, state),
             _goal_live_state(root, state, phase, next_action),
             _goal_section_index(),
@@ -9844,6 +9856,7 @@ def _goal_section_index() -> str:
         ("Next action", "goal-next-action"),
         ("Next recommendation", "goal-next-recommendation"),
         ("Workflow map", "goal-workflow-map"),
+        ("Coder handoff digest", "goal-coder-handoff-digest"),
         ("CI handoff", "goal-ci-handoff"),
         ("Live state", "goal-live-state"),
         ("Resume snapshot", "goal-resume-snapshot"),
@@ -9914,8 +9927,8 @@ def _goal_section_index() -> str:
             "Work",
             "Delegations, runs, approvals",
             "Move through execution and review surfaces.",
-            "goal-delegation-command-bar",
-            "Delegations",
+            "goal-coder-handoff-digest",
+            "Coder handoff",
             False,
         ),
         (
@@ -9969,7 +9982,7 @@ def _goal_section_index() -> str:
                     ("goal_section_switchboard_card_count", str(len(switchboard_cards))),
                     ("goal_section_switchboard_primary", "goal-next-action"),
                     ("goal_section_switchboard_proof_surface", "goal-verification-command-bar"),
-                    ("goal_section_switchboard_work_surface", "goal-delegation-command-bar"),
+                    ("goal_section_switchboard_work_surface", "goal-coder-handoff-digest"),
                     ("goal_section_switchboard_knowledge_surface", "goal-artifact-command-bar"),
                     ("goal_section_switchboard_finish_surface", "goal-completion-readiness"),
                     ("goal_section_index_write_on_get", "false"),
@@ -9980,7 +9993,7 @@ def _goal_section_index() -> str:
                 [
                     "goal_section_switchboard_operate: <a href='#goal-next-action'>Next action</a>",
                     "goal_section_switchboard_proof: <a href='#goal-verification-command-bar'>Verification</a>",
-                    "goal_section_switchboard_work: <a href='#goal-delegation-command-bar'>Delegations</a>",
+                    "goal_section_switchboard_work: <a href='#goal-coder-handoff-digest'>Coder handoff</a>",
                     "goal_section_switchboard_knowledge: <a href='#goal-artifact-command-bar'>Artifacts</a>",
                     "goal_section_switchboard_finish: <a href='#goal-completion-readiness'>Completion</a>",
                     "goal_section_switchboard_safety: read-only local anchor navigation",
@@ -10300,6 +10313,361 @@ def _goal_workflow_map(
             "".join(items),
             "</ol>",
             _ul(gate_lines + ["workflow_map_safety: read-only full workflow action guide"]),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _goal_coder_handoff_digest(
+    root: Path,
+    state: dict[str, Any],
+    next_action: GoalNextAction,
+) -> str:
+    goal = state["goal"]
+    delegations = list(state["delegations"])
+    selected_delegation = delegations[0] if delegations else None
+    summary_by_delegation = {
+        delegation.id: summarize_implementation_handoff(root, delegation)
+        for delegation in delegations
+    }
+    context_pack_ready = 0
+    for delegation in delegations:
+        metadata = load_delegation_result_metadata(delegation)
+        if _delegation_has_context_pack(root, delegation, metadata):
+            context_pack_ready += 1
+    implementation_handoff_ready = sum(
+        1
+        for summary in summary_by_delegation.values()
+        if str(summary.get("status")) == "readable"
+    )
+
+    prep_count = len(state["prep_packets"])
+    plan_count = len(state["worktree_plans"])
+    worktree_pending = _count_status(
+        state["worktree_approvals"],
+        "pending_operator_approval",
+    )
+    worktree_approved = _count_status(state["worktree_approvals"], "approved")
+    worktree_runs = list(state["worktree_runs"])
+    completed_worktree_runs = [
+        run for run in worktree_runs if run.status == "completed"
+    ]
+    reviewed_worktree_runs = [
+        run
+        for run in completed_worktree_runs
+        if _run_review_gate_state(root, run)["commit_request_form_available"]
+    ]
+    commit_pending = _count_status(
+        state["commit_approvals"],
+        "pending_operator_approval",
+    )
+    commit_approved = _count_status(state["commit_approvals"], "approved")
+    committed_commits = _count_status(state["commit_approvals"], "committed")
+    publication_pending = _count_status(
+        state["publications"],
+        "pending_operator_approval",
+    )
+    publication_approved = _count_status(state["publications"], "approved")
+    publication_ready = _count_status(state["publications"], "ready_for_operator")
+
+    handoff_token = "create_scout_delegation"
+    selected_delegation_id = "none"
+    selected_context_pack_status = "none"
+    selected_handoff_status = "none"
+    delegation_surface: str | SafeHtml = "none"
+    workflow_surface: str | SafeHtml = SafeHtml("<a href='/workflow'>/workflow</a>")
+    latest_run_id = "none"
+    latest_run_surface: str | SafeHtml = "none"
+    if selected_delegation is not None:
+        selected_delegation_id = selected_delegation.id
+        metadata = load_delegation_result_metadata(selected_delegation)
+        selected_context_pack_status = (
+            "available"
+            if _delegation_has_context_pack(root, selected_delegation, metadata)
+            else "missing"
+        )
+        summary = summary_by_delegation[selected_delegation.id]
+        selected_handoff_status = str(summary.get("status", "unknown"))
+        delegation_prep = [
+            item
+            for item in state["prep_packets"]
+            if item.get("source", {}).get("delegation_id") == selected_delegation.id
+        ]
+        delegation_plans = [
+            item
+            for item in state["worktree_plans"]
+            if item.get("source", {}).get("delegation_id") == selected_delegation.id
+        ]
+        delegation_worktree_approvals = list_coder_worktree_approvals(
+            root,
+            delegation_id=selected_delegation.id,
+            limit=50,
+        )
+        delegation_worktree_runs = list_coder_worktree_runs(
+            root,
+            delegation_id=selected_delegation.id,
+            limit=50,
+        )
+        delegation_commit_approvals = list_coder_worktree_commit_approvals(
+            root,
+            delegation_id=selected_delegation.id,
+            limit=50,
+        )
+        delegation_publications = list_coder_publications(
+            root,
+            delegation_id=selected_delegation.id,
+            limit=50,
+        )
+        handoff_token = _delegation_next_action(
+            root,
+            summary=summary,
+            prep_count=len(delegation_prep),
+            plan_count=len(delegation_plans),
+            worktree_approvals=delegation_worktree_approvals,
+            worktree_runs=delegation_worktree_runs,
+            commit_approvals=delegation_commit_approvals,
+            publications=delegation_publications,
+        )
+        delegation_surface = SafeHtml(
+            f"<a href='/delegations/{quote(selected_delegation.id)}'>"
+            f"/delegations/{_e(selected_delegation.id)}</a>"
+        )
+        workflow_surface = SafeHtml(
+            f"<a href='/workflow?delegation_id={quote(selected_delegation.id)}'>"
+            f"/workflow?delegation_id={_e(selected_delegation.id)}</a>"
+        )
+
+    selected_run = worktree_runs[0] if worktree_runs else None
+    fallback_run_id = next(
+        (
+            item.run_id
+            for item in [*state["commit_approvals"], *state["publications"]]
+            if getattr(item, "run_id", "")
+        ),
+        "",
+    )
+    if selected_run is not None:
+        latest_run_id = selected_run.id
+    elif fallback_run_id:
+        latest_run_id = fallback_run_id
+    if latest_run_id != "none":
+        latest_run_surface = SafeHtml(
+            f"<a href='/runs/{quote(latest_run_id)}'>/runs/{_e(latest_run_id)}</a>"
+        )
+
+    token_statuses = {
+        "create_scout_delegation": "empty",
+        "generate_context_pack": "context_pack_missing",
+        "run_delegation_or_review_implementation_handoff": "handoff_missing",
+        "prepare_coder_from_handoff": "handoff_ready",
+        "prepare_coder_worktree_plan": "coder_prep_ready",
+        "decide_pending_worktree_approval": "waiting_for_worktree_approval",
+        "run_approved_worktree_from_cli": "worktree_approved",
+        "request_commit_for_reviewed_run": "ready_for_commit_request",
+        "approve_or_reject_commit_request": "waiting_for_commit_approval",
+        "commit_approved_worktree": "commit_approved",
+        "request_publication_handoff": "ready_for_publication_request",
+        "approve_or_reject_publication_request": "waiting_for_publication_approval",
+        "prepare_publication_handoff": "publication_approved",
+        "manual_operator_push_pr_outside_clankeros": "publication_handoff_ready",
+        "review_delegation_state": "review_delegation_state",
+    }
+    digest_status = token_statuses.get(handoff_token, handoff_token)
+    action_form_available = bool(_goal_next_action_form(state, next_action))
+    primary_href = "#goal-next-action-form" if action_form_available else next_action.href
+    primary_label = (
+        "Use Goal action form" if action_form_available else next_action.action
+    )
+    primary_surface = SafeHtml(
+        f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
+    )
+    delegation_href = (
+        f"/delegations/{quote(selected_delegation_id)}"
+        if selected_delegation_id != "none"
+        else "#goal-next-action"
+    )
+    delegation_label = (
+        "Open delegation" if selected_delegation_id != "none" else "Create scout delegation"
+    )
+    workflow_href = (
+        f"/workflow?delegation_id={quote(selected_delegation_id)}"
+        if selected_delegation_id != "none"
+        else "/workflow"
+    )
+    run_href = (
+        f"/runs/{quote(latest_run_id)}"
+        if latest_run_id != "none"
+        else "#goal-run-command-bar"
+    )
+    execute_href = (
+        f"/approvals?goal_id={quote(goal.id)}"
+        if worktree_pending or worktree_approved
+        else run_href
+    )
+    execute_label = (
+        "Review approvals"
+        if worktree_pending or worktree_approved
+        else ("Open latest run" if latest_run_id != "none" else "Open run command")
+    )
+    approval_surface = SafeHtml(
+        f"<a href='/approvals?goal_id={quote(goal.id)}'>/approvals?goal_id={_e(goal.id)}</a>"
+    )
+    run_surface = (
+        latest_run_surface
+        if latest_run_id != "none"
+        else SafeHtml("<a href='#goal-run-command-bar'>Goal Run Command Bar</a>")
+    )
+    if publication_ready or committed_commits:
+        ship_href = run_href
+        ship_label = "Open latest run"
+    else:
+        ship_href = "#goal-ci-handoff"
+        ship_label = "Review CI handoff"
+    ship_surface = SafeHtml(f"<a href='{_e(ship_href)}'>{_e(ship_label)}</a>")
+
+    cards = "".join(
+        [
+            "<div class='goal-coder-handoff-card goal-coder-handoff-primary' data-goal-coder-handoff-now='true'>",
+            "<h3>Now</h3>",
+            f"<strong>{_e(next_action.action)}</strong>",
+            f"<p>{_e(digest_status.replace('_', ' '))}; token {_e(handoff_token)}.</p>",
+            f"<a class='goal-coder-handoff-action' data-goal-coder-handoff-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            "</div>",
+            "<div class='goal-coder-handoff-card' data-goal-coder-handoff-handoff='true'>",
+            "<h3>Handoff</h3>",
+            f"<strong>{_e(context_pack_ready)} context / {_e(implementation_handoff_ready)} handoff</strong>",
+            f"<p>{_e(len(delegations))} delegation(s); latest {_e(selected_delegation_id)}.</p>",
+            f"<a class='goal-coder-handoff-link' href='{_e(delegation_href)}'>{_e(delegation_label)}</a>",
+            "</div>",
+            "<div class='goal-coder-handoff-card' data-goal-coder-handoff-prep='true'>",
+            "<h3>Prep</h3>",
+            f"<strong>{_e(prep_count)} prep / {_e(plan_count)} plan</strong>",
+            f"<p>Context {_e(selected_context_pack_status)}; handoff {_e(selected_handoff_status)}.</p>",
+            f"<a class='goal-coder-handoff-link' href='{_e(workflow_href)}'>Workflow</a>",
+            "</div>",
+            "<div class='goal-coder-handoff-card' data-goal-coder-handoff-execute='true'>",
+            "<h3>Execute</h3>",
+            f"<strong>{_e(worktree_pending)} pending / {_e(worktree_approved)} approved</strong>",
+            f"<p>{_e(len(worktree_runs))} run(s); {_e(len(reviewed_worktree_runs))} reviewed.</p>",
+            f"<a class='goal-coder-handoff-link' href='{_e(execute_href)}'>{_e(execute_label)}</a>",
+            "</div>",
+            "<div class='goal-coder-handoff-card' data-goal-coder-handoff-ship='true'>",
+            "<h3>Ship</h3>",
+            f"<strong>{_e(committed_commits)} committed / {_e(publication_ready)} ready</strong>",
+            f"<p>{_e(commit_pending)} commit approval(s); {_e(publication_pending)} publication approval(s).</p>",
+            f"<a class='goal-coder-handoff-link' href='{_e(ship_href)}'>{_e(ship_label)}</a>",
+            "</div>",
+            "<div class='goal-coder-handoff-card' data-goal-coder-handoff-safety='true'>",
+            "<h3>Safety</h3>",
+            "<strong>read-only digest</strong>",
+            "<p>No providers, network actions, runs, commits, pushes, PRs, or writes on GET.</p>",
+            "<a class='goal-coder-handoff-link' href='#goal-delegation-command-bar'>Detailed state</a>",
+            "</div>",
+        ]
+    )
+    return "".join(
+        [
+            "<section id='goal-coder-handoff-digest' class='panel goal-coder-handoff-digest' data-goal-coder-handoff-digest='true'><h2>Goal Coder Handoff Digest</h2>",
+            "<p class='muted'>A compact read-only handoff view from scout output through bounded coding, review, commit, and publication.</p>",
+            "<div class='goal-coder-handoff-grid' data-goal-coder-handoff-actions='true'>",
+            cards,
+            "</div>",
+            "<details class='goal-coder-handoff-evidence' data-goal-coder-handoff-evidence='true'><summary>Goal coder handoff evidence</summary>",
+            _kv(
+                [
+                    ("goal_coder_handoff_digest_goal", goal.id),
+                    ("goal_coder_handoff_digest_project", goal.project_id),
+                    ("goal_coder_handoff_digest_status", digest_status),
+                    ("goal_coder_handoff_digest_token", handoff_token),
+                    ("goal_coder_handoff_selected_delegation", selected_delegation_id),
+                    ("goal_coder_handoff_total_delegations", str(len(delegations))),
+                    ("goal_coder_handoff_context_packs_ready", str(context_pack_ready)),
+                    (
+                        "goal_coder_handoff_implementation_handoffs_ready",
+                        str(implementation_handoff_ready),
+                    ),
+                    ("goal_coder_handoff_coder_prep_packets", str(prep_count)),
+                    ("goal_coder_handoff_worktree_plans", str(plan_count)),
+                    (
+                        "goal_coder_handoff_worktree_pending_approvals",
+                        str(worktree_pending),
+                    ),
+                    (
+                        "goal_coder_handoff_worktree_approved_approvals",
+                        str(worktree_approved),
+                    ),
+                    ("goal_coder_handoff_worktree_runs", str(len(worktree_runs))),
+                    (
+                        "goal_coder_handoff_completed_worktree_runs",
+                        str(len(completed_worktree_runs)),
+                    ),
+                    (
+                        "goal_coder_handoff_reviewed_worktree_runs",
+                        str(len(reviewed_worktree_runs)),
+                    ),
+                    (
+                        "goal_coder_handoff_commit_pending_approvals",
+                        str(commit_pending),
+                    ),
+                    (
+                        "goal_coder_handoff_commit_approved_approvals",
+                        str(commit_approved),
+                    ),
+                    ("goal_coder_handoff_committed_commits", str(committed_commits)),
+                    (
+                        "goal_coder_handoff_publication_pending_approvals",
+                        str(publication_pending),
+                    ),
+                    (
+                        "goal_coder_handoff_publication_approved",
+                        str(publication_approved),
+                    ),
+                    (
+                        "goal_coder_handoff_publication_handoffs_ready",
+                        str(publication_ready),
+                    ),
+                    ("goal_coder_handoff_next_action", next_action.action),
+                    ("goal_coder_handoff_primary_surface", primary_surface),
+                    (
+                        "goal_coder_handoff_action_form_available",
+                        str(action_form_available).lower(),
+                    ),
+                    ("goal_coder_handoff_delegation_surface", delegation_surface),
+                    ("goal_coder_handoff_workflow_surface", workflow_surface),
+                    ("goal_coder_handoff_run_surface", run_surface),
+                    ("goal_coder_handoff_approval_surface", approval_surface),
+                    ("goal_coder_handoff_ship_surface", ship_surface),
+                    (
+                        "goal_coder_handoff_source",
+                        "delegations_context_prep_worktree_commit_publication_state",
+                    ),
+                    ("goal_coder_handoff_write_on_get", "false"),
+                    ("goal_coder_handoff_provider_calls_taken", "0"),
+                    ("goal_coder_handoff_network_actions_taken", "0"),
+                    ("goal_coder_handoff_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_coder_handoff_now: {_e(next_action.action)} status={_e(digest_status)} token={_e(handoff_token)}",
+                    (
+                        "goal_coder_handoff_handoff: "
+                        f"context={_e(context_pack_ready)} handoff={_e(implementation_handoff_ready)}"
+                    ),
+                    f"goal_coder_handoff_prep: prep={_e(prep_count)} plan={_e(plan_count)}",
+                    (
+                        "goal_coder_handoff_execute: "
+                        f"approvals={_e(worktree_pending + worktree_approved)} "
+                        f"runs={_e(len(worktree_runs))} reviewed={_e(len(reviewed_worktree_runs))}"
+                    ),
+                    (
+                        "goal_coder_handoff_ship: "
+                        f"committed={_e(committed_commits)} publication_ready={_e(publication_ready)}"
+                    ),
+                    "goal_coder_handoff_safety: read-only local coder handoff digest",
+                ]
+            ),
             "</details>",
             "</section>",
         ]
@@ -33634,7 +34002,7 @@ def _html_page(
     .goal-continuation-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-continuation-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-continuation-evidence:not([open]) > :not(summary) {{ display:none; }}
-    #goal-progress-meter, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence-digest, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
+    #goal-progress-meter, .goal-workflow-map, #goal-coder-handoff-digest, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence-digest, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
     .goal-workflow-map {{ border-left:4px solid var(--accent); }}
     .goal-workflow-map dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .goal-workflow-map-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
@@ -33648,6 +34016,19 @@ def _html_page(
     .goal-workflow-map-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-workflow-map-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-workflow-map-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .goal-coder-handoff-digest {{ border-left:4px solid var(--accent); }}
+    .goal-coder-handoff-digest dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .goal-coder-handoff-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-coder-handoff-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-coder-handoff-card h3 {{ margin-top:0; }}
+    .goal-coder-handoff-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .goal-coder-handoff-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-coder-handoff-action, .goal-coder-handoff-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-coder-handoff-action {{ background:var(--accent); color:#fff; }}
+    .goal-coder-handoff-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-coder-handoff-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-coder-handoff-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-coder-handoff-evidence:not([open]) > :not(summary) {{ display:none; }}
     .goal-ci-handoff {{ border-left:4px solid var(--ok); }}
     .goal-ci-handoff dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .goal-ci-handoff-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}

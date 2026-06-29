@@ -210,7 +210,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   dock and meter appear before the Goal
   Command Bar, Goal Operator Workbench, Goal Daily Loop, Goal Return Brief,
   Goal Continuation Rail, next action, next recommendation, Goal Workflow Map,
-  Goal CI Handoff, live state, and collapsed section index before the detailed overview, goal risk, completion criteria,
+  Goal Coder Handoff Digest, Goal CI Handoff, live state, and collapsed section
+  index before the detailed overview, goal risk, completion criteria,
   progress, chronological timeline, activity log, delegations, runs, approvals,
   evidence, artifacts, memory, skills used, git status, operator notes, a
   goal-scoped resume snapshot, and remaining work. The timeline starts with a
@@ -304,9 +305,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   cards point at the existing Goal action form, Remaining Work, goal-scoped
   approvals, CI handoff, and Finish Today save form, while the full lifecycle
   rail, every gate's eventual local operator surface, and zero-effect boundary
-  stay available in collapsed workflow evidence. A read-only `Goal CI Handoff`
-  follows it with visible Check GitHub, Record Proof, Current Proof, Full
-  Suite, and Finish Today cards. The cards show project-scoped proof status,
+  stay available in collapsed workflow evidence. A read-only
+  `Goal Coder Handoff Digest` follows with Now, Handoff, Prep, Execute, Ship,
+  and Safety cards over the selected delegation, context-pack readiness,
+  implementation handoff, coder prep/worktree plan, worktree run/review,
+  commit approval, and publication handoff posture. A read-only
+  `Goal CI Handoff` follows it with visible Check GitHub, Record Proof,
+  Current Proof, Full Suite, and Finish Today cards. The cards show project-scoped proof status,
   latest operator-recorded GitHub Actions evidence, exact `gh run list` /
   `gh run view` command templates, and a same-page JSON paste target for
   recording proof while the detailed ledger stays collapsed and app-side GitHub

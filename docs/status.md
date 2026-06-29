@@ -128,7 +128,10 @@ Latest status focus:
   exposes Now, Next Gate, Then, Publish Boundary, and Finish Today cards. Goal
   Workflow Map now exposes Now,
   Progress, Approvals, Publish Boundary, and Finish Today cards before its
-  detailed lifecycle rail. Goal CI Handoff exposes Check GitHub, Record Proof,
+  detailed lifecycle rail. Goal Coder Handoff Digest now exposes Now, Handoff,
+  Prep, Execute, Ship, and Safety cards over context-pack,
+  implementation-handoff, coder-prep, worktree, commit, and publication
+  posture before CI. Goal CI Handoff exposes Check GitHub, Record Proof,
   Current Proof, Full Suite, and Finish Today cards, and Goal Live State now
   exposes Now, Phase, Refresh, Pause Rules, and Safety cards before its
   detailed refresh evidence. Goal Remaining Work now exposes Now, Gate

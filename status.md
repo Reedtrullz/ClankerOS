@@ -1,5 +1,29 @@
 # Status
 
+## 2026-06-29 Goal Coder Handoff Digest UX
+
+- Added a visible read-only `Goal Coder Handoff Digest` to `/goals/<goal_id>`
+  after the Goal Workflow Map and before the Goal CI Handoff.
+- The digest turns the implementation handoff path into six scan-first cards:
+  Now, Handoff, Prep, Execute, Ship, and Safety.
+- It is sourced from existing Goal state only: delegations, context-pack
+  readiness, implementation handoff summaries, coder prep packets, worktree
+  plans, worktree approvals/runs, commit approvals, and publication handoffs.
+- Collapsed digest evidence records the selected delegation, next handoff
+  token/status, context/handoff/prep/plan/run/review/commit/publication counts,
+  routed local surfaces, and zero-effect counters.
+- Updated README, local app docs, operating summary, current status focus, and
+  fixture-backed Goal route assertions.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  focused `tests/test_first_milestone.py` demo route coverage
+  (`1 passed, 515 deselected in 34.58s`), `python3 -m compileall -q agent_os tests`,
+  bounded `app-smoke-test`, bounded `app-demo-smoke-test`, and
+  `git diff --check`.
+- Non-claims: no browser screenshot QA for this slice, no write on GET, no
+  approval or execution on GET, no app-side GitHub polling, no provider calls,
+  no external mutation, no PR creation, and no deploy from ClankerOS itself.
+
 ## 2026-06-29 Goal Evidence Digest UX
 
 - Added a visible read-only `Goal Evidence Digest` to `/goals/<goal_id>` after

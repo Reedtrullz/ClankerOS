@@ -323,8 +323,8 @@ operator work, latest proof state, and the next confirmed browser action before
 deeper command evidence. The dock and meter precede the Goal Command Bar, Goal
 Operator Workbench, Goal Daily Loop, Goal Return Brief, Goal Session Digest,
 Goal Continuation Rail,
-next action, next recommendation, Goal Workflow Map, Goal CI Handoff, live
-state, and collapsed section index before the detailed progress, timeline, activity log, goal risk, completion
+next action, next recommendation, Goal Workflow Map, Goal Coder Handoff
+Digest, Goal CI Handoff, live state, and collapsed section index before the detailed progress, timeline, activity log, goal risk, completion
 criteria, completion readiness, evidence, delegations, runs, approvals,
 artifacts, a typed Goal Artifact Explorer, memory, skills used, git status,
 operator notes, a goal-scoped resume snapshot, and remaining work. The page
@@ -401,8 +401,11 @@ that point at the existing Goal action form, Remaining Work, goal-scoped
 approvals, CI handoff, and Finish Today save form. The detailed lifecycle rail
 from scout delegation through manual publish, every gate's eventual operator
 surface, the manual publish boundary, and zero-effect counters remain in
-collapsed workflow evidence without writing on GET. Goal CI Handoff follows the
-workflow map near the top of the Goal page with visible Check GitHub, Record
+collapsed workflow evidence without writing on GET. Goal Coder Handoff Digest
+follows the workflow map and turns delegation, context-pack,
+implementation-handoff, coder-prep, worktree, commit, and publication state
+into scan-first Now, Handoff, Prep, Execute, Ship, and Safety cards. Goal CI
+Handoff follows near the top of the Goal page with visible Check GitHub, Record
 Proof, Current Proof, Full Suite, and Finish Today cards. The cards expose the
 project-scoped proof status, latest operator-recorded GitHub Actions evidence,
 exact `gh run list` / `gh run view` command templates, and a same-page JSON
