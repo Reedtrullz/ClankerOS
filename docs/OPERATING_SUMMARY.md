@@ -166,10 +166,10 @@ Core layers for the bootstrap:
   same Goal remaining-work gates so the saved goal's current gate, lifecycle
   progress, next surface, and zero-effect boundaries are visible before
   leaving `/resume`; before a saved Goal exists, `/resume` follows first-run
-  progress instead, so an empty checkout points to Home's `Create Project`
-  anchor and a registered-project/no-goal workspace points to Home's
-  `Create First Goal` anchor while still showing the saved project, without
-  writing on GET;
+  progress instead by rendering the same-page `Resume First-Run Action`
+  `register-project` or `create-goal` form for the current gate while retaining
+  Home/Today/Goals fallback setup links in collapsed evidence, without writing
+  on GET;
   `/` also includes a read-only `Home Live State` panel with five-second local
   page reload polling that pauses while a form is focused or the tab is hidden,
   points at the same-page first-run form before a Goal exists or the
@@ -274,9 +274,10 @@ Core layers for the bootstrap:
   goal's phase, current gate, resume readiness, finish posture, and zero-effect
   counters. Saved-state and restore-link readbacks stay inside collapsed
   evidence. Before a saved Goal exists, `/workspace` follows first-run
-  progress instead: empty checkouts point those sections at Home's
-  `Create Project` anchor and registered-project/no-goal workspaces point at
-  `Create First Goal` while preserving the saved project link. Home, Recent
+  progress instead: empty checkouts point those sections at the same-page
+  `Workspace First-Run Action` `register-project` form and
+  registered-project/no-goal workspaces point at the same-page `create-goal`
+  form while preserving the saved project link. Home, Recent
   Items, and the command palette also prefer the exact saved `resume_surface`
   when one exists, while retaining `/resume` as the hub; `/memory` for project/global/
   generated memories, proposed memories, operator notes, future work, and pin

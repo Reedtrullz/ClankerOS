@@ -139,10 +139,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   progress, next surface, and zero-effect counters, points back to
   `/workspace` for edits, and writes nothing on GET. Before a saved Goal
   exists, `/resume` follows first-run progress instead: an empty checkout
-  points at Home's `Create Project` anchor, a registered-project/no-goal
-  workspace points at Home's `Create First Goal` anchor while still linking
-  the saved project, and the command bar, workbench, readiness, next-action,
-  and workflow-map sections all show the same first-run gate and setup target.
+  renders a same-page `Resume First-Run Action` `register-project` form, a
+  registered-project/no-goal workspace renders a same-page `create-goal` form
+  while still linking the saved project, and the command bar, workbench,
+  readiness, next-action, and workflow-map sections all show that same first-run
+  gate and setup target while retaining Home/Today/Goals fallback links in
+  collapsed evidence.
 - `/` includes a confirmed `refresh-dashboard-state` action that rewrites the
   local `.clanker/app/local_app_status.json` artifact from current repository
   and route state without providers, pushes, PRs, deploys, or external
@@ -537,9 +539,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   and zero-effect counters, while saved-state and restore-link readbacks stay
   inside collapsed evidence. Before a saved Goal exists, the same daily brief,
   workbench, continuation readback, restore links, and workflow map follow
-  first-run progress: empty checkouts point to Home's `Create Project` anchor
-  and registered-project/no-goal workspaces point to `Create First Goal` while
-  preserving the saved project link. Home and `/resume` read the same saved
+  first-run progress: empty checkouts point to the same-page
+  `Workspace First-Run Action` `register-project` form and
+  registered-project/no-goal workspaces point to the same-page `create-goal`
+  form while preserving the saved project link. Home/Today/Goals fallback setup
+  links remain in collapsed evidence. Home and `/resume` read the same saved
   state for daily resume links and continuation readbacks. The confirmed
   `save-workspace` form writes `.clanker/app/workspace.json`; GET requests
   write nothing.

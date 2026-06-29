@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/resume` and `/workspace` now render same-page first-run continuation forms
+  when no saved Goal exists. Fresh checkouts can register the project directly
+  from Resume/Workspace, and registered-project/no-goal states can create the
+  first Goal there, while Home/Today/Goals fallback setup links remain in
+  collapsed safety evidence and GET requests stay read-only.
 - `/workflow` now includes a read-only `Workflow Scope Picker` immediately
   after the `Workflow Operator Workbench`, with direct cards for the primary
   pickup, recent delegations, recent coder runs, parent Goal, and safety

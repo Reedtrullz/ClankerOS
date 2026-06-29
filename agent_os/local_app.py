@@ -2695,6 +2695,136 @@ def _first_run_focus_target(
     }
 
 
+def _first_run_action_form_payload(root: Path, progress: dict[str, Any]) -> dict[str, Any]:
+    current_step = str(progress.get("current_step") or "")
+    action_name = _action_name_for_first_run_step(current_step)
+    form_title = _first_run_same_page_target(progress)[1]
+    form_source = "first_run_progress"
+    form = ""
+    goal_id = str(progress.get("goal_id") or "")
+    delegation_id = str(progress.get("delegation_id") or "")
+
+    if current_step == "create_project":
+        form = _input_form(
+            "register-project",
+            {},
+            {
+                "name": str(progress["default_project"]),
+                "path": str(root),
+                "test_command": "python3 -m pytest -q",
+                "allowed_write_roots": str(root),
+            },
+        )
+    elif current_step == "create_first_goal":
+        form = _input_form(
+            "create-goal",
+            {},
+            {
+                "project_id": str(progress["default_project"]),
+                "prompt": "Make ClankerOS easier to operate from the browser.",
+                "created_by_profile": "planner",
+            },
+        )
+    elif goal_id:
+        form_source = "goal_next_action_form"
+        try:
+            goal_state = _goal_state(root, _storage(root), goal_id)
+            next_action = _goal_next_action(root, goal_state)
+            goal_form = _goal_next_action_form(goal_state, next_action)
+        except Exception:
+            goal_form = ""
+            next_action = None
+        if next_action is not None:
+            action_name = _action_name_for_goal_action(next_action.action)
+            form_title = next_action.action
+        form = goal_form
+
+    return {
+        "action_name": action_name,
+        "form": form,
+        "form_available": bool(form),
+        "form_title": form_title,
+        "form_source": form_source,
+        "goal_id": goal_id,
+        "delegation_id": delegation_id,
+    }
+
+
+def _first_run_action_form_section(
+    root: Path,
+    context: dict[str, Any],
+    *,
+    prefix: str,
+    section_id: str,
+    title: str,
+) -> str:
+    progress = context["progress"]
+    payload = _first_run_action_form_payload(root, progress)
+    if not payload["form_available"]:
+        return ""
+
+    target_label = str(payload["form_title"])
+    target = SafeHtml(f"<a href='#{_e(section_id)}'>{_e(target_label)}</a>")
+    rows: list[tuple[str, str | SafeHtml]] = [
+        (f"{prefix}_first_run_action_status", "available"),
+        (f"{prefix}_first_run_action_source", str(payload["form_source"])),
+        (f"{prefix}_first_run_action_current_step", str(progress["current_step"])),
+        (f"{prefix}_first_run_action_next_action", str(progress["next_action"])),
+        (f"{prefix}_first_run_action_reason", str(progress["next_reason"])),
+        (f"{prefix}_first_run_action_name", str(payload["action_name"])),
+        (f"{prefix}_first_run_action_target_surface", target),
+        (
+            f"{prefix}_first_run_action_home_target",
+            SafeHtml(f"<a href='{_e(str(context['home_href']))}'>Home setup</a>"),
+        ),
+        (
+            f"{prefix}_first_run_action_today_target",
+            SafeHtml(f"<a href='{_e(str(context['today_href']))}'>Today setup</a>"),
+        ),
+        (
+            f"{prefix}_first_run_action_goals_target",
+            SafeHtml(f"<a href='{_e(str(context['goals_href']))}'>Goal setup</a>"),
+        ),
+        (f"{prefix}_first_run_action_project", str(progress["default_project"])),
+        (f"{prefix}_first_run_action_goal", str(payload["goal_id"] or "none")),
+        (f"{prefix}_first_run_action_delegation", str(payload["delegation_id"] or "none")),
+        (f"{prefix}_first_run_action_form_available", "true"),
+        (f"{prefix}_first_run_action_confirmation_required", "true"),
+        (f"{prefix}_first_run_action_write_on_get", "false"),
+        (f"{prefix}_first_run_action_provider_calls_taken", "0"),
+        (f"{prefix}_first_run_action_network_actions_taken", "0"),
+        (f"{prefix}_first_run_action_external_effects_created", "false"),
+    ]
+    return "".join(
+        [
+            (
+                f"<section id='{_e(section_id)}' "
+                f"class='panel first-run-action-form {prefix}-first-run-action-form' "
+                f"data-{_e(prefix)}-first-run-action-form='true'>"
+            ),
+            f"<h2>{_e(title)}</h2>",
+            "<p class='muted'>Continue the first-run browser path here. Confirmation is still required before any local write or local execution.</p>",
+            "<details class='first-run-action-evidence' ",
+            f"data-{_e(prefix)}-first-run-action-evidence='true'>",
+            f"<summary>{_e(title)} evidence</summary>",
+            _kv(rows),
+            _ul(
+                [
+                    (
+                        f"{prefix}_first_run_action_form: "
+                        f"action={_e(str(payload['action_name']))} target="
+                        f"<a href='#{_e(section_id)}'>{_e(target_label)}</a>"
+                    ),
+                    f"{prefix}_first_run_action_safety: confirmed local action only; no write on GET",
+                ]
+            ),
+            "</details>",
+            str(payload["form"]),
+            "</section>",
+        ]
+    )
+
+
 def _today_first_run_target(first_run: dict[str, Any]) -> tuple[str, str]:
     return _first_run_same_page_target(first_run)
 
@@ -2703,6 +2833,12 @@ def _first_run_route_context(root: Path, current_path: str) -> dict[str, Any]:
     storage = _storage(root)
     progress = _first_run_progress(root, storage)
     target = _first_run_focus_target(progress, current_path)
+    path = urlparse(current_path or "/").path or "/"
+    if target["form_available"] == "true":
+        if path == "/resume":
+            target["target_href"] = "#resume-first-run-action-form"
+        elif path == "/workspace":
+            target["target_href"] = "#workspace-first-run-action-form"
     done = 0
     waiting = 0
     for name, _label in FIRST_RUN_WORKFLOW_STEPS:
@@ -5135,6 +5271,7 @@ def _resume_page(root: Path) -> str:
             _resume_command_bar(root, state, open_project, open_goal, filters, expanded, last_artifact),
             _resume_readiness_section(root, state, open_project, open_goal, filters, expanded, last_artifact),
             _resume_next_action_section(root, open_goal),
+            _resume_first_run_action_form_section(root, open_goal),
             _resume_workflow_map_section(root, open_goal),
             _list_section("Resume Targets", targets),
             _list_section(
@@ -5758,6 +5895,18 @@ def _resume_next_action_section(root: Path, open_goal: str) -> str:
             f"<div id='resume-action-form' class='resume-action-form'><h3>Resume Action Form</h3>{form}</div>" if form else "",
             "</section>",
         ]
+    )
+
+
+def _resume_first_run_action_form_section(root: Path, open_goal: str) -> str:
+    if not _resume_should_use_first_run(root, open_goal):
+        return ""
+    return _first_run_action_form_section(
+        root,
+        _resume_first_run_context(root),
+        prefix="resume",
+        section_id="resume-first-run-action-form",
+        title="Resume First-Run Action",
     )
 
 
@@ -7007,7 +7156,15 @@ def _workspace_workflow_map_section(root: Path, open_goal: str) -> str:
 
 def _workspace_action_form_section(root: Path, open_goal: str) -> str:
     if not open_goal:
-        return ""
+        if not _workspace_should_use_first_run(root, open_goal):
+            return ""
+        return _first_run_action_form_section(
+            root,
+            _workspace_first_run_context(root),
+            prefix="workspace",
+            section_id="workspace-first-run-action-form",
+            title="Workspace First-Run Action",
+        )
     storage = _storage(root)
     state = _goal_state(root, storage, open_goal)
     next_action = _goal_next_action(root, state)
@@ -35185,6 +35342,11 @@ def _html_page(
     .first-run-command-action {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .first-run-command-action summary {{ cursor:pointer; font-weight:700; }}
     .first-run-command-action form {{ margin-top:10px; }}
+    .first-run-action-form {{ border-left:4px solid var(--accent); }}
+    .first-run-action-form form {{ margin-top:10px; }}
+    .first-run-action-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .first-run-action-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .first-run-action-evidence:not([open]) > :not(summary) {{ display:none; }}
     .first-run-launchpad {{ border-left:4px solid var(--accent); }}
     .first-run-launchpad-grid {{ display:grid; grid-template-columns:minmax(240px, 1.2fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
     .first-run-launchpad-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}

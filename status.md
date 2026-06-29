@@ -1,5 +1,34 @@
 # Status
 
+## 2026-06-29 First-Run Return Surface UX
+
+- Added same-page `Resume First-Run Action` and `Workspace First-Run Action`
+  sections for first-run states before a saved Goal exists.
+- Fresh `/resume` and `/workspace` checkouts now route their command bars,
+  workbenches, readiness/brief sections, restore links, next-action readbacks,
+  and workflow maps to the route-local `register-project` form instead of
+  sending the operator back to Home.
+- Registered-project/no-goal `/resume` and `/workspace` states now route to a
+  route-local `create-goal` form while preserving the saved project link and
+  Home/Today/Goals fallback setup links in collapsed evidence.
+- The new sections expose first-run step, action name, target surface, project,
+  optional goal/delegation ids, confirmation requirement, no-write-on-GET,
+  no-provider/no-network/no-external-effect evidence, and reuse the existing
+  confirmed first-run forms.
+- Updated README, local app docs, operating summary, docs status, and focused
+  first-run route assertions for empty and registered-project/no-goal states.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  first_run_browser_actions_persist_resume_workspace" --tb=short` passed with
+  `2 passed, 514 deselected in 34.65s`; `python3 -m compileall -q agent_os
+  tests`; bounded temp-root `app-smoke-test`; bounded temp-root
+  `app-demo-smoke-test`; `git diff --check`.
+- Non-claims: no new action authority, no write on GET, no provider calls, no
+  non-loopback network actions, no approval, no execution, no push, no PR, no
+  deploy, and no external mutation from the app.
+
 ## 2026-06-29 Workflow Scope Picker UX
 
 - Added a read-only `Workflow Scope Picker` immediately after the

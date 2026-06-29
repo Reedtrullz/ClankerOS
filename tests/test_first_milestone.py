@@ -5075,7 +5075,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "resume_command_next_action</dt><dd>Register ClankerOS project" in resume_empty.body
     assert "resume_command_reason</dt><dd>no_project_registered" in resume_empty.body
     assert (
-        "resume_command_next_surface</dt><dd><a href='/#first-run-create-project'>"
+        "resume_command_next_surface</dt><dd><a href='#resume-first-run-action-form'>"
         "Create Project</a>"
     ) in resume_empty.body
     assert "resume_command_action_form_available</dt><dd>false" in resume_empty.body
@@ -5107,11 +5107,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "resume_workbench_waiting_gates</dt><dd>4" in resume_empty.body
     assert "resume_workbench_next_action</dt><dd>Register ClankerOS project" in resume_empty.body
     assert (
-        "resume_workbench_primary_surface</dt><dd><a href='/#first-run-create-project'>"
+        "resume_workbench_primary_surface</dt><dd><a href='#resume-first-run-action-form'>"
         "Register ClankerOS project</a>"
     ) in resume_empty.body
     assert (
-        "resume_workbench_target_surface</dt><dd><a href='/#first-run-create-project'>"
+        "resume_workbench_target_surface</dt><dd><a href='#resume-first-run-action-form'>"
         "Create Project</a>"
     ) in resume_empty.body
     assert "resume_workbench_reason</dt><dd>no_project_registered" in resume_empty.body
@@ -5133,7 +5133,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "resume_workbench_waiting_items</dt><dd>0" in resume_empty.body
     assert "resume_workbench_unblock_action</dt><dd>Create Project" in resume_empty.body
     assert (
-        "resume_workbench_unblock_surface</dt><dd><a href='/#first-run-create-project'>"
+        "resume_workbench_unblock_surface</dt><dd><a href='#resume-first-run-action-form'>"
         "Create Project</a>"
     ) in resume_empty.body
     assert "resume_workbench_unblock_reason</dt><dd>create_project" in resume_empty.body
@@ -5151,7 +5151,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "resume_workbench_deploy_created</dt><dd>false" in resume_empty.body
     assert "resume_workbench_now: Register ClankerOS project" in resume_empty.body
     assert (
-        "resume_workbench_click: <a href='/#first-run-create-project'>"
+        "resume_workbench_click: <a href='#resume-first-run-action-form'>"
         "Register ClankerOS project</a>"
     ) in resume_empty.body
     assert "resume_workbench_finish: <a href='/workspace#save-workspace'>Finish Today</a>" in resume_empty.body
@@ -5159,7 +5159,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "id='resume-readiness'" in resume_empty.body
     assert "resume_readiness_status</dt><dd>first_run" in resume_empty.body
     assert (
-        "resume_readiness_next_surface</dt><dd><a href='/#first-run-create-project'>"
+        "resume_readiness_next_surface</dt><dd><a href='#resume-first-run-action-form'>"
         "Create Project</a>"
     ) in resume_empty.body
     assert "resume_readiness_first_run_step</dt><dd>create_project" in resume_empty.body
@@ -5171,10 +5171,33 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "resume_next_action</dt><dd>Register ClankerOS project" in resume_empty.body
     assert "resume_next_reason</dt><dd>no_project_registered" in resume_empty.body
     assert (
-        "resume_next_surface</dt><dd><a href='/#first-run-create-project'>"
+        "resume_next_surface</dt><dd><a href='#resume-first-run-action-form'>"
         "Create Project</a>"
     ) in resume_empty.body
     assert "resume_next_action_form_available</dt><dd>true" in resume_empty.body
+    assert "Resume First-Run Action" in resume_empty.body
+    assert "id='resume-first-run-action-form'" in resume_empty.body
+    assert "data-resume-first-run-action-form='true'" in resume_empty.body
+    assert "data-resume-first-run-action-evidence='true'" in resume_empty.body
+    assert "resume_first_run_action_status</dt><dd>available" in resume_empty.body
+    assert "resume_first_run_action_source</dt><dd>first_run_progress" in resume_empty.body
+    assert "resume_first_run_action_current_step</dt><dd>create_project" in resume_empty.body
+    assert "resume_first_run_action_next_action</dt><dd>Register ClankerOS project" in resume_empty.body
+    assert "resume_first_run_action_reason</dt><dd>no_project_registered" in resume_empty.body
+    assert "resume_first_run_action_name</dt><dd>register-project" in resume_empty.body
+    assert (
+        "resume_first_run_action_target_surface</dt><dd><a href='#resume-first-run-action-form'>"
+        "Create Project</a>"
+    ) in resume_empty.body
+    assert "resume_first_run_action_form_available</dt><dd>true" in resume_empty.body
+    assert "resume_first_run_action_confirmation_required</dt><dd>true" in resume_empty.body
+    assert "resume_first_run_action_write_on_get</dt><dd>false" in resume_empty.body
+    assert "resume_first_run_action_provider_calls_taken</dt><dd>0" in resume_empty.body
+    assert "resume_first_run_action_network_actions_taken</dt><dd>0" in resume_empty.body
+    assert "resume_first_run_action_external_effects_created</dt><dd>false" in resume_empty.body
+    assert "action='/actions/register-project'" in resume_empty.body
+    assert "name='name' value='clankeros'" in resume_empty.body
+    assert "name='path'" in resume_empty.body
     assert "Resume Workflow Map" in resume_empty.body
     assert "data-resume-workflow-map='true'" in resume_empty.body
     assert "resume_workflow_map_status</dt><dd>first_run" in resume_empty.body
@@ -5183,7 +5206,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "resume_workflow_map_current_step</dt><dd>create_project" in resume_empty.body
     assert "resume_workflow_map_next_action</dt><dd>Register ClankerOS project" in resume_empty.body
     assert (
-        "resume_workflow_map_next_surface</dt><dd><a href='/#first-run-create-project'>"
+        "resume_workflow_map_next_surface</dt><dd><a href='#resume-first-run-action-form'>"
         "Create Project</a>"
     ) in resume_empty.body
     assert "resume_workflow_map_progress</dt><dd>0/5 gates done" in resume_empty.body
@@ -5997,13 +6020,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_restore_map_status</dt><dd>first_run" in workspace.body
     assert "workspace_restore_map_source</dt><dd>first_run_progress" in workspace.body
     assert (
-        "workspace_restore_map_primary_surface</dt><dd><a href='/#first-run-create-project'>"
+        "workspace_restore_map_primary_surface</dt><dd><a href='#workspace-first-run-action-form'>"
         "Create Project</a>"
     ) in workspace.body
     assert "workspace_restore_map_saved_resume_surface</dt><dd>none" in workspace.body
     assert (
         "workspace_restore_map_suggested_resume_surface</dt><dd>"
-        "<a href='/#first-run-create-project'>/#first-run-create-project</a>"
+        "<a href='#workspace-first-run-action-form'>#workspace-first-run-action-form</a>"
     ) in workspace.body
     assert "workspace_restore_map_project</dt><dd>none" in workspace.body
     assert "workspace_restore_map_goal</dt><dd>none" in workspace.body
@@ -6018,7 +6041,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_restore_map_write_on_get</dt><dd>false" in workspace.body
     assert "workspace_restore_map_network_actions_taken</dt><dd>0" in workspace.body
     assert "workspace_restore_map_external_effects_created</dt><dd>false" in workspace.body
-    assert "workspace_restore_map_card: restore surface=<a href='/#first-run-create-project'>Create Project</a>" in workspace.body
+    assert (
+        "workspace_restore_map_card: restore surface="
+        "<a href='#workspace-first-run-action-form'>Create Project</a>"
+    ) in workspace.body
     assert "workspace_restore_map_safety: read-only restore guidance" in workspace.body
     assert "workspace_save_defaults_status</dt><dd>first_run" in workspace.body
     assert "workspace_save_defaults_source</dt><dd>first_run_progress" in workspace.body
@@ -6029,7 +6055,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_save_defaults_lead_project</dt><dd>none" in workspace.body
     assert (
         "workspace_save_defaults_resume_surface</dt><dd>"
-        "<a href='/#first-run-create-project'>/#first-run-create-project</a>"
+        "<a href='#workspace-first-run-action-form'>#workspace-first-run-action-form</a>"
     ) in workspace.body
     assert "workspace_save_defaults_applied_to_form</dt><dd>true" in workspace.body
     assert "workspace_save_defaults_confirmation_required</dt><dd>true" in workspace.body
@@ -6037,7 +6063,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_save_defaults_external_effects_created</dt><dd>false" in workspace.body
     assert "name='open_project' value=''" in workspace.body
     assert "name='open_goal' value=''" in workspace.body
-    assert "name='resume_surface' value='/#first-run-create-project'" in workspace.body
+    assert "name='resume_surface' value='#workspace-first-run-action-form'" in workspace.body
     assert "resume_surface</dt><dd>none" in workspace.body
     assert "Workspace Daily Brief" in workspace.body
     assert "data-workspace-daily-brief='true'" in workspace.body
@@ -6048,7 +6074,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_daily_current_gate</dt><dd>create_project" in workspace.body
     assert "workspace_daily_next_action</dt><dd>Register ClankerOS project" in workspace.body
     assert "workspace_daily_reason</dt><dd>no_project_registered" in workspace.body
-    assert "workspace_daily_target_surface</dt><dd><a href='/#first-run-create-project'>Create Project</a>" in workspace.body
+    assert (
+        "workspace_daily_target_surface</dt><dd><a href='#workspace-first-run-action-form'>"
+        "Create Project</a>"
+    ) in workspace.body
     assert "workspace_daily_first_run_form_available</dt><dd>true" in workspace.body
     assert (
         "workspace_daily_first_run_home_target</dt><dd><a href='/#first-run-create-project'>"
@@ -6072,7 +6101,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_daily_external_effects_created</dt><dd>false" in workspace.body
     assert "workspace_daily_safety: read-only until confirmed save-workspace or local action form" in workspace.body
     assert "workspace_daily_start: Register ClankerOS project" in workspace.body
-    assert "workspace_daily_continue: <a href='/#first-run-create-project'>Create Project</a>" in workspace.body
+    assert "workspace_daily_continue: <a href='#workspace-first-run-action-form'>Create Project</a>" in workspace.body
     assert "data-workspace-workbench-actions='true'" in workspace.body
     assert "workspace_workbench_status</dt><dd>first_run" in workspace.body
     assert "workspace_workbench_ready</dt><dd>false" in workspace.body
@@ -6087,11 +6116,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_workbench_waiting_gates</dt><dd>4" in workspace.body
     assert "workspace_workbench_next_action</dt><dd>Register ClankerOS project" in workspace.body
     assert (
-        "workspace_workbench_primary_surface</dt><dd><a href='/#first-run-create-project'>"
+        "workspace_workbench_primary_surface</dt><dd><a href='#workspace-first-run-action-form'>"
         "Register ClankerOS project</a>"
     ) in workspace.body
     assert (
-        "workspace_workbench_target_surface</dt><dd><a href='/#first-run-create-project'>"
+        "workspace_workbench_target_surface</dt><dd><a href='#workspace-first-run-action-form'>"
         "Create Project</a>"
     ) in workspace.body
     assert "workspace_workbench_reason</dt><dd>no_project_registered" in workspace.body
@@ -6116,7 +6145,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_workbench_waiting_items</dt><dd>0" in workspace.body
     assert "workspace_workbench_unblock_action</dt><dd>Create Project" in workspace.body
     assert (
-        "workspace_workbench_unblock_surface</dt><dd><a href='/#first-run-create-project'>"
+        "workspace_workbench_unblock_surface</dt><dd><a href='#workspace-first-run-action-form'>"
         "Create Project</a>"
     ) in workspace.body
     assert "workspace_workbench_unblock_reason</dt><dd>create_project" in workspace.body
@@ -6135,21 +6164,50 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_workbench_deploy_created</dt><dd>false" in workspace.body
     assert "workspace_workbench_now: Register ClankerOS project" in workspace.body
     assert (
-        "workspace_workbench_click: <a href='/#first-run-create-project'>"
+        "workspace_workbench_click: <a href='#workspace-first-run-action-form'>"
         "Register ClankerOS project</a>"
     ) in workspace.body
     assert "workspace_workbench_finish: <a data-open-details='true' href='#save-workspace'>Save Workspace</a>" in workspace.body
     assert "workspace_workbench_safety: confirmed local actions only; no write on GET" in workspace.body
     assert "workspace_first_run_action: Register ClankerOS project" in workspace.body
     assert "workspace_first_run_step: create_project" in workspace.body
-    assert "workspace_first_run_surface: <a href='/#first-run-create-project'>Create Project</a>" in workspace.body
+    assert (
+        "workspace_first_run_surface: <a href='#workspace-first-run-action-form'>"
+        "Create Project</a>"
+    ) in workspace.body
     assert "workspace_next_action_status: first_run" in workspace.body
     assert "workspace_next_action_source: first_run_progress" in workspace.body
     assert "workspace_next_action_current_step: create_project" in workspace.body
     assert "workspace_next_action: Register ClankerOS project" in workspace.body
     assert "workspace_next_reason: no_project_registered" in workspace.body
-    assert "workspace_next_surface: <a href='/#first-run-create-project'>Create Project</a>" in workspace.body
+    assert (
+        "workspace_next_surface: <a href='#workspace-first-run-action-form'>"
+        "Create Project</a>"
+    ) in workspace.body
     assert "workspace_next_action_form_available: true" in workspace.body
+    assert "Workspace First-Run Action" in workspace.body
+    assert "id='workspace-first-run-action-form'" in workspace.body
+    assert "data-workspace-first-run-action-form='true'" in workspace.body
+    assert "data-workspace-first-run-action-evidence='true'" in workspace.body
+    assert "workspace_first_run_action_status</dt><dd>available" in workspace.body
+    assert "workspace_first_run_action_source</dt><dd>first_run_progress" in workspace.body
+    assert "workspace_first_run_action_current_step</dt><dd>create_project" in workspace.body
+    assert "workspace_first_run_action_next_action</dt><dd>Register ClankerOS project" in workspace.body
+    assert "workspace_first_run_action_reason</dt><dd>no_project_registered" in workspace.body
+    assert "workspace_first_run_action_name</dt><dd>register-project" in workspace.body
+    assert (
+        "workspace_first_run_action_target_surface</dt><dd><a href='#workspace-first-run-action-form'>"
+        "Create Project</a>"
+    ) in workspace.body
+    assert "workspace_first_run_action_form_available</dt><dd>true" in workspace.body
+    assert "workspace_first_run_action_confirmation_required</dt><dd>true" in workspace.body
+    assert "workspace_first_run_action_write_on_get</dt><dd>false" in workspace.body
+    assert "workspace_first_run_action_provider_calls_taken</dt><dd>0" in workspace.body
+    assert "workspace_first_run_action_network_actions_taken</dt><dd>0" in workspace.body
+    assert "workspace_first_run_action_external_effects_created</dt><dd>false" in workspace.body
+    assert "action='/actions/register-project'" in workspace.body
+    assert "name='name' value='clankeros'" in workspace.body
+    assert "name='path'" in workspace.body
     assert "Workspace Workflow Map" in workspace.body
     assert "data-workspace-workflow-map='true'" in workspace.body
     assert "workspace_workflow_map_status</dt><dd>first_run" in workspace.body
@@ -6157,7 +6215,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_workflow_map_current_gate</dt><dd>create_project" in workspace.body
     assert "workspace_workflow_map_next_action</dt><dd>Register ClankerOS project" in workspace.body
     assert (
-        "workspace_workflow_map_next_surface</dt><dd><a href='/#first-run-create-project'>"
+        "workspace_workflow_map_next_surface</dt><dd><a href='#workspace-first-run-action-form'>"
         "Create Project</a>"
     ) in workspace.body
     assert "workspace_workflow_map_progress</dt><dd>0/5 gates done" in workspace.body
@@ -8129,18 +8187,39 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "resume_first_run_action: Create first goal" in register_resume.body
     assert "resume_first_run_step: create_first_goal" in register_resume.body
     assert (
-        "resume_first_run_surface: <a href='/#first-run-create-goal'>"
+        "resume_first_run_surface: <a href='#resume-first-run-action-form'>"
         "Create First Goal</a>"
     ) in register_resume.body
-    assert "<a href='/#first-run-create-goal'>Create First Goal</a>" in register_resume.body
     assert "resume_command_status</dt><dd>first_run" in register_resume.body
     assert "resume_command_current_gate</dt><dd>create_first_goal" in register_resume.body
     assert "resume_command_next_action</dt><dd>Create first goal" in register_resume.body
     assert (
-        "resume_command_next_surface</dt><dd><a href='/#first-run-create-goal'>"
+        "resume_command_next_surface</dt><dd><a href='#resume-first-run-action-form'>"
         "Create First Goal</a>"
     ) in register_resume.body
     assert "resume_command_first_run_form_available</dt><dd>true" in register_resume.body
+    assert "Resume First-Run Action" in register_resume.body
+    assert "id='resume-first-run-action-form'" in register_resume.body
+    assert "data-resume-first-run-action-form='true'" in register_resume.body
+    assert "data-resume-first-run-action-evidence='true'" in register_resume.body
+    assert "resume_first_run_action_status</dt><dd>available" in register_resume.body
+    assert "resume_first_run_action_source</dt><dd>first_run_progress" in register_resume.body
+    assert "resume_first_run_action_current_step</dt><dd>create_first_goal" in register_resume.body
+    assert "resume_first_run_action_next_action</dt><dd>Create first goal" in register_resume.body
+    assert "resume_first_run_action_reason</dt><dd>no_goal_created" in register_resume.body
+    assert "resume_first_run_action_name</dt><dd>create-goal" in register_resume.body
+    assert (
+        "resume_first_run_action_target_surface</dt><dd><a href='#resume-first-run-action-form'>"
+        "Create First Goal</a>"
+    ) in register_resume.body
+    assert "resume_first_run_action_form_available</dt><dd>true" in register_resume.body
+    assert "resume_first_run_action_confirmation_required</dt><dd>true" in register_resume.body
+    assert "resume_first_run_action_write_on_get</dt><dd>false" in register_resume.body
+    assert "resume_first_run_action_provider_calls_taken</dt><dd>0" in register_resume.body
+    assert "resume_first_run_action_network_actions_taken</dt><dd>0" in register_resume.body
+    assert "resume_first_run_action_external_effects_created</dt><dd>false" in register_resume.body
+    assert "action='/actions/create-goal'" in register_resume.body
+    assert "name='project_id' value='clankeros'" in register_resume.body
     assert "data-resume-state-details='true'" in register_resume.body
     assert "data-resume-workbench-primary='true'" in register_resume.body
     assert "data-resume-workbench-evidence='true'" in register_resume.body
@@ -8161,13 +8240,13 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "resume_workbench_waiting_gates</dt><dd>3" in register_resume.body
     assert "resume_workbench_next_action</dt><dd>Create first goal" in register_resume.body
     assert (
-        "resume_workbench_target_surface</dt><dd><a href='/#first-run-create-goal'>"
+        "resume_workbench_target_surface</dt><dd><a href='#resume-first-run-action-form'>"
         "Create First Goal</a>"
     ) in register_resume.body
     assert "resume_workbench_reason</dt><dd>no_goal_created" in register_resume.body
     assert "resume_workbench_unblock_action</dt><dd>Create First Goal" in register_resume.body
     assert (
-        "resume_workbench_unblock_surface</dt><dd><a href='/#first-run-create-goal'>"
+        "resume_workbench_unblock_surface</dt><dd><a href='#resume-first-run-action-form'>"
         "Create First Goal</a>"
     ) in register_resume.body
     assert "resume_workbench_source</dt><dd>first_run_progress" in register_resume.body
@@ -8175,10 +8254,22 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "resume_readiness_open_project</dt><dd>present" in register_resume.body
     assert "resume_readiness_open_goal</dt><dd>missing" in register_resume.body
     assert "resume_readiness_first_run_step</dt><dd>create_first_goal" in register_resume.body
+    assert (
+        "resume_readiness_next_surface</dt><dd><a href='#resume-first-run-action-form'>"
+        "Create First Goal</a>"
+    ) in register_resume.body
     assert "resume_next_action_status</dt><dd>first_run" in register_resume.body
     assert "resume_next_action_current_step</dt><dd>create_first_goal" in register_resume.body
     assert "resume_next_action</dt><dd>Create first goal" in register_resume.body
+    assert (
+        "resume_next_surface</dt><dd><a href='#resume-first-run-action-form'>"
+        "Create First Goal</a>"
+    ) in register_resume.body
     assert "resume_workflow_map_current_gate</dt><dd>create_first_goal" in register_resume.body
+    assert (
+        "resume_workflow_map_next_surface</dt><dd><a href='#resume-first-run-action-form'>"
+        "Create First Goal</a>"
+    ) in register_resume.body
     assert "resume_workflow_map_progress</dt><dd>1/5 gates done" in register_resume.body
     assert "resume_workflow_map_done_count</dt><dd>1" in register_resume.body
     assert "resume_workflow_map_pending_count</dt><dd>1" in register_resume.body
@@ -8203,7 +8294,7 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "workspace_daily_next_action</dt><dd>Create first goal" in register_workspace.body
     assert "workspace_daily_reason</dt><dd>no_goal_created" in register_workspace.body
     assert (
-        "workspace_daily_target_surface</dt><dd><a href='/#first-run-create-goal'>"
+        "workspace_daily_target_surface</dt><dd><a href='#workspace-first-run-action-form'>"
         "Create First Goal</a>"
     ) in register_workspace.body
     assert "workspace_daily_first_run_form_available</dt><dd>true" in register_workspace.body
@@ -8223,7 +8314,7 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "workspace_workbench_waiting_gates</dt><dd>3" in register_workspace.body
     assert "workspace_workbench_next_action</dt><dd>Create first goal" in register_workspace.body
     assert (
-        "workspace_workbench_target_surface</dt><dd><a href='/#first-run-create-goal'>"
+        "workspace_workbench_target_surface</dt><dd><a href='#workspace-first-run-action-form'>"
         "Create First Goal</a>"
     ) in register_workspace.body
     assert "workspace_workbench_reason</dt><dd>no_goal_created" in register_workspace.body
@@ -8231,7 +8322,7 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "workspace_workbench_confirmation_required</dt><dd>true" in register_workspace.body
     assert "workspace_workbench_unblock_action</dt><dd>Create First Goal" in register_workspace.body
     assert (
-        "workspace_workbench_unblock_surface</dt><dd><a href='/#first-run-create-goal'>"
+        "workspace_workbench_unblock_surface</dt><dd><a href='#workspace-first-run-action-form'>"
         "Create First Goal</a>"
     ) in register_workspace.body
     assert "workspace_workbench_unblock_reason</dt><dd>create_first_goal" in register_workspace.body
@@ -8239,7 +8330,7 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "workspace_first_run_action: Create first goal" in register_workspace.body
     assert "workspace_first_run_step: create_first_goal" in register_workspace.body
     assert (
-        "workspace_first_run_surface: <a href='/#first-run-create-goal'>Create First Goal</a>"
+        "workspace_first_run_surface: <a href='#workspace-first-run-action-form'>Create First Goal</a>"
         in register_workspace.body
     )
     assert "workspace_next_action_status: first_run" in register_workspace.body
@@ -8247,11 +8338,37 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "workspace_next_action: Create first goal" in register_workspace.body
     assert "workspace_next_reason: no_goal_created" in register_workspace.body
     assert (
-        "workspace_next_surface: <a href='/#first-run-create-goal'>Create First Goal</a>"
+        "workspace_next_surface: <a href='#workspace-first-run-action-form'>Create First Goal</a>"
         in register_workspace.body
     )
+    assert "Workspace First-Run Action" in register_workspace.body
+    assert "id='workspace-first-run-action-form'" in register_workspace.body
+    assert "data-workspace-first-run-action-form='true'" in register_workspace.body
+    assert "data-workspace-first-run-action-evidence='true'" in register_workspace.body
+    assert "workspace_first_run_action_status</dt><dd>available" in register_workspace.body
+    assert "workspace_first_run_action_source</dt><dd>first_run_progress" in register_workspace.body
+    assert "workspace_first_run_action_current_step</dt><dd>create_first_goal" in register_workspace.body
+    assert "workspace_first_run_action_next_action</dt><dd>Create first goal" in register_workspace.body
+    assert "workspace_first_run_action_reason</dt><dd>no_goal_created" in register_workspace.body
+    assert "workspace_first_run_action_name</dt><dd>create-goal" in register_workspace.body
+    assert (
+        "workspace_first_run_action_target_surface</dt><dd><a href='#workspace-first-run-action-form'>"
+        "Create First Goal</a>"
+    ) in register_workspace.body
+    assert "workspace_first_run_action_form_available</dt><dd>true" in register_workspace.body
+    assert "workspace_first_run_action_confirmation_required</dt><dd>true" in register_workspace.body
+    assert "workspace_first_run_action_write_on_get</dt><dd>false" in register_workspace.body
+    assert "workspace_first_run_action_provider_calls_taken</dt><dd>0" in register_workspace.body
+    assert "workspace_first_run_action_network_actions_taken</dt><dd>0" in register_workspace.body
+    assert "workspace_first_run_action_external_effects_created</dt><dd>false" in register_workspace.body
+    assert "action='/actions/create-goal'" in register_workspace.body
+    assert "name='project_id' value='clankeros'" in register_workspace.body
     assert "workspace_workflow_map_status</dt><dd>first_run" in register_workspace.body
     assert "workspace_workflow_map_current_gate</dt><dd>create_first_goal" in register_workspace.body
+    assert (
+        "workspace_workflow_map_next_surface</dt><dd><a href='#workspace-first-run-action-form'>"
+        "Create First Goal</a>"
+    ) in register_workspace.body
     assert "workspace_workflow_map_progress</dt><dd>1/5 gates done" in register_workspace.body
     assert "workspace_workflow_map_done_count</dt><dd>1" in register_workspace.body
     assert "workspace_workflow_map_pending_count</dt><dd>1" in register_workspace.body
@@ -8466,12 +8583,12 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "resume_workspace_available</dt><dd>true" in resume.body
     assert (
         f"resume_goal: <a href='/goals/{created_goal_id}'>"
-        "Create a browser-first first-run workflow</a>"
+        "Make ClankerOS resumable after first-run goal creation.</a>"
         in resume.body
     )
     assert f"resume_goal_id: {created_goal_id}" in resume.body
     assert "resume_goal_label_source: title" in resume.body
-    assert "Open saved surface for Create a browser-first first-run workflow" in resume.body
+    assert "Open saved surface for Make ClankerOS resumable after first-run goal creation." in resume.body
     assert "Resume Operator Workbench" in resume.body
     assert "data-resume-state-details='true'" in resume.body
     assert "data-resume-workbench-primary='true'" in resume.body
@@ -8488,11 +8605,14 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "resume_workbench_readiness_status</dt><dd>partial" in resume.body
     assert "resume_workbench_project</dt><dd><a href='/projects/clankeros'>clankeros</a>" in resume.body
     assert f"resume_workbench_goal_id</dt><dd>{created_goal_id}" in resume.body
-    assert "resume_workbench_goal_label</dt><dd>Create a browser-first first-run workflow" in resume.body
+    assert (
+        "resume_workbench_goal_label</dt><dd>"
+        "Make ClankerOS resumable after first-run goal creation."
+    ) in resume.body
     assert "resume_workbench_goal_label_source</dt><dd>title" in resume.body
     assert (
         f"resume_workbench_goal</dt><dd><a href='/goals/{created_goal_id}'>"
-        "Create a browser-first first-run workflow</a>"
+        "Make ClankerOS resumable after first-run goal creation.</a>"
         in resume.body
     )
     assert "resume_workbench_phase</dt><dd>Ready for delegation" in resume.body
@@ -8516,7 +8636,7 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     home = render_local_app_route(tmp_path, "/")
     assert (
         f"resume_goal: <a href='/goals/{created_goal_id}'>"
-        "Create a browser-first first-run workflow</a>"
+        "Make ClankerOS resumable after first-run goal creation.</a>"
         in home.body
     )
     assert f"resume_goal_id: {created_goal_id}" in home.body

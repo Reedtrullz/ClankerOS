@@ -212,9 +212,10 @@ Saved Goal links on Home, `/resume`, `/workspace`, and the Goal resume snapshot
 are now title-first when a title exists, while raw Goal ids and label-source
 readbacks remain in collapsed evidence for review and automation.
 Before a saved Goal exists, `/resume` follows first-run progress instead of
-stopping at the project link: an empty checkout points to the Home
-`Create Project` anchor, and a registered-project/no-goal state points to the
-Home `Create First Goal` anchor while still showing the saved project. The
+stopping at the project link: an empty checkout renders the same-page
+`Resume First-Run Action` `register-project` form, and a
+registered-project/no-goal state renders the same-page `create-goal` form while
+still showing the saved project. The
 workbench shows
 do/check/unblock/finish cards for the saved Goal, the current action or
 same-page action form, readiness repair, blockers, last artifact, and the
@@ -229,7 +230,8 @@ attention cue, target surface, and the same confirmed local action form that
 the Goal page would show when that next action is browser-available. When
 first-run is still incomplete, the same Readiness, Next Action, and Workflow
 Map sections show the current first-run gate, next setup action, and
-Home/Today/Goals setup targets. It also
+same-page setup target, with Home/Today/Goals setup links retained as fallback
+evidence. It also
 includes a read-only `Resume Workflow Map` that mirrors the Goal page
 lifecycle rail, showing the saved goal's current gate, gate progress, next
 action, and no-write/no-network boundaries before the operator leaves
@@ -254,9 +256,11 @@ and restore-link readbacks stay inside collapsed evidence.
 Before a saved Goal exists, `/workspace` now follows the
 same first-run progress as Home, Today, Goals, and `/resume`: an empty checkout
 points its daily brief, workbench, continuation readback, restore links, and
-workflow map at Home's `Create Project` anchor, while a registered-project/
-no-goal workspace points at `Create First Goal` and keeps the saved project
-visible. Both routes report that they write nothing on GET.
+workflow map at the same-page `Workspace First-Run Action` `register-project`
+form, while a registered-project/no-goal workspace points at the same-page
+`create-goal` form and keeps the saved project visible. Home/Today/Goals setup
+links remain in collapsed evidence as fallback routes. Both routes report that
+they write nothing on GET.
 
 For the first manual browser pass, run `python3 -m agent_os.cli demo`
 or `python3 -m agent_os.cli demo-app-scenario`, open `/goals`, then `/demo`,
