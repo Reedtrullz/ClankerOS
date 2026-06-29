@@ -1,5 +1,38 @@
 # Status
 
+## 2026-06-29 Guide Command Panel UX
+
+- Added a visible `Guide Command Panel` to `/guide` before the daily loop. It
+  renders four action cards for Do Now, State, Proof, and Resume, plus
+  evidence for command mode, source, project/Goal, current step, action name,
+  confirmation requirement, and zero-effect counters.
+- The panel reuses existing confirmed forms rather than creating a new write
+  path: an empty checkout embeds `register-project`, a registered project
+  advances to `create-goal`, and current-goal work can embed the current Goal
+  next-action form when available.
+- Updated focused route assertions so `/guide` proves the empty first-run
+  `register-project` form and the post-registration `create-goal` form are
+  both reachable from the browser guide.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed;
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health` passed with `1 passed,
+  515 deselected in 32.96s`; `python3 -m agent_os.cli app-smoke-test` passed
+  with `/guide` marker matched and zero provider/network/external-mutation
+  counters.
+- Browser verification: Playwright against throwaway first-run root
+  `http://127.0.0.1:62109/guide` confirmed the `Guide Command Panel`, four
+  command cards, embedded `register-project` form with draft action metadata,
+  six daily cards, five first-run cards, four safety cards, command-before-daily
+  ordering, and no horizontal overflow at `1280px`. Mobile `390x844` kept the
+  command panel at `358px` and the embedded form at `332px` with no horizontal
+  overflow. Screenshot:
+  `.playwright-cli/page-2026-06-29T21-42-45-397Z.png`. Browser, server, and
+  scratch root were cleaned up.
+- Non-claims: this does not create projects, goals, delegations, context
+  packs, runs, approvals, execution, pushes, PRs, deploys, provider calls,
+  non-loopback network actions, server writes on GET, or external mutations.
+
 ## 2026-06-29 Suggested Use Guide UX
 
 - Added `/guide` as a first-class local app route and top-level nav item. The

@@ -158,8 +158,11 @@ Core layers for the bootstrap:
   operators to Home/Today/Goals project/goal setup forms, links current-goal
   operators to `/today`, `/goals/<goal_id>`, existing confirmed action forms,
   `/verification`, `/ci-evidence`, Finish Today,
-  `/workspace#save-workspace`, and `/resume`, and remains read-only on GET with
-  no provider calls, network actions, push, PR, deploy, or external mutation.
+  `/workspace#save-workspace`, and `/resume`. A visible `Guide Command Panel`
+  embeds the existing confirmed first-run or current Goal action form when
+  available, letting operators register the project, create the first Goal, or
+  continue the current Goal from the guide. It remains read-only on GET with no
+  provider calls, network actions, push, PR, deploy, or external mutation.
   The local app also exposes `/resume` as a
   read-only return-to-work surface over saved `.clanker/app/workspace.json`
   state and browser-local route memory. It opens with a primary return link, a

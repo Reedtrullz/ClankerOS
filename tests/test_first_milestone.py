@@ -4464,6 +4464,32 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-guide-page='true'" in guide.body
     assert "data-guide-loop-art='true'" in guide.body
     assert "[ Today ] -> [ Goal ] -> [ Action ] -> [ Proof ] -> [ Finish ] -> [ Resume ]" in guide.body
+    assert "Guide Command Panel" in guide.body
+    assert "data-guide-command-panel='true'" in guide.body
+    assert "data-guide-command-actions='true'" in guide.body
+    assert guide.body.count("data-guide-command-card='true'") == 4
+    assert "data-guide-command-card-key='now'" in guide.body
+    assert "data-guide-command-card-key='state'" in guide.body
+    assert "data-guide-command-card-key='proof'" in guide.body
+    assert "data-guide-command-card-key='resume'" in guide.body
+    assert "data-guide-command-form='true'" in guide.body
+    assert "action='/actions/register-project'" in guide.body
+    assert "data-action-draft-action='register-project'" in guide.body
+    assert "data-guide-command-evidence='true'" in guide.body
+    assert "guide_command_mode</dt><dd>first_run" in guide.body
+    assert "guide_command_source</dt><dd>first_run_progress" in guide.body
+    assert "guide_command_project</dt><dd>clankeros" in guide.body
+    assert "guide_command_current_step</dt><dd>create_project" in guide.body
+    assert "guide_command_primary_action</dt><dd>Register ClankerOS project" in guide.body
+    assert "guide_command_action_name</dt><dd>register-project" in guide.body
+    assert "guide_command_form_available</dt><dd>true" in guide.body
+    assert "guide_command_confirmation_required</dt><dd>true" in guide.body
+    assert "guide_command_write_on_get</dt><dd>false" in guide.body
+    assert "guide_command_provider_calls_taken</dt><dd>0" in guide.body
+    assert "guide_command_network_actions_taken</dt><dd>0" in guide.body
+    assert "guide_command_external_effects_created</dt><dd>false" in guide.body
+    assert "guide_command_form: action=register-project available=true" in guide.body
+    assert "guide_command_safety: existing confirmed local forms own writes" in guide.body
     assert "data-guide-daily-loop='true'" in guide.body
     assert "data-guide-daily-loop-cards='true'" in guide.body
     assert guide.body.count("data-guide-step='true'") == 6
@@ -4502,6 +4528,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert ".guide-action" in guide.body
     assert guide.body.index("data-guide-page='true'") < guide.body.index(
         "data-route-context='true'"
+    )
+    assert guide.body.index("data-guide-command-panel='true'") < guide.body.index(
+        "data-guide-daily-loop='true'"
     )
     assert guide.body.index("data-guide-daily-loop='true'") < guide.body.index(
         "data-guide-first-run-path='true'"
@@ -7152,6 +7181,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "action_result_form_draft_storage</dt><dd>localStorage:clankeros-action-form-draft:register-project:first-target" in register_result.body
     assert "action_result_form_draft_write_on_get</dt><dd>false" in register_result.body
     assert (tmp_path / "projects" / "first-target" / "project.md").exists()
+    registered_guide = render_local_app_route(tmp_path, "/guide")
+    assert "Guide Command Panel" in registered_guide.body
+    assert "guide_command_current_step</dt><dd>create_first_goal" in registered_guide.body
+    assert "guide_command_primary_action</dt><dd>Create first goal" in registered_guide.body
+    assert "guide_command_action_name</dt><dd>create-goal" in registered_guide.body
+    assert "guide_command_project</dt><dd>first-target" in registered_guide.body
+    assert "action='/actions/create-goal'" in registered_guide.body
+    assert "data-action-draft-action='create-goal'" in registered_guide.body
+    assert "guide_command_form_available</dt><dd>true" in registered_guide.body
+    assert "guide_command_confirmation_required</dt><dd>true" in registered_guide.body
     registered_goals = render_local_app_route(tmp_path, "/goals")
     assert "first_run_current_step</dt><dd>create_first_goal" in registered_goals.body
     assert "first_run_project_registered</dt><dd>true" in registered_goals.body

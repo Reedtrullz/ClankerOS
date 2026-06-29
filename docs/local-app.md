@@ -157,10 +157,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   operators to Home/Today/Goals first-run project/goal setup forms and
   current-goal operators to `/today`, `/goals/<goal_id>`, existing confirmed
   action forms, `/verification`, `/ci-evidence`, Finish Today,
-  `/workspace#save-workspace`, and `/resume`. The route is read-only on GET
-  and only links to existing local surfaces; it does not call providers,
-  perform network actions, push, create PRs, deploy, or mutate external
-  systems.
+  `/workspace#save-workspace`, and `/resume`. A visible `Guide Command Panel`
+  embeds the existing confirmed first-run or current Goal action form when one
+  is available, so project registration, first Goal creation, and the current
+  Goal action can be started from the guide. The route is read-only on GET and
+  only reuses existing local surfaces and confirmed forms; it does not call
+  providers, perform network actions, push, create PRs, deploy, or mutate
+  external systems.
 - `/resume` - read-only return-to-work surface for the saved
   `.clanker/app/workspace.json` state and this browser's local route memory.
   It opens with a primary return link, a `Browser Resume` panel, and

@@ -244,9 +244,13 @@ Resume`: start in `/today`, choose or create the Goal through the Home
 first-run forms or `/goals`, follow the current action to the existing
 confirmed action form or Goal page, check proof in `/verification` or
 `/ci-evidence`, save the day with the route-local Finish Today form or
-`/workspace#save-workspace`, and return through `/resume`. It is read-only on
-GET and only links to existing local surfaces; it does not call providers,
-perform network actions, push, create PRs, deploy, or mutate external systems.
+`/workspace#save-workspace`, and return through `/resume`. A visible
+`Guide Command Panel` now embeds the existing confirmed first-run or current
+Goal action form when available, so an empty checkout can register a project
+and then create the first Goal from the guide without hunting through docs. It
+is read-only on GET and only reuses existing local surfaces and confirmed
+forms; it does not call providers, perform network actions, push, create PRs,
+deploy, or mutate external systems.
 
 Use `/resume` when returning to ClankerOS after a break. It now opens with a
 primary return link, a browser-local `Browser Resume` panel, and a

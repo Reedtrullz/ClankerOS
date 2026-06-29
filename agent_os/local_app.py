@@ -1953,6 +1953,15 @@ def _guide_page(root: Path) -> str:
             "<p>One browser-first operating loop for spending the day inside ClankerOS without remembering the CLI.</p>",
             "<pre class='guide-loop-art' data-guide-loop-art='true' aria-label='Daily browser loop text map'>[ Today ] -> [ Goal ] -> [ Action ] -> [ Proof ] -> [ Finish ] -> [ Resume ]</pre>",
             "</section>",
+            _guide_command_panel(
+                root,
+                focus=focus,
+                first_run=first_run,
+                primary_href=primary_href,
+                primary_label=primary_label,
+                primary_action=primary_action,
+                phase=phase,
+            ),
             "<section id='guide-daily-loop' class='panel guide-daily-loop' data-guide-daily-loop='true'><h2>Daily Loop</h2>",
             "<p class='muted'>Use these in order when you want ClankerOS to feel like the main operator surface.</p>",
             "<div class='guide-grid' data-guide-daily-loop-cards='true'>",
@@ -1976,6 +1985,161 @@ def _guide_page(root: Path) -> str:
             "</details>",
             "</section>",
             _non_claim_banner(),
+        ]
+    )
+
+
+def _guide_command_panel(
+    root: Path,
+    *,
+    focus: dict[str, Any],
+    first_run: dict[str, Any],
+    primary_href: str,
+    primary_label: str,
+    primary_action: str,
+    phase: str,
+) -> str:
+    status = str(focus.get("status") or "unknown")
+    command_mode = status
+    form = ""
+    form_available = False
+    form_source = "none"
+    action_name = primary_action
+    current_step = str(first_run.get("current_step") or "unknown")
+    goal_value: str | SafeHtml = "none"
+    project_value = str(first_run.get("default_project") or "clankeros")
+    reason = str(focus.get("next_reason") or first_run.get("next_reason") or "state_aware_guide")
+    source_surface: str | SafeHtml = SafeHtml(
+        f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
+    )
+    form_surface: str | SafeHtml = "none"
+
+    if status == "first_run":
+        payload = _first_run_action_form_payload(root, first_run)
+        form = str(payload["form"])
+        form_available = bool(payload["form_available"])
+        form_source = str(payload["form_source"])
+        action_name = str(payload["action_name"])
+        primary_action = str(first_run["next_action"])
+        reason = str(first_run["next_reason"])
+        project_value = str(first_run["default_project"])
+        goal_id = str(payload["goal_id"] or "")
+        if goal_id:
+            goal_value = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(goal_id)}</a>")
+        if form_available:
+            form_surface = SafeHtml("<a href='#guide-command-panel'>Guide command form</a>")
+    elif status == "available":
+        goal = focus.get("goal")
+        goal_id = str(getattr(goal, "id", "")) if goal is not None else ""
+        project_value = str(getattr(goal, "project_id", project_value)) if goal is not None else project_value
+        if goal_id:
+            goal_label = str(focus.get("goal_label") or goal_id)
+            goal_value = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(goal_label)}</a>")
+        next_action = focus.get("next_action")
+        if isinstance(next_action, GoalNextAction):
+            command_mode = "goal"
+            action_name = _action_name_for_goal_action(next_action.action)
+            reason = next_action.reason
+            goal_state = focus.get("goal_state")
+            if isinstance(goal_state, dict):
+                form = _goal_next_action_form(goal_state, next_action)
+                form_available = bool(form)
+                form_source = "goal_next_action_form" if form_available else "goal_next_action_link"
+            if form_available:
+                form_surface = SafeHtml("<a href='#guide-command-panel'>Guide command form</a>")
+        current_step = "goal_next_action"
+
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("guide_command_status", "available"),
+        ("guide_command_mode", command_mode),
+        ("guide_command_source", form_source),
+        ("guide_command_project", project_value),
+        ("guide_command_goal", goal_value),
+        ("guide_command_phase", phase),
+        ("guide_command_current_step", current_step),
+        ("guide_command_primary_action", primary_action),
+        ("guide_command_action_name", action_name),
+        ("guide_command_reason", reason),
+        ("guide_command_source_surface", source_surface),
+        ("guide_command_form_surface", form_surface),
+        ("guide_command_form_available", str(form_available).lower()),
+        ("guide_command_confirmation_required", str(form_available).lower()),
+        ("guide_command_write_on_get", "false"),
+        ("guide_command_provider_calls_taken", "0"),
+        ("guide_command_network_actions_taken", "0"),
+        ("guide_command_external_effects_created", "false"),
+    ]
+    cards = "".join(
+        [
+            _guide_card(
+                "now",
+                "Do Now",
+                primary_action,
+                "#guide-command-panel" if form_available else primary_href,
+                "Use command form" if form_available else primary_label,
+                primary=True,
+                data_attr="data-guide-command-card",
+                key_attr="data-guide-command-card-key",
+                card_class="guide-card guide-command-card",
+                action_class="guide-action",
+            ),
+            _guide_card(
+                "state",
+                "State",
+                f"{command_mode}: {phase}",
+                primary_href,
+                primary_label,
+                data_attr="data-guide-command-card",
+                key_attr="data-guide-command-card-key",
+                card_class="guide-card guide-command-card",
+            ),
+            _guide_card(
+                "proof",
+                "Proof",
+                "Check evidence before trusting progress.",
+                "/verification",
+                "Verification",
+                data_attr="data-guide-command-card",
+                key_attr="data-guide-command-card-key",
+                card_class="guide-card guide-command-card",
+            ),
+            _guide_card(
+                "resume",
+                "Resume",
+                "Save or restore the browser return point.",
+                "/resume",
+                "Resume",
+                data_attr="data-guide-command-card",
+                key_attr="data-guide-command-card-key",
+                card_class="guide-card guide-command-card",
+            ),
+        ]
+    )
+    form_html = (
+        f"<div class='guide-command-form' data-guide-command-form='true'>{form}</div>"
+        if form_available
+        else ""
+    )
+    return "".join(
+        [
+            "<section id='guide-command-panel' class='panel guide-command-panel' data-guide-command-panel='true'><h2>Guide Command Panel</h2>",
+            "<p class='muted'>Run the next browser step from the guide when a confirmed local form is already available.</p>",
+            "<div class='guide-command-grid' data-guide-command-actions='true'>",
+            cards,
+            "</div>",
+            "<details class='guide-command-evidence' data-guide-command-evidence='true'><summary>Guide command evidence</summary>",
+            _kv(rows),
+            _ul(
+                [
+                    f"guide_command_now: {_e(primary_action)}",
+                    f"guide_command_form: action={_e(action_name)} available={str(form_available).lower()}",
+                    f"guide_command_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    "guide_command_safety: existing confirmed local forms own writes",
+                ]
+            ),
+            "</details>",
+            form_html,
+            "</section>",
         ]
     )
 
@@ -40689,8 +40853,8 @@ def _html_page(
     .workspace-panel-restore li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--panel); overflow-wrap:anywhere; }}
     .guide-hero {{ border-left:4px solid var(--accent); }}
     .guide-loop-art {{ margin:12px 0 0; padding:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); white-space:pre-wrap; overflow-wrap:anywhere; text-align:center; font-size:15px; line-height:1.55; }}
-    .guide-daily-loop, .guide-first-run-path, .guide-safety-boundary {{ border-left:4px solid var(--accent); }}
-    .guide-grid, .guide-first-run-grid, .guide-safety-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:12px 0; align-items:stretch; }}
+    .guide-command-panel, .guide-daily-loop, .guide-first-run-path, .guide-safety-boundary {{ border-left:4px solid var(--accent); }}
+    .guide-grid, .guide-command-grid, .guide-first-run-grid, .guide-safety-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:12px 0; align-items:stretch; }}
     .guide-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; display:grid; gap:8px; align-content:start; }}
     .guide-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .guide-card-kicker {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
@@ -40706,6 +40870,14 @@ def _html_page(
     .guide-evidence dl {{ grid-template-columns:minmax(190px, 260px) 1fr; }}
     .guide-evidence ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .guide-evidence li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .guide-command-form {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .guide-command-panel form {{ margin-top:0; }}
+    .guide-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .guide-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .guide-command-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .guide-command-evidence dl {{ grid-template-columns:minmax(190px, 260px) 1fr; }}
+    .guide-command-evidence ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .guide-command-evidence li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .operator-side {{ position:sticky; top:74px; border:1px solid var(--line); background:var(--panel); padding:12px; }}
     .operator-side h2 {{ font-size:14px; }}
     .operator-side ul, .command-palette ul {{ list-style:none; padding:0; margin:0; display:grid; gap:7px; }}
