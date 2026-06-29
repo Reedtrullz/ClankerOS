@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/resume` now starts with a read-only `Browser Resume` panel that uses this
+  browser's `localStorage:clankeros-route-history` to reopen the most recent
+  non-resume route, reports route-scoped scroll/open-panel memory when present,
+  falls back to the Goal cockpit, and keeps canonical resume state behind the
+  explicit `/workspace#save-workspace` Finish Today form.
 - Goal workflow forms now share the browser-local
   `localStorage:clankeros-action-form-draft:<action>:<scope>` draft system:
   worktree approval/run, commit request/approval, local commit, publication

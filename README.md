@@ -219,12 +219,19 @@ nothing on GET, and only exposes confirmed local forms already available
 elsewhere in the app.
 
 Use `/resume` when returning to ClankerOS after a break. It now opens with a
-primary return link and a `Resume Operator Workbench` before shared
-route/focus diagnostics or the command readback, so the first screen is the
-current saved action. It reads the saved workspace state, prefers the exact
-saved `resume_surface` local route when one exists, shows the saved
+primary return link, a browser-local `Browser Resume` panel, and a
+`Resume Operator Workbench` before shared route/focus diagnostics or the
+command readback, so the first screen is the current return path instead of a
+report. `Browser Resume` reads this browser's
+`localStorage:clankeros-route-history`, ignores `/resume` itself, and offers
+the most recent non-resume route with route-scoped scroll/open-panel memory
+when available. It does not write server state; the canonical saved workspace
+still comes from the explicit `/workspace#save-workspace` Finish Today form.
+The rest of `/resume` reads the saved workspace state, prefers the exact saved
+`resume_surface` local route when one exists, shows the saved
 goal/project/artifact links, preserves filters and expanded panel readbacks,
-and keeps saved-state, command, and workbench evidence collapsed by default.
+and keeps saved-state, command, workbench, and browser-local resume evidence
+collapsed by default.
 Saved Goal links on Home, `/resume`, `/workspace`, and the Goal resume snapshot
 are now title-first when a title exists, while raw Goal ids and label-source
 readbacks remain in collapsed evidence for review and automation.

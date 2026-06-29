@@ -5288,6 +5288,22 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "operator_focus_safety: read-only local first-run routing" in root.body
     resume_empty = render_local_app_route(tmp_path, "/resume")
     assert resume_empty.status == 200
+    assert "Browser Resume" in resume_empty.body
+    assert "data-browser-resume='true'" in resume_empty.body
+    assert "data-browser-resume-storage-key='clankeros-route-history'" in resume_empty.body
+    assert "data-browser-resume-scroll-prefix='clankeros-scroll-position:'" in resume_empty.body
+    assert "data-browser-resume-panels-prefix='clankeros-open-panels:'" in resume_empty.body
+    assert "data-browser-resume-label='true'>Waiting for browser history." in resume_empty.body
+    assert "data-browser-resume-link='true' href='/goals'>Open Goal cockpit</a>" in resume_empty.body
+    assert "browser_resume_status</dt><dd>browser_local_pending" in resume_empty.body
+    assert "browser_resume_storage</dt><dd>localStorage:clankeros-route-history" in resume_empty.body
+    assert "browser_resume_selection</dt><dd>most_recent_non_resume_route" in resume_empty.body
+    assert "browser_resume_write_on_get</dt><dd>false" in resume_empty.body
+    assert "browser_resume_external_effects_created</dt><dd>false" in resume_empty.body
+    assert "function renderBrowserResumeState(entries)" in resume_empty.body
+    assert resume_empty.body.index("Browser Resume") < resume_empty.body.index(
+        "Resume Operator Workbench"
+    )
     assert "Resume Command Bar" in resume_empty.body
     assert "data-resume-command-bar='true'" in resume_empty.body
     assert "resume_command_status</dt><dd>first_run" in resume_empty.body
@@ -6797,6 +6813,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_restore_map_open_goal_saved</dt><dd>true" in workspace_saved.body
     assert "workspace_restore_map_resume_hub_surface</dt><dd><a href='/resume'>/resume</a>" in workspace_saved.body
     resume_saved = render_local_app_route(tmp_path, "/resume")
+    assert "Browser Resume" in resume_saved.body
+    assert "data-browser-resume='true'" in resume_saved.body
+    assert "browser_resume_canonical_workspace</dt><dd>.clanker/app/workspace.json" in resume_saved.body
     assert "Open saved surface for goal_demo" in resume_saved.body
     assert (
         "resume_saved_surface</dt><dd><a href='/goals/goal_demo#goal-timeline-command-bar'>"

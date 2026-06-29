@@ -146,11 +146,16 @@ Core layers for the bootstrap:
   first-run panels without writing on GET or adding action authority. The
   local app also exposes `/resume` as a
   read-only return-to-work surface over saved `.clanker/app/workspace.json`
-  state, opening with a primary return link and `Resume Operator Workbench`
-  before shared route/focus diagnostics or command readback. It shows saved
-  `resume_surface`, goal, project, artifact, filters, expanded panels, and
-  zero-effect counters inside collapsed saved-state/command/workbench
-  evidence. The shared `Workspace Panel Restore` strip now treats saved
+  state and browser-local route memory. It opens with a primary return link, a
+  `Browser Resume` panel, and `Resume Operator Workbench` before shared
+  route/focus diagnostics or command readback. `Browser Resume` reads
+  `localStorage:clankeros-route-history`, ignores `/resume` itself, and offers
+  the most recent non-resume route plus route-scoped scroll/open-panel memory
+  when available while leaving canonical resume state to the explicit
+  `/workspace#save-workspace` form. It shows saved `resume_surface`, goal,
+  project, artifact, filters, expanded panels, and zero-effect counters inside
+  collapsed saved-state/browser-resume/command/workbench evidence. The shared
+  `Workspace Panel Restore` strip now treats saved
   `expanded_panels` as actionable return context on `/resume`, `/workspace`,
   and the saved Goal page; it links to saved Goal panels and browser-locally
   reopens matching details on the saved Goal page without writing state,

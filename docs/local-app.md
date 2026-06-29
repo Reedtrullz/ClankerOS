@@ -130,11 +130,18 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   incidents, and first-run panels without writing on GET or adding new action
   authority.
 - `/resume` - read-only return-to-work surface for the saved
-  `.clanker/app/workspace.json` state. It opens with a primary return link and
+  `.clanker/app/workspace.json` state and this browser's local route memory.
+  It opens with a primary return link, a `Browser Resume` panel, and
   `Resume Operator Workbench` before shared route/focus diagnostics or command
-  readback, links the saved goal, project, and last artifact, preserves filters
-  and expanded panel readbacks, and keeps saved-state, command, and workbench
-  evidence collapsed by default. Saved Goal links on Home, `/resume`,
+  readback. `Browser Resume` reads
+  `localStorage:clankeros-route-history`, ignores `/resume` itself, and offers
+  the most recent non-resume route plus route-scoped scroll/open-panel memory
+  when this browser has it. It falls back to the Goal cockpit and keeps
+  canonical tomorrow state behind the explicit
+  `/workspace#save-workspace` Finish Today form. `/resume` also links the
+  saved goal, project, and last artifact, preserves filters and expanded panel
+  readbacks, and keeps saved-state, browser-local resume, command, and
+  workbench evidence collapsed by default. Saved Goal links on Home, `/resume`,
   `/workspace`, and the Goal resume snapshot are title-first when a title
   exists, while raw Goal ids and label-source fields remain available in
   collapsed evidence for review and automation. The shared

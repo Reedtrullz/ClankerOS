@@ -1,5 +1,38 @@
 # Status
 
+## 2026-06-29 Browser-Local Resume Panel
+
+- Added a read-only `Browser Resume` panel near the top of `/resume`, before
+  the existing operator workbench. It reads this browser's
+  `localStorage:clankeros-route-history`, skips `/resume` itself, and points
+  the operator back to the most recent non-resume route.
+- The panel also reports route-scoped scroll and open-panel memory using the
+  existing `clankeros-scroll-position:` and `clankeros-open-panels:` prefixes,
+  with a Goal cockpit fallback when no prior browser route exists.
+- The surface keeps canonical saved workspace state separate: the durable
+  resume point is still `.clanker/app/workspace.json`, updated only by the
+  explicit `/workspace#save-workspace` Finish Today form.
+- Verification: `df -h /System/Volumes/Data` showed 80Gi free before the
+  longer local loop; `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused
+  `test_local_app_routes_render_modern_workflow_and_health` passed with
+  `1 passed in 39.60s`; `python3 -m compileall -q agent_os tests` passed;
+  `git diff --check` passed; bounded scratch-root `app-smoke-test` and
+  `app-demo-smoke-test` passed with ClankerOS provider/network/external
+  mutation counters at zero.
+- Browser verification: Playwright against throwaway demo app
+  `http://127.0.0.1:58047` visited `/goals/goal_7a57eb8dcad1`, seeded route
+  history plus scroll/open-panel memory, then opened `/resume` and confirmed
+  `data-browser-resume-status-value=available`,
+  `data-browser-resume-href=/goals/goal_7a57eb8dcad1`,
+  route key `/goals/goal_7a57eb8dcad1`, link href
+  `/goals/goal_7a57eb8dcad1`, and memory text
+  `scroll=saved panels=saved`. Mobile `390x844` had document width 390,
+  no horizontal overflow, and zero browser console warnings/errors.
+- Non-claims: browser resume is browser-local view memory only. It does not
+  write `.clanker/app/workspace.json`, create or update goals, call providers,
+  fetch GitHub, push, create PRs, deploy, or mutate external systems.
+
 ## 2026-06-29 Browser-Local Workflow Form Drafts
 
 - Extended browser-local action form draft memory from setup forms to the

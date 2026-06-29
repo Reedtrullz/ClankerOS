@@ -5861,6 +5861,7 @@ def _resume_page(root: Path) -> str:
             ),
             "</details>",
             "</section>",
+            _browser_resume_section(),
             _resume_operator_workbench(root, state, open_project, open_goal, filters, expanded, last_artifact),
             _resume_command_bar(root, state, open_project, open_goal, filters, expanded, last_artifact),
             _resume_readiness_section(root, state, open_project, open_goal, filters, expanded, last_artifact),
@@ -5877,6 +5878,72 @@ def _resume_page(root: Path) -> str:
                 ],
             ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _browser_resume_section() -> str:
+    return "".join(
+        [
+            (
+                "<section id='browser-resume' class='panel browser-resume' "
+                "data-browser-resume='true' "
+                "data-browser-resume-storage-key='clankeros-route-history' "
+                "data-browser-resume-scroll-prefix='clankeros-scroll-position:' "
+                "data-browser-resume-panels-prefix='clankeros-open-panels:' "
+                "data-browser-resume-write-on-get='false' "
+                "data-browser-resume-provider-calls-taken='0' "
+                "data-browser-resume-network-actions-taken='0' "
+                "data-browser-resume-external-effects-created='false'>"
+            ),
+            "<h2>Browser Resume</h2>",
+            "<p class='muted'>This browser can reopen the last non-Resume page it saw, even before the saved workspace is fully populated.</p>",
+            "<div class='browser-resume-grid' data-browser-resume-grid='true'>",
+            "<article class='browser-resume-card browser-resume-primary'>",
+            "<h3>Last Place</h3>",
+            "<p data-browser-resume-label='true'>Waiting for browser history.</p>",
+            "<a class='browser-resume-link' data-browser-resume-link='true' href='/goals'>Open Goal cockpit</a>",
+            "</article>",
+            "<article class='browser-resume-card'>",
+            "<h3>Route</h3>",
+            "<p data-browser-resume-href='true'>none</p>",
+            "<p class='muted' data-browser-resume-at='true'>No timestamp yet.</p>",
+            "</article>",
+            "<article class='browser-resume-card'>",
+            "<h3>View Memory</h3>",
+            "<p data-browser-resume-memory='true'>Route history will be inspected after load.</p>",
+            "<a class='browser-resume-link' href='/workspace#workspace-view-memory'>Open view memory</a>",
+            "</article>",
+            "<article class='browser-resume-card'>",
+            "<h3>Safety</h3>",
+            "<p data-browser-resume-status='true'>Read-only browser-local resume.</p>",
+            "<a class='browser-resume-link' href='/workspace#save-workspace'>Save canonical workspace</a>",
+            "</article>",
+            "</div>",
+            "<details class='browser-resume-evidence' data-browser-resume-evidence='true'><summary>Browser resume evidence</summary>",
+            _kv(
+                [
+                    ("browser_resume_status", "browser_local_pending"),
+                    ("browser_resume_storage", "localStorage:clankeros-route-history"),
+                    ("browser_resume_selection", "most_recent_non_resume_route"),
+                    ("browser_resume_scroll_storage_prefix", "localStorage:clankeros-scroll-position:"),
+                    ("browser_resume_panel_storage_prefix", "localStorage:clankeros-open-panels:"),
+                    ("browser_resume_canonical_workspace", ".clanker/app/workspace.json"),
+                    ("browser_resume_write_on_get", "false"),
+                    ("browser_resume_provider_calls_taken", "0"),
+                    ("browser_resume_network_actions_taken", "0"),
+                    ("browser_resume_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "browser_resume_fallback: opens Goal cockpit when this browser has no prior route",
+                    "browser_resume_scope: browser-local route history, scroll position, and open-panel memory only",
+                    "browser_resume_finish: use the save form for canonical tomorrow workspace state",
+                ]
+            ),
+            "</details>",
+            "</section>",
         ]
     )
 
@@ -39247,6 +39314,16 @@ def _html_page(
     .browser-route-history-evidence:not([open]) > :not(summary) {{ display:none; }}
     .browser-route-history dl {{ grid-template-columns:1fr; gap:4px; }}
     .browser-route-history ul {{ margin-top:8px; }}
+    .browser-resume {{ border-left:4px solid var(--accent); }}
+    .browser-resume-grid {{ display:grid; grid-template-columns:minmax(230px, 1.2fr) repeat(3, minmax(150px, 1fr)); gap:10px; margin:12px 0; }}
+    .browser-resume-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .browser-resume-card h3 {{ margin-top:0; }}
+    .browser-resume-card p {{ margin:0 0 10px; }}
+    .browser-resume-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .browser-resume-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; width:100%; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); color:var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
+    .browser-resume-primary .browser-resume-link {{ background:var(--accent); color:#fff; }}
+    .browser-resume-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .browser-resume-evidence:not([open]) > :not(summary) {{ display:none; }}
     .recent-items-filter {{ border:1px solid var(--line); border-left:4px solid var(--warn); background:var(--surface); padding:9px; margin:10px 0; display:grid; gap:8px; }}
     .recent-items-filter h3 {{ margin:0; }}
     .recent-items-filter-search {{ display:grid; gap:5px; color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
@@ -40886,7 +40963,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .workflow-scope-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #goal-attention-digest {{ scroll-margin-top:260px; }} .goal-attention-grid {{ grid-template-columns:1fr; }} }}
@@ -41106,6 +41183,102 @@ def _html_page(
       }});
       refreshPaletteResults();
       syncPaletteFilter();
+      renderBrowserResumeState(entries);
+    }}
+    function browserResumePanels() {{
+      return Array.prototype.slice.call(document.querySelectorAll("[data-browser-resume='true']"));
+    }}
+    function browserResumeCurrentHref() {{
+      return window.location.pathname + window.location.search + window.location.hash;
+    }}
+    function browserResumeRouteKey(href) {{
+      href = String(href || "").trim();
+      var hashIndex = href.indexOf("#");
+      if (hashIndex !== -1) {{ href = href.slice(0, hashIndex); }}
+      return href || "/";
+    }}
+    function isBrowserResumeRoute(href) {{
+      var route = browserResumeRouteKey(href);
+      var path = route.split("?")[0] || route;
+      return path === "/resume";
+    }}
+    function browserResumeCandidate(entries) {{
+      var current = browserResumeCurrentHref();
+      for (var index = 0; index < entries.length; index += 1) {{
+        var entry = entries[index];
+        if (!entry || !entry.href) {{ continue; }}
+        if (entry.href === current || isBrowserResumeRoute(entry.href)) {{ continue; }}
+        return entry;
+      }}
+      return null;
+    }}
+    function setBrowserResumeText(root, selector, text) {{
+      var node = root.querySelector(selector);
+      if (node) {{ node.textContent = text; }}
+    }}
+    function renderBrowserResumeState(entries) {{
+      var panels = browserResumePanels();
+      if (!panels.length) {{ return; }}
+      entries = Array.isArray(entries) ? entries : loadBrowserRouteHistory();
+      var candidate = browserResumeCandidate(entries);
+      panels.forEach(function(root) {{
+        root.setAttribute("data-browser-resume-route-count", String(entries.length));
+        var link = root.querySelector("[data-browser-resume-link='true']");
+        if (!window.localStorage) {{
+          root.setAttribute("data-browser-resume-status-value", "unavailable");
+          setBrowserResumeText(root, "[data-browser-resume-label='true']", "Browser resume unavailable.");
+          setBrowserResumeText(root, "[data-browser-resume-href='true']", "localStorage unavailable");
+          setBrowserResumeText(root, "[data-browser-resume-at='true']", "No browser-local memory can be read.");
+          setBrowserResumeText(root, "[data-browser-resume-memory='true']", "View memory unavailable.");
+          setBrowserResumeText(root, "[data-browser-resume-status='true']", "No server writes or external effects.");
+          if (link) {{
+            link.href = "/goals";
+            link.textContent = "Open Goal cockpit";
+          }}
+          return;
+        }}
+        if (!candidate) {{
+          root.setAttribute("data-browser-resume-status-value", "empty");
+          root.setAttribute("data-browser-resume-href", "");
+          root.setAttribute("data-browser-resume-scroll-memory", "false");
+          root.setAttribute("data-browser-resume-panel-memory", "false");
+          setBrowserResumeText(root, "[data-browser-resume-label='true']", "No previous non-Resume page in this browser.");
+          setBrowserResumeText(root, "[data-browser-resume-href='true']", "none");
+          setBrowserResumeText(root, "[data-browser-resume-at='true']", "Visit a Goal, run, project, or artifact, then return here.");
+          setBrowserResumeText(root, "[data-browser-resume-memory='true']", "No route-specific view memory yet.");
+          setBrowserResumeText(root, "[data-browser-resume-status='true']", "Read-only browser-local resume.");
+          if (link) {{
+            link.href = "/goals";
+            link.textContent = "Open Goal cockpit";
+          }}
+          return;
+        }}
+        var routeKey = browserResumeRouteKey(candidate.href);
+        var scrollPrefix = root.getAttribute("data-browser-resume-scroll-prefix") || "clankeros-scroll-position:";
+        var panelsPrefix = root.getAttribute("data-browser-resume-panels-prefix") || "clankeros-open-panels:";
+        var scrollKey = scrollPrefix + routeKey;
+        var panelsKey = panelsPrefix + routeKey;
+        var hasScroll = false;
+        var hasPanels = false;
+        try {{ hasScroll = Boolean(window.localStorage.getItem(scrollKey)); }} catch (error) {{}}
+        try {{ hasPanels = Boolean(window.localStorage.getItem(panelsKey)); }} catch (error) {{}}
+        root.setAttribute("data-browser-resume-status-value", "available");
+        root.setAttribute("data-browser-resume-href", candidate.href);
+        root.setAttribute("data-browser-resume-route-key", routeKey);
+        root.setAttribute("data-browser-resume-scroll-key", scrollKey);
+        root.setAttribute("data-browser-resume-panel-key", panelsKey);
+        root.setAttribute("data-browser-resume-scroll-memory", hasScroll ? "true" : "false");
+        root.setAttribute("data-browser-resume-panel-memory", hasPanels ? "true" : "false");
+        setBrowserResumeText(root, "[data-browser-resume-label='true']", candidate.label || candidate.href);
+        setBrowserResumeText(root, "[data-browser-resume-href='true']", candidate.href);
+        setBrowserResumeText(root, "[data-browser-resume-at='true']", candidate.at ? ("Last seen " + candidate.at) : "Timestamp unavailable.");
+        setBrowserResumeText(root, "[data-browser-resume-memory='true']", "scroll=" + (hasScroll ? "saved" : "none") + " panels=" + (hasPanels ? "saved" : "none"));
+        setBrowserResumeText(root, "[data-browser-resume-status='true']", "Browser-local route ready; canonical save remains in Workspace.");
+        if (link) {{
+          link.href = candidate.href;
+          link.textContent = "Open last place";
+        }}
+      }});
     }}
     function rememberCurrentRoute() {{
       if (!window.localStorage) {{
