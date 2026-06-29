@@ -954,13 +954,14 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   command bar, diagnostics, counts, registered commands, and workflow imports
   stay collapsed as evidence while preserving the explicit
   `status_artifact_write_on_get=true` boundary.
-- `/demo` - demo scenario instructions plus a read-only `Demo Operator
-  Workbench` that opens the page with Now, Project, Workflow, and Proof cards
-  before shared diagnostics or command readback. Demo workbench and command
-  evidence stay collapsed by default while preserving fixture status, the
-  preferred `python3 -m agent_os.cli demo` command, compatibility command,
-  selected project/Goal/delegation/run, next local surface, and zero-effect
-  counters. The demo page also includes
+- `/demo` - demo scenario instructions plus a confirmed browser-local fixture
+  action and a read-only `Demo Operator Workbench` that opens the page with
+  Now, Project, Workflow, and Proof cards before shared diagnostics or command
+  readback. Demo workbench and command evidence stay collapsed by default while
+  preserving fixture status, the `demo-app-scenario` browser action,
+  confirmation requirement, CLI fallback, compatibility command, selected
+  project/Goal/delegation/run, next local surface, and zero-effect counters.
+  The demo page also includes
   `Demo Gate Artifacts`, a read-only artifact map for the selected fixture
   run's commit request,
   commit decision, local commit, publication request, publication decision,
@@ -971,6 +972,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   the first visual pass.
 
 ## Demo Scenario
+
+Open `/demo#demo-fixture-action` in the local app and confirm the
+`demo-app-scenario` browser action to create or refresh the deterministic demo
+fixture.
+
+CLI fallback:
 
 ```bash
 python3 -m agent_os.cli demo
@@ -998,11 +1005,12 @@ The demo creates fixture-backed local state under `.clanker/demo/`:
 It is local-only. It does not call providers, push, create PRs, deploy, use the
 network, or modify external projects outside the repo demo area.
 
-After running the demo command, open `/goals`, then `/demo` in the local app.
-`/goals` shows the fixture goal phase and next action, while `/demo` opens
-with the `Demo Operator Workbench` and links directly to the demo project,
-selected workflow, delegation, coder worktree run, route-walk proof, review
-artifact, inbox, approvals, and health page. The same page includes a manual
+After confirming the browser action, the action result records `/demo` as the
+next surface. Open `/goals` when you want the fixture goal phase and next
+action; `/demo` opens with the `Demo Operator Workbench` and links directly to
+the demo project, selected workflow, delegation, coder worktree run, route-walk
+proof, review artifact, inbox, approvals, and health page. The same page
+includes a manual
 browser script for the first dogfooding pass through commit request, commit
 approval, typed local commit, publication request, publication approval, and
 publication handoff. The

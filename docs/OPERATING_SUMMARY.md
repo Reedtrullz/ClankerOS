@@ -1299,7 +1299,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   `ClankerOS Local Operator`, `Modern Operator Workflow`, `Safe Action
   Catalog`, `Verification Handoff`, and `CI Evidence Records`, and reports
   `marker=matched` or `marker=missing` per route while preserving
-  provider/network/external-mutation counters at zero. `app-demo-smoke-test`
+  provider/network/external-mutation counters at zero. The browser demo path
+  now starts at `/demo#demo-fixture-action`, where an explicit confirmation
+  creates or refreshes the same deterministic fixture while preserving the CLI
+  commands as fallbacks. `app-demo-smoke-test`
   creates the fixture-backed demo state and renders the stateful demo,
   dogfooding, goal, search, workspace, memory, skills, profiles, project,
   delegation, scoped workflow, run, approvals, inbox,

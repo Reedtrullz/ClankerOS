@@ -203,6 +203,7 @@ FIRST_RUN_WORKFLOW_STEPS = [
 ]
 ACTION_CATALOG = [
     ("refresh-dashboard-state", "low-risk", "dashboard", "yes", "yes", "current repo/app route state", ".clanker/app/local_app_status.json"),
+    ("demo-app-scenario", "local fixture", "demo", "yes", "yes", "operator confirmation to seed deterministic local demo state", ".clanker/demo plus fixture project/goal/delegation/run artifacts"),
     ("context-pack", "local artifact", "delegation detail", "yes", "yes", "delegation_id", "context_pack.json/.md"),
     ("run-delegation", "local execution", "goal next action", "yes", "yes", "pending read-only delegation with a safe adapter", "delegation run evidence packet"),
     ("implementation-handoff", "readback", "delegation detail", "no", "no", "completed delegation", "implementation handoff status/readback"),
@@ -25506,7 +25507,7 @@ def _action_operator_workbench(root: Path) -> str:
 
 
 def _action_workflow_stage_for_action(action_name: str) -> str:
-    if action_name in {"register-project", "create-goal", "save-workspace"}:
+    if action_name in {"register-project", "create-goal", "demo-app-scenario", "save-workspace"}:
         return "setup"
     if action_name in {"delegate", "run-delegation"}:
         return "scout"
@@ -26997,7 +26998,7 @@ def _dogfooding_page(root: Path) -> str:
     storage = _storage(root)
     project = storage.get_registered_project("local-app-demo")
     fixture_status = "available" if project is not None else "missing"
-    next_surface = "/demo" if project is not None else "demo-app-scenario"
+    next_surface = "/demo" if project is not None else "/demo#demo-fixture-action"
     fixture_lines = [
         ("demo_fixture_status", fixture_status),
         ("next_operator_surface", next_surface),
@@ -27020,9 +27021,9 @@ def _dogfooding_page(root: Path) -> str:
             _list_section(
                 "Start Or Refresh Fixture",
                 [
-                    "Run `python3 -m agent_os.cli demo` to create or refresh fixture-backed local state.",
-                    "`python3 -m agent_os.cli demo-app-scenario` remains available as a compatibility command.",
-                    "Open <a href='/demo'>/demo</a> and confirm demo_fixture_status before following run-specific links.",
+                    "Open <a href='/demo#demo-fixture-action'>/demo#demo-fixture-action</a> and confirm the local browser action to create or refresh fixture-backed local state.",
+                    "CLI fallback: `python3 -m agent_os.cli demo`; compatibility command: `python3 -m agent_os.cli demo-app-scenario`.",
+                    "After the action result offers <a href='/demo'>/demo</a> as the next surface, confirm demo_fixture_status before following run-specific links.",
                     "Open <a href='/health'>/health</a> if you need a fresh `.clanker/app/local_app_status.json` readback.",
                 ],
                 anchor_id="dogfooding-start-refresh",
@@ -27119,8 +27120,8 @@ def _dogfooding_operator_workbench(root: Path) -> str:
             primary_href = f"/delegations/{quote(selected_delegation.id)}"
             primary_label = "Open delegation"
 
-    project_href = "/demo"
-    project_label = "Refresh demo fixture"
+    project_href = "/demo#demo-fixture-action"
+    project_label = "Create demo fixture"
     project_summary = "Create fixture-backed ClankerOS state before the route walk."
     if project is not None:
         project_href = f"/projects/{quote(project.name)}"
@@ -34688,9 +34689,9 @@ def _demo_page(root: Path) -> str:
     return "".join(
         [
             "<section><h1>Demo Scenario</h1>",
-            "<p>Use the fixture-backed demo to populate this local app without providers, pushes, PRs, deploys, or external projects.</p>",
+            "<p>Use the fixture-backed demo to populate this local app without providers, network actions, pushes, PRs, deploys, or external projects.</p>",
             "<pre>python3 -m agent_os.cli demo</pre>",
-            "<p>The demo alias creates or reuses a demo project under <code>.clanker/demo/local-app-project</code>, writes context-pack and implementation-handoff fixture artifacts, prepares coder prep and worktree-plan packets, and leaves a pending worktree approval request. The longer <code>demo-app-scenario</code> command remains available for compatibility.</p>",
+            "<p>The browser form below creates the same deterministic local fixture after explicit confirmation. The CLI alias remains available as a fallback.</p>",
             _non_claim_banner(),
             "</section>",
             _demo_operator_workbench(root),
@@ -34739,7 +34740,7 @@ def _demo_operator_workbench(root: Path) -> str:
         run_id=run_id,
         goal_id=goal_id,
     )
-    project_href = f"/projects/{quote(project.name)}" if project is not None else "#demo-command-bar"
+    project_href = f"/projects/{quote(project.name)}" if project is not None else "#demo-fixture-action"
     project_label = project.name if project is not None else "Create fixture"
     workflow_href = (
         f"/workflow?run_id={quote(run_id)}"
@@ -34835,7 +34836,7 @@ def _demo_operator_workbench(root: Path) -> str:
                     f"demo_workbench_now: <a href='{_e(now_href)}'>{_e(now_label)}</a>",
                     f"demo_workbench_project: <a href='{_e(project_href)}'>{_e(project_label)}</a>",
                     f"demo_workbench_workflow: <a href='{_e(workflow_href)}'>{_e(workflow_label)}</a>",
-                    "demo_workbench_safety: read-only launchpad; demo fixture creation still uses the explicit CLI command and gate forms still require confirmation",
+                    "demo_workbench_safety: read-only launchpad; demo fixture creation and gate forms require confirmation",
                 ]
             ),
             "</details>",
@@ -34852,7 +34853,7 @@ def _demo_primary_target(
     goal_id: str,
 ) -> tuple[str, str, str, str]:
     if fixture_status != "available":
-        return "#demo-command-bar", "Copy demo command", "Create fixture-backed demo state", "fixture_missing"
+        return "#demo-fixture-action", "Create demo fixture", "Create fixture-backed demo state", "fixture_missing"
     if next_step in {
         "approve_or_reject_commit_request",
         "approve_or_reject_publication_request",
@@ -34933,8 +34934,8 @@ def _demo_walkthrough_target(
     goal_id: str,
 ) -> tuple[str, str]:
     if key == "fixture":
-        return "/demo" if project is not None else "#demo-command-bar", (
-            "Refresh demo" if project is not None else "Copy demo command"
+        return "/demo" if project is not None else "#demo-fixture-action", (
+            "Refresh demo" if project is not None else "Create demo fixture"
         )
     if key == "goal":
         if goal_id:
@@ -35094,6 +35095,9 @@ def _demo_command_bar(root: Path) -> str:
 
     rows = [
         ("demo_command_fixture_status", fixture_status),
+        ("demo_command_browser_action", "demo-app-scenario"),
+        ("demo_command_browser_action_available", "true"),
+        ("demo_command_browser_action_confirmation_required", "true"),
         ("demo_command_primary_command", "python3 -m agent_os.cli demo"),
         ("demo_command_compat_command", "python3 -m agent_os.cli demo-app-scenario"),
         (
@@ -35136,11 +35140,12 @@ def _demo_command_bar(root: Path) -> str:
     lines = [
         f"demo_command_now: {_e(progress['next_step'])}",
         f"demo_command_fixture: {_e(fixture_status)}",
+        "demo_command_browser_action: /actions/demo-app-scenario",
         "demo_command_cli: python3 -m agent_os.cli demo",
-        "demo_command_safety: read-only on page load; confirmed local writes only inside gate forms",
+        "demo_command_safety: read-only on page load; confirmed local writes only inside the demo fixture form and gate forms",
     ]
     if fixture_status == "missing":
-        lines.append("demo_command_start: run the demo command, then refresh /demo")
+        lines.append("demo_command_start: confirm the browser demo action or run the CLI fallback")
     if run_id:
         lines.append(
             f"demo_command_continue: open /runs/{_e(run_id)} or scoped workflow"
@@ -35149,11 +35154,29 @@ def _demo_command_bar(root: Path) -> str:
         [
             "<section id='demo-command-bar' class='panel demo-command-bar' data-demo-command-bar='true'><h2>Demo Command Bar</h2>",
             "<p class='muted'>One scan-first place to start or continue the fixture-backed product walkthrough.</p>",
+            _demo_fixture_action_form(fixture_status),
             "<details class='demo-command-evidence' data-demo-command-evidence='true'><summary>Demo command evidence</summary>",
             _kv(rows),
             _ul(lines),
             "</details>",
             "</section>",
+        ]
+    )
+
+
+def _demo_fixture_action_form(fixture_status: str) -> str:
+    action_label = "Create demo fixture" if fixture_status == "missing" else "Refresh demo fixture"
+    return "".join(
+        [
+            "<div id='demo-fixture-action' class='demo-fixture-action' data-demo-fixture-action='true'>",
+            "<form method='post' action='/actions/demo-app-scenario' data-demo-fixture-action-form='true'>",
+            "<input type='hidden' name='requested_by' value='operator'>",
+            "<input type='hidden' name='return_to' value='/demo'>",
+            "<input type='hidden' name='resume_surface' value='/demo'>",
+            f"<button type='submit'>{_e(action_label)}</button>",
+            "</form>",
+            "<p class='muted'>Confirmed local action. Seeds deterministic fixture state under .clanker/demo and sets /demo as the next surface.</p>",
+            "</div>",
         ]
     )
 
@@ -35180,7 +35203,7 @@ def _demo_dogfooding_state(root: Path) -> str:
         return "".join(
             [
                 "<section><h2>Demo Dogfooding Links</h2>",
-                "<p class='muted'>Run <code>python3 -m agent_os.cli demo</code> to create fixture state and unlock direct demo links. Compatibility command: <code>demo-app-scenario</code>.</p>",
+                "<p class='muted'>Use the confirmed browser action above to create fixture state and unlock direct demo links. CLI fallback: <code>python3 -m agent_os.cli demo</code>.</p>",
                 "</section>",
                 _manual_browser_script(None),
             ]
@@ -35894,6 +35917,24 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             message = f"local_app_status: {status_path.relative_to(root)}"
             location = "/"
             result = {"status_path": status_path, "artifact_written": True}
+        elif action == "demo-app-scenario":
+            result = run_demo_app_scenario(root)
+            message = f"demo_app_scenario_ready: {result.goal_id}"
+            location = "/demo"
+            _write_workspace_state(
+                root,
+                {
+                    **_load_workspace_state(root),
+                    "open_project": result.project_id,
+                    "open_goal": result.goal_id,
+                    "last_viewed_artifact": _repo_relative_artifact_path(
+                        root,
+                        result.review_path,
+                    ),
+                    "resume_surface": "/demo",
+                    "updated_by": "demo-app-scenario",
+                },
+            )
         elif action == "register-project":
             project = register_project(
                 root,
@@ -36913,6 +36954,8 @@ def _action_error_retry_target(
         return "/#first-run-create-goal", "Create First Goal", "create_goal_action"
     if action == "save-workspace":
         return "/workspace#save-workspace", "Workspace save form", "save_workspace_action"
+    if action == "demo-app-scenario":
+        return "/demo#demo-fixture-action", "Demo fixture action", "demo_fixture_action"
     if action == "pin-memory":
         return "/memory", "Memory page", "pin_memory_action"
     return "/actions", "Action catalog", "fallback_action_catalog"
@@ -38425,7 +38468,12 @@ def _action_confirmation_context(action: str, form: dict[str, list[str]]) -> dic
     )
     executes_local_command = (
         "true"
-        if action in {"run-delegation", "run-coder-worktree", "commit-coder-worktree"}
+        if action in {
+            "demo-app-scenario",
+            "run-delegation",
+            "run-coder-worktree",
+            "commit-coder-worktree",
+        }
         or "execution" in category
         or "git" in category
         else "false"
@@ -42641,7 +42689,7 @@ def _html_page(
     .demo-workbench-action {{ background:var(--accent); color:#fff; }}
     .demo-workbench-link {{ background:var(--surface); color:var(--accent); }}
     .demo-walkthrough-map {{ border-left:4px solid var(--accent); }}
-    .demo-walkthrough-grid {{ display:grid; grid-template-columns:repeat(7, minmax(150px, 1fr)); gap:10px; margin:12px 0; }}
+    .demo-walkthrough-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap:10px; margin:12px 0; }}
     .demo-walkthrough-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
     .demo-walkthrough-card h3 {{ margin:4px 0 8px; }}
     .demo-walkthrough-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}

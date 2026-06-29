@@ -54,8 +54,8 @@ hidden autonomy.
 ```bash
 python3 -m agent_os.cli init
 python3 -m agent_os.cli app
-python3 -m agent_os.cli demo-app-scenario
 python3 -m agent_os.cli demo
+python3 -m agent_os.cli demo-app-scenario
 python3 -m agent_os.cli projects
 python3 -m agent_os.cli dashboard
 python3 -m agent_os.cli iterate
@@ -336,9 +336,11 @@ form, while a registered-project/no-goal workspace points at the same-page
 links remain in collapsed evidence as fallback routes. Both routes report that
 they write nothing on GET.
 
-For the first manual browser pass, run `python3 -m agent_os.cli demo`
-or `python3 -m agent_os.cli demo-app-scenario`, open `/goals`, then `/demo`,
-and follow the state-aware dogfooding links
+For the first manual browser pass, open `/demo#demo-fixture-action` and confirm
+the browser-local demo action. CLI fallback:
+`python3 -m agent_os.cli demo` or
+`python3 -m agent_os.cli demo-app-scenario`. After the action result offers
+`/demo` as the next surface, open `/goals` and follow the state-aware dogfooding links
 into the demo project, selected workflow, delegation, coder worktree run,
 review artifact, approvals, and inbox. The `/demo` page starts with a
 read-only `Demo Operator Workbench` for Now, Project, Workflow, and Proof,

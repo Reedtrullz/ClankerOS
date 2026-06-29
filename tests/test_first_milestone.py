@@ -8250,10 +8250,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "data-operator-focus-strip='true'"
     )
     assert "action_catalog_status</dt><dd>available" in actions.body
-    assert "action_catalog_total_actions</dt><dd>28" in actions.body
+    assert "action_catalog_total_actions</dt><dd>29" in actions.body
     assert "action_catalog_navigation_actions</dt><dd>8" in actions.body
-    assert "action_catalog_mutating_actions</dt><dd>27" in actions.body
-    assert "action_catalog_confirmation_required</dt><dd>27" in actions.body
+    assert "action_catalog_mutating_actions</dt><dd>28" in actions.body
+    assert "action_catalog_confirmation_required</dt><dd>28" in actions.body
     assert "action_catalog_local_execution_actions</dt><dd>2" in actions.body
     assert "action_catalog_local_git_actions</dt><dd>1" in actions.body
     assert "action_catalog_approval_actions</dt><dd>6" in actions.body
@@ -8337,6 +8337,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "id='action-catalog-workflow-actions'" in actions.body
     assert "id='action-catalog-execution-boundary'" in actions.body
     assert "refresh-dashboard-state" in actions.body
+    assert "demo-app-scenario" in actions.body
     assert "delegate" in actions.body
     assert "save-goal-note" in actions.body
     assert "context-pack" in actions.body
@@ -8577,7 +8578,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "dogfooding_workbench_selected_project</dt><dd>none" in dogfooding.body
     assert "dogfooding_workbench_next_action</dt><dd>Run demo fixture" in dogfooding.body
     assert "dogfooding_workbench_target_surface</dt><dd><a href='/demo'>/demo</a>" in dogfooding.body
-    assert "dogfooding_workbench_project_surface</dt><dd><a href='/demo'>Refresh demo fixture</a>" in dogfooding.body
+    assert "dogfooding_workbench_project_surface</dt><dd><a href='/demo#demo-fixture-action'>Create demo fixture</a>" in dogfooding.body
     assert "dogfooding_workbench_workflow_surface</dt><dd><a href='/workflow'>Open workflow</a>" in dogfooding.body
     assert "dogfooding_workbench_proof_surface</dt><dd><a href='/verification'>Check proof handoff</a>" in dogfooding.body
     assert "dogfooding_workbench_write_on_get</dt><dd>false" in dogfooding.body
@@ -9124,7 +9125,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "demo_workbench_status</dt><dd>fixture_missing" in demo.body
     assert "demo_workbench_fixture_status</dt><dd>missing" in demo.body
     assert "demo_workbench_next_action</dt><dd>run demo scenario and select a coder worktree run" in demo.body
-    assert "demo_workbench_next_surface</dt><dd><a href='#demo-command-bar'>Copy demo command</a>" in demo.body
+    assert "demo_workbench_next_surface</dt><dd><a href='#demo-fixture-action'>Create demo fixture</a>" in demo.body
     assert "demo_workbench_write_on_get</dt><dd>false" in demo.body
     assert "demo_workbench_external_effects_created</dt><dd>false" in demo.body
     assert "demo_workbench_safety: read-only launchpad" in demo.body
@@ -9138,8 +9139,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "<details class='demo-command-evidence' data-demo-command-evidence='true'><summary>Demo command evidence</summary>" in demo.body
     assert "Demo Command Bar" in demo.body
     assert "data-demo-command-bar='true'" in demo.body
+    assert "id='demo-fixture-action'" in demo.body
+    assert "data-demo-fixture-action='true'" in demo.body
+    assert "data-demo-fixture-action-form='true'" in demo.body
+    assert "action='/actions/demo-app-scenario'" in demo.body
+    assert "Create demo fixture" in demo.body
     assert "data-demo-command-evidence='true'" in demo.body
     assert "demo_command_fixture_status</dt><dd>missing" in demo.body
+    assert "demo_command_browser_action</dt><dd>demo-app-scenario" in demo.body
+    assert "demo_command_browser_action_available</dt><dd>true" in demo.body
+    assert "demo_command_browser_action_confirmation_required</dt><dd>true" in demo.body
     assert "demo_command_primary_command</dt><dd>python3 -m agent_os.cli demo" in demo.body
     assert (
         "demo_command_compat_command</dt><dd>python3 -m agent_os.cli demo-app-scenario"
@@ -9148,7 +9157,55 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "demo_command_next_surface</dt><dd><a href='/demo'>/demo</a>" in demo.body
     assert "demo_command_write_on_get</dt><dd>false" in demo.body
     assert "demo_command_external_effects_created</dt><dd>false" in demo.body
+    assert "demo_command_browser_action: /actions/demo-app-scenario" in demo.body
+    assert "demo_command_start: confirm the browser demo action or run the CLI fallback" in demo.body
     assert "demo-app-scenario" in demo.body
+
+    demo_preflight = render_local_app_route(
+        tmp_path,
+        "/actions/demo-app-scenario",
+        method="POST",
+        form={
+            "requested_by": ["operator"],
+            "return_to": ["/demo"],
+            "resume_surface": ["/demo"],
+        },
+    )
+    assert demo_preflight.status == 409
+    assert "Confirm demo-app-scenario" in demo_preflight.body
+    assert "action_preflight_action</dt><dd>demo-app-scenario" in demo_preflight.body
+    assert "action_preflight_return_surface</dt><dd><a href='/demo'>/demo</a>" in demo_preflight.body
+    assert "action_preflight_output_artifact</dt><dd>.clanker/demo plus fixture project/goal/delegation/run artifacts" in demo_preflight.body
+    assert "action_confirmation_review_executes_local_command_after_confirm</dt><dd>true" in demo_preflight.body
+    assert "action_preflight_network_actions_taken</dt><dd>0" in demo_preflight.body
+    assert "action_preflight_external_effects_created</dt><dd>false" in demo_preflight.body
+    assert "demo_workbench_fixture_status</dt><dd>missing" in render_local_app_route(tmp_path, "/demo").body
+
+    demo_action = render_local_app_route(
+        tmp_path,
+        "/actions/demo-app-scenario",
+        method="POST",
+        form={
+            "requested_by": ["operator"],
+            "return_to": ["/demo"],
+            "resume_surface": ["/demo"],
+            "confirm": ["yes"],
+        },
+    )
+    assert demo_action.status == 200
+    assert "Action Complete" in demo_action.body
+    assert "action_result_command_action</dt><dd>demo-app-scenario" in demo_action.body
+    assert "demo_app_scenario_ready:" in demo_action.body
+    assert "project_id</dt><dd>local-app-demo" in demo_action.body
+    assert "action_resume_receipt_open_project</dt><dd><a href='/projects/local-app-demo'>local-app-demo</a>" in demo_action.body
+    assert "action_resume_receipt_resume_surface</dt><dd><a href='/demo'>/demo</a>" in demo_action.body
+    assert "action_result_command_network_actions_taken</dt><dd>0" in demo_action.body
+    assert "action_result_command_external_effects_created</dt><dd>false" in demo_action.body
+
+    demo_seeded = render_local_app_route(tmp_path, "/demo")
+    assert "demo_workbench_fixture_status</dt><dd>available" in demo_seeded.body
+    assert "Refresh demo fixture" in demo_seeded.body
+    assert "data-demo-walkthrough-map='true'" in demo_seeded.body
 
 
 def test_local_app_runs_delegation_from_browser_action(

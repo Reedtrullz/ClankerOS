@@ -1,5 +1,43 @@
 # Status
 
+## 2026-06-30 Browser Demo Fixture Action UX
+
+- Made demo fixture setup first-class in the browser: `/demo#demo-fixture-action`
+  posts to the confirmed `demo-app-scenario` action, seeds the deterministic
+  `.clanker/demo` fixture, sets `/demo` as the next/resume surface, and
+  keeps CLI commands as fallbacks.
+- Added the action to the safe action catalog and confirmation context so the
+  review screen explicitly marks it as a local command with no provider call,
+  no push, no PR, no deploy, and no external mutation.
+- Updated `/demo` and `/dogfooding` copy and targets so missing fixture state
+  points at the exact browser form instead of telling the operator to leave the
+  product for a CLI command.
+- Verification: `df -h /System/Volumes/Data` showed 81Gi free before the
+  local loop; `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed;
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health` passed with `1 passed,
+  515 deselected in 29.04s`; `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state` passed with `1 passed, 515
+  deselected in 33.48s`; `python3 -m agent_os.cli app-smoke-test` passed with
+  all route markers matched and provider/network/external-mutation counters at
+  0; `python3 -m agent_os.cli app-demo-smoke-test` passed across the
+  fixture-backed route set with the same zero-effect counters.
+- Browser verification: in-app browser against throwaway scratch app
+  `http://127.0.0.1:62121/demo` confirmed the missing-fixture page shows the
+  `Create demo fixture` form, no desktop overflow at `1280px`, the
+  confirmation review records `demo-app-scenario`,
+  `executes_local_command=true`, `write_before_confirm=false`, and network
+  actions `0`, the confirmed result records `Action Complete`,
+  `project_id=local-app-demo`, `next_page=/demo`, `resume_surface=/demo`,
+  network actions `0`, and external effects `false`, and the seeded `/demo`
+  page shows `Refresh demo fixture`, `fixture_status=available`,
+  `walkthrough_stage=run`, no desktop overflow at `1280px`, no mobile overflow
+  at `390x844`, and zero browser console warnings/errors.
+- Non-claims: this does not run providers, perform non-loopback network work,
+  push, create PRs, deploy, or mutate external projects.
+
 ## 2026-06-30 Guide Operator Recipes UX
 
 - Added a read-only `Operator Recipes` panel to `/guide` between the Guide

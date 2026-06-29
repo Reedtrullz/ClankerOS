@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/demo#demo-fixture-action` now lets the operator create or refresh the
+  deterministic local demo fixture from the browser through the existing
+  confirmation flow. It records the action in the safe action catalog, sets
+  `/demo` as the next surface, points dogfooding at the exact fixture form,
+  keeps CLI commands as fallbacks, and preserves no provider call, no
+  non-loopback network action, no push, no PR, no deploy, and no external
+  mutation.
 - The local app now has a first-class `/guide` route in the main navigation.
   `Suggested Use Guide` maps the daily browser loop
   `Today -> Goal -> Action -> Proof -> Finish -> Resume`, points empty
