@@ -11906,6 +11906,39 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "timeline_digest_latest:" in goal.body
     assert "timeline_digest_next: Create commit request" in goal.body
     assert "timeline_digest_safety: read-only local chronology digest" in goal.body
+    assert "Timeline Lane Filter" in goal.body
+    assert "data-goal-timeline-filter='true'" in goal.body
+    assert "data-goal-timeline-filter-buttons='true'" in goal.body
+    assert "data-goal-timeline-filter-kind='all'" in goal.body
+    assert "data-goal-timeline-filter-kind='artifact'" in goal.body
+    assert "data-goal-timeline-filter-kind='delegation'" in goal.body
+    assert "data-goal-timeline-filter-kind='run'" in goal.body
+    assert "data-goal-timeline-filter-kind='task'" in goal.body
+    assert "data-goal-timeline-filter-active='true'" in goal.body
+    assert "data-goal-timeline-filter-status='true'" in goal.body
+    assert "Goal timeline filter evidence" in goal.body
+    assert "data-goal-timeline-filter-evidence='true'" in goal.body
+    assert "timeline_filter_status</dt><dd>available" in goal.body
+    assert "timeline_filter_scope</dt><dd>browser_local_rendered_events" in goal.body
+    assert "timeline_filter_total_items</dt><dd>" in goal.body
+    assert "timeline_filter_artifact_events</dt><dd>" in goal.body
+    assert "timeline_filter_delegation_events</dt><dd>" in goal.body
+    assert "timeline_filter_run_events</dt><dd>" in goal.body
+    assert "timeline_filter_task_events</dt><dd>" in goal.body
+    assert "timeline_filter_source</dt><dd>data-timeline-kind" in goal.body
+    assert "timeline_filter_persistence</dt><dd>none" in goal.body
+    assert "timeline_filter_write_on_get</dt><dd>false" in goal.body
+    assert "timeline_filter_provider_calls_taken</dt><dd>0" in goal.body
+    assert "timeline_filter_network_actions_taken</dt><dd>0" in goal.body
+    assert "timeline_filter_external_effects_created</dt><dd>false" in goal.body
+    assert "timeline_filter_action: click a lane button" in goal.body
+    assert "timeline_filter_reset: click All" in goal.body
+    assert goal.body.index("data-goal-timeline-digest='true'") < goal.body.index(
+        "data-goal-timeline-filter='true'"
+    )
+    assert goal.body.index("data-goal-timeline-filter='true'") < goal.body.index(
+        "data-goal-timeline-metadata='true'"
+    )
     assert "timeline_links_enabled</dt><dd>true" in goal.body
     assert "timeline_artifact_records</dt><dd>" in goal.body
     assert "class='timeline-link'" in goal.body

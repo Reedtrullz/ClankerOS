@@ -512,7 +512,10 @@ Families, Flow, and Safety cards before collapsed timeline command evidence
 and metadata. A read-only `Goal Timeline Digest` follows with Span, Latest,
 Artifact, Next, and Safety cards so the chronological list can be scanned from
 the current useful event, newest artifact, and next action before reading every
-row. The Activity Log now starts
+row. A browser-local `Timeline Lane Filter` follows the digest so the operator
+can switch the rendered chronology between all events, artifacts, approvals,
+delegations, runs, tasks, notes, and generic events without changing Goal
+state or leaving the page. The Activity Log now starts
 with a read-only `Goal Activity Command Bar` that exposes visible Now, Latest,
 Signals, Window, and Safety cards before collapsed activity evidence and
 metadata, then the recent human-readable event list. Progress starts with a read-only Goal Progress

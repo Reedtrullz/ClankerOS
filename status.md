@@ -1,5 +1,29 @@
 # Status
 
+## 2026-06-29 Goal Timeline Lane Filter UX
+
+- Added a browser-local `Timeline Lane Filter` to the Goal timeline after the
+  `Goal Timeline Digest` and before timeline metadata/the full chronological
+  list.
+- The filter reuses existing rendered `data-timeline-kind` markers so the
+  operator can switch between all events, artifacts, approvals, delegations,
+  runs, tasks, notes, and generic events without leaving the Goal page.
+- The helper only hides/shows already-rendered rows and updates a visible
+  count. It has no persistence, no provider call, no network action, no local
+  write, no retry/replan action, no GitHub action, and no external mutation.
+- Updated README, local app docs, operating summary, docs status, and focused
+  Goal timeline assertions.
+- Verification: `python3 -m py_compile agent_os/local_app.py`; focused pytest
+  `python3 -m pytest
+  tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state
+  -q --tb=short` passed with `1 passed in 39.25s`; `python3 -m py_compile
+  agent_os/local_app.py tests/test_first_milestone.py`; `python3 -m
+  compileall -q agent_os tests`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; `git diff --check`; Playwright browser
+  pass against `http://127.0.0.1:8793/goals/goal_35dbc8f1ef9c` showed
+  Artifact filtering to `19 of 29` rendered events with `10` hidden rows, and
+  All restoring `29 of 29` rendered events.
+
 ## 2026-06-29 CI JSON Assistant UX
 
 - Added a browser-local `CI JSON Assistant` to `/ci-evidence` between the

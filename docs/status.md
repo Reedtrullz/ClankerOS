@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal Timeline now includes a browser-local `Timeline Lane Filter` after the
+  digest and before metadata/the full list. It filters already-rendered
+  `data-timeline-kind` rows by all, artifact, approval, delegation, run, task,
+  note, or generic event, updates a visible count, and keeps persistence,
+  provider calls, network actions, writes, and external mutation out of the
+  helper.
 - `/ci-evidence` now includes a browser-local `CI JSON Assistant` between the
   proof workbench and evidence summary. It copies the current `gh run view`
   JSON command, optionally pastes clipboard JSON into the confirmed recorder

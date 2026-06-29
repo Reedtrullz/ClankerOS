@@ -442,8 +442,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   event-family, run/task/note, and zero-effect evidence. A read-only
   `Goal Timeline Digest` follows with Span, Latest, Artifact, Next, and Safety
   cards, plus collapsed evidence for item counts, current gate, latest
-  artifact, next surface, and zero-effect counters before timeline metadata
-  and the full chronological list. The Activity Log likewise opens with visible Now, Latest, Signals,
+  artifact, next surface, and zero-effect counters. A browser-local
+  `Timeline Lane Filter` follows the digest, using existing
+  `data-timeline-kind` markers to hide or show rendered artifact, approval,
+  delegation, run, task, note, and generic event rows without persistence,
+  network access, or local writes before timeline metadata and the full
+  chronological list. The Activity Log likewise opens with visible Now, Latest, Signals,
   Window, and Safety cards before collapsed recent-event evidence and
   metadata. Goal pages include a browser-native progress
   bar and a large Current Phase banner that explains the phase reason,

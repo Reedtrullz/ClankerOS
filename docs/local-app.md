@@ -234,7 +234,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   clickable local message, and target badge so artifacts, delegations, runs,
   approvals, and goal events are easier to scan without reading raw logs. A
   read-only `Goal Timeline Digest` follows the command bar with Span, Latest,
-  Artifact, Next, and Safety cards before the full chronological list. It uses local polling
+  Artifact, Next, and Safety cards, then a browser-local `Timeline Lane Filter`
+  for switching the rendered chronology between all events, artifacts,
+  approvals, delegations, runs, tasks, notes, and generic events before the
+  full chronological list. It uses local polling
   refresh, pauses refresh while the
   operator is editing a form or the tab is hidden, and does not contact GitHub
   or providers. The Current Phase banner is the primary operator state readback:
