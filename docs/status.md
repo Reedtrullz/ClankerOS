@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/workflow` now includes a read-only `Workflow Scope Picker` immediately
+  after the `Workflow Operator Workbench`, with direct cards for the primary
+  pickup, recent delegations, recent coder runs, parent Goal, and safety
+  evidence before the journey rail.
 - Confirmed local action result pages now include an `Action Resume Receipt`
   immediately after `Action Complete`, so operators can see the saved
   `.clanker/app/workspace.json` resume route, project/Goal, artifact, last
@@ -306,7 +310,9 @@ Latest status focus:
 - `/workflow` is now action-first: it opens with the `Workflow Operator
   Workbench` before shared route/focus diagnostics or command readback, shows
   visible Now, State, Queue, and Resume cards, then follows with a visible
-  read-only `Workflow Journey` rail for Select, Goal + Scout, Context,
+  read-only `Workflow Scope Picker` for choosing the primary delegation/run
+  scope, recent delegations, recent coder runs, parent Goal, and safety
+  evidence before the `Workflow Journey` rail for Select, Goal + Scout, Context,
   Handoff, Coder Prep, Approval, Execution, Commit, and Publish. It then adds
   `Workflow Live State` with five-second local page reload polling, pause rules
   for focused form fields and hidden tabs, and a manual Refresh button. It now

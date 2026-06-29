@@ -816,6 +816,10 @@ Core layers for the bootstrap:
   `Workflow Operator Workbench` before shared route/focus diagnostics or
   command readback, with cards for the current workflow action, selected
   state, queue attention, and `/resume`. A visible read-only
+  `Workflow Scope Picker` follows with the primary pickup, recent delegation
+  and coder-run choices, parent Goal link, and zero-effect safety evidence so
+  direct `/workflow` visits can select a concrete scope before the stage map.
+  A visible read-only
   `Workflow Journey` follows with nine stage cards that mark the current stage
   and route each stage to the next safe local surface. A visible
   `Workflow Live State` panel follows with local page reload polling every five

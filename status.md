@@ -1,5 +1,32 @@
 # Status
 
+## 2026-06-29 Workflow Scope Picker UX
+
+- Added a read-only `Workflow Scope Picker` immediately after the
+  `Workflow Operator Workbench` on `/workflow`.
+- The picker gives direct cards for the primary pickup, recent delegations,
+  recent coder runs, parent Goal, and safety evidence before the detailed
+  workflow journey rail, so a direct `/workflow` visit can choose a concrete
+  delegation/run scope without detouring through `/delegation-runs`.
+- Scoped delegation and coder-run workflow pages now keep the selected URL
+  surface as the primary pickup while still showing the related run,
+  delegation, Goal, current stage, and zero-effect evidence.
+- Normalized first-run fallback targets so completed first-run states reuse
+  plain Goal hrefs instead of nested anchor strings in scope evidence.
+- Updated README, local app docs, operating summary, and docs status so the
+  workflow route docs match the new operator order.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 62.47s`; `python3 -m compileall -q agent_os
+  tests`; bounded temp-root `app-smoke-test`; bounded temp-root
+  `app-demo-smoke-test`; `git diff --check`.
+- Non-claims: no new action authority, no write on GET, no provider calls, no
+  non-loopback network actions, no approval, no execution, no push, no PR, no
+  deploy, and no external mutation from the app.
+
 ## 2026-06-29 Today Activity Digest UX
 
 - Added a read-only `Today Activity Digest` immediately after `Today Session

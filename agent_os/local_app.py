@@ -2661,6 +2661,10 @@ def _first_run_same_page_target(first_run: dict[str, Any]) -> tuple[str, str]:
     surface = str(first_run.get("next_surface") or "/goals")
     if current_step in {"create_first_delegation", "generate_context_pack", "run_first_delegation"}:
         return "#first-run-command-action", "Run First-Run Action"
+    anchor = re.search(r"href=['\"]([^'\"]+)['\"][^>]*>(.*?)</a>", surface)
+    if anchor:
+        label = re.sub(r"<[^>]+>", "", anchor.group(2))
+        return html.unescape(anchor.group(1)), html.unescape(label)
     return surface, surface
 
 
@@ -18284,6 +18288,7 @@ def _workflow(
                 delegation_id=delegation_id,
                 run_id=run_id,
             ),
+            _workflow_scope_picker(root, delegation_id=delegation_id, run_id=run_id),
             _workflow_journey(root, delegation_id=delegation_id, run_id=run_id),
             _workflow_live_state(root, delegation_id=delegation_id, run_id=run_id),
             _workflow_finish_today(root, delegation_id=delegation_id, run_id=run_id),
@@ -18572,6 +18577,224 @@ def _workflow_operator_workbench(
                     f"workflow_workbench_resume: <a href='{_e(resume_href)}'>{_e(resume_label)}</a>",
                     f"workflow_workbench_finish: <a data-open-details='true' href='{_e(finish_href)}'>{_e(finish_label)}</a>",
                     "workflow_workbench_safety: read-only workflow routing; confirmed forms remain on owning surfaces",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _workflow_scope_picker(
+    root: Path,
+    *,
+    delegation_id: str | None = None,
+    run_id: str | None = None,
+) -> str:
+    context = _workflow_operator_context(root, delegation_id=delegation_id, run_id=run_id)
+    storage = _storage(root)
+    delegations = storage.list_recent_subagent_delegations(limit=8)
+    runs = list_coder_worktree_runs(root, limit=8)
+    selected_scope = str(context["scope"])
+    selected_delegation = str(context["delegation_id"])
+    selected_run = str(context["run_id"])
+
+    candidate_rows: list[dict[str, str]] = []
+    seen: set[str] = set()
+
+    def add_candidate(
+        *,
+        kind: str,
+        item_id: str,
+        href: str,
+        label: str,
+        status: str,
+        goal_id: str,
+        project_id: str,
+        stage: str,
+    ) -> None:
+        key = f"{kind}:{item_id}"
+        if key in seen:
+            return
+        seen.add(key)
+        candidate_rows.append(
+            {
+                "kind": kind,
+                "id": item_id,
+                "href": href,
+                "label": label,
+                "status": status,
+                "goal_id": goal_id,
+                "project_id": project_id,
+                "stage": stage,
+            }
+        )
+
+    for run in runs:
+        stage = "run"
+        try:
+            run_context = _workflow_operator_context(root, run_id=run.id)
+            stage = str(run_context.get("current_stage") or "run")
+        except Exception:
+            stage = "run"
+        add_candidate(
+            kind="run",
+            item_id=run.id,
+            href=f"/workflow?run_id={quote(run.id)}",
+            label=f"Run {run.id}",
+            status=str(run.status),
+            goal_id=str(_goal_id_for_coder_run(storage, run.id) or ""),
+            project_id=str(run.project_id),
+            stage=stage,
+        )
+
+    for delegation in delegations:
+        stage = "delegation"
+        try:
+            delegation_context = _workflow_operator_context(root, delegation_id=delegation.id)
+            stage = str(delegation_context.get("current_stage") or "delegation")
+        except Exception:
+            stage = "delegation"
+        add_candidate(
+            kind="delegation",
+            item_id=delegation.id,
+            href=f"/workflow?delegation_id={quote(delegation.id)}",
+            label=str(delegation.title or delegation.id),
+            status=str(delegation.status),
+            goal_id=str(delegation.parent_goal_id),
+            project_id=str(_task_project(storage, delegation.parent_task_id)),
+            stage=stage,
+        )
+
+    if run_id and selected_run != "none":
+        primary = next(
+            (
+                item
+                for item in candidate_rows
+                if item["kind"] == "run" and item["id"] == selected_run
+            ),
+            None,
+        )
+    elif selected_delegation != "none":
+        primary = next(
+            (
+                item
+                for item in candidate_rows
+                if item["kind"] == "delegation" and item["id"] == selected_delegation
+            ),
+            None,
+        )
+    else:
+        primary = candidate_rows[0] if candidate_rows else None
+
+    first_run = _first_run_progress(root, storage)
+    first_run_target = _first_run_focus_target(first_run, "/workflow")
+    first_run_href = str(first_run_target["target_href"])
+    first_run_label = str(first_run_target["target_label"])
+    if primary is None:
+        primary_href = first_run_href
+        primary_label = first_run_label
+        primary_kind = "first_run"
+        primary_status = str(first_run["current_step"])
+        primary_stage = "select_scope"
+        status = "first_run" if not first_run["complete"] else "empty"
+    else:
+        primary_href = primary["href"]
+        primary_label = primary["label"]
+        primary_kind = primary["kind"]
+        primary_status = primary["status"]
+        primary_stage = primary["stage"]
+        status = "selected" if selected_scope in {"delegation", "run"} else "available"
+
+    first_delegation = next(
+        (item for item in candidate_rows if item["kind"] == "delegation"),
+        None,
+    )
+    first_run_candidate = next((item for item in candidate_rows if item["kind"] == "run"), None)
+    goal_id = str(context["goal_id"])
+    goal_label, _goal_label_source = _goal_display_label(root, goal_id)
+    goal_href = f"/goals/{quote(goal_id)}" if goal_id != "none" else "/goals"
+    goal_label = goal_label if goal_id != "none" else "Goals"
+    delegation_href = first_delegation["href"] if first_delegation else "/delegation-runs"
+    delegation_label = first_delegation["label"] if first_delegation else "Delegation runs"
+    run_href = first_run_candidate["href"] if first_run_candidate else "/delegation-runs"
+    run_label = first_run_candidate["label"] if first_run_candidate else "Coder runs"
+
+    candidate_lines = [
+        "workflow_scope_candidate: "
+        f"type={_e(item['kind'])} id={_e(item['id'])} status={_e(item['status'])} "
+        f"stage={_e(item['stage'])} project={_e(item['project_id'] or 'none')} "
+        f"goal={_e(item['goal_id'] or 'none')} "
+        f"surface=<a href='{_e(item['href'])}'>{_e(item['label'])}</a>"
+        for item in candidate_rows
+    ]
+    if not candidate_lines:
+        candidate_lines = [
+            f"workflow_scope_first_run: <a href='{_e(first_run_href)}'>{_e(first_run_label)}</a>",
+        ]
+
+    return "".join(
+        [
+            "<section id='workflow-scope-picker' class='panel workflow-scope-picker' data-workflow-scope-picker='true'><h2>Workflow Scope Picker</h2>",
+            "<p class='muted'>Pick the delegation or coder run that owns the workflow before reading the full journey.</p>",
+            "<div class='workflow-scope-grid' data-workflow-scope-actions='true'>",
+            "<article class='workflow-scope-card workflow-scope-primary' data-workflow-scope-primary='true'><h3>Pick Up</h3>",
+            f"<p>{_e(primary_kind)} / {_e(primary_stage)} / {_e(primary_status)}</p><a class='workflow-scope-action' href='{_e(primary_href)}'>{_e(primary_label)}</a></article>",
+            "<article class='workflow-scope-card' data-workflow-scope-delegations='true'><h3>Delegations</h3>",
+            f"<p>{len(delegations)} recent delegation{'s' if len(delegations) != 1 else ''}</p><a class='workflow-scope-link' href='{_e(delegation_href)}'>{_e(delegation_label)}</a></article>",
+            "<article class='workflow-scope-card' data-workflow-scope-runs='true'><h3>Runs</h3>",
+            f"<p>{len(runs)} recent coder run{'s' if len(runs) != 1 else ''}</p><a class='workflow-scope-link' href='{_e(run_href)}'>{_e(run_label)}</a></article>",
+            "<article class='workflow-scope-card' data-workflow-scope-goal='true'><h3>Goal</h3>",
+            f"<p>{_e(goal_id if goal_id != 'none' else 'No scoped Goal selected')}</p><a class='workflow-scope-link' href='{_e(goal_href)}'>{_e(goal_label)}</a></article>",
+            "<article class='workflow-scope-card' data-workflow-scope-safety='true'><h3>Safety</h3>",
+            "<p>Read-only scope selection; actions stay on the selected workflow, Goal, run, or approval surface.</p><a class='workflow-scope-link' href='#workflow-scope-evidence'>Evidence</a></article>",
+            "</div>",
+            "<details id='workflow-scope-evidence' class='workflow-scope-evidence' data-workflow-scope-evidence='true'><summary>Workflow scope picker evidence</summary>",
+            _kv(
+                [
+                    ("workflow_scope_picker_status", status),
+                    ("workflow_scope_picker_scope", selected_scope),
+                    ("workflow_scope_picker_selected_delegation", selected_delegation),
+                    ("workflow_scope_picker_selected_run", selected_run),
+                    ("workflow_scope_picker_primary_kind", primary_kind),
+                    (
+                        "workflow_scope_picker_primary_surface",
+                        SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+                    ),
+                    ("workflow_scope_picker_primary_stage", primary_stage),
+                    ("workflow_scope_picker_primary_status", primary_status),
+                    ("workflow_scope_picker_delegation_count", str(len(delegations))),
+                    ("workflow_scope_picker_run_count", str(len(runs))),
+                    ("workflow_scope_picker_candidate_count", str(len(candidate_rows))),
+                    (
+                        "workflow_scope_picker_delegation_surface",
+                        SafeHtml(f"<a href='{_e(delegation_href)}'>{_e(delegation_label)}</a>"),
+                    ),
+                    (
+                        "workflow_scope_picker_run_surface",
+                        SafeHtml(f"<a href='{_e(run_href)}'>{_e(run_label)}</a>"),
+                    ),
+                    (
+                        "workflow_scope_picker_goal_surface",
+                        SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_label)}</a>"),
+                    ),
+                    ("workflow_scope_picker_first_run_step", str(first_run["current_step"])),
+                    (
+                        "workflow_scope_picker_first_run_surface",
+                        SafeHtml(f"<a href='{_e(first_run_href)}'>{_e(first_run_label)}</a>"),
+                    ),
+                    ("workflow_scope_picker_source", "recent_delegations_and_coder_runs"),
+                    ("workflow_scope_picker_write_on_get", "false"),
+                    ("workflow_scope_picker_provider_calls_taken", "0"),
+                    ("workflow_scope_picker_network_actions_taken", "0"),
+                    ("workflow_scope_picker_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"workflow_scope_pick: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    *candidate_lines,
+                    "workflow_scope_safety: read-only local scope picker",
                 ]
             ),
             "</details>",
@@ -35381,6 +35604,18 @@ def _html_page(
     .workflow-workbench-action, .workflow-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .workflow-workbench-action {{ background:var(--accent); color:#fff; }}
     .workflow-workbench-link {{ background:var(--surface); color:var(--accent); }}
+    .workflow-scope-picker {{ border-left:4px solid var(--accent); }}
+    .workflow-scope-picker dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .workflow-scope-picker ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .workflow-scope-picker li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .workflow-scope-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .workflow-scope-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .workflow-scope-card h3 {{ margin-top:0; }}
+    .workflow-scope-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .workflow-scope-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .workflow-scope-action, .workflow-scope-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .workflow-scope-action {{ background:var(--accent); color:#fff; }}
+    .workflow-scope-link {{ background:var(--surface); color:var(--accent); }}
     .workflow-journey {{ border-left:4px solid var(--accent); }}
     .workflow-journey-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
     .workflow-journey-card {{ min-width:0; display:flex; flex-direction:column; gap:8px; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
@@ -35410,9 +35645,9 @@ def _html_page(
     .workflow-finish-action, .workflow-finish-link {{ display:inline-flex; align-items:center; min-height:32px; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
     .workflow-finish-action {{ background:var(--accent); color:#fff; }}
     .workflow-finish-link {{ background:var(--surface); color:var(--accent); }}
-    .workflow-workbench-evidence, .workflow-journey-evidence, .workflow-live-evidence, .workflow-finish-evidence, .workflow-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .workflow-workbench-evidence summary, .workflow-journey-evidence summary, .workflow-live-evidence summary, .workflow-finish-evidence summary, .workflow-command-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .workflow-workbench-evidence:not([open]) > :not(summary), .workflow-journey-evidence:not([open]) > :not(summary), .workflow-live-evidence:not([open]) > :not(summary), .workflow-finish-evidence:not([open]) > :not(summary), .workflow-command-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .workflow-workbench-evidence, .workflow-scope-evidence, .workflow-journey-evidence, .workflow-live-evidence, .workflow-finish-evidence, .workflow-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .workflow-workbench-evidence summary, .workflow-scope-evidence summary, .workflow-journey-evidence summary, .workflow-live-evidence summary, .workflow-finish-evidence summary, .workflow-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .workflow-workbench-evidence:not([open]) > :not(summary), .workflow-scope-evidence:not([open]) > :not(summary), .workflow-journey-evidence:not([open]) > :not(summary), .workflow-live-evidence:not([open]) > :not(summary), .workflow-finish-evidence:not([open]) > :not(summary), .workflow-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .inbox-command-bar {{ border-left:4px solid var(--accent); }}
     .inbox-command-evidence, .inbox-workbench-evidence {{ margin-top:10px; }}
     .inbox-finish-details {{ margin-top:12px; }}
@@ -35533,6 +35768,7 @@ def _html_page(
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
     @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ .workflow-scope-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #goal-attention-digest {{ scroll-margin-top:260px; }} .goal-attention-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-attention-grid {{ grid-template-columns:1fr; }} }}

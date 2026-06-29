@@ -5705,6 +5705,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workflow-operator-workbench='true'" in workflow.body
     assert "data-workflow-workbench-primary='true'" in workflow.body
     assert "data-workflow-workbench-evidence='true'" in workflow.body
+    assert "Workflow Scope Picker" in workflow.body
+    assert "data-workflow-scope-picker='true'" in workflow.body
+    assert "data-workflow-scope-actions='true'" in workflow.body
+    assert "data-workflow-scope-primary='true'" in workflow.body
+    assert "data-workflow-scope-delegations='true'" in workflow.body
+    assert "data-workflow-scope-runs='true'" in workflow.body
+    assert "data-workflow-scope-goal='true'" in workflow.body
+    assert "data-workflow-scope-safety='true'" in workflow.body
+    assert "data-workflow-scope-evidence='true'" in workflow.body
     assert "Workflow Journey" in workflow.body
     assert "data-workflow-journey='true'" in workflow.body
     assert "data-workflow-journey-actions='true'" in workflow.body
@@ -5721,7 +5730,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workflow-finish-evidence='true'" in workflow.body
     assert "data-workflow-save-details='true'" in workflow.body
     assert "data-workflow-command-evidence='true'" in workflow.body
-    assert workflow.body.index("data-workflow-operator-workbench") < workflow.body.index("data-workflow-journey")
+    assert workflow.body.index("data-workflow-operator-workbench") < workflow.body.index("data-workflow-scope-picker")
+    assert workflow.body.index("data-workflow-scope-picker") < workflow.body.index("data-workflow-journey")
     assert workflow.body.index("data-workflow-journey") < workflow.body.index("data-workflow-live-state")
     assert workflow.body.index("data-workflow-live-state") < workflow.body.index("data-workflow-finish-today")
     assert workflow.body.index("data-workflow-finish-today") < workflow.body.index("data-workflow-command-bar")
@@ -5741,6 +5751,30 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workflow_workbench_provider_calls_taken</dt><dd>0" in workflow.body
     assert "workflow_workbench_network_actions_taken</dt><dd>0" in workflow.body
     assert "workflow_workbench_external_effects_created</dt><dd>false" in workflow.body
+    assert "workflow_scope_picker_status</dt><dd>first_run" in workflow.body
+    assert "workflow_scope_picker_scope</dt><dd>all" in workflow.body
+    assert "workflow_scope_picker_selected_delegation</dt><dd>none" in workflow.body
+    assert "workflow_scope_picker_selected_run</dt><dd>none" in workflow.body
+    assert "workflow_scope_picker_primary_kind</dt><dd>first_run" in workflow.body
+    assert "workflow_scope_picker_primary_surface</dt><dd><a href='/#first-run-create-project'>Create Project</a>" in workflow.body
+    assert "workflow_scope_picker_primary_stage</dt><dd>select_scope" in workflow.body
+    assert "workflow_scope_picker_primary_status</dt><dd>create_project" in workflow.body
+    assert "workflow_scope_picker_delegation_count</dt><dd>0" in workflow.body
+    assert "workflow_scope_picker_run_count</dt><dd>0" in workflow.body
+    assert "workflow_scope_picker_candidate_count</dt><dd>0" in workflow.body
+    assert "workflow_scope_picker_delegation_surface</dt><dd><a href='/delegation-runs'>Delegation runs</a>" in workflow.body
+    assert "workflow_scope_picker_run_surface</dt><dd><a href='/delegation-runs'>Coder runs</a>" in workflow.body
+    assert "workflow_scope_picker_goal_surface</dt><dd><a href='/goals'>Goals</a>" in workflow.body
+    assert "workflow_scope_picker_first_run_step</dt><dd>create_project" in workflow.body
+    assert "workflow_scope_picker_first_run_surface</dt><dd><a href='/#first-run-create-project'>Create Project</a>" in workflow.body
+    assert "workflow_scope_picker_source</dt><dd>recent_delegations_and_coder_runs" in workflow.body
+    assert "workflow_scope_picker_write_on_get</dt><dd>false" in workflow.body
+    assert "workflow_scope_picker_provider_calls_taken</dt><dd>0" in workflow.body
+    assert "workflow_scope_picker_network_actions_taken</dt><dd>0" in workflow.body
+    assert "workflow_scope_picker_external_effects_created</dt><dd>false" in workflow.body
+    assert "workflow_scope_pick: <a href='/#first-run-create-project'>Create Project</a>" in workflow.body
+    assert "workflow_scope_first_run: <a href='/#first-run-create-project'>Create Project</a>" in workflow.body
+    assert "workflow_scope_safety: read-only local scope picker" in workflow.body
     assert "workflow_journey_status</dt><dd>no_selection" in workflow.body
     assert "workflow_journey_scope</dt><dd>all" in workflow.body
     assert "workflow_journey_current_stage_key</dt><dd>select_scope" in workflow.body
@@ -13469,6 +13503,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-workflow-operator-workbench='true'" in workflow_for_delegation.body
     assert "data-workflow-workbench-primary='true'" in workflow_for_delegation.body
     assert "data-workflow-workbench-evidence='true'" in workflow_for_delegation.body
+    assert "Workflow Scope Picker" in workflow_for_delegation.body
+    assert "data-workflow-scope-picker='true'" in workflow_for_delegation.body
+    assert "data-workflow-scope-actions='true'" in workflow_for_delegation.body
+    assert "data-workflow-scope-primary='true'" in workflow_for_delegation.body
+    assert "data-workflow-scope-delegations='true'" in workflow_for_delegation.body
+    assert "data-workflow-scope-runs='true'" in workflow_for_delegation.body
+    assert "data-workflow-scope-goal='true'" in workflow_for_delegation.body
+    assert "data-workflow-scope-safety='true'" in workflow_for_delegation.body
+    assert "data-workflow-scope-evidence='true'" in workflow_for_delegation.body
     assert "Workflow Journey" in workflow_for_delegation.body
     assert "data-workflow-journey='true'" in workflow_for_delegation.body
     assert "data-workflow-journey-actions='true'" in workflow_for_delegation.body
@@ -13485,7 +13528,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-workflow-finish-evidence='true'" in workflow_for_delegation.body
     assert "data-workflow-save-details='true'" in workflow_for_delegation.body
     assert "data-workflow-command-evidence='true'" in workflow_for_delegation.body
-    assert workflow_for_delegation.body.index("data-workflow-operator-workbench") < workflow_for_delegation.body.index("data-workflow-journey")
+    assert workflow_for_delegation.body.index("data-workflow-operator-workbench") < workflow_for_delegation.body.index("data-workflow-scope-picker")
+    assert workflow_for_delegation.body.index("data-workflow-scope-picker") < workflow_for_delegation.body.index("data-workflow-journey")
     assert workflow_for_delegation.body.index("data-workflow-journey") < workflow_for_delegation.body.index("data-workflow-live-state")
     assert workflow_for_delegation.body.index("data-workflow-live-state") < workflow_for_delegation.body.index("data-workflow-finish-today")
     assert workflow_for_delegation.body.index("data-workflow-finish-today") < workflow_for_delegation.body.index("data-workflow-command-bar")
@@ -13511,6 +13555,30 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_workbench_provider_calls_taken</dt><dd>0" in workflow_for_delegation.body
     assert "workflow_workbench_network_actions_taken</dt><dd>0" in workflow_for_delegation.body
     assert "workflow_workbench_external_effects_created</dt><dd>false" in workflow_for_delegation.body
+    assert "workflow_scope_picker_status</dt><dd>selected" in workflow_for_delegation.body
+    assert "workflow_scope_picker_scope</dt><dd>delegation" in workflow_for_delegation.body
+    assert f"workflow_scope_picker_selected_delegation</dt><dd>{result.delegation_id}" in workflow_for_delegation.body
+    assert f"workflow_scope_picker_selected_run</dt><dd>{result.coder_worktree_run_id}" in workflow_for_delegation.body
+    assert "workflow_scope_picker_primary_kind</dt><dd>delegation" in workflow_for_delegation.body
+    assert f"workflow_scope_picker_primary_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'" in workflow_for_delegation.body
+    assert "workflow_scope_picker_primary_stage</dt><dd>Commit request" in workflow_for_delegation.body
+    assert "workflow_scope_picker_delegation_count</dt><dd>1" in workflow_for_delegation.body
+    assert "workflow_scope_picker_run_count</dt><dd>1" in workflow_for_delegation.body
+    assert "workflow_scope_picker_candidate_count</dt><dd>2" in workflow_for_delegation.body
+    assert f"workflow_scope_picker_delegation_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'" in workflow_for_delegation.body
+    assert f"workflow_scope_picker_run_surface</dt><dd><a href='/workflow?run_id={result.coder_worktree_run_id}'" in workflow_for_delegation.body
+    assert f"workflow_scope_picker_goal_surface</dt><dd><a href='/goals/{result.goal_id}'" in workflow_for_delegation.body
+    assert "workflow_scope_picker_first_run_step</dt><dd>first_delegation_complete" in workflow_for_delegation.body
+    assert f"workflow_scope_picker_first_run_surface</dt><dd><a href='/goals/{result.goal_id}'" in workflow_for_delegation.body
+    assert "workflow_scope_picker_source</dt><dd>recent_delegations_and_coder_runs" in workflow_for_delegation.body
+    assert "workflow_scope_picker_write_on_get</dt><dd>false" in workflow_for_delegation.body
+    assert "workflow_scope_picker_provider_calls_taken</dt><dd>0" in workflow_for_delegation.body
+    assert "workflow_scope_picker_network_actions_taken</dt><dd>0" in workflow_for_delegation.body
+    assert "workflow_scope_picker_external_effects_created</dt><dd>false" in workflow_for_delegation.body
+    assert f"workflow_scope_pick: <a href='/workflow?delegation_id={result.delegation_id}'" in workflow_for_delegation.body
+    assert f"workflow_scope_candidate: type=run id={result.coder_worktree_run_id}" in workflow_for_delegation.body
+    assert f"workflow_scope_candidate: type=delegation id={result.delegation_id}" in workflow_for_delegation.body
+    assert "workflow_scope_safety: read-only local scope picker" in workflow_for_delegation.body
     assert "workflow_journey_status</dt><dd>delegation_selected" in workflow_for_delegation.body
     assert "workflow_journey_scope</dt><dd>delegation" in workflow_for_delegation.body
     assert f"workflow_journey_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in workflow_for_delegation.body
@@ -13627,6 +13695,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-workflow-operator-workbench='true'" in workflow_for_run.body
     assert "data-workflow-workbench-primary='true'" in workflow_for_run.body
     assert "data-workflow-workbench-evidence='true'" in workflow_for_run.body
+    assert "data-workflow-scope-picker='true'" in workflow_for_run.body
+    assert "data-workflow-scope-primary='true'" in workflow_for_run.body
+    assert "data-workflow-scope-evidence='true'" in workflow_for_run.body
     assert "data-workflow-journey='true'" in workflow_for_run.body
     assert "data-workflow-journey-evidence='true'" in workflow_for_run.body
     assert "data-workflow-live-state='true'" in workflow_for_run.body
@@ -13634,7 +13705,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-workflow-finish-today='true'" in workflow_for_run.body
     assert "data-workflow-finish-evidence='true'" in workflow_for_run.body
     assert "data-workflow-command-evidence='true'" in workflow_for_run.body
-    assert workflow_for_run.body.index("data-workflow-operator-workbench") < workflow_for_run.body.index("data-workflow-journey")
+    assert workflow_for_run.body.index("data-workflow-operator-workbench") < workflow_for_run.body.index("data-workflow-scope-picker")
+    assert workflow_for_run.body.index("data-workflow-scope-picker") < workflow_for_run.body.index("data-workflow-journey")
     assert workflow_for_run.body.index("data-workflow-journey") < workflow_for_run.body.index("data-workflow-live-state")
     assert workflow_for_run.body.index("data-workflow-live-state") < workflow_for_run.body.index("data-workflow-finish-today")
     assert workflow_for_run.body.index("data-workflow-finish-today") < workflow_for_run.body.index("data-workflow-command-bar")
@@ -13654,6 +13726,26 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_workbench_provider_calls_taken</dt><dd>0" in workflow_for_run.body
     assert "workflow_workbench_network_actions_taken</dt><dd>0" in workflow_for_run.body
     assert "workflow_workbench_external_effects_created</dt><dd>false" in workflow_for_run.body
+    assert "workflow_scope_picker_status</dt><dd>selected" in workflow_for_run.body
+    assert "workflow_scope_picker_scope</dt><dd>run" in workflow_for_run.body
+    assert f"workflow_scope_picker_selected_delegation</dt><dd>{result.delegation_id}" in workflow_for_run.body
+    assert f"workflow_scope_picker_selected_run</dt><dd>{result.coder_worktree_run_id}" in workflow_for_run.body
+    assert "workflow_scope_picker_primary_kind</dt><dd>run" in workflow_for_run.body
+    assert f"workflow_scope_picker_primary_surface</dt><dd><a href='/workflow?run_id={result.coder_worktree_run_id}'" in workflow_for_run.body
+    assert "workflow_scope_picker_primary_stage</dt><dd>Commit request" in workflow_for_run.body
+    assert "workflow_scope_picker_delegation_count</dt><dd>1" in workflow_for_run.body
+    assert "workflow_scope_picker_run_count</dt><dd>1" in workflow_for_run.body
+    assert "workflow_scope_picker_candidate_count</dt><dd>2" in workflow_for_run.body
+    assert f"workflow_scope_picker_delegation_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'" in workflow_for_run.body
+    assert f"workflow_scope_picker_run_surface</dt><dd><a href='/workflow?run_id={result.coder_worktree_run_id}'" in workflow_for_run.body
+    assert f"workflow_scope_picker_goal_surface</dt><dd><a href='/goals/{result.goal_id}'" in workflow_for_run.body
+    assert "workflow_scope_picker_write_on_get</dt><dd>false" in workflow_for_run.body
+    assert "workflow_scope_picker_provider_calls_taken</dt><dd>0" in workflow_for_run.body
+    assert "workflow_scope_picker_network_actions_taken</dt><dd>0" in workflow_for_run.body
+    assert "workflow_scope_picker_external_effects_created</dt><dd>false" in workflow_for_run.body
+    assert f"workflow_scope_pick: <a href='/workflow?run_id={result.coder_worktree_run_id}'" in workflow_for_run.body
+    assert f"workflow_scope_candidate: type=run id={result.coder_worktree_run_id}" in workflow_for_run.body
+    assert f"workflow_scope_candidate: type=delegation id={result.delegation_id}" in workflow_for_run.body
     assert "workflow_journey_status</dt><dd>run_selected" in workflow_for_run.body
     assert "workflow_journey_scope</dt><dd>run" in workflow_for_run.body
     assert "workflow_journey_current_stage_key</dt><dd>commit" in workflow_for_run.body

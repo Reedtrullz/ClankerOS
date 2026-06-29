@@ -575,7 +575,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   the next recommended local operator action. The page opens with a visible
   `Workflow Operator Workbench` before shared route/focus diagnostics or
   command readback, with cards for the current workflow action, selected
-  state, queue attention, and `/resume`. The read-only `Workflow Command Bar`
+  state, queue attention, and `/resume`. It follows with a read-only
+  `Workflow Scope Picker` that surfaces the primary pickup, recent
+  delegations, recent coder runs, parent Goal, and safety evidence before the
+  journey rail, so direct `/workflow` visits can pick the right scope in the
+  browser. The read-only `Workflow Command Bar`
   keeps selected delegation/run, parent Goal, project, current stage, next
   local action, target surface, reason, and zero-effect counters collapsed by
   default before the detailed evidence map. When a delegation or run is
