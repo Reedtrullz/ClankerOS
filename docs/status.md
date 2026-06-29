@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/today#today-goal-queue` now has a browser-local Find box, All / Active /
+  Paused / Completed lane buttons, live match count, first-match link,
+  no-match state, visible View status, and reload persistence via
+  `localStorage:clankeros-today-goal-queue-view`. The saved queue view is now
+  first-class in `/workspace#workspace-view-memory`, can be inspected or reset
+  from there, and keeps GET rendering read-only with no server write, provider
+  call, network action, approval, execution, push, PR, deploy, or external
+  effect.
 - `/goals/<goal_id>#goal-section-index` now remembers the section-finder query
   per Goal in `localStorage:clankeros-goal-section-finder:<goal_id>`, shows
   visible default/restored/saved/reset View status, exposes Reset section

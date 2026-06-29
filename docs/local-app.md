@@ -128,9 +128,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   completes; it reports that the app does not poll GitHub or write on GET. A
   read-only `Today Goal Queue` follows with active/paused/completed counts,
   lead-goal phase and next action, switch links, lead same-page action-form
-  availability, progress, and waiting counts across the day's goals. When no
-  Goal exists yet, the command center, queue, Start Here panel, and reused
-  Home Day Plan link directly to the same-page `Create Project` or
+  availability, progress, and waiting counts across the day's goals. Its
+  browser-local Find box, All / Active / Paused / Completed lane buttons, live
+  match count, first-match link, empty state, and visible View status persist
+  in `localStorage:clankeros-today-goal-queue-view` and reset from
+  `/workspace#workspace-view-memory`. When no Goal exists yet, the command
+  center, queue, Start Here panel, and reused Home Day Plan link directly to
+  the same-page `Create Project` or
   `Create First Goal` form rendered by the first-run guide instead of
   requiring a detour to `/goals`. It then reuses the existing Start Here,
   Home Day Plan,
@@ -668,9 +672,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   id, label source, and route evidence. A read-only `Workspace View Memory`
   panel follows, showing browser-local `localStorage` view state for theme,
   focus mode, Goal board view, open panels, scroll position, search lanes,
-  timeline lanes, Goal section searches, Today and Goal decision filters,
-  artifact filters, notes filters, note drafts, setup form drafts, Memory Bank
-  filters, and Skills Inventory filters with
+  timeline lanes, Goal section searches, Today Goal Queue view, Today and Goal
+  decision filters, artifact filters, notes filters, note drafts, setup form
+  drafts, Memory Bank filters, and Skills Inventory filters with
   Refresh plus reset controls. It only clears
   browser-local view memory after explicit clicks and does not write
   `.clanker/app/workspace.json`. The read-only `Workspace Daily Brief` and `Workspace Workflow Map`

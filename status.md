@@ -1,5 +1,44 @@
 # Status
 
+## 2026-06-29 Today Goal Queue Filter UX
+
+- Reworked `/today#today-goal-queue` into a scan-first daily goal switcher
+  with a browser-local Find box, All / Active / Paused / Completed lane
+  buttons, live match count, first-match link, no-match state, visible View
+  status, and reload persistence in
+  `localStorage:clankeros-today-goal-queue-view`.
+- `/workspace#workspace-view-memory` now includes a first-class `Today Goal
+  Queue` exact-key card, raising the visible view-memory inventory to 23 cards
+  and allowing the saved Today queue lane/query to be inspected or cleared
+  alongside other browser-local view state.
+- Fixed the queue script to initialize after `DOMContentLoaded`; browser QA
+  caught the pre-fix race where the script ran before the goal rows existed and
+  showed `0 of 0 goals` even though a row rendered below the filter.
+- Updated README, local app docs, operating summary, docs status, and focused
+  first-milestone assertions for the new queue persistence and workspace reset
+  surface.
+- Safety: browser-local filtering and view memory only; read-only GET rendering
+  with no approval, execution, push, PR, deploy, provider call, network action,
+  server write, GitHub polling, or external mutation authority added.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused local-app pytest passed with
+  `2 passed in 58.82s`.
+- Browser verification: Playwright against throwaway demo `/today` at
+  `http://127.0.0.1:62093/today` confirmed the default queue showed
+  `1 of 1 goals`; typing `demo` saved
+  `{"query":"demo","mode":"all"}`; Active mode saved
+  `{"query":"demo","mode":"active"}` and kept `1 of 1`; Paused mode showed
+  `0 of 1 goals`, revealed the empty state, and hid the first-match link;
+  reload restored `demo` plus Paused with `View: restored`; Reset cleared
+  storage and returned to All with `1 of 1`; mobile `390x844` restored the
+  Active/demo view with no horizontal overflow; Workspace View Memory showed
+  23 cards, the `today-goals` card, exact key
+  `clankeros-today-goal-queue-view`, and cleared that storage key from its
+  Reset control; console warnings/errors were zero.
+- Non-claims: this does not make `/today` execute work, approve decisions,
+  call providers, fetch GitHub, push, create PRs, deploy, mutate external
+  systems, or write `.clanker/app/workspace.json`.
+
 ## 2026-06-29 Goal Section Finder View Memory UX
 
 - Added per-Goal browser-local view memory to the `Goal Section Index` section

@@ -6516,13 +6516,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 22
+    assert workspace.body.count("class='workspace-view-memory-card") == 23
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
     assert "data-workspace-view-memory-card='goal-board'" in workspace.body
     assert "data-workspace-view-memory-card='home-goal-board'" in workspace.body
     assert "data-workspace-view-memory-card='recent-items'" in workspace.body
     assert "data-workspace-view-memory-card='route-history'" in workspace.body
+    assert "data-workspace-view-memory-card='today-goals'" in workspace.body
     assert "data-workspace-view-memory-card='open-panels'" in workspace.body
     assert "data-workspace-view-memory-card='scroll-position'" in workspace.body
     assert "data-workspace-view-memory-card='search'" in workspace.body
@@ -6545,6 +6546,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-home-goal-board-view'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-recent-items-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-route-history'" in workspace.body
+    assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-today-goal-queue-view'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-today-decision-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-open-panels:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-scroll-position:'" in workspace.body
@@ -6565,8 +6567,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>22" in workspace.body
-    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-home-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-today-decision-filter, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>23" in workspace.body
+    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-home-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-today-goal-queue-view, clankeros-today-decision-filter, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
     assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-section-finder:, clankeros-goal-decision-filter:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:, clankeros-goal-note-draft:, clankeros-action-form-draft:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
@@ -6580,6 +6582,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: home-goal-board mode=exact key=clankeros-home-goal-board-view" in workspace.body
     assert "workspace_view_memory_card: recent-items mode=exact key=clankeros-recent-items-filter" in workspace.body
     assert "workspace_view_memory_card: route-history mode=exact key=clankeros-route-history" in workspace.body
+    assert "workspace_view_memory_card: today-goals mode=exact key=clankeros-today-goal-queue-view" in workspace.body
     assert "workspace_view_memory_card: today-decisions mode=exact key=clankeros-today-decision-filter" in workspace.body
     assert "workspace_view_memory_card: open-panels mode=prefix key=clankeros-open-panels:" in workspace.body
     assert "workspace_view_memory_card: scroll-position mode=prefix key=clankeros-scroll-position:" in workspace.body
@@ -6593,7 +6596,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: approvals mode=exact key=clankeros-approval-queue-filter" in workspace.body
     assert "workspace_view_memory_card: inbox mode=exact key=clankeros-inbox-queue-filter" in workspace.body
     assert "workspace_view_memory_card: profiles mode=exact key=clankeros-profile-routing-filter" in workspace.body
-    assert "workspace_view_memory_reset_scope: theme focus board home-goal-board recent route-history today-decisions open-panels scroll-position search timeline goal-sections decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
+    assert "workspace_view_memory_reset_scope: theme focus board home-goal-board recent route-history today-goals today-decisions open-panels scroll-position search timeline goal-sections decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
     assert "window.localStorage.removeItem(key)" in workspace.body
     assert "candidate.indexOf(key) === 0" in workspace.body
     assert "delete document.documentElement.dataset.theme" in workspace.body
@@ -11052,10 +11055,41 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"today_goal_queue_lead_surface</dt><dd><a href='/goals/{result.goal_id}'>" in today.body
     assert "today_goal_queue_lead_action_form_available</dt><dd>true" in today.body
     assert f"today_goal_queue_first_switch_surface</dt><dd><a href='/goals/{result.goal_id}'>" in today.body
+    assert "data-today-goal-queue-filter='true'" in today.body
+    assert "data-today-goal-queue-filter-storage-key='clankeros-today-goal-queue-view'" in today.body
+    assert "data-today-goal-queue-filter-input='true'" in today.body
+    assert "data-today-goal-queue-filter-count='true'>1 goals" in today.body
+    assert "data-today-goal-queue-filter-first='true' href='/goals/" in today.body
+    assert "data-today-goal-queue-filter-mode='all' aria-pressed='true'" in today.body
+    assert "data-today-goal-queue-filter-mode='active' aria-pressed='false'" in today.body
+    assert "data-today-goal-queue-filter-mode='paused' aria-pressed='false'" in today.body
+    assert "data-today-goal-queue-filter-mode='completed' aria-pressed='false'" in today.body
+    assert "data-today-goal-queue-filter-reset='true'>Reset view</button>" in today.body
+    assert "data-today-goal-queue-view-status='true'>View: default</span>" in today.body
+    assert "data-today-goal-queue-filter-empty='true' hidden" in today.body
+    assert "data-today-goal-queue-row='true'" in today.body
+    assert "data-today-goal-queue-row-bucket='active'" in today.body
+    assert "data-today-goal-queue-row-lead='true'" in today.body
     assert "today_goal_queue_item: <a href='/goals/" in today.body
     assert "bucket=active lead=true phase=Ready to commit" in today.body
     assert "next_action=Create commit request action_surface=<a href='#today-current-action'>Today Current Action</a>" in today.body
     assert "progress=0/1 tasks completed waiting=1 approvals=1 incidents=0 recommendations=0 form_available=true" in today.body
+    assert "today_goal_queue_filter_status</dt><dd>available" in today.body
+    assert "today_goal_queue_filter_storage</dt><dd>localStorage:clankeros-today-goal-queue-view" in today.body
+    assert "today_goal_queue_filter_fields</dt><dd>query mode" in today.body
+    assert "today_goal_queue_filter_default</dt><dd>all" in today.body
+    assert "today_goal_queue_filter_reset</dt><dd>available" in today.body
+    assert "today_goal_queue_filter_write_on_get</dt><dd>false" in today.body
+    assert "today_goal_queue_filter_network_actions_taken</dt><dd>0" in today.body
+    assert "today_goal_queue_filter_external_effects_created</dt><dd>false" in today.body
+    assert "today_goal_queue_filter_default: all -> 1 goals" in today.body
+    assert "today_goal_queue_filter_mode: active -> 1 goals" in today.body
+    assert "today_goal_queue_view_memory: restores query and lane from browser storage" in today.body
+    assert "today_goal_queue_filter_safety: browser-local filtering only" in today.body
+    assert "document.addEventListener(\"DOMContentLoaded\", initTodayGoalQueueFilter" in today.body
+    assert "function updateTodayGoalQueueFilter(options)" in today.body
+    assert "window.localStorage.setItem(todayGoalQueueFilterStorageKey(queue)" in today.body
+    assert "window.localStorage.removeItem(todayGoalQueueFilterStorageKey(queue))" in today.body
     assert "today_goal_queue_write_on_get</dt><dd>false" in today.body
     assert "today_goal_queue_provider_calls_taken</dt><dd>0" in today.body
     assert "today_goal_queue_network_actions_taken</dt><dd>0" in today.body

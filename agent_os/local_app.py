@@ -3096,6 +3096,7 @@ def _today_goal_queue(
         first_surface: str | SafeHtml = SafeHtml(
             f"<a href='/goals/{quote(str(rows[0]['id']))}'>/goals/{_e(str(rows[0]['id']))}</a>"
         )
+        filter_html = _today_goal_queue_filter(rows, active, paused, completed)
     else:
         first_run = _first_run_progress(root, storage)
         first_run_href, first_run_label = _today_first_run_target(first_run)
@@ -3108,11 +3109,13 @@ def _today_goal_queue(
         first_surface = SafeHtml(
             f"<a href='{_e(first_run_href)}'>{_e(first_run_label)}</a>"
         )
+        filter_html = ""
 
     return "".join(
         [
             "<section id='today-goal-queue' class='panel today-goal-queue' data-today-goal-queue='true'><h2>Today Goal Queue</h2>",
             "<p class='muted'>Switch goals, scan paused work, and keep completed goals visible without leaving the daily cockpit.</p>",
+            filter_html,
             _kv(
                 [
                     ("today_goal_queue_status", status),
@@ -3128,6 +3131,15 @@ def _today_goal_queue(
                     ("today_goal_queue_lead_surface", lead_surface),
                     ("today_goal_queue_lead_action_form_available", lead_action_form_available),
                     ("today_goal_queue_first_switch_surface", first_surface),
+                    ("today_goal_queue_filter_status", "available" if rows else "first_run"),
+                    ("today_goal_queue_filter_storage", "localStorage:clankeros-today-goal-queue-view"),
+                    ("today_goal_queue_filter_fields", "query mode"),
+                    ("today_goal_queue_filter_default", "all"),
+                    ("today_goal_queue_filter_reset", "available" if rows else "none"),
+                    ("today_goal_queue_filter_write_on_get", "false"),
+                    ("today_goal_queue_filter_provider_calls_taken", "0"),
+                    ("today_goal_queue_filter_network_actions_taken", "0"),
+                    ("today_goal_queue_filter_external_effects_created", "false"),
                     ("today_goal_queue_write_on_get", "false"),
                     ("today_goal_queue_provider_calls_taken", "0"),
                     ("today_goal_queue_network_actions_taken", "0"),
@@ -3138,6 +3150,171 @@ def _today_goal_queue(
             "</section>",
         ]
     )
+
+
+def _today_goal_queue_filter(
+    rows: list[sqlite3.Row],
+    active: list[sqlite3.Row],
+    paused: list[sqlite3.Row],
+    completed: list[sqlite3.Row],
+) -> str:
+    total = len(rows)
+    first_goal = str(rows[0]["id"]) if rows else ""
+    first_href = f"/goals/{quote(first_goal)}" if first_goal else "/goals"
+    return "".join(
+        [
+            "<section class='today-goal-queue-filter' data-today-goal-queue-filter='true' "
+            "data-today-goal-queue-filter-storage-key='clankeros-today-goal-queue-view'>",
+            "<label class='today-goal-queue-filter-search'>Find "
+            "<input type='search' data-today-goal-queue-filter-input='true' placeholder='goal, phase, next action...'></label>",
+            "<div class='today-goal-queue-filter-controls' data-today-goal-queue-filter-controls='true'>",
+            "<button type='button' data-today-goal-queue-filter-mode='all' aria-pressed='true'>All</button>",
+            f"<button type='button' data-today-goal-queue-filter-mode='active' aria-pressed='false'>Active <span>{len(active)}</span></button>",
+            f"<button type='button' data-today-goal-queue-filter-mode='paused' aria-pressed='false'>Paused <span>{len(paused)}</span></button>",
+            f"<button type='button' data-today-goal-queue-filter-mode='completed' aria-pressed='false'>Completed <span>{len(completed)}</span></button>",
+            "<button type='button' data-today-goal-queue-filter-reset='true'>Reset view</button>",
+            "<span class='today-goal-queue-view-status' data-today-goal-queue-view-status='true'>View: default</span>",
+            "</div>",
+            f"<p class='muted' data-today-goal-queue-filter-count='true'>{total} goals</p>",
+            f"<a class='today-goal-queue-filter-first' data-today-goal-queue-filter-first='true' href='{_e(first_href)}'>Open first match</a>",
+            "<p class='muted' data-today-goal-queue-filter-empty='true' hidden>No Today goals match this view.</p>",
+            _ul(
+                [
+                    f"today_goal_queue_filter_default: all -> {total} goals",
+                    f"today_goal_queue_filter_mode: active -> {len(active)} goals",
+                    f"today_goal_queue_filter_mode: paused -> {len(paused)} goals",
+                    f"today_goal_queue_filter_mode: completed -> {len(completed)} goals",
+                    "today_goal_queue_view_memory: restores query and lane from browser storage",
+                    "today_goal_queue_filter_safety: browser-local filtering only",
+                ]
+            ),
+            "</section>",
+            _today_goal_queue_filter_script(),
+        ]
+    )
+
+
+def _today_goal_queue_filter_script() -> str:
+    return """<script>
+(function () {
+  function initTodayGoalQueueFilter() {
+    var queue = document.querySelector("[data-today-goal-queue='true']");
+    if (!queue) return;
+    var filter = queue.querySelector("[data-today-goal-queue-filter='true']");
+    if (!filter) return;
+    var input = filter.querySelector("[data-today-goal-queue-filter-input='true']");
+    var buttons = Array.prototype.slice.call(filter.querySelectorAll("[data-today-goal-queue-filter-mode]"));
+    var reset = filter.querySelector("[data-today-goal-queue-filter-reset='true']");
+    var count = filter.querySelector("[data-today-goal-queue-filter-count='true']");
+    var first = filter.querySelector("[data-today-goal-queue-filter-first='true']");
+    var empty = filter.querySelector("[data-today-goal-queue-filter-empty='true']");
+    var status = filter.querySelector("[data-today-goal-queue-view-status='true']");
+    var mode = "all";
+    function todayGoalQueueFilterStorageKey(queueNode) {
+      var filterNode = queueNode ? queueNode.querySelector("[data-today-goal-queue-filter='true']") : null;
+      return filterNode ? filterNode.getAttribute("data-today-goal-queue-filter-storage-key") || "clankeros-today-goal-queue-view" : "clankeros-today-goal-queue-view";
+    }
+    function setStatus(message) {
+      if (status) status.textContent = message;
+    }
+    function setMode(nextMode) {
+      mode = nextMode || "all";
+      if (!buttons.some(function (button) { return button.getAttribute("data-today-goal-queue-filter-mode") === mode; })) {
+        mode = "all";
+      }
+      buttons.forEach(function (button) {
+        button.setAttribute("aria-pressed", (button.getAttribute("data-today-goal-queue-filter-mode") || "all") === mode ? "true" : "false");
+      });
+    }
+    function saveTodayGoalQueueFilterState() {
+      if (!window.localStorage) return;
+      try {
+        window.localStorage.setItem(todayGoalQueueFilterStorageKey(queue), JSON.stringify({
+          query: input && input.value ? input.value : "",
+          mode: mode
+        }));
+        setStatus("View: saved");
+      } catch (error) {
+        setStatus("View: local only");
+      }
+    }
+    function restoreTodayGoalQueueFilterState() {
+      if (!window.localStorage) return false;
+      try {
+        var raw = window.localStorage.getItem(todayGoalQueueFilterStorageKey(queue));
+        if (!raw) return false;
+        var saved = JSON.parse(raw);
+        if (input && typeof saved.query === "string") input.value = saved.query.slice(0, 200);
+        setMode(saved.mode || "all");
+        setStatus("View: restored");
+        return true;
+      } catch (error) {
+        setStatus("View: default");
+        return false;
+      }
+    }
+    function clearTodayGoalQueueFilterState() {
+      if (input) input.value = "";
+      setMode("all");
+      if (window.localStorage) {
+        try { window.localStorage.removeItem(todayGoalQueueFilterStorageKey(queue)); } catch (error) {}
+      }
+      updateTodayGoalQueueFilter({ save: false });
+      setStatus("View: reset");
+    }
+    function updateTodayGoalQueueFilter(options) {
+      var rows = Array.prototype.slice.call(queue.querySelectorAll("[data-today-goal-queue-row='true']"));
+      var query = input && input.value ? input.value.trim().toLowerCase() : "";
+      rows.forEach(function (row) {
+        var bucket = row.getAttribute("data-today-goal-queue-row-bucket") || "";
+        var text = row.getAttribute("data-today-goal-queue-row-text") || "";
+        var matched = (mode === "all" || bucket === mode) && (!query || text.indexOf(query) !== -1);
+        var item = row.closest ? row.closest("li") : row.parentElement;
+        if (item) item.hidden = !matched;
+        row.hidden = !matched;
+      });
+      var visible = rows.filter(function (row) { return !row.hidden; });
+      if (count) count.textContent = visible.length + " of " + rows.length + " goals";
+      if (empty) empty.hidden = visible.length !== 0;
+      if (first) {
+        var firstRow = visible[0];
+        var link = firstRow ? firstRow.querySelector("a") : null;
+        if (link) {
+          first.hidden = false;
+          first.href = link.href;
+          first.textContent = "Open first match";
+        } else {
+          first.hidden = true;
+          first.removeAttribute("href");
+          first.textContent = "No match";
+        }
+      }
+      if (!options || options.save !== false) saveTodayGoalQueueFilterState();
+    }
+    buttons.forEach(function (button) {
+      button.addEventListener("click", function () {
+        setMode(button.getAttribute("data-today-goal-queue-filter-mode") || "all");
+        updateTodayGoalQueueFilter({});
+      });
+    });
+    if (input) input.addEventListener("input", function () { updateTodayGoalQueueFilter({}); });
+    if (reset) reset.addEventListener("click", function (event) {
+      event.preventDefault();
+      clearTodayGoalQueueFilterState();
+    });
+    if (!restoreTodayGoalQueueFilterState()) {
+      setMode("all");
+      setStatus("View: default");
+    }
+    updateTodayGoalQueueFilter({ save: false });
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initTodayGoalQueueFilter, { once: true });
+  } else {
+    initTodayGoalQueueFilter();
+  }
+})();
+</script>"""
 
 
 def _first_run_same_page_target(first_run: dict[str, Any]) -> tuple[str, str]:
@@ -3398,13 +3575,37 @@ def _today_goal_queue_line(
     is_lead = goal_id == lead_goal_id
     action_href = "#today-current-action" if is_lead and form_available else next_action.href
     action_label = "Today Current Action" if is_lead and form_available else next_action.href
-    return (
-        f"today_goal_queue_item: <a href='/goals/{quote(goal_id)}'>{_e(_compact_label(label, 56))}</a> "
-        f"bucket={_e(bucket)} lead={str(is_lead).lower()} phase={_e(phase)} "
-        f"next_action={_e(next_action.action)} action_surface=<a href='{_e(action_href)}'>{_e(action_label)}</a> "
-        f"progress={_e(_goal_progress_label(state))} waiting={waiting_items} "
-        f"approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations} "
-        f"form_available={str(form_available).lower()}"
+    project_id = str(row["project_id"] or "")
+    progress = _goal_progress_label(state)
+    search_text = " ".join(
+        [
+            goal_id,
+            label,
+            project_id,
+            bucket,
+            phase,
+            next_action.action,
+            progress,
+            f"waiting {waiting_items}",
+            f"approvals {pending_approvals}",
+            f"incidents {open_incidents}",
+            f"recommendations {open_recommendations}",
+        ]
+    ).lower()
+    return "".join(
+        [
+            "<span data-today-goal-queue-row='true' ",
+            f"data-today-goal-queue-row-bucket='{_e(bucket)}' ",
+            f"data-today-goal-queue-row-lead='{str(is_lead).lower()}' ",
+            f"data-today-goal-queue-row-text='{_e(search_text)}'>",
+            f"today_goal_queue_item: <a href='/goals/{quote(goal_id)}'>{_e(_compact_label(label, 56))}</a> ",
+            f"bucket={_e(bucket)} lead={str(is_lead).lower()} phase={_e(phase)} ",
+            f"next_action={_e(next_action.action)} action_surface=<a href='{_e(action_href)}'>{_e(action_label)}</a> ",
+            f"progress={_e(progress)} waiting={waiting_items} ",
+            f"approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations} ",
+            f"form_available={str(form_available).lower()}",
+            "</span>",
+        ]
     )
 
 
@@ -7236,6 +7437,13 @@ def _workspace_view_memory_panel() -> str:
             "Browser-local route history",
         ),
         (
+            "today-goals",
+            "Today Goal Queue",
+            "exact",
+            "clankeros-today-goal-queue-view",
+            "Daily goal queue query and lane",
+        ),
+        (
             "today-decisions",
             "Today Decision Filter",
             "exact",
@@ -7412,7 +7620,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus board home-goal-board recent route-history today-decisions open-panels scroll-position search timeline goal-sections decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles",
+                    "workspace_view_memory_reset_scope: theme focus board home-goal-board recent route-history today-goals today-decisions open-panels scroll-position search timeline goal-sections decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles",
                 ]
             ),
             "</details>",
@@ -40751,6 +40959,18 @@ def _html_page(
     .home-goal-board-filter-count, .home-goal-board-filter-empty {{ margin:10px 0 0; }}
     .home-goal-board-filter-first {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; margin-top:10px; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .home-goal-board-filter-first[hidden] {{ display:none; }}
+    .today-goal-queue-filter {{ border:1px solid var(--line); background:var(--panel); padding:12px; margin:10px 0 12px; }}
+    .today-goal-queue-filter-search {{ display:grid; grid-template-columns:auto minmax(190px, 1fr); gap:8px; align-items:center; color:var(--muted); font-weight:700; }}
+    .today-goal-queue-filter-search input {{ min-height:36px; }}
+    .today-goal-queue-filter-controls {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:10px; }}
+    .today-goal-queue-filter-controls button {{ margin:0; min-height:34px; }}
+    .today-goal-queue-filter-controls button[aria-pressed='true'] {{ background:var(--accent); color:#fff; border-color:var(--accent); }}
+    .today-goal-queue-view-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .today-goal-queue-filter-first {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; margin-top:10px; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .today-goal-queue-filter-first[hidden] {{ display:none; }}
+    .today-goal-queue-list {{ list-style:none; padding:0; display:grid; gap:8px; }}
+    .today-goal-queue-list li {{ border:1px solid var(--line); background:var(--surface); padding:8px 10px; overflow-wrap:anywhere; }}
+    @media (max-width: 640px) {{ .today-goal-queue-filter-search {{ grid-template-columns:1fr; }} .today-goal-queue-filter-controls button, .today-goal-queue-view-status, .today-goal-queue-filter-first {{ width:100%; justify-content:center; }} .today-goal-queue-filter-controls {{ align-items:stretch; }} }}
     .home-goal-board-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px; margin:12px 0; }}
     .home-goal-lane ul {{ list-style:none; padding:0; margin:10px 0 0; display:grid; gap:8px; }}
     .home-goal-lane li {{ min-width:0; }}
@@ -45047,11 +45267,12 @@ def _kv(items: list[tuple[str, str]]) -> str:
 def _ul(items: list[str]) -> str:
     if not items:
         return "<p class='muted'>none</p>"
-    list_class = (
-        " class='goal-index-list'"
-        if any("data-goal-board-row='true'" in item for item in items)
-        else ""
-    )
+    classes = []
+    if any("data-goal-board-row='true'" in item for item in items):
+        classes.append("goal-index-list")
+    if any("data-today-goal-queue-row='true'" in item for item in items):
+        classes.append("today-goal-queue-list")
+    list_class = f" class='{' '.join(classes)}'" if classes else ""
     return f"<ul{list_class}>" + "".join(f"<li>{item}</li>" for item in items) + "</ul>"
 
 
