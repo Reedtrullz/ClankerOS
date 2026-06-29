@@ -7214,10 +7214,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "data-operator-focus-strip='true'"
     )
     assert "action_catalog_status</dt><dd>available" in actions.body
-    assert "action_catalog_total_actions</dt><dd>27" in actions.body
+    assert "action_catalog_total_actions</dt><dd>28" in actions.body
     assert "action_catalog_navigation_actions</dt><dd>8" in actions.body
-    assert "action_catalog_mutating_actions</dt><dd>26" in actions.body
-    assert "action_catalog_confirmation_required</dt><dd>26" in actions.body
+    assert "action_catalog_mutating_actions</dt><dd>27" in actions.body
+    assert "action_catalog_confirmation_required</dt><dd>27" in actions.body
     assert "action_catalog_local_execution_actions</dt><dd>2" in actions.body
     assert "action_catalog_local_git_actions</dt><dd>1" in actions.body
     assert "action_catalog_approval_actions</dt><dd>6" in actions.body
