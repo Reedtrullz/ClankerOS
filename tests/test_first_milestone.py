@@ -6104,11 +6104,29 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-search-result-lane='goals' data-search-result-status='empty'" in search.body
     assert "data-search-result-lane='artifacts' data-search-result-status='empty'" in search.body
     assert "data-search-result-map-evidence='true'" in search.body
+    assert "Search Result Filter" in search.body
+    assert "data-search-result-filter='true'" in search.body
+    assert "data-search-result-filter-storage-key='clankeros-search-result-lane:" in search.body
+    assert "data-search-result-filter-buttons='true'" in search.body
+    assert "data-search-result-filter-kind='all'" in search.body
+    assert "data-search-result-filter-kind='goals'" in search.body
+    assert "data-search-result-filter-kind='work'" in search.body
+    assert "data-search-result-filter-kind='decisions'" in search.body
+    assert "data-search-result-filter-kind='knowledge'" in search.body
+    assert "data-search-result-filter-kind='artifacts'" in search.body
+    assert "data-search-result-filter-active='true'" in search.body
+    assert "data-search-result-filter-view-status='true'>View: default</span>" in search.body
+    assert "data-search-result-filter-reset='true'>Reset lane</button>" in search.body
+    assert "data-search-result-filter-empty='true' hidden" in search.body
+    assert "data-search-result-filter-evidence='true'" in search.body
     assert "data-search-command-evidence='true'" in search.body
     assert search.body.index("data-search-operator-workbench='true'") < search.body.index(
         "data-search-result-map='true'"
     )
     assert search.body.index("data-search-result-map='true'") < search.body.index(
+        "data-search-result-filter='true'"
+    )
+    assert search.body.index("data-search-result-filter='true'") < search.body.index(
         "data-search-command-bar='true'"
     )
     assert search.body.index("data-search-operator-workbench='true'") < search.body.index(
@@ -6126,6 +6144,28 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "search_result_map_external_effects_created</dt><dd>false" in search.body
     assert "search_result_map_raw_filesystem_browsing</dt><dd>false" in search.body
     assert "search_result_map_safety: read-only indexed search; no raw filesystem browsing" in search.body
+    assert "search_result_filter_status</dt><dd>ready_for_query" in search.body
+    assert "search_result_filter_scope</dt><dd>browser_local_rendered_results" in search.body
+    assert "search_result_filter_query</dt><dd>none" in search.body
+    assert "search_result_filter_total_results</dt><dd>0" in search.body
+    assert "search_result_filter_goals_results</dt><dd>0" in search.body
+    assert "search_result_filter_decisions_results</dt><dd>0" in search.body
+    assert "search_result_filter_artifacts_results</dt><dd>0" in search.body
+    assert "search_result_filter_lane_count</dt><dd>6" in search.body
+    assert "search_result_filter_source</dt><dd>data-search-result-lane" in search.body
+    assert "search_result_filter_persistence</dt><dd>browser_local_view_memory" in search.body
+    assert "search_result_filter_memory_storage</dt><dd>localStorage:clankeros-search-result-lane:" in search.body
+    assert "search_result_filter_memory_fields</dt><dd>lane query" in search.body
+    assert "search_result_filter_default</dt><dd>all" in search.body
+    assert "search_result_filter_reset</dt><dd>available" in search.body
+    assert "search_result_filter_write_on_get</dt><dd>false" in search.body
+    assert "search_result_filter_provider_calls_taken</dt><dd>0" in search.body
+    assert "search_result_filter_network_actions_taken</dt><dd>0" in search.body
+    assert "search_result_filter_external_effects_created</dt><dd>false" in search.body
+    assert "search_result_filter_raw_filesystem_browsing</dt><dd>false" in search.body
+    assert "search_result_filter_action: click a lane" in search.body
+    assert "search_result_filter_memory: restores the selected lane" in search.body
+    assert "search_result_filter_reset: clears the browser-local Search result lane" in search.body
     assert "Search Command Bar" in search.body
     assert "data-search-command-bar='true'" in search.body
     assert "search_workbench_status</dt><dd>ready_for_query" in search.body
@@ -13004,11 +13044,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert search.body.count("class='search-result-map-card") == 6
     assert "data-search-result-lane='goals' data-search-result-status='ready'" in search.body
     assert "data-search-result-map-evidence='true'" in search.body
+    assert "Search Result Filter" in search.body
+    assert "data-search-result-filter='true'" in search.body
+    assert "data-search-result-filter-buttons='true'" in search.body
+    assert "data-search-result-filter-kind='all'" in search.body
+    assert "data-search-result-filter-kind='goals'" in search.body
+    assert "data-search-result-filter-kind='artifacts'" in search.body
+    assert "data-search-result-filter-active='true'" in search.body
+    assert "data-search-result-filter-status='true'>Showing " in search.body
+    assert "data-search-result-filter-view-status='true'>View: default</span>" in search.body
+    assert "data-search-result-filter-reset='true'>Reset lane</button>" in search.body
+    assert "data-search-result-filter-evidence='true'" in search.body
     assert "data-search-command-evidence='true'" in search.body
     assert search.body.index("data-search-operator-workbench='true'") < search.body.index(
         "data-search-result-map='true'"
     )
     assert search.body.index("data-search-result-map='true'") < search.body.index(
+        "data-search-result-filter='true'"
+    )
+    assert search.body.index("data-search-result-filter='true'") < search.body.index(
         "data-search-command-bar='true'"
     )
     assert search.body.index("data-search-operator-workbench='true'") < search.body.index(
@@ -13026,6 +13080,26 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "search_result_map_external_effects_created</dt><dd>false" in search.body
     assert "search_result_map_raw_filesystem_browsing</dt><dd>false" in search.body
     assert "search_result_map_click: <a href='/goals/" in search.body
+    assert "search_result_filter_status</dt><dd>results_ready" in search.body
+    assert "search_result_filter_query</dt><dd>fixture-backed" in search.body
+    assert "search_result_filter_total_results</dt><dd>" in search.body
+    assert "search_result_filter_goals_results</dt><dd>" in search.body
+    assert "search_result_filter_artifacts_results</dt><dd>" in search.body
+    assert "search_result_filter_source</dt><dd>data-search-result-lane" in search.body
+    assert "search_result_filter_persistence</dt><dd>browser_local_view_memory" in search.body
+    assert "search_result_filter_memory_storage</dt><dd>localStorage:clankeros-search-result-lane:" in search.body
+    assert "search_result_filter_write_on_get</dt><dd>false" in search.body
+    assert "search_result_filter_network_actions_taken</dt><dd>0" in search.body
+    assert "search_result_filter_raw_filesystem_browsing</dt><dd>false" in search.body
+    assert "data-search-result-item='true'" in search.body
+    assert "data-search-result-lane='goals'" in search.body
+    assert "data-search-result-lane='artifacts'" in search.body
+    assert "function restoreSearchResultLaneState()" in search.body
+    assert "function updateSearchResultLane(filterKind, options)" in search.body
+    assert "window.localStorage.setItem(searchResultLaneStorageKey(filterPanel)" in search.body
+    assert "window.localStorage.removeItem(searchResultLaneStorageKey(filterPanel))" in search.body
+    assert 'updateSearchResultLane(saved && typeof saved.lane === "string" ? saved.lane : "all", { save: false })' in search.body
+    assert "updateSearchResultLane(\"all\", { save: false })" in search.body
     assert "Search Command Bar" in search.body
     assert "data-search-command-bar='true'" in search.body
     assert "search_workbench_status</dt><dd>results_ready" in search.body

@@ -648,9 +648,13 @@ content-first and opens with a visible
 query, first useful hit, result list, and `/resume` into four browser cards.
 It now follows with a visible read-only `Search Result Map` for Goals,
 Projects, Work, Decisions, Knowledge, and Artifacts, so category counts and
-first targets are visible before the flat result list. Search state, result
-map, workbench evidence, and command evidence stay collapsed by default while
-preserving result counts, first-result target links, and the
+first targets are visible before the flat result list. A browser-local
+`Search Result Filter` follows the map so broad queries can be narrowed to one
+lane without another request; the selected lane is remembered per query in
+`localStorage:clankeros-search-result-lane:<query-hash>` and Reset lane clears
+that browser-local view. Search state, result map, result filter, workbench
+evidence, and command evidence stay collapsed by default while preserving
+result counts, first-result target links, lane counts, and the
 no-write/no-network/no-raw-filesystem boundary in the DOM. Use `/memory`, `/skills`, and
 `/profiles` for local readbacks of memory entries, generated skills/usage,
 and inactive future provider-routing lanes. `/memory` is now action-first and

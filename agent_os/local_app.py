@@ -952,6 +952,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-search-result-map='true'",
                 "data-search-result-map-cards='true'",
                 "data-search-result-map-evidence='true'",
+                "Search Result Filter",
+                "data-search-result-filter='true'",
+                "data-search-result-filter-evidence='true'",
                 "data-search-command-evidence='true'",
                 demo.goal_id,
                 "artifact",
@@ -4737,6 +4740,7 @@ def _search_page(root: Path, *, query: str) -> str:
             "</section>",
             _search_operator_workbench(term, results),
             _search_result_map(term, results),
+            _search_result_filter(term, results),
             _search_command_bar(term, results),
             _list_section(
                 "Search Results",
@@ -4828,8 +4832,8 @@ def _search_form(term: str) -> str:
     )
 
 
-def _search_result_map(term: str, results: list[dict[str, str]]) -> str:
-    lane_specs = [
+def _search_lane_specs() -> list[tuple[str, str, set[str], str]]:
+    return [
         ("goals", "Goals", {"goal"}, "Open goal"),
         ("projects", "Projects", {"project"}, "Open project"),
         ("work", "Work", {"task", "delegation", "run"}, "Open work"),
@@ -4837,6 +4841,17 @@ def _search_result_map(term: str, results: list[dict[str, str]]) -> str:
         ("knowledge", "Knowledge", {"memory", "skill"}, "Open knowledge"),
         ("artifacts", "Artifacts", {"artifact"}, "Open artifact"),
     ]
+
+
+def _search_result_lane_key(category: str) -> str:
+    for key, _label, categories, _action in _search_lane_specs():
+        if category in categories:
+            return key
+    return "knowledge"
+
+
+def _search_result_map(term: str, results: list[dict[str, str]]) -> str:
+    lane_specs = _search_lane_specs()
     lanes: list[dict[str, str | int | bool]] = []
     primary_lane = "goals"
     primary_label = "Search form"
@@ -4926,6 +4941,85 @@ def _search_result_map(term: str, results: list[dict[str, str]]) -> str:
                     f"search_result_map_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
                     f"search_result_map_reason: {_e(primary_reason)}",
                     "search_result_map_safety: read-only indexed search; no raw filesystem browsing",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _search_result_filter(term: str, results: list[dict[str, str]]) -> str:
+    lane_specs = _search_lane_specs()
+    lane_counts = {key: 0 for key, _label, _categories, _action in lane_specs}
+    for item in results:
+        lane_counts[_search_result_lane_key(item.get("category", "unknown"))] += 1
+    buttons = [
+        (
+            "<button type='button' class='search-result-filter-button' "
+            "data-search-result-filter-kind='all' data-search-result-filter-active='true' aria-pressed='true'>"
+            f"All <span>{len(results)}</span></button>"
+        )
+    ]
+    for key, label, _categories, _action in lane_specs:
+        buttons.append(
+            (
+                "<button type='button' class='search-result-filter-button' "
+                f"data-search-result-filter-kind='{_e(key)}' aria-pressed='false'>{_e(label)} "
+                f"<span>{lane_counts[key]}</span></button>"
+            )
+        )
+    lane_summary = ", ".join(f"{key}={lane_counts[key]}" for key in lane_counts)
+    query_key = hashlib.sha256((term or "no-query").encode("utf-8")).hexdigest()[:12]
+    storage_key = f"clankeros-search-result-lane:{query_key}"
+    status = "results_ready" if results else ("ready_for_query" if not term else "empty")
+    return "".join(
+        [
+            "<section id='search-result-filter' class='panel search-result-filter' data-search-result-filter='true' "
+            f"data-search-result-filter-storage-key='{_e(storage_key)}'>",
+            "<h2>Search Result Filter</h2>",
+            "<p class='muted'>Filter the rendered local search results by lane without submitting a new query.</p>",
+            "<div class='search-result-filter-buttons' data-search-result-filter-buttons='true'>",
+            "".join(buttons),
+            "</div>",
+            "<div class='search-result-filter-memory' data-search-result-filter-memory='true'>",
+            "<span class='search-result-filter-memory-status' data-search-result-filter-view-status='true'>View: default</span>",
+            "<button type='button' class='search-result-filter-reset' data-search-result-filter-reset='true'>Reset lane</button>",
+            "</div>",
+            f"<p class='muted' data-search-result-filter-status='true'>Showing {len(results)} of {len(results)} results.</p>",
+            "<p class='muted search-result-filter-empty' data-search-result-filter-empty='true' hidden>No results in this lane.</p>",
+            "<details class='search-result-filter-evidence' data-search-result-filter-evidence='true'><summary>Search result filter evidence</summary>",
+            _kv(
+                [
+                    ("search_result_filter_status", status),
+                    ("search_result_filter_scope", "browser_local_rendered_results"),
+                    ("search_result_filter_query", term or "none"),
+                    ("search_result_filter_total_results", str(len(results))),
+                    *[
+                        (f"search_result_filter_{key}_results", str(lane_counts[key]))
+                        for key, _label, _categories, _action in lane_specs
+                    ],
+                    ("search_result_filter_lane_count", str(len(lane_specs))),
+                    ("search_result_filter_source", "data-search-result-lane"),
+                    ("search_result_filter_persistence", "browser_local_view_memory"),
+                    ("search_result_filter_memory_storage", f"localStorage:{storage_key}"),
+                    ("search_result_filter_memory_fields", "lane query"),
+                    ("search_result_filter_default", "all"),
+                    ("search_result_filter_reset", "available"),
+                    ("search_result_filter_write_on_get", "false"),
+                    ("search_result_filter_provider_calls_taken", "0"),
+                    ("search_result_filter_network_actions_taken", "0"),
+                    ("search_result_filter_external_effects_created", "false"),
+                    ("search_result_filter_raw_filesystem_browsing", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"search_result_filter_lanes: {_e(lane_summary)}",
+                    "search_result_filter_action: click a lane to hide unmatched rendered search results",
+                    "search_result_filter_memory: restores the selected lane from browser storage for this query",
+                    "search_result_filter_reset: clears the browser-local Search result lane",
+                    "search_result_filter_safety: client-side display filter only",
                 ]
             ),
             "</details>",
@@ -5183,10 +5277,17 @@ def _search_results(root: Path, storage: Storage, term: str) -> list[dict[str, s
 
 
 def _search_result_line(item: dict[str, str]) -> str:
+    category = item["category"]
+    lane = _search_result_lane_key(category)
+    search_text = " ".join([category, item["title"], item["href"], item["summary"]]).lower()
     return (
-        f"<strong>{_e(item['category'])}</strong> "
+        "<span data-search-result-item='true' "
+        f"data-search-result-lane='{_e(lane)}' "
+        f"data-search-result-category='{_e(category)}' "
+        f"data-search-result-text='{_e(search_text)}'>"
+        f"<strong>{_e(category)}</strong> "
         f"<a href='{_e(item['href'])}'>{_e(item['title'])}</a>: "
-        f"{_e(item['summary'])}"
+        f"{_e(item['summary'])}</span>"
     )
 
 
@@ -37057,9 +37158,19 @@ def _html_page(
     .search-result-map-action, .search-result-map-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .search-result-map-action {{ background:var(--accent); color:#fff; }}
     .search-result-map-link {{ background:var(--surface); color:var(--accent); }}
-    .search-state-details, .search-command-evidence, .search-workbench-evidence, .search-result-map-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .search-state-details summary, .search-command-evidence summary, .search-workbench-evidence summary, .search-result-map-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .search-state-details:not([open]) > :not(summary), .search-command-evidence:not([open]) > :not(summary), .search-workbench-evidence:not([open]) > :not(summary), .search-result-map-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .search-result-filter {{ border-left:4px solid var(--ok); }}
+    .search-result-filter-buttons {{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }}
+    .search-result-filter-button {{ display:inline-flex; gap:6px; align-items:center; min-height:34px; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:6px; padding:7px 10px; }}
+    .search-result-filter-button[data-search-result-filter-active='true'] {{ border-color:var(--accent); background:var(--accent); color:#fff; }}
+    .search-result-filter-button span {{ font-variant-numeric:tabular-nums; }}
+    .search-result-filter-memory {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0; }}
+    .search-result-filter-memory-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .search-result-filter-reset {{ min-height:32px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 10px; }}
+    .search-result-filter-empty {{ margin:10px 0 0; }}
+    .search-state-details, .search-command-evidence, .search-workbench-evidence, .search-result-map-evidence, .search-result-filter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .search-state-details summary, .search-command-evidence summary, .search-workbench-evidence summary, .search-result-map-evidence summary, .search-result-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .search-state-details:not([open]) > :not(summary), .search-command-evidence:not([open]) > :not(summary), .search-workbench-evidence:not([open]) > :not(summary), .search-result-map-evidence:not([open]) > :not(summary), .search-result-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
+    @media (max-width: 640px) {{ .search-result-filter-button, .search-result-filter-reset {{ width:100%; justify-content:center; }} .search-result-filter-memory {{ align-items:stretch; }} .search-result-filter-memory-status {{ width:100%; }} }}
     .first-run-command-bar {{ border-left:4px solid var(--accent); margin:12px 0; }}
     .first-run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .first-run-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -37828,6 +37939,101 @@ def _html_page(
       input.focus();
       setClipboardStatus("Set job_name to " + (jobName || "blank") + ".");
     }}
+    function searchResultLaneStorageKey(filterPanel) {{
+      var key = filterPanel ? filterPanel.getAttribute("data-search-result-filter-storage-key") : "";
+      return key || "clankeros-search-result-lane";
+    }}
+    function setSearchResultLaneViewStatus(filterPanel, message) {{
+      var status = filterPanel ? filterPanel.querySelector("[data-search-result-filter-view-status='true']") : null;
+      if (status) {{ status.textContent = message; }}
+    }}
+    function normalizeSearchResultLane(filterPanel, filterKind) {{
+      var normalized = filterKind || "all";
+      var buttons = filterPanel ? Array.prototype.slice.call(filterPanel.querySelectorAll("[data-search-result-filter-kind]")) : [];
+      var found = buttons.some(function(button) {{
+        return (button.getAttribute("data-search-result-filter-kind") || "all") === normalized;
+      }});
+      return found ? normalized : "all";
+    }}
+    function saveSearchResultLaneState(filterPanel, lane) {{
+      if (!window.localStorage || !filterPanel) {{ return; }}
+      try {{
+        window.localStorage.setItem(searchResultLaneStorageKey(filterPanel), JSON.stringify({{ lane: lane }}));
+        setSearchResultLaneViewStatus(filterPanel, "View: saved");
+      }} catch (error) {{
+        setSearchResultLaneViewStatus(filterPanel, "View: local only");
+      }}
+    }}
+    function restoreSearchResultLaneState() {{
+      var filterPanel = document.querySelector("[data-search-result-filter='true']");
+      if (!filterPanel) {{ return; }}
+      if (!window.localStorage) {{
+        setSearchResultLaneViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+      try {{
+        var raw = window.localStorage.getItem(searchResultLaneStorageKey(filterPanel));
+        if (!raw) {{
+          setSearchResultLaneViewStatus(filterPanel, "View: default");
+          return false;
+        }}
+        var saved = JSON.parse(raw);
+        updateSearchResultLane(saved && typeof saved.lane === "string" ? saved.lane : "all", {{ save: false }});
+        setSearchResultLaneViewStatus(filterPanel, "View: restored");
+        return true;
+      }} catch (error) {{
+        setSearchResultLaneViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+    }}
+    function clearSearchResultLaneState() {{
+      var filterPanel = document.querySelector("[data-search-result-filter='true']");
+      if (filterPanel && window.localStorage) {{
+        try {{ window.localStorage.removeItem(searchResultLaneStorageKey(filterPanel)); }} catch (error) {{}}
+      }}
+      updateSearchResultLane("all", {{ save: false }});
+      setSearchResultLaneViewStatus(filterPanel, "View: reset");
+    }}
+    function updateSearchResultLane(filterKind, options) {{
+      var filterPanel = document.querySelector("[data-search-result-filter='true']");
+      if (!filterPanel) {{ return; }}
+      var normalized = normalizeSearchResultLane(filterPanel, filterKind || "all");
+      var results = Array.prototype.slice.call(document.querySelectorAll("[data-search-result-item='true']"));
+      var shown = 0;
+      results.forEach(function(resultNode) {{
+        var lane = resultNode.getAttribute("data-search-result-lane") || "knowledge";
+        var match = normalized === "all" || lane === normalized;
+        var row = resultNode.closest ? resultNode.closest("li") : resultNode.parentElement;
+        if (row) {{ row.hidden = !match; }}
+        resultNode.hidden = !match;
+        if (match) {{ shown += 1; }}
+      }});
+      Array.prototype.slice.call(filterPanel.querySelectorAll("[data-search-result-filter-kind]")).forEach(function(button) {{
+        var active = (button.getAttribute("data-search-result-filter-kind") || "all") === normalized;
+        if (active) {{
+          button.setAttribute("data-search-result-filter-active", "true");
+          button.setAttribute("aria-pressed", "true");
+        }} else {{
+          button.removeAttribute("data-search-result-filter-active");
+          button.setAttribute("aria-pressed", "false");
+        }}
+      }});
+      var status = filterPanel.querySelector("[data-search-result-filter-status='true']");
+      if (status) {{
+        status.textContent = "Showing " + shown + " of " + results.length + " results" + (normalized === "all" ? "." : " in " + normalized.replace("_", " ") + ".");
+      }}
+      var empty = filterPanel.querySelector("[data-search-result-filter-empty='true']");
+      if (empty) {{ empty.hidden = shown !== 0; }}
+      if (!options || options.save !== false) {{ saveSearchResultLaneState(filterPanel, normalized); }}
+    }}
+    function initializeSearchResultLaneState() {{
+      var filterPanel = document.querySelector("[data-search-result-filter='true']");
+      if (!filterPanel) {{ return; }}
+      if (!restoreSearchResultLaneState()) {{
+        updateSearchResultLane("all", {{ save: false }});
+        setSearchResultLaneViewStatus(filterPanel, "View: default");
+      }}
+    }}
     function timelineLaneStorageKey(filterPanel) {{
       var key = filterPanel ? filterPanel.getAttribute("data-goal-timeline-filter-storage-key") : "";
       return key || "clankeros-goal-timeline-lane";
@@ -37949,6 +38155,18 @@ def _html_page(
         fillCiJobName(fillJobButton.getAttribute("data-fill-ci-job") || "");
         return;
       }}
+      var searchFilterReset = target.closest ? target.closest("[data-search-result-filter-reset='true']") : null;
+      if (searchFilterReset) {{
+        event.preventDefault();
+        clearSearchResultLaneState();
+        return;
+      }}
+      var searchFilterButton = target.closest ? target.closest("[data-search-result-filter-kind]") : null;
+      if (searchFilterButton) {{
+        event.preventDefault();
+        updateSearchResultLane(searchFilterButton.getAttribute("data-search-result-filter-kind") || "all");
+        return;
+      }}
       var timelineFilterReset = target.closest ? target.closest("[data-goal-timeline-filter-reset='true']") : null;
       if (timelineFilterReset) {{
         event.preventDefault();
@@ -38003,6 +38221,7 @@ def _html_page(
       }}
     }}
     openCurrentHashDetails();
+    initializeSearchResultLaneState();
     initializeTimelineLaneState();
     restoreWorkspacePanels();
     window.addEventListener("hashchange", openCurrentHashDetails);

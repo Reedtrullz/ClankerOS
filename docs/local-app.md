@@ -555,9 +555,16 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   detail surface. It is content-first and
   opens with a visible `Search Operator Workbench` before shared route/focus
   diagnostics, with cards for the current query, first useful hit, result
-  list, and `/resume`. Search state, workbench evidence, and command evidence
-  stay collapsed by default while preserving result counts by category, first
-  result target, summary, and write-on-GET/network/external-effect/raw
+  list, and `/resume`. A visible read-only `Search Result Map` follows with
+  Goals, Projects, Work, Decisions, Knowledge, and Artifacts lane cards before
+  the flat result list. A browser-local `Search Result Filter` follows the map,
+  narrowing already-rendered results to all, goals, projects, work, decisions,
+  knowledge, or artifacts. It remembers the selected lane per query in
+  `localStorage:clankeros-search-result-lane:<query-hash>` and Reset lane
+  clears that browser-local view without writing search state. Search state,
+  result-map, result-filter, workbench evidence, and command evidence stay
+  collapsed by default while preserving result counts by category, first result
+  target, summary, lane counts, and write-on-GET/network/external-effect/raw
   filesystem boundaries in the DOM. It does not expose arbitrary filesystem
   browsing.
 - `/incidents` - read-only incident and recommendation triage. It starts with

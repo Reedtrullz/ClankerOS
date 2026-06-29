@@ -213,10 +213,16 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   diagnostics, with cards for query, first useful hit, result list, and
   `/resume`. A visible read-only `Search Result Map` follows with Goals,
   Projects, Work, Decisions, Knowledge, and Artifacts lane cards before the
-  flat result list. Search state, result-map, workbench, and command evidence
-  stay collapsed by default while preserving result counts by category, first
-  result, target link, summary, and no-write/no-network/no-raw-filesystem
-  boundaries in the DOM;
+  flat result list. A browser-local `Search Result Filter` follows the map,
+  narrowing already-rendered results to all, goals, projects, work, decisions,
+  knowledge, or artifacts. It remembers the selected lane per query in
+  `localStorage:clankeros-search-result-lane:<query-hash>` and exposes Reset
+  lane to clear that browser-local view while keeping GET rendering free of
+  search-state writes, network access, external effects, and raw filesystem
+  browsing. Search state, result-map, result-filter, workbench, and command
+  evidence stay collapsed by default while preserving result counts by
+  category, first result, target link, summary, lane counts, and
+  no-write/no-network/no-raw-filesystem boundaries in the DOM;
   `/incidents` is action-first and includes a visible read-only
   `Incident Operator Workbench` before shared route/focus diagnostics or
   command readback, with cards for the next triage action, evidence artifact,

@@ -1,5 +1,41 @@
 # Status
 
+## 2026-06-29 Search Result Filter UX
+
+- Added a browser-local `Search Result Filter` to
+  `/search#search-result-filter` after the Search Result Map and before the
+  Search Command Bar.
+- Operators can narrow the already-rendered local search results by All,
+  Goals, Projects, Work, Decisions, Knowledge, or Artifacts without submitting
+  a new request.
+- The selected lane is remembered per query in
+  `localStorage:clankeros-search-result-lane:<query-hash>` and can be cleared
+  with `Reset lane`; the visible status reports `View: default`, `View: saved`,
+  `View: restored`, or `View: reset`.
+- Search result rows now expose stable `data-search-result-item`,
+  `data-search-result-lane`, category, and text metadata so the filter can hide
+  unmatched rendered rows without changing the server-side search result set.
+- The behavior is browser-local display filtering only: no write on GET, no
+  provider calls, no network actions, no execution, no approval, no push, no
+  PR, no deploy, no raw filesystem browsing, and no external mutation.
+- Updated README, local app docs, operating summary, docs status, demo smoke
+  expectations, and first-milestone route/demo regressions.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 61.39s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55615` showed the fixture-backed search filter with 3
+  results, Work lane filtering to 1 visible Work result and 2
+  hidden rows, reload restoring Work with `View: restored`, Reset lane returning
+  All with `Showing 3 of 3 results`, reload after reset staying default, mobile
+  `390x844` stacking lane buttons and Reset lane at `329px` width inside a
+  `358px` panel, no horizontal overflow, no framework overlay, and no console
+  warnings/errors.
+
 ## 2026-06-29 Timeline Lane View Memory UX
 
 - Added browser-local view memory to `/goals/<goal_id>#goal-timeline-filter`

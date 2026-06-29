@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/search#search-result-filter` now adds a browser-local Search Result Filter
+  after the Search Result Map. It narrows already-rendered results by all,
+  goals, projects, work, decisions, knowledge, or artifacts, remembers the
+  selected lane per query in
+  `localStorage:clankeros-search-result-lane:<query-hash>`, and provides Reset
+  lane while preserving read-only GET behavior and no-provider/no-network/
+  no-raw-filesystem boundaries.
 - `/goals/<goal_id>#goal-timeline-filter` now remembers the selected Timeline
   lane per Goal in `localStorage:clankeros-goal-timeline-lane:<goal_id>`, shows
   visible View status, and provides Reset lane while preserving read-only GET
