@@ -156,6 +156,19 @@ COMMAND_PALETTE_GOAL_SECTIONS = [
     ("Operator notes", "goal-operator-notes", "human notes future context"),
     ("Remaining work", "goal-remaining-work", "completion blockers open work"),
 ]
+COMMAND_PALETTE_TODAY_SECTIONS = [
+    ("Current action", "today-current-action", "current next action command form"),
+    ("Goal queue", "today-goal-queue", "active paused completed goals switch goal"),
+    ("Live state", "today-live-state", "reload polling local state"),
+    ("Session summary", "today-session-summary", "return brief continue proof resume"),
+    ("Activity digest", "today-activity-digest", "recent timeline artifacts notes"),
+    ("Operator workbench", "today-operator-workbench", "do check unblock finish"),
+    ("Decision queue", "today-decision-queue", "waiting decisions approval blockers"),
+    ("Decision filter", "today-decision-filter", "decision lane text filter view memory"),
+    ("Workflow map", "today-workflow-map", "lifecycle gate progress next action"),
+    ("CI handoff", "today-ci-handoff", "ci github actions verification proof handoff"),
+    ("Finish today", "today-finish", "workspace save resume surface"),
+]
 WORKFLOW_STEPS = [
     ("Goal / task", "goal, tasks", "local_state", "none", "goal row, task rows"),
     ("Delegate scout", "delegate", "local_state", "task", "delegation row"),
@@ -38460,7 +38473,9 @@ def _command_palette(
         focus_context,
         current_path,
     )
+    today_section_links, today_section_context = _command_palette_today_section_links(current_path)
     commands.extend(goal_section_links)
+    commands.extend(today_section_links)
     seen: set[str] = set()
     open_rows = []
     result_rows = []
@@ -38512,11 +38527,13 @@ def _command_palette(
                 [
                     ("palette_filter_status", "available"),
                     ("palette_filter_result_count", str(result_count)),
-                    ("palette_filter_source", "nav_recent_and_goal_sections"),
+                    ("palette_filter_source", "nav_recent_goal_and_today_sections"),
                     ("palette_filter_scope", "browser_local_commands"),
                     ("palette_filter_goal_section_count", str(len(goal_section_links))),
                     ("palette_filter_goal_section_source", goal_section_context["source"]),
                     ("palette_filter_goal_section_goal", goal_section_context["goal"]),
+                    ("palette_filter_today_section_count", str(len(today_section_links))),
+                    ("palette_filter_today_section_source", today_section_context["source"]),
                     ("palette_filter_write_on_get", "false"),
                     ("palette_filter_provider_calls_taken", "0"),
                     ("palette_filter_network_actions_taken", "0"),
@@ -38527,6 +38544,7 @@ def _command_palette(
                 [
                     "palette_filter_action: type in command-palette-search",
                     *goal_section_context["lines"],
+                    *today_section_context["lines"],
                     "palette_filter_route_history: browser-local viewed pages are added after localStorage readback",
                     "palette_filter_empty_state: show local no-match message",
                     "palette_filter_safety: client-side filtering only",
@@ -38631,6 +38649,35 @@ def _command_palette_goal_section_links(
             f"surface=<a href='{_e(href)}'>{_e(anchor)}</a>"
         )
     return links, {"source": source, "goal": goal_id, "lines": lines}
+
+
+def _command_palette_today_section_links(
+    current_path: str,
+) -> tuple[list[tuple[str, str, str]], dict[str, Any]]:
+    parsed = urlparse(current_path or "/")
+    path = parsed.path or "/"
+    if path != "/today":
+        return [], {
+            "source": "none",
+            "lines": ["palette_today_section_commands: none"],
+        }
+
+    source = "current_route"
+    links: list[tuple[str, str, str]] = []
+    lines: list[str] = [
+        "palette_today_section_commands: route=/today source=current_route",
+    ]
+    for label, anchor, search_terms in COMMAND_PALETTE_TODAY_SECTIONS:
+        href = f"/today#{anchor}"
+        command_label = f"Today {label}"
+        links.append(
+            (_compact_label(command_label, 96), href, f"today section {search_terms}")
+        )
+        lines.append(
+            f"palette_today_section_command: {_e(label)} "
+            f"surface=<a href='{_e(href)}'>{_e(anchor)}</a>"
+        )
+    return links, {"source": source, "lines": lines}
 
 
 def _command_palette_quick_switch(

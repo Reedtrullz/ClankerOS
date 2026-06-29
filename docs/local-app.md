@@ -132,6 +132,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Attention Brief, Focus Queue, recent activity, inbox, recommendations,
   incidents, and first-run panels without writing on GET or adding new action
   authority.
+  The shared command palette adds Today section jump commands only while the
+  current route is `/today`, so the daily cockpit is searchable by current
+  action, goal queue, live state, summary, activity, decisions, workflow, CI,
+  or Finish Today without adding server writes or external effects.
 - `/resume` - read-only return-to-work surface for the saved
   `.clanker/app/workspace.json` state and this browser's local route memory.
   It opens with a primary return link, a `Browser Resume` panel, and

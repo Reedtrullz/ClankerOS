@@ -1,5 +1,38 @@
 # Status
 
+## 2026-06-29 Today Palette Section Shortcuts
+
+- Added route-aware Today section commands to the command palette when the
+  current route is `/today`. The palette now indexes daily cockpit anchors for
+  Current Action, Goal Queue, Live State, Session Summary, Activity Digest,
+  Operator Workbench, Decision Queue, Decision Filter, Workflow Map, CI
+  Handoff, and Finish Today.
+- The new commands are local `/today#...` links only. Palette evidence now
+  reports Today section command counts and source separately from Goal section
+  commands.
+- Updated `docs/status.md`, `docs/local-app.md`, and
+  `docs/OPERATING_SUMMARY.md` so the daily command-palette affordance is
+  visible in operator docs.
+- Safety: read-only GET rendering and browser-local filtering only; no
+  approval, execution, push, PR, deploy, provider call, network action, server
+  write, or external mutation authority added.
+- Verification: TDD red run failed first on missing `Today Current action`;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  passed; `git diff --check` passed; focused local-app pytest passed with
+  `2 passed in 55.71s`; `python3 -m compileall -q agent_os tests` passed.
+- Browser verification: Playwright against throwaway demo `/today` at
+  `http://127.0.0.1:61894/today` opened the palette with `/`, confirmed
+  `50 local commands available`, filtered `ci` to seven visible commands
+  including `/today#today-ci-handoff`, confirmed no desktop horizontal
+  overflow at `1280px`, resized to `390x844`, confirmed the Today CI command
+  remained visible with dialog width `358px`, document/client width `390px`,
+  no horizontal overflow, and zero browser console warnings/errors. The
+  scratch root, server, and browser session were cleaned up.
+- Non-claims: Today palette section shortcuts do not persist workspace state,
+  approve decisions, execute work, create commit/publication requests, mark
+  goals complete, call providers, fetch GitHub, push, create PRs, deploy, or
+  mutate external systems.
+
 ## 2026-06-29 Today Decision Filter
 
 - Added a browser-local `Today Decision Filter` inside

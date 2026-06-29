@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The command palette now adds `/today` section jump commands when the current
+  route is `/today`, so typing for current action, goal queue, live state,
+  session summary, activity digest, operator workbench, decision queue,
+  decision filter, workflow map, CI handoff, or Finish Today opens the daily
+  cockpit anchors directly. These are route-local links only and keep GET
+  rendering read-only with no provider call, network action, write, approval,
+  execution, push, PR, deploy, or external mutation.
 - `/today#today-decision-filter` now narrows already-rendered Today Decision
   Queue rows by all, first-run action, current action, approval type,
   incidents, recommendations, blocked work, or local text search. It remembers

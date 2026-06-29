@@ -5154,9 +5154,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "No local palette matches. Press Search to search all indexed ClankerOS state." in root.body
     assert "data-command-palette-filter-evidence='true'" in root.body
     assert "palette_filter_status</dt><dd>available" in root.body
-    assert "palette_filter_source</dt><dd>nav_recent_and_goal_sections" in root.body
+    assert "palette_filter_source</dt><dd>nav_recent_goal_and_today_sections" in root.body
     assert "palette_filter_scope</dt><dd>browser_local_commands" in root.body
     assert "palette_filter_goal_section_count</dt><dd>0" in root.body
+    assert "palette_filter_today_section_count</dt><dd>0" in root.body
     assert "palette_filter_goal_section_source</dt><dd>none" in root.body
     assert "palette_filter_goal_section_goal</dt><dd>none" in root.body
     assert "palette_filter_write_on_get</dt><dd>false" in root.body
@@ -11194,6 +11195,35 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "data-command-palette-quick-finish='true' href='#today-finish'>"
         "Finish Today</a>"
     ) in today.body
+    assert "Today Current action" in today.body
+    assert "Today Goal queue" in today.body
+    assert "Today Live state" in today.body
+    assert "Today Session summary" in today.body
+    assert "Today Activity digest" in today.body
+    assert "Today Operator workbench" in today.body
+    assert "Today Decision queue" in today.body
+    assert "Today Decision filter" in today.body
+    assert "Today Workflow map" in today.body
+    assert "Today CI handoff" in today.body
+    assert "Today Finish today" in today.body
+    assert "href='/today#today-current-action'" in today.body
+    assert "href='/today#today-goal-queue'" in today.body
+    assert "href='/today#today-live-state'" in today.body
+    assert "href='/today#today-session-summary'" in today.body
+    assert "href='/today#today-activity-digest'" in today.body
+    assert "href='/today#today-operator-workbench'" in today.body
+    assert "href='/today#today-decision-queue'" in today.body
+    assert "href='/today#today-decision-filter'" in today.body
+    assert "href='/today#today-workflow-map'" in today.body
+    assert "href='/today#today-ci-handoff'" in today.body
+    assert "href='/today#today-finish'" in today.body
+    assert "today section current next action command form" in today.body
+    assert "today section ci github actions verification proof handoff" in today.body
+    assert "palette_filter_today_section_count</dt><dd>11" in today.body
+    assert "palette_filter_today_section_source</dt><dd>current_route" in today.body
+    assert "palette_today_section_commands: route=/today source=current_route" in today.body
+    assert "palette_today_section_command: Decision filter surface=<a href='/today#today-decision-filter'>today-decision-filter</a>" in today.body
+    assert "palette_today_section_command: CI handoff surface=<a href='/today#today-ci-handoff'>today-ci-handoff</a>" in today.body
     assert (
         "palette_quick_switch_finish_surface</dt><dd><a href='#today-finish'>"
         "#today-finish</a>"
@@ -11629,8 +11659,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-command-palette-filter='true'" in goal.body
     assert "data-command-palette-result-list='true'" in goal.body
     assert "data-palette-result='true'" in goal.body
-    assert "palette_filter_source</dt><dd>nav_recent_and_goal_sections" in goal.body
+    assert "palette_filter_source</dt><dd>nav_recent_goal_and_today_sections" in goal.body
     assert "palette_filter_goal_section_count</dt><dd>14" in goal.body
+    assert "palette_filter_today_section_count</dt><dd>0" in goal.body
     assert "palette_filter_goal_section_source</dt><dd>current_route" in goal.body
     assert f"palette_filter_goal_section_goal</dt><dd>{result.goal_id}" in goal.body
     assert (
