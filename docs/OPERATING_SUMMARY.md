@@ -559,9 +559,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   hidden; it does not fetch GitHub status, call providers, push, create PRs,
   deploy, or mutate external systems. They also include a read-only
   `Goal Section Index` with visible Operate, Proof, Work, Knowledge, and
-  Finish switchboard cards plus stable collapsed in-page anchors including the
-  command bar, workflow map, and major Goal surfaces, so operators can jump
-  through a long Goal workbench without leaving the page or triggering writes.
+  Finish switchboard cards plus a browser-local section finder over stable
+  in-page anchors including the command bar, workflow map, and major Goal
+  surfaces, so operators can filter/jump through a long Goal workbench without
+  leaving the page or triggering writes.
   Every app page also includes a shared read-only `Operator Ribbon` above the
   sidebar/page shell. It derives from the saved workspace goal, current lead
   goal, or first-run state and opens with compact Now, Goal, Attention,

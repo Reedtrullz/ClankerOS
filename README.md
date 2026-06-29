@@ -384,10 +384,10 @@ The read-only `Goal Continuation Rail` follows the digest as visible
 Now, Next Gate, Then, Publish Boundary, and Finish Today cards, while detailed
 gate rows, exact surfaces, manual publish boundary, and zero-effect counters
 stay in collapsed continuation evidence. Goal
-Section Index remains available as a collapsed full anchor map and links
-directly to the Timeline, Activity, and Git command bars, so the long Goal page
-can jump to the scan-first operational panels without dropping a fifty-link
-readback into the top of the page. Goal
+Section Index now includes a browser-local section finder with a type-to-filter
+input, match count, first-match jump, and compact anchor chips before the
+collapsed evidence ledger, so the long Goal page can jump to operational panels
+such as approvals, memory, or git without memorizing the page structure. Goal
 Overview now starts with a read-only `Goal Overview Command Bar` with visible
 Now, Scope, Progress, Waiting, and Safety cards before collapsed command
 evidence and collapsed raw metadata. Goal Risk now starts with visible Now,

@@ -10850,9 +10850,19 @@ def _goal_section_index() -> str:
         ("Remaining work command", "goal-remaining-work-command-bar"),
         ("Remaining work", "goal-remaining-work"),
     ]
-    links = [
-        f"<a href='#{_e(anchor)}'>{_e(label)}</a>"
+    finder_items = [
+        (
+            "<li class='goal-section-finder-item' data-goal-section-result='true' "
+            f"data-goal-section-label='{_e(label.lower())}' "
+            f"data-goal-section-anchor='{_e(anchor)}'>"
+            f"<a href='#{_e(anchor)}'>{_e(label)}</a>"
+            "</li>"
+        )
         for label, anchor in sections
+    ]
+    finder_lines = [
+        f"goal_section_finder_target: {_e(label)} -> #{_e(anchor)}"
+        for label, anchor in sections[:8]
     ]
     switchboard_cards = [
         (
@@ -10924,11 +10934,68 @@ def _goal_section_index() -> str:
             "<div class='goal-section-index-grid' data-goal-section-index-actions='true'>",
             switchboard,
             "</div>",
+            "<div class='goal-section-finder' data-goal-section-finder='true'>",
+            "<label class='goal-section-finder-label' for='goal-section-finder-input'>Find section</label>",
+            "<div class='goal-section-finder-row'>",
+            "<input id='goal-section-finder-input' class='goal-section-finder-input' "
+            "type='search' autocomplete='off' placeholder='approval, memory, git' "
+            "data-goal-section-finder-input='true'>",
+            f"<span class='goal-section-finder-count' data-goal-section-finder-count='true'>{len(sections)} sections</span>",
+            "<a class='goal-section-finder-first' data-goal-section-finder-first='true' href='#goal-summary'>Summary</a>",
+            "</div>",
+            "<nav aria-label='Find Goal section'>",
+            "<ul class='goal-section-finder-list' data-goal-section-finder-results='true'>",
+            "".join(finder_items),
+            "</ul>",
+            "</nav>",
+            "<p class='muted goal-section-finder-empty' data-goal-section-finder-empty='true' hidden>No matching sections.</p>",
+            "</div>",
+            """<script>
+(function () {
+  var root = document.querySelector("[data-goal-section-finder='true']");
+  if (!root) return;
+  var input = root.querySelector("[data-goal-section-finder-input='true']");
+  var count = root.querySelector("[data-goal-section-finder-count='true']");
+  var first = root.querySelector("[data-goal-section-finder-first='true']");
+  var empty = root.querySelector("[data-goal-section-finder-empty='true']");
+  var items = Array.prototype.slice.call(root.querySelectorAll("[data-goal-section-result='true']"));
+  function update() {
+    var query = input && input.value ? input.value.trim().toLowerCase() : "";
+    var visible = [];
+    items.forEach(function (item) {
+      var text = (item.getAttribute("data-goal-section-label") || "") + " " + (item.getAttribute("data-goal-section-anchor") || "");
+      var matched = !query || text.indexOf(query) !== -1;
+      item.hidden = !matched;
+      if (matched) visible.push(item);
+    });
+    if (count) count.textContent = visible.length + " of " + items.length + " sections";
+    if (empty) empty.hidden = visible.length !== 0;
+    if (first) {
+      var firstItem = visible[0];
+      if (firstItem) {
+        var link = firstItem.querySelector("a");
+        first.hidden = false;
+        first.href = link ? link.href : "#goal-section-index";
+        first.textContent = link ? link.textContent : "First match";
+      } else {
+        first.hidden = true;
+        first.removeAttribute("href");
+        first.textContent = "No match";
+      }
+    }
+  }
+  if (input) input.addEventListener("input", update);
+  update();
+})();
+</script>""",
             f"<details class='goal-section-index-evidence' data-goal-section-index-evidence='true'><summary>Full Goal section index ({len(sections)})</summary>",
             _kv(
                 [
                     ("goal_section_index_status", "available"),
                     ("goal_section_count", str(len(sections))),
+                    ("goal_section_finder_status", "available"),
+                    ("goal_section_finder_result_count", str(len(sections))),
+                    ("goal_section_finder_default_first", "goal-summary"),
                     ("goal_section_switchboard_status", "available"),
                     ("goal_section_switchboard_card_count", str(len(switchboard_cards))),
                     ("goal_section_switchboard_primary", "goal-next-action"),
@@ -10947,11 +11014,18 @@ def _goal_section_index() -> str:
                     "goal_section_switchboard_work: <a href='#goal-coder-handoff-digest'>Coder handoff</a>",
                     "goal_section_switchboard_knowledge: <a href='#goal-artifact-command-bar'>Artifacts</a>",
                     "goal_section_switchboard_finish: <a href='#goal-completion-readiness'>Completion</a>",
+                    "goal_section_finder_default: <a href='#goal-summary'>Summary</a>",
+                    *finder_lines,
                     "goal_section_switchboard_safety: read-only local anchor navigation",
                 ]
             ),
             "<nav aria-label='Full Goal section index'>",
-            _ul(links),
+            _ul(
+                [
+                    f"<a href='#{_e(anchor)}'>{_e(label)}</a>"
+                    for label, anchor in sections
+                ]
+            ),
             "</nav>",
             "</details>",
             "</section>",
@@ -35914,6 +35988,18 @@ def _html_page(
     .goal-section-index-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .goal-section-index-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .goal-section-index-primary .goal-section-index-link {{ background:var(--accent); color:#fff; }}
+    .goal-section-finder {{ margin:12px 0; padding:12px; border:1px solid var(--line); background:var(--panel); }}
+    .goal-section-finder-label {{ display:block; margin:0 0 6px; color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .goal-section-finder-row {{ display:grid; grid-template-columns:minmax(180px, 1fr) auto auto; gap:8px; align-items:center; }}
+    .goal-section-finder-input {{ min-height:36px; min-width:0; width:100%; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:7px 10px; }}
+    .goal-section-finder-count {{ color:var(--muted); white-space:nowrap; }}
+    .goal-section-finder-first {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border:1px solid var(--accent); border-radius:6px; background:var(--accent); color:#fff; text-decoration:none; overflow-wrap:anywhere; }}
+    .goal-section-finder-list {{ list-style:none; padding:0; margin:10px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:8px; }}
+    .goal-section-finder-item {{ min-width:0; }}
+    .goal-section-finder-item a {{ display:flex; min-height:32px; align-items:center; padding:7px 9px; border:1px solid var(--line); border-radius:6px; background:var(--surface); text-decoration:none; overflow-wrap:anywhere; }}
+    .goal-section-finder-item a:hover, .goal-section-finder-item a:focus {{ border-color:var(--accent); outline:0; }}
+    .goal-section-finder-empty {{ margin:8px 0 0; }}
+    @media (max-width: 640px) {{ .goal-section-finder-row {{ grid-template-columns:1fr; }} .goal-section-finder-count {{ white-space:normal; }} .goal-section-finder-first {{ width:100%; }} }}
     .goal-section-index ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:8px; }}
     .goal-section-index li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     body:has(.goal-action-dock) main {{ padding-bottom:24px; }}

@@ -11224,6 +11224,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_section_index_status</dt><dd>available" in goal.body
     assert "goal_section_count</dt><dd>" in goal.body
     assert "data-goal-section-index-actions='true'" in goal.body
+    assert "data-goal-section-finder='true'" in goal.body
+    assert "data-goal-section-finder-input='true'" in goal.body
+    assert "data-goal-section-finder-count='true'>56 sections" in goal.body
+    assert "data-goal-section-finder-first='true' href='#goal-summary'>Summary</a>" in goal.body
+    assert "data-goal-section-finder-results='true'" in goal.body
+    assert "data-goal-section-result='true' data-goal-section-label='approval command'" in goal.body
+    assert "data-goal-section-anchor='goal-git-status'" in goal.body
+    assert "data-goal-section-finder-empty='true' hidden" in goal.body
     assert "data-goal-section-index-operate='true'" in goal.body
     assert "data-goal-section-index-proof='true'" in goal.body
     assert "data-goal-section-index-work='true'" in goal.body
@@ -11231,6 +11239,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-section-index-finish='true'" in goal.body
     assert "data-goal-section-index-primary='true' href='#goal-next-action'>Next action</a>" in goal.body
     assert "goal_section_switchboard_status</dt><dd>available" in goal.body
+    assert "goal_section_finder_status</dt><dd>available" in goal.body
+    assert "goal_section_finder_result_count</dt><dd>56" in goal.body
+    assert "goal_section_finder_default_first</dt><dd>goal-summary" in goal.body
     assert "goal_section_switchboard_card_count</dt><dd>5" in goal.body
     assert "goal_section_switchboard_primary</dt><dd>goal-next-action" in goal.body
     assert "goal_section_switchboard_proof_surface</dt><dd>goal-verification-command-bar" in goal.body
@@ -11240,10 +11251,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_section_switchboard_proof: <a href='#goal-verification-command-bar'>Verification</a>" in goal.body
     assert "goal_section_switchboard_work: <a href='#goal-coder-handoff-digest'>Coder handoff</a>" in goal.body
     assert "goal_section_switchboard_finish: <a href='#goal-completion-readiness'>Completion</a>" in goal.body
+    assert "goal_section_finder_default: <a href='#goal-summary'>Summary</a>" in goal.body
+    assert "goal_section_finder_target: Summary -> #goal-summary" in goal.body
+    assert "goal_section_finder_target: Operator workbench -> #goal-operator-workbench" in goal.body
     assert "goal_section_switchboard_safety: read-only local anchor navigation" in goal.body
     assert goal.body.index("data-goal-section-index-actions='true'") < goal.body.index(
+        "data-goal-section-finder='true'"
+    )
+    assert goal.body.index("data-goal-section-finder='true'") < goal.body.index(
         "data-goal-section-index-evidence='true'"
     )
+    assert "items.forEach(function (item)" in goal.body
+    assert "visible.length + \" of \" + items.length + \" sections\"" in goal.body
     assert "goal_section_index_write_on_get</dt><dd>false" in goal.body
     assert "goal_section_index_external_effects_created</dt><dd>false" in goal.body
     assert "href='#goal-summary'" in goal.body

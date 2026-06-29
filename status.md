@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-29 Goal Section Finder UX
+
+- Added a browser-local section finder to the `Goal Section Index` on
+  `/goals/<goal_id>`.
+- The finder exposes a search input, live match count, first-match jump, compact
+  anchor chips, and a no-results state over the existing Goal section anchors.
+- The behavior is read-only anchor navigation: no write on GET, no provider
+  calls, no network actions, no execution, no approval, no push, no PR, no
+  deploy, and no external mutation.
+- Updated README, local app docs, operating summary, docs status, and the
+  fixture-backed Goal route regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state --tb=short` passed with
+  `1 passed, 515 deselected`; `python3 -m compileall -q agent_os tests`;
+  `git diff --check`; bounded temp-root `app-smoke-test`; bounded temp-root
+  `app-demo-smoke-test`; in-app Browser QA against a throwaway demo server on
+  `127.0.0.1:8795` showed `git` filtering to `2 of 56` sections with first
+  jump `Git command`, and mobile-width `approval` filtering to `2 of 56`
+  sections with first jump `Approval command`; console warnings/errors were
+  empty.
+
 ## 2026-06-29 Artifact Goal Title Context UX
 
 - Made stored Goal artifact pages title-first across the `Artifact Operator

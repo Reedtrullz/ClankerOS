@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals/<goal_id>#goal-section-index` now includes a browser-local section
+  finder with match count, first-match jump, compact anchor chips, and
+  no-write/no-network posture so long Goal pages can be navigated by typing
+  section names such as approval, memory, or git.
 - `/artifacts?path=...` now renders stored Goal context title-first across the
   Artifact Operator Workbench, Relationship Map, Command Bar, and Review Brief.
   Raw Goal ids and label-source fields remain in collapsed evidence, and

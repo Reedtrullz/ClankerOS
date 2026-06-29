@@ -268,9 +268,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   resume route visible near the top of the Goal without covering later
   controls while jumping directly to the confirmed form without adding a
   second action form. The Goal Section Index now opens with visible Operate,
-  Proof, Work, Knowledge, and Finish switchboard cards before the collapsed
-  full anchor map, so long Goal pages remain navigable from their scan-first
-  operator surfaces without showing the whole anchor list by default. Goal
+  Proof, Work, Knowledge, and Finish switchboard cards plus a browser-local
+  section finder with a match count, first-match jump, and compact anchor
+  chips before collapsed evidence, so long Goal pages remain navigable from
+  their scan-first operator surfaces without requiring CLI recall. Goal
   Overview starts with a read-only `Goal Overview Command Bar` with visible
   Now, Scope, Progress, Waiting, and Safety cards before collapsed command
   evidence and collapsed raw goal metadata. Goal Risk starts with visible Now,
