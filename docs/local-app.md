@@ -888,7 +888,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   that view per Goal in
   `localStorage:clankeros-goal-artifact-filter:<goal_id>`, and exposes Reset
   filter without writing Goal state, contacting providers, using the network,
-  or browsing raw filesystem paths. The Goal timeline backfills
+  or browsing raw filesystem paths. A browser-local `Goal Artifact Reader`
+  follows it, previews one already-registered artifact inline with the same
+  bounded inert renderers used by `/artifacts`, remembers the selected artifact
+  per Goal in `localStorage:clankeros-goal-artifact-reader:<goal_id>`, and
+  exposes Reset reader without writing Goal state, executing content,
+  contacting providers, using the network, or browsing raw filesystem paths.
+  The Goal timeline backfills
   generic `Artifact recorded` entries
   from the same bounded artifact registry after workflow-specific timeline
   events are added, so artifacts such as context-pack JSON, handoff JSON,

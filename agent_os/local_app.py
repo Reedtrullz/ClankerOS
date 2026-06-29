@@ -87,6 +87,7 @@ LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8787
 MAX_ARTIFACT_BYTES = 64_000
+GOAL_ARTIFACT_READER_BYTES = 8_000
 NO_EXTERNAL_EFFECT_CLAIMS = [
     "no provider calls",
     "no network actions except local browser/server loopback",
@@ -152,6 +153,7 @@ COMMAND_PALETTE_GOAL_SECTIONS = [
     ("Runs", "goal-runs", "execution run evidence"),
     ("Approvals", "goal-approvals", "operator approval gates"),
     ("Artifacts", "goal-artifacts", "produced files patches handoffs"),
+    ("Artifact reader", "goal-artifact-reader", "preview selected artifact in page"),
     ("Memory", "goal-memory", "project memory operator notes"),
     ("Skills used", "goal-skills-used", "skills usage generated skills"),
     ("Git status", "goal-git-status", "branch commit diff posture"),
@@ -939,6 +941,8 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-artifact-explorer-evidence='true'",
                 "data-goal-artifact-filter='true'",
                 "data-goal-artifact-filter-evidence='true'",
+                "data-goal-artifact-reader='true'",
+                "data-goal-artifact-reader-evidence='true'",
                 "data-goal-artifact-groups='true'",
                 "data-goal-memory-actions='true'",
                 "data-goal-memory-now='true'",
@@ -7978,6 +7982,13 @@ def _workspace_view_memory_panel() -> str:
             "Per-Goal artifact type, source, and text filters",
         ),
         (
+            "artifact-reader",
+            "Artifact Reader",
+            "prefix",
+            "clankeros-goal-artifact-reader:",
+            "Per-Goal selected artifact preview",
+        ),
+        (
             "notes",
             "Notes Filters",
             "prefix",
@@ -14292,6 +14303,7 @@ def _goal_section_index(goal_id: str) -> str:
         ("Artifact command", "goal-artifact-command-bar"),
         ("Artifacts", "goal-artifacts"),
         ("Artifact explorer", "goal-artifact-explorer"),
+        ("Artifact reader", "goal-artifact-reader"),
         ("Memory command", "goal-memory-command-bar"),
         ("Memory", "goal-memory"),
         ("Skills command", "goal-skills-command-bar"),
@@ -21199,6 +21211,7 @@ def _goal_artifact_explorer(
             ]
         ),
         "</details>",
+        _goal_artifact_reader(root, state, records),
         "<div class='goal-artifact-groups' data-goal-artifact-groups='true'>",
     ]
     if not records:
@@ -21231,6 +21244,204 @@ def _goal_artifact_explorer(
     sections.append("</div>")
     sections.append("</section>")
     return "".join(sections)
+
+
+def _goal_artifact_reader(
+    root: Path,
+    state: dict[str, Any],
+    records: list[dict[str, str]],
+) -> str:
+    goal = state["goal"]
+    available_records = [record for record in records if record["status"] == "available"]
+    selected_path = _goal_latest_artifact_path(root, state)
+    selected_record = next(
+        (record for record in available_records if record["path"] == selected_path),
+        None,
+    )
+    if selected_record is None and available_records:
+        selected_record = available_records[-1]
+        selected_path = selected_record["path"]
+    elif selected_record is None:
+        selected_path = ""
+    previews = [
+        _goal_artifact_preview(root, record, selected_path=selected_path)
+        for record in available_records
+    ]
+    selected_preview = next(
+        (preview for preview in previews if preview["path"] == selected_path),
+        previews[-1] if previews else None,
+    )
+    options = [
+        (
+            f"<option value='{_e(preview['path'])}'"
+            f"{' selected' if preview['path'] == selected_path else ''}>"
+            f"{_e(preview['label'])} · {_e(preview['kind'])}</option>"
+        )
+        for preview in previews
+    ]
+    preview_html = "".join(str(preview["html"]) for preview in previews)
+    selected_label = str(selected_preview["label"]) if selected_preview else "none"
+    selected_kind = str(selected_preview["kind"]) if selected_preview else "none"
+    selected_source = str(selected_preview["source"]) if selected_preview else "none"
+    selected_renderer = str(selected_preview["renderer"]) if selected_preview else "none"
+    selected_bytes = str(selected_preview["rendered_bytes"]) if selected_preview else "0"
+    selected_lines = str(selected_preview["line_count"]) if selected_preview else "0"
+    selected_truncated = str(selected_preview["truncated"]).lower() if selected_preview else "false"
+    selected_href = _artifact_href(root, selected_path) if selected_path else "#goal-artifact-reader"
+    storage_key = f"clankeros-goal-artifact-reader:{goal.id}"
+    status = "available" if previews else "empty"
+    return "".join(
+        [
+            "<section id='goal-artifact-reader' class='panel goal-artifact-reader' data-goal-artifact-reader='true' "
+            f"data-goal-artifact-reader-storage-key='{_e(storage_key)}'>",
+            "<h3>Goal Artifact Reader</h3>",
+            "<p class='muted'>Preview one known Goal artifact in-page with the same inert Markdown, JSON, patch, and text renderers used by the full artifact viewer.</p>",
+            "<div class='goal-artifact-reader-toolbar' data-goal-artifact-reader-toolbar='true'>",
+            "<label>Read <select data-goal-artifact-reader-select='true'>",
+            "".join(options) if options else "<option value=''>No available artifacts</option>",
+            "</select></label>",
+            f"<a class='goal-artifact-reader-open' data-goal-artifact-reader-open='true' href='{_e(selected_href)}'>Open full artifact</a>",
+            "<span class='goal-artifact-reader-view-status' data-goal-artifact-reader-view-status='true'>View: default</span>",
+            "<button type='button' class='goal-artifact-reader-reset' data-goal-artifact-reader-reset='true'>Reset reader</button>",
+            "</div>",
+            "<details class='goal-artifact-reader-evidence' data-goal-artifact-reader-evidence='true'><summary>Goal artifact reader evidence</summary>",
+            _kv(
+                [
+                    ("goal_artifact_reader_status", status),
+                    ("goal_artifact_reader_goal", goal.id),
+                    ("goal_artifact_reader_project", goal.project_id),
+                    ("goal_artifact_reader_total_records", str(len(records))),
+                    ("goal_artifact_reader_preview_records", str(len(previews))),
+                    ("goal_artifact_reader_selected_artifact", selected_label),
+                    ("goal_artifact_reader_selected_path", selected_path or "none"),
+                    ("goal_artifact_reader_selected_kind", selected_kind),
+                    ("goal_artifact_reader_selected_source", selected_source),
+                    ("goal_artifact_reader_selected_renderer", selected_renderer),
+                    ("goal_artifact_reader_selected_bytes", selected_bytes),
+                    ("goal_artifact_reader_selected_line_count", selected_lines),
+                    ("goal_artifact_reader_selected_truncated", selected_truncated),
+                    ("goal_artifact_reader_full_surface", SafeHtml(f"<a href='{_e(selected_href)}'>{_e(selected_href)}</a>")),
+                    ("goal_artifact_reader_byte_cap", str(GOAL_ARTIFACT_READER_BYTES)),
+                    ("goal_artifact_reader_persistence", "browser_local_view_memory"),
+                    ("goal_artifact_reader_memory_storage", f"localStorage:{storage_key}"),
+                    ("goal_artifact_reader_memory_fields", "path goal"),
+                    ("goal_artifact_reader_reset", "available"),
+                    ("goal_artifact_reader_raw_filesystem_browsing", "false"),
+                    ("goal_artifact_reader_content_executed", "false"),
+                    ("goal_artifact_reader_write_on_get", "false"),
+                    ("goal_artifact_reader_provider_calls_taken", "0"),
+                    ("goal_artifact_reader_network_actions_taken", "0"),
+                    ("goal_artifact_reader_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_artifact_reader_now: {_e(selected_label)} kind={_e(selected_kind)}",
+                    f"goal_artifact_reader_open: <a href='{_e(selected_href)}'>{_e(selected_href)}</a>",
+                    "goal_artifact_reader_memory: restores selected known artifact from browser storage per Goal",
+                    "goal_artifact_reader_safety: bounded inert in-page preview of registered Goal artifacts only",
+                ]
+            ),
+            "</details>",
+            "<div class='goal-artifact-reader-previews' data-goal-artifact-reader-previews='true'>",
+            preview_html or "<p class='muted' data-goal-artifact-reader-empty='true'>No available Goal artifacts to preview yet.</p>",
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _goal_artifact_preview(
+    root: Path,
+    record: dict[str, str],
+    *,
+    selected_path: str,
+) -> dict[str, Any]:
+    relative_path = record["path"]
+    hidden_attr = "" if relative_path == selected_path else " hidden"
+    fallback = {
+        "label": record["label"],
+        "path": relative_path,
+        "kind": record["kind"],
+        "source": record["source"],
+        "renderer": "missing",
+        "rendered_bytes": 0,
+        "line_count": 0,
+        "truncated": False,
+    }
+    try:
+        path = resolve_artifact_path(root, relative_path)
+    except ValueError:
+        fallback["html"] = SafeHtml(
+            "<article class='goal-artifact-preview' data-goal-artifact-preview='true' "
+            f"data-goal-artifact-reader-path='{_e(relative_path)}'{hidden_attr}>"
+            f"<h4>{_e(record['label'])}</h4>"
+            "<p class='muted'>Artifact path was rejected by the bounded viewer.</p>"
+            "</article>"
+        )
+        return fallback
+    if not path.exists() or not path.is_file():
+        fallback["html"] = SafeHtml(
+            "<article class='goal-artifact-preview' data-goal-artifact-preview='true' "
+            f"data-goal-artifact-reader-path='{_e(relative_path)}'{hidden_attr}>"
+            f"<h4>{_e(record['label'])}</h4>"
+            "<p class='muted'>Artifact file is missing.</p>"
+            "</article>"
+        )
+        return fallback
+    size = path.stat().st_size
+    data = path.read_bytes()[:GOAL_ARTIFACT_READER_BYTES]
+    truncated = size > GOAL_ARTIFACT_READER_BYTES
+    text = data.decode("utf-8", errors="replace")
+    if path.suffix == ".json" and not truncated:
+        try:
+            text = json.dumps(json.loads(text), indent=2, sort_keys=True)
+        except json.JSONDecodeError:
+            pass
+    render_family = _artifact_render_family(path)
+    renderer = _artifact_renderer_name(path)
+    line_count = len(text.splitlines())
+    rendered = _render_artifact_content(text, render_family, renderer)
+    full_href = _artifact_href(root, relative_path)
+    fallback.update(
+        {
+            "renderer": renderer,
+            "rendered_bytes": len(data),
+            "line_count": line_count,
+            "truncated": truncated,
+        }
+    )
+    fallback["html"] = SafeHtml(
+        "<article class='goal-artifact-preview' data-goal-artifact-preview='true' "
+        f"data-goal-artifact-reader-path='{_e(relative_path)}' "
+        f"data-goal-artifact-reader-label='{_e(record['label'])}' "
+        f"data-goal-artifact-reader-kind='{_e(record['kind'])}' "
+        f"data-goal-artifact-reader-source='{_e(record['source'])}' "
+        f"data-goal-artifact-reader-renderer='{_e(renderer)}' "
+        f"data-goal-artifact-reader-bytes='{_e(str(len(data)))}' "
+        f"data-goal-artifact-reader-lines='{_e(str(line_count))}' "
+        f"data-goal-artifact-reader-truncated='{str(truncated).lower()}'"
+        f"{hidden_attr}>"
+        "<div class='goal-artifact-preview-header'>"
+        f"<h4>{_e(record['label'])}</h4>"
+        f"<a class='goal-artifact-reader-open-inline' href='{_e(full_href)}'>Open full artifact</a>"
+        "</div>"
+        + _kv(
+            [
+                ("reader_artifact_path", relative_path),
+                ("reader_artifact_kind", record["kind"]),
+                ("reader_artifact_source", record["source"]),
+                ("reader_artifact_renderer", renderer),
+                ("reader_artifact_bytes", str(len(data))),
+                ("reader_artifact_line_count", str(line_count)),
+                ("reader_artifact_truncated", str(truncated).lower()),
+            ]
+        )
+        + rendered
+        + ("<p class='muted'>Preview truncated. Open the full artifact for complete content.</p>" if truncated else "")
+        + "</article>"
+    )
+    return fallback
 
 
 def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, str]]:
@@ -41532,7 +41743,7 @@ def _html_page(
     .goal-artifact-action, .goal-artifact-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .goal-artifact-action {{ background:var(--accent); color:#fff; }}
     .goal-artifact-link {{ background:var(--surface); color:var(--accent); }}
-    .goal-artifact-filter {{ margin:12px 0; border:1px solid var(--line); border-left:4px solid var(--ok); background:var(--panel); padding:12px; }}
+    .goal-artifact-filter, .goal-artifact-reader {{ margin:12px 0; border:1px solid var(--line); border-left:4px solid var(--ok); background:var(--panel); padding:12px; }}
     .goal-artifact-filter h3 {{ margin-top:0; }}
     .goal-artifact-filter-buttons {{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }}
     .goal-artifact-filter-button {{ display:inline-flex; gap:6px; align-items:center; min-height:34px; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:6px; padding:7px 10px; }}
@@ -41545,11 +41756,22 @@ def _html_page(
     .goal-artifact-filter-memory-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
     .goal-artifact-filter-reset {{ min-height:32px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 10px; }}
     .goal-artifact-filter-empty {{ margin:10px 0 0; }}
-    .goal-artifact-command-evidence, .goal-artifact-list, .goal-artifact-explorer-evidence, .goal-artifact-filter-evidence, .goal-artifact-group {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .goal-artifact-command-evidence summary, .goal-artifact-list summary, .goal-artifact-explorer-evidence summary, .goal-artifact-filter-evidence summary, .goal-artifact-group summary {{ cursor:pointer; font-weight:700; }}
-    .goal-artifact-command-evidence:not([open]) > :not(summary), .goal-artifact-list:not([open]) > :not(summary), .goal-artifact-explorer-evidence:not([open]) > :not(summary), .goal-artifact-filter-evidence:not([open]) > :not(summary), .goal-artifact-group:not([open]) > :not(summary) {{ display:none; }}
+    .goal-artifact-reader-toolbar {{ display:grid; grid-template-columns:minmax(240px, 1fr) auto auto auto; gap:10px; align-items:end; margin:10px 0; }}
+    .goal-artifact-reader-toolbar label {{ display:grid; gap:4px; color:var(--muted); min-width:0; }}
+    .goal-artifact-reader-toolbar select {{ width:100%; min-height:34px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 8px; }}
+    .goal-artifact-reader-open, .goal-artifact-reader-open-inline {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-artifact-reader-view-status {{ min-height:34px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .goal-artifact-reader-reset {{ min-height:34px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:7px 10px; }}
+    .goal-artifact-reader-previews {{ min-width:0; margin-top:10px; }}
+    .goal-artifact-preview {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow:hidden; }}
+    .goal-artifact-preview-header {{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; }}
+    .goal-artifact-preview h4 {{ margin:0; }}
+    .goal-artifact-preview .artifact-render-shell {{ max-height:420px; overflow:auto; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-artifact-command-evidence, .goal-artifact-list, .goal-artifact-explorer-evidence, .goal-artifact-filter-evidence, .goal-artifact-reader-evidence, .goal-artifact-group {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-artifact-command-evidence summary, .goal-artifact-list summary, .goal-artifact-explorer-evidence summary, .goal-artifact-filter-evidence summary, .goal-artifact-reader-evidence summary, .goal-artifact-group summary {{ cursor:pointer; font-weight:700; }}
+    .goal-artifact-command-evidence:not([open]) > :not(summary), .goal-artifact-list:not([open]) > :not(summary), .goal-artifact-explorer-evidence:not([open]) > :not(summary), .goal-artifact-filter-evidence:not([open]) > :not(summary), .goal-artifact-reader-evidence:not([open]) > :not(summary), .goal-artifact-group:not([open]) > :not(summary) {{ display:none; }}
     .goal-artifact-groups {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin:12px 0; }}
-    @media (max-width: 640px) {{ .goal-artifact-filter-button, .goal-artifact-filter-reset {{ width:100%; justify-content:center; }} .goal-artifact-filter-controls {{ grid-template-columns:1fr; }} .goal-artifact-filter-memory {{ align-items:stretch; }} .goal-artifact-filter-memory-status {{ width:100%; }} }}
+    @media (max-width: 640px) {{ .goal-artifact-filter-button, .goal-artifact-filter-reset, .goal-artifact-reader-open, .goal-artifact-reader-reset {{ width:100%; justify-content:center; }} .goal-artifact-filter-controls, .goal-artifact-reader-toolbar {{ grid-template-columns:1fr; }} .goal-artifact-filter-memory {{ align-items:stretch; }} .goal-artifact-filter-memory-status, .goal-artifact-reader-view-status {{ width:100%; }} }}
     .goal-memory-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-memory-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-memory-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -41748,7 +41970,7 @@ def _html_page(
     .goal-continuation-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-continuation-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-continuation-evidence:not([open]) > :not(summary) {{ display:none; }}
-    #today-decision-queue, #today-decision-filter, #goal-progress-meter, #goal-attention-digest, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-coder-handoff-digest, #goal-session-digest, #goal-activity-pulse, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence-digest, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
+    #today-decision-queue, #today-decision-filter, #goal-progress-meter, #goal-attention-digest, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-coder-handoff-digest, #goal-session-digest, #goal-activity-pulse, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence-digest, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
     .goal-workflow-map {{ border-left:4px solid var(--accent); }}
     .goal-workflow-map dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .goal-workflow-map-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
@@ -42796,7 +43018,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .workflow-scope-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #goal-attention-digest {{ scroll-margin-top:260px; }} .goal-attention-grid {{ grid-template-columns:1fr; }} }}
@@ -43586,6 +43808,96 @@ def _html_page(
       if (!restoreGoalArtifactFilterState()) {{
         updateGoalArtifactFilter({{ type: "all", source: "all", query: "", save: false }});
         setGoalArtifactFilterViewStatus(filterPanel, "View: default");
+      }}
+    }}
+    function goalArtifactReaderStorageKey(reader) {{
+      var key = reader ? reader.getAttribute("data-goal-artifact-reader-storage-key") : "";
+      return key || "clankeros-goal-artifact-reader";
+    }}
+    function setGoalArtifactReaderViewStatus(reader, message) {{
+      var status = reader ? reader.querySelector("[data-goal-artifact-reader-view-status='true']") : null;
+      if (status) {{ status.textContent = message; }}
+    }}
+    function goalArtifactReaderPaths(reader) {{
+      return reader ? Array.prototype.slice.call(reader.querySelectorAll("[data-goal-artifact-preview='true']")).map(function(preview) {{
+        return preview.getAttribute("data-goal-artifact-reader-path") || "";
+      }}).filter(Boolean) : [];
+    }}
+    function saveGoalArtifactReaderState(reader, path) {{
+      if (!window.localStorage || !reader || !path) {{ return; }}
+      try {{
+        window.localStorage.setItem(goalArtifactReaderStorageKey(reader), JSON.stringify({{ path: path }}));
+        setGoalArtifactReaderViewStatus(reader, "View: saved");
+      }} catch (error) {{
+        setGoalArtifactReaderViewStatus(reader, "View: local only");
+      }}
+    }}
+    function updateGoalArtifactReader(path, options) {{
+      var reader = document.querySelector("[data-goal-artifact-reader='true']");
+      if (!reader) {{ return; }}
+      options = options || {{}};
+      var paths = goalArtifactReaderPaths(reader);
+      var selectedPath = paths.indexOf(path || "") !== -1 ? path : (paths[0] || "");
+      var previews = Array.prototype.slice.call(reader.querySelectorAll("[data-goal-artifact-preview='true']"));
+      var selectedShown = false;
+      previews.forEach(function(preview) {{
+        var isSelected = (preview.getAttribute("data-goal-artifact-reader-path") || "") === selectedPath;
+        if (isSelected && selectedShown) {{ isSelected = false; }}
+        if (isSelected) {{ selectedShown = true; }}
+        preview.hidden = !isSelected;
+      }});
+      var select = reader.querySelector("[data-goal-artifact-reader-select='true']");
+      if (select && selectedPath && select.value !== selectedPath) {{ select.value = selectedPath; }}
+      var openLink = reader.querySelector("[data-goal-artifact-reader-open='true']");
+      if (openLink && selectedPath) {{
+        openLink.setAttribute("href", "/artifacts?path=" + encodeURIComponent(selectedPath));
+      }}
+      if (options.save !== false && selectedPath) {{
+        saveGoalArtifactReaderState(reader, selectedPath);
+      }}
+    }}
+    function restoreGoalArtifactReaderState() {{
+      var reader = document.querySelector("[data-goal-artifact-reader='true']");
+      if (!reader) {{ return false; }}
+      if (!window.localStorage) {{
+        setGoalArtifactReaderViewStatus(reader, "View: default");
+        return false;
+      }}
+      try {{
+        var raw = window.localStorage.getItem(goalArtifactReaderStorageKey(reader));
+        if (!raw) {{
+          setGoalArtifactReaderViewStatus(reader, "View: default");
+          return false;
+        }}
+        var saved = JSON.parse(raw);
+        var path = saved && typeof saved.path === "string" ? saved.path : "";
+        if (goalArtifactReaderPaths(reader).indexOf(path) === -1) {{
+          setGoalArtifactReaderViewStatus(reader, "View: stale");
+          return false;
+        }}
+        updateGoalArtifactReader(path, {{ save: false }});
+        setGoalArtifactReaderViewStatus(reader, "View: restored");
+        return true;
+      }} catch (error) {{
+        setGoalArtifactReaderViewStatus(reader, "View: default");
+        return false;
+      }}
+    }}
+    function clearGoalArtifactReaderState() {{
+      var reader = document.querySelector("[data-goal-artifact-reader='true']");
+      if (reader && window.localStorage) {{
+        try {{ window.localStorage.removeItem(goalArtifactReaderStorageKey(reader)); }} catch (error) {{}}
+      }}
+      updateGoalArtifactReader("", {{ save: false }});
+      setGoalArtifactReaderViewStatus(reader, "View: reset");
+    }}
+    function initializeGoalArtifactReaderState() {{
+      var reader = document.querySelector("[data-goal-artifact-reader='true']");
+      if (!reader) {{ return; }}
+      if (!restoreGoalArtifactReaderState()) {{
+        var select = reader.querySelector("[data-goal-artifact-reader-select='true']");
+        updateGoalArtifactReader(select ? select.value || "" : "", {{ save: false }});
+        setGoalArtifactReaderViewStatus(reader, "View: default");
       }}
     }}
     function timelineLaneStorageKey(filterPanel) {{
@@ -45083,6 +45395,12 @@ def _html_page(
         updateGoalArtifactFilter({{ type: artifactFilterButton.getAttribute("data-goal-artifact-filter-kind") || "all" }});
         return;
       }}
+      var artifactReaderReset = target.closest ? target.closest("[data-goal-artifact-reader-reset='true']") : null;
+      if (artifactReaderReset) {{
+        event.preventDefault();
+        clearGoalArtifactReaderState();
+        return;
+      }}
       var timelineFilterReset = target.closest ? target.closest("[data-goal-timeline-filter-reset='true']") : null;
       if (timelineFilterReset) {{
         event.preventDefault();
@@ -45233,6 +45551,10 @@ def _html_page(
       if (artifactFilterSource) {{
         updateGoalArtifactFilter({{ source: artifactFilterSource.value || "all" }});
       }}
+      var artifactReaderSelect = target.closest ? target.closest("[data-goal-artifact-reader-select='true']") : null;
+      if (artifactReaderSelect) {{
+        updateGoalArtifactReader(artifactReaderSelect.value || "");
+      }}
     }});
     function openCurrentHashDetails() {{
       var hash = window.location.hash || "";
@@ -45271,6 +45593,7 @@ def _html_page(
     initializeRecentItemsFilterState();
     initializeSearchResultLaneState();
     initializeGoalArtifactFilterState();
+    initializeGoalArtifactReaderState();
     initializeTimelineLaneState();
     initializeGoalDecisionFilterState();
     initializeTodayDecisionFilterState();

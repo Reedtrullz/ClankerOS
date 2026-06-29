@@ -1,5 +1,47 @@
 # Status
 
+## 2026-06-30 Goal Artifact Reader UX
+
+- Added a browser-local `Goal Artifact Reader` to the Goal page after the
+  existing Goal Artifact Filter. It lets the operator preview one
+  already-registered artifact inline with the same inert Markdown, JSON,
+  Patch/Diff, Text, and Log renderers used by `/artifacts`.
+- The reader stores only the selected artifact path in
+  `localStorage:clankeros-goal-artifact-reader:<goal_id>`, restores that
+  selection per Goal, exposes Reset reader, and appears in Workspace View
+  Memory so the operator can inspect or clear that browser-local state.
+- Added the reader to the Goal section finder and command palette so long Goal
+  pages can jump directly to the inline preview surface.
+- Tightened duplicate-path handling in the browser helper: if two artifact
+  records share the same path with different labels, selecting that path shows
+  one preview instead of opening multiple duplicate previews.
+- Updated README, local app docs, the operating summary, and latest-status docs
+  to describe the reader and its zero-effect boundary.
+- Verification: `df -h /System/Volumes/Data` showed 82Gi free before the test
+  loop; `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed;
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health` passed with `1 passed,
+  515 deselected in 34.97s`; `python3 -m agent_os.cli app-smoke-test` passed
+  with all required route markers matched and provider/network/external
+  mutation counters at 0.
+- Browser verification: Playwright against throwaway demo Goal
+  `goal_f3e6c640d859` on `127.0.0.1:62111` confirmed 21 reader options and
+  previews, one visible preview, the default Markdown renderer, a bounded full
+  artifact link, the per-Goal storage key, JSON selection save/restore across
+  reload with `View: restored`, Reset reader clearing storage, no desktop
+  overflow at `1280px`, no mobile overflow at `390x844`, and zero console
+  warnings/errors. Screenshot:
+  `.playwright-cli/page-2026-06-29T22-26-48-294Z.png`.
+- Duplicate-path browser recheck: Playwright against throwaway demo Goal
+  `goal_2fc6f193e09a` on `127.0.0.1:62112` selected the duplicated
+  `coder_prep.json` path and confirmed `duplicateOptionCount=2`,
+  `matchingPreviewCount=2`, `visiblePreviews=1`, and `matchingVisible=1`.
+- Non-claims: this does not execute artifact content, browse raw filesystem
+  paths, write Goal state on GET, append memory, call providers, perform
+  non-loopback network actions, push, create PRs, deploy, or mutate external
+  systems.
+
 ## 2026-06-29 First Run Action Ladder UX
 
 - Added a visible read-only `First Run Action Ladder` to the First Run Guide

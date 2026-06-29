@@ -894,6 +894,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   Goal from `localStorage:clankeros-goal-artifact-filter:<goal_id>`, and
   exposes Reset filter while preserving read-only GET, no-provider,
   no-network, no-raw-filesystem, and no-external-effect boundaries.
+  A browser-local `Goal Artifact Reader` follows the filter, renders one
+  already-registered artifact inline through the same bounded inert Markdown,
+  JSON, patch/diff, text, and log renderers used by `/artifacts`, remembers the
+  selected preview per Goal in
+  `localStorage:clankeros-goal-artifact-reader:<goal_id>`, and exposes Reset
+  reader while preserving the same zero-effect boundaries.
   The artifact
   viewer now opens with an `Artifact Operator Workbench`, reports render
   family/renderer posture, and renders Markdown as escaped headings/lists/

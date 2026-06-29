@@ -203,6 +203,13 @@ Latest status focus:
   Goal in `localStorage:clankeros-goal-artifact-filter:<goal_id>`, and
   provides Reset filter while preserving read-only GET behavior and
   no-provider/no-network/no-raw-filesystem/no-external-effect boundaries.
+- `/goals/<goal_id>#goal-artifact-reader` now adds a browser-local Goal
+  Artifact Reader after the Goal Artifact Filter. It previews one
+  already-registered artifact inline with the bounded inert Markdown, JSON,
+  Patch/Diff, Text, and Log renderers, remembers the selected artifact per Goal
+  in `localStorage:clankeros-goal-artifact-reader:<goal_id>`, and provides
+  Reset reader while preserving read-only GET behavior and
+  no-provider/no-network/no-raw-filesystem/no-external-effect boundaries.
 - `/search#search-result-filter` now adds a browser-local Search Result Filter
   after the Search Result Map. It narrows already-rendered results by all,
   goals, projects, work, decisions, knowledge, or artifacts, remembers the

@@ -6764,7 +6764,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 24
+    assert workspace.body.count("class='workspace-view-memory-card") == 25
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
     assert "data-workspace-view-memory-card='first-run'" in workspace.body
@@ -6779,6 +6779,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-card='timeline'" in workspace.body
     assert "data-workspace-view-memory-card='goal-sections'" in workspace.body
     assert "data-workspace-view-memory-card='artifacts'" in workspace.body
+    assert "data-workspace-view-memory-card='artifact-reader'" in workspace.body
     assert "data-workspace-view-memory-card='notes'" in workspace.body
     assert "data-workspace-view-memory-card='note-drafts'" in workspace.body
     assert "data-workspace-view-memory-card='form-drafts'" in workspace.body
@@ -6810,6 +6811,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-section-finder:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-decision-filter:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-artifact-filter:'" in workspace.body
+    assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-artifact-reader:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-notes-filter:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-note-draft:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-action-form-draft:'" in workspace.body
@@ -6817,9 +6819,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>24" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>25" in workspace.body
     assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-first-run-checklist, clankeros-goal-board-view, clankeros-home-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-today-goal-queue-view, clankeros-today-decision-filter, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
-    assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-section-finder:, clankeros-goal-decision-filter:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:, clankeros-goal-note-draft:, clankeros-action-form-draft:" in workspace.body
+    assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-section-finder:, clankeros-goal-decision-filter:, clankeros-goal-artifact-filter:, clankeros-goal-artifact-reader:, clankeros-goal-notes-filter:, clankeros-goal-note-draft:, clankeros-action-form-draft:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
     assert "workspace_view_memory_workspace_json_write</dt><dd>false" in workspace.body
@@ -12641,13 +12643,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in goal.body
     )
     assert "data-goal-section-finder-input='true'" in goal.body
-    assert "data-goal-section-finder-count='true'>60 sections" in goal.body
+    assert "data-goal-section-finder-count='true'>61 sections" in goal.body
     assert "data-goal-section-finder-first='true' href='#goal-summary'>Summary</a>" in goal.body
     assert "data-goal-section-finder-memory='true'" in goal.body
     assert "data-goal-section-finder-view-status='true'>View: default</span>" in goal.body
     assert "data-goal-section-finder-reset='true'>Reset section search</button>" in goal.body
     assert "data-goal-section-finder-results='true'" in goal.body
     assert "data-goal-section-result='true' data-goal-section-label='approval command'" in goal.body
+    assert "data-goal-section-result='true' data-goal-section-label='artifact reader'" in goal.body
     assert "data-goal-section-anchor='goal-git-status'" in goal.body
     assert "data-goal-section-finder-empty='true' hidden" in goal.body
     assert "data-goal-section-index-operate='true'" in goal.body
@@ -12658,7 +12661,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-section-index-primary='true' href='#goal-next-action'>Next action</a>" in goal.body
     assert "goal_section_switchboard_status</dt><dd>available" in goal.body
     assert "goal_section_finder_status</dt><dd>available" in goal.body
-    assert "goal_section_finder_result_count</dt><dd>60" in goal.body
+    assert "goal_section_finder_result_count</dt><dd>61" in goal.body
     assert "goal_section_finder_default_first</dt><dd>goal-summary" in goal.body
     assert "goal_section_finder_persistence</dt><dd>browser_local_view_memory" in goal.body
     assert (
@@ -12680,6 +12683,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_section_finder_target: Summary -> #goal-summary" in goal.body
     assert "goal_section_finder_target: Decision queue -> #goal-decision-queue" in goal.body
     assert "goal_section_finder_target: Decision filter -> #goal-decision-filter" in goal.body
+    assert "goal_section_finder_target: Artifact reader -> #goal-artifact-reader" in goal.body
     assert "goal_section_finder_memory: restores section query for this Goal" in goal.body
     assert "goal_section_switchboard_safety: read-only local anchor navigation" in goal.body
     assert goal.body.index("data-goal-section-index-actions='true'") < goal.body.index(
@@ -12769,7 +12773,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>60" in goal.body
+    assert "goal_section_count</dt><dd>61" in goal.body
     assert "data-goal-section-index-evidence='true'" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "data-goal-command-strip='true'" in goal.body
@@ -13937,6 +13941,50 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-artifact-filter-status='true'>Showing 21 of 21 artifacts.</p>" in goal.body
     assert "data-goal-artifact-filter-empty='true' hidden" in goal.body
     assert "data-goal-artifact-filter-evidence='true'" in goal.body
+    assert "Goal Artifact Reader" in goal.body
+    assert "id='goal-artifact-reader'" in goal.body
+    assert "data-goal-artifact-reader='true'" in goal.body
+    assert (
+        f"data-goal-artifact-reader-storage-key='clankeros-goal-artifact-reader:{result.goal_id}'"
+        in goal.body
+    )
+    assert "data-goal-artifact-reader-toolbar='true'" in goal.body
+    assert "data-goal-artifact-reader-select='true'" in goal.body
+    assert "data-goal-artifact-reader-open='true'" in goal.body
+    assert "data-goal-artifact-reader-view-status='true'>View: default</span>" in goal.body
+    assert "data-goal-artifact-reader-reset='true'>Reset reader</button>" in goal.body
+    assert "data-goal-artifact-reader-evidence='true'" in goal.body
+    assert "data-goal-artifact-reader-previews='true'" in goal.body
+    assert goal.body.count("data-goal-artifact-preview='true'") == 21
+    assert f"goal_artifact_reader_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_artifact_reader_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_artifact_reader_status</dt><dd>available" in goal.body
+    assert "goal_artifact_reader_total_records</dt><dd>21" in goal.body
+    assert "goal_artifact_reader_preview_records</dt><dd>21" in goal.body
+    assert f"goal_artifact_reader_selected_artifact</dt><dd>coder run {result.coder_worktree_run_id} review" in goal.body
+    assert "goal_artifact_reader_selected_path</dt><dd>runs/" in goal.body
+    assert "review.md" in goal.body
+    assert "goal_artifact_reader_selected_kind</dt><dd>markdown" in goal.body
+    assert "goal_artifact_reader_selected_source</dt><dd>coder_run" in goal.body
+    assert "goal_artifact_reader_selected_renderer</dt><dd>markdown_safe_html" in goal.body
+    assert "goal_artifact_reader_byte_cap</dt><dd>8000" in goal.body
+    assert f"goal_artifact_reader_memory_storage</dt><dd>localStorage:clankeros-goal-artifact-reader:{result.goal_id}" in goal.body
+    assert "goal_artifact_reader_memory_fields</dt><dd>path goal" in goal.body
+    assert "goal_artifact_reader_reset</dt><dd>available" in goal.body
+    assert "goal_artifact_reader_raw_filesystem_browsing</dt><dd>false" in goal.body
+    assert "goal_artifact_reader_content_executed</dt><dd>false" in goal.body
+    assert "goal_artifact_reader_write_on_get</dt><dd>false" in goal.body
+    assert "goal_artifact_reader_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_artifact_reader_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_artifact_reader_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_artifact_reader_memory: restores selected known artifact from browser storage per Goal" in goal.body
+    assert "goal_artifact_reader_safety: bounded inert in-page preview of registered Goal artifacts only" in goal.body
+    assert "reader_artifact_renderer</dt><dd>markdown_safe_html" in goal.body
+    assert "data-artifact-renderer='markdown_safe_html'" in goal.body
+    assert "function updateGoalArtifactReader(path, options)" in goal.body
+    assert "var selectedShown = false;" in goal.body
+    assert "window.localStorage.setItem(goalArtifactReaderStorageKey(reader)" in goal.body
+    assert "window.localStorage.removeItem(goalArtifactReaderStorageKey(reader))" in goal.body
     assert "data-goal-artifact-groups='true'" in goal.body
     assert "data-goal-artifact-group='markdown'" in goal.body
     assert "data-goal-artifact-group='json'" in goal.body

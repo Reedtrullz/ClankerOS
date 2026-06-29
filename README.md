@@ -658,7 +658,12 @@ typed explorer now starts with a browser-local `Goal Artifact Filter` for
 type, source, and text narrowing over the already-rendered artifact rows; the
 selected filter is remembered per Goal in
 `localStorage:clankeros-goal-artifact-filter:<goal_id>` and Reset filter clears
-that browser-local view without reading arbitrary filesystem paths. Each
+that browser-local view without reading arbitrary filesystem paths. A
+browser-local `Goal Artifact Reader` follows the filter so the operator can
+preview one already-registered artifact inline, switch between bounded
+Markdown/JSON/Patch/Text renderers, keep the selected artifact per Goal in
+`localStorage:clankeros-goal-artifact-reader:<goal_id>`, and reset that reader
+view without executing content, writing state, or browsing raw paths. Each
 artifact page starts with
 a visible `Artifact Operator Workbench` for opening the inert content,
 returning to the owning Goal/delegation context, remembering or resuming from
