@@ -341,7 +341,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   collapsed evidence. The `Approval Decision Brief` then shows Decision,
   Inspect, Evidence, After, and Safety cards before collapsed decision evidence
   so the operator can inspect the right workflow/run/artifact and understand
-  the next local-only follow-up before using a confirmed approval form;
+  the next local-only follow-up before using a confirmed approval form. A
+  browser-local `Approval Queue Filter` narrows already-rendered approval rows
+  by worktree, commit, publication, scoped Goal, scoped run, or text and
+  restores lane/query from `localStorage:clankeros-approval-queue-filter`
+  without deciding, approving, executing, pushing, creating PRs, deploying, or
+  calling providers;
   and `/profiles`
   for inactive future provider-routing readback from `.clanker/profiles.yml`
   and SQLite profile storage rows, including profile labels, modes, cost

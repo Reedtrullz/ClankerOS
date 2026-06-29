@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/approvals#approval-queue-filter` now narrows already-rendered pending
+  approval rows by all, worktree, commit, publication, scoped Goal, scoped run,
+  or local text search. It remembers lane/query view state in
+  `localStorage:clankeros-approval-queue-filter`, exposes Reset filter, and
+  keeps GET rendering read-only with no approval, execution, provider calls,
+  network actions, push, PR, deploy, or external effects.
 - `/skills#skills-inventory-filter` now narrows already-rendered Skills
   Inventory rows by all, available, generated, active, proposed, used, or
   unused lanes plus local text search. It remembers lane/query view state in
@@ -18,8 +24,8 @@ Latest status focus:
   network actions, raw filesystem browsing, or external effects.
 - `/workspace#workspace-view-memory` now exposes browser-local view memory
   for theme, focus mode, Goal board view, search lanes, timeline lanes,
-  artifact filters, notes filters, Memory Bank filters, and Skills Inventory
-  filters. It can refresh or clear those
+  artifact filters, notes filters, Memory Bank filters, Skills Inventory
+  filters, and Approval Queue filters. It can refresh or clear those
   `localStorage` values after explicit clicks while preserving read-only GET
   behavior, `.clanker/app/workspace.json`, no raw filesystem browsing, and
   no-provider/no-network/no-external-effect boundaries.

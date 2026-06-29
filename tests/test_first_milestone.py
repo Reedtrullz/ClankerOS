@@ -6246,7 +6246,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 9
+    assert workspace.body.count("class='workspace-view-memory-card") == 10
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
     assert "data-workspace-view-memory-card='goal-board'" in workspace.body
@@ -6256,11 +6256,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-card='notes'" in workspace.body
     assert "data-workspace-view-memory-card='memory'" in workspace.body
     assert "data-workspace-view-memory-card='skills'" in workspace.body
+    assert "data-workspace-view-memory-card='approvals'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-theme'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-focus-mode'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-goal-board-view'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-memory-inventory-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-skills-inventory-filter'" in workspace.body
+    assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-approval-queue-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-search-result-lane:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-timeline-lane:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-artifact-filter:'" in workspace.body
@@ -6269,8 +6271,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>9" in workspace.body
-    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>10" in workspace.body
+    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter" in workspace.body
     assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
@@ -6284,7 +6286,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: search mode=prefix key=clankeros-search-result-lane:" in workspace.body
     assert "workspace_view_memory_card: memory mode=exact key=clankeros-memory-inventory-filter" in workspace.body
     assert "workspace_view_memory_card: skills mode=exact key=clankeros-skills-inventory-filter" in workspace.body
-    assert "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory skills" in workspace.body
+    assert "workspace_view_memory_card: approvals mode=exact key=clankeros-approval-queue-filter" in workspace.body
+    assert "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory skills approvals" in workspace.body
     assert "window.localStorage.removeItem(key)" in workspace.body
     assert "candidate.indexOf(key) === 0" in workspace.body
     assert "delete document.documentElement.dataset.theme" in workspace.body
@@ -8259,6 +8262,45 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "approval_decision_executes_work</dt><dd>false" in approvals.body
     assert "approval_decision_network_actions_taken</dt><dd>0" in approvals.body
     assert "approval_decision_external_effects_created</dt><dd>false" in approvals.body
+    assert "Approval Queue Filter" in approvals.body
+    assert "data-approval-queue-filter='true'" in approvals.body
+    assert "data-approval-filter-storage-key='clankeros-approval-queue-filter'" in approvals.body
+    assert "data-approval-filter-scope-goal='none'" in approvals.body
+    assert "data-approval-filter-scope-run='none'" in approvals.body
+    assert "data-approval-filter-controls='true'" in approvals.body
+    assert "data-approval-filter-kind='all' aria-pressed='true'>All" in approvals.body
+    assert "data-approval-filter-kind='worktree'" in approvals.body
+    assert "data-approval-filter-kind='commit'" in approvals.body
+    assert "data-approval-filter-kind='publication'" in approvals.body
+    assert "data-approval-filter-kind='scoped_goal'" in approvals.body
+    assert "data-approval-filter-kind='scoped_run'" in approvals.body
+    assert "data-approval-filter-query='true'" in approvals.body
+    assert "data-approval-filter-reset='true'>Reset filter" in approvals.body
+    assert "data-approval-filter-view-status='true'>View: default" in approvals.body
+    assert "data-approval-filter-status='true'>Showing 0 of 0 approval rows." in approvals.body
+    assert "data-approval-filter-empty='true' hidden" in approvals.body
+    assert "data-approval-filter-evidence='true'" in approvals.body
+    assert "approval_filter_total_rows</dt><dd>0" in approvals.body
+    assert "approval_filter_worktree_rows</dt><dd>0" in approvals.body
+    assert "approval_filter_commit_rows</dt><dd>0" in approvals.body
+    assert "approval_filter_publication_rows</dt><dd>0" in approvals.body
+    assert "approval_filter_lanes</dt><dd>all worktree commit publication scoped_goal scoped_run" in approvals.body
+    assert "approval_filter_memory_storage</dt><dd>localStorage:clankeros-approval-queue-filter" in approvals.body
+    assert "approval_filter_memory_fields</dt><dd>lane query" in approvals.body
+    assert "approval_filter_decides_on_get</dt><dd>false" in approvals.body
+    assert "approval_filter_approves_on_get</dt><dd>false" in approvals.body
+    assert "approval_filter_executes_work_on_get</dt><dd>false" in approvals.body
+    assert "approval_filter_network_actions_taken</dt><dd>0" in approvals.body
+    assert "approval_filter_external_effects_created</dt><dd>false" in approvals.body
+    assert "approval_filter_push_created</dt><dd>false" in approvals.body
+    assert "approval_filter_pr_created</dt><dd>false" in approvals.body
+    assert "approval_filter_deploy_created</dt><dd>false" in approvals.body
+    assert approvals.body.index("data-approval-decision-brief='true'") < approvals.body.index(
+        "data-approval-queue-filter='true'"
+    )
+    assert approvals.body.index("data-approval-queue-filter='true'") < approvals.body.index(
+        "id='pending-worktree-approvals'"
+    )
     incidents = render_local_app_route(tmp_path, "/incidents")
     assert incidents.status == 200
     assert "Incidents" in incidents.body
@@ -14920,6 +14962,48 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "approval_decision_provider_calls_taken_by_clankeros</dt><dd>0" in approvals.body
     assert "approval_decision_network_actions_taken</dt><dd>0" in approvals.body
     assert "approval_decision_external_effects_created</dt><dd>false" in approvals.body
+    assert "Approval Queue Filter" in approvals.body
+    assert "data-approval-queue-filter='true'" in approvals.body
+    assert "data-approval-filter-storage-key='clankeros-approval-queue-filter'" in approvals.body
+    assert f"data-approval-filter-scope-goal='none'" in approvals.body
+    assert "data-approval-filter-scope-run='none'" in approvals.body
+    assert "data-approval-filter-controls='true'" in approvals.body
+    assert "data-approval-filter-kind='all' aria-pressed='true'>All" in approvals.body
+    assert "data-approval-filter-kind='worktree'" in approvals.body
+    assert "data-approval-filter-kind='commit'" in approvals.body
+    assert "data-approval-filter-kind='publication'" in approvals.body
+    assert "data-approval-filter-kind='scoped_goal'" in approvals.body
+    assert "data-approval-filter-kind='scoped_run'" in approvals.body
+    assert "data-approval-filter-query='true'" in approvals.body
+    assert "data-approval-filter-reset='true'>Reset filter" in approvals.body
+    assert "data-approval-filter-view-status='true'>View: default" in approvals.body
+    assert "data-approval-filter-status='true'>Showing 1 of 1 approval rows." in approvals.body
+    assert "data-approval-filter-empty='true' hidden" in approvals.body
+    assert "data-approval-filter-evidence='true'" in approvals.body
+    assert approvals.body.count("<span data-approval-filter-item='true'") == 1
+    assert "data-approval-filter-row-kind='worktree' data-approval-filter-status='pending_operator_approval'" in approvals.body
+    assert "data-approval-filter-project='local-app-demo'" in approvals.body
+    assert f"data-approval-filter-goal='{result.goal_id}'" in approvals.body
+    assert f"data-approval-filter-source-run='{result.run_id}'" in approvals.body
+    assert "approval_filter_total_rows</dt><dd>1" in approvals.body
+    assert "approval_filter_worktree_rows</dt><dd>1" in approvals.body
+    assert "approval_filter_commit_rows</dt><dd>0" in approvals.body
+    assert "approval_filter_publication_rows</dt><dd>0" in approvals.body
+    assert "approval_filter_memory_storage</dt><dd>localStorage:clankeros-approval-queue-filter" in approvals.body
+    assert "approval_filter_memory_fields</dt><dd>lane query" in approvals.body
+    assert "approval_filter_decides_on_get</dt><dd>false" in approvals.body
+    assert "approval_filter_approves_on_get</dt><dd>false" in approvals.body
+    assert "approval_filter_executes_work_on_get</dt><dd>false" in approvals.body
+    assert "approval_filter_network_actions_taken</dt><dd>0" in approvals.body
+    assert "approval_filter_external_effects_created</dt><dd>false" in approvals.body
+    assert "window.localStorage.setItem(approvalFilterStorageKey(filterPanel), JSON.stringify(state))" in approvals.body
+    assert "window.localStorage.removeItem(approvalFilterStorageKey(filterPanel))" in approvals.body
+    assert approvals.body.index("data-approval-decision-brief='true'") < approvals.body.index(
+        "data-approval-queue-filter='true'"
+    )
+    assert approvals.body.index("data-approval-queue-filter='true'") < approvals.body.index(
+        "id='pending-worktree-approvals'"
+    )
     assert "id='pending-worktree-approvals'" in approvals.body
     assert "id='pending-commit-approvals'" in approvals.body
     assert "id='pending-publication-approvals'" in approvals.body

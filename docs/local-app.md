@@ -814,9 +814,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   collapsed evidence. A read-only `Approval Decision Brief` expands the first
   decision into direct delegation/workflow/run links, request and evidence
   artifacts, the exact form anchor, the post-decision surface, and explicit
-  write/network/external-effect counters. Commit and publication rows link
-  back to the relevant run and show the next local-only follow-up action after
-  approval.
+  write/network/external-effect counters. A browser-local `Approval Queue
+  Filter` then narrows already-rendered approval rows by decision type,
+  current route scope, or text, remembers lane/query in
+  `localStorage:clankeros-approval-queue-filter`, and resets without approving
+  or executing anything. Commit and publication rows link back to the relevant
+  run and show the next local-only follow-up action after approval.
 - `/incidents` - recent local incidents and evidence links.
 - `/artifacts?path=<relative_path>` - safe read-only artifact viewer.
 - `/health` - Python, git, storage, command, import, route, and counter health.

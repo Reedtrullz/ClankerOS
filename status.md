@@ -1,5 +1,46 @@
 # Status
 
+## 2026-06-29 Approval Queue Filter UX
+
+- Added a browser-local `Approval Queue Filter` to
+  `/approvals#approval-queue-filter` after the Approval Decision Brief and
+  before the pending worktree/commit/publication approval lists.
+- Operators can narrow already-rendered approval rows by All, Worktree,
+  Commit, Publication, Scoped Goal, Scoped Run, or local text search across
+  approval id, status, project, Goal, delegation, run, source run, action,
+  request/evidence artifacts, remote/target branch, and changed files.
+- The selected lane/query view is remembered in
+  `localStorage:clankeros-approval-queue-filter` and cleared with
+  `Reset filter`; scoped lanes fall back to All when the current route has no
+  matching `goal_id` or `run_id` scope.
+- Approval rows now expose stable `data-approval-filter-item`, kind, status,
+  project, Goal, run, source-run, and text metadata so the filter can hide
+  unmatched rendered rows without changing approval records or granting any
+  decision authority.
+- Workspace View Memory now includes the Approval Queue filter key, so
+  `/workspace#workspace-view-memory` can inspect and reset it with the rest of
+  the browser-local view state.
+- The behavior is browser-local display filtering only: no write on GET, no
+  approval decision, no execution, no provider calls, no network actions, no
+  push, no PR, no deploy, and no external mutation.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused route/demo pytest `python3 -m
+  pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 56.58s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55621` showed the scoped approvals page with one
+  rendered approval row and no desktop overflow, Scoped Goal + text
+  `worktree` filtering to one visible row, reload restoring that saved view,
+  unscoped `/approvals` falling back from Scoped Goal to All while preserving
+  the text query, Commit + `worktree` showing the empty state with one hidden
+  row, Reset filter returning All and staying default after reload, mobile
+  `390x844` stacking lane buttons, query, Reset filter, and status at `329px`
+  width inside a `358px` panel, no horizontal overflow, no framework overlay,
+  and no console warnings/errors.
+
 ## 2026-06-29 Skills Inventory Filter UX
 
 - Added a browser-local `Skills Inventory Filter` to

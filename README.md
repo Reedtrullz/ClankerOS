@@ -945,7 +945,11 @@ then turns the first recommended decision into visible Decision, Inspect,
 Evidence, After, and Safety cards before collapsed evidence for the relevant
 delegation, workflow, run when one exists, request artifact, evidence artifact,
 form anchor, post-decision surface, and no-write/no-network/no-external-effect
-boundary. Pending commit and publication approvals link back to the relevant
+boundary. A browser-local `Approval Queue Filter` follows, narrowing
+already-rendered approval rows by worktree, commit, publication, scoped Goal,
+scoped run, or text and restoring lane/query from
+`localStorage:clankeros-approval-queue-filter` without deciding or approving
+anything. Pending commit and publication approvals link back to the relevant
 run and name the next local-only follow-up action after
 approval, including the typed commit-message requirement and the manual
 push/PR boundary.

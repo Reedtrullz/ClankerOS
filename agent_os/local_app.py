@@ -1137,6 +1137,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-approval-workbench-evidence='true'",
                 "data-approval-command-evidence='true'",
                 "data-approval-finish-details='true'",
+                "Approval Queue Filter",
+                "data-approval-queue-filter='true'",
+                "data-approval-filter-evidence='true'",
                 "approval_workbench_status</dt><dd>decision_form_ready",
                 "approval_queue_status</dt><dd>available",
                 demo.approval_id,
@@ -6504,6 +6507,13 @@ def _workspace_view_memory_panel() -> str:
             "clankeros-skills-inventory-filter",
             "Skills Inventory lane and text filter",
         ),
+        (
+            "approvals",
+            "Approval Filters",
+            "exact",
+            "clankeros-approval-queue-filter",
+            "Approval queue lane and text filter",
+        ),
     ]
     card_html = []
     evidence_lines = []
@@ -6569,7 +6579,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory skills",
+                    "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory skills approvals",
                 ]
             ),
             "</details>",
@@ -25989,6 +25999,7 @@ def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
 
 
 def _approvals(root: Path, *, run_id: str | None = None, goal_id: str | None = None) -> str:
+    storage = _storage(root)
     worktree_approvals = list_coder_worktree_approvals(
         root,
         status="pending_operator_approval",
@@ -26012,6 +26023,19 @@ def _approvals(root: Path, *, run_id: str | None = None, goal_id: str | None = N
         scope_run_id=run_id,
         scope_goal_id=goal_id,
     )
+    worktree_lines = [
+        _approval_filter_line(root, storage, item, "worktree")
+        for item in worktree_approvals
+    ]
+    commit_lines = [
+        _approval_filter_line(root, storage, item, "commit")
+        for item in commit_approvals
+    ]
+    publication_lines = [
+        _approval_filter_line(root, storage, item, "publication")
+        for item in publication_approvals
+    ]
+    total_filter_items = len(worktree_lines) + len(commit_lines) + len(publication_lines)
     return "".join(
         [
             "<section><h1>Approvals</h1>",
@@ -26037,19 +26061,26 @@ def _approvals(root: Path, *, run_id: str | None = None, goal_id: str | None = N
                 publication_approvals,
                 focus,
             ),
+            _approval_queue_filter(
+                total_filter_items,
+                worktree_count=len(worktree_lines),
+                commit_count=len(commit_lines),
+                publication_count=len(publication_lines),
+                focus=focus,
+            ),
             _list_section(
                 "Pending Worktree Approvals",
-                [_worktree_approval_action_line(item) for item in worktree_approvals],
+                worktree_lines,
                 anchor_id="pending-worktree-approvals",
             ),
             _list_section(
                 "Pending Commit Approvals",
-                [_commit_approval_action_line(item) for item in commit_approvals],
+                commit_lines,
                 anchor_id="pending-commit-approvals",
             ),
             _list_section(
                 "Pending Publication Approvals",
-                [_publication_approval_action_line(root, item) for item in publication_approvals],
+                publication_lines,
                 anchor_id="pending-publication-approvals",
             ),
             _non_claim_banner(),
@@ -26143,6 +26174,150 @@ def _approval_item_goal_id(storage: Storage, item: Any) -> str:
         return ""
     delegation = storage.get_subagent_delegation(delegation_id)
     return delegation.parent_goal_id if delegation is not None else ""
+
+
+def _approval_filter_line(root: Path, storage: Storage, item: Any, kind: str) -> str:
+    if kind == "worktree":
+        rendered = _worktree_approval_action_line(item)
+        action = "approve worktree"
+        evidence_path = _repo_relative_artifact_path(root, getattr(item, "source_plan_path", "") or "")
+        request_path = _repo_relative_artifact_path(root, getattr(item, "request_artifact_path", "") or "")
+    elif kind == "commit":
+        rendered = _commit_approval_action_line(item)
+        action = "approve commit"
+        evidence_path = _repo_relative_artifact_path(root, getattr(item, "review_path", "") or "")
+        request_path = _repo_relative_artifact_path(root, getattr(item, "request_artifact_path", "") or "")
+    else:
+        rendered = _publication_approval_action_line(root, item)
+        action = "approve publication"
+        evidence_path = _repo_relative_artifact_path(root, getattr(item, "source_commit_artifact_path", "") or "")
+        request_path = _repo_relative_artifact_path(root, getattr(item, "request_artifact_path", "") or "")
+
+    goal_id = _approval_item_goal_id(storage, item)
+    run_id = str(getattr(item, "run_id", "") or "")
+    source_run_id = str(getattr(item, "source_run_id", "") or "")
+    changed_files = getattr(item, "changed_files", []) or []
+    remote = str(getattr(item, "remote", "") or "")
+    target_branch = str(getattr(item, "target_branch", "") or "")
+    metadata = " ".join(
+        [
+            kind,
+            str(getattr(item, "id", "") or ""),
+            str(getattr(item, "status", "") or ""),
+            str(getattr(item, "project_id", "") or ""),
+            goal_id,
+            str(getattr(item, "delegation_id", "") or ""),
+            run_id,
+            source_run_id,
+            action,
+            evidence_path,
+            request_path,
+            remote,
+            target_branch,
+            " ".join(str(path) for path in changed_files),
+        ]
+    ).lower()
+    return (
+        f"<span data-approval-filter-item='true' "
+        f"data-approval-filter-row-kind='{_e(kind)}' "
+        f"data-approval-filter-status='{_e(str(getattr(item, 'status', '') or 'unknown'))}' "
+        f"data-approval-filter-project='{_e(str(getattr(item, 'project_id', '') or 'none'))}' "
+        f"data-approval-filter-goal='{_e(goal_id or 'none')}' "
+        f"data-approval-filter-run='{_e(run_id or 'none')}' "
+        f"data-approval-filter-source-run='{_e(source_run_id or 'none')}' "
+        f"data-approval-filter-text='{_e(metadata)}'>{rendered}</span>"
+    )
+
+
+def _approval_queue_filter(
+    total_items: int,
+    *,
+    worktree_count: int,
+    commit_count: int,
+    publication_count: int,
+    focus: dict[str, Any],
+) -> str:
+    scoped_goal = str(focus.get("scope_goal_id") or "none")
+    scoped_run = str(focus.get("scope_run_id") or "none")
+    lanes = [
+        ("all", "All"),
+        ("worktree", "Worktree"),
+        ("commit", "Commit"),
+        ("publication", "Publication"),
+        ("scoped_goal", "Scoped Goal"),
+        ("scoped_run", "Scoped Run"),
+    ]
+    buttons = "".join(
+        [
+            (
+                f"<button type='button' class='approval-filter-button' "
+                f"data-approval-filter-kind='{_e(key)}' "
+                f"aria-pressed='{'true' if key == 'all' else 'false'}'>{_e(label)}</button>"
+            )
+            for key, label in lanes
+        ]
+    )
+    return "".join(
+        [
+            "<section id='approval-queue-filter' class='panel approval-queue-filter' "
+            "data-approval-queue-filter='true' "
+            "data-approval-filter-storage-key='clankeros-approval-queue-filter' "
+            f"data-approval-filter-scope-goal='{_e(scoped_goal)}' "
+            f"data-approval-filter-scope-run='{_e(scoped_run)}'>",
+            "<h2>Approval Queue Filter</h2>",
+            "<p class='muted'>Narrow already-rendered approval rows by decision type, route scope, or text without deciding anything.</p>",
+            "<div class='approval-filter-controls' data-approval-filter-controls='true'>",
+            buttons,
+            "<label class='approval-filter-search'>Find "
+            "<input type='search' data-approval-filter-query='true' placeholder='approval, goal, run, project...'></label>",
+            "<button type='button' class='approval-filter-reset' data-approval-filter-reset='true'>Reset filter</button>",
+            "<span class='approval-filter-memory-status' data-approval-filter-view-status='true'>View: default</span>",
+            "</div>",
+            (
+                f"<p class='muted' data-approval-filter-status='true'>"
+                f"Showing {total_items} of {total_items} approval rows.</p>"
+            ),
+            "<p class='muted' data-approval-filter-empty='true' hidden>No approval rows match this filter.</p>",
+            "<details class='approval-filter-evidence' data-approval-filter-evidence='true'>"
+            "<summary>Approval queue filter evidence</summary>",
+            _kv(
+                [
+                    ("approval_filter_status", "available"),
+                    ("approval_filter_total_rows", str(total_items)),
+                    ("approval_filter_worktree_rows", str(worktree_count)),
+                    ("approval_filter_commit_rows", str(commit_count)),
+                    ("approval_filter_publication_rows", str(publication_count)),
+                    ("approval_filter_scope_goal", scoped_goal),
+                    ("approval_filter_scope_run", scoped_run),
+                    ("approval_filter_lanes", "all worktree commit publication scoped_goal scoped_run"),
+                    ("approval_filter_persistence", "browser_local_view_memory"),
+                    ("approval_filter_memory_storage", "localStorage:clankeros-approval-queue-filter"),
+                    ("approval_filter_memory_fields", "lane query"),
+                    ("approval_filter_default", "all"),
+                    ("approval_filter_reset", "available"),
+                    ("approval_filter_decides_on_get", "false"),
+                    ("approval_filter_approves_on_get", "false"),
+                    ("approval_filter_executes_work_on_get", "false"),
+                    ("approval_filter_provider_calls_taken", "0"),
+                    ("approval_filter_network_actions_taken", "0"),
+                    ("approval_filter_external_effects_created", "false"),
+                    ("approval_filter_push_created", "false"),
+                    ("approval_filter_pr_created", "false"),
+                    ("approval_filter_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "approval_filter: filters already-rendered local approval rows only",
+                    "approval_filter: restores lane and query from browser storage",
+                    "approval_filter: scoped lanes fall back to all when the current route has no matching scope",
+                    "approval_filter_safety: no approval, execution, push, PR, deploy, provider call, or network action",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
 
 
 def _approval_operator_workbench(
@@ -38613,6 +38788,16 @@ def _html_page(
     .approval-decision-link {{ background:var(--surface); color:var(--accent); }}
     .approval-decision-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .approval-decision-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .approval-queue-filter {{ border-left:4px solid var(--ok); }}
+    .approval-filter-controls {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0; }}
+    .approval-filter-button, .approval-filter-reset {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border:1px solid var(--line); background:var(--surface); color:var(--text); }}
+    .approval-filter-button[aria-pressed="true"] {{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }}
+    .approval-filter-search {{ display:inline-flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:min(100%, 260px); }}
+    .approval-filter-search input {{ min-width:min(100%, 220px); }}
+    .approval-filter-memory-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .approval-filter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .approval-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .approval-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
     .approval-operator-workbench {{ border-left:4px solid var(--accent); }}
     .approval-workbench-evidence, .approval-finish-details, .approval-decision-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .approval-workbench-evidence summary, .approval-finish-details summary, .approval-decision-evidence summary {{ cursor:pointer; font-weight:700; }}
@@ -38676,6 +38861,7 @@ def _html_page(
     @media (max-width: 860px) {{ .home-attention-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .skills-usage-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .approval-decision-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 640px) {{ .approval-filter-button, .approval-filter-reset, .approval-filter-search, .approval-filter-search input {{ width:100%; }} .approval-filter-controls {{ align-items:stretch; }} .approval-filter-memory-status {{ width:100%; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .run-evidence-map dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
@@ -39378,6 +39564,140 @@ def _html_page(
         setSkillsInventoryViewStatus(filterPanel, "View: default");
       }}
     }}
+    function approvalFilterStorageKey(filterPanel) {{
+      var key = filterPanel ? filterPanel.getAttribute("data-approval-filter-storage-key") : "";
+      return key || "clankeros-approval-queue-filter";
+    }}
+    function setApprovalFilterViewStatus(filterPanel, message) {{
+      var status = filterPanel ? filterPanel.querySelector("[data-approval-filter-view-status='true']") : null;
+      if (status) {{ status.textContent = message; }}
+    }}
+    function approvalFilterScopeGoal(filterPanel) {{
+      var value = filterPanel ? filterPanel.getAttribute("data-approval-filter-scope-goal") || "none" : "none";
+      return value && value !== "none" ? value : "";
+    }}
+    function approvalFilterScopeRun(filterPanel) {{
+      var value = filterPanel ? filterPanel.getAttribute("data-approval-filter-scope-run") || "none" : "none";
+      return value && value !== "none" ? value : "";
+    }}
+    function normalizeApprovalFilterLane(filterPanel, lane) {{
+      var normalized = lane || "all";
+      if (normalized === "scoped_goal" && !approvalFilterScopeGoal(filterPanel)) {{ normalized = "all"; }}
+      if (normalized === "scoped_run" && !approvalFilterScopeRun(filterPanel)) {{ normalized = "all"; }}
+      var buttons = filterPanel ? Array.prototype.slice.call(filterPanel.querySelectorAll("[data-approval-filter-kind]")) : [];
+      var found = buttons.some(function(button) {{
+        return (button.getAttribute("data-approval-filter-kind") || "all") === normalized;
+      }});
+      return found ? normalized : "all";
+    }}
+    function selectedApprovalFilterLane(filterPanel) {{
+      var active = filterPanel ? filterPanel.querySelector("[data-approval-filter-kind][aria-pressed='true']") : null;
+      return active ? active.getAttribute("data-approval-filter-kind") || "all" : "all";
+    }}
+    function saveApprovalFilterState(filterPanel, state) {{
+      if (!window.localStorage || !filterPanel) {{ return; }}
+      try {{
+        window.localStorage.setItem(approvalFilterStorageKey(filterPanel), JSON.stringify(state));
+        setApprovalFilterViewStatus(filterPanel, "View: saved");
+      }} catch (error) {{
+        setApprovalFilterViewStatus(filterPanel, "View: local only");
+      }}
+    }}
+    function restoreApprovalFilterState() {{
+      var filterPanel = document.querySelector("[data-approval-queue-filter='true']");
+      if (!filterPanel) {{ return; }}
+      if (!window.localStorage) {{
+        setApprovalFilterViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+      try {{
+        var raw = window.localStorage.getItem(approvalFilterStorageKey(filterPanel));
+        if (!raw) {{
+          setApprovalFilterViewStatus(filterPanel, "View: default");
+          return false;
+        }}
+        var saved = JSON.parse(raw);
+        updateApprovalFilter({{
+          lane: saved && typeof saved.lane === "string" ? saved.lane : "all",
+          query: saved && typeof saved.query === "string" ? saved.query : "",
+          save: false
+        }});
+        setApprovalFilterViewStatus(filterPanel, "View: restored");
+        return true;
+      }} catch (error) {{
+        setApprovalFilterViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+    }}
+    function clearApprovalFilterState() {{
+      var filterPanel = document.querySelector("[data-approval-queue-filter='true']");
+      if (filterPanel && window.localStorage) {{
+        try {{ window.localStorage.removeItem(approvalFilterStorageKey(filterPanel)); }} catch (error) {{}}
+      }}
+      updateApprovalFilter({{ lane: "all", query: "", save: false }});
+      setApprovalFilterViewStatus(filterPanel, "View: reset");
+    }}
+    function updateApprovalFilter(options) {{
+      var filterPanel = document.querySelector("[data-approval-queue-filter='true']");
+      if (!filterPanel) {{ return; }}
+      options = options || {{}};
+      var queryInput = filterPanel.querySelector("[data-approval-filter-query='true']");
+      var lane = normalizeApprovalFilterLane(filterPanel, Object.prototype.hasOwnProperty.call(options, "lane") ? options.lane : selectedApprovalFilterLane(filterPanel));
+      var query = Object.prototype.hasOwnProperty.call(options, "query") ? String(options.query || "") : (queryInput ? queryInput.value || "" : "");
+      if (queryInput && queryInput.value !== query) {{ queryInput.value = query; }}
+      var queryText = query.toLowerCase().trim();
+      var scopedGoal = approvalFilterScopeGoal(filterPanel);
+      var scopedRun = approvalFilterScopeRun(filterPanel);
+      var rows = Array.prototype.slice.call(document.querySelectorAll("[data-approval-filter-item='true']"));
+      var shown = 0;
+      rows.forEach(function(item) {{
+        var kind = item.getAttribute("data-approval-filter-row-kind") || "";
+        var goal = item.getAttribute("data-approval-filter-goal") || "";
+        var run = item.getAttribute("data-approval-filter-run") || "";
+        var sourceRun = item.getAttribute("data-approval-filter-source-run") || "";
+        var itemText = item.getAttribute("data-approval-filter-text") || item.textContent.toLowerCase();
+        var laneMatch = lane === "all"
+          || kind === lane
+          || (lane === "scoped_goal" && scopedGoal && goal === scopedGoal)
+          || (lane === "scoped_run" && scopedRun && (run === scopedRun || sourceRun === scopedRun));
+        var textMatch = !queryText || itemText.indexOf(queryText) !== -1;
+        var match = laneMatch && textMatch;
+        var listItem = item.closest ? item.closest("li") : item.parentElement;
+        if (listItem) {{ listItem.hidden = !match; }}
+        item.hidden = !match;
+        if (match) {{ shown += 1; }}
+      }});
+      Array.prototype.slice.call(filterPanel.querySelectorAll("[data-approval-filter-kind]")).forEach(function(button) {{
+        var active = (button.getAttribute("data-approval-filter-kind") || "all") === lane;
+        if (active) {{
+          button.setAttribute("data-approval-filter-active", "true");
+          button.setAttribute("aria-pressed", "true");
+        }} else {{
+          button.removeAttribute("data-approval-filter-active");
+          button.setAttribute("aria-pressed", "false");
+        }}
+      }});
+      var status = filterPanel.querySelector("[data-approval-filter-status='true']");
+      if (status) {{
+        var parts = [];
+        if (lane !== "all") {{ parts.push("lane " + lane.replace("_", " ")); }}
+        if (queryText) {{ parts.push("text " + queryText); }}
+        status.textContent = "Showing " + shown + " of " + rows.length + " approval rows" + (parts.length ? " matching " + parts.join(", ") : "") + ".";
+      }}
+      var empty = filterPanel.querySelector("[data-approval-filter-empty='true']");
+      if (empty) {{ empty.hidden = shown !== 0; }}
+      if (options.save !== false) {{
+        saveApprovalFilterState(filterPanel, {{ lane: lane, query: query }});
+      }}
+    }}
+    function initializeApprovalFilterState() {{
+      var filterPanel = document.querySelector("[data-approval-queue-filter='true']");
+      if (!filterPanel) {{ return; }}
+      if (!restoreApprovalFilterState()) {{
+        updateApprovalFilter({{ lane: "all", query: "", save: false }});
+        setApprovalFilterViewStatus(filterPanel, "View: default");
+      }}
+    }}
     if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
     if (paletteSearch) {{ paletteSearch.addEventListener("input", syncPaletteFilter); }}
     if (nextActionOpen) {{ nextActionOpen.addEventListener("click", openNextAction); }}
@@ -39465,6 +39785,18 @@ def _html_page(
         updateSkillsInventoryFilter({{ lane: skillsFilterButton.getAttribute("data-skills-inventory-filter-kind") || "all" }});
         return;
       }}
+      var approvalFilterReset = target.closest ? target.closest("[data-approval-filter-reset='true']") : null;
+      if (approvalFilterReset) {{
+        event.preventDefault();
+        clearApprovalFilterState();
+        return;
+      }}
+      var approvalFilterButton = target.closest ? target.closest("[data-approval-filter-kind]") : null;
+      if (approvalFilterButton) {{
+        event.preventDefault();
+        updateApprovalFilter({{ lane: approvalFilterButton.getAttribute("data-approval-filter-kind") || "all" }});
+        return;
+      }}
       var opener = target.closest ? target.closest("[data-open-details='true']") : null;
       if (!opener) {{ return; }}
       var href = opener.getAttribute("href") || "";
@@ -39487,6 +39819,10 @@ def _html_page(
       var skillsFilterQuery = target.closest ? target.closest("[data-skills-inventory-filter-query='true']") : null;
       if (skillsFilterQuery) {{
         updateSkillsInventoryFilter({{ query: skillsFilterQuery.value || "" }});
+      }}
+      var approvalFilterQuery = target.closest ? target.closest("[data-approval-filter-query='true']") : null;
+      if (approvalFilterQuery) {{
+        updateApprovalFilter({{ query: approvalFilterQuery.value || "" }});
       }}
     }});
     document.addEventListener("change", function(event) {{
@@ -39534,6 +39870,7 @@ def _html_page(
     initializeTimelineLaneState();
     initializeMemoryInventoryFilterState();
     initializeSkillsInventoryFilterState();
+    initializeApprovalFilterState();
     restoreWorkspacePanels();
     window.addEventListener("hashchange", openCurrentHashDetails);
     document.addEventListener("keydown", function(event) {{
