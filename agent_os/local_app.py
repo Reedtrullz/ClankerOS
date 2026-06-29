@@ -380,7 +380,12 @@ def render_local_app_route(
             return page("Incidents", _incidents(root))
         if path.startswith("/goals/"):
             goal_id = unquote(path.removeprefix("/goals/"))
-            return page(f"Goal {goal_id}", _goal_detail(root, goal_id))
+            goal_title = f"Goal {goal_id}"
+            try:
+                goal_title = _goal_summary_parts(_storage(root).get_goal(goal_id))[0]
+            except KeyError:
+                pass
+            return page(goal_title, _goal_detail(root, goal_id))
         if path.startswith("/projects/"):
             project_id = unquote(path.removeprefix("/projects/"))
             return page(f"Project {project_id}", _project_detail(root, project_id))
@@ -8718,6 +8723,20 @@ class GoalNextAction:
     reason: str
 
 
+def _goal_summary_parts(goal: Any) -> tuple[str, str, str]:
+    title = str(getattr(goal, "title", "") or "").strip()
+    description = str(getattr(goal, "description", "") or "").strip()
+    prompt = str(getattr(goal, "original_prompt", "") or "").strip()
+    goal_id = str(getattr(goal, "id", "") or "").strip()
+    if title:
+        return title, description or prompt or title, "title"
+    if description:
+        return description, description, "description"
+    if prompt:
+        return prompt, prompt, "original_prompt"
+    return goal_id or "Untitled Goal", goal_id or "Untitled Goal", "id"
+
+
 def _goals(root: Path) -> str:
     storage = _storage(root)
     rows = _goal_rows(storage, limit=100)
@@ -9257,12 +9276,20 @@ def _goal_detail(root: Path, goal_id: str) -> str:
         return "<p class='error'>Goal not found.</p>"
     next_action = _goal_next_action(root, state)
     phase = _goal_current_phase(state)
+    summary_title, summary_intent, summary_title_source = _goal_summary_parts(goal)
     return "".join(
         [
-            f"<section id='goal-summary' class='hero'><h1>Goal {_e(goal.id)}</h1>",
-            f"<p>{_e(goal.title or goal.description)}</p>",
+            (
+                "<section id='goal-summary' class='hero' data-goal-summary='true' "
+                "data-goal-summary-content-first='true'>"
+            ),
+            f"<h1 data-goal-summary-title='true'>{_e(summary_title)}</h1>",
+            f"<p class='muted' data-goal-summary-id='true'>Goal {_e(goal.id)}</p>",
             _kv(
                 [
+                    ("goal_id", goal.id),
+                    ("goal_intent", summary_intent),
+                    ("goal_summary_title_source", summary_title_source),
                     ("project", SafeHtml(f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a>")),
                     ("status", goal.status),
                     ("current_phase", phase),

@@ -189,7 +189,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   checkout.
 - `/goals/<goal_id>` - goal-centered workbench that is content-first: the Goal
   summary, large Current Phase banner, jump bar, action dock, and progress meter
-  appear before shared route/focus diagnostics. The in-flow read-only
+  appear before shared route/focus diagnostics. The summary is now title-first:
+  the H1 and browser title use the human Goal title/intent, while the Goal id
+  stays visible as metadata alongside project, status, phase, and local refresh
+  evidence. The in-flow read-only
   `Goal Jump Bar` covers phase, action, workflow, timeline, evidence,
   artifacts, notes, git, and remaining work. Its visible `1`-`9` key badges
   and `aria-keyshortcuts` jump to those local anchors without submitting

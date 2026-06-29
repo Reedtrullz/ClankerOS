@@ -10026,6 +10026,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     goal = render_local_app_route(tmp_path, f"/goals/{result.goal_id}")
     assert goal.status == 200
+    assert (
+        "<title>Demo the ClankerOS local operator app with fixture-backed state - "
+        "ClankerOS Local Operator</title>"
+    ) in goal.body
+    assert (
+        "<section id='goal-summary' class='hero' data-goal-summary='true' "
+        "data-goal-summary-content-first='true'>"
+    ) in goal.body
+    assert (
+        "<h1 data-goal-summary-title='true'>Demo the ClankerOS local operator app "
+        "with fixture-backed state</h1>"
+    ) in goal.body
+    assert f"<p class='muted' data-goal-summary-id='true'>Goal {result.goal_id}</p>" in goal.body
+    assert f"goal_id</dt><dd>{result.goal_id}" in goal.body
+    assert (
+        "goal_intent</dt><dd>Demo the ClankerOS local operator app with fixture-backed state"
+        in goal.body
+    )
+    assert "goal_summary_title_source</dt><dd>title" in goal.body
     assert "data-command-palette='true'" in goal.body
     assert "data-command-palette-focus='true'" in goal.body
     assert "data-command-palette-focus-grid='true'" in goal.body
@@ -10051,7 +10070,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in goal.body
     assert (
         f"palette_focus_current_surface</dt><dd><a href='/goals/{result.goal_id}'>"
-        f"Goal {result.goal_id}</a>"
+        "Demo the ClankerOS local operator app with fixture-backed state</a>"
     ) in goal.body
     assert "palette_focus_action_form_available</dt><dd>true" in goal.body
     assert "palette_focus_write_on_get</dt><dd>false" in goal.body

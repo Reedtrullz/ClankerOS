@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-29 Goal Summary Title-First UX
+
+- Made `/goals/<goal_id>` title-first at the top of the operator surface.
+- The Goal detail browser title and H1 now use the human Goal title/intent
+  instead of `Goal <id>`.
+- The Goal id remains visible as metadata in the summary, alongside explicit
+  title-source, intent, project, status, current phase, and local refresh
+  readback.
+- This keeps direct Goal links recognizable as human work objects while
+  preserving stable machine-readable id evidence for review, automation, and
+  tests.
+- Updated README, local app docs, operating summary, current status focus, and
+  fixture-backed Goal route assertions for the title-first summary contract.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `python3 -m compileall -q agent_os tests`, focused
+  `tests/test_first_milestone.py` demo route coverage
+  (`1 passed, 515 deselected in 35.28s`), bounded `app-smoke-test`, bounded
+  `app-demo-smoke-test`, and `git diff --check`.
+- Non-claims: no browser QA for this slice, no write on GET, no approval or
+  execution on GET, no app-side GitHub polling, no provider calls, no external
+  mutation, no PR creation, and no deploy from ClankerOS itself.
+
 ## 2026-06-29 Goal Detail Content-First UX
 
 - Made `/goals/<goal_id>` content-first in the shared app shell.

@@ -4,6 +4,9 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals/<goal_id>` now opens with a title-first Goal summary: the H1 and
+  browser title use the human Goal title/intent, while the Goal id remains
+  visible as metadata with project, status, phase, and local refresh evidence.
 - `/goals/<goal_id>` is now content-first in the shared app shell: the Goal
   summary, Current Phase banner, jump bar, action dock, and progress meter
   render before Route Context and Operator Focus diagnostics, so a direct Goal

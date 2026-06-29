@@ -300,7 +300,10 @@ switching to the CLI.
 Use `/goals/<goal_id>` as the
 goal-centered workbench: the page is now content-first, so the Goal summary,
 large Current Phase banner, jump bar, action dock, and progress meter appear
-before shared route/focus diagnostics. The Goal Jump Bar covers phase, action,
+before shared route/focus diagnostics. The summary itself is title-first: it
+uses the human Goal title/intent as the page heading, keeps the Goal id as
+metadata instead of the headline, and preserves the project, status, phase,
+and local refresh posture in the readback. The Goal Jump Bar covers phase, action,
 workflow, timeline, evidence, artifacts, notes, git, and remaining work. Its visible `1`-`9` key badges and
 `aria-keyshortcuts` jump to those local anchors without submitting forms,
 while jump-state evidence stays collapsed by default,

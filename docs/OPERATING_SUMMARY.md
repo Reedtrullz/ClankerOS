@@ -385,11 +385,13 @@ Core layers for the bootstrap:
   boundaries in the DOM.
   Goal detail pages are now content-first: the Goal summary, large Current
   Phase banner, jump bar, action dock, and progress meter render before shared
-  route/focus diagnostics. The in-flow read-only `Goal Jump Bar` covers phase,
-  action, workflow, timeline, evidence, artifacts, notes, git, and remaining
-  work. Visible `1`-`9` key badges and `aria-keyshortcuts` jump to those local
-  anchors without submitting forms while jump evidence stays collapsed by
-  default. An in-flow `Goal Action Dock`
+  route/focus diagnostics. The summary is title-first and uses the human Goal
+  title/intent as both the page heading and browser title, while retaining the
+  Goal id as metadata with project, status, phase, and local refresh posture.
+  The in-flow read-only `Goal Jump Bar` covers phase, action, workflow,
+  timeline, evidence, artifacts, notes, git, and remaining work. Visible `1`-`9`
+  key badges and `aria-keyshortcuts` jump to those local anchors without
+  submitting forms while jump evidence stays collapsed by default. An in-flow `Goal Action Dock`
   follows the jump bar and keeps the current action, workflow gate, CI proof
   target, and `/resume` route visible near the top of the workbench while
   jumping directly to the existing confirmed Goal action form when one is
