@@ -5088,6 +5088,43 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "<a href='#first-run-create-project'>Create Project</a>"
     ) in root.body
     assert "first_run_next_step_safety: same-page guidance only" in root.body
+    assert "First Run Empty State Map" in root.body
+    assert "id='first-run-empty-state-illustration'" in root.body
+    assert "data-first-run-empty-state='true'" in root.body
+    assert "data-first-run-empty-state-art='true'" in root.body
+    assert "[ Project ] -- [ Goal ] -- [ Delegation ] -- [ Context ] -- [ Run ]" in root.body
+    assert "data-first-run-empty-state-grid='true'" in root.body
+    assert root.body.count("data-first-run-empty-state-step='true'") == 5
+    assert "data-first-run-empty-state-step-key='create_project'" in root.body
+    assert "data-first-run-empty-state-step-status='current'" in root.body
+    assert "data-first-run-empty-state-step-key='create_first_goal'" in root.body
+    assert "data-first-run-empty-state-step-status='waiting_for_project'" in root.body
+    assert (
+        "data-first-run-empty-state-primary='true' "
+        "href='#first-run-create-project'>Create Project</a>"
+    ) in root.body
+    assert "data-first-run-empty-state-evidence='true'" in root.body
+    assert "first_run_empty_state_status</dt><dd>active" in root.body
+    assert "first_run_empty_state_current_step</dt><dd>create_project" in root.body
+    assert "first_run_empty_state_next_action</dt><dd>Register ClankerOS project" in root.body
+    assert (
+        "first_run_empty_state_target_surface</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert "first_run_empty_state_total_steps</dt><dd>5" in root.body
+    assert "first_run_empty_state_project_registered</dt><dd>false" in root.body
+    assert "first_run_empty_state_goal_created</dt><dd>false" in root.body
+    assert "first_run_empty_state_delegation_created</dt><dd>false" in root.body
+    assert "first_run_empty_state_context_pack_ready</dt><dd>false" in root.body
+    assert "first_run_empty_state_delegation_completed</dt><dd>false" in root.body
+    assert "first_run_empty_state_write_on_get</dt><dd>false" in root.body
+    assert "first_run_empty_state_provider_calls_taken</dt><dd>0" in root.body
+    assert "first_run_empty_state_network_actions_taken</dt><dd>0" in root.body
+    assert "first_run_empty_state_external_effects_created</dt><dd>false" in root.body
+    assert "first_run_empty_state_step: create_project status=current" in root.body
+    assert "first_run_empty_state_step: run_first_delegation status=waiting_for_goal" in root.body
+    assert "first_run_empty_state_action: follow visible text map to first delegation" in root.body
+    assert "first_run_empty_state_safety: read-only illustration; confirmed forms own writes" in root.body
     assert "First Run Checklist" in root.body
     assert "data-first-run-checklist='true'" in root.body
     assert "data-first-run-checklist-storage-key='clankeros-first-run-checklist'" in root.body
@@ -5130,7 +5167,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "window.localStorage.removeItem(firstRunChecklistStorageKey(root))" in root.body
     assert root.body.index("First Run Command Bar") < root.body.index("First Run Launchpad")
     assert root.body.index("First Run Launchpad") < root.body.index("First Run Next Step")
-    assert root.body.index("First Run Next Step") < root.body.index("First Run Checklist")
+    assert root.body.index("First Run Next Step") < root.body.index("First Run Empty State Map")
+    assert root.body.index("First Run Empty State Map") < root.body.index("First Run Checklist")
     assert root.body.index("First Run Checklist") < root.body.index("First Run Progress")
     assert (
         "first_run_guided_path</dt><dd>Create project -&gt; Create first goal -&gt; "

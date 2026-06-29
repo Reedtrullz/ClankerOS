@@ -153,6 +153,9 @@ populated demo, inspect workflow, review verification proof, or check health
 and safety. A visible `First Run Next Step` panel follows with one primary
 same-page action, setup/handoff/resume/safety cards, confirmation posture, and
 zero-effect counters, making the current click obvious before the checklist. A
+visible `First Run Empty State Map` now renders a text-only
+`Project -> Goal -> Delegation -> Context -> Run` illustration with step cards,
+so a blank checkout shows a path instead of just empty inventories. A
 browser-local `First Run Checklist` then lets the operator mark setup checks
 and keep a short return note in `localStorage:clankeros-first-run-checklist`;
 the real step state still comes from ClankerOS progress and GET rendering

@@ -10794,6 +10794,92 @@ def _first_run_next_step(progress: dict[str, Any]) -> str:
     )
 
 
+def _first_run_empty_state_illustration(progress: dict[str, Any]) -> str:
+    primary_href, primary_label = _first_run_same_page_target(progress)
+    steps = [
+        ("create_project", "Project"),
+        ("create_first_goal", "Goal"),
+        ("create_first_delegation", "Delegation"),
+        ("generate_context_pack", "Context"),
+        ("run_first_delegation", "Run"),
+    ]
+    art = "[ Project ] -- [ Goal ] -- [ Delegation ] -- [ Context ] -- [ Run ]"
+    step_cards: list[str] = []
+    step_lines: list[str] = []
+    for index, (step, label) in enumerate(steps, start=1):
+        status = _first_run_step_status(progress, step)
+        href = _first_run_step_href(progress, step)
+        step_lines.append(f"first_run_empty_state_step: {step} status={status}")
+        step_cards.append(
+            "".join(
+                [
+                    (
+                        "<article class='first-run-empty-card' data-first-run-empty-state-step='true' "
+                        f"data-first-run-empty-state-step-key='{_e(step)}' "
+                        f"data-first-run-empty-state-step-status='{_e(status)}'>"
+                    ),
+                    f"<span>{index}</span>",
+                    f"<strong>{_e(label)}</strong>",
+                    f"<em>{_e(status.replace('_', ' '))}</em>",
+                    f"<a href='{_e(href)}'>{_e('Open' if status == 'done' else ('Continue' if status == 'current' else 'Waiting'))}</a>",
+                    "</article>",
+                ]
+            )
+        )
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("first_run_empty_state_status", "complete" if progress["complete"] else "active"),
+        ("first_run_empty_state_current_step", progress["current_step"]),
+        ("first_run_empty_state_next_action", progress["next_action"]),
+        (
+            "first_run_empty_state_target_surface",
+            SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+        ),
+        ("first_run_empty_state_total_steps", str(len(steps))),
+        ("first_run_empty_state_illustration", art),
+        ("first_run_empty_state_project_registered", str(progress["project_registered"]).lower()),
+        ("first_run_empty_state_goal_created", str(progress["goal_created"]).lower()),
+        ("first_run_empty_state_delegation_created", str(progress["delegation_created"]).lower()),
+        ("first_run_empty_state_context_pack_ready", str(progress["context_pack_ready"]).lower()),
+        ("first_run_empty_state_delegation_completed", str(progress["delegation_completed"]).lower()),
+        ("first_run_empty_state_write_on_get", "false"),
+        ("first_run_empty_state_provider_calls_taken", "0"),
+        ("first_run_empty_state_network_actions_taken", "0"),
+        ("first_run_empty_state_external_effects_created", "false"),
+    ]
+    return "".join(
+        [
+            (
+                "<section id='first-run-empty-state-illustration' class='panel first-run-empty-state' "
+                "data-first-run-empty-state='true'>"
+            ),
+            "<h3>First Run Empty State Map</h3>",
+            "<p class='muted'>A text map for turning a fresh checkout into the first completed local delegation.</p>",
+            (
+                "<pre class='first-run-empty-state-art' data-first-run-empty-state-art='true' "
+                "aria-label='First-run path text illustration'>"
+                f"{_e(art)}</pre>"
+            ),
+            "<div class='first-run-empty-grid' data-first-run-empty-state-grid='true'>",
+            "".join(step_cards),
+            "</div>",
+            "<a class='first-run-empty-action' data-first-run-empty-state-primary='true' "
+            f"href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            "<details class='first-run-empty-evidence' data-first-run-empty-state-evidence='true'>",
+            "<summary>First run empty-state evidence</summary>",
+            _kv(rows),
+            _ul(
+                step_lines
+                + [
+                    "first_run_empty_state_action: follow visible text map to first delegation",
+                    "first_run_empty_state_safety: read-only illustration; confirmed forms own writes",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
 def _first_run_checklist(progress: dict[str, Any]) -> str:
     statuses = {
         step: _first_run_step_status(progress, step)
@@ -11018,6 +11104,7 @@ def _first_run_panel(root: Path, storage: Storage) -> str:
             _first_run_command_bar(root, storage, progress),
             _first_run_launchpad(progress),
             _first_run_next_step(progress),
+            _first_run_empty_state_illustration(progress),
             _first_run_checklist(progress),
             _first_run_progress_strip(progress),
             _kv(
@@ -41400,6 +41487,19 @@ def _html_page(
     .first-run-next-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .first-run-next-evidence summary {{ cursor:pointer; font-weight:700; }}
     .first-run-next-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .first-run-empty-state {{ border-left:4px solid var(--accent); }}
+    .first-run-empty-state-art {{ margin:10px 0; white-space:pre-wrap; text-align:center; background:var(--panel); color:var(--ink); border:1px solid var(--line); }}
+    .first-run-empty-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin:12px 0; }}
+    .first-run-empty-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:10px; display:grid; gap:6px; align-content:start; }}
+    .first-run-empty-card[data-first-run-empty-state-step-status='current'] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .first-run-empty-card span {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .first-run-empty-card strong, .first-run-empty-card em {{ overflow-wrap:anywhere; }}
+    .first-run-empty-card em {{ color:var(--muted); font-style:normal; }}
+    .first-run-empty-card a, .first-run-empty-action {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; background:var(--surface); color:var(--accent); }}
+    .first-run-empty-action {{ margin-top:4px; background:var(--accent); color:#fff; }}
+    .first-run-empty-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .first-run-empty-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .first-run-empty-evidence:not([open]) > :not(summary) {{ display:none; }}
     .first-run-checklist {{ border-left:4px solid var(--accent); }}
     .first-run-checklist-toolbar {{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:10px 0; }}
     .first-run-checklist-toolbar p {{ margin:0; }}

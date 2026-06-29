@@ -1064,7 +1064,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   right browser path without reading docs first. It then shows a read-only
   `First Run Next Step` panel with one primary same-page action plus setup,
   handoff, resume, and safety cards, so the current click is obvious before the
-  operator reads the full checklist. It then shows a browser-local
+  operator reads the full checklist. It then shows a visible read-only
+  `First Run Empty State Map` with a text-only
+  `Project -> Goal -> Delegation -> Context -> Run` illustration and step
+  cards, so a blank checkout still has a concrete path. It then shows a browser-local
   `First Run Checklist` that lets operators mark setup checks and keep a short
   return note in `localStorage:clankeros-first-run-checklist`, while the real
   Project, Goal, Delegation, Context, and Run statuses still come from

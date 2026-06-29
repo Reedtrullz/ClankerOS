@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The First Run Guide now includes a visible `First Run Empty State Map`:
+  a text-only `Project -> Goal -> Delegation -> Context -> Run` illustration
+  plus step cards between Next Step and Checklist, keeping empty checkouts
+  scan-friendly with no state write, provider call, network action,
+  approval/execution/push/PR/deploy, or external effect on GET.
 - The shared browser shell now has first-class shortcut discovery: a visible
   `Keys` header control and `?` shortcut open a browser-local Keyboard
   Shortcuts dialog with the same shortcut list, no state write, no provider

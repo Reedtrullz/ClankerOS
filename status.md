@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-29 First Run Empty State Text Map UX
+
+- Promoted the first-run empty-state illustration into the visible First Run
+  Guide. A fresh checkout now shows `First Run Empty State Map` between the
+  `First Run Next Step` and `First Run Checklist` panels.
+- The map renders the text-only path
+  `[ Project ] -- [ Goal ] -- [ Delegation ] -- [ Context ] -- [ Run ]`, five
+  step cards, and a current `Create Project` action so a new operator can see
+  the path to the first completed delegation without opening hidden evidence
+  first.
+- Added machine-readable evidence for the active step, target surface, total
+  steps, illustration text, per-step statuses, and no-effect counters for
+  write-on-GET, provider calls, network actions, and external effects.
+- Updated README, local app docs, operating summary, docs status, and focused
+  first-milestone assertions for the new first-run map, ordering, CTA,
+  evidence rows, and safety lines.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed; focused
+  local-app pytest passed with `2 passed in 56.02s`.
+- Browser verification: Playwright against a throwaway empty root at
+  `http://127.0.0.1:62107/` confirmed `First Run Empty State Map`, the text
+  illustration, five step cards, current `create_project`, `Create Project`
+  CTA to `#first-run-create-project`, evidence rows with zero-effect values,
+  and DOM ordering after Next Step and before Checklist. Mobile `390x844`
+  kept the panel at `358px` inside a `390px` viewport with no horizontal
+  overflow, and console warnings/errors were zero. The scratch root, browser,
+  and server were cleaned up.
+- Non-claims: this does not create projects, goals, delegations, context
+  packs, runs, approvals, execution, pushes, PRs, deploys, provider calls,
+  network actions beyond local loopback, server writes, or external mutations.
+
 ## 2026-06-29 Keyboard Shortcut Help Dialog UX
 
 - Promoted shortcut discovery into the shared browser shell. Every route now

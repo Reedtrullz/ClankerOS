@@ -75,7 +75,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   guide also renders `First Run Next Step` between the launchpad and progress
   strip, turning the current setup or delegation gate into one primary
   same-page browser action with setup, handoff, resume, and safety cards.
-  A browser-local `First Run Checklist` follows the next-step panel so an
+  A visible `First Run Empty State Map` follows with a text-only
+  `Project -> Goal -> Delegation -> Context -> Run` illustration and step
+  cards, so empty local state still has a scan-friendly path. A browser-local
+  `First Run Checklist` follows the map so an
   operator can mark setup checks and keep a short return note in
   `localStorage:clankeros-first-run-checklist`, while real progress remains
   derived from ClankerOS state and GET rendering stays read-only.
