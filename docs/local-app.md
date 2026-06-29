@@ -234,9 +234,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   operator work, latest proof state, and the next confirmed browser action. A
   read-only `Goal Attention Digest` follows with Now, Approvals, Incidents,
   Recommendations, Open Work, and Safety cards so the first waiting queue and
-  safe next click are visible before deeper command evidence. The
-  dock, meter, and digest appear before the Goal
-  Command Bar, Goal Operator Workbench, Goal Daily Loop, Goal Return Brief,
+  safe next click are visible before deeper command evidence. A read-only
+  `Goal Decision Queue` follows with concrete Goal-scoped decision rows for
+  the current action plus pending approvals, incidents, recommendations, or
+  blocked tasks, linking to existing confirmed forms and scoped review
+  surfaces without adding write authority. The dock, meter, digest, and
+  decision queue appear before the Goal Command Bar, Goal Operator Workbench,
+  Goal Daily Loop, Goal Return Brief,
   Goal Continuation Rail, next action, next recommendation, Goal Workflow Map,
   Goal Coder Handoff Digest, Goal CI Handoff, live state, and collapsed section
   index before the detailed overview, goal risk, completion criteria,

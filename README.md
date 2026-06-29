@@ -359,9 +359,13 @@ operator work, latest proof state, and the next confirmed browser action before
 deeper command evidence. A read-only `Goal Attention Digest` follows the meter
 with Now, Approvals, Incidents, Recommendations, Open Work, and Safety cards so
 the first waiting queue and safe next click are visible before deeper command
-evidence. The dock, meter, and digest precede the Goal Command Bar, Goal
-Operator Workbench, Goal Daily Loop, Goal Return Brief, Goal Session Digest,
-Goal Activity Pulse, Goal Continuation Rail,
+evidence. A read-only `Goal Decision Queue` follows with exact Goal-scoped
+operator rows for the current action plus pending approvals, incidents,
+recommendations, or blocked tasks, linking to the existing confirmed action
+form or scoped approval surfaces without deciding anything on GET. The dock,
+meter, digest, and decision queue precede the Goal Command Bar, Goal Operator
+Workbench, Goal Daily Loop, Goal Return Brief, Goal Session Digest, Goal
+Activity Pulse, Goal Continuation Rail,
 next action, next recommendation, Goal Workflow Map, Goal Coder Handoff
 Digest, Goal CI Handoff, live state, and collapsed section index before the detailed progress, timeline, activity log, goal risk, completion
 criteria, completion readiness, evidence, delegations, runs, approvals,

@@ -510,7 +510,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   human-readable event, target surface, counts, and safety evidence. Goal detail pages also include a
   read-only `Goal Attention Digest` after the progress meter with visible Now,
   Approvals, Incidents, Recommendations, Open Work, and Safety cards before the
-  deeper command surfaces. The page also includes a
+  deeper command surfaces. A read-only `Goal Decision Queue` follows with
+  exact Goal-scoped rows for the current next action plus pending approvals,
+  incidents, recommendations, and blocked tasks; those rows link only to the
+  existing confirmed Goal action form, scoped approvals, incidents,
+  recommendations, or risk surfaces and preserve zero write/provider/network/
+  external-effect counters. The page also includes a
   read-only `Goal Command Bar` near the top that opens with visible Now,
   Phase, Progress, Proof, and Resume cards while keeping phase, one primary
   action, target local surface, progress, waiting counts, `/resume`, latest

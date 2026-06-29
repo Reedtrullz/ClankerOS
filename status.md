@@ -1,5 +1,34 @@
 # Status
 
+## 2026-06-29 Goal Decision Queue
+
+- Added a read-only `Goal Decision Queue` to `/goals/<goal_id>` after the
+  Goal Attention Digest and before the Goal Command Bar.
+- The queue renders concrete Goal-scoped operator rows for the current next
+  action plus pending worktree, commit, publication, incident, recommendation,
+  or blocked-task decisions. Rows link to the existing confirmed Goal action
+  form, scoped approvals, incidents, recommendations, or risk surfaces instead
+  of adding new write authority.
+- It is included in the command palette's Goal section commands and the Goal
+  Section Index, preserving explicit evidence for Goal, project, phase, row
+  counts, waiting counts, approval/incidents/recommendation/task counts, action
+  form availability, and zero write/provider/network/external-effect counters.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused route/demo pytest passed with
+  `2 passed, 514 deselected in 61.21s`; `python3 -m compileall -q agent_os
+  tests` passed; `git diff --check` passed; bounded scratch-root
+  `app-smoke-test` passed across core routes with provider/network/external
+  mutation counters at zero; bounded scratch-root `app-demo-smoke-test` passed
+  across fixture-backed stateful routes with provider/network/external
+  mutation counters at zero; Playwright browser QA against a throwaway demo
+  Goal at `http://127.0.0.1:55628/goals/goal_064371858de9` confirmed the
+  queue rendered two rows (`current_action` and `worktree_approval`), linked
+  the current action to `#goal-next-action-form`, linked the approval row to
+  `/approvals?goal_id=goal_064371858de9`, sat between Goal Attention Digest
+  and Goal Command Bar, emitted no console errors or warnings, had no desktop
+  horizontal overflow at `1280x900`, and stacked to one `329px` column with no
+  horizontal overflow at mobile `390x844`.
+
 ## 2026-06-29 Goal Activity Pulse
 
 - Added a read-only `Goal Activity Pulse` to `/goals/<goal_id>` after the

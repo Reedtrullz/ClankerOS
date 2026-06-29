@@ -11295,7 +11295,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-command-palette-result-list='true'" in goal.body
     assert "data-palette-result='true'" in goal.body
     assert "palette_filter_source</dt><dd>nav_recent_and_goal_sections" in goal.body
-    assert "palette_filter_goal_section_count</dt><dd>12" in goal.body
+    assert "palette_filter_goal_section_count</dt><dd>13" in goal.body
     assert "palette_filter_goal_section_source</dt><dd>current_route" in goal.body
     assert f"palette_filter_goal_section_goal</dt><dd>{result.goal_id}" in goal.body
     assert (
@@ -11304,6 +11304,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in goal.body
     assert (
         f"href='/goals/{result.goal_id}#goal-approvals'>Goal Approvals: "
+        "Demo the ClankerOS local operator app with fixture-backed state</a>"
+    ) in goal.body
+    assert (
+        f"href='/goals/{result.goal_id}#goal-decision-queue'>Goal Decision queue: "
         "Demo the ClankerOS local operator app with fixture-backed state</a>"
     ) in goal.body
     assert (
@@ -11800,12 +11804,56 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_attention_recommendations: open=0" in goal.body
     assert "goal_attention_open_work: tasks=1 waiting=1" in goal.body
     assert "goal_attention_safety: read-only local queue digest; confirmed forms own writes" in goal.body
+    assert "Goal Decision Queue" in goal.body
+    assert "id='goal-decision-queue'" in goal.body
+    assert "data-goal-decision-queue='true'" in goal.body
+    assert "data-goal-decision-list='true'" in goal.body
+    assert "data-goal-decision-row='true'" in goal.body
+    assert "data-goal-decision-kind='current_action'" in goal.body
+    assert "data-goal-decision-kind='worktree_approval'" in goal.body
+    assert "data-goal-decision-primary='true'" in goal.body
+    assert "data-goal-decision-primary='false'" in goal.body
+    assert "data-goal-decision-evidence='true'" in goal.body
+    assert "goal_decision_queue_status</dt><dd>waiting_on_operator" in goal.body
+    assert f"goal_decision_queue_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_decision_queue_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_decision_queue_phase</dt><dd>Ready to commit" in goal.body
+    assert "goal_decision_queue_next_action</dt><dd>Create commit request" in goal.body
+    assert "goal_decision_queue_primary_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_decision_queue_action_form_available</dt><dd>true" in goal.body
+    assert "goal_decision_queue_rows</dt><dd>2" in goal.body
+    assert "goal_decision_queue_visible_rows</dt><dd>2" in goal.body
+    assert "goal_decision_queue_hidden_rows</dt><dd>0" in goal.body
+    assert "goal_decision_queue_waiting_items</dt><dd>1" in goal.body
+    assert "goal_decision_queue_pending_approvals</dt><dd>1" in goal.body
+    assert "goal_decision_queue_pending_worktree_approvals</dt><dd>1" in goal.body
+    assert "goal_decision_queue_pending_commit_approvals</dt><dd>0" in goal.body
+    assert "goal_decision_queue_pending_publication_approvals</dt><dd>0" in goal.body
+    assert "goal_decision_queue_open_incidents</dt><dd>0" in goal.body
+    assert "goal_decision_queue_open_recommendations</dt><dd>0" in goal.body
+    assert "goal_decision_queue_blocked_tasks</dt><dd>0" in goal.body
+    assert "goal_decision_queue_source</dt><dd>goal_next_action_approvals_incidents_recommendations_tasks" in goal.body
+    assert "goal_decision_queue_write_on_get</dt><dd>false" in goal.body
+    assert "goal_decision_queue_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_decision_queue_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_decision_queue_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_decision_queue_now: Create commit request" in goal.body
+    assert "goal_decision_queue_row: kind=current_action status=recommended id=Create commit request surface=<a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_decision_queue_row: kind=worktree_approval status=pending_operator_approval id=" in goal.body
+    assert f"surface=<a href='/approvals?goal_id={result.goal_id}'>Scoped approvals</a>" in goal.body
+    assert "goal_decision_queue_safety: read-only local queue; existing confirmed forms and approval surfaces own writes" in goal.body
+    assert goal.body.index("data-goal-attention-digest='true'") < goal.body.index(
+        "data-goal-decision-queue='true'"
+    )
+    assert goal.body.index("data-goal-decision-queue='true'") < goal.body.index(
+        "data-goal-command-bar='true'"
+    )
     assert "goal_section_index_status</dt><dd>available" in goal.body
     assert "goal_section_count</dt><dd>" in goal.body
     assert "data-goal-section-index-actions='true'" in goal.body
     assert "data-goal-section-finder='true'" in goal.body
     assert "data-goal-section-finder-input='true'" in goal.body
-    assert "data-goal-section-finder-count='true'>58 sections" in goal.body
+    assert "data-goal-section-finder-count='true'>59 sections" in goal.body
     assert "data-goal-section-finder-first='true' href='#goal-summary'>Summary</a>" in goal.body
     assert "data-goal-section-finder-results='true'" in goal.body
     assert "data-goal-section-result='true' data-goal-section-label='approval command'" in goal.body
@@ -11819,7 +11867,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-section-index-primary='true' href='#goal-next-action'>Next action</a>" in goal.body
     assert "goal_section_switchboard_status</dt><dd>available" in goal.body
     assert "goal_section_finder_status</dt><dd>available" in goal.body
-    assert "goal_section_finder_result_count</dt><dd>58" in goal.body
+    assert "goal_section_finder_result_count</dt><dd>59" in goal.body
     assert "goal_section_finder_default_first</dt><dd>goal-summary" in goal.body
     assert "goal_section_switchboard_card_count</dt><dd>5" in goal.body
     assert "goal_section_switchboard_primary</dt><dd>goal-next-action" in goal.body
@@ -11832,7 +11880,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_section_switchboard_finish: <a href='#goal-completion-readiness'>Completion</a>" in goal.body
     assert "goal_section_finder_default: <a href='#goal-summary'>Summary</a>" in goal.body
     assert "goal_section_finder_target: Summary -> #goal-summary" in goal.body
-    assert "goal_section_finder_target: Operator workbench -> #goal-operator-workbench" in goal.body
+    assert "goal_section_finder_target: Decision queue -> #goal-decision-queue" in goal.body
     assert "goal_section_switchboard_safety: read-only local anchor navigation" in goal.body
     assert goal.body.index("data-goal-section-index-actions='true'") < goal.body.index(
         "data-goal-section-finder='true'"
@@ -11849,6 +11897,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-action-dock'" in goal.body
     assert "href='#goal-progress-meter'" in goal.body
     assert "href='#goal-attention-digest'" in goal.body
+    assert "href='#goal-decision-queue'" in goal.body
     assert "href='#goal-first-run-rail'" in goal.body
     assert "href='#goal-command-bar'" in goal.body
     assert "href='#goal-operator-workbench'" in goal.body
@@ -11883,6 +11932,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-remaining-work'" in goal.body
     assert "id='goal-summary'" in goal.body
     assert "id='goal-attention-digest'" in goal.body
+    assert "id='goal-decision-queue'" in goal.body
     assert "id='goal-first-run-rail'" not in goal.body
     assert "id='goal-command-bar'" in goal.body
     assert "id='goal-operator-workbench'" in goal.body
@@ -11916,7 +11966,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>58" in goal.body
+    assert "goal_section_count</dt><dd>59" in goal.body
     assert "data-goal-section-index-evidence='true'" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "data-goal-command-strip='true'" in goal.body

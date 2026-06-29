@@ -142,6 +142,7 @@ GLOBAL_KEYBOARD_SHORTCUTS = {
 }
 COMMAND_PALETTE_GOAL_SECTIONS = [
     ("Next action", "goal-next-action", "current recommendation action form"),
+    ("Decision queue", "goal-decision-queue", "waiting decisions approval blockers"),
     ("Timeline", "goal-timeline", "chronological activity artifacts"),
     ("Evidence", "goal-evidence", "proof verification artifacts"),
     ("Delegations", "goal-delegations", "scout delegation contracts"),
@@ -690,6 +691,12 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-attention-safety='true'",
                 "data-goal-attention-evidence='true'",
                 "goal_attention_digest_status</dt><dd>waiting_on_operator",
+                "Goal Decision Queue",
+                "data-goal-decision-queue='true'",
+                "data-goal-decision-list='true'",
+                "data-goal-decision-row='true'",
+                "data-goal-decision-evidence='true'",
+                "goal_decision_queue_status</dt><dd>waiting_on_operator",
                 "data-goal-command-strip='true'",
                 "data-goal-command-evidence='true'",
                 "data-goal-jump-evidence='true'",
@@ -11226,6 +11233,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_action_dock(root, state, phase, next_action),
             _goal_progress_meter(root, state, phase, next_action),
             _goal_attention_digest(root, state, phase, next_action),
+            _goal_decision_queue(root, state, phase, next_action),
             _goal_first_run_rail(root, state, next_action),
             _goal_command_bar(root, state, phase, next_action),
             _goal_operator_workbench(root, state, phase, next_action),
@@ -11788,6 +11796,222 @@ def _goal_attention_digest(
     )
 
 
+def _goal_decision_queue(
+    root: Path,
+    state: dict[str, Any],
+    phase: str,
+    next_action: GoalNextAction,
+) -> str:
+    goal = state["goal"]
+    form_available = bool(_goal_next_action_form(state, next_action))
+    primary_href = "#goal-next-action-form" if form_available else next_action.href
+    primary_label = "Use Goal action form" if form_available else next_action.action
+    pending_worktree = [
+        item
+        for item in state["worktree_approvals"]
+        if item.status == "pending_operator_approval"
+    ]
+    pending_commit = [
+        item
+        for item in state["commit_approvals"]
+        if item.status == "pending_operator_approval"
+    ]
+    pending_publication = [
+        item
+        for item in state["publications"]
+        if item.status == "pending_operator_approval"
+    ]
+    open_incidents = [
+        row for row in state["incidents"] if row["status"] == "open"
+    ]
+    open_recommendations = [
+        row for row in state["recommendations"] if row["status"] == "open"
+    ]
+    blocked_tasks = [
+        task for task in state["tasks"] if task.status in {"blocked", "failed"}
+    ]
+    pending_approvals = (
+        len(pending_worktree) + len(pending_commit) + len(pending_publication)
+    )
+    waiting_items = (
+        pending_approvals
+        + len(open_incidents)
+        + len(open_recommendations)
+        + len(blocked_tasks)
+    )
+    status = "waiting_on_operator" if waiting_items else "current_action_only"
+
+    rows: list[dict[str, str]] = [
+        {
+            "kind": "current_action",
+            "status": "recommended",
+            "item_id": next_action.action,
+            "label": next_action.action,
+            "href": primary_href,
+            "surface": primary_label,
+            "reason": next_action.reason,
+            "primary": "true",
+        }
+    ]
+
+    for item in pending_commit:
+        rows.append(
+            {
+                "kind": "commit_approval",
+                "status": item.status,
+                "item_id": item.id,
+                "label": "Approve commit",
+                "href": f"/approvals?run_id={quote(item.run_id)}",
+                "surface": "Scoped approvals",
+                "reason": f"commit request for run {item.run_id}",
+                "primary": "false",
+            }
+        )
+    for item in pending_publication:
+        rows.append(
+            {
+                "kind": "publication_approval",
+                "status": item.status,
+                "item_id": item.id,
+                "label": "Approve publication",
+                "href": f"/approvals?run_id={quote(item.run_id)}",
+                "surface": "Scoped approvals",
+                "reason": f"publication request for run {item.run_id}",
+                "primary": "false",
+            }
+        )
+    for item in pending_worktree:
+        rows.append(
+            {
+                "kind": "worktree_approval",
+                "status": item.status,
+                "item_id": item.id,
+                "label": "Approve worktree",
+                "href": f"/approvals?goal_id={quote(goal.id)}",
+                "surface": "Scoped approvals",
+                "reason": f"worktree plan from delegation {item.delegation_id}",
+                "primary": "false",
+            }
+        )
+    for row in open_incidents:
+        rows.append(
+            {
+                "kind": "incident",
+                "status": str(row["status"]),
+                "item_id": str(row["id"]),
+                "label": "Inspect incident",
+                "href": "/incidents#incident-open",
+                "surface": "Open incidents",
+                "reason": str(row["summary"]),
+                "primary": "false",
+            }
+        )
+    for row in open_recommendations:
+        target = _goal_recommendation_target(goal, row)
+        rows.append(
+            {
+                "kind": "recommendation",
+                "status": str(row["status"]),
+                "item_id": str(row["id"]),
+                "label": target.action,
+                "href": target.href,
+                "surface": "Recommendation",
+                "reason": str(row["reason"]),
+                "primary": "false",
+            }
+        )
+    for task in blocked_tasks:
+        rows.append(
+            {
+                "kind": "blocked_task",
+                "status": task.status,
+                "item_id": task.id,
+                "label": "Inspect blocked task",
+                "href": "#goal-risk-command-bar",
+                "surface": "Goal risk",
+                "reason": task.description,
+                "primary": "false",
+            }
+        )
+
+    display_rows = rows[:8]
+    hidden_count = max(len(rows) - len(display_rows), 0)
+    row_items = "".join(
+        [
+            (
+                "<li class='goal-decision-row' data-goal-decision-row='true' "
+                f"data-goal-decision-kind='{_e(row['kind'])}' "
+                f"data-goal-decision-status='{_e(row['status'])}' "
+                f"data-goal-decision-primary='{_e(row['primary'])}'>"
+                "<span class='goal-decision-kind'>"
+                f"{_e(row['kind'].replace('_', ' '))}</span>"
+                f"<strong>{_e(row['label'])}</strong>"
+                f"<p>{_e(row['reason'])}</p>"
+                f"<a class='goal-decision-link' href='{_e(row['href'])}'>{_e(row['surface'])}</a>"
+                "</li>"
+            )
+            for row in display_rows
+        ]
+    )
+    queue_lines = [
+        (
+            f"goal_decision_queue_row: kind={_e(row['kind'])} "
+            f"status={_e(row['status'])} id={_e(row['item_id'])} "
+            f"surface=<a href='{_e(row['href'])}'>{_e(row['surface'])}</a>"
+        )
+        for row in display_rows
+    ]
+    return "".join(
+        [
+            "<section id='goal-decision-queue' class='panel goal-decision-queue' data-goal-decision-queue='true'><h2>Goal Decision Queue</h2>",
+            "<p class='muted'>Exact Goal-scoped operator decisions near the top of the page: current action first, then approvals, incidents, recommendations, and blocked work.</p>",
+            "<ol class='goal-decision-list' data-goal-decision-list='true'>",
+            row_items,
+            "</ol>",
+            "<details class='goal-decision-evidence' data-goal-decision-evidence='true'><summary>Goal decision queue evidence</summary>",
+            _kv(
+                [
+                    ("goal_decision_queue_status", status),
+                    ("goal_decision_queue_goal", goal.id),
+                    ("goal_decision_queue_project", goal.project_id),
+                    ("goal_decision_queue_phase", phase),
+                    ("goal_decision_queue_next_action", next_action.action),
+                    (
+                        "goal_decision_queue_primary_surface",
+                        SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+                    ),
+                    ("goal_decision_queue_action_form_available", str(form_available).lower()),
+                    ("goal_decision_queue_rows", str(len(rows))),
+                    ("goal_decision_queue_visible_rows", str(len(display_rows))),
+                    ("goal_decision_queue_hidden_rows", str(hidden_count)),
+                    ("goal_decision_queue_waiting_items", str(waiting_items)),
+                    ("goal_decision_queue_pending_approvals", str(pending_approvals)),
+                    ("goal_decision_queue_pending_worktree_approvals", str(len(pending_worktree))),
+                    ("goal_decision_queue_pending_commit_approvals", str(len(pending_commit))),
+                    ("goal_decision_queue_pending_publication_approvals", str(len(pending_publication))),
+                    ("goal_decision_queue_open_incidents", str(len(open_incidents))),
+                    ("goal_decision_queue_open_recommendations", str(len(open_recommendations))),
+                    ("goal_decision_queue_blocked_tasks", str(len(blocked_tasks))),
+                    ("goal_decision_queue_source", "goal_next_action_approvals_incidents_recommendations_tasks"),
+                    ("goal_decision_queue_write_on_get", "false"),
+                    ("goal_decision_queue_provider_calls_taken", "0"),
+                    ("goal_decision_queue_network_actions_taken", "0"),
+                    ("goal_decision_queue_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_decision_queue_now: {_e(next_action.action)}",
+                    *queue_lines,
+                    "goal_decision_queue_safety: read-only local queue; existing confirmed forms and approval surfaces own writes",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
 def _goal_first_run_rail(
     root: Path,
     state: dict[str, Any],
@@ -12018,6 +12242,7 @@ def _goal_section_index() -> str:
         ("Action dock", "goal-action-dock"),
         ("Progress meter", "goal-progress-meter"),
         ("Attention digest", "goal-attention-digest"),
+        ("Decision queue", "goal-decision-queue"),
         ("First-run rail", "goal-first-run-rail"),
         ("Command bar", "goal-command-bar"),
         ("Operator workbench", "goal-operator-workbench"),
@@ -38484,6 +38709,18 @@ def _html_page(
     .goal-attention-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-attention-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-attention-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .goal-decision-queue {{ border-left:4px solid var(--warn); }}
+    .goal-decision-list {{ list-style:none; padding:0; margin:12px 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:10px; }}
+    .goal-decision-row {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; display:grid; gap:8px; align-content:start; }}
+    .goal-decision-row[data-goal-decision-primary='true'] {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
+    .goal-decision-kind {{ display:inline-flex; width:max-content; max-width:100%; padding:3px 7px; border:1px solid var(--line); border-radius:999px; color:var(--muted); font-size:12px; overflow-wrap:anywhere; }}
+    .goal-decision-row strong, .goal-decision-row p {{ margin:0; overflow-wrap:anywhere; }}
+    .goal-decision-row p {{ color:var(--muted); }}
+    .goal-decision-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; width:100%; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-decision-row[data-goal-decision-primary='true'] .goal-decision-link {{ background:var(--accent); color:#fff; }}
+    .goal-decision-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-decision-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-decision-evidence:not([open]) > :not(summary) {{ display:none; }}
     .goal-first-run-rail {{ border-left:4px solid var(--accent); }}
     .goal-first-run-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:10px; margin:12px 0; }}
     .goal-first-run-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; display:grid; gap:7px; align-content:start; }}
@@ -38893,7 +39130,7 @@ def _html_page(
     .goal-continuation-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-continuation-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-continuation-evidence:not([open]) > :not(summary) {{ display:none; }}
-    #goal-progress-meter, #goal-attention-digest, #goal-first-run-rail, .goal-workflow-map, #goal-coder-handoff-digest, #goal-session-digest, #goal-activity-pulse, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence-digest, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
+    #goal-progress-meter, #goal-attention-digest, #goal-decision-queue, #goal-first-run-rail, .goal-workflow-map, #goal-coder-handoff-digest, #goal-session-digest, #goal-activity-pulse, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence-digest, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
     .goal-workflow-map {{ border-left:4px solid var(--accent); }}
     .goal-workflow-map dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .goal-workflow-map-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
@@ -39860,10 +40097,11 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .workflow-scope-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #goal-attention-digest {{ scroll-margin-top:260px; }} .goal-attention-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ #goal-decision-queue {{ scroll-margin-top:260px; }} .goal-decision-list {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #goal-activity-pulse {{ scroll-margin-top:260px; }} .goal-activity-pulse-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-attention-grid {{ grid-template-columns:1fr; }} }}

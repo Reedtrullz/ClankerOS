@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal pages now include a read-only `Goal Decision Queue` after Attention
+  Digest, showing concrete Goal-scoped rows for the current action plus pending
+  approvals, incidents, recommendations, or blocked tasks while linking only to
+  existing confirmed forms and scoped review surfaces.
 - Goal pages now include a read-only `Goal Activity Pulse` between Session
   Digest and Continuation Rail, showing Latest, Recent Three, Mix, Artifact,
   and Next cards from existing Goal timeline data before the full event list.
