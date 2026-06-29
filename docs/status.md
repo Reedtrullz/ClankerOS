@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Active first-run Goal pages now include a read-only `Goal First Run Rail`
+  between Attention and the Goal Command Bar, keeping Project, Goal,
+  Delegation, Context, and Run visible inside the Goal page and routing the
+  current onboarding gate to the existing confirmed Goal action form.
 - The command palette now adds focused Goal section jump commands to its local
   filtered results, so typing `timeline`, `approval`, `artifact`, `memory`,
   `git`, or `remaining` can navigate directly to the current Goal's core

@@ -70,6 +70,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   guide also renders `First Run Next Step` between the launchpad and progress
   strip, turning the current setup or delegation gate into one primary
   same-page browser action with setup, handoff, resume, and safety cards.
+  Active first-run Goal pages also show a read-only `Goal First Run Rail`
+  between Attention and the Goal Command Bar, keeping Project, Goal,
+  Delegation, Context, and Run visible on the Goal page and routing the
+  current gate to the existing confirmed Goal action form.
   Confirmed
   `register-project` and `create-goal` browser actions also update
   `.clanker/app/workspace.json`, so `/resume` can restore the new project or

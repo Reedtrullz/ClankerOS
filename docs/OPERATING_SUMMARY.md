@@ -1002,7 +1002,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   collapsed and preserving no-write/provider/network/external-effect
   counters; after a Goal exists, it can render the same confirmed local
   next-action form inline for scout delegation, context-pack generation, and
-  first delegation execution. After a confirmed
+  first delegation execution. Active first-run Goal pages also show a
+  read-only `Goal First Run Rail` between Attention and the Goal Command Bar,
+  preserving the Project -> Goal -> Delegation -> Context -> Run path on the
+  Goal page and pointing the current gate at the existing confirmed Goal action
+  form. After a confirmed
   `register-project` action, `Action Result Details` can also continue the
   first-run browser path before a saved Goal exists by rendering the
   confirmation-required `create-goal` form inline plus Home and Today fallback

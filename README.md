@@ -151,7 +151,11 @@ same-page action, setup/handoff/resume/safety cards, confirmation posture, and
 zero-effect counters, making the current click obvious before the checklist. A
 visible `First Run Progress` strip follows with a progress bar and five step
 cards for Project, Goal, Delegation, Context, and Run, while detailed status
-evidence stays collapsed and read-only. Confirmed browser
+evidence stays collapsed and read-only. Active first-run Goal pages also show
+a read-only `Goal First Run Rail` between Attention and the Goal Command Bar,
+so the same Project -> Goal -> Delegation -> Context -> Run path stays visible
+and routes the current step to the existing confirmed Goal action form.
+Confirmed browser
 project registration and goal creation also update the saved workspace, so
 `/resume` already knows the first project/goal after those actions. When a
 lead goal exists, Home also shows an explicit

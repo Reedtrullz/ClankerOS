@@ -1,5 +1,33 @@
 # Status
 
+## 2026-06-29 Goal First Run Rail
+
+- Added a read-only `Goal First Run Rail` to active first-run Goal pages before
+  the Goal Command Bar.
+- The rail keeps the Project, Goal, Delegation, Context, and Run onboarding
+  path visible inside `/goals/<goal_id>` until the first delegation completes.
+- The current first-run gate routes to the existing confirmed Goal action form
+  when available, so Create scout delegation, Generate context pack, and Run
+  delegation stay one obvious browser action without adding any new action
+  authority.
+- The rail preserves explicit evidence for current step, next action, target
+  surface, Goal, project, delegation, context-pack readiness, delegation
+  completion, step counts, and zero write/provider/network/external-effect
+  counters.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused route/demo pytest passed with
+  `2 passed, 514 deselected in 64.71s`; `python3 -m compileall -q agent_os
+  tests` passed; `git diff --check` passed; scratch-root
+  `app-smoke-test` passed across core routes with provider/network/external
+  mutation counters at zero; scratch-root `app-demo-smoke-test` passed across
+  fixture-backed stateful routes with provider/network/external mutation
+  counters at zero; Playwright browser QA against a throwaway first-run Goal
+  at `http://127.0.0.1:55626/goals/goal_d5dcd20e4aee` confirmed the rail
+  rendered with five cards, the current `create_first_delegation` card linked
+  to `#goal-next-action-form`, the Goal action form existed, no console errors
+  were emitted, desktop had no horizontal overflow, and mobile `390x844`
+  stacked the five cards at 329px with no horizontal overflow.
+
 ## 2026-06-29 Goal Section Palette Commands
 
 - Added focused Goal section jump commands to the shared command palette's

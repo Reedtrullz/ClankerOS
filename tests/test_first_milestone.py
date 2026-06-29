@@ -6977,6 +6977,41 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "pause_goal_new_status</dt><dd>paused" in first_goal_page.body
     assert "pause_goal_external_effects_created</dt><dd>false" in first_goal_page.body
     assert "action='/actions/pause-goal'" in first_goal_page.body
+    assert "Goal First Run Rail" in first_goal_page.body
+    assert "data-goal-first-run-rail='true'" in first_goal_page.body
+    assert "data-goal-first-run-cards='true'" in first_goal_page.body
+    assert first_goal_page.body.count("data-goal-first-run-card='true'") == 5
+    assert (
+        "data-goal-first-run-step='create_first_delegation' "
+        "data-goal-first-run-status='current'"
+    ) in first_goal_page.body
+    assert "goal_first_run_current_step</dt><dd>create_first_delegation" in first_goal_page.body
+    assert "goal_first_run_next_action</dt><dd>Open goal to create scout delegation" in first_goal_page.body
+    assert (
+        "goal_first_run_primary_surface</dt><dd><a href='#goal-next-action-form'>"
+        "Use Goal action form</a>"
+    ) in first_goal_page.body
+    assert "goal_first_run_action_form_available</dt><dd>true" in first_goal_page.body
+    assert f"goal_first_run_goal</dt><dd>{created_goal_id}" in first_goal_page.body
+    assert "goal_first_run_context_pack_ready</dt><dd>false" in first_goal_page.body
+    assert "goal_first_run_delegation_completed</dt><dd>false" in first_goal_page.body
+    assert "goal_first_run_done_count</dt><dd>2" in first_goal_page.body
+    assert "goal_first_run_total_steps</dt><dd>5" in first_goal_page.body
+    assert "goal_first_run_write_on_get</dt><dd>false" in first_goal_page.body
+    assert "goal_first_run_provider_calls_taken</dt><dd>0" in first_goal_page.body
+    assert "goal_first_run_network_actions_taken</dt><dd>0" in first_goal_page.body
+    assert "goal_first_run_external_effects_created</dt><dd>false" in first_goal_page.body
+    assert (
+        "goal_first_run_step: create_first_delegation status=current "
+        "surface=<a href='#goal-next-action-form'>Use Goal action form</a>"
+    ) in first_goal_page.body
+    assert "goal_first_run_safety: read-only first-run rail" in first_goal_page.body
+    assert first_goal_page.body.index("data-goal-attention-digest='true'") < first_goal_page.body.index(
+        "data-goal-first-run-rail='true'"
+    )
+    assert first_goal_page.body.index("data-goal-first-run-rail='true'") < first_goal_page.body.index(
+        "data-goal-command-bar='true'"
+    )
     goals_after_first_goal = render_local_app_route(tmp_path, "/goals")
     assert "first_run_current_step</dt><dd>create_first_delegation" in goals_after_first_goal.body
     assert "first_run_goal_created</dt><dd>true" in goals_after_first_goal.body
@@ -7474,6 +7509,25 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "next_action_form_available</dt><dd>true" in delegated_goal_page.body
     assert "Generate Context Pack" in delegated_goal_page.body
     assert "action='/actions/context-pack'" in delegated_goal_page.body
+    assert "Goal First Run Rail" in delegated_goal_page.body
+    assert "data-goal-first-run-rail='true'" in delegated_goal_page.body
+    assert (
+        "data-goal-first-run-step='generate_context_pack' "
+        "data-goal-first-run-status='current'"
+    ) in delegated_goal_page.body
+    assert "goal_first_run_current_step</dt><dd>generate_context_pack" in delegated_goal_page.body
+    assert "goal_first_run_next_action</dt><dd>Generate context pack" in delegated_goal_page.body
+    assert (
+        "goal_first_run_primary_surface</dt><dd><a href='#goal-next-action-form'>"
+        "Use Goal action form</a>"
+    ) in delegated_goal_page.body
+    assert "goal_first_run_delegation</dt><dd>" in delegated_goal_page.body
+    assert "goal_first_run_context_pack_ready</dt><dd>false" in delegated_goal_page.body
+    assert "goal_first_run_done_count</dt><dd>3" in delegated_goal_page.body
+    assert (
+        "goal_first_run_step: generate_context_pack status=current "
+        "surface=<a href='#goal-next-action-form'>Use Goal action form</a>"
+    ) in delegated_goal_page.body
     goals_after_delegation = render_local_app_route(tmp_path, "/goals")
     assert "first_run_current_step</dt><dd>generate_context_pack" in goals_after_delegation.body
     assert "first_run_context_pack_ready</dt><dd>false" in goals_after_delegation.body
@@ -7535,6 +7589,24 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert delegation.id in after_context_pack_goal_page.body
     assert "run_delegation_form_available</dt><dd>true" in after_context_pack_goal_page.body
     assert "browser_execution_exposed</dt><dd>confirmed_local_only" in after_context_pack_goal_page.body
+    assert "Goal First Run Rail" in after_context_pack_goal_page.body
+    assert "data-goal-first-run-rail='true'" in after_context_pack_goal_page.body
+    assert (
+        "data-goal-first-run-step='run_first_delegation' "
+        "data-goal-first-run-status='current'"
+    ) in after_context_pack_goal_page.body
+    assert "goal_first_run_current_step</dt><dd>run_first_delegation" in after_context_pack_goal_page.body
+    assert "goal_first_run_next_action</dt><dd>Run delegation" in after_context_pack_goal_page.body
+    assert (
+        "goal_first_run_primary_surface</dt><dd><a href='#goal-next-action-form'>"
+        "Use Goal action form</a>"
+    ) in after_context_pack_goal_page.body
+    assert "goal_first_run_context_pack_ready</dt><dd>true" in after_context_pack_goal_page.body
+    assert "goal_first_run_done_count</dt><dd>4" in after_context_pack_goal_page.body
+    assert (
+        "goal_first_run_step: run_first_delegation status=current "
+        "surface=<a href='#goal-next-action-form'>Use Goal action form</a>"
+    ) in after_context_pack_goal_page.body
     home_after_delegate = render_local_app_route(tmp_path, "/")
     assert "Goal-First Home" in home_after_delegate.body
     assert "home_active_goals</dt><dd>1" in home_after_delegate.body
@@ -11733,7 +11805,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-section-index-actions='true'" in goal.body
     assert "data-goal-section-finder='true'" in goal.body
     assert "data-goal-section-finder-input='true'" in goal.body
-    assert "data-goal-section-finder-count='true'>56 sections" in goal.body
+    assert "data-goal-section-finder-count='true'>57 sections" in goal.body
     assert "data-goal-section-finder-first='true' href='#goal-summary'>Summary</a>" in goal.body
     assert "data-goal-section-finder-results='true'" in goal.body
     assert "data-goal-section-result='true' data-goal-section-label='approval command'" in goal.body
@@ -11747,7 +11819,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-section-index-primary='true' href='#goal-next-action'>Next action</a>" in goal.body
     assert "goal_section_switchboard_status</dt><dd>available" in goal.body
     assert "goal_section_finder_status</dt><dd>available" in goal.body
-    assert "goal_section_finder_result_count</dt><dd>56" in goal.body
+    assert "goal_section_finder_result_count</dt><dd>57" in goal.body
     assert "goal_section_finder_default_first</dt><dd>goal-summary" in goal.body
     assert "goal_section_switchboard_card_count</dt><dd>5" in goal.body
     assert "goal_section_switchboard_primary</dt><dd>goal-next-action" in goal.body
@@ -11777,6 +11849,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-action-dock'" in goal.body
     assert "href='#goal-progress-meter'" in goal.body
     assert "href='#goal-attention-digest'" in goal.body
+    assert "href='#goal-first-run-rail'" in goal.body
     assert "href='#goal-command-bar'" in goal.body
     assert "href='#goal-operator-workbench'" in goal.body
     assert "href='#goal-return-brief'" in goal.body
@@ -11809,6 +11882,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-remaining-work'" in goal.body
     assert "id='goal-summary'" in goal.body
     assert "id='goal-attention-digest'" in goal.body
+    assert "id='goal-first-run-rail'" not in goal.body
     assert "id='goal-command-bar'" in goal.body
     assert "id='goal-operator-workbench'" in goal.body
     assert "id='goal-daily-loop'" in goal.body
@@ -11840,7 +11914,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>56" in goal.body
+    assert "goal_section_count</dt><dd>57" in goal.body
     assert "data-goal-section-index-evidence='true'" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "data-goal-command-strip='true'" in goal.body
