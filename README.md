@@ -856,7 +856,9 @@ current Goal action, jump to search, resume the saved workspace, or stay on the
 current page. The search box also narrows a visible `Palette Results` list of
 local routes, recent work, and the focused Goal's core section anchors as you
 type, so `timeline`, `approval`, `artifact`, `memory`, `git`, or `remaining`
-can jump straight into the Goal page without scanning. Browser-local viewed
+can jump straight into the Goal page without scanning. ArrowDown/ArrowUp move
+through visible local commands and Enter opens the active local result, while
+the Search button remains the full indexed `/search` fallback. Browser-local viewed
 pages are appended to the same palette results after localStorage readback, so
 recent route hops are searchable from `/` without a server write. A no-match state leaves
 the existing Search button available for full indexed search. It also includes a

@@ -39171,28 +39171,45 @@ def _command_palette(
             continue
         seen.add(key)
         search_text = " ".join([label, href, kind]).lower()
+        result_index = len(result_rows)
+        active_class = " is-active" if result_index == 0 else ""
+        selected = "true" if result_index == 0 else "false"
         open_rows.append(
             f"<li><a href='{_e(href)}'{_shortcut_attrs(label, href)}>{_e(label)}</a> "
             f"<span class='muted'>{_e(kind)}</span></li>"
         )
         result_rows.append(
-            "<li class='palette-result-item' data-palette-result='true' "
-            f"data-palette-search-text='{_e(search_text)}'>"
-            f"<a href='{_e(href)}'{_shortcut_attrs(label, href)}>{_e(label)}</a> "
+            f"<li id='command-palette-result-{result_index}' "
+            f"class='palette-result-item{active_class}' data-palette-result='true' "
+            f"data-palette-result-index='{result_index}' "
+            f"data-palette-search-text='{_e(search_text)}' role='option' "
+            f"aria-selected='{selected}'>"
+            f"<a href='{_e(href)}' data-palette-result-link='true'{_shortcut_attrs(label, href)}>{_e(label)}</a> "
             f"<span class='muted'>{_e(kind)} · {_e(href)}</span></li>"
         )
     result_count = len(result_rows)
+    active_index = "0" if result_count else "-1"
+    active_descendant = "command-palette-result-0" if result_count else ""
     return "".join(
         [
-            "<dialog id='command-palette' class='command-palette' data-command-palette='true' data-command-palette-filter-supported='true'>",
+            "<dialog id='command-palette' class='command-palette' data-command-palette='true' data-command-palette-filter-supported='true' data-command-palette-keyboard-nav='true'>",
             "<form method='dialog'><button class='icon-button' type='submit'>Close</button></form>",
             "<h2>Command Palette</h2>",
             _command_palette_focus(focus_context, current_path, title),
             "<form action='/search' method='get' class='command-grid'>",
-            "<input id='command-palette-search' name='q' autocomplete='off' placeholder='Filter commands or search local state' data-command-palette-filter-input='true'>",
+            (
+                "<input id='command-palette-search' name='q' autocomplete='off' "
+                "placeholder='Filter commands or search local state' "
+                "data-command-palette-filter-input='true' "
+                "data-command-palette-keyboard-input='true' "
+                "aria-controls='command-palette-results' "
+                f"aria-activedescendant='{_e(active_descendant)}'>"
+            ),
             "<button type='submit'>Search</button>",
             "</form>",
             "<section class='palette-results' data-command-palette-filter='true' "
+            "data-command-palette-keyboard-nav='true' "
+            f"data-command-palette-active-index='{active_index}' "
             f"data-command-palette-filter-item-count='{result_count}' "
             "data-command-palette-filter-write-on-get='false' "
             "data-command-palette-filter-provider-calls-taken='0' "
@@ -39203,7 +39220,7 @@ def _command_palette(
             "<p class='muted' data-command-palette-filter-status='true'>"
             "<span data-command-palette-filter-count='true'>"
             f"{result_count}</span> local commands available</p>",
-            "<ul class='palette-result-list' data-command-palette-result-list='true'>",
+            "<ul id='command-palette-results' class='palette-result-list' role='listbox' data-command-palette-result-list='true'>",
             "".join(result_rows),
             "</ul>",
             "<p class='muted' data-command-palette-empty='true' hidden>No local palette matches. Press Search to search all indexed ClankerOS state.</p>",
@@ -39220,6 +39237,8 @@ def _command_palette(
                     ("palette_filter_goal_section_goal", goal_section_context["goal"]),
                     ("palette_filter_today_section_count", str(len(today_section_links))),
                     ("palette_filter_today_section_source", today_section_context["source"]),
+                    ("palette_filter_keyboard_navigation", "ArrowDown ArrowUp Enter"),
+                    ("palette_filter_enter_behavior", "open_active_local_result"),
                     ("palette_filter_write_on_get", "false"),
                     ("palette_filter_provider_calls_taken", "0"),
                     ("palette_filter_network_actions_taken", "0"),
@@ -39229,6 +39248,7 @@ def _command_palette(
             _ul(
                 [
                     "palette_filter_action: type in command-palette-search",
+                    "palette_filter_keyboard: ArrowDown/ArrowUp move active result; Enter opens active local command",
                     *goal_section_context["lines"],
                     *today_section_context["lines"],
                     "palette_filter_route_history: browser-local viewed pages are added after localStorage readback",
@@ -40316,6 +40336,7 @@ def _html_page(
     .palette-focus-details:not([open]) > :not(summary), .palette-evidence:not([open]) > :not(summary) {{ display:none; }}
     .palette-result-list {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:8px; margin:10px 0; }}
     .palette-result-item {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; display:grid; gap:4px; align-content:start; }}
+    .palette-result-item.is-active {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); background:var(--panel); }}
     .palette-result-item a {{ font-weight:700; }}
     .palette-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
     .palette-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
@@ -42037,6 +42058,8 @@ def _html_page(
     var paletteOpen = document.getElementById("palette-open");
     var paletteSearch = document.getElementById("command-palette-search");
     var paletteResults = palette ? Array.prototype.slice.call(palette.querySelectorAll("[data-palette-result='true']")) : [];
+    var paletteFilterPanel = palette ? palette.querySelector("[data-command-palette-filter='true']") : null;
+    var paletteActiveIndex = 0;
     var paletteEmpty = palette ? palette.querySelector("[data-command-palette-empty='true']") : null;
     var paletteFilterCount = palette ? palette.querySelector("[data-command-palette-filter-count='true']") : null;
     var themeToggle = document.getElementById("theme-toggle");
@@ -42045,10 +42068,74 @@ def _html_page(
     var finishTodayOpen = document.getElementById("finish-today-open");
     function refreshPaletteResults() {{
       paletteResults = palette ? Array.prototype.slice.call(palette.querySelectorAll("[data-palette-result='true']")) : [];
+      paletteResults.forEach(function(item, index) {{
+        if (!item.id) {{ item.id = "command-palette-result-" + index; }}
+        item.setAttribute("data-palette-result-index", String(index));
+        item.setAttribute("role", "option");
+        if (!item.hasAttribute("aria-selected")) {{ item.setAttribute("aria-selected", "false"); }}
+        var link = item.querySelector("a");
+        if (link && !link.hasAttribute("data-palette-result-link")) {{
+          link.setAttribute("data-palette-result-link", "true");
+        }}
+      }});
+    }}
+    function visiblePaletteResults() {{
+      return paletteResults.filter(function(item) {{ return !item.hidden; }});
+    }}
+    function setActivePaletteResult(index) {{
+      var visible = visiblePaletteResults();
+      if (!visible.length) {{
+        paletteActiveIndex = -1;
+        paletteResults.forEach(function(item) {{
+          item.classList.remove("is-active");
+          item.setAttribute("aria-selected", "false");
+        }});
+        if (paletteSearch) {{ paletteSearch.removeAttribute("aria-activedescendant"); }}
+        if (paletteFilterPanel) {{ paletteFilterPanel.setAttribute("data-command-palette-active-index", "-1"); }}
+        return null;
+      }}
+      var next = index;
+      if (next < 0) {{ next = visible.length - 1; }}
+      if (next >= visible.length) {{ next = 0; }}
+      paletteActiveIndex = next;
+      var active = visible[next];
+      paletteResults.forEach(function(item) {{
+        var selected = item === active;
+        item.classList.toggle("is-active", selected);
+        item.setAttribute("aria-selected", selected ? "true" : "false");
+      }});
+      if (paletteSearch && active.id) {{ paletteSearch.setAttribute("aria-activedescendant", active.id); }}
+      if (paletteFilterPanel) {{
+        paletteFilterPanel.setAttribute("data-command-palette-active-index", active.getAttribute("data-palette-result-index") || String(next));
+      }}
+      return active;
+    }}
+    function moveActivePaletteResult(delta) {{
+      return setActivePaletteResult(paletteActiveIndex + delta);
+    }}
+    function activePaletteResult() {{
+      var visible = visiblePaletteResults();
+      if (!visible.length) {{ return null; }}
+      if (paletteActiveIndex < 0 || paletteActiveIndex >= visible.length) {{
+        return setActivePaletteResult(0);
+      }}
+      return visible[paletteActiveIndex];
+    }}
+    function openActivePaletteResult() {{
+      var active = activePaletteResult();
+      if (!active) {{ return false; }}
+      var link = active.querySelector("[data-palette-result-link='true'], a");
+      var href = link ? link.getAttribute("href") : "";
+      if (!href) {{ return false; }}
+      window.location.href = href;
+      return true;
     }}
     function syncPaletteFilter() {{
       refreshPaletteResults();
-      if (!paletteSearch || !paletteResults.length) {{ return; }}
+      if (!paletteSearch || !paletteResults.length) {{
+        setActivePaletteResult(-1);
+        return;
+      }}
       var query = String(paletteSearch.value || "").trim().toLowerCase();
       var shown = 0;
       paletteResults.forEach(function(item) {{
@@ -42059,6 +42146,24 @@ def _html_page(
       }});
       if (paletteEmpty) {{ paletteEmpty.hidden = shown !== 0; }}
       if (paletteFilterCount) {{ paletteFilterCount.textContent = String(shown); }}
+      setActivePaletteResult(shown ? Math.max(0, Math.min(paletteActiveIndex, shown - 1)) : -1);
+    }}
+    function handlePaletteSearchKeydown(event) {{
+      if (!paletteSearch || event.defaultPrevented || event.isComposing) {{ return; }}
+      if (event.key === "ArrowDown") {{
+        event.preventDefault();
+        moveActivePaletteResult(1);
+      }} else if (event.key === "ArrowUp") {{
+        event.preventDefault();
+        moveActivePaletteResult(-1);
+      }} else if (event.key === "Enter") {{
+        if (openActivePaletteResult()) {{
+          event.preventDefault();
+        }}
+      }} else if (event.key === "Escape") {{
+        event.preventDefault();
+        closePalette();
+      }}
     }}
     function openPalette() {{
       if (!palette) {{ return; }}
@@ -44113,6 +44218,7 @@ def _html_page(
     }}
     if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
     if (paletteSearch) {{ paletteSearch.addEventListener("input", syncPaletteFilter); }}
+    if (paletteSearch) {{ paletteSearch.addEventListener("keydown", handlePaletteSearchKeydown); }}
     if (nextActionOpen) {{ nextActionOpen.addEventListener("click", openNextAction); }}
     if (finishTodayOpen) {{ finishTodayOpen.addEventListener("click", openFinishToday); }}
     if (themeToggle) {{ themeToggle.addEventListener("click", toggleTheme); }}

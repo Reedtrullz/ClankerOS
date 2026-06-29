@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-29 Command Palette Active Result Keyboard UX
+
+- Promoted `Palette Results` from a filter-only list into a keyboard-operated
+  local launcher. Results now render with listbox/option metadata, an active
+  row, `aria-activedescendant`, and selected-state styling.
+- ArrowDown/ArrowUp move through the currently visible local commands, and
+  Enter opens the active local route or anchor. When no local result is visible,
+  Enter is left to the existing Search form so full indexed `/search` remains
+  the explicit fallback.
+- Dynamically injected browser-local viewed-page results are normalized into
+  the same active-result model after route-history readback, so recent routes
+  participate in keyboard navigation without server writes.
+- Updated README, local app docs, operating summary, docs status, and focused
+  first-milestone assertions for the keyboard navigation metadata, evidence,
+  script hooks, and no-effect boundaries.
+- Safety: browser-local navigation only; read-only GET rendering with no
+  approval, execution, push, PR, deploy, provider call, app-side GitHub polling,
+  server write, or external mutation authority added.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed; focused
+  local-app pytest passed with `2 passed in 67.62s`.
+- Browser verification: Playwright against throwaway demo Goal
+  `http://127.0.0.1:62105/goals/goal_e60c5f216e8b` confirmed `/` opened the
+  palette, query `goal` showed 18 visible commands, ArrowDown changed the
+  active result from `/goals` to the demo Goal route, query `timeline` plus
+  Enter opened `#goal-timeline`, query `zzzz-no-match` showed zero visible
+  results with `data-command-palette-active-index=-1`, and Enter fell through
+  to `/search?q=zzzz-no-match`. Mobile `390x844` kept the open palette inside
+  the viewport with no horizontal overflow, and console warnings/errors were
+  zero.
+- Non-claims: this does not make the palette execute work, approve decisions,
+  call providers, fetch GitHub, push, create PRs, deploy, mutate external
+  systems, or write `.clanker/app/workspace.json`.
+
 ## 2026-06-29 First Run Checklist View Memory UX
 
 - Added a state-aware `First Run Checklist` between `First Run Next Step` and

@@ -678,8 +678,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   workspace, or staying on the current page. Its search box narrows a visible
   `Palette Results` list of local routes, recent work, the focused Goal's
   core section anchors, and route-local `/today` section anchors in place,
-  with a no-match state and zero-effect evidence, while the Search button
-  still opens full indexed `/search`. This makes palette queries such as
+  with a no-match state and zero-effect evidence. ArrowDown/ArrowUp move the
+  active visible command and Enter opens that local route or anchor, while the
+  Search button still opens full indexed `/search`. This makes palette queries such as
   `timeline`, `approval`, `artifact`, `memory`, `git`, `remaining`,
   `decision`, `workflow`, `CI`, or `finish` jump directly to the relevant
   Goal or Today page sections. Its detailed
@@ -940,7 +941,8 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   can reopen the current Goal, saved workspace, latest local action target,
   latest artifact, or the route-aware Finish Today handoff without expanding
   the sidebar. The visible `Palette Results` list filters local routes and
-  recent work on input before falling back to full `/search`. It also starts with the same
+  recent work on input, supports ArrowDown/ArrowUp plus Enter for active local
+  result navigation, and keeps full `/search` as the explicit fallback. It also starts with the same
   current-page route context, parent link, resolved Goal/Project/run context,
   focus target, `/resume`, and zero-effect readbacks inside the
   keyboard-driven surface. The shared focus strip and command palette include

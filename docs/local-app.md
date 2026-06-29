@@ -612,7 +612,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   search box now narrows a visible `Palette Results` list of local routes and
   recent work as the operator types, and it now adds the focused Goal's core
   section anchors so queries like `timeline`, `approval`, `artifact`, `memory`,
-  `git`, or `remaining` can jump straight to the Goal page. Browser-local
+  `git`, or `remaining` can jump straight to the Goal page. ArrowDown/ArrowUp
+  move through visible local commands, and Enter opens the active local result.
+  Browser-local
   viewed pages are appended to the palette results after localStorage readback,
   so recent route hops can be reopened from the keyboard launcher. The existing
   Search button still opens full indexed `/search` results. The

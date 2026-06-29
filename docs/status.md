@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared command palette now supports active-result keyboard navigation:
+  `Palette Results` render as a local listbox, ArrowDown/ArrowUp move through
+  visible local commands, Enter opens the active local route/anchor, and the
+  Search button remains the explicit full indexed `/search` fallback. This
+  keeps palette navigation browser-local with no server write, provider call,
+  network action, approval, execution, push, PR, deploy, or external effect on
+  GET.
 - The first-run guide now includes a browser-local `First Run Checklist`
   between `First Run Next Step` and `First Run Progress`. It lets operators
   mark setup checks and save a short return note in

@@ -5156,6 +5156,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "create-goal" in root.body
     assert "data-command-palette='true'" in root.body
     assert "data-command-palette-filter-supported='true'" in root.body
+    assert "data-command-palette-keyboard-nav='true'" in root.body
     assert "data-command-palette-focus='true'" in root.body
     assert "data-command-palette-focus-grid='true'" in root.body
     assert "data-command-palette-focus-continue='true'" in root.body
@@ -5179,8 +5180,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "palette_focus_network_actions_taken</dt><dd>0" in root.body
     assert "palette_focus_external_effects_created</dt><dd>false" in root.body
     assert "data-command-palette-filter-input='true'" in root.body
+    assert "data-command-palette-keyboard-input='true'" in root.body
+    assert "aria-controls='command-palette-results'" in root.body
     assert "Filter commands or search local state" in root.body
     assert "data-command-palette-filter='true'" in root.body
+    assert "data-command-palette-active-index='0'" in root.body
     assert "data-command-palette-filter-item-count='" in root.body
     assert "data-command-palette-filter-write-on-get='false'" in root.body
     assert "data-command-palette-filter-provider-calls-taken='0'" in root.body
@@ -5188,8 +5192,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-command-palette-filter-external-effects-created='false'" in root.body
     assert "data-command-palette-filter-status='true'" in root.body
     assert "data-command-palette-filter-count='true'" in root.body
-    assert "data-command-palette-result-list='true'" in root.body
+    assert (
+        "id='command-palette-results' class='palette-result-list' role='listbox' "
+        "data-command-palette-result-list='true'"
+    ) in root.body
     assert "data-palette-result='true'" in root.body
+    assert "data-palette-result-index='0'" in root.body
+    assert "role='option' aria-selected='true'" in root.body
     assert "data-palette-search-text='dashboard / route'" in root.body
     assert "data-command-palette-empty='true' hidden" in root.body
     assert "No local palette matches. Press Search to search all indexed ClankerOS state." in root.body
@@ -5201,11 +5210,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "palette_filter_today_section_count</dt><dd>0" in root.body
     assert "palette_filter_goal_section_source</dt><dd>none" in root.body
     assert "palette_filter_goal_section_goal</dt><dd>none" in root.body
+    assert "palette_filter_keyboard_navigation</dt><dd>ArrowDown ArrowUp Enter" in root.body
+    assert "palette_filter_enter_behavior</dt><dd>open_active_local_result" in root.body
     assert "palette_filter_write_on_get</dt><dd>false" in root.body
     assert "palette_filter_provider_calls_taken</dt><dd>0" in root.body
     assert "palette_filter_network_actions_taken</dt><dd>0" in root.body
     assert "palette_filter_external_effects_created</dt><dd>false" in root.body
     assert "palette_filter_action: type in command-palette-search" in root.body
+    assert "palette_filter_keyboard: ArrowDown/ArrowUp move active result; Enter opens active local command" in root.body
     assert "palette_goal_section_commands: none" in root.body
     assert "palette_filter_empty_state: show local no-match message" in root.body
     assert "palette_filter_safety: client-side filtering only" in root.body
@@ -5800,7 +5812,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert 'if (focusToggle) { focusToggle.addEventListener("click", toggleFocusMode); }' in root.body
     assert "var paletteResults = palette ? Array.prototype.slice.call" in root.body
     assert "function syncPaletteFilter()" in root.body
+    assert "function visiblePaletteResults()" in root.body
+    assert "function setActivePaletteResult(index)" in root.body
+    assert "function openActivePaletteResult()" in root.body
+    assert "function handlePaletteSearchKeydown(event)" in root.body
     assert 'paletteSearch.addEventListener("input", syncPaletteFilter);' in root.body
+    assert 'paletteSearch.addEventListener("keydown", handlePaletteSearchKeydown);' in root.body
     assert 'item.hidden = !match;' in root.body
     assert "paletteEmpty.hidden = shown !== 0;" in root.body
     assert 'if (event.key === "Escape") { closePalette(); return; }' in root.body
