@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The local app now has a first-class `/guide` route in the main navigation.
+  `Suggested Use Guide` maps the daily browser loop
+  `Today -> Goal -> Action -> Proof -> Finish -> Resume`, points empty
+  checkouts to the first-run browser path, points active work to the current
+  Goal action form, and shows evidence for route state, counts, workspace
+  resume state, and zero-effect safety on GET.
 - The First Run Guide now includes a visible `First Run Empty State Map`:
   a text-only `Project -> Goal -> Delegation -> Context -> Run` illustration
   plus step cards between Next Step and Checklist, keeping empty checkouts

@@ -4457,6 +4457,58 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "operator_ribbon_safety: read-only global operator orientation" in root.body
     assert ".operator-main { order:1; } .operator-side { order:2; }" in root.body
     assert ".operator-ribbon-grid" in root.body
+    assert "href='/guide'" in root.body
+    guide = render_local_app_route(tmp_path, "/guide")
+    assert guide.status == 200
+    assert "Suggested Use Guide" in guide.body
+    assert "data-guide-page='true'" in guide.body
+    assert "data-guide-loop-art='true'" in guide.body
+    assert "[ Today ] -> [ Goal ] -> [ Action ] -> [ Proof ] -> [ Finish ] -> [ Resume ]" in guide.body
+    assert "data-guide-daily-loop='true'" in guide.body
+    assert "data-guide-daily-loop-cards='true'" in guide.body
+    assert guide.body.count("data-guide-step='true'") == 6
+    assert "data-guide-step-key='today'" in guide.body
+    assert "data-guide-step-key='current'" in guide.body
+    assert "data-guide-step-key='action'" in guide.body
+    assert "data-guide-step-key='proof'" in guide.body
+    assert "data-guide-step-key='finish'" in guide.body
+    assert "data-guide-step-key='resume'" in guide.body
+    assert "href='/today#first-run-create-project'>Create Project</a>" in guide.body
+    assert "data-guide-first-run-path='true'" in guide.body
+    assert "data-guide-first-run-cards='true'" in guide.body
+    assert guide.body.count("data-guide-first-run-step='true'") == 5
+    assert "data-guide-first-run-step-key='create_project'" in guide.body
+    assert "data-guide-first-run-step-status='current'" in guide.body
+    assert "data-guide-first-run-step-key='run_first_delegation'" in guide.body
+    assert "data-guide-safety-boundary='true'" in guide.body
+    assert guide.body.count("data-guide-safety-card='true'") == 4
+    assert "data-guide-evidence='true'" in guide.body
+    assert "guide_mode</dt><dd>first_run" in guide.body
+    assert "guide_focus_status</dt><dd>first_run" in guide.body
+    assert "guide_project</dt><dd>clankeros" in guide.body
+    assert "guide_project_count</dt><dd>0" in guide.body
+    assert "guide_goal_count</dt><dd>0" in guide.body
+    assert "guide_first_run_current_step</dt><dd>create_project" in guide.body
+    assert "guide_loop_steps</dt><dd>6" in guide.body
+    assert "guide_first_run_steps</dt><dd>5" in guide.body
+    assert "guide_safety_cards</dt><dd>4" in guide.body
+    assert "guide_write_on_get</dt><dd>false" in guide.body
+    assert "guide_provider_calls_taken</dt><dd>0" in guide.body
+    assert "guide_network_actions_taken</dt><dd>0" in guide.body
+    assert "guide_external_effects_created</dt><dd>false" in guide.body
+    assert "guide_loop: Today -> Goal -> Action -> Proof -> Finish -> Resume" in guide.body
+    assert "guide_safety: read-only browser guide; existing confirmed forms own writes" in guide.body
+    assert ".guide-grid" in guide.body
+    assert ".guide-action" in guide.body
+    assert guide.body.index("data-guide-page='true'") < guide.body.index(
+        "data-route-context='true'"
+    )
+    assert guide.body.index("data-guide-daily-loop='true'") < guide.body.index(
+        "data-guide-first-run-path='true'"
+    )
+    assert guide.body.index("data-guide-first-run-path='true'") < guide.body.index(
+        "data-guide-safety-boundary='true'"
+    )
     assert "Goal-First Home" in root.body
     assert "home_dashboard_goal_first</dt><dd>true" in root.body
     assert "home_active_goals</dt><dd>0" in root.body
@@ -6189,6 +6241,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert refreshed_status["port"] == 8787
     assert "no push" in refreshed_status["non_claims"]
     assert "/today" in refreshed_status["routes_available"]
+    assert "/guide" in refreshed_status["routes_available"]
     assert "/actions" in refreshed_status["routes_available"]
     assert "/verification" in refreshed_status["routes_available"]
     assert "/ci-evidence" in refreshed_status["routes_available"]
@@ -7012,6 +7065,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
         ("/memory", "Memory Bank"),
         ("/skills", "Skills Inventory"),
         ("/profiles", "Profiles And Routing"),
+        ("/guide", "Suggested Use Guide"),
     ]:
         response = render_local_app_route(tmp_path, route)
         assert response.status == 200

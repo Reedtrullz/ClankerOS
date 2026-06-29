@@ -94,10 +94,11 @@ Then read:
 - [GitHub Testing](docs/github-testing.md)
 
 The primary operator surface is now the local app plus the CLI. Start the app
-for a browser view of goals, resume state, search, workspace restore, memory,
-skills, profiles, projects, workflow, delegations, delegation runs, coder
-runs, safe action catalog, verification handoff, dogfooding checklist, health,
-artifacts, the operator inbox, approvals, incidents, and demo state:
+for a browser view of goals, suggested-use guidance, resume state, search,
+workspace restore, memory, skills, profiles, projects, workflow, delegations,
+delegation runs, coder runs, safe action catalog, verification handoff,
+dogfooding checklist, health, artifacts, the operator inbox, approvals,
+incidents, and demo state:
 
 ```bash
 python3 -m agent_os.cli app
@@ -236,6 +237,16 @@ to another inventory page. It reuses the existing Home,
 Goal, inbox, activity, and first-run surfaces below the command center, writes
 nothing on GET, and only exposes confirmed local forms already available
 elsewhere in the app.
+
+Use `/guide` as the in-app `Suggested Use Guide` when you want the operator
+loop in browser form. It maps `Today -> Goal -> Action -> Proof -> Finish ->
+Resume`: start in `/today`, choose or create the Goal through the Home
+first-run forms or `/goals`, follow the current action to the existing
+confirmed action form or Goal page, check proof in `/verification` or
+`/ci-evidence`, save the day with the route-local Finish Today form or
+`/workspace#save-workspace`, and return through `/resume`. It is read-only on
+GET and only links to existing local surfaces; it does not call providers,
+perform network actions, push, create PRs, deploy, or mutate external systems.
 
 Use `/resume` when returning to ClankerOS after a break. It now opens with a
 primary return link, a browser-local `Browser Resume` panel, and a

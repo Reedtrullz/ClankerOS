@@ -153,7 +153,14 @@ Core layers for the bootstrap:
   the Start Here, Home Day Plan, Attention Brief,
   Focus Queue, recent activity, inbox, recommendations, incidents, and
   first-run panels without writing on GET or adding action authority. The
-  local app also exposes `/resume` as a
+  local app also exposes `/guide` as an in-app `Suggested Use Guide` that maps
+  `Today -> Goal -> Action -> Proof -> Finish -> Resume`, links first-run
+  operators to Home/Today/Goals project/goal setup forms, links current-goal
+  operators to `/today`, `/goals/<goal_id>`, existing confirmed action forms,
+  `/verification`, `/ci-evidence`, Finish Today,
+  `/workspace#save-workspace`, and `/resume`, and remains read-only on GET with
+  no provider calls, network actions, push, PR, deploy, or external mutation.
+  The local app also exposes `/resume` as a
   read-only return-to-work surface over saved `.clanker/app/workspace.json`
   state and browser-local route memory. It opens with a primary return link, a
   `Browser Resume` panel, and `Resume Operator Workbench` before shared

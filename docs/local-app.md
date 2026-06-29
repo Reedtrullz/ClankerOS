@@ -152,6 +152,15 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   current route is `/today`, so the daily cockpit is searchable by current
   action, goal queue, live state, summary, activity, decisions, workflow, CI,
   or Finish Today without adding server writes or external effects.
+- `/guide` - in-app `Suggested Use Guide` for the daily operator loop. It maps
+  `Today -> Goal -> Action -> Proof -> Finish -> Resume`, routing first-run
+  operators to Home/Today/Goals first-run project/goal setup forms and
+  current-goal operators to `/today`, `/goals/<goal_id>`, existing confirmed
+  action forms, `/verification`, `/ci-evidence`, Finish Today,
+  `/workspace#save-workspace`, and `/resume`. The route is read-only on GET
+  and only links to existing local surfaces; it does not call providers,
+  perform network actions, push, create PRs, deploy, or mutate external
+  systems.
 - `/resume` - read-only return-to-work surface for the saved
   `.clanker/app/workspace.json` state and this browser's local route memory.
   It opens with a primary return link, a `Browser Resume` panel, and

@@ -98,6 +98,7 @@ NO_EXTERNAL_EFFECT_CLAIMS = [
 NAV_ITEMS = [
     ("Dashboard", "/"),
     ("Today", "/today"),
+    ("Guide", "/guide"),
     ("Resume", "/resume"),
     ("Goals", "/goals"),
     ("Search", "/search"),
@@ -366,6 +367,8 @@ def render_local_app_route(
             return page("Dashboard", _dashboard(root, host=host, port=port))
         if path == "/today":
             return page("Today", _today_page(root))
+        if path == "/guide":
+            return page("Guide", _guide_page(root))
         if path == "/goals":
             return page("Goals", _goals(root))
         if path == "/resume":
@@ -473,6 +476,7 @@ def run_local_app_smoke_test(root: Path) -> dict[str, Any]:
     routes = [
         ("/", "ClankerOS Local Operator"),
         ("/today", "Today Command Center"),
+        ("/guide", "Suggested Use Guide"),
         ("/resume", "Resume Workspace"),
         ("/goals", "Goal Cockpit"),
         ("/search", "Global Search"),
@@ -1634,7 +1638,7 @@ def write_local_app_status(root: Path, *, host: str, port: int) -> Path:
         "dirty_tracked_files": state["dirty_tracked_files"],
         "untracked_files": state["untracked_files"],
         "warnings": warnings,
-        "routes_available": ["/", "/today", "/goals", "/goals/<id>", "/search", "/workspace", "/memory", "/skills", "/profiles", "/workflow", "/actions", "/verification", "/ci-evidence", "/dogfooding", "/projects", "/delegation-runs", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
+        "routes_available": ["/", "/today", "/guide", "/goals", "/goals/<id>", "/search", "/workspace", "/memory", "/skills", "/profiles", "/workflow", "/actions", "/verification", "/ci-evidence", "/dogfooding", "/projects", "/delegation-runs", "/delegations/<id>", "/runs/<id>", "/inbox", "/approvals", "/incidents", "/artifacts", "/health", "/demo"],
         "supported_workflow_stages": [step[0] for step in WORKFLOW_STEPS],
         "non_claims": NO_EXTERNAL_EFFECT_CLAIMS,
         "known_gaps": [
@@ -1701,6 +1705,308 @@ def _dashboard(root: Path, *, host: str, port: int) -> str:
             _list_section("Pending Approvals", rows["approvals"], "/approvals"),
             _list_section("Incidents / Recommendations", rows["incidents"], "/incidents"),
             _dashboard_next_action_section(next_action),
+        ]
+    )
+
+
+def _guide_page(root: Path) -> str:
+    storage = _storage(root)
+    rows = _goal_rows(storage, limit=100)
+    active = [row for row in rows if _goal_bucket(row) == "active"]
+    paused = [row for row in rows if _goal_bucket(row) == "paused"]
+    completed = [row for row in rows if _goal_bucket(row) == "completed"]
+    projects = storage.list_registered_projects()
+    workspace = _load_workspace_state(root)
+    first_run = _first_run_progress(root, storage)
+    focus = _operator_focus_context(root, "/guide")
+    latest_ci = _latest_ci_evidence_record(root)
+    mode = str(focus.get("status") or "unknown")
+    phase = "First run"
+    primary_href = str(focus.get("today_href") or focus.get("target_href") or "/today")
+    primary_label = str(focus.get("target_label") or focus.get("next_action") or "Open Today")
+    primary_action = str(focus.get("next_action") or "Open Today")
+    goal_surface: str | SafeHtml = "none"
+    project_value = str(first_run["default_project"])
+    action_form_available = str(bool(focus.get("form_available"))).lower()
+
+    if focus.get("status") == "available":
+        goal = focus.get("goal")
+        next_action = focus.get("next_action")
+        goal_id = str(getattr(goal, "id", "")) if goal is not None else ""
+        project_value = str(getattr(goal, "project_id", project_value)) if goal is not None else project_value
+        goal_label = str(focus.get("goal_label") or goal_id or "Current Goal")
+        goal_surface = (
+            SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(goal_label)}</a>")
+            if goal_id
+            else "none"
+        )
+        phase = str(focus.get("phase") or "Current goal")
+        mode = "goal"
+        if isinstance(next_action, GoalNextAction):
+            primary_action = next_action.action
+            if focus.get("form_available") and goal_id:
+                primary_href = f"/goals/{quote(goal_id)}#goal-next-action-form"
+                primary_label = "Open Goal action form"
+            elif next_action.href.startswith("#") and goal_id:
+                primary_href = f"/goals/{quote(goal_id)}{next_action.href}"
+                primary_label = next_action.href
+            else:
+                primary_href = next_action.href or f"/goals/{quote(goal_id)}"
+                primary_label = next_action.href or "Open Goal"
+        elif goal_id:
+            primary_href = f"/goals/{quote(goal_id)}"
+            primary_label = "Open Goal"
+            primary_action = "Open Goal"
+    elif focus.get("status") == "first_run":
+        mode = "first_run"
+        phase = "First run"
+        primary_href = str(focus.get("today_href") or "/today")
+        primary_label = str(focus.get("target_label") or "Continue First Run")
+        primary_action = str(focus.get("next_action") or first_run["next_action"])
+    else:
+        primary_href = "/health"
+        primary_label = "Open Health"
+        primary_action = "Inspect local app state"
+
+    daily_cards = [
+        (
+            "today",
+            "Today",
+            "Start with the command center, attention queue, notes, and active goals.",
+            "/today",
+            "Open Today",
+            False,
+        ),
+        (
+            "current",
+            "Current Goal" if mode == "goal" else "First Run",
+            f"{phase}: {primary_action}",
+            primary_href,
+            primary_label,
+            True,
+        ),
+        (
+            "action",
+            "One Action",
+            primary_action,
+            primary_href,
+            primary_label,
+            True,
+        ),
+        (
+            "proof",
+            "Proof",
+            "Check local verification and recorded GitHub evidence before believing progress.",
+            "/verification",
+            "Open Proof",
+            False,
+        ),
+        (
+            "finish",
+            "Finish",
+            "Save the current project, Goal, filters, panels, and resume surface.",
+            "/workspace#save-workspace",
+            "Finish Today",
+            False,
+        ),
+        (
+            "resume",
+            "Resume",
+            "Come back to the saved surface instead of rebuilding context from chat.",
+            "/resume",
+            "Open Resume",
+            False,
+        ),
+    ]
+    daily_card_html = "".join(
+        _guide_card(
+            key,
+            title,
+            body,
+            href,
+            label,
+            primary=primary,
+            data_attr="data-guide-step",
+            key_attr="data-guide-step-key",
+            card_class="guide-card",
+            action_class="guide-action" if primary else "guide-link",
+        )
+        for key, title, body, href, label, primary in daily_cards
+    )
+
+    first_run_cards: list[str] = []
+    first_run_lines: list[str] = []
+    for index, (step, label, action) in enumerate(_FIRST_RUN_STEPS, start=1):
+        status = _first_run_step_status(first_run, step)
+        raw_href = _first_run_step_href(first_run, step)
+        href = f"/goals{raw_href}" if raw_href.startswith("#") else raw_href
+        first_run_lines.append(f"guide_first_run_step: {step} status={status}")
+        first_run_cards.append(
+            "".join(
+                [
+                    (
+                        "<article class='guide-card guide-first-run-card' "
+                        "data-guide-first-run-step='true' "
+                        f"data-guide-first-run-step-key='{_e(step)}' "
+                        f"data-guide-first-run-step-status='{_e(status)}'>"
+                    ),
+                    f"<span class='guide-card-kicker'>{index}</span>",
+                    f"<h3>{_e(label)}</h3>",
+                    f"<p>{_e(action)}</p>",
+                    f"<p class='guide-status'>{_e(status.replace('_', ' '))}</p>",
+                    f"<a class='guide-link' href='{_e(href)}'>{_e('Continue' if status == 'current' else ('Open' if status == 'done' else 'Waiting'))}</a>",
+                    "</article>",
+                ]
+            )
+        )
+
+    safety_cards = "".join(
+        [
+            _guide_card(
+                "get",
+                "Read-Only GET",
+                "Opening this guide reads local state and renders links only.",
+                "/health",
+                "Health",
+                data_attr="data-guide-safety-card",
+                key_attr="data-guide-safety-card-key",
+                card_class="guide-card guide-safety-card",
+            ),
+            _guide_card(
+                "forms",
+                "Confirmed Forms",
+                "Writes stay behind existing explicit browser confirmations.",
+                primary_href,
+                primary_label,
+                data_attr="data-guide-safety-card",
+                key_attr="data-guide-safety-card-key",
+                card_class="guide-card guide-safety-card",
+            ),
+            _guide_card(
+                "external",
+                "No External Effects",
+                "No provider calls, non-loopback network action, push, PR, deploy, or external mutation is taken by this page.",
+                "/verification",
+                "Proof",
+                data_attr="data-guide-safety-card",
+                key_attr="data-guide-safety-card-key",
+                card_class="guide-card guide-safety-card",
+            ),
+            _guide_card(
+                "resume",
+                "Resume State",
+                "Use Workspace and Resume so a day of work has a durable browser return point.",
+                "/workspace",
+                "Workspace",
+                data_attr="data-guide-safety-card",
+                key_attr="data-guide-safety-card-key",
+                card_class="guide-card guide-safety-card",
+            ),
+        ]
+    )
+
+    latest_ci_label = "none"
+    if latest_ci is not None:
+        latest_ci_label = str(getattr(latest_ci[1], "status", "unknown"))
+    workspace_goal = str(workspace.get("open_goal") or "") or "none"
+    workspace_surface = str(workspace.get("resume_surface") or "") or "none"
+    evidence_rows: list[tuple[str, str | SafeHtml]] = [
+        ("guide_status", "available"),
+        ("guide_mode", mode),
+        ("guide_focus_status", str(focus.get("status") or "unknown")),
+        ("guide_project", project_value),
+        ("guide_goal", goal_surface),
+        ("guide_phase", phase),
+        ("guide_primary_action", primary_action),
+        (
+            "guide_primary_surface",
+            SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+        ),
+        ("guide_action_form_available", action_form_available),
+        ("guide_goal_count", str(len(rows))),
+        ("guide_active_goals", str(len(active))),
+        ("guide_paused_goals", str(len(paused))),
+        ("guide_completed_goals", str(len(completed))),
+        ("guide_project_count", str(len(projects))),
+        ("guide_first_run_current_step", str(first_run["current_step"])),
+        ("guide_first_run_complete", str(first_run["complete"]).lower()),
+        ("guide_workspace_goal", workspace_goal),
+        ("guide_workspace_surface", workspace_surface),
+        ("guide_latest_ci_status", latest_ci_label),
+        ("guide_loop_steps", str(len(daily_cards))),
+        ("guide_first_run_steps", str(len(_FIRST_RUN_STEPS))),
+        ("guide_safety_cards", "4"),
+        ("guide_write_on_get", "false"),
+        ("guide_provider_calls_taken", "0"),
+        ("guide_network_actions_taken", "0"),
+        ("guide_external_effects_created", "false"),
+    ]
+    evidence_lines = [
+        "guide_loop: Today -> Goal -> Action -> Proof -> Finish -> Resume",
+        f"guide_primary: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+        f"guide_workspace_resume: {_e(workspace_surface)}",
+        "guide_safety: read-only browser guide; existing confirmed forms own writes",
+    ]
+    return "".join(
+        [
+            "<section class='hero guide-hero' data-guide-page='true'><h1>Suggested Use Guide</h1>",
+            "<p>One browser-first operating loop for spending the day inside ClankerOS without remembering the CLI.</p>",
+            "<pre class='guide-loop-art' data-guide-loop-art='true' aria-label='Daily browser loop text map'>[ Today ] -> [ Goal ] -> [ Action ] -> [ Proof ] -> [ Finish ] -> [ Resume ]</pre>",
+            "</section>",
+            "<section id='guide-daily-loop' class='panel guide-daily-loop' data-guide-daily-loop='true'><h2>Daily Loop</h2>",
+            "<p class='muted'>Use these in order when you want ClankerOS to feel like the main operator surface.</p>",
+            "<div class='guide-grid' data-guide-daily-loop-cards='true'>",
+            daily_card_html,
+            "</div>",
+            "</section>",
+            "<section id='guide-first-run-path' class='panel guide-first-run-path' data-guide-first-run-path='true'><h2>First Run Path</h2>",
+            "<p class='muted'>A fresh checkout should become a project, a Goal, a delegation, local context, and a first completed run from the browser.</p>",
+            "<div class='guide-first-run-grid' data-guide-first-run-cards='true'>",
+            "".join(first_run_cards),
+            "</div>",
+            "</section>",
+            "<section id='guide-safety-boundary' class='panel guide-safety-boundary' data-guide-safety-boundary='true'><h2>Safety Boundary</h2>",
+            "<p class='muted'>The guide points to local surfaces; confirmed forms remain the only place local writes or local executions happen.</p>",
+            "<div class='guide-safety-grid' data-guide-safety-cards='true'>",
+            safety_cards,
+            "</div>",
+            "<details class='guide-evidence' data-guide-evidence='true'><summary>Guide evidence</summary>",
+            _kv(evidence_rows),
+            _ul(evidence_lines + first_run_lines),
+            "</details>",
+            "</section>",
+            _non_claim_banner(),
+        ]
+    )
+
+
+def _guide_card(
+    key: str,
+    title: str,
+    body: str,
+    href: str,
+    label: str,
+    *,
+    primary: bool = False,
+    data_attr: str = "data-guide-card",
+    key_attr: str = "data-guide-card-key",
+    card_class: str = "guide-card",
+    action_class: str = "guide-link",
+) -> str:
+    classes = [card_class]
+    if primary:
+        classes.append("guide-primary")
+    return "".join(
+        [
+            (
+                f"<article class='{_e(' '.join(classes))}' "
+                f"{data_attr}='true' {key_attr}='{_e(key)}'>"
+            ),
+            f"<span class='guide-card-kicker'>{_e(key.replace('_', ' '))}</span>",
+            f"<h3>{_e(title)}</h3>",
+            f"<p>{_e(body)}</p>",
+            f"<a class='{_e(action_class)}' href='{_e(href)}'>{_e(label)}</a>",
+            "</article>",
         ]
     )
 
@@ -40319,7 +40625,7 @@ def _html_page(
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
     workspace_panel_restore = _workspace_panel_restore_strip(root, current_path)
-    content_first_paths = {"/", "/actions", "/approvals", "/artifacts", "/ci-evidence", "/delegation-runs", "/demo", "/dogfooding", "/goals", "/health", "/inbox", "/incidents", "/memory", "/profiles", "/projects", "/resume", "/search", "/skills", "/today", "/verification", "/workflow", "/workspace"}
+    content_first_paths = {"/", "/actions", "/approvals", "/artifacts", "/ci-evidence", "/delegation-runs", "/demo", "/dogfooding", "/goals", "/guide", "/health", "/inbox", "/incidents", "/memory", "/profiles", "/projects", "/resume", "/search", "/skills", "/today", "/verification", "/workflow", "/workspace"}
     if (
         current_route_path in content_first_paths
         or current_route_path.startswith("/projects/")
@@ -40381,6 +40687,25 @@ def _html_page(
     .workspace-panel-restore dl {{ grid-template-columns:minmax(190px, 250px) 1fr; }}
     .workspace-panel-restore ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
     .workspace-panel-restore li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--panel); overflow-wrap:anywhere; }}
+    .guide-hero {{ border-left:4px solid var(--accent); }}
+    .guide-loop-art {{ margin:12px 0 0; padding:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); white-space:pre-wrap; overflow-wrap:anywhere; text-align:center; font-size:15px; line-height:1.55; }}
+    .guide-daily-loop, .guide-first-run-path, .guide-safety-boundary {{ border-left:4px solid var(--accent); }}
+    .guide-grid, .guide-first-run-grid, .guide-safety-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:12px 0; align-items:stretch; }}
+    .guide-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; display:grid; gap:8px; align-content:start; }}
+    .guide-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .guide-card-kicker {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .guide-card h3, .guide-card p {{ margin:0; overflow-wrap:anywhere; }}
+    .guide-card p {{ color:var(--muted); }}
+    .guide-status {{ font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; color:var(--muted); }}
+    .guide-action, .guide-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; width:100%; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
+    .guide-action {{ background:var(--accent); color:#fff; }}
+    .guide-link {{ background:var(--surface); color:var(--accent); }}
+    .guide-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .guide-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .guide-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .guide-evidence dl {{ grid-template-columns:minmax(190px, 260px) 1fr; }}
+    .guide-evidence ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .guide-evidence li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .operator-side {{ position:sticky; top:74px; border:1px solid var(--line); background:var(--panel); padding:12px; }}
     .operator-side h2 {{ font-size:14px; }}
     .operator-side ul, .command-palette ul {{ list-style:none; padding:0; margin:0; display:grid; gap:7px; }}

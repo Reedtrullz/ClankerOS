@@ -1,5 +1,38 @@
 # Status
 
+## 2026-06-29 Suggested Use Guide UX
+
+- Added `/guide` as a first-class local app route and top-level nav item. The
+  page opens with `Suggested Use Guide`, a text map for
+  `[ Today ] -> [ Goal ] -> [ Action ] -> [ Proof ] -> [ Finish ] -> [ Resume ]`,
+  a six-card daily loop, a five-step first-run path, and a four-card safety
+  boundary.
+- The guide is state-aware: empty checkouts point toward the first-run browser
+  setup path, while populated/current-goal work points at the active Goal or
+  existing confirmed action form. It also exposes evidence for mode, focus
+  status, project/goal counts, first-run step, workspace resume state, latest
+  CI status, and zero-effect counters.
+- Wired `/guide` into `routes_available`, `app-smoke-test`, content-first page
+  ordering, README, local app docs, operating summary, and focused
+  first-milestone assertions.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed;
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health` passed with `1 passed,
+  515 deselected in 32.19s`; `python3 -m agent_os.cli app-smoke-test` passed
+  with `/guide` marker matched and zero provider/network/external-mutation
+  counters.
+- Browser verification: Playwright opened
+  `http://127.0.0.1:62108/guide`, confirmed title
+  `Guide - ClankerOS Local Operator`, six daily cards, five first-run cards,
+  four safety cards, the current primary Goal/action link, and no horizontal
+  overflow at both `1280px` and mobile `390x844`. Screenshot:
+  `.playwright-cli/page-2026-06-29T21-29-21-861Z.png`. Browser and local app
+  server were closed.
+- Non-claims: this does not create projects, goals, delegations, context
+  packs, runs, approvals, execution, pushes, PRs, deploys, provider calls,
+  non-loopback network actions, server writes on GET, or external mutations.
+
 ## 2026-06-29 First Run Empty State Text Map UX
 
 - Promoted the first-run empty-state illustration into the visible First Run
