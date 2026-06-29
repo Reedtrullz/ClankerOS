@@ -303,9 +303,10 @@ verification, and health surfaces, then lets you jump directly to the relevant
 local surface.
 
 Use `/goals` as the daily cockpit. It separates active, paused, and completed
-goals, links each goal to its detail page, and shows phase, next action, and
-task progress plus open task, incident, and recommendation counts from
-existing local state. A `Goal Board Workbench` starts the page before shared
+goals into scan-first Goal cards that link each goal to its detail page,
+project page, and next action surface while showing phase, next action, task
+progress, waiting count, and open work from existing local state. A
+`Goal Board Workbench` starts the page before shared
 route/focus diagnostics, with visible Do Now, Selected Goal, Attention, and
 Start/Resume cards; it links the selected Goal straight to its confirmed
 action form when one exists, routes pending approval attention through

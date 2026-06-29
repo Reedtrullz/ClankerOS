@@ -1,5 +1,34 @@
 # Status
 
+## 2026-06-29 Goal Board Cards UX
+
+- Reworked shared Goal rows on `/goals` and Home goal lanes into scan-first
+  cards instead of dense one-line inventory strings.
+- Each card now shows the Goal title, lane, project, phase, task progress, next
+  action, waiting count, open work, plus direct Goal, project, and next-action
+  links.
+- Preserved the legacy `project=... status=... phase=... next_action=...
+  progress=... remaining_work=...` row text and `data-goal-board-search`
+  metadata so existing filters, tests, and automation keep their stable readback.
+- The behavior is read-only card rendering: no write on GET, no provider calls,
+  no network actions, no execution, no approval, no push, no PR, no deploy, and
+  no external mutation.
+- Updated README, local app docs, operating summary, docs status, and the
+  fixture-backed Goal board regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state --tb=short` passed with
+  `1 passed, 515 deselected in 40.27s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55611` showed one rendered Goal card with Goal link
+  `/goals/goal_ffc365383f06`, next link
+  `/goals/goal_ffc365383f06#goal-next-action-form`, project link
+  `/projects/local-app-demo`, `commit` filtering still at `1 of 1 goals`, no
+  desktop overflow at `1280px`, mobile `390x844` card width `358px`, action
+  buttons `34px` tall, and no console warnings/errors.
+
 ## 2026-06-29 Goal Board Filter UX
 
 - Added a browser-local `Goal Board Filter` to `/goals` after the goal creation

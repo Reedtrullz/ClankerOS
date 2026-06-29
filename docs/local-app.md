@@ -186,9 +186,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   summary with task progress plus open task, incident, and recommendation
   counts.
 - `/goals` - daily goal cockpit. It separates active, paused, and completed
-  goals, links to each goal detail page, and keeps phase, next action, task
-  progress, open task/incident/recommendation counts, and first-run browser
-  actions visible. A `Goal Board Workbench` now starts the page before shared
+  goals into scan-first Goal cards, links each card to the Goal detail page,
+  project page, and next action surface, and keeps phase, next action, task
+  progress, waiting count, open work, and first-run browser actions visible. A
+  `Goal Board Workbench` now starts the page before shared
   route/focus diagnostics, with Do Now, Selected Goal, Attention, and
   Start/Resume cards, including direct links to the selected Goal's confirmed
   action form, scoped

@@ -389,7 +389,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   paused, and completed lanes by title, project, phase, status, next action,
   progress, or remaining work with a live count, mode buttons, first-match
   jump, and explicit no-write/no-provider/no-network/no-external-effect
-  evidence before the longer lane lists. The
+  evidence before the longer lane lists. Goal rows in those lanes render as
+  scan-first cards with direct Goal, project, and next-action links plus phase,
+  progress, waiting, and open-work readbacks while preserving the legacy
+  project/status/phase/next-action/progress/remaining-work text for automation
+  and tests. The
   checklist reports the current step,
   one `first_run_next_action` with a reason, project/goal/delegation/
   context-pack state, next local surface, a confirmed local `run-delegation`

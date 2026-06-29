@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals` active, paused, and completed lanes now render scan-first Goal cards
+  instead of dense text rows. Each card links to the Goal, project, and current
+  next-action surface while showing phase, progress, next action, waiting
+  count, open work, and the legacy row text needed by filters and automation.
 - `/goals` now includes a browser-local `Goal Board Filter` after the goal
   creation form and before the active/paused/completed lanes. It filters
   rendered Goal rows by title, project, phase, status, next action, progress,

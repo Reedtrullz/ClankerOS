@@ -12976,14 +12976,49 @@ def _goal_index_line(root: Path, storage: Storage, row: sqlite3.Row) -> str:
     progress = _goal_progress_label(state)
     remaining = _goal_remaining_work_summary(state)
     bucket = _goal_bucket(row)
+    goal_id = str(row["id"])
+    project_id = str(row["project_id"])
+    status = str(row["status"])
     title = str(row["title"] or row["description"] or row["id"])
+    open_tasks = len(
+        [
+            task
+            for task in state.get("tasks", [])
+            if task.status not in {"completed", "cancelled"}
+        ]
+    )
+    open_incidents = len(
+        [
+            incident
+            for incident in state.get("incidents", [])
+            if incident["status"] == "open"
+        ]
+    )
+    open_recommendations = len(
+        [
+            recommendation
+            for recommendation in state.get("recommendations", [])
+            if recommendation["status"] == "open"
+        ]
+    )
+    pending_approvals = (
+        _count_status(state.get("worktree_approvals", []), "pending_operator_approval")
+        + _count_status(state.get("commit_approvals", []), "pending_operator_approval")
+        + _count_status(state.get("publications", []), "pending_operator_approval")
+    )
+    waiting_items = pending_approvals + open_incidents + open_recommendations
+    form_available = (
+        bool(_goal_next_action_form(state, next_action)) if state.get("goal") else False
+    )
+    next_href = _goal_board_action_href(goal_id, next_action.href, form_available)
+    next_label = "Use action form" if form_available else "Open next"
     searchable = " ".join(
         [
-            str(row["id"]),
+            goal_id,
             title,
             str(row["description"] or ""),
-            str(row["project_id"]),
-            str(row["status"]),
+            project_id,
+            status,
             bucket,
             phase,
             next_action.action,
@@ -12991,17 +13026,34 @@ def _goal_index_line(root: Path, storage: Storage, row: sqlite3.Row) -> str:
             remaining,
         ]
     ).lower()
-    return (
-        "<span class='goal-index-row' data-goal-board-row='true' "
-        f"data-goal-board-bucket='{_e(bucket)}' "
-        f"data-goal-board-search='{_e(searchable)}'>"
-        f"<a href='/goals/{quote(str(row['id']))}'>{_e(row['title'] or row['description'])}</a>: "
-        f"project={_e(row['project_id'])} status={_e(row['status'])} "
-        f"phase={_e(phase)} "
-        f"next_action={_e(next_action.action)} "
-        f"progress={_e(progress)} "
-        f"remaining_work={_e(remaining)}"
-        "</span>"
+    return "".join(
+        [
+            "<article class='goal-index-row goal-index-card' data-goal-card='true' data-goal-board-row='true' ",
+            f"data-goal-board-bucket='{_e(bucket)}' ",
+            f"data-goal-board-search='{_e(searchable)}'>",
+            "<div class='goal-index-main'>",
+            f"<span class='goal-index-kicker'>{_e(bucket.title())} Goal</span>",
+            f"<h3><a data-goal-card-open='true' href='/goals/{quote(goal_id)}'>{_e(title)}</a></h3>",
+            f"<p class='goal-index-summary'>{_e(project_id)} / {_e(phase)} / {_e(progress)}</p>",
+            "<div class='goal-index-actions'>",
+            f"<a class='goal-index-action' data-goal-card-next='true' href='{_e(next_href)}'>{_e(next_label)}</a>",
+            f"<a class='goal-index-link' data-goal-card-project='true' href='/projects/{quote(project_id)}'>Project</a>",
+            "</div>",
+            "</div>",
+            "<dl class='goal-index-metrics'>",
+            f"<dt>Next</dt><dd>{_e(next_action.action)}</dd>",
+            f"<dt>Waiting</dt><dd>{waiting_items} item(s)</dd>",
+            f"<dt>Open Work</dt><dd>{open_tasks} task(s)</dd>",
+            "</dl>",
+            "<p class='goal-index-legacy'>",
+            f"project={_e(project_id)} status={_e(status)} "
+            f"phase={_e(phase)} "
+            f"next_action={_e(next_action.action)} "
+            f"progress={_e(progress)} "
+            f"remaining_work={_e(remaining)}",
+            "</p>",
+            "</article>",
+        ]
     )
 
 
@@ -36264,8 +36316,22 @@ def _html_page(
     .goal-board-filter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-board-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-board-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
-    .goal-index-row {{ display:inline; }}
-    @media (max-width: 640px) {{ .goal-board-filter-row {{ grid-template-columns:1fr; }} .goal-board-filter-label, .goal-board-filter-count {{ white-space:normal; }} .goal-board-filter-first {{ width:100%; }} }}
+    .goal-index-list {{ list-style:none; padding:0; margin:10px 0 0; display:grid; gap:10px; }}
+    .goal-index-list > li {{ min-width:0; }}
+    .goal-index-row {{ display:grid; grid-template-columns:minmax(220px, 1fr) minmax(170px, 0.55fr); gap:12px; align-items:start; border:1px solid var(--line); border-left:4px solid var(--accent); background:var(--surface); padding:12px; }}
+    .goal-index-main {{ min-width:0; display:grid; gap:6px; }}
+    .goal-index-kicker {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .goal-index-row h3 {{ margin:0; font-size:16px; line-height:1.3; overflow-wrap:anywhere; }}
+    .goal-index-summary, .goal-index-legacy {{ margin:0; color:var(--muted); overflow-wrap:anywhere; }}
+    .goal-index-legacy {{ font-size:12px; }}
+    .goal-index-actions {{ display:flex; flex-wrap:wrap; gap:7px; margin-top:2px; }}
+    .goal-index-action, .goal-index-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
+    .goal-index-action {{ background:var(--accent); color:#fff; }}
+    .goal-index-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-index-metrics {{ display:grid; grid-template-columns:minmax(70px, auto) minmax(0, 1fr); gap:4px 8px; margin:0; border:0; background:transparent; }}
+    .goal-index-metrics dt {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .goal-index-metrics dd {{ margin:0; overflow-wrap:anywhere; }}
+    @media (max-width: 640px) {{ .goal-board-filter-row, .goal-index-row {{ grid-template-columns:1fr; }} .goal-board-filter-label, .goal-board-filter-count {{ white-space:normal; }} .goal-board-filter-first, .goal-index-action, .goal-index-link {{ width:100%; }} }}
     .goal-board-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-cockpit-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-cockpit-evidence summary {{ cursor:pointer; font-weight:700; }}
@@ -38799,7 +38865,12 @@ def _kv(items: list[tuple[str, str]]) -> str:
 def _ul(items: list[str]) -> str:
     if not items:
         return "<p class='muted'>none</p>"
-    return "<ul>" + "".join(f"<li>{item}</li>" for item in items) + "</ul>"
+    list_class = (
+        " class='goal-index-list'"
+        if any("data-goal-board-row='true'" in item for item in items)
+        else ""
+    )
+    return f"<ul{list_class}>" + "".join(f"<li>{item}</li>" for item in items) + "</ul>"
 
 
 def _non_claim_banner() -> str:

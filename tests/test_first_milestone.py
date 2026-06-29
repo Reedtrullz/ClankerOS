@@ -10741,6 +10741,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "id='active-goals'"
     )
     assert "data-goal-board-row='true'" in goals.body
+    assert "class='goal-index-list'" in goals.body
+    assert "class='goal-index-row goal-index-card' data-goal-card='true' data-goal-board-row='true'" in goals.body
+    assert f"data-goal-card-open='true' href='/goals/{result.goal_id}'" in goals.body
+    assert f"data-goal-card-next='true' href='/goals/{result.goal_id}#goal-next-action-form'" in goals.body
+    assert "data-goal-card-project='true' href='/projects/local-app-demo'" in goals.body
+    assert "<dt>Next</dt><dd>Create commit request</dd>" in goals.body
+    assert "<dt>Waiting</dt><dd>1 item(s)</dd>" in goals.body
+    assert "<dt>Open Work</dt><dd>1 task(s)</dd>" in goals.body
+    assert "local-app-demo / Ready to commit / 0/1 tasks completed" in goals.body
     assert "data-goal-board-bucket='active'" in goals.body
     assert "data-goal-board-search='" in goals.body
     assert "demo the clankeros local operator app with fixture-backed state" in goals.body
