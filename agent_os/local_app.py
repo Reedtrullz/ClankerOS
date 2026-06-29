@@ -15132,13 +15132,17 @@ def _goal_evidence_lines(root: Path, state: dict[str, Any]) -> list[str]:
 
 def _goal_evidence_section(root: Path, state: dict[str, Any]) -> str:
     lines = _goal_evidence_lines(root, state)
-    return _goal_evidence_command_bar(root, state, lines) + _collapsible_list_section(
-        "Evidence",
-        lines,
-        anchor_id="goal-evidence",
-        details_class="goal-evidence-list",
-        data_attr="goal-evidence-list",
-        summary=f"Detailed evidence list ({len(lines)})",
+    return (
+        _goal_evidence_command_bar(root, state, lines)
+        + _goal_evidence_digest(root, state, lines)
+        + _collapsible_list_section(
+            "Evidence",
+            lines,
+            anchor_id="goal-evidence",
+            details_class="goal-evidence-list",
+            data_attr="goal-evidence-list",
+            summary=f"Detailed evidence list ({len(lines)})",
+        )
     )
 
 
@@ -15292,6 +15296,204 @@ def _goal_evidence_command_bar(
                     f"goal_evidence_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
                     f"goal_evidence_reason: {_e(reason)}",
                     "goal_evidence_safety: read-only local evidence inventory",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _goal_evidence_digest(
+    root: Path,
+    state: dict[str, Any],
+    evidence_lines: list[str],
+) -> str:
+    goal = state["goal"]
+    artifact_records = _goal_artifact_records(root, state)
+    artifact_counts = {kind: 0 for kind in ["markdown", "json", "patch", "text"]}
+    available_artifacts = 0
+    missing_artifacts = 0
+    for record in artifact_records:
+        artifact_counts[record["kind"]] += 1
+        if record["status"] == "available":
+            available_artifacts += 1
+        else:
+            missing_artifacts += 1
+
+    run_evidence_items = sum(
+        1
+        for row in state["runs"]
+        for key in ["activity_path", "summary_path", "events_path"]
+        if row[key]
+    )
+    worktree_evidence_items = len(state["worktree_runs"])
+    incident_evidence_items = len(state["incidents"])
+    recommendation_evidence_items = len(state["recommendations"])
+
+    latest_path = _goal_latest_artifact_path(root, state)
+    latest_record = next(
+        (record for record in artifact_records if record["path"] == latest_path),
+        None,
+    )
+    if latest_record is None:
+        latest_record = next(
+            (record for record in reversed(artifact_records) if record["status"] == "available"),
+            artifact_records[-1] if artifact_records else None,
+        )
+    latest_label = latest_record["label"] if latest_record is not None else "none"
+    latest_kind = latest_record["kind"] if latest_record is not None else "none"
+    latest_status = latest_record["status"] if latest_record is not None else "none"
+    latest_href = (
+        _artifact_href(root, latest_record["path"])
+        if latest_record is not None
+        else "#goal-artifact-explorer"
+    )
+    latest_surface = (
+        _artifact_link(latest_record["path"])
+        if latest_record is not None
+        else "none"
+    )
+
+    project = _storage(root).get_registered_project(goal.project_id)
+    project_root = Path(project.root_path) if project else root
+    repo = _repo_state(project_root)
+    full_commit = _git(project_root, ["rev-parse", "HEAD"]) or repo["commit"]
+    latest_ci = _latest_ci_evidence_record(root, project_id=goal.project_id)
+    ci_source = "none"
+    ci_status = "missing"
+    ci_scope = "none"
+    ci_run_id = "none"
+    ci_commit = "none"
+    ci_matches_current = False
+    ci_status_label = "No CI proof"
+    ci_href = "#record-goal-ci-proof"
+    ci_link_label = "Record CI proof"
+    ci_record_surface: str | SafeHtml = "none"
+    if latest_ci is not None:
+        ci_source, ci_record = latest_ci
+        result_json = ci_record.result_json if isinstance(ci_record.result_json, dict) else {}
+        ci_status = str(ci_record.status)
+        ci_scope = str(result_json.get("evidence_scope", "unknown"))
+        ci_run_id = str(ci_record.external_run_id)
+        ci_commit = str(ci_record.commit_sha)
+        branch_matches = ci_record.branch_name == repo["branch"]
+        commit_matches = _commit_refs_match(ci_record.commit_sha, full_commit, repo["commit"])
+        ci_matches_current = branch_matches and commit_matches
+        if ci_matches_current and ci_status == "success" and ci_scope == "workflow_run":
+            ci_status_label = "Current workflow proof"
+            ci_href = "#goal-verification-evidence"
+            ci_link_label = "Review CI proof"
+        elif ci_matches_current and ci_status == "success":
+            ci_status_label = "Current partial proof"
+            ci_href = "#record-goal-ci-proof"
+            ci_link_label = "Record full proof"
+        elif ci_matches_current:
+            ci_status_label = "Current proof needs attention"
+            ci_href = "#goal-verification-evidence"
+            ci_link_label = "Inspect CI proof"
+        else:
+            ci_status_label = "Stale CI proof"
+            ci_href = "#record-goal-ci-proof"
+            ci_link_label = "Record current proof"
+        ci_record_surface = SafeHtml(
+            _artifact_link(_repo_relative_artifact_path(root, ci_record.evidence_path))
+        )
+
+    evidence_status = "available" if evidence_lines or artifact_records else "empty"
+    artifact_mix = (
+        f"{artifact_counts['markdown']} md / {artifact_counts['json']} json / "
+        f"{artifact_counts['patch']} patch / {artifact_counts['text']} text"
+    )
+    proof_total = len(evidence_lines) + len(artifact_records)
+
+    return "".join(
+        [
+            "<section id='goal-evidence-digest' class='panel goal-evidence-digest' data-goal-evidence-digest='true'><h3>Goal Evidence Digest</h3>",
+            "<p class='muted'>Scan-first proof summary before the full evidence inventory.</p>",
+            "<div class='goal-evidence-grid' data-goal-evidence-digest-actions='true'>",
+            "<article class='goal-evidence-card goal-evidence-primary' data-goal-evidence-digest-proof='true'>",
+            "<h3>Proof</h3>",
+            f"<strong>{_e(evidence_status)}</strong>",
+            f"<p>{proof_total} local proof item(s); {available_artifacts} available artifact(s).</p>",
+            "<a class='goal-evidence-action' data-goal-evidence-digest-primary='true' href='#goal-evidence'>Evidence list</a>",
+            "</article>",
+            "<article class='goal-evidence-card' data-goal-evidence-digest-latest='true'>",
+            "<h3>Latest</h3>",
+            f"<strong>{_e(latest_label)}</strong>",
+            f"<p>{_e(latest_kind)}; status={_e(latest_status)}.</p>",
+            f"<a class='goal-evidence-link' href='{_e(latest_href)}'>Open latest</a>",
+            "</article>",
+            "<article class='goal-evidence-card' data-goal-evidence-digest-run='true'>",
+            "<h3>Run Proof</h3>",
+            f"<strong>{run_evidence_items + worktree_evidence_items} item(s)</strong>",
+            f"<p>{run_evidence_items} run file(s); {worktree_evidence_items} coder run(s).</p>",
+            "<a class='goal-evidence-link' href='#goal-runs'>Runs</a>",
+            "</article>",
+            "<article class='goal-evidence-card' data-goal-evidence-digest-types='true'>",
+            "<h3>Artifact Mix</h3>",
+            f"<strong>{len(artifact_records)} artifact(s)</strong>",
+            f"<p>{_e(artifact_mix)}; missing={missing_artifacts}.</p>",
+            "<a class='goal-evidence-link' href='#goal-artifact-explorer'>Artifact explorer</a>",
+            "</article>",
+            "<article class='goal-evidence-card' data-goal-evidence-digest-ci='true'>",
+            "<h3>CI Proof</h3>",
+            f"<strong>{_e(ci_status_label)}</strong>",
+            f"<p>{_e(ci_status)}; scope={_e(ci_scope)}; matches current={str(ci_matches_current).lower()}.</p>",
+            f"<a class='goal-evidence-link' href='{_e(ci_href)}'>{_e(ci_link_label)}</a>",
+            "</article>",
+            "<article class='goal-evidence-card' data-goal-evidence-digest-safety='true'>",
+            "<h3>Safety</h3>",
+            "<strong>read-only digest</strong>",
+            "<p>No provider calls, network actions, writes on GET, or external effects.</p>",
+            "<a class='goal-evidence-link' href='#goal-evidence-digest'>Evidence</a>",
+            "</article>",
+            "</div>",
+            "<details class='goal-evidence-digest-evidence' data-goal-evidence-digest-evidence='true'><summary>Goal evidence digest evidence</summary>",
+            _kv(
+                [
+                    ("goal_evidence_digest_goal", goal.id),
+                    ("goal_evidence_digest_project", goal.project_id),
+                    ("goal_evidence_digest_status", evidence_status),
+                    ("goal_evidence_digest_evidence_items", str(len(evidence_lines))),
+                    ("goal_evidence_digest_artifact_records", str(len(artifact_records))),
+                    ("goal_evidence_digest_available_artifacts", str(available_artifacts)),
+                    ("goal_evidence_digest_missing_artifacts", str(missing_artifacts)),
+                    ("goal_evidence_digest_run_evidence_items", str(run_evidence_items)),
+                    ("goal_evidence_digest_worktree_evidence_items", str(worktree_evidence_items)),
+                    ("goal_evidence_digest_incident_evidence_items", str(incident_evidence_items)),
+                    ("goal_evidence_digest_recommendation_evidence_items", str(recommendation_evidence_items)),
+                    ("goal_evidence_digest_markdown_artifacts", str(artifact_counts["markdown"])),
+                    ("goal_evidence_digest_json_artifacts", str(artifact_counts["json"])),
+                    ("goal_evidence_digest_patch_artifacts", str(artifact_counts["patch"])),
+                    ("goal_evidence_digest_text_artifacts", str(artifact_counts["text"])),
+                    ("goal_evidence_digest_latest_artifact", latest_label),
+                    ("goal_evidence_digest_latest_kind", latest_kind),
+                    ("goal_evidence_digest_latest_status", latest_status),
+                    ("goal_evidence_digest_latest_surface", SafeHtml(str(latest_surface))),
+                    ("goal_evidence_digest_ci_status_label", ci_status_label),
+                    ("goal_evidence_digest_ci_status", ci_status),
+                    ("goal_evidence_digest_ci_source", ci_source),
+                    ("goal_evidence_digest_ci_scope", ci_scope),
+                    ("goal_evidence_digest_ci_run_id", ci_run_id),
+                    ("goal_evidence_digest_ci_commit", ci_commit),
+                    ("goal_evidence_digest_ci_matches_current_checkout", str(ci_matches_current).lower()),
+                    ("goal_evidence_digest_ci_surface", ci_record_surface),
+                    ("goal_evidence_digest_source", "goal_evidence_lines_artifact_records_and_project_ci_evidence"),
+                    ("goal_evidence_digest_write_on_get", "false"),
+                    ("goal_evidence_digest_github_status_fetch", "none"),
+                    ("goal_evidence_digest_provider_calls_taken", "0"),
+                    ("goal_evidence_digest_network_actions_taken", "0"),
+                    ("goal_evidence_digest_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_evidence_digest_proof: {proof_total} local proof item(s)",
+                    f"goal_evidence_digest_latest: {_e(latest_label)} kind={_e(latest_kind)} status={_e(latest_status)}",
+                    f"goal_evidence_digest_artifacts: {_e(artifact_mix)}",
+                    f"goal_evidence_digest_ci: {_e(ci_status_label)} status={_e(ci_status)} scope={_e(ci_scope)}",
+                    "goal_evidence_digest_safety: read-only local proof digest",
                 ]
             ),
             "</details>",
@@ -33253,9 +33455,10 @@ def _html_page(
     .goal-git-command-evidence summary, .goal-git-snapshot summary {{ cursor:pointer; font-weight:700; }}
     .goal-git-command-evidence:not([open]) > :not(summary), .goal-git-snapshot:not([open]) > :not(summary) {{ display:none; }}
     .goal-evidence-command-bar {{ border-left:4px solid var(--ok); }}
+    .goal-evidence-digest {{ border-left:4px solid var(--accent); }}
     .goal-evidence-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-evidence-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
-    .goal-evidence-command-bar dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .goal-evidence-command-bar dl, .goal-evidence-digest dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .goal-evidence-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
     .goal-evidence-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
     .goal-evidence-card h3 {{ margin-top:0; }}
@@ -33264,9 +33467,9 @@ def _html_page(
     .goal-evidence-action, .goal-evidence-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .goal-evidence-action {{ background:var(--accent); color:#fff; }}
     .goal-evidence-link {{ background:var(--surface); color:var(--accent); }}
-    .goal-evidence-command-evidence, .goal-evidence-list {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .goal-evidence-command-evidence summary, .goal-evidence-list summary {{ cursor:pointer; font-weight:700; }}
-    .goal-evidence-command-evidence:not([open]) > :not(summary), .goal-evidence-list:not([open]) > :not(summary) {{ display:none; }}
+    .goal-evidence-command-evidence, .goal-evidence-digest-evidence, .goal-evidence-list {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-evidence-command-evidence summary, .goal-evidence-digest-evidence summary, .goal-evidence-list summary {{ cursor:pointer; font-weight:700; }}
+    .goal-evidence-command-evidence:not([open]) > :not(summary), .goal-evidence-digest-evidence:not([open]) > :not(summary), .goal-evidence-list:not([open]) > :not(summary) {{ display:none; }}
     .goal-artifact-command-bar {{ border-left:4px solid var(--ok); }}
     .goal-artifact-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-artifact-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -33431,7 +33634,7 @@ def _html_page(
     .goal-continuation-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-continuation-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-continuation-evidence:not([open]) > :not(summary) {{ display:none; }}
-    #goal-progress-meter, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
+    #goal-progress-meter, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence-digest, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
     .goal-workflow-map {{ border-left:4px solid var(--accent); }}
     .goal-workflow-map dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .goal-workflow-map-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}

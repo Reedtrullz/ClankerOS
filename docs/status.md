@@ -140,7 +140,8 @@ Latest status focus:
   exposes Now, Open, First, Recovery, and Safety cards, all before collapsed
   command evidence and collapsed detailed rows. Goal Evidence now exposes Now,
   Latest, Inventory, Attention, and Safety cards before collapsed command
-  evidence and the collapsed detailed evidence list; Goal Artifacts now exposes
+  evidence, then a read-only Proof/Latest/Run Proof/Artifact Mix/CI Proof/
+  Safety digest before the collapsed detailed evidence list; Goal Artifacts now exposes
   Open, Latest, Types, Inventory, and Safety cards before collapsed command
   evidence, the collapsed detailed artifact list, and collapsed typed explorer
   groups. Goal Memory now exposes Now, Notes, Memory Bank, Pin, and Safety

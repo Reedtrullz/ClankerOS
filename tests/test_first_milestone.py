@@ -11470,6 +11470,51 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_evidence_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_evidence_command_external_effects_created</dt><dd>false" in goal.body
     assert "goal_evidence_safety: read-only local evidence inventory" in goal.body
+    assert "Goal Evidence Digest" in goal.body
+    assert "data-goal-evidence-digest='true'" in goal.body
+    assert "data-goal-evidence-digest-actions='true'" in goal.body
+    assert "data-goal-evidence-digest-proof='true'" in goal.body
+    assert "data-goal-evidence-digest-primary='true'" in goal.body
+    assert "data-goal-evidence-digest-latest='true'" in goal.body
+    assert "data-goal-evidence-digest-run='true'" in goal.body
+    assert "data-goal-evidence-digest-types='true'" in goal.body
+    assert "data-goal-evidence-digest-ci='true'" in goal.body
+    assert "data-goal-evidence-digest-safety='true'" in goal.body
+    assert "data-goal-evidence-digest-evidence='true'" in goal.body
+    assert goal.body.index("data-goal-evidence-command-bar='true'") < goal.body.index(
+        "data-goal-evidence-digest='true'"
+    )
+    assert goal.body.index("data-goal-evidence-digest='true'") < goal.body.index(
+        "data-goal-evidence-list='true'"
+    )
+    assert f"goal_evidence_digest_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_evidence_digest_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_evidence_digest_status</dt><dd>available" in goal.body
+    assert "goal_evidence_digest_evidence_items</dt><dd>" in goal.body
+    assert "goal_evidence_digest_artifact_records</dt><dd>" in goal.body
+    assert "goal_evidence_digest_available_artifacts</dt><dd>" in goal.body
+    assert "goal_evidence_digest_missing_artifacts</dt><dd>" in goal.body
+    assert "goal_evidence_digest_run_evidence_items</dt><dd>" in goal.body
+    assert "goal_evidence_digest_worktree_evidence_items</dt><dd>1" in goal.body
+    assert "goal_evidence_digest_markdown_artifacts</dt><dd>" in goal.body
+    assert "goal_evidence_digest_json_artifacts</dt><dd>" in goal.body
+    assert "goal_evidence_digest_patch_artifacts</dt><dd>" in goal.body
+    assert "goal_evidence_digest_text_artifacts</dt><dd>" in goal.body
+    assert "goal_evidence_digest_latest_surface</dt><dd><a href='/artifacts?path=" in goal.body
+    assert "goal_evidence_digest_ci_status_label</dt><dd>" in goal.body
+    assert "goal_evidence_digest_ci_status</dt><dd>" in goal.body
+    assert "goal_evidence_digest_ci_source</dt><dd>" in goal.body
+    assert "goal_evidence_digest_ci_matches_current_checkout</dt><dd>" in goal.body
+    assert (
+        "goal_evidence_digest_source</dt><dd>"
+        "goal_evidence_lines_artifact_records_and_project_ci_evidence"
+    ) in goal.body
+    assert "goal_evidence_digest_write_on_get</dt><dd>false" in goal.body
+    assert "goal_evidence_digest_github_status_fetch</dt><dd>none" in goal.body
+    assert "goal_evidence_digest_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_evidence_digest_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_evidence_digest_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_evidence_digest_safety: read-only local proof digest" in goal.body
     assert "Artifacts" in goal.body
     assert "Goal Artifact Command Bar" in goal.body
     assert "data-goal-artifact-command-bar='true'" in goal.body

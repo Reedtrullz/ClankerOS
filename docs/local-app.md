@@ -381,8 +381,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   run evidence, worktree evidence, incident evidence, recommendation evidence,
   typed artifact counts, latest artifact, one local review target, and
   zero-effect boundaries through visible Now, Latest, Inventory, Attention, and
-  Safety cards before collapsed command evidence and the collapsed detailed
-  evidence list. Goal
+  Safety cards before collapsed command evidence. A read-only `Goal Evidence
+  Digest` follows with Proof, Latest, Run Proof, Artifact Mix, CI Proof, and
+  Safety cards before the collapsed detailed evidence list, preserving local
+  proof, artifact mix, recorded CI posture, and zero-effect counters without
+  app-side GitHub polling. Goal
   Verification Evidence starts with a read-only `Goal Verification Command
   Bar` that opens with visible Now, Current, Latest, Record, and Safety cards
   before collapsed command evidence and collapsed proof lines. It links to

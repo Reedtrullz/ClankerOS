@@ -456,7 +456,10 @@ opens with visible Now, Latest, Inventory, Attention, and Safety cards. It
 summarizes run, worktree, incident, recommendation, and typed artifact evidence
 counts, points at the latest bounded artifact or highest-priority local evidence
 surface, and keeps provider/network/external-effect counters at zero inside
-collapsed command evidence before the collapsed detailed evidence list.
+collapsed command evidence. A read-only `Goal Evidence Digest` follows with
+Proof, Latest, Run Proof, Artifact Mix, CI Proof, and Safety cards before the
+collapsed detailed evidence list, so the operator can distinguish local proof,
+artifact coverage, and recorded CI posture without opening the full inventory.
 Goal Verification Evidence starts with a read-only `Goal Verification Command
 Bar` that opens with visible Now, Current, Latest, Record, and Safety cards
 before collapsed command evidence and collapsed proof lines. It shows whether

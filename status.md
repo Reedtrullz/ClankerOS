@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-29 Goal Evidence Digest UX
+
+- Added a visible read-only `Goal Evidence Digest` to `/goals/<goal_id>` after
+  the Goal Evidence Command Bar and before the collapsed detailed evidence
+  inventory.
+- The digest turns evidence review into six scan-first cards: Proof, Latest,
+  Run Proof, Artifact Mix, CI Proof, and Safety.
+- It is sourced from existing Goal evidence lines, typed artifact records, and
+  operator-supplied project CI evidence; it does not fetch GitHub status or add
+  action authority on page load.
+- Collapsed digest evidence records proof counts, available/missing artifacts,
+  run/worktree/incident/recommendation counts, typed artifact counts, latest
+  artifact surface, local CI proof status/scope/run/commit/current-checkout
+  match, and zero-effect counters.
+- Updated README, local app docs, operating summary, current status focus, and
+  fixture-backed Goal route assertions.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  focused `tests/test_first_milestone.py` demo route coverage
+  (`1 passed, 515 deselected in 38.43s`), `python3 -m compileall -q agent_os tests`,
+  bounded `app-smoke-test`, bounded `app-demo-smoke-test`, and
+  `git diff --check`.
+
 ## 2026-06-29 Goal Timeline Digest UX
 
 - Added a visible read-only `Goal Timeline Digest` to `/goals/<goal_id>` after

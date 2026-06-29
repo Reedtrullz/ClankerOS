@@ -700,7 +700,10 @@ Core layers for the bootstrap:
   recommendation evidence, typed artifact counts, latest artifact, one local
   review target, and zero-effect boundaries through visible Now, Latest,
   Inventory, Attention, and Safety cards before collapsed command evidence, the
-  collapsed detailed evidence list, and the typed artifact explorer.
+  read-only `Goal Evidence Digest`, the collapsed detailed evidence list, and
+  the typed artifact explorer. The digest adds Proof, Latest, Run Proof,
+  Artifact Mix, CI Proof, and Safety cards sourced from existing local
+  evidence/artifact records and operator-supplied CI proof.
   Goal `Verification Evidence` starts with a read-only
   `Goal Verification Command Bar` that exposes visible Now, Current, Latest,
   Record, and Safety cards for project-scoped proof status, checkout freshness,
