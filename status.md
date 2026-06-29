@@ -1,5 +1,35 @@
 # Status
 
+## 2026-06-30 First-Run Confirmation Copy UX
+
+- Extended the first-run form guidance through the confirmation and result
+  pages. `register-project` now presents `Confirm project setup` before the
+  write and `Project setup complete` after success, while retaining
+  `register-project` in evidence fields.
+- Added matching Goal setup copy for `create-goal`: `Confirm Goal setup`
+  before the write and `Goal setup complete` after success, while retaining
+  `create-goal` in evidence fields.
+- Kept the existing safety model: confirmation pages still return `409` until
+  `confirm=yes`, raw action ids remain in collapsed evidence, GET rendering is
+  read-only, and no external effects are introduced.
+- Updated README, local app docs, operating summary, and latest-status docs so
+  the first-run path describes the full browser setup gate rather than only the
+  pre-confirm form.
+- Verification: `df -h /System/Volumes/Data` showed 81Gi free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `git diff --check`, `python3 -m pytest tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health`, `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  first_run_browser_actions_persist_resume_workspace`, and `python3 -m
+  agent_os.cli app-smoke-test` passed locally.
+- Browser QA: ran `python3 -m agent_os.cli --root <throwaway-root> app --host
+  127.0.0.1 --port 62123`, submitted and confirmed the first project and first
+  Goal setup forms, verified `Project setup complete` and `Goal setup
+  complete`, verified raw `register-project` / `create-goal` evidence remained,
+  checked no browser console warnings/errors, and checked a 390x844 mobile
+  viewport with no horizontal overflow. Non-claim: the full pytest suite is
+  delegated to GitHub Actions for this slice.
+
 ## 2026-06-30 First-Run Form Guidance UX
 
 - Made shared confirmed action forms more usable in first-run flows:

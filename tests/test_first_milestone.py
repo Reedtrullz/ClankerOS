@@ -7114,9 +7114,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     )
     assert workspace_result.status == 200
     assert "workspace_saved" in workspace_result.body
+    assert "Return point saved" in workspace_result.body
     assert "Action Resume Receipt" in workspace_result.body
     assert "data-action-resume-receipt='true'" in workspace_result.body
-    assert workspace_result.body.index("Action Complete") < workspace_result.body.index(
+    assert workspace_result.body.index("Return point saved") < workspace_result.body.index(
         "Action Resume Receipt"
     )
     assert workspace_result.body.index("Action Resume Receipt") < workspace_result.body.index(
@@ -7625,7 +7626,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
         },
     )
     assert pause_confirmation.status == 409
-    assert "Confirm pause-goal" in pause_confirmation.body
+    assert "Confirm Goal pause" in pause_confirmation.body
     assert "Action Confirmation Command Bar" in pause_confirmation.body
     assert "action_confirmation_action</dt><dd>pause-goal" in pause_confirmation.body
     pause_result = render_local_app_route(
@@ -7746,7 +7747,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
         },
     )
     assert note_confirmation.status == 409
-    assert "Confirm save-goal-note" in note_confirmation.body
+    assert "Confirm operator note" in note_confirmation.body
     assert "Action Payload" in note_confirmation.body
     assert "Resume by checking the scout delegation state first." in note_confirmation.body
     note_result = render_local_app_route(
@@ -9309,6 +9310,38 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     target_repo.mkdir()
     subprocess.run(["git", "init"], cwd=target_repo, check=True, capture_output=True)
 
+    register_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/register-project",
+        method="POST",
+        form={
+            "name": ["clankeros"],
+            "path": [str(target_repo)],
+            "test_command": ["python3 -m pytest -q"],
+            "allowed_write_roots": [str(target_repo)],
+        },
+    )
+    assert register_confirmation.status == 409
+    assert "Confirm project setup" in register_confirmation.body
+    assert "Confirm register-project" not in register_confirmation.body
+    assert "Review the project path, verifier, and allowed write roots" in register_confirmation.body
+    assert "data-action-confirm-title='true' data-action-confirm-action='register-project'" in register_confirmation.body
+    assert "data-action-preflight='true'" in register_confirmation.body
+    assert "action_preflight_action</dt><dd>register-project" in register_confirmation.body
+    assert "action_preflight_label</dt><dd>First project setup" in register_confirmation.body
+    assert "action_confirmation_review_action</dt><dd>register-project" in register_confirmation.body
+    assert "action_confirmation_review_label</dt><dd>First project setup" in register_confirmation.body
+    assert "action_confirmation_action</dt><dd>register-project" in register_confirmation.body
+    assert "action_confirmation_label</dt><dd>First project setup" in register_confirmation.body
+    assert "action_preflight_confirm: First project setup" in register_confirmation.body
+    assert "action_confirmation_review_primary: confirm First project setup" in register_confirmation.body
+    assert "action_confirmation_now: Review First project setup payload" in register_confirmation.body
+    assert "href='#action-confirm-local-action'>Confirm project setup</a>" in register_confirmation.body
+    assert ">Confirm project setup</button>" in register_confirmation.body
+    assert "action_confirmation_write_before_confirm</dt><dd>false" in register_confirmation.body
+    assert "action_confirmation_network_actions_taken</dt><dd>0" in register_confirmation.body
+    assert "action_confirmation_external_effects_created</dt><dd>false" in register_confirmation.body
+
     register_result = render_local_app_route(
         tmp_path,
         "/actions/register-project",
@@ -9323,12 +9356,18 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     )
 
     assert register_result.status == 200
-    assert "Action Complete" in register_result.body
+    assert "Project setup complete" in register_result.body
+    assert "Action Complete" not in register_result.body
     assert "data-action-result-command-bar='true'" in register_result.body
-    assert register_result.body.index("Action Complete") < register_result.body.index(
+    assert register_result.body.index("Project setup complete") < register_result.body.index(
         "Action Result Details"
     )
+    assert "data-action-result-action='register-project'" in register_result.body
     assert "action_result_command_action</dt><dd>register-project" in register_result.body
+    assert "action_result_command_label</dt><dd>First project setup" in register_result.body
+    assert "action_result_command_completed: First project setup" in register_result.body
+    assert "action_label</dt><dd>First project setup" in register_result.body
+    assert "ClankerOS registered the local project and saved the return point" in register_result.body
     assert (
         "action_result_command_next_surface</dt><dd>"
         "<a href='/projects/clankeros?notice=project_registered%3A%20clankeros'>"
@@ -9862,6 +9901,30 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "action_notice_network_actions_taken</dt><dd>0" in register_notice.body
     assert "action_notice_external_effects_created</dt><dd>false" in register_notice.body
 
+    create_goal_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/create-goal",
+        method="POST",
+        form={
+            "project_id": ["clankeros"],
+            "prompt": ["Make ClankerOS resumable after first-run goal creation."],
+            "created_by_profile": ["planner"],
+        },
+    )
+    assert create_goal_confirmation.status == 409
+    assert "Confirm Goal setup" in create_goal_confirmation.body
+    assert "Confirm create-goal" not in create_goal_confirmation.body
+    assert "Review the project, Goal intent, and planning profile" in create_goal_confirmation.body
+    assert "data-action-confirm-title='true' data-action-confirm-action='create-goal'" in create_goal_confirmation.body
+    assert "action_preflight_action</dt><dd>create-goal" in create_goal_confirmation.body
+    assert "action_preflight_label</dt><dd>First Goal setup" in create_goal_confirmation.body
+    assert "action_confirmation_review_action</dt><dd>create-goal" in create_goal_confirmation.body
+    assert "action_confirmation_review_label</dt><dd>First Goal setup" in create_goal_confirmation.body
+    assert "action_confirmation_action</dt><dd>create-goal" in create_goal_confirmation.body
+    assert "action_confirmation_label</dt><dd>First Goal setup" in create_goal_confirmation.body
+    assert "href='#action-confirm-local-action'>Confirm Goal setup</a>" in create_goal_confirmation.body
+    assert ">Confirm Goal setup</button>" in create_goal_confirmation.body
+
     create_goal_result = render_local_app_route(
         tmp_path,
         "/actions/create-goal",
@@ -9875,6 +9938,13 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     )
 
     assert create_goal_result.status == 200
+    assert "Goal setup complete" in create_goal_result.body
+    assert "data-action-result-action='create-goal'" in create_goal_result.body
+    assert "action_result_command_action</dt><dd>create-goal" in create_goal_result.body
+    assert "action_result_command_label</dt><dd>First Goal setup" in create_goal_result.body
+    assert "action_result_command_completed: First Goal setup" in create_goal_result.body
+    assert "action_label</dt><dd>First Goal setup" in create_goal_result.body
+    assert "ClankerOS created the Goal, planning records, starter tasks" in create_goal_result.body
     assert "data-action-result-form-draft-cleanup='true'" in create_goal_result.body
     assert "data-action-result-form-draft-action='create-goal'" in create_goal_result.body
     assert "data-action-result-form-draft-key='clankeros-action-form-draft:create-goal:clankeros'" in create_goal_result.body
@@ -10132,7 +10202,7 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
         },
     )
     assert remember_artifact.status == 409
-    assert "Confirm save-workspace" in remember_artifact.body
+    assert "Confirm return point" in remember_artifact.body
     assert "Action Preflight" in remember_artifact.body
     assert "data-action-preflight='true'" in remember_artifact.body
     assert "data-action-preflight-cards='true'" in remember_artifact.body
@@ -11234,7 +11304,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
         },
     )
     assert home_day_plan_workspace_confirmation.status == 409
-    assert "Confirm save-workspace" in home_day_plan_workspace_confirmation.body
+    assert "Confirm return point" in home_day_plan_workspace_confirmation.body
     assert "Action Preflight" in home_day_plan_workspace_confirmation.body
     assert "action_preflight_return_surface</dt><dd><a href='/'>/</a>" in home_day_plan_workspace_confirmation.body
     assert f"action_preflight_project</dt><dd>{result.project_id}" in home_day_plan_workspace_confirmation.body
@@ -11922,7 +11992,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
         },
     )
     assert today_workspace_confirmation.status == 409
-    assert "Confirm save-workspace" in today_workspace_confirmation.body
+    assert "Confirm return point" in today_workspace_confirmation.body
     assert "Action Preflight" in today_workspace_confirmation.body
     assert "action_preflight_return_surface</dt><dd><a href='/today'>/today</a>" in today_workspace_confirmation.body
     assert f"action_preflight_project</dt><dd>{result.project_id}" in today_workspace_confirmation.body
@@ -15115,7 +15185,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
         },
     )
     assert daily_loop_workspace_confirmation.status == 409
-    assert "Confirm save-workspace" in daily_loop_workspace_confirmation.body
+    assert "Confirm return point" in daily_loop_workspace_confirmation.body
     assert "goal-daily-loop" in daily_loop_workspace_confirmation.body
     daily_loop_workspace = render_local_app_route(
         tmp_path,

@@ -36973,6 +36973,7 @@ def _action_result_page(
     safe_location = _safe_local_return_path(location) or "/"
     next_href = f"{safe_location}?notice={quote(message)}"
     result_rows = _action_result_rows(root, result)
+    action_label = _action_form_copy(action)["title"]
     return "".join(
         [
             _action_result_command_bar(
@@ -36994,11 +36995,12 @@ def _action_result_page(
             _action_result_action_form_draft_cleanup(action, form),
             _action_result_goal_note_draft_cleanup(action, result),
             "<section id='action-result-details'><h2>Action Result Details</h2>",
-            "<p>Action completed. Review the local result before continuing.</p>",
+            f"<p>{_e(_action_result_body(action))} Review the local result before continuing.</p>",
             _non_claim_banner(),
             _kv(
                 [
                     ("action", action),
+                    ("action_label", action_label),
                     ("result", message),
                     ("next_page", SafeHtml(f"<a href='{_e(next_href)}'>{_e(safe_location)}</a>")),
                 ]
@@ -37259,16 +37261,23 @@ def _action_result_command_bar(
 ) -> str:
     context = _action_confirmation_context(action, form)
     artifact_surface = _action_result_primary_artifact_surface(root, result_rows)
+    action_label = _action_form_copy(action)["title"]
+    result_title = _action_result_title(action)
+    result_body = _action_result_body(action)
     return "".join(
         [
-            "<section id='action-result-command-bar' class='panel action-result-command-bar' data-action-result-command-bar='true'><h1>Action Complete</h1>",
-            "<p class='muted'>The confirmed local action finished. Continue from the next operator surface or inspect the evidence below.</p>",
+            (
+                "<section id='action-result-command-bar' class='panel action-result-command-bar' "
+                "data-action-result-command-bar='true' "
+                f"data-action-result-action='{_e(action)}'><h1>{_e(result_title)}</h1>"
+            ),
+            f"<p class='muted'>{_e(result_body)}</p>",
             "<div class='action-result-command-grid' data-action-result-command-actions='true'>",
             "<article class='action-result-command-card action-result-command-primary'><h3>Continue</h3>",
             f"<p>{_e(location)}</p>",
             f"<a class='action-result-command-action' data-action-result-command-primary='true' href='{_e(next_href)}'>Open next surface</a></article>",
             "<article class='action-result-command-card'><h3>Completed</h3>",
-            f"<p>{_e(action)}</p>",
+            f"<p>{_e(action_label)}</p>",
             "<a class='action-result-command-link' href='#action-result-details'>Result details</a></article>",
             "<article class='action-result-command-card'><h3>Artifact</h3>",
             f"<p>{artifact_surface}</p>",
@@ -37285,6 +37294,7 @@ def _action_result_command_bar(
                 [
                     ("action_result_command_status", "completed"),
                     ("action_result_command_action", action),
+                    ("action_result_command_label", action_label),
                     ("action_result_command_result", message),
                     ("action_result_command_next_surface", SafeHtml(f"<a href='{_e(next_href)}'>{_e(location)}</a>")),
                     ("action_result_command_artifact_surface", artifact_surface),
@@ -37303,7 +37313,7 @@ def _action_result_command_bar(
             ),
             _ul(
                 [
-                    f"action_result_command_completed: {_e(action)}",
+                    f"action_result_command_completed: {_e(action_label)}",
                     f"action_result_command_continue: <a href='{_e(next_href)}'>{_e(location)}</a>",
                     f"action_result_command_result: {_e(message)}",
                     f"action_result_command_artifact: {artifact_surface}",
@@ -38238,26 +38248,51 @@ ACTION_FORM_COPY: dict[str, dict[str, str]] = {
         "title": "First project setup",
         "body": "These defaults register this checkout as the first ClankerOS project. Review them, then confirm the local write on the next screen.",
         "button": "Create project",
+        "confirm_title": "Confirm project setup",
+        "confirm_body": "Review the project path, verifier, and allowed write roots before ClankerOS creates local project records.",
+        "confirm_button": "Confirm project setup",
+        "result_title": "Project setup complete",
+        "result_body": "ClankerOS registered the local project and saved the return point for the browser workflow.",
     },
     "create-goal": {
         "title": "First Goal setup",
         "body": "This creates the Goal, plan, contract, and starter task records that the browser workflow will use next.",
         "button": "Create Goal",
+        "confirm_title": "Confirm Goal setup",
+        "confirm_body": "Review the project, Goal intent, and planning profile before ClankerOS creates the local Goal records.",
+        "confirm_button": "Confirm Goal setup",
+        "result_title": "Goal setup complete",
+        "result_body": "ClankerOS created the Goal, planning records, starter tasks, and saved Goal return point.",
     },
     "save-workspace": {
         "title": "Save return point",
         "body": "Store the current project, Goal, filters, expanded panels, and artifact pointer for tomorrow's resume surface.",
         "button": "Save workspace",
+        "confirm_title": "Confirm return point",
+        "confirm_body": "Review the saved project, Goal, filters, panels, and artifact before updating the local resume state.",
+        "confirm_button": "Confirm return point",
+        "result_title": "Return point saved",
+        "result_body": "ClankerOS saved the browser resume point for tomorrow's operator surface.",
     },
     "save-goal-note": {
         "title": "Capture operator note",
         "body": "Append a local note to this Goal so future you can recover context from the browser.",
         "button": "Save note",
+        "confirm_title": "Confirm operator note",
+        "confirm_body": "Review the Goal note before appending it to local operator-note evidence.",
+        "confirm_button": "Confirm note",
+        "result_title": "Operator note saved",
+        "result_body": "ClankerOS appended the local note and kept the Goal return point available.",
     },
     "pause-goal": {
         "title": "Pause Goal",
         "body": "Move this Goal out of the active lane until you explicitly resume it.",
         "button": "Pause Goal",
+        "confirm_title": "Confirm Goal pause",
+        "confirm_body": "Review the Goal before moving it out of the active lane.",
+        "confirm_button": "Confirm pause",
+        "result_title": "Goal paused",
+        "result_body": "ClankerOS moved the Goal to the paused lane.",
     },
 }
 
@@ -38318,6 +38353,34 @@ def _action_form_field_label(key: str) -> str:
 
 def _action_form_field_help(key: str) -> str:
     return ACTION_FORM_FIELD_HELP.get(key, "Submitted exactly as shown after confirmation.")
+
+
+def _action_confirm_title(action: str) -> str:
+    copy = _action_form_copy(action)
+    return copy.get("confirm_title", f"Confirm {action}")
+
+
+def _action_confirm_body(action: str) -> str:
+    copy = _action_form_copy(action)
+    return copy.get(
+        "confirm_body",
+        "Review the local write, payload, and safety boundary before confirming.",
+    )
+
+
+def _action_confirm_button(action: str) -> str:
+    return _action_form_copy(action).get("confirm_button", "Confirm local action")
+
+
+def _action_result_title(action: str) -> str:
+    return _action_form_copy(action).get("result_title", "Action Complete")
+
+
+def _action_result_body(action: str) -> str:
+    return _action_form_copy(action).get(
+        "result_body",
+        "The confirmed local action finished. Continue from the next operator surface or inspect the evidence below.",
+    )
 
 
 def _input_form(
@@ -38442,6 +38505,9 @@ def _input_form(
 
 
 def _confirm_form(action: str, form: dict[str, list[str]]) -> str:
+    confirm_title = _action_confirm_title(action)
+    confirm_body = _action_confirm_body(action)
+    confirm_button = _action_confirm_button(action)
     inputs = []
     for key, values in form.items():
         if key == "confirm":
@@ -38451,8 +38517,12 @@ def _confirm_form(action: str, form: dict[str, list[str]]) -> str:
     inputs.append("<input type='hidden' name='confirm' value='yes'>")
     return "".join(
         [
-            f"<section><h1>Confirm {_e(action)}</h1>",
-            "<p>This action writes local ClankerOS artifacts only after explicit confirmation. It does not push, create PRs, deploy, call providers, or execute external mutations.</p>",
+            (
+                "<section data-action-confirm-title='true' "
+                f"data-action-confirm-action='{_e(action)}'><h1>{_e(confirm_title)}</h1>"
+            ),
+            f"<p>{_e(confirm_body)}</p>",
+            "<p class='muted'>This action writes local ClankerOS artifacts only after explicit confirmation. It does not push, create PRs, deploy, call providers, or execute external mutations.</p>",
             _action_confirmation_preflight(action, form),
             _action_confirmation_review(action, form),
             "<div id='action-confirmation-safety'>",
@@ -38464,7 +38534,7 @@ def _confirm_form(action: str, form: dict[str, list[str]]) -> str:
             (
                 f"<form id='action-confirm-local-action' data-action-confirm-local-action='true' "
                 f"method='post' action='/actions/{_e(action)}'>"
-                f"{''.join(inputs)}<button type='submit'>Confirm local action</button></form>"
+                f"{''.join(inputs)}<button type='submit'>{_e(confirm_button)}</button></form>"
             ),
             "</section>",
         ]
@@ -38473,6 +38543,8 @@ def _confirm_form(action: str, form: dict[str, list[str]]) -> str:
 
 def _action_confirmation_preflight(action: str, form: dict[str, list[str]]) -> str:
     context = _action_confirmation_context(action, form)
+    action_label = _action_form_copy(action)["title"]
+    confirm_button = _action_confirm_button(action)
     return_to = _safe_local_return_path(_one(form, "return_to"))
     resume_surface = _safe_local_return_path(_one(form, "resume_surface"))
     if return_to:
@@ -38509,8 +38581,8 @@ def _action_confirmation_preflight(action: str, form: dict[str, list[str]]) -> s
             "<p class='muted'>Scan the local write, return route, submitted context, and safety boundary before confirming.</p>",
             "<div class='action-confirmation-grid' data-action-preflight-cards='true'>",
             "<article class='action-confirmation-card action-confirmation-primary' data-action-preflight-primary='true'><h3>Confirm</h3>",
-            f"<p>{_e(action)}</p>",
-            "<a class='action-confirmation-action' href='#action-confirm-local-action'>Confirm local action</a></article>",
+            f"<p>{_e(action_label)}</p>",
+            f"<a class='action-confirmation-action' href='#action-confirm-local-action'>{_e(confirm_button)}</a></article>",
             "<article class='action-confirmation-card' data-action-preflight-return='true'><h3>Returns</h3>",
             f"<p>{_e(return_surface or 'post-action notice')}</p>",
             f"<a class='action-confirmation-link' href='{_e(return_surface or '#action-confirmation-payload')}'>{_e(return_surface or 'Review payload')}</a></article>",
@@ -38530,6 +38602,7 @@ def _action_confirmation_preflight(action: str, form: dict[str, list[str]]) -> s
                 [
                     ("action_preflight_status", "awaiting_operator_confirm"),
                     ("action_preflight_action", action),
+                    ("action_preflight_label", action_label),
                     ("action_preflight_category", context["category"]),
                     ("action_preflight_surface", context["surface"]),
                     ("action_preflight_return_surface", return_value),
@@ -38554,7 +38627,7 @@ def _action_confirmation_preflight(action: str, form: dict[str, list[str]]) -> s
             ),
             _ul(
                 [
-                    f"action_preflight_confirm: {_e(action)}",
+                    f"action_preflight_confirm: {_e(action_label)}",
                     f"action_preflight_return: {_e(return_surface or 'post-action notice')}",
                     f"action_preflight_write: {_e(context['output'])}",
                     f"action_preflight_fields: {_e(context['submitted_fields'])}",
@@ -38610,6 +38683,8 @@ def _action_confirmation_context(action: str, form: dict[str, list[str]]) -> dic
 
 def _action_confirmation_review(action: str, form: dict[str, list[str]]) -> str:
     context = _action_confirmation_context(action, form)
+    action_label = _action_form_copy(action)["title"]
+    confirm_button = _action_confirm_button(action)
     requires = context["requires"]
     output = context["output"]
     category = context["category"]
@@ -38627,8 +38702,8 @@ def _action_confirmation_review(action: str, form: dict[str, list[str]]) -> str:
             "<p class='muted'>Confirm exactly one local action after checking the required input, expected artifact, and safety boundary.</p>",
             "<div class='action-confirmation-grid' data-action-confirmation-review-actions='true'>",
             "<article class='action-confirmation-card action-confirmation-primary' data-action-confirmation-primary='true'><h3>Confirm</h3>",
-            f"<p>{_e(action)}</p>",
-            "<a class='action-confirmation-action' href='#action-confirm-local-action'>Confirm local action</a></article>",
+            f"<p>{_e(action_label)}</p>",
+            f"<a class='action-confirmation-action' href='#action-confirm-local-action'>{_e(confirm_button)}</a></article>",
             "<article class='action-confirmation-card'><h3>Requires</h3>",
             f"<p>{_e(requires)}</p>",
             "<a class='action-confirmation-link' href='#action-confirmation-payload'>Review payload</a></article>",
@@ -38647,6 +38722,7 @@ def _action_confirmation_review(action: str, form: dict[str, list[str]]) -> str:
                 [
                     ("action_confirmation_review_status", "awaiting_operator_confirm"),
                     ("action_confirmation_review_action", action),
+                    ("action_confirmation_review_label", action_label),
                     ("action_confirmation_review_category", category),
                     ("action_confirmation_review_surface", surface),
                     ("action_confirmation_review_required_input", requires),
@@ -38666,7 +38742,7 @@ def _action_confirmation_review(action: str, form: dict[str, list[str]]) -> str:
             ),
             _ul(
                 [
-                    f"action_confirmation_review_primary: confirm {_e(action)}",
+                    f"action_confirmation_review_primary: confirm {_e(action_label)}",
                     f"action_confirmation_review_requires: {_e(requires)}",
                     f"action_confirmation_review_writes: {_e(output)}",
                     f"action_confirmation_review_scope: {_e(category)} on {_e(surface)}",
@@ -38681,8 +38757,9 @@ def _action_confirmation_review(action: str, form: dict[str, list[str]]) -> str:
 
 def _action_confirmation_command_bar(action: str, form: dict[str, list[str]]) -> str:
     context = _action_confirmation_context(action, form)
+    action_label = _action_form_copy(action)["title"]
     lines = [
-        f"action_confirmation_now: Review {_e(action)} payload",
+        f"action_confirmation_now: Review {_e(action_label)} payload",
         f"action_confirmation_after_confirm: {_e(context['output'])}",
         "action_confirmation_safety: confirmation required before any local write",
     ]
@@ -38695,6 +38772,7 @@ def _action_confirmation_command_bar(action: str, form: dict[str, list[str]]) ->
                 [
                     ("action_confirmation_status", "awaiting_operator_confirm"),
                     ("action_confirmation_action", action),
+                    ("action_confirmation_label", action_label),
                     ("action_confirmation_category", context["category"]),
                     ("action_confirmation_surface", context["surface"]),
                     ("action_confirmation_submitted_fields", context["submitted_fields"]),

@@ -404,7 +404,10 @@ until the operator clears them or the confirmed local action succeeds. The
 shared action forms now open with a short action brief, human field labels,
 field help, explicit confirmation/external-effect notes, and outcome-named
 buttons such as `Create project` and `Create Goal`, so first-run setup is
-usable without knowing the internal action ids. The
+usable without knowing the internal action ids. The confirmation and result
+pages for those setup actions keep the same human labels (`Confirm project
+setup`, `Project setup complete`, `Confirm Goal setup`, `Goal setup complete`)
+while preserving raw action ids in collapsed evidence. The
 same browser-local draft behavior is used for goal workflow forms that collect
 worktree approval notes, safe run commands, commit/publication messages,
 publication approval notes, and manual `complete-goal` notes.

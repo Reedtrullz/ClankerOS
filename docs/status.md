@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- First-run confirmation and result pages now continue the human setup
+  language after form submission: `register-project` renders `Confirm project
+  setup` / `Project setup complete`, `create-goal` renders `Confirm Goal
+  setup` / `Goal setup complete`, and both keep raw action ids in evidence
+  fields for auditability. Focused pytest routes, `app-smoke-test`, and
+  browser QA on desktop plus 390x844 mobile passed locally; the full suite is
+  left to GitHub Actions.
 - First-run action forms now read like product surfaces instead of raw action
   payloads: `register-project` and `create-goal` forms include a short action
   brief, human field labels, field help, confirmation/external-effect notes,

@@ -98,7 +98,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   with a short action brief, human field labels, field help, explicit
   confirmation/external-effect notes, and outcome-named buttons such as
   `Create project` and `Create Goal`, so first-run setup can be completed from
-  the browser without knowing raw action ids. After
+  the browser without knowing raw action ids. Their confirmation and result
+  pages continue that language with `Confirm project setup`,
+  `Project setup complete`, `Confirm Goal setup`, and `Goal setup complete`
+  while raw action ids remain in evidence fields. After
   `register-project`, the
   local `Action Result Details` page also reads first-run progress and renders
   an inline confirmed `create-goal` continuation, plus Home and Today fallback
