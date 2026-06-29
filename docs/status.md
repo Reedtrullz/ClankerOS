@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals/<goal_id>#goal-section-index` now remembers the section-finder query
+  per Goal in `localStorage:clankeros-goal-section-finder:<goal_id>`, shows
+  visible default/restored/saved/reset View status, exposes Reset section
+  search, and can be inspected or cleared from
+  `/workspace#workspace-view-memory` without server writes, provider calls,
+  network actions, approvals, execution, pushes, PRs, deploys, or external
+  effects.
 - The root `/` `Home Goal Board` now has a browser-local Find box, lane mode
   buttons for all/active/paused/completed goals, live match count, first-match
   jump, no-match empty state, visible View status, and reload persistence via
@@ -132,11 +139,10 @@ Latest status focus:
   network actions, raw filesystem browsing, or external effects.
 - `/workspace#workspace-view-memory` now exposes browser-local view memory
   for theme, focus mode, Goal board view, Home Goal Board view, open panels,
-  scroll position, search
-  lanes, timeline lanes, decision filters, artifact filters, notes filters,
-  note drafts, setup form drafts, Memory Bank filters, Skills Inventory
-  filters, Approval Queue filters, Inbox Queue filters, and Profile Routing
-  filters. It can refresh or clear those
+  scroll position, search lanes, timeline lanes, Goal section searches,
+  decision filters, artifact filters, notes filters, note drafts, setup form
+  drafts, Memory Bank filters, Skills Inventory filters, Approval Queue
+  filters, Inbox Queue filters, and Profile Routing filters. It can refresh or clear those
   `localStorage` values after explicit clicks while preserving read-only GET
   behavior, `.clanker/app/workspace.json`, no raw filesystem browsing, and
   no-provider/no-network/no-external-effect boundaries.
@@ -181,9 +187,10 @@ Latest status focus:
   visible match count and first-match jump, and keeps writes, providers,
   network actions, and external effects out of the helper.
 - `/goals/<goal_id>#goal-section-index` now includes a browser-local section
-  finder with match count, first-match jump, compact anchor chips, and
+  finder with match count, first-match jump, compact anchor chips, per-Goal
+  query memory in `localStorage:clankeros-goal-section-finder:<goal_id>`, and
   no-write/no-network posture so long Goal pages can be navigated by typing
-  section names such as approval, memory, or git.
+  section names such as approval, memory, or git and restored after reload.
 - `/artifacts?path=...` now renders stored Goal context title-first across the
   Artifact Operator Workbench, Relationship Map, Command Bar, and Review Brief.
   Raw Goal ids and label-source fields remain in collapsed evidence, and

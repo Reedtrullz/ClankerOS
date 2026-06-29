@@ -1,5 +1,40 @@
 # Status
 
+## 2026-06-29 Goal Section Finder View Memory UX
+
+- Added per-Goal browser-local view memory to the `Goal Section Index` section
+  finder on `/goals/<goal_id>#goal-section-index`. Section search now exposes
+  the Goal id, uses `localStorage:clankeros-goal-section-finder:<goal_id>`,
+  restores the previous query after reload, shows visible View status for
+  default/restored/saved/reset states, and provides Reset section search.
+- `/workspace#workspace-view-memory` now includes a `Goal Section Finder`
+  prefix-key card for `clankeros-goal-section-finder:`, raising the visible
+  view-memory inventory to 22 cards and allowing stale Goal section searches
+  to be inspected or cleared alongside other browser-local view state.
+- Updated README, local app docs, operating summary, docs status, and focused
+  first-milestone assertions for the new Goal section finder persistence and
+  workspace reset surface.
+- Safety: read-only GET rendering and client-side filtering only; no approval,
+  execution, push, PR, deploy, provider call, network action, server write,
+  GitHub polling, or external mutation authority added.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed; focused
+  local-app pytest passed with `2 passed in 52.38s`.
+- Browser verification: Playwright against throwaway demo Goal
+  `goal_8d4b99bdae9a` at `http://127.0.0.1:62092` confirmed typing `git`
+  filtered the section finder to `2 of 60 sections`, first match became
+  `Git command`, and storage saved `{"query":"git"}` under
+  `clankeros-goal-section-finder:goal_8d4b99bdae9a`; reload restored the query
+  with `View: restored`; Reset section search cleared storage and returned to
+  `60 of 60 sections`; Workspace View Memory showed 22 cards, the Goal Section
+  Finder prefix key, and `1 saved view`, then its Reset cleared the stored key;
+  mobile `390x844` had no horizontal overflow on both Workspace View Memory
+  and the Goal section finder, and console warnings/errors were zero. The
+  scratch root, browser, and server were cleaned up.
+- Non-claims: this does not make the Goal page execute work, approve
+  decisions, call providers, fetch GitHub, push, create PRs, deploy, mutate
+  external systems, or write `.clanker/app/workspace.json`.
+
 ## 2026-06-29 Home Goal Board Filter UX
 
 - Reworked the root `/` `Home Goal Board` from a static active/paused/completed

@@ -303,9 +303,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   read-only `Workspace View Memory` panel. That panel inventories browser
   `localStorage` view state for theme, focus mode, Goal board, Home Goal
   Board, Recent Items filters, open panels, scroll position, search lanes,
-  timeline lanes, artifact
-  filters, Today and Goal decision filters, notes filters, note drafts, setup
-  and workflow form drafts, Memory Bank filters, Skills Inventory filters,
+  timeline lanes, Goal section searches, artifact filters, Today and Goal
+  decision filters, notes filters, note drafts, setup and workflow form drafts,
+  Memory Bank filters, Skills Inventory filters,
   Approval Queue filters, Inbox Queue filters, and Profile Routing filters, and
   can clear those browser-local
   values after explicit operator clicks without writing
@@ -641,8 +641,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   `Goal Section Index` with visible Operate, Proof, Work, Knowledge, and
   Finish switchboard cards plus a browser-local section finder over stable
   in-page anchors including the command bar, workflow map, and major Goal
-  surfaces, so operators can filter/jump through a long Goal workbench without
-  leaving the page or triggering writes.
+  surfaces. The finder keeps only its per-Goal query in
+  `localStorage:clankeros-goal-section-finder:<goal_id>` and can be reset from
+  the Goal page or Workspace View Memory, so operators can filter/jump through
+  a long Goal workbench without leaving the page or triggering writes.
   Every app page also includes a shared read-only `Operator Ribbon` above the
   sidebar/page shell. It derives from the saved workspace goal, current lead
   goal, or first-run state and opens with compact Now, Goal, Attention,

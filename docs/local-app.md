@@ -323,8 +323,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   second action form. The Goal Section Index now opens with visible Operate,
   Proof, Work, Knowledge, and Finish switchboard cards plus a browser-local
   section finder with a match count, first-match jump, and compact anchor
-  chips before collapsed evidence, so long Goal pages remain navigable from
-  their scan-first operator surfaces without requiring CLI recall. Goal
+  chips before collapsed evidence. The finder restores its per-Goal query from
+  `localStorage:clankeros-goal-section-finder:<goal_id>` and can be reset from
+  the Goal page or Workspace View Memory, so long Goal pages remain navigable
+  from their scan-first operator surfaces without requiring CLI recall. Goal
   Overview starts with a read-only `Goal Overview Command Bar` with visible
   Now, Scope, Progress, Waiting, and Safety cards before collapsed command
   evidence and collapsed raw goal metadata. Goal Risk starts with visible Now,
@@ -540,10 +542,14 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   actions, pushes, PRs, deploys, or external mutations.
 - `/goals/<goal_id>` includes `Goal Section Index`, a read-only in-page map
   of stable anchors for summary, live state, command bar, workflow map,
-  current phase, next action, next
-  recommendation, timeline, artifacts, memory, skills, verification evidence,
-  notes, and remaining work. The index writes nothing on GET and only helps
-  the operator jump around the long Goal workbench.
+  current phase, next action, next recommendation, timeline, artifacts,
+  memory, skills, verification evidence, notes, and remaining work. The
+  section finder remembers only the per-Goal query in
+  `localStorage:clankeros-goal-section-finder:<goal_id>`, shows View status,
+  and exposes Reset section search. `/workspace#workspace-view-memory` can
+  inspect or clear those section searches with the rest of browser-local view
+  memory. The index writes nothing on GET and only helps the operator jump
+  around the long Goal workbench.
 - Every app page includes a shared operator shell with a global
   `Operator Focus` strip, a read-only `Route Context` breadcrumb strip, recent
   local items, a command palette, local Focus mode, a dark/light theme toggle,
@@ -662,9 +668,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   id, label source, and route evidence. A read-only `Workspace View Memory`
   panel follows, showing browser-local `localStorage` view state for theme,
   focus mode, Goal board view, open panels, scroll position, search lanes,
-  timeline lanes, Today and Goal decision filters, artifact filters, notes
-  filters, note drafts, setup form drafts, Memory Bank filters, and Skills
-  Inventory filters with
+  timeline lanes, Goal section searches, Today and Goal decision filters,
+  artifact filters, notes filters, note drafts, setup form drafts, Memory Bank
+  filters, and Skills Inventory filters with
   Refresh plus reset controls. It only clears
   browser-local view memory after explicit clicks and does not write
   `.clanker/app/workspace.json`. The read-only `Workspace Daily Brief` and `Workspace Workflow Map`

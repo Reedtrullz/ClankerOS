@@ -7271,6 +7271,13 @@ def _workspace_view_memory_panel() -> str:
             "Per-Goal timeline lane filters",
         ),
         (
+            "goal-sections",
+            "Goal Section Finder",
+            "prefix",
+            "clankeros-goal-section-finder:",
+            "Per-Goal Goal page section searches",
+        ),
+        (
             "decisions",
             "Decision Filters",
             "prefix",
@@ -7405,7 +7412,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus board home-goal-board recent route-history today-decisions open-panels scroll-position search timeline decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles",
+                    "workspace_view_memory_reset_scope: theme focus board home-goal-board recent route-history today-decisions open-panels scroll-position search timeline goal-sections decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles",
                 ]
             ),
             "</details>",
@@ -12019,7 +12026,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_coder_handoff_digest(root, state, next_action),
             _goal_ci_handoff(root, state),
             _goal_live_state(root, state, phase, next_action),
-            _goal_section_index(),
+            _goal_section_index(goal.id),
             _goal_resume_snapshot(root, state),
             _goal_overview(state, phase, next_action),
             _goal_risk_section(state),
@@ -13111,7 +13118,7 @@ def _goal_live_state(
     )
 
 
-def _goal_section_index() -> str:
+def _goal_section_index(goal_id: str) -> str:
     sections = [
         ("Summary", "goal-summary"),
         ("Current phase", "goal-current-phase"),
@@ -13258,7 +13265,11 @@ def _goal_section_index() -> str:
             "<div class='goal-section-index-grid' data-goal-section-index-actions='true'>",
             switchboard,
             "</div>",
-            "<div class='goal-section-finder' data-goal-section-finder='true'>",
+            (
+                "<div class='goal-section-finder' data-goal-section-finder='true' "
+                f"data-goal-section-finder-goal='{_e(goal_id)}' "
+                f"data-goal-section-finder-storage-key='clankeros-goal-section-finder:{_e(goal_id)}'>"
+            ),
             "<label class='goal-section-finder-label' for='goal-section-finder-input'>Find section</label>",
             "<div class='goal-section-finder-row'>",
             "<input id='goal-section-finder-input' class='goal-section-finder-input' "
@@ -13266,6 +13277,10 @@ def _goal_section_index() -> str:
             "data-goal-section-finder-input='true'>",
             f"<span class='goal-section-finder-count' data-goal-section-finder-count='true'>{len(sections)} sections</span>",
             "<a class='goal-section-finder-first' data-goal-section-finder-first='true' href='#goal-summary'>Summary</a>",
+            "</div>",
+            "<div class='goal-section-finder-memory' data-goal-section-finder-memory='true'>",
+            "<span class='goal-section-finder-view-status' data-goal-section-finder-view-status='true'>View: default</span>",
+            "<button type='button' class='goal-section-finder-reset' data-goal-section-finder-reset='true'>Reset section search</button>",
             "</div>",
             "<nav aria-label='Find Goal section'>",
             "<ul class='goal-section-finder-list' data-goal-section-finder-results='true'>",
@@ -13282,9 +13297,49 @@ def _goal_section_index() -> str:
   var count = root.querySelector("[data-goal-section-finder-count='true']");
   var first = root.querySelector("[data-goal-section-finder-first='true']");
   var empty = root.querySelector("[data-goal-section-finder-empty='true']");
+  var viewStatus = root.querySelector("[data-goal-section-finder-view-status='true']");
+  var reset = root.querySelector("[data-goal-section-finder-reset='true']");
   var items = Array.prototype.slice.call(root.querySelectorAll("[data-goal-section-result='true']"));
-  function update() {
-    var query = input && input.value ? input.value.trim().toLowerCase() : "";
+  function goalSectionFinderStorageKey(rootNode) {
+    var key = rootNode ? rootNode.getAttribute("data-goal-section-finder-storage-key") : "";
+    return key || "clankeros-goal-section-finder";
+  }
+  function setGoalSectionFinderViewStatus(message) {
+    if (viewStatus) viewStatus.textContent = message;
+  }
+  function saveGoalSectionFinderState(query) {
+    if (!window.localStorage || !root) return;
+    try {
+      window.localStorage.setItem(goalSectionFinderStorageKey(root), JSON.stringify({ query: query || "" }));
+      setGoalSectionFinderViewStatus("View: saved");
+    } catch (error) {
+      setGoalSectionFinderViewStatus("View: local only");
+    }
+  }
+  function restoreGoalSectionFinderState() {
+    if (!window.localStorage || !input) {
+      setGoalSectionFinderViewStatus("View: default");
+      return false;
+    }
+    try {
+      var raw = window.localStorage.getItem(goalSectionFinderStorageKey(root));
+      if (!raw) {
+        setGoalSectionFinderViewStatus("View: default");
+        return false;
+      }
+      var saved = JSON.parse(raw);
+      input.value = saved && typeof saved.query === "string" ? saved.query.slice(0, 200) : "";
+      setGoalSectionFinderViewStatus("View: restored");
+      return true;
+    } catch (error) {
+      setGoalSectionFinderViewStatus("View: default");
+      return false;
+    }
+  }
+  function updateGoalSectionFinder(options) {
+    options = options || {};
+    var queryRaw = input && input.value ? input.value : "";
+    var query = queryRaw.trim().toLowerCase();
     var visible = [];
     items.forEach(function (item) {
       var text = (item.getAttribute("data-goal-section-label") || "") + " " + (item.getAttribute("data-goal-section-anchor") || "");
@@ -13307,9 +13362,27 @@ def _goal_section_index() -> str:
         first.textContent = "No match";
       }
     }
+    if (options.save !== false) {
+      saveGoalSectionFinderState(queryRaw);
+    }
   }
-  if (input) input.addEventListener("input", update);
-  update();
+  function clearGoalSectionFinderState() {
+    if (input) input.value = "";
+    if (window.localStorage) {
+      try { window.localStorage.removeItem(goalSectionFinderStorageKey(root)); } catch (error) {}
+    }
+    updateGoalSectionFinder({ save: false });
+    setGoalSectionFinderViewStatus("View: reset");
+  }
+  if (input) input.addEventListener("input", function () { updateGoalSectionFinder({}); });
+  if (reset) reset.addEventListener("click", function (event) {
+    event.preventDefault();
+    clearGoalSectionFinderState();
+  });
+  if (!restoreGoalSectionFinderState()) {
+    setGoalSectionFinderViewStatus("View: default");
+  }
+  updateGoalSectionFinder({ save: false });
 })();
 </script>""",
             f"<details class='goal-section-index-evidence' data-goal-section-index-evidence='true'><summary>Full Goal section index ({len(sections)})</summary>",
@@ -13320,6 +13393,13 @@ def _goal_section_index() -> str:
                     ("goal_section_finder_status", "available"),
                     ("goal_section_finder_result_count", str(len(sections))),
                     ("goal_section_finder_default_first", "goal-summary"),
+                    ("goal_section_finder_persistence", "browser_local_view_memory"),
+                    (
+                        "goal_section_finder_memory_storage",
+                        f"localStorage:clankeros-goal-section-finder:{goal_id}",
+                    ),
+                    ("goal_section_finder_memory_fields", "query"),
+                    ("goal_section_finder_reset", "available"),
                     ("goal_section_switchboard_status", "available"),
                     ("goal_section_switchboard_card_count", str(len(switchboard_cards))),
                     ("goal_section_switchboard_primary", "goal-next-action"),
@@ -13328,6 +13408,8 @@ def _goal_section_index() -> str:
                     ("goal_section_switchboard_knowledge_surface", "goal-artifact-command-bar"),
                     ("goal_section_switchboard_finish_surface", "goal-completion-readiness"),
                     ("goal_section_index_write_on_get", "false"),
+                    ("goal_section_index_provider_calls_taken", "0"),
+                    ("goal_section_index_network_actions_taken", "0"),
                     ("goal_section_index_external_effects_created", "false"),
                 ]
             ),
@@ -13340,6 +13422,7 @@ def _goal_section_index() -> str:
                     "goal_section_switchboard_finish: <a href='#goal-completion-readiness'>Completion</a>",
                     "goal_section_finder_default: <a href='#goal-summary'>Summary</a>",
                     *finder_lines,
+                    "goal_section_finder_memory: restores section query for this Goal",
                     "goal_section_switchboard_safety: read-only local anchor navigation",
                 ]
             ),
@@ -39956,12 +40039,15 @@ def _html_page(
     .goal-section-finder-input {{ min-height:36px; min-width:0; width:100%; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:7px 10px; }}
     .goal-section-finder-count {{ color:var(--muted); white-space:nowrap; }}
     .goal-section-finder-first {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border:1px solid var(--accent); border-radius:6px; background:var(--accent); color:#fff; text-decoration:none; overflow-wrap:anywhere; }}
+    .goal-section-finder-memory {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:8px; }}
+    .goal-section-finder-view-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .goal-section-finder-reset {{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; max-width:100%; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 10px; }}
     .goal-section-finder-list {{ list-style:none; padding:0; margin:10px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:8px; }}
     .goal-section-finder-item {{ min-width:0; }}
     .goal-section-finder-item a {{ display:flex; min-height:32px; align-items:center; padding:7px 9px; border:1px solid var(--line); border-radius:6px; background:var(--surface); text-decoration:none; overflow-wrap:anywhere; }}
     .goal-section-finder-item a:hover, .goal-section-finder-item a:focus {{ border-color:var(--accent); outline:0; }}
     .goal-section-finder-empty {{ margin:8px 0 0; }}
-    @media (max-width: 640px) {{ .goal-section-finder-row {{ grid-template-columns:1fr; }} .goal-section-finder-count {{ white-space:normal; }} .goal-section-finder-first {{ width:100%; }} }}
+    @media (max-width: 640px) {{ .goal-section-finder-row {{ grid-template-columns:1fr; }} .goal-section-finder-count {{ white-space:normal; }} .goal-section-finder-first, .goal-section-finder-reset, .goal-section-finder-view-status {{ width:100%; }} .goal-section-finder-memory {{ align-items:stretch; }} }}
     .goal-section-index ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:8px; }}
     .goal-section-index li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     body:has(.goal-action-dock) main {{ padding-bottom:24px; }}

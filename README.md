@@ -283,9 +283,10 @@ title-first when possible, while still retaining exact saved Goal id and route
 evidence for restoration. A read-only `Workspace View Memory` panel follows to
 inspect and clear browser-local view state such as theme, focus mode, Goal
 board filters, open panels, scroll position, search lanes, timeline lanes,
-Today and Goal decision filters, artifact filters, notes filters, note drafts,
-setup and workflow form drafts, Memory Bank filters, and Skills Inventory
-filters from `localStorage` without changing `.clanker/app/workspace.json`.
+Goal section searches, Today and Goal decision filters, artifact filters,
+notes filters, note drafts, setup and workflow form drafts, Memory Bank
+filters, and Skills Inventory filters from `localStorage` without changing
+`.clanker/app/workspace.json`.
 The read-only
 `Workspace Daily Brief` and `Workspace Workflow Map` then follow with the
 saved goal's current gate, gate counts, and finish posture, while saved-state
@@ -442,9 +443,13 @@ Now, Next Gate, Then, Publish Boundary, and Finish Today cards, while detailed
 gate rows, exact surfaces, manual publish boundary, and zero-effect counters
 stay in collapsed continuation evidence. Goal
 Section Index now includes a browser-local section finder with a type-to-filter
-input, match count, first-match jump, and compact anchor chips before the
-collapsed evidence ledger, so the long Goal page can jump to operational panels
-such as approvals, memory, or git without memorizing the page structure. Goal
+input, match count, first-match jump, compact anchor chips, visible View
+status, and per-Goal query memory in
+`localStorage:clankeros-goal-section-finder:<goal_id>` before the collapsed
+evidence ledger, so the long Goal page can jump back to operational panels
+such as approvals, memory, or git without memorizing the page structure.
+Workspace View Memory can inspect or clear those section searches alongside
+the rest of the browser-local view state. Goal
 Overview now starts with a read-only `Goal Overview Command Bar` with visible
 Now, Scope, Progress, Waiting, and Safety cards before collapsed command
 evidence and collapsed raw metadata. Goal Risk now starts with visible Now,

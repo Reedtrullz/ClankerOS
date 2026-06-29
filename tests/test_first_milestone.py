@@ -6516,7 +6516,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 21
+    assert workspace.body.count("class='workspace-view-memory-card") == 22
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
     assert "data-workspace-view-memory-card='goal-board'" in workspace.body
@@ -6527,6 +6527,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-card='scroll-position'" in workspace.body
     assert "data-workspace-view-memory-card='search'" in workspace.body
     assert "data-workspace-view-memory-card='timeline'" in workspace.body
+    assert "data-workspace-view-memory-card='goal-sections'" in workspace.body
     assert "data-workspace-view-memory-card='artifacts'" in workspace.body
     assert "data-workspace-view-memory-card='notes'" in workspace.body
     assert "data-workspace-view-memory-card='note-drafts'" in workspace.body
@@ -6554,6 +6555,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-profile-routing-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-search-result-lane:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-timeline-lane:'" in workspace.body
+    assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-section-finder:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-decision-filter:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-artifact-filter:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-notes-filter:'" in workspace.body
@@ -6563,9 +6565,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>21" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>22" in workspace.body
     assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-home-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-today-decision-filter, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
-    assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-decision-filter:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:, clankeros-goal-note-draft:, clankeros-action-form-draft:" in workspace.body
+    assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-section-finder:, clankeros-goal-decision-filter:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:, clankeros-goal-note-draft:, clankeros-action-form-draft:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
     assert "workspace_view_memory_workspace_json_write</dt><dd>false" in workspace.body
@@ -6582,6 +6584,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: open-panels mode=prefix key=clankeros-open-panels:" in workspace.body
     assert "workspace_view_memory_card: scroll-position mode=prefix key=clankeros-scroll-position:" in workspace.body
     assert "workspace_view_memory_card: search mode=prefix key=clankeros-search-result-lane:" in workspace.body
+    assert "workspace_view_memory_card: goal-sections mode=prefix key=clankeros-goal-section-finder:" in workspace.body
     assert "workspace_view_memory_card: decisions mode=prefix key=clankeros-goal-decision-filter:" in workspace.body
     assert "workspace_view_memory_card: note-drafts mode=prefix key=clankeros-goal-note-draft:" in workspace.body
     assert "workspace_view_memory_card: form-drafts mode=prefix key=clankeros-action-form-draft:" in workspace.body
@@ -6590,7 +6593,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: approvals mode=exact key=clankeros-approval-queue-filter" in workspace.body
     assert "workspace_view_memory_card: inbox mode=exact key=clankeros-inbox-queue-filter" in workspace.body
     assert "workspace_view_memory_card: profiles mode=exact key=clankeros-profile-routing-filter" in workspace.body
-    assert "workspace_view_memory_reset_scope: theme focus board home-goal-board recent route-history today-decisions open-panels scroll-position search timeline decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
+    assert "workspace_view_memory_reset_scope: theme focus board home-goal-board recent route-history today-decisions open-panels scroll-position search timeline goal-sections decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
     assert "window.localStorage.removeItem(key)" in workspace.body
     assert "candidate.indexOf(key) === 0" in workspace.body
     assert "delete document.documentElement.dataset.theme" in workspace.body
@@ -12311,9 +12314,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_section_count</dt><dd>" in goal.body
     assert "data-goal-section-index-actions='true'" in goal.body
     assert "data-goal-section-finder='true'" in goal.body
+    assert f"data-goal-section-finder-goal='{result.goal_id}'" in goal.body
+    assert (
+        f"data-goal-section-finder-storage-key='clankeros-goal-section-finder:{result.goal_id}'"
+        in goal.body
+    )
     assert "data-goal-section-finder-input='true'" in goal.body
     assert "data-goal-section-finder-count='true'>60 sections" in goal.body
     assert "data-goal-section-finder-first='true' href='#goal-summary'>Summary</a>" in goal.body
+    assert "data-goal-section-finder-memory='true'" in goal.body
+    assert "data-goal-section-finder-view-status='true'>View: default</span>" in goal.body
+    assert "data-goal-section-finder-reset='true'>Reset section search</button>" in goal.body
     assert "data-goal-section-finder-results='true'" in goal.body
     assert "data-goal-section-result='true' data-goal-section-label='approval command'" in goal.body
     assert "data-goal-section-anchor='goal-git-status'" in goal.body
@@ -12328,6 +12339,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_section_finder_status</dt><dd>available" in goal.body
     assert "goal_section_finder_result_count</dt><dd>60" in goal.body
     assert "goal_section_finder_default_first</dt><dd>goal-summary" in goal.body
+    assert "goal_section_finder_persistence</dt><dd>browser_local_view_memory" in goal.body
+    assert (
+        f"goal_section_finder_memory_storage</dt><dd>localStorage:clankeros-goal-section-finder:{result.goal_id}"
+        in goal.body
+    )
+    assert "goal_section_finder_memory_fields</dt><dd>query" in goal.body
+    assert "goal_section_finder_reset</dt><dd>available" in goal.body
     assert "goal_section_switchboard_card_count</dt><dd>5" in goal.body
     assert "goal_section_switchboard_primary</dt><dd>goal-next-action" in goal.body
     assert "goal_section_switchboard_proof_surface</dt><dd>goal-verification-command-bar" in goal.body
@@ -12341,6 +12359,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_section_finder_target: Summary -> #goal-summary" in goal.body
     assert "goal_section_finder_target: Decision queue -> #goal-decision-queue" in goal.body
     assert "goal_section_finder_target: Decision filter -> #goal-decision-filter" in goal.body
+    assert "goal_section_finder_memory: restores section query for this Goal" in goal.body
     assert "goal_section_switchboard_safety: read-only local anchor navigation" in goal.body
     assert goal.body.index("data-goal-section-index-actions='true'") < goal.body.index(
         "data-goal-section-finder='true'"
@@ -12349,6 +12368,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "data-goal-section-index-evidence='true'"
     )
     assert "items.forEach(function (item)" in goal.body
+    assert "function updateGoalSectionFinder(options)" in goal.body
+    assert "window.localStorage.setItem(goalSectionFinderStorageKey(root)" in goal.body
+    assert "window.localStorage.removeItem(goalSectionFinderStorageKey(root))" in goal.body
     assert "visible.length + \" of \" + items.length + \" sections\"" in goal.body
     assert "goal_section_index_write_on_get</dt><dd>false" in goal.body
     assert "goal_section_index_external_effects_created</dt><dd>false" in goal.body
