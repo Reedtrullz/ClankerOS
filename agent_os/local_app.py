@@ -11232,6 +11232,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_daily_loop(root, state, phase, next_action),
             _goal_return_brief(root, state, phase, next_action),
             _goal_session_digest(root, state, phase, next_action),
+            _goal_activity_pulse(root, state, phase, next_action),
             _goal_continuation_rail(root, state, phase, next_action),
             _goal_next_action_card(state, next_action),
             _goal_next_recommendation_section(state, next_action),
@@ -12023,6 +12024,7 @@ def _goal_section_index() -> str:
         ("Daily loop", "goal-daily-loop"),
         ("Return brief", "goal-return-brief"),
         ("Session digest", "goal-session-digest"),
+        ("Activity pulse", "goal-activity-pulse"),
         ("Continuation rail", "goal-continuation-rail"),
         ("Next action", "goal-next-action"),
         ("Next recommendation", "goal-next-recommendation"),
@@ -13835,6 +13837,165 @@ def _goal_session_digest(
                     f"goal_session_digest_waiting: approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations} -> <a href='{_e(waiting_href)}'>{_e(waiting_label)}</a>",
                     "goal_session_digest_finish: <a href='#goal-finish-today'>Finish Today</a>",
                     "goal_session_digest_safety: read-only local session digest; confirmed forms own writes",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _goal_activity_pulse(
+    root: Path,
+    state: dict[str, Any],
+    phase: str,
+    next_action: GoalNextAction,
+) -> str:
+    goal = state["goal"]
+    items = _goal_timeline_items(root, state)
+    recent = list(reversed(items[-3:]))
+    family_order = ["artifact", "approval", "delegation", "run", "task", "operator_note", "event"]
+    family_counts = {family: 0 for family in family_order}
+    for item in items:
+        family = _timeline_item_family(item)
+        if family not in family_counts:
+            family = "event"
+        family_counts[family] += 1
+
+    latest = items[-1] if items else {}
+    latest_kind = _timeline_item_family(latest) if latest else "none"
+    latest_at = _format_time(latest.get("at") or "") if latest else "none"
+    latest_message = latest.get("message") or "No goal activity yet"
+    latest_href = latest.get("href") or "#goal-timeline-command-bar"
+    artifact_items = [
+        item
+        for item in items
+        if _timeline_item_family(item) == "artifact"
+        or str(item.get("href") or "").startswith("/artifacts?path=")
+    ]
+    latest_artifact = artifact_items[-1] if artifact_items else {}
+    latest_artifact_at = _format_time(latest_artifact.get("at") or "") if latest_artifact else "none"
+    latest_artifact_label = latest_artifact.get("message") or "No artifact recorded yet"
+    latest_artifact_href = latest_artifact.get("href") or "#goal-artifact-command-bar"
+    action_form_available = bool(_goal_next_action_form(state, next_action))
+    primary_href = "#goal-next-action-form" if action_form_available else next_action.href
+    primary_label = "Use Goal action form" if action_form_available else next_action.action
+
+    if recent:
+        recent_rows = "".join(
+            [
+                (
+                    "<li data-goal-activity-pulse-event='true' "
+                    f"data-goal-activity-pulse-kind='{_e(_timeline_item_family(item))}'>"
+                    f"<time>{_e(_format_time(item.get('at') or ''))}</time> "
+                    f"<strong>{_e(_timeline_item_family(item))}</strong> "
+                    f"<a href='{_e(item.get('href') or '#goal-timeline-command-bar')}'>"
+                    f"{_e(item.get('message') or 'Goal activity')}</a></li>"
+                )
+                for item in recent
+            ]
+        )
+    else:
+        recent_rows = (
+            "<li data-goal-activity-pulse-event='true' "
+            "data-goal-activity-pulse-kind='empty'>No recent activity yet.</li>"
+        )
+    recent_lines = [
+        (
+            f"goal_activity_pulse_recent: {_e(_format_time(item.get('at') or ''))} "
+            f"kind={_e(_timeline_item_family(item))} "
+            f"surface=<a href='{_e(item.get('href') or '#goal-timeline-command-bar')}'>"
+            f"{_e(item.get('message') or 'Goal activity')}</a>"
+        )
+        for item in recent
+    ]
+    if not recent_lines:
+        recent_lines = ["goal_activity_pulse_recent: none"]
+
+    latest_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_message)}</a>")
+    artifact_surface = SafeHtml(
+        f"<a href='{_e(latest_artifact_href)}'>{_e(latest_artifact_label)}</a>"
+    )
+    next_surface = SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")
+    mix_label = (
+        f"{family_counts['artifact']} artifacts · {family_counts['run']} runs · "
+        f"{family_counts['approval']} approvals"
+    )
+    cards = "".join(
+        [
+            "<article class='goal-activity-pulse-card goal-activity-pulse-primary' data-goal-activity-pulse-latest='true'>",
+            "<h3>Latest</h3>",
+            f"<p>{_e(latest_kind)} · {_e(latest_at)}</p>",
+            f"<a class='goal-activity-pulse-action' data-goal-activity-pulse-primary='true' href='{_e(latest_href)}'>Open latest</a>",
+            "</article>",
+            "<article class='goal-activity-pulse-card goal-activity-pulse-recent' data-goal-activity-pulse-recent='true'>",
+            "<h3>Recent Three</h3>",
+            f"<ol class='goal-activity-pulse-list'>{recent_rows}</ol>",
+            "</article>",
+            "<article class='goal-activity-pulse-card' data-goal-activity-pulse-mix='true'>",
+            "<h3>Mix</h3>",
+            f"<p>{_e(mix_label)}</p>",
+            "<a class='goal-activity-pulse-link' href='#goal-timeline-filter'>Filter timeline</a>",
+            "</article>",
+            "<article class='goal-activity-pulse-card' data-goal-activity-pulse-artifact='true'>",
+            "<h3>Artifact</h3>",
+            f"<p>{_e(latest_artifact_at)} · {_e(latest_artifact_label)}</p>",
+            f"<a class='goal-activity-pulse-link' href='{_e(latest_artifact_href)}'>Open artifact</a>",
+            "</article>",
+            "<article class='goal-activity-pulse-card' data-goal-activity-pulse-next='true'>",
+            "<h3>Next</h3>",
+            f"<p>{_e(next_action.action)} · {_e(phase)}</p>",
+            f"<a class='goal-activity-pulse-link' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            "</article>",
+        ]
+    )
+    return "".join(
+        [
+            "<section id='goal-activity-pulse' class='panel goal-activity-pulse' data-goal-activity-pulse='true'><h2>Goal Activity Pulse</h2>",
+            "<p class='muted'>The newest Goal movement, surfaced before the full timeline so returning operators can see what changed without hunting.</p>",
+            "<div class='goal-activity-pulse-grid' data-goal-activity-pulse-actions='true'>",
+            cards,
+            "</div>",
+            "<details class='goal-activity-pulse-evidence' data-goal-activity-pulse-evidence='true'><summary>Goal activity pulse evidence</summary>",
+            _kv(
+                [
+                    ("goal_activity_pulse_status", "available" if items else "empty"),
+                    ("goal_activity_pulse_goal", goal.id),
+                    ("goal_activity_pulse_project", goal.project_id),
+                    ("goal_activity_pulse_phase", phase),
+                    ("goal_activity_pulse_items", str(len(items))),
+                    ("goal_activity_pulse_recent_count", str(len(recent))),
+                    ("goal_activity_pulse_latest_kind", latest_kind),
+                    ("goal_activity_pulse_latest_at", latest_at),
+                    ("goal_activity_pulse_latest_message", latest_message),
+                    ("goal_activity_pulse_latest_surface", latest_surface),
+                    ("goal_activity_pulse_artifact_events", str(family_counts["artifact"])),
+                    ("goal_activity_pulse_approval_events", str(family_counts["approval"])),
+                    ("goal_activity_pulse_delegation_events", str(family_counts["delegation"])),
+                    ("goal_activity_pulse_run_events", str(family_counts["run"])),
+                    ("goal_activity_pulse_task_events", str(family_counts["task"])),
+                    ("goal_activity_pulse_operator_note_events", str(family_counts["operator_note"])),
+                    ("goal_activity_pulse_event_events", str(family_counts["event"])),
+                    ("goal_activity_pulse_latest_artifact_at", latest_artifact_at),
+                    ("goal_activity_pulse_latest_artifact", artifact_surface),
+                    ("goal_activity_pulse_next_action", next_action.action),
+                    ("goal_activity_pulse_next_surface", next_surface),
+                    ("goal_activity_pulse_action_form_available", str(action_form_available).lower()),
+                    ("goal_activity_pulse_source", "goal_timeline_items_and_goal_next_action"),
+                    ("goal_activity_pulse_write_on_get", "false"),
+                    ("goal_activity_pulse_provider_calls_taken", "0"),
+                    ("goal_activity_pulse_network_actions_taken", "0"),
+                    ("goal_activity_pulse_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_activity_pulse_latest: {_e(latest_kind)} {_e(latest_message)}",
+                    *recent_lines,
+                    f"goal_activity_pulse_mix: {_e(mix_label)}",
+                    f"goal_activity_pulse_artifact: {artifact_surface}",
+                    f"goal_activity_pulse_next: {_e(next_action.action)} {next_surface}",
+                    "goal_activity_pulse_safety: read-only local timeline pulse; confirmed forms own writes",
                 ]
             ),
             "</details>",
@@ -38705,6 +38866,21 @@ def _html_page(
     .goal-session-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-session-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-session-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .goal-activity-pulse {{ border-left:4px solid var(--ok); }}
+    .goal-activity-pulse-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-activity-pulse-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; display:grid; gap:7px; align-content:start; }}
+    .goal-activity-pulse-card h3, .goal-activity-pulse-card p {{ margin:0; overflow-wrap:anywhere; }}
+    .goal-activity-pulse-card p {{ color:var(--muted); }}
+    .goal-activity-pulse-primary {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
+    .goal-activity-pulse-list {{ list-style:none; padding:0; margin:0; display:grid; gap:6px; }}
+    .goal-activity-pulse-list li {{ min-width:0; border:1px solid var(--line); background:var(--panel); padding:6px 7px; overflow-wrap:anywhere; }}
+    .goal-activity-pulse-list time {{ color:var(--muted); font-variant-numeric:tabular-nums; margin-right:5px; }}
+    .goal-activity-pulse-action, .goal-activity-pulse-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; width:100%; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-activity-pulse-action {{ background:var(--accent); color:#fff; }}
+    .goal-activity-pulse-link {{ background:var(--surface); color:var(--accent); }}
+    .goal-activity-pulse-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-activity-pulse-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-activity-pulse-evidence:not([open]) > :not(summary) {{ display:none; }}
     .goal-continuation-rail {{ border-left:4px solid var(--accent); }}
     .goal-continuation-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
     .goal-continuation-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
@@ -38717,7 +38893,7 @@ def _html_page(
     .goal-continuation-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-continuation-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-continuation-evidence:not([open]) > :not(summary) {{ display:none; }}
-    #goal-progress-meter, #goal-attention-digest, #goal-first-run-rail, .goal-workflow-map, #goal-coder-handoff-digest, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence-digest, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
+    #goal-progress-meter, #goal-attention-digest, #goal-first-run-rail, .goal-workflow-map, #goal-coder-handoff-digest, #goal-session-digest, #goal-activity-pulse, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence-digest, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
     .goal-workflow-map {{ border-left:4px solid var(--accent); }}
     .goal-workflow-map dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .goal-workflow-map-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
@@ -39688,6 +39864,7 @@ def _html_page(
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .workflow-scope-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #goal-attention-digest {{ scroll-margin-top:260px; }} .goal-attention-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ #goal-activity-pulse {{ scroll-margin-top:260px; }} .goal-activity-pulse-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-attention-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .skills-usage-grid {{ grid-template-columns:1fr; }} }}

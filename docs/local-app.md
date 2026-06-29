@@ -329,7 +329,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   existing Goal state, saved workspace timestamp, latest local timeline item,
   latest artifact, and waiting queue counts, and keeps its source and
   zero-effect counters in collapsed digest evidence. A read-only
-  `Goal Continuation Rail` follows the digest as a five-card Now, Next
+  `Goal Activity Pulse` follows the digest as a five-card Latest, Recent
+  Three, Mix, Artifact, and Next strip, reusing the Goal timeline to show the
+  newest linked movement before the full event list. A read-only
+  `Goal Continuation Rail` follows the pulse as a five-card Now, Next
   Gate, Then, Publish Boundary, and Finish Today path. Detailed gate rows,
   exact surfaces, the manual publish boundary, and zero-effect counters stay
   in collapsed continuation evidence, so the Goal page can be followed as a

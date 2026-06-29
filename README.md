@@ -361,7 +361,7 @@ with Now, Approvals, Incidents, Recommendations, Open Work, and Safety cards so
 the first waiting queue and safe next click are visible before deeper command
 evidence. The dock, meter, and digest precede the Goal Command Bar, Goal
 Operator Workbench, Goal Daily Loop, Goal Return Brief, Goal Session Digest,
-Goal Continuation Rail,
+Goal Activity Pulse, Goal Continuation Rail,
 next action, next recommendation, Goal Workflow Map, Goal Coder Handoff
 Digest, Goal CI Handoff, live state, and collapsed section index before the detailed progress, timeline, activity log, goal risk, completion
 criteria, completion readiness, evidence, delegations, runs, approvals,
@@ -399,7 +399,10 @@ current continuation into Continue, Since Save, Latest Artifact, Waiting, and
 Finish Today cards. It uses existing Goal state, saved workspace timestamp,
 latest local timeline item, latest artifact, and waiting queue counts, then
 keeps the exact sources and zero-effect boundary in collapsed digest evidence.
-The read-only `Goal Continuation Rail` follows the digest as visible
+The read-only `Goal Activity Pulse` follows the digest with Latest, Recent
+Three, Mix, Artifact, and Next cards, reusing the Goal timeline so returning
+operators can see the newest linked movement before opening the full timeline.
+The read-only `Goal Continuation Rail` follows the pulse as visible
 Now, Next Gate, Then, Publish Boundary, and Finish Today cards, while detailed
 gate rows, exact surfaces, manual publish boundary, and zero-effect counters
 stay in collapsed continuation evidence. Goal

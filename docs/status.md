@@ -4,6 +4,9 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal pages now include a read-only `Goal Activity Pulse` between Session
+  Digest and Continuation Rail, showing Latest, Recent Three, Mix, Artifact,
+  and Next cards from existing Goal timeline data before the full event list.
 - Active first-run Goal pages now include a read-only `Goal First Run Rail`
   between Attention and the Goal Command Bar, keeping Project, Goal,
   Delegation, Context, and Run visible inside the Goal page and routing the

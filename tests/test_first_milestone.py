@@ -11805,7 +11805,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-section-index-actions='true'" in goal.body
     assert "data-goal-section-finder='true'" in goal.body
     assert "data-goal-section-finder-input='true'" in goal.body
-    assert "data-goal-section-finder-count='true'>57 sections" in goal.body
+    assert "data-goal-section-finder-count='true'>58 sections" in goal.body
     assert "data-goal-section-finder-first='true' href='#goal-summary'>Summary</a>" in goal.body
     assert "data-goal-section-finder-results='true'" in goal.body
     assert "data-goal-section-result='true' data-goal-section-label='approval command'" in goal.body
@@ -11819,7 +11819,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-section-index-primary='true' href='#goal-next-action'>Next action</a>" in goal.body
     assert "goal_section_switchboard_status</dt><dd>available" in goal.body
     assert "goal_section_finder_status</dt><dd>available" in goal.body
-    assert "goal_section_finder_result_count</dt><dd>57" in goal.body
+    assert "goal_section_finder_result_count</dt><dd>58" in goal.body
     assert "goal_section_finder_default_first</dt><dd>goal-summary" in goal.body
     assert "goal_section_switchboard_card_count</dt><dd>5" in goal.body
     assert "goal_section_switchboard_primary</dt><dd>goal-next-action" in goal.body
@@ -11854,6 +11854,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-operator-workbench'" in goal.body
     assert "href='#goal-return-brief'" in goal.body
     assert "href='#goal-session-digest'" in goal.body
+    assert "href='#goal-activity-pulse'" in goal.body
     assert "href='#goal-continuation-rail'" in goal.body
     assert "href='#goal-workflow-map'" in goal.body
     assert "href='#goal-coder-handoff-digest'" in goal.body
@@ -11887,6 +11888,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-operator-workbench'" in goal.body
     assert "id='goal-daily-loop'" in goal.body
     assert "id='goal-session-digest'" in goal.body
+    assert "id='goal-activity-pulse'" in goal.body
     assert "id='goal-workflow-map'" in goal.body
     assert "id='goal-coder-handoff-digest'" in goal.body
     assert "id='goal-ci-handoff'" in goal.body
@@ -11914,7 +11916,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>57" in goal.body
+    assert "goal_section_count</dt><dd>58" in goal.body
     assert "data-goal-section-index-evidence='true'" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "data-goal-command-strip='true'" in goal.body
@@ -12117,6 +12119,43 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_session_digest_waiting: approvals=1 incidents=0 recommendations=0 -> <a href='/approvals'>Review approvals</a>" in goal.body
     assert "goal_session_digest_finish: <a href='#goal-finish-today'>Finish Today</a>" in goal.body
     assert "goal_session_digest_safety: read-only local session digest; confirmed forms own writes" in goal.body
+    assert "Goal Activity Pulse" in goal.body
+    assert "data-goal-activity-pulse='true'" in goal.body
+    assert "data-goal-activity-pulse-actions='true'" in goal.body
+    assert "data-goal-activity-pulse-latest='true'" in goal.body
+    assert "data-goal-activity-pulse-primary='true'" in goal.body
+    assert "data-goal-activity-pulse-recent='true'" in goal.body
+    assert goal.body.count("data-goal-activity-pulse-event='true'") == 3
+    assert "data-goal-activity-pulse-mix='true'" in goal.body
+    assert "data-goal-activity-pulse-artifact='true'" in goal.body
+    assert "data-goal-activity-pulse-next='true'" in goal.body
+    assert "data-goal-activity-pulse-evidence='true'" in goal.body
+    assert goal.body.index("id='goal-session-digest'") < goal.body.index("id='goal-activity-pulse'")
+    assert goal.body.index("id='goal-activity-pulse'") < goal.body.index("id='goal-continuation-rail'")
+    assert f"goal_activity_pulse_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_activity_pulse_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_activity_pulse_phase</dt><dd>Ready to commit" in goal.body
+    assert "goal_activity_pulse_status</dt><dd>available" in goal.body
+    assert "goal_activity_pulse_items</dt><dd>" in goal.body
+    assert "goal_activity_pulse_recent_count</dt><dd>3" in goal.body
+    assert "goal_activity_pulse_latest_kind</dt><dd>" in goal.body
+    assert "goal_activity_pulse_latest_message</dt><dd>" in goal.body
+    assert "goal_activity_pulse_latest_surface</dt><dd><a href='" in goal.body
+    assert "goal_activity_pulse_artifact_events</dt><dd>" in goal.body
+    assert "goal_activity_pulse_delegation_events</dt><dd>" in goal.body
+    assert "goal_activity_pulse_run_events</dt><dd>" in goal.body
+    assert "goal_activity_pulse_latest_artifact</dt><dd><a href='/artifacts?path=" in goal.body
+    assert "goal_activity_pulse_next_action</dt><dd>Create commit request" in goal.body
+    assert "goal_activity_pulse_next_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_activity_pulse_action_form_available</dt><dd>true" in goal.body
+    assert "goal_activity_pulse_source</dt><dd>goal_timeline_items_and_goal_next_action" in goal.body
+    assert "goal_activity_pulse_write_on_get</dt><dd>false" in goal.body
+    assert "goal_activity_pulse_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_activity_pulse_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_activity_pulse_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_activity_pulse_recent:" in goal.body
+    assert "goal_activity_pulse_next: Create commit request <a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_activity_pulse_safety: read-only local timeline pulse; confirmed forms own writes" in goal.body
     assert "Goal Continuation Rail" in goal.body
     assert "data-goal-continuation-rail='true'" in goal.body
     assert "data-goal-continuation-actions='true'" in goal.body

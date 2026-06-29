@@ -1,5 +1,33 @@
 # Status
 
+## 2026-06-29 Goal Activity Pulse
+
+- Added a read-only `Goal Activity Pulse` to `/goals/<goal_id>` after the
+  Goal Session Digest and before the Goal Continuation Rail.
+- The pulse reuses existing Goal timeline data to show Latest, Recent Three,
+  Mix, Artifact, and Next cards near the top of the Goal page, so returning
+  operators can see the newest linked movement before opening the full
+  Timeline.
+- It preserves explicit evidence for Goal, project, phase, total timeline
+  items, recent count, latest event, event-family counts, latest artifact,
+  next action, action-form availability, and zero write/provider/network/
+  external-effect counters.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused route/demo pytest passed with
+  `2 passed, 514 deselected in 61.34s`; `python3 -m compileall -q agent_os
+  tests` passed; `git diff --check` passed; bounded scratch-root
+  `app-smoke-test` passed across core routes with provider/network/external
+  mutation counters at zero; bounded scratch-root `app-demo-smoke-test` passed
+  across fixture-backed stateful routes with provider/network/external
+  mutation counters at zero; Playwright browser QA against a throwaway demo
+  Goal at `http://127.0.0.1:55627/goals/goal_66ce127ba7e1` confirmed the
+  pulse rendered with five cards and three recent events, sat between Goal
+  Session Digest and Goal Continuation Rail, linked Latest to
+  `/runs/run_2164d62cad57`, linked Next to `#goal-next-action-form`, emitted
+  no console errors or warnings, had no desktop horizontal overflow at
+  `1280x900`, and stacked to one `329px` column with no horizontal overflow at
+  mobile `390x844`.
+
 ## 2026-06-29 Goal First Run Rail
 
 - Added a read-only `Goal First Run Rail` to active first-run Goal pages before

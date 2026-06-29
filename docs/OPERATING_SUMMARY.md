@@ -557,7 +557,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   from existing Goal state, saved workspace timestamp, latest local timeline
   item, latest artifact, and waiting queue counts, with source and zero-effect
   counters kept in collapsed digest evidence.
-  A read-only `Goal Continuation Rail` follows the digest as visible Now, Next Gate,
+  A read-only `Goal Activity Pulse` follows the digest as visible Latest,
+  Recent Three, Mix, Artifact, and Next cards, reusing the Goal timeline so a
+  returning operator can see the newest linked movement before opening the
+  full event list.
+  A read-only `Goal Continuation Rail` follows the pulse as visible Now, Next Gate,
   Then, Publish Boundary, and Finish Today cards, with detailed gate rows,
   exact surfaces, the manual publish boundary, and zero-effect counters kept
   in collapsed continuation evidence so the Goal page can be followed without
