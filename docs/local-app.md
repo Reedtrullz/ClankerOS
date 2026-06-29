@@ -200,7 +200,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Populated cockpit counts are collapsed as evidence so the visible board
   appears sooner on mobile. The page exposes a confirmed local `Start Another
   Goal` form for registered
-  projects, plus
+  projects, plus a browser-local `Goal Board Filter` for narrowing active,
+  paused, and completed lanes by title, project, phase, status, next action,
+  progress, or remaining work with a live count, first-match jump, and
+  no-write/no-network evidence. Fresh checkouts still expose
   confirmed local `register-project` and `create-goal` forms for a fresh
   checkout.
 - `/goals/<goal_id>` - goal-centered workbench that is content-first: the Goal

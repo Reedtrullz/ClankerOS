@@ -315,7 +315,11 @@ lanes for fast switching. The read-only
 counts, the prioritized saved or active Goal, its current phase, one next
 action, the target surface, waiting counts, resume link, and zero-effect
 counters. Populated cockpit counts are also collapsed as evidence so the board
-arrives quickly on mobile. The cockpit also includes a confirmed local
+arrives quickly on mobile. A browser-local `Goal Board Filter` follows the
+goal creation form and filters active, paused, and completed lanes by title,
+project, phase, status, next action, progress, or remaining work, with a live
+count, mode buttons, first-match jump, and no-write/no-network evidence. The
+cockpit also includes a confirmed local
 `Start Another Goal` form backed by the existing `create-goal` action,
 so an operator can add the next goal for a registered project without
 switching to the CLI.

@@ -384,7 +384,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   that preserves the saved or active Goal, phase, one next action, target local
   surface, waiting counts, resume route, action availability, and zero-effect
   counters. It also exposes a confirmed local `Start Another Goal` form for
-  registered projects, so daily goal creation does not require the CLI. The
+  registered projects, so daily goal creation does not require the CLI. A
+  browser-local `Goal Board Filter` follows that form, filtering active,
+  paused, and completed lanes by title, project, phase, status, next action,
+  progress, or remaining work with a live count, mode buttons, first-match
+  jump, and explicit no-write/no-provider/no-network/no-external-effect
+  evidence before the longer lane lists. The
   checklist reports the current step,
   one `first_run_next_action` with a reason, project/goal/delegation/
   context-pack state, next local surface, a confirmed local `run-delegation`

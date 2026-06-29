@@ -9596,6 +9596,7 @@ def _goals(root: Path) -> str:
                 completed=completed,
             ),
             _goal_creation_panel(storage, rows),
+            _goal_board_filter(rows, active, paused, completed),
             _list_section(
                 "Active Goals",
                 [_goal_index_line(root, storage, row) for row in active],
@@ -9613,6 +9614,124 @@ def _goals(root: Path) -> str:
             ),
             _first_run_panel(root, storage),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _goal_board_filter(
+    rows: list[sqlite3.Row],
+    active: list[sqlite3.Row],
+    paused: list[sqlite3.Row],
+    completed: list[sqlite3.Row],
+) -> str:
+    total = len(rows)
+    first_match_link = (
+        "<a class='goal-board-filter-first' data-goal-board-filter-first='true' href='#active-goals'>First match</a>"
+        if total
+        else "<a class='goal-board-filter-first' data-goal-board-filter-first='true' hidden>First match</a>"
+    )
+    return "".join(
+        [
+            "<section id='goal-board-filter' class='panel goal-board-filter' data-goal-board-filter='true'><h2>Goal Board Filter</h2>",
+            "<p class='muted'>Filter the active, paused, and completed Goal lanes locally by title, project, phase, status, or next action.</p>",
+            "<div class='goal-board-filter-row'>",
+            "<label class='goal-board-filter-label' for='goal-board-filter-input'>Find goal</label>",
+            "<input id='goal-board-filter-input' class='goal-board-filter-input' type='search' autocomplete='off' "
+            "placeholder='project, phase, approval, title' data-goal-board-filter-input='true'>",
+            f"<span class='goal-board-filter-count' data-goal-board-filter-count='true'>{total} goals</span>",
+            first_match_link,
+            "</div>",
+            "<div class='goal-board-filter-modes' data-goal-board-filter-modes='true'>",
+            "<button type='button' class='goal-board-filter-mode' data-goal-board-filter-mode='all' aria-pressed='true'>All</button>",
+            "<button type='button' class='goal-board-filter-mode' data-goal-board-filter-mode='active' aria-pressed='false'>Active</button>",
+            "<button type='button' class='goal-board-filter-mode' data-goal-board-filter-mode='paused' aria-pressed='false'>Paused</button>",
+            "<button type='button' class='goal-board-filter-mode' data-goal-board-filter-mode='completed' aria-pressed='false'>Completed</button>",
+            "</div>",
+            "<p class='muted goal-board-filter-empty' data-goal-board-filter-empty='true' hidden>No matching goals.</p>",
+            "<details class='goal-board-filter-evidence' data-goal-board-filter-evidence='true'><summary>Goal board filter evidence</summary>",
+            _kv(
+                [
+                    ("goal_board_filter_status", "available"),
+                    ("goal_board_filter_total_goals", str(total)),
+                    ("goal_board_filter_active_goals", str(len(active))),
+                    ("goal_board_filter_paused_goals", str(len(paused))),
+                    ("goal_board_filter_completed_goals", str(len(completed))),
+                    ("goal_board_filter_scope", "active paused completed goal rows"),
+                    ("goal_board_filter_fields", "title description project status phase next_action progress remaining_work"),
+                    ("goal_board_filter_default_mode", "all"),
+                    ("goal_board_filter_write_on_get", "false"),
+                    ("goal_board_filter_provider_calls_taken", "0"),
+                    ("goal_board_filter_network_actions_taken", "0"),
+                    ("goal_board_filter_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_board_filter_default: all -> {total} goals",
+                    f"goal_board_filter_mode: active -> {len(active)} goals",
+                    f"goal_board_filter_mode: paused -> {len(paused)} goals",
+                    f"goal_board_filter_mode: completed -> {len(completed)} goals",
+                    "goal_board_filter_safety: browser-local row filtering only",
+                ]
+            ),
+            "</details>",
+            """<script>
+(function () {
+  var root = document.querySelector("[data-goal-board-filter='true']");
+  if (!root) return;
+  var input = root.querySelector("[data-goal-board-filter-input='true']");
+  var count = root.querySelector("[data-goal-board-filter-count='true']");
+  var first = root.querySelector("[data-goal-board-filter-first='true']");
+  var empty = root.querySelector("[data-goal-board-filter-empty='true']");
+  var modes = Array.prototype.slice.call(root.querySelectorAll("[data-goal-board-filter-mode]"));
+  var mode = "all";
+  function update() {
+    var rows = Array.prototype.slice.call(document.querySelectorAll("[data-goal-board-row='true']"));
+    var query = input && input.value ? input.value.trim().toLowerCase() : "";
+    var visible = [];
+    rows.forEach(function (row) {
+      var bucket = row.getAttribute("data-goal-board-bucket") || "";
+      var text = row.getAttribute("data-goal-board-search") || "";
+      var matched = (mode === "all" || bucket === mode) && (!query || text.indexOf(query) !== -1);
+      var item = row.closest("li");
+      if (item) item.hidden = !matched;
+      row.hidden = !matched;
+      if (matched) visible.push(row);
+    });
+    if (count) count.textContent = visible.length + " of " + rows.length + " goals";
+    if (empty) empty.hidden = visible.length !== 0;
+    if (first) {
+      var firstRow = visible[0];
+      var link = firstRow ? firstRow.querySelector("a") : null;
+      if (link) {
+        first.hidden = false;
+        first.href = link.href;
+        first.textContent = "Open first match";
+      } else {
+        first.hidden = true;
+        first.removeAttribute("href");
+        first.textContent = "No match";
+      }
+    }
+  }
+  modes.forEach(function (button) {
+    button.addEventListener("click", function () {
+      mode = button.getAttribute("data-goal-board-filter-mode") || "all";
+      modes.forEach(function (candidate) {
+        candidate.setAttribute("aria-pressed", candidate === button ? "true" : "false");
+      });
+      update();
+    });
+  });
+  if (input) input.addEventListener("input", update);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", update, { once: true });
+  } else {
+    update();
+  }
+})();
+</script>""",
+            "</section>",
         ]
     )
 
@@ -12853,13 +12972,36 @@ def _goal_bucket(row: sqlite3.Row) -> str:
 def _goal_index_line(root: Path, storage: Storage, row: sqlite3.Row) -> str:
     state = _goal_state(root, storage, str(row["id"]))
     next_action = _goal_next_action(root, state)
+    phase = _goal_current_phase(state)
+    progress = _goal_progress_label(state)
+    remaining = _goal_remaining_work_summary(state)
+    bucket = _goal_bucket(row)
+    title = str(row["title"] or row["description"] or row["id"])
+    searchable = " ".join(
+        [
+            str(row["id"]),
+            title,
+            str(row["description"] or ""),
+            str(row["project_id"]),
+            str(row["status"]),
+            bucket,
+            phase,
+            next_action.action,
+            progress,
+            remaining,
+        ]
+    ).lower()
     return (
+        "<span class='goal-index-row' data-goal-board-row='true' "
+        f"data-goal-board-bucket='{_e(bucket)}' "
+        f"data-goal-board-search='{_e(searchable)}'>"
         f"<a href='/goals/{quote(str(row['id']))}'>{_e(row['title'] or row['description'])}</a>: "
         f"project={_e(row['project_id'])} status={_e(row['status'])} "
-        f"phase={_e(_goal_current_phase(state))} "
+        f"phase={_e(phase)} "
         f"next_action={_e(next_action.action)} "
-        f"progress={_e(_goal_progress_label(state))} "
-        f"remaining_work={_e(_goal_remaining_work_summary(state))}"
+        f"progress={_e(progress)} "
+        f"remaining_work={_e(remaining)}"
+        "</span>"
     )
 
 
@@ -36109,6 +36251,21 @@ def _html_page(
     .goal-overview-command-evidence:not([open]) > :not(summary), .goal-risk-command-evidence:not([open]) > :not(summary), .goal-criteria-command-evidence:not([open]) > :not(summary), .goal-progress-command-evidence:not([open]) > :not(summary), .goal-overview-details:not([open]) > :not(summary), .goal-risk-list:not([open]) > :not(summary), .goal-criteria-list:not([open]) > :not(summary), .goal-progress-details:not([open]) > :not(summary) {{ display:none; }}
     .goal-overview-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-overview-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .goal-board-filter {{ border-left:4px solid var(--accent); }}
+    .goal-board-filter-row {{ display:grid; grid-template-columns:auto minmax(220px, 1fr) auto auto; gap:8px; align-items:center; }}
+    .goal-board-filter-label {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; white-space:nowrap; }}
+    .goal-board-filter-input {{ min-height:36px; min-width:0; width:100%; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:7px 10px; }}
+    .goal-board-filter-count {{ color:var(--muted); white-space:nowrap; }}
+    .goal-board-filter-first {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:#fff; overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-board-filter-modes {{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 0; }}
+    .goal-board-filter-mode {{ min-height:32px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 10px; }}
+    .goal-board-filter-mode[aria-pressed='true'] {{ border-color:var(--accent); background:var(--accent); color:#fff; }}
+    .goal-board-filter-empty {{ margin:10px 0 0; }}
+    .goal-board-filter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-board-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-board-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .goal-index-row {{ display:inline; }}
+    @media (max-width: 640px) {{ .goal-board-filter-row {{ grid-template-columns:1fr; }} .goal-board-filter-label, .goal-board-filter-count {{ white-space:normal; }} .goal-board-filter-first {{ width:100%; }} }}
     .goal-board-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-cockpit-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-cockpit-evidence summary {{ cursor:pointer; font-weight:700; }}

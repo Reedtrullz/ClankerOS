@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals` now includes a browser-local `Goal Board Filter` after the goal
+  creation form and before the active/paused/completed lanes. It filters
+  rendered Goal rows by title, project, phase, status, next action, progress,
+  and remaining work, supports all/active/paused/completed modes, updates a
+  visible match count and first-match jump, and keeps writes, providers,
+  network actions, and external effects out of the helper.
 - `/goals/<goal_id>#goal-section-index` now includes a browser-local section
   finder with match count, first-match jump, compact anchor chips, and
   no-write/no-network posture so long Goal pages can be navigated by typing
