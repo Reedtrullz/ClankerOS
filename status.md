@@ -1,5 +1,34 @@
 # Status
 
+## 2026-06-29 Today Decision Queue
+
+- Added a read-only `Today Decision Queue` to `/today` after the Today
+  Operator Workbench and before the Today Workflow Map.
+- Empty first-run checkouts now show one concrete `first_run_current_action`
+  row that links back to the same-page Create Project/Create First Goal target.
+  Populated daily cockpits show the lead Goal's current action first, then
+  pending worktree, commit, publication, incident, recommendation, or
+  blocked-task decision rows.
+- The queue preserves explicit evidence for status, Goal, project, phase, next
+  action, row counts, waiting counts, approval breakdowns, incident/
+  recommendation/task counts, same-page action availability, first-run form
+  availability, and zero write/provider/network/external-effect counters.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused route/demo pytest passed with
+  `2 passed, 514 deselected in 59.90s`; `python3 -m compileall -q agent_os
+  tests` passed; `git diff --check` passed; bounded scratch-root
+  `app-smoke-test` passed across core routes with provider/network/external
+  mutation counters at zero; bounded scratch-root `app-demo-smoke-test` passed
+  across fixture-backed stateful routes with provider/network/external
+  mutation counters at zero; Playwright browser QA against throwaway demo
+  `/today` at `http://127.0.0.1:55629/today` confirmed two decision rows
+  (`current_action` and `worktree_approval`), the primary row linked to
+  `#today-current-action`, the approval row linked to
+  `/approvals?goal_id=goal_bb0caa420575`, the queue sat between Today
+  Operator Workbench and Today Workflow Map, emitted no console errors or
+  warnings, had no desktop horizontal overflow at `1280x900`, and stacked to
+  one `329px` column with no horizontal overflow at mobile `390x844`.
+
 ## 2026-06-29 Goal Decision Queue
 
 - Added a read-only `Goal Decision Queue` to `/goals/<goal_id>` after the

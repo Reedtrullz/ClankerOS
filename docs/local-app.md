@@ -104,10 +104,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   from `/today` without opening the full Goal page. A read-only
   `Today Operator Workbench` follows with do/check/unblock/finish
   cards for the current action, timeline/evidence review, first blocker, and
-  finish-today resume save target. A read-only `Today Workflow Map` follows
-  with the first-run gate rail when no Goal exists, or the lead Goal's local
-  lifecycle gates, current gate, next action, same-page action target, and gate
-  counts once a Goal exists. A read-only `Today CI Handoff` follows with the
+  finish-today resume save target. A read-only `Today Decision Queue` follows
+  with exact daily decision rows for the current action plus waiting approvals,
+  incidents, recommendations, or blocked work, linking only to existing
+  confirmed forms and scoped review surfaces. A read-only `Today Workflow Map`
+  follows with the first-run gate rail when no Goal exists, or the lead Goal's
+  local lifecycle gates, current gate, next action, same-page action target,
+  and gate counts once a Goal exists. A read-only `Today CI Handoff` follows with the
   latest operator-recorded GitHub Actions proof, current-checkout match status,
   exact `gh run list` / `gh run view` commands for current CI, and links to
   `/verification` plus `/ci-evidence` for recording proof once Actions

@@ -195,9 +195,13 @@ cockpit carries enough context to regain the thread without opening the full
 Goal timeline.
 A read-only `Today Operator Workbench` follows with four obvious moves for the
 day: do the current action, check timeline/evidence, clear the first blocker,
-and save the resume point. A read-only `Today Workflow Map` follows with the whole first-run
-path when no Goal exists, or the lead Goal's lifecycle gates when one does,
-including current gate, next action, same-page action target, and gate counts.
+and save the resume point. A read-only `Today Decision Queue` then turns the
+lead Goal or first-run state into exact daily rows: current action first, then
+pending approvals, incidents, recommendations, or blocked work, all linked to
+existing confirmed action forms or scoped review surfaces. A read-only `Today
+Workflow Map` follows with the whole first-run path when no Goal exists, or the
+lead Goal's lifecycle gates when one does, including current gate, next action,
+same-page action target, and gate counts.
 A read-only `Today CI Handoff` follows so the daily cockpit shows the latest
 operator-recorded GitHub Actions proof, whether it matches the current checkout,
 the exact `gh run list` / `gh run view` commands to inspect current CI, and

@@ -4800,6 +4800,41 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_workbench_unblock: first_run -> <a href='#first-run-create-project'>Create Project</a>" in today.body
     assert "today_workbench_finish: not_ready_until_goal_exists -> <a href='#first-run-guide'>First Run Guide</a>" in today.body
     assert "today_workbench_safety: read-only daily routing" in today.body
+    assert "Today Decision Queue" in today.body
+    assert "id='today-decision-queue'" in today.body
+    assert "data-today-decision-queue='true'" in today.body
+    assert "data-today-decision-list='true'" in today.body
+    assert "data-today-decision-row='true'" in today.body
+    assert "data-today-decision-kind='first_run_current_action'" in today.body
+    assert "data-today-decision-primary='true'" in today.body
+    assert "data-today-decision-evidence='true'" in today.body
+    assert today.body.index("data-today-operator-workbench='true'") < today.body.index(
+        "data-today-decision-queue='true'"
+    )
+    assert today.body.index("data-today-decision-queue='true'") < today.body.index(
+        "data-today-workflow-map='true'"
+    )
+    assert "today_decision_queue_status</dt><dd>first_run" in today.body
+    assert "today_decision_queue_goal</dt><dd>none" in today.body
+    assert "today_decision_queue_project</dt><dd>clankeros" in today.body
+    assert "today_decision_queue_phase</dt><dd>First run" in today.body
+    assert "today_decision_queue_next_action</dt><dd>Register ClankerOS project" in today.body
+    assert "today_decision_queue_primary_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_decision_queue_action_form_available</dt><dd>false" in today.body
+    assert "today_decision_queue_first_run_form_available</dt><dd>true" in today.body
+    assert "today_decision_queue_rows</dt><dd>1" in today.body
+    assert "today_decision_queue_visible_rows</dt><dd>1" in today.body
+    assert "today_decision_queue_hidden_rows</dt><dd>0" in today.body
+    assert "today_decision_queue_waiting_items</dt><dd>0" in today.body
+    assert "today_decision_queue_pending_approvals</dt><dd>0" in today.body
+    assert "today_decision_queue_source</dt><dd>first_run_progress" in today.body
+    assert "today_decision_queue_write_on_get</dt><dd>false" in today.body
+    assert "today_decision_queue_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_decision_queue_network_actions_taken</dt><dd>0" in today.body
+    assert "today_decision_queue_external_effects_created</dt><dd>false" in today.body
+    assert "today_decision_queue_now: Register ClankerOS project" in today.body
+    assert "today_decision_queue_row: kind=first_run_current_action status=recommended goal=none id=create_project surface=<a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_decision_queue_safety: read-only daily queue; existing confirmed forms and approval surfaces own writes" in today.body
     assert "Today Workflow Map" in today.body
     assert "data-today-workflow-map='true'" in today.body
     assert "today_workflow_map_status</dt><dd>first_run" in today.body
@@ -10987,6 +11022,52 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_workbench_unblock: needs_approval_review -> <a href='/approvals'>/approvals</a>" in today.body
     assert "today_workbench_finish: needs_workspace_save -> <a href='#today-finish'>Finish Today</a>" in today.body
     assert "today_workbench_safety: read-only daily routing" in today.body
+    assert "Today Decision Queue" in today.body
+    assert "id='today-decision-queue'" in today.body
+    assert "data-today-decision-queue='true'" in today.body
+    assert "data-today-decision-list='true'" in today.body
+    assert "data-today-decision-row='true'" in today.body
+    assert "data-today-decision-kind='current_action'" in today.body
+    assert "data-today-decision-kind='worktree_approval'" in today.body
+    assert "data-today-decision-primary='true'" in today.body
+    assert "data-today-decision-primary='false'" in today.body
+    assert "data-today-decision-evidence='true'" in today.body
+    assert today.body.index("data-today-operator-workbench='true'") < today.body.index(
+        "data-today-decision-queue='true'"
+    )
+    assert today.body.index("data-today-decision-queue='true'") < today.body.index(
+        "data-today-workflow-map='true'"
+    )
+    assert "today_decision_queue_status</dt><dd>waiting_on_operator" in today.body
+    assert f"today_decision_queue_goal</dt><dd><a href='/goals/{result.goal_id}'" in today.body
+    assert f"today_decision_queue_project</dt><dd><a href='/projects/{result.project_id}'" in today.body
+    assert "today_decision_queue_phase</dt><dd>Ready to commit" in today.body
+    assert "today_decision_queue_next_action</dt><dd>Create commit request" in today.body
+    assert "today_decision_queue_primary_surface</dt><dd><a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_decision_queue_action_form_available</dt><dd>true" in today.body
+    assert "today_decision_queue_first_run_form_available</dt><dd>false" in today.body
+    assert "today_decision_queue_rows</dt><dd>2" in today.body
+    assert "today_decision_queue_visible_rows</dt><dd>2" in today.body
+    assert "today_decision_queue_hidden_rows</dt><dd>0" in today.body
+    assert "today_decision_queue_waiting_items</dt><dd>1" in today.body
+    assert "today_decision_queue_pending_approvals</dt><dd>1" in today.body
+    assert "today_decision_queue_pending_worktree_approvals</dt><dd>1" in today.body
+    assert "today_decision_queue_pending_commit_approvals</dt><dd>0" in today.body
+    assert "today_decision_queue_pending_publication_approvals</dt><dd>0" in today.body
+    assert "today_decision_queue_open_incidents</dt><dd>0" in today.body
+    assert "today_decision_queue_open_recommendations</dt><dd>0" in today.body
+    assert "today_decision_queue_blocked_tasks</dt><dd>0" in today.body
+    assert "today_decision_queue_source</dt><dd>lead_goal_next_action_queues" in today.body
+    assert "today_decision_queue_write_on_get</dt><dd>false" in today.body
+    assert "today_decision_queue_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_decision_queue_network_actions_taken</dt><dd>0" in today.body
+    assert "today_decision_queue_external_effects_created</dt><dd>false" in today.body
+    assert "today_decision_queue_now: Create commit request" in today.body
+    assert "today_decision_queue_row: kind=current_action status=recommended" in today.body
+    assert "surface=<a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_decision_queue_row: kind=worktree_approval status=pending_operator_approval" in today.body
+    assert f"surface=<a href='/approvals?goal_id={result.goal_id}'>Scoped approvals</a>" in today.body
+    assert "today_decision_queue_safety: read-only daily queue; existing confirmed forms and approval surfaces own writes" in today.body
     assert "Today Workflow Map" in today.body
     assert "data-today-workflow-map='true'" in today.body
     assert "today_workflow_map_status</dt><dd>available" in today.body
