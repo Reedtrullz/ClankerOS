@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-29 Action Preflight Confirmation UX
+
+- Added a read-only `Action Preflight` block to every local app confirmation
+  page before the existing `Action Confirmation Review`.
+- The final safety checkpoint now shows visible Confirm, Returns, Local Write,
+  Context, and Boundary cards before the payload and final `confirm=yes`
+  submit.
+- Collapsed preflight evidence records the action, category, surface, return
+  route/source, submitted project, Goal, artifact, field names/count, expected
+  output, confirmation requirement, and no write/provider/network/external
+  effect counters before confirmation.
+- The existing confirmation review, command evidence, payload table, and
+  confirmation semantics remain intact.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest
+  `python3 -m pytest -q tests/test_first_milestone.py -k
+  'local_app_artifact_viewer_is_read_only_and_bounded or
+  local_app_demo_scenario_populates_fixture_state'` passed with `2 passed, 514
+  deselected in 41.73s`; Playwright browser check against a temp-root local
+  app submitted the artifact `save-workspace` form, rendered
+  `Action Preflight` before review/command/payload, confirmed return route
+  `/artifacts?path=docs/sample.md`, artifact `docs/sample.md`, no write before
+  confirm, no network/external effects, then completed the existing
+  `Confirm local action` path to the `Action Result` page; `python3 -m
+  compileall -q agent_os tests`; bounded temp-root `python3 -m agent_os.cli
+  --root "$scratch" app-smoke-test`; bounded temp-root `python3 -m agent_os.cli
+  --root "$scratch" app-demo-smoke-test`; `git diff --check`.
+- Non-claims: no confirmation bypass, no new action authority, no write before
+  confirmation, no provider calls, no network actions, no push, no PR, no
+  deploy, and no external mutation.
+
 ## 2026-06-29 Command Palette Results Filter UX
 
 - Added a visible browser-local `Palette Results` list to the shared command

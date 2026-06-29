@@ -1039,11 +1039,13 @@ Core layers for the bootstrap:
   health/status artifact with current warning readbacks, and exposes only
   explicit local forms for safe
   artifact-producing and approval-producing actions. Confirmation pages render
-  a read-only `Action Confirmation Review` first, with visible Confirm,
-  Requires, Writes, Scope, and Boundary cards plus collapsed review evidence;
-  the existing `Action Confirmation Command Bar`, submitted action payload,
-  and safety boundary remain available before a confirmed local write, local
-  approval decision, or bounded local execution; confirmed action result pages
+  a read-only `Action Preflight` first, with visible Confirm, Returns, Local
+  Write, Context, and Boundary cards plus collapsed preflight evidence for the
+  submitted return route, project/Goal context, artifact, field count, and
+  zero-effect counters. The existing read-only `Action Confirmation Review`,
+  `Action Confirmation Command Bar`, submitted action payload, and safety
+  boundary remain available before a confirmed local write, local approval
+  decision, or bounded local execution; confirmed action result pages
   now open with an action-first `Action Complete` surface containing Continue,
   Completed, Artifact, Workflow, and Boundary cards plus collapsed
   result-command evidence, before preserving the submitted payload, local

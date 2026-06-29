@@ -8600,6 +8600,38 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     )
     assert remember_artifact.status == 409
     assert "Confirm save-workspace" in remember_artifact.body
+    assert "Action Preflight" in remember_artifact.body
+    assert "data-action-preflight='true'" in remember_artifact.body
+    assert "data-action-preflight-cards='true'" in remember_artifact.body
+    assert "data-action-preflight-primary='true'" in remember_artifact.body
+    assert "data-action-preflight-return='true'" in remember_artifact.body
+    assert "data-action-preflight-write='true'" in remember_artifact.body
+    assert "data-action-preflight-context='true'" in remember_artifact.body
+    assert "data-action-preflight-safety='true'" in remember_artifact.body
+    assert "data-action-preflight-evidence='true'" in remember_artifact.body
+    assert "action_preflight_status</dt><dd>awaiting_operator_confirm" in remember_artifact.body
+    assert "action_preflight_action</dt><dd>save-workspace" in remember_artifact.body
+    assert "action_preflight_return_surface</dt><dd><a href='/artifacts?path=docs/sample.md'>/artifacts?path=docs/sample.md</a>" in remember_artifact.body
+    assert "action_preflight_return_source</dt><dd>return_to" in remember_artifact.body
+    assert "action_preflight_project</dt><dd>none" in remember_artifact.body
+    assert "action_preflight_goal</dt><dd>none" in remember_artifact.body
+    assert "action_preflight_artifact</dt><dd>docs/sample.md" in remember_artifact.body
+    assert "action_preflight_submitted_fields</dt><dd>7" in remember_artifact.body
+    assert "action_preflight_field_names</dt><dd>open_project, open_goal, filters, expanded_panels, last_viewed_artifact, updated_by, return_to" in remember_artifact.body
+    assert "action_preflight_write_before_confirm</dt><dd>false" in remember_artifact.body
+    assert "action_preflight_provider_calls_taken</dt><dd>0" in remember_artifact.body
+    assert "action_preflight_network_actions_taken</dt><dd>0" in remember_artifact.body
+    assert "action_preflight_external_effects_created</dt><dd>false" in remember_artifact.body
+    assert "action_preflight_safety: explicit confirmation before local write" in remember_artifact.body
+    assert remember_artifact.body.index("Action Preflight") < remember_artifact.body.index(
+        "Action Confirmation Review"
+    )
+    assert remember_artifact.body.index("Action Confirmation Review") < remember_artifact.body.index(
+        "Action Confirmation Command Bar"
+    )
+    assert remember_artifact.body.index("Action Confirmation Command Bar") < remember_artifact.body.index(
+        "Action Payload"
+    )
     remembered = render_local_app_route(
         tmp_path,
         "/actions/save-workspace",
@@ -9571,6 +9603,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     )
     assert home_day_plan_workspace_confirmation.status == 409
     assert "Confirm save-workspace" in home_day_plan_workspace_confirmation.body
+    assert "Action Preflight" in home_day_plan_workspace_confirmation.body
+    assert "action_preflight_return_surface</dt><dd><a href='/'>/</a>" in home_day_plan_workspace_confirmation.body
+    assert f"action_preflight_project</dt><dd>{result.project_id}" in home_day_plan_workspace_confirmation.body
+    assert f"action_preflight_goal</dt><dd>{result.goal_id}" in home_day_plan_workspace_confirmation.body
+    assert "action_preflight_submitted_fields</dt><dd>7" in home_day_plan_workspace_confirmation.body
+    assert "action_preflight_write_before_confirm</dt><dd>false" in home_day_plan_workspace_confirmation.body
     assert "home-day-plan" in home_day_plan_workspace_confirmation.body
     assert "home_ci_snapshot_fast_smoke_validated_record_command_template: gh run view" in dashboard.body
     assert "Home Recent Activity" in dashboard.body
@@ -10039,6 +10077,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     )
     assert today_workspace_confirmation.status == 409
     assert "Confirm save-workspace" in today_workspace_confirmation.body
+    assert "Action Preflight" in today_workspace_confirmation.body
+    assert "action_preflight_return_surface</dt><dd><a href='/today'>/today</a>" in today_workspace_confirmation.body
+    assert f"action_preflight_project</dt><dd>{result.project_id}" in today_workspace_confirmation.body
+    assert f"action_preflight_goal</dt><dd>{result.goal_id}" in today_workspace_confirmation.body
+    assert "action_preflight_safety: explicit confirmation before local write" in today_workspace_confirmation.body
     assert "today-command-center" in today_workspace_confirmation.body
 
     goals = render_local_app_route(tmp_path, "/goals")

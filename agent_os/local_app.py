@@ -31113,6 +31113,7 @@ def _confirm_form(action: str, form: dict[str, list[str]]) -> str:
         [
             f"<section><h1>Confirm {_e(action)}</h1>",
             "<p>This action writes local ClankerOS artifacts only after explicit confirmation. It does not push, create PRs, deploy, call providers, or execute external mutations.</p>",
+            _action_confirmation_preflight(action, form),
             _action_confirmation_review(action, form),
             "<div id='action-confirmation-safety'>",
             _non_claim_banner(),
@@ -31125,6 +31126,102 @@ def _confirm_form(action: str, form: dict[str, list[str]]) -> str:
                 f"method='post' action='/actions/{_e(action)}'>"
                 f"{''.join(inputs)}<button type='submit'>Confirm local action</button></form>"
             ),
+            "</section>",
+        ]
+    )
+
+
+def _action_confirmation_preflight(action: str, form: dict[str, list[str]]) -> str:
+    context = _action_confirmation_context(action, form)
+    return_to = _safe_local_return_path(_one(form, "return_to"))
+    resume_surface = _safe_local_return_path(_one(form, "resume_surface"))
+    if return_to:
+        return_surface = return_to
+        return_source = "return_to"
+    elif resume_surface:
+        return_surface = resume_surface
+        return_source = "resume_surface"
+    else:
+        return_surface = ""
+        return_source = "post_action_notice"
+    project = _one(form, "open_project") or _one(form, "project_id") or ""
+    goal = _one(form, "open_goal") or _one(form, "goal_id") or ""
+    artifact = (
+        _one(form, "last_viewed_artifact")
+        or _one(form, "artifact_path")
+        or _one(form, "path")
+        or ""
+    )
+    field_names = [
+        key
+        for key, values in form.items()
+        if key != "confirm" and values
+    ]
+    return_value: str | SafeHtml = (
+        SafeHtml(f"<a href='{_e(return_surface)}'>{_e(return_surface)}</a>")
+        if return_surface
+        else "post-action notice"
+    )
+    return "".join(
+        [
+            "<section id='action-confirmation-preflight' class='panel action-confirmation-preflight' data-action-preflight='true'>",
+            "<h2>Action Preflight</h2>",
+            "<p class='muted'>Scan the local write, return route, submitted context, and safety boundary before confirming.</p>",
+            "<div class='action-confirmation-grid' data-action-preflight-cards='true'>",
+            "<article class='action-confirmation-card action-confirmation-primary' data-action-preflight-primary='true'><h3>Confirm</h3>",
+            f"<p>{_e(action)}</p>",
+            "<a class='action-confirmation-action' href='#action-confirm-local-action'>Confirm local action</a></article>",
+            "<article class='action-confirmation-card' data-action-preflight-return='true'><h3>Returns</h3>",
+            f"<p>{_e(return_surface or 'post-action notice')}</p>",
+            f"<a class='action-confirmation-link' href='{_e(return_surface or '#action-confirmation-payload')}'>{_e(return_surface or 'Review payload')}</a></article>",
+            "<article class='action-confirmation-card' data-action-preflight-write='true'><h3>Local Write</h3>",
+            f"<p>{_e(context['output'])}</p>",
+            "<a class='action-confirmation-link' href='#action-confirmation-payload'>Review fields</a></article>",
+            "<article class='action-confirmation-card' data-action-preflight-context='true'><h3>Context</h3>",
+            f"<p>{_e(project or 'no project')} · {_e(goal or 'no goal')}</p>",
+            "<a class='action-confirmation-link' href='#action-confirmation-preflight-evidence'>Preflight evidence</a></article>",
+            "<article class='action-confirmation-card' data-action-preflight-safety='true'><h3>Boundary</h3>",
+            "<p>No network, provider, push, PR, deploy, or external mutation.</p>",
+            "<a class='action-confirmation-link' href='#action-confirmation-safety'>Safety</a></article>",
+            "</div>",
+            "<details id='action-confirmation-preflight-evidence' class='action-preflight-evidence' data-action-preflight-evidence='true'>",
+            "<summary>Action preflight evidence</summary>",
+            _kv(
+                [
+                    ("action_preflight_status", "awaiting_operator_confirm"),
+                    ("action_preflight_action", action),
+                    ("action_preflight_category", context["category"]),
+                    ("action_preflight_surface", context["surface"]),
+                    ("action_preflight_return_surface", return_value),
+                    ("action_preflight_return_source", return_source),
+                    ("action_preflight_project", project or "none"),
+                    ("action_preflight_goal", goal or "none"),
+                    ("action_preflight_artifact", artifact or "none"),
+                    ("action_preflight_submitted_fields", context["submitted_fields"]),
+                    ("action_preflight_field_names", ", ".join(field_names) if field_names else "none"),
+                    ("action_preflight_required_input", context["requires"]),
+                    ("action_preflight_output_artifact", context["output"]),
+                    ("action_preflight_mutates_local_state_after_confirm", context["mutates"]),
+                    ("action_preflight_confirmation_required", context["confirmation"]),
+                    ("action_preflight_write_before_confirm", "false"),
+                    ("action_preflight_provider_calls_taken", "0"),
+                    ("action_preflight_network_actions_taken", "0"),
+                    ("action_preflight_external_effects_created", "false"),
+                    ("action_preflight_push_created", "false"),
+                    ("action_preflight_pr_created", "false"),
+                    ("action_preflight_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"action_preflight_confirm: {_e(action)}",
+                    f"action_preflight_return: {_e(return_surface or 'post-action notice')}",
+                    f"action_preflight_write: {_e(context['output'])}",
+                    f"action_preflight_fields: {_e(context['submitted_fields'])}",
+                    "action_preflight_safety: explicit confirmation before local write",
+                ]
+            ),
+            "</details>",
             "</section>",
         ]
     )
@@ -34756,7 +34853,7 @@ def _html_page(
     .action-workbench-action {{ background:var(--accent); color:#fff; }}
     .action-workbench-link {{ background:var(--surface); color:var(--accent); }}
     .action-finish-today {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
-    .action-confirmation-review {{ border-left:4px solid var(--warn); }}
+    .action-confirmation-preflight, .action-confirmation-review {{ border-left:4px solid var(--warn); }}
     .action-confirmation-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
     .action-confirmation-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
     .action-confirmation-card h3 {{ margin-top:0; }}
@@ -34765,9 +34862,9 @@ def _html_page(
     .action-confirmation-action, .action-confirmation-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .action-confirmation-action {{ background:var(--accent); color:#fff; }}
     .action-confirmation-link {{ background:var(--surface); color:var(--accent); }}
-    .action-confirmation-review-evidence, .action-confirmation-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .action-confirmation-review-evidence summary, .action-confirmation-command-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .action-confirmation-review-evidence:not([open]) > :not(summary), .action-confirmation-command-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .action-preflight-evidence, .action-confirmation-review-evidence, .action-confirmation-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .action-preflight-evidence summary, .action-confirmation-review-evidence summary, .action-confirmation-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .action-preflight-evidence:not([open]) > :not(summary), .action-confirmation-review-evidence:not([open]) > :not(summary), .action-confirmation-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .action-confirmation-command-bar {{ border-left:4px solid var(--warn); }}
     .action-confirmation-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .action-confirmation-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -35135,7 +35232,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #goal-attention-digest {{ scroll-margin-top:260px; }} .goal-attention-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-attention-grid {{ grid-template-columns:1fr; }} }}

@@ -942,12 +942,14 @@ The app is local-only by default, binds to `127.0.0.1`, and refuses non-local
 binds unless `--allow-nonlocal-bind` is explicitly supplied. It does not push,
 create PRs, deploy, call providers, or perform network actions beyond local
 browser/server loopback. Confirmation pages show submitted payloads before
-local writes. They now start with a read-only `Action Confirmation Review`
-with visible Confirm, Requires, Writes, Scope, and Boundary cards before the
-payload. The existing `Action Confirmation Command Bar` remains as collapsed
-evidence, preserving the action kind, required input, output artifact, local
-mutation/execution posture, and no-provider/no-network/no-push boundaries
-before the final `confirm=yes` submit. Confirmed actions now return an
+local writes. They now start with a read-only `Action Preflight` that shows the
+local action, return route, expected local write, submitted project/Goal
+context, field count, and safety boundary before the existing read-only
+`Action Confirmation Review` cards and payload. The existing `Action
+Confirmation Command Bar` remains as collapsed evidence, preserving the action
+kind, required input, output artifact, local mutation/execution posture, and
+no-provider/no-network/no-push boundaries before the final `confirm=yes`
+submit. Confirmed actions now return an
 action-first `Action Complete` surface before the raw details, with visible
 Continue, Completed, Artifact, Workflow, and Boundary cards plus collapsed
 result-command evidence preserving the target notice surface, result, primary

@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Confirmation pages now open with a read-only `Action Preflight` before the
+  existing confirmation review. It turns the final browser safety checkpoint
+  into visible Confirm, Returns, Local Write, Context, and Boundary cards,
+  preserves submitted return route/project/Goal/artifact/field-count evidence,
+  and still writes only after the final `confirm=yes` submit.
 - The shared command palette now has a visible browser-local `Palette Results`
   list. Typing in `command-palette-search` filters local routes and recent work
   in place, shows a no-match state when needed, and keeps the existing Search
@@ -456,10 +461,10 @@ Latest status focus:
   fast-smoke proof, recording full-suite proof, or using the manual
   record-after-success fallback, while keeping all GitHub commands copy-only
   and all local proof writes confirmation-bound.
-- Confirmation pages now open with a read-only `Action Confirmation Review`
-  before payload details, with visible Confirm, Requires, Writes, Scope, and
-  Boundary cards, a stable `#action-confirm-local-action` form anchor, and
-  collapsed review/command evidence preserving zero-effect counters.
+- Confirmation pages now open with a read-only `Action Preflight` and then the
+  existing `Action Confirmation Review` before payload details, with visible
+  return route, local write, submitted context, field-count, confirmation
+  target, and zero-effect evidence before `confirm=yes`.
 - Confirmed local action result pages now open with an action-first
   `Action Complete` surface before payload details, with visible Continue,
   Completed, Artifact, Workflow, and Boundary cards plus collapsed result
