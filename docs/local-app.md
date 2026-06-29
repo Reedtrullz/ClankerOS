@@ -110,7 +110,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   finish-today resume save target. A read-only `Today Decision Queue` follows
   with exact daily decision rows for the current action plus waiting approvals,
   incidents, recommendations, or blocked work, linking only to existing
-  confirmed forms and scoped review surfaces. A read-only `Today Workflow Map`
+  confirmed forms and scoped review surfaces. A browser-local `Today Decision
+  Filter` narrows those already-rendered rows by lane or text, remembers the
+  daily lane/query in `localStorage:clankeros-today-decision-filter`, and
+  resets from `/workspace#workspace-view-memory`. A read-only `Today Workflow Map`
   follows with the first-run gate rail when no Goal exists, or the lead Goal's
   local lifecycle gates, current gate, next action, same-page action target,
   and gate counts once a Goal exists. A read-only `Today CI Handoff` follows with the
@@ -649,8 +652,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   id, label source, and route evidence. A read-only `Workspace View Memory`
   panel follows, showing browser-local `localStorage` view state for theme,
   focus mode, Goal board view, open panels, scroll position, search lanes,
-  timeline lanes, artifact filters, notes filters, note drafts, setup form
-  drafts, Memory Bank filters, and Skills Inventory filters with
+  timeline lanes, Today and Goal decision filters, artifact filters, notes
+  filters, note drafts, setup form drafts, Memory Bank filters, and Skills
+  Inventory filters with
   Refresh plus reset controls. It only clears
   browser-local view memory after explicit clicks and does not write
   `.clanker/app/workspace.json`. The read-only `Workspace Daily Brief` and `Workspace Workflow Map`

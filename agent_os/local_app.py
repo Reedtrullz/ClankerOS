@@ -660,6 +660,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-today-decision-queue='true'",
                 "data-today-decision-list='true'",
                 "data-today-decision-row='true'",
+                "data-today-decision-filter='true'",
+                "data-today-decision-filter-kind='worktree_approval'",
+                "data-today-decision-filter-query='true'",
                 "data-today-decision-evidence='true'",
                 "data-today-workflow-map='true'",
                 "data-today-ci-handoff='true'",
@@ -2561,7 +2564,7 @@ def _today_decision_queue(
                 }
             )
 
-    display_rows = rows[:8]
+    display_rows = rows
     hidden_count = max(len(rows) - len(display_rows), 0)
     row_items = "".join(
         [
@@ -2570,7 +2573,9 @@ def _today_decision_queue(
                 f"data-today-decision-kind='{_e(row['kind'])}' "
                 f"data-today-decision-status='{_e(row['status'])}' "
                 f"data-today-decision-primary='{_e(row['primary'])}' "
-                f"data-today-decision-goal='{_e(row['goal'])}'>"
+                f"data-today-decision-goal='{_e(row['goal'])}' "
+                f"data-today-decision-item-id='{_e(row['item_id'])}' "
+                f"data-today-decision-text='{_e(_goal_decision_row_text(row))}'>"
                 "<span class='goal-decision-kind'>"
                 f"{_e(row['kind'].replace('_', ' '))}</span>"
                 f"<strong>{_e(row['label'])}</strong>"
@@ -2597,6 +2602,7 @@ def _today_decision_queue(
             "<ol class='goal-decision-list today-decision-list' data-today-decision-list='true'>",
             row_items,
             "</ol>",
+            _today_decision_filter(rows),
             "<details class='goal-decision-evidence today-decision-evidence' data-today-decision-evidence='true'><summary>Today decision queue evidence</summary>",
             _kv(
                 [
@@ -2634,6 +2640,102 @@ def _today_decision_queue(
                     f"today_decision_queue_now: {_e(next_action)}",
                     *queue_lines,
                     "today_decision_queue_safety: read-only daily queue; existing confirmed forms and approval surfaces own writes",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _today_decision_filter(rows: list[dict[str, str]]) -> str:
+    lane_order = [
+        ("first_run_current_action", "First run"),
+        ("current_action", "Current"),
+        ("worktree_approval", "Worktree"),
+        ("commit_approval", "Commit"),
+        ("publication_approval", "Publication"),
+        ("incident", "Incidents"),
+        ("recommendation", "Recommendations"),
+        ("blocked_task", "Blocked"),
+    ]
+    lane_counts = {lane: 0 for lane, _label in lane_order}
+    for row in rows:
+        kind = row.get("kind", "")
+        if kind in lane_counts:
+            lane_counts[kind] += 1
+    active_lanes = [(lane, label) for lane, label in lane_order if lane_counts[lane]]
+    buttons = [
+        (
+            "<button type='button' class='today-decision-filter-button goal-decision-filter-button' "
+            "data-today-decision-filter-kind='all' data-today-decision-filter-active='true' aria-pressed='true'>"
+            f"All <span>{len(rows)}</span></button>"
+        )
+    ]
+    for lane, label in active_lanes:
+        buttons.append(
+            (
+                "<button type='button' class='today-decision-filter-button goal-decision-filter-button' "
+                f"data-today-decision-filter-kind='{_e(lane)}' aria-pressed='false'>{_e(label)} "
+                f"<span>{lane_counts[lane]}</span></button>"
+            )
+        )
+    lane_summary = ", ".join(f"{lane}={lane_counts[lane]}" for lane, _label in lane_order)
+    storage_key = "clankeros-today-decision-filter"
+    return "".join(
+        [
+            "<section id='today-decision-filter' class='panel today-decision-filter goal-decision-filter' "
+            "data-today-decision-filter='true' "
+            f"data-today-decision-filter-storage-key='{_e(storage_key)}'>",
+            "<h3>Today Decision Filter</h3>",
+            "<p class='muted'>Narrow already-rendered daily decisions by lane or text without deciding anything.</p>",
+            "<div class='today-decision-filter-controls goal-decision-filter-controls' data-today-decision-filter-controls='true'>",
+            "".join(buttons),
+            "<label class='today-decision-filter-search goal-decision-filter-search'>Find "
+            "<input type='search' data-today-decision-filter-query='true' placeholder='approval, incident, command...'></label>",
+            "<button type='button' class='today-decision-filter-reset goal-decision-filter-reset' data-today-decision-filter-reset='true'>Reset filter</button>",
+            "<span class='today-decision-filter-memory-status goal-decision-filter-memory-status' data-today-decision-filter-view-status='true'>View: default</span>",
+            "</div>",
+            f"<p class='muted' data-today-decision-filter-status='true'>Showing {len(rows)} of {len(rows)} decision rows.</p>",
+            "<p class='muted' data-today-decision-filter-empty='true' hidden>No decision rows match this filter.</p>",
+            "<details class='today-decision-filter-evidence goal-decision-filter-evidence' data-today-decision-filter-evidence='true'><summary>Today decision filter evidence</summary>",
+            _kv(
+                [
+                    ("today_decision_filter_status", "available"),
+                    ("today_decision_filter_scope", "browser_local_rendered_decisions"),
+                    ("today_decision_filter_total_rows", str(len(rows))),
+                    (
+                        "today_decision_filter_first_run_current_action_rows",
+                        str(lane_counts["first_run_current_action"]),
+                    ),
+                    ("today_decision_filter_current_action_rows", str(lane_counts["current_action"])),
+                    ("today_decision_filter_worktree_approval_rows", str(lane_counts["worktree_approval"])),
+                    ("today_decision_filter_commit_approval_rows", str(lane_counts["commit_approval"])),
+                    ("today_decision_filter_publication_approval_rows", str(lane_counts["publication_approval"])),
+                    ("today_decision_filter_incident_rows", str(lane_counts["incident"])),
+                    ("today_decision_filter_recommendation_rows", str(lane_counts["recommendation"])),
+                    ("today_decision_filter_blocked_task_rows", str(lane_counts["blocked_task"])),
+                    (
+                        "today_decision_filter_lanes",
+                        "all first_run_current_action current_action worktree_approval commit_approval publication_approval incident recommendation blocked_task",
+                    ),
+                    ("today_decision_filter_persistence", "browser_local_view_memory"),
+                    ("today_decision_filter_memory_storage", f"localStorage:{storage_key}"),
+                    ("today_decision_filter_memory_fields", "lane query"),
+                    ("today_decision_filter_default", "all"),
+                    ("today_decision_filter_reset", "available"),
+                    ("today_decision_filter_write_on_get", "false"),
+                    ("today_decision_filter_provider_calls_taken", "0"),
+                    ("today_decision_filter_network_actions_taken", "0"),
+                    ("today_decision_filter_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"today_decision_filter_lanes: {_e(lane_summary)}",
+                    "today_decision_filter: filters already-rendered Today decision rows only",
+                    "today_decision_filter: restores lane and query from browser storage for the daily cockpit",
+                    "today_decision_filter_safety: no approval, execution, push, PR, deploy, provider call, or network action",
                 ]
             ),
             "</details>",
@@ -6955,6 +7057,13 @@ def _workspace_view_memory_panel() -> str:
             "Browser-local route history",
         ),
         (
+            "today-decisions",
+            "Today Decision Filter",
+            "exact",
+            "clankeros-today-decision-filter",
+            "Daily decision queue lane and text filter",
+        ),
+        (
             "open-panels",
             "Open Panels",
             "prefix",
@@ -7117,7 +7226,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus board recent route-history open-panels scroll-position search timeline decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles",
+                    "workspace_view_memory_reset_scope: theme focus board recent route-history today-decisions open-panels scroll-position search timeline decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles",
                 ]
             ),
             "</details>",
@@ -39676,26 +39785,27 @@ def _html_page(
     .goal-decision-queue, .today-decision-queue {{ border-left:4px solid var(--warn); }}
     .goal-decision-list {{ list-style:none; padding:0; margin:12px 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:10px; }}
     .goal-decision-row {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; display:grid; gap:8px; align-content:start; }}
-    .goal-decision-row[data-goal-decision-primary='true'] {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
+    .goal-decision-row[data-goal-decision-primary='true'], .today-decision-row[data-today-decision-primary='true'] {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
     .goal-decision-kind {{ display:inline-flex; width:max-content; max-width:100%; padding:3px 7px; border:1px solid var(--line); border-radius:999px; color:var(--muted); font-size:12px; overflow-wrap:anywhere; }}
     .goal-decision-row strong, .goal-decision-row p {{ margin:0; overflow-wrap:anywhere; }}
     .goal-decision-row p {{ color:var(--muted); }}
     .goal-decision-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; width:100%; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
-    .goal-decision-row[data-goal-decision-primary='true'] .goal-decision-link {{ background:var(--accent); color:#fff; }}
+    .goal-decision-row[data-goal-decision-primary='true'] .goal-decision-link, .today-decision-row[data-today-decision-primary='true'] .goal-decision-link {{ background:var(--accent); color:#fff; }}
     .goal-decision-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-decision-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-decision-evidence:not([open]) > :not(summary) {{ display:none; }}
-    .goal-decision-filter {{ border-left:4px solid var(--ok); margin:0 0 12px; }}
-    .goal-decision-filter-controls {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0; }}
-    .goal-decision-filter-button, .goal-decision-filter-reset {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border:1px solid var(--line); background:var(--surface); color:var(--text); border-radius:6px; }}
-    .goal-decision-filter-button[data-goal-decision-filter-active='true'] {{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }}
+    .goal-decision-filter, .today-decision-filter {{ border-left:4px solid var(--ok); margin:0 0 12px; }}
+    .goal-decision-filter-controls, .today-decision-filter-controls {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0; }}
+    .goal-decision-filter-button, .goal-decision-filter-reset, .today-decision-filter-button, .today-decision-filter-reset {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border:1px solid var(--line); background:var(--surface); color:var(--text); border-radius:6px; }}
+    .goal-decision-filter-button[data-goal-decision-filter-active='true'], .today-decision-filter-button[data-today-decision-filter-active='true'] {{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }}
     .goal-decision-filter-button span {{ font-variant-numeric:tabular-nums; }}
-    .goal-decision-filter-search {{ display:inline-flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:min(100%, 260px); }}
-    .goal-decision-filter-search input {{ min-width:min(100%, 220px); }}
-    .goal-decision-filter-memory-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
-    .goal-decision-filter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .goal-decision-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .goal-decision-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .today-decision-filter-button span {{ font-variant-numeric:tabular-nums; }}
+    .goal-decision-filter-search, .today-decision-filter-search {{ display:inline-flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:min(100%, 260px); }}
+    .goal-decision-filter-search input, .today-decision-filter-search input {{ min-width:min(100%, 220px); }}
+    .goal-decision-filter-memory-status, .today-decision-filter-memory-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .goal-decision-filter-evidence, .today-decision-filter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-decision-filter-evidence summary, .today-decision-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-decision-filter-evidence:not([open]) > :not(summary), .today-decision-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
     .goal-first-run-rail {{ border-left:4px solid var(--accent); }}
     .goal-first-run-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:10px; margin:12px 0; }}
     .goal-first-run-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; display:grid; gap:7px; align-content:start; }}
@@ -40124,7 +40234,7 @@ def _html_page(
     .goal-continuation-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-continuation-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-continuation-evidence:not([open]) > :not(summary) {{ display:none; }}
-    #today-decision-queue, #goal-progress-meter, #goal-attention-digest, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-coder-handoff-digest, #goal-session-digest, #goal-activity-pulse, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence-digest, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
+    #today-decision-queue, #today-decision-filter, #goal-progress-meter, #goal-attention-digest, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-coder-handoff-digest, #goal-session-digest, #goal-activity-pulse, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence-digest, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-remaining-work-command-bar, #goal-remaining-work {{ scroll-margin-top:128px; }}
     .goal-workflow-map {{ border-left:4px solid var(--accent); }}
     .goal-workflow-map dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .goal-workflow-map-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
@@ -40765,7 +40875,7 @@ def _html_page(
     .goal-timeline-filter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-timeline-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-timeline-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
-    @media (max-width: 640px) {{ .goal-timeline-filter-button, .goal-timeline-filter-reset, .goal-decision-filter-button, .goal-decision-filter-reset {{ width:100%; justify-content:center; }} .goal-timeline-filter-memory, .goal-decision-filter-controls {{ align-items:stretch; }} .goal-timeline-filter-memory-status, .goal-decision-filter-memory-status, .goal-decision-filter-search, .goal-decision-filter-search input {{ width:100%; }} }}
+    @media (max-width: 640px) {{ .goal-timeline-filter-button, .goal-timeline-filter-reset, .goal-decision-filter-button, .goal-decision-filter-reset, .today-decision-filter-button, .today-decision-filter-reset {{ width:100%; justify-content:center; }} .goal-timeline-filter-memory, .goal-decision-filter-controls, .today-decision-filter-controls {{ align-items:stretch; }} .goal-timeline-filter-memory-status, .goal-decision-filter-memory-status, .today-decision-filter-memory-status, .goal-decision-filter-search, .goal-decision-filter-search input, .today-decision-filter-search, .today-decision-filter-search input {{ width:100%; }} }}
     .goal-timeline-grid, .goal-activity-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
     .goal-timeline-card, .goal-activity-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
     .goal-timeline-card h3, .goal-activity-card h3 {{ margin-top:0; }}
@@ -41091,11 +41201,11 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .workflow-scope-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #goal-attention-digest {{ scroll-margin-top:260px; }} .goal-attention-grid {{ grid-template-columns:1fr; }} }}
-    @media (max-width: 860px) {{ #today-decision-queue, #goal-decision-queue, #goal-decision-filter {{ scroll-margin-top:260px; }} .goal-decision-list {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ #today-decision-queue, #today-decision-filter, #goal-decision-queue, #goal-decision-filter {{ scroll-margin-top:260px; }} .goal-decision-list {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #goal-activity-pulse {{ scroll-margin-top:260px; }} .goal-activity-pulse-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-attention-grid {{ grid-template-columns:1fr; }} }}
@@ -41991,6 +42101,119 @@ def _html_page(
       if (!restoreGoalDecisionFilterState()) {{
         updateGoalDecisionFilter({{ lane: "all", query: "", save: false }});
         setGoalDecisionFilterViewStatus(filterPanel, "View: default");
+      }}
+    }}
+    function todayDecisionFilterStorageKey(filterPanel) {{
+      var key = filterPanel ? filterPanel.getAttribute("data-today-decision-filter-storage-key") : "";
+      return key || "clankeros-today-decision-filter";
+    }}
+    function setTodayDecisionFilterViewStatus(filterPanel, message) {{
+      var status = filterPanel ? filterPanel.querySelector("[data-today-decision-filter-view-status='true']") : null;
+      if (status) {{ status.textContent = message; }}
+    }}
+    function normalizeTodayDecisionFilterLane(filterPanel, lane) {{
+      var normalized = lane || "all";
+      var buttons = filterPanel ? Array.prototype.slice.call(filterPanel.querySelectorAll("[data-today-decision-filter-kind]")) : [];
+      var found = buttons.some(function(button) {{
+        return (button.getAttribute("data-today-decision-filter-kind") || "all") === normalized;
+      }});
+      return found ? normalized : "all";
+    }}
+    function selectedTodayDecisionFilterLane(filterPanel) {{
+      var active = filterPanel ? filterPanel.querySelector("[data-today-decision-filter-kind][aria-pressed='true']") : null;
+      return active ? active.getAttribute("data-today-decision-filter-kind") || "all" : "all";
+    }}
+    function saveTodayDecisionFilterState(filterPanel, state) {{
+      if (!window.localStorage || !filterPanel) {{ return; }}
+      try {{
+        window.localStorage.setItem(todayDecisionFilterStorageKey(filterPanel), JSON.stringify(state));
+        setTodayDecisionFilterViewStatus(filterPanel, "View: saved");
+      }} catch (error) {{
+        setTodayDecisionFilterViewStatus(filterPanel, "View: local only");
+      }}
+    }}
+    function restoreTodayDecisionFilterState() {{
+      var filterPanel = document.querySelector("[data-today-decision-filter='true']");
+      if (!filterPanel) {{ return false; }}
+      if (!window.localStorage) {{
+        setTodayDecisionFilterViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+      try {{
+        var raw = window.localStorage.getItem(todayDecisionFilterStorageKey(filterPanel));
+        if (!raw) {{
+          setTodayDecisionFilterViewStatus(filterPanel, "View: default");
+          return false;
+        }}
+        var saved = JSON.parse(raw);
+        updateTodayDecisionFilter({{
+          lane: saved && typeof saved.lane === "string" ? saved.lane : "all",
+          query: saved && typeof saved.query === "string" ? saved.query : "",
+          save: false
+        }});
+        setTodayDecisionFilterViewStatus(filterPanel, "View: restored");
+        return true;
+      }} catch (error) {{
+        setTodayDecisionFilterViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+    }}
+    function clearTodayDecisionFilterState() {{
+      var filterPanel = document.querySelector("[data-today-decision-filter='true']");
+      if (filterPanel && window.localStorage) {{
+        try {{ window.localStorage.removeItem(todayDecisionFilterStorageKey(filterPanel)); }} catch (error) {{}}
+      }}
+      updateTodayDecisionFilter({{ lane: "all", query: "", save: false }});
+      setTodayDecisionFilterViewStatus(filterPanel, "View: reset");
+    }}
+    function updateTodayDecisionFilter(options) {{
+      var filterPanel = document.querySelector("[data-today-decision-filter='true']");
+      var list = document.querySelector("[data-today-decision-list='true']");
+      if (!filterPanel || !list) {{ return; }}
+      options = options || {{}};
+      var queryInput = filterPanel.querySelector("[data-today-decision-filter-query='true']");
+      var lane = normalizeTodayDecisionFilterLane(filterPanel, typeof options.lane === "string" ? options.lane : selectedTodayDecisionFilterLane(filterPanel));
+      var query = typeof options.query === "string" ? options.query : (queryInput ? queryInput.value || "" : "");
+      if (queryInput) {{ queryInput.value = query; }}
+      var queryText = query.trim().toLowerCase();
+      var rows = Array.prototype.slice.call(list.querySelectorAll("[data-today-decision-row='true']"));
+      var shown = 0;
+      rows.forEach(function(row) {{
+        var kind = row.getAttribute("data-today-decision-kind") || "";
+        var text = row.getAttribute("data-today-decision-text") || row.textContent.toLowerCase();
+        var match = (lane === "all" || kind === lane) && (!queryText || text.indexOf(queryText) !== -1);
+        row.hidden = !match;
+        if (match) {{ shown += 1; }}
+      }});
+      Array.prototype.slice.call(filterPanel.querySelectorAll("[data-today-decision-filter-kind]")).forEach(function(button) {{
+        var active = (button.getAttribute("data-today-decision-filter-kind") || "all") === lane;
+        if (active) {{
+          button.setAttribute("data-today-decision-filter-active", "true");
+          button.setAttribute("aria-pressed", "true");
+        }} else {{
+          button.removeAttribute("data-today-decision-filter-active");
+          button.setAttribute("aria-pressed", "false");
+        }}
+      }});
+      var status = filterPanel.querySelector("[data-today-decision-filter-status='true']");
+      if (status) {{
+        var parts = [];
+        if (lane !== "all") {{ parts.push("lane " + lane.replace(/_/g, " ")); }}
+        if (queryText) {{ parts.push("text " + queryText); }}
+        status.textContent = "Showing " + shown + " of " + rows.length + " decision rows" + (parts.length ? " matching " + parts.join(", ") : "") + ".";
+      }}
+      var empty = filterPanel.querySelector("[data-today-decision-filter-empty='true']");
+      if (empty) {{ empty.hidden = shown !== 0; }}
+      if (options.save !== false) {{
+        saveTodayDecisionFilterState(filterPanel, {{ lane: lane, query: query }});
+      }}
+    }}
+    function initializeTodayDecisionFilterState() {{
+      var filterPanel = document.querySelector("[data-today-decision-filter='true']");
+      if (!filterPanel) {{ return; }}
+      if (!restoreTodayDecisionFilterState()) {{
+        updateTodayDecisionFilter({{ lane: "all", query: "", save: false }});
+        setTodayDecisionFilterViewStatus(filterPanel, "View: default");
       }}
     }}
     function memoryInventoryStorageKey(filterPanel) {{
@@ -43190,6 +43413,18 @@ def _html_page(
         updateGoalDecisionFilter({{ lane: goalDecisionFilterButton.getAttribute("data-goal-decision-filter-kind") || "all" }});
         return;
       }}
+      var todayDecisionFilterReset = target.closest ? target.closest("[data-today-decision-filter-reset='true']") : null;
+      if (todayDecisionFilterReset) {{
+        event.preventDefault();
+        clearTodayDecisionFilterState();
+        return;
+      }}
+      var todayDecisionFilterButton = target.closest ? target.closest("[data-today-decision-filter-kind]") : null;
+      if (todayDecisionFilterButton) {{
+        event.preventDefault();
+        updateTodayDecisionFilter({{ lane: todayDecisionFilterButton.getAttribute("data-today-decision-filter-kind") || "all" }});
+        return;
+      }}
       var memoryFilterReset = target.closest ? target.closest("[data-memory-inventory-filter-reset='true']") : null;
       if (memoryFilterReset) {{
         event.preventDefault();
@@ -43273,6 +43508,10 @@ def _html_page(
       if (goalDecisionFilterQuery) {{
         updateGoalDecisionFilter({{ query: goalDecisionFilterQuery.value || "" }});
       }}
+      var todayDecisionFilterQuery = target.closest ? target.closest("[data-today-decision-filter-query='true']") : null;
+      if (todayDecisionFilterQuery) {{
+        updateTodayDecisionFilter({{ query: todayDecisionFilterQuery.value || "" }});
+      }}
       var memoryFilterQuery = target.closest ? target.closest("[data-memory-inventory-filter-query='true']") : null;
       if (memoryFilterQuery) {{
         updateMemoryInventoryFilter({{ query: memoryFilterQuery.value || "" }});
@@ -43340,6 +43579,7 @@ def _html_page(
     initializeGoalArtifactFilterState();
     initializeTimelineLaneState();
     initializeGoalDecisionFilterState();
+    initializeTodayDecisionFilterState();
     initializeMemoryInventoryFilterState();
     initializeSkillsInventoryFilterState();
     initializeApprovalFilterState();

@@ -198,7 +198,10 @@ day: do the current action, check timeline/evidence, clear the first blocker,
 and save the resume point. A read-only `Today Decision Queue` then turns the
 lead Goal or first-run state into exact daily rows: current action first, then
 pending approvals, incidents, recommendations, or blocked work, all linked to
-existing confirmed action forms or scoped review surfaces. A read-only `Today
+existing confirmed action forms or scoped review surfaces. A browser-local
+`Today Decision Filter` narrows those already-rendered rows by lane or text,
+restores lane/query from `localStorage:clankeros-today-decision-filter`, and
+can be reset from `/workspace#workspace-view-memory`. A read-only `Today
 Workflow Map` follows with the whole first-run path when no Goal exists, or the
 lead Goal's lifecycle gates when one does, including current gate, next action,
 same-page action target, and gate counts.
@@ -276,9 +279,9 @@ title-first when possible, while still retaining exact saved Goal id and route
 evidence for restoration. A read-only `Workspace View Memory` panel follows to
 inspect and clear browser-local view state such as theme, focus mode, Goal
 board filters, open panels, scroll position, search lanes, timeline lanes,
-artifact filters, notes filters, note drafts, setup and workflow form drafts,
-Memory Bank filters, and Skills Inventory filters from `localStorage` without changing
-`.clanker/app/workspace.json`.
+Today and Goal decision filters, artifact filters, notes filters, note drafts,
+setup and workflow form drafts, Memory Bank filters, and Skills Inventory
+filters from `localStorage` without changing `.clanker/app/workspace.json`.
 The read-only
 `Workspace Daily Brief` and `Workspace Workflow Map` then follow with the
 saved goal's current gate, gate counts, and finish posture, while saved-state

@@ -125,10 +125,14 @@ Core layers for the bootstrap:
   with exact daily decision rows for the current action plus waiting approvals,
   incidents, recommendations, or blocked work, linking only to existing
   confirmed forms and scoped review surfaces while preserving zero-effect
-  evidence. A read-only `Today Workflow Map` follows with the first-run gate
-  rail when no Goal exists, or the lead Goal's local lifecycle gates, current
-  gate, next action, same-page action target, and gate counts once a Goal
-  exists. A read-only `Today CI Handoff` follows with the
+  evidence. A browser-local `Today Decision Filter` narrows those
+  already-rendered rows by lane or text, restores lane/query from
+  `localStorage:clankeros-today-decision-filter`, and is included in
+  `/workspace#workspace-view-memory` reset coverage. A read-only `Today
+  Workflow Map` follows with the first-run gate rail when no Goal exists, or
+  the lead Goal's local lifecycle gates, current gate, next action, same-page
+  action target, and gate counts once a Goal exists. A read-only `Today CI
+  Handoff` follows with the
   latest operator-recorded GitHub Actions proof, current-checkout match status,
   exact `gh run list` / `gh run view` commands for current CI, and links to
   `/verification` plus `/ci-evidence` for recording proof after Actions
@@ -299,9 +303,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   read-only `Workspace View Memory` panel. That panel inventories browser
   `localStorage` view state for theme, focus mode, Goal board, Recent Items
   filters, open panels, scroll position, search lanes, timeline lanes, artifact
-  filters, notes filters, note drafts, setup and workflow form drafts, Memory
-  Bank filters, Skills Inventory filters, Approval Queue filters, Inbox Queue
-  filters, and Profile Routing filters, and can clear those browser-local
+  filters, Today and Goal decision filters, notes filters, note drafts, setup
+  and workflow form drafts, Memory Bank filters, Skills Inventory filters,
+  Approval Queue filters, Inbox Queue filters, and Profile Routing filters, and
+  can clear those browser-local
   values after explicit operator clicks without writing
   `.clanker/app/workspace.json`, calling providers, using the network, or
   mutating external systems. It sits before the

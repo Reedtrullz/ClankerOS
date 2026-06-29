@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/today#today-decision-filter` now narrows already-rendered Today Decision
+  Queue rows by all, first-run action, current action, approval type,
+  incidents, recommendations, blocked work, or local text search. It remembers
+  lane/query for the daily cockpit in
+  `localStorage:clankeros-today-decision-filter`, can be reset from
+  `/workspace#workspace-view-memory`, and keeps GET rendering read-only with no
+  decision, approval, execution, provider call, network action, push, PR,
+  deploy, or external effect.
 - `/goals/<goal_id>#goal-decision-filter` now narrows already-rendered Goal
   Decision Queue rows by all, current action, approval type, incidents,
   recommendations, blocked work, or local text search. It remembers lane/query

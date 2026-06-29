@@ -4807,13 +4807,47 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-today-decision-row='true'" in today.body
     assert "data-today-decision-kind='first_run_current_action'" in today.body
     assert "data-today-decision-primary='true'" in today.body
+    assert "data-today-decision-item-id='create_project'" in today.body
+    assert "data-today-decision-text='" in today.body
+    assert "Today Decision Filter" in today.body
+    assert "id='today-decision-filter'" in today.body
+    assert "data-today-decision-filter='true'" in today.body
+    assert "data-today-decision-filter-storage-key='clankeros-today-decision-filter'" in today.body
+    assert "data-today-decision-filter-controls='true'" in today.body
+    assert "data-today-decision-filter-kind='all'" in today.body
+    assert "data-today-decision-filter-kind='first_run_current_action'" in today.body
+    assert "data-today-decision-filter-active='true'" in today.body
+    assert "data-today-decision-filter-query='true'" in today.body
+    assert "data-today-decision-filter-reset='true'>Reset filter</button>" in today.body
+    assert "data-today-decision-filter-view-status='true'>View: default</span>" in today.body
+    assert "data-today-decision-filter-status='true'>Showing 1 of 1 decision rows." in today.body
+    assert "data-today-decision-filter-empty='true' hidden" in today.body
+    assert "data-today-decision-filter-evidence='true'" in today.body
     assert "data-today-decision-evidence='true'" in today.body
     assert today.body.index("data-today-operator-workbench='true'") < today.body.index(
         "data-today-decision-queue='true'"
     )
+    assert today.body.index("data-today-decision-list='true'") < today.body.index(
+        "data-today-decision-filter='true'"
+    )
     assert today.body.index("data-today-decision-queue='true'") < today.body.index(
         "data-today-workflow-map='true'"
     )
+    assert "today_decision_filter_status</dt><dd>available" in today.body
+    assert "today_decision_filter_scope</dt><dd>browser_local_rendered_decisions" in today.body
+    assert "today_decision_filter_total_rows</dt><dd>1" in today.body
+    assert "today_decision_filter_first_run_current_action_rows</dt><dd>1" in today.body
+    assert "today_decision_filter_current_action_rows</dt><dd>0" in today.body
+    assert "today_decision_filter_worktree_approval_rows</dt><dd>0" in today.body
+    assert "today_decision_filter_memory_storage</dt><dd>localStorage:clankeros-today-decision-filter" in today.body
+    assert "today_decision_filter_memory_fields</dt><dd>lane query" in today.body
+    assert "today_decision_filter_write_on_get</dt><dd>false" in today.body
+    assert "today_decision_filter_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_decision_filter_network_actions_taken</dt><dd>0" in today.body
+    assert "today_decision_filter_external_effects_created</dt><dd>false" in today.body
+    assert "today_decision_filter_lanes: first_run_current_action=1" in today.body
+    assert "today_decision_filter: filters already-rendered Today decision rows only" in today.body
+    assert "today_decision_filter_safety: no approval, execution, push, PR, deploy, provider call, or network action" in today.body
     assert "today_decision_queue_status</dt><dd>first_run" in today.body
     assert "today_decision_queue_goal</dt><dd>none" in today.body
     assert "today_decision_queue_project</dt><dd>clankeros" in today.body
@@ -6481,7 +6515,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 19
+    assert workspace.body.count("class='workspace-view-memory-card") == 20
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
     assert "data-workspace-view-memory-card='goal-board'" in workspace.body
@@ -6501,11 +6535,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-card='inbox'" in workspace.body
     assert "data-workspace-view-memory-card='profiles'" in workspace.body
     assert "data-workspace-view-memory-card='decisions'" in workspace.body
+    assert "data-workspace-view-memory-card='today-decisions'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-theme'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-focus-mode'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-goal-board-view'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-recent-items-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-route-history'" in workspace.body
+    assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-today-decision-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-open-panels:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-scroll-position:'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-memory-inventory-filter'" in workspace.body
@@ -6524,8 +6560,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>19" in workspace.body
-    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>20" in workspace.body
+    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-today-decision-filter, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
     assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-decision-filter:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:, clankeros-goal-note-draft:, clankeros-action-form-draft:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
@@ -6538,6 +6574,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: theme mode=exact key=clankeros-theme" in workspace.body
     assert "workspace_view_memory_card: recent-items mode=exact key=clankeros-recent-items-filter" in workspace.body
     assert "workspace_view_memory_card: route-history mode=exact key=clankeros-route-history" in workspace.body
+    assert "workspace_view_memory_card: today-decisions mode=exact key=clankeros-today-decision-filter" in workspace.body
     assert "workspace_view_memory_card: open-panels mode=prefix key=clankeros-open-panels:" in workspace.body
     assert "workspace_view_memory_card: scroll-position mode=prefix key=clankeros-scroll-position:" in workspace.body
     assert "workspace_view_memory_card: search mode=prefix key=clankeros-search-result-lane:" in workspace.body
@@ -6549,7 +6586,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: approvals mode=exact key=clankeros-approval-queue-filter" in workspace.body
     assert "workspace_view_memory_card: inbox mode=exact key=clankeros-inbox-queue-filter" in workspace.body
     assert "workspace_view_memory_card: profiles mode=exact key=clankeros-profile-routing-filter" in workspace.body
-    assert "workspace_view_memory_reset_scope: theme focus board recent route-history open-panels scroll-position search timeline decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
+    assert "workspace_view_memory_reset_scope: theme focus board recent route-history today-decisions open-panels scroll-position search timeline decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
     assert "window.localStorage.removeItem(key)" in workspace.body
     assert "candidate.indexOf(key) === 0" in workspace.body
     assert "delete document.documentElement.dataset.theme" in workspace.body
@@ -11194,13 +11231,61 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-today-decision-kind='worktree_approval'" in today.body
     assert "data-today-decision-primary='true'" in today.body
     assert "data-today-decision-primary='false'" in today.body
+    assert "data-today-decision-item-id='Create commit request'" in today.body
+    assert "data-today-decision-text='" in today.body
+    assert "Today Decision Filter" in today.body
+    assert "id='today-decision-filter'" in today.body
+    assert "data-today-decision-filter='true'" in today.body
+    assert "data-today-decision-filter-storage-key='clankeros-today-decision-filter'" in today.body
+    assert "data-today-decision-filter-controls='true'" in today.body
+    assert "data-today-decision-filter-kind='all'" in today.body
+    assert "data-today-decision-filter-kind='current_action'" in today.body
+    assert "data-today-decision-filter-kind='worktree_approval'" in today.body
+    assert "data-today-decision-filter-active='true'" in today.body
+    assert "data-today-decision-filter-query='true'" in today.body
+    assert "data-today-decision-filter-reset='true'>Reset filter</button>" in today.body
+    assert "data-today-decision-filter-view-status='true'>View: default</span>" in today.body
+    assert "data-today-decision-filter-status='true'>Showing 2 of 2 decision rows." in today.body
+    assert "data-today-decision-filter-empty='true' hidden" in today.body
+    assert "data-today-decision-filter-evidence='true'" in today.body
     assert "data-today-decision-evidence='true'" in today.body
     assert today.body.index("data-today-operator-workbench='true'") < today.body.index(
         "data-today-decision-queue='true'"
     )
+    assert today.body.index("data-today-decision-list='true'") < today.body.index(
+        "data-today-decision-filter='true'"
+    )
     assert today.body.index("data-today-decision-queue='true'") < today.body.index(
         "data-today-workflow-map='true'"
     )
+    assert "today_decision_filter_status</dt><dd>available" in today.body
+    assert "today_decision_filter_scope</dt><dd>browser_local_rendered_decisions" in today.body
+    assert "today_decision_filter_total_rows</dt><dd>2" in today.body
+    assert "today_decision_filter_first_run_current_action_rows</dt><dd>0" in today.body
+    assert "today_decision_filter_current_action_rows</dt><dd>1" in today.body
+    assert "today_decision_filter_worktree_approval_rows</dt><dd>1" in today.body
+    assert "today_decision_filter_commit_approval_rows</dt><dd>0" in today.body
+    assert "today_decision_filter_publication_approval_rows</dt><dd>0" in today.body
+    assert "today_decision_filter_incident_rows</dt><dd>0" in today.body
+    assert "today_decision_filter_recommendation_rows</dt><dd>0" in today.body
+    assert "today_decision_filter_blocked_task_rows</dt><dd>0" in today.body
+    assert "today_decision_filter_lanes</dt><dd>all first_run_current_action current_action worktree_approval commit_approval publication_approval incident recommendation blocked_task" in today.body
+    assert "today_decision_filter_persistence</dt><dd>browser_local_view_memory" in today.body
+    assert "today_decision_filter_memory_storage</dt><dd>localStorage:clankeros-today-decision-filter" in today.body
+    assert "today_decision_filter_memory_fields</dt><dd>lane query" in today.body
+    assert "today_decision_filter_default</dt><dd>all" in today.body
+    assert "today_decision_filter_reset</dt><dd>available" in today.body
+    assert "today_decision_filter_write_on_get</dt><dd>false" in today.body
+    assert "today_decision_filter_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_decision_filter_network_actions_taken</dt><dd>0" in today.body
+    assert "today_decision_filter_external_effects_created</dt><dd>false" in today.body
+    assert "today_decision_filter_lanes: first_run_current_action=0, current_action=1, worktree_approval=1" in today.body
+    assert "today_decision_filter: filters already-rendered Today decision rows only" in today.body
+    assert "today_decision_filter: restores lane and query from browser storage for the daily cockpit" in today.body
+    assert "today_decision_filter_safety: no approval, execution, push, PR, deploy, provider call, or network action" in today.body
+    assert "function updateTodayDecisionFilter(options)" in today.body
+    assert "window.localStorage.setItem(todayDecisionFilterStorageKey(filterPanel)" in today.body
+    assert "window.localStorage.removeItem(todayDecisionFilterStorageKey(filterPanel))" in today.body
     assert "today_decision_queue_status</dt><dd>waiting_on_operator" in today.body
     assert f"today_decision_queue_goal</dt><dd><a href='/goals/{result.goal_id}'" in today.body
     assert f"today_decision_queue_project</dt><dd><a href='/projects/{result.project_id}'" in today.body

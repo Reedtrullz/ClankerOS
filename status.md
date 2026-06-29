@@ -1,5 +1,44 @@
 # Status
 
+## 2026-06-29 Today Decision Filter
+
+- Added a browser-local `Today Decision Filter` inside
+  `/today#today-decision-queue`, after the rendered daily decision rows and
+  before queue evidence.
+- The filter narrows already-rendered Today Decision Queue rows by all,
+  first-run action, current action, worktree approval, commit approval,
+  publication approval, incidents, recommendations, blocked tasks, or local
+  text search. Rows now expose `data-today-decision-item-id` and
+  `data-today-decision-text` metadata so filtering never needs a server write.
+- The selected daily lane/query are restored from
+  `localStorage:clankeros-today-decision-filter`. `/workspace#workspace-view-memory`
+  now includes a `Today Decision Filter` exact-key card so operators can
+  inspect/reset that daily cockpit filter with the rest of browser-local view
+  memory.
+- Safety: read-only GET rendering; no approval, execution, push, PR, deploy,
+  provider call, network action, or external mutation authority added.
+- Verification: TDD red run failed first on missing
+  `data-today-decision-item-id='create_project'`; `python3 -m py_compile
+  agent_os/local_app.py tests/test_first_milestone.py` passed;
+  `python3 -m compileall -q agent_os tests` passed; `git diff --check`
+  passed; focused local-app pytest passed with `2 passed in 58.42s`;
+  bounded scratch-root `app-demo-smoke-test` passed across fixture-backed
+  routes with provider/network/external mutation counters at zero.
+- Browser verification: Playwright against throwaway demo `/today` at
+  `http://127.0.0.1:55633/today` confirmed two initial rows
+  (`current_action`, `worktree_approval`), Worktree lane filtering hid only
+  the current-action row, reload restored
+  `localStorage:clankeros-today-decision-filter`, text query `commit` showed
+  only the current-action row, Reset restored both rows and cleared storage,
+  desktop and mobile had no horizontal overflow, mobile filter panel measured
+  `329px` with `300px` controls, and browser console warnings/errors were
+  zero.
+- Non-claims: Today Decision Filter is browser-local view state only. It does
+  not write `.clanker/app/workspace.json`, approve or execute work, create
+  commit/publication requests, mark goals complete, bypass confirmed action
+  review, call providers, fetch GitHub, push, create PRs, deploy, or mutate
+  external systems.
+
 ## 2026-06-29 Browser-Local Resume Panel
 
 - Added a read-only `Browser Resume` panel near the top of `/resume`, before
