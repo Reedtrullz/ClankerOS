@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal Timeline now has a visible read-only `Goal Timeline Digest` after the
+  Timeline Command Bar and before metadata/the full event list, with Span,
+  Latest, Artifact, Next, and Safety cards plus collapsed item/gate/artifact/
+  next-surface evidence.
 - Saved workspace and return-to-work surfaces are now Goal title-first: Home,
   `/resume`, `/workspace`, Workspace Restore Map, and the Goal resume snapshot
   show human Goal titles for visible saved Goal links while retaining raw Goal

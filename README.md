@@ -485,7 +485,10 @@ backfills generic `Artifact recorded` events from the same bounded artifact
 registry used by the Goal Artifact Explorer. The timeline starts with a
 read-only `Goal Timeline Command Bar` that exposes visible Now, Latest,
 Families, Flow, and Safety cards before collapsed timeline command evidence
-and metadata, then the full chronological list. The Activity Log now starts
+and metadata. A read-only `Goal Timeline Digest` follows with Span, Latest,
+Artifact, Next, and Safety cards so the chronological list can be scanned from
+the current useful event, newest artifact, and next action before reading every
+row. The Activity Log now starts
 with a read-only `Goal Activity Command Bar` that exposes visible Now, Latest,
 Signals, Window, and Safety cards before collapsed activity evidence and
 metadata, then the recent human-readable event list. Progress starts with a read-only Goal Progress

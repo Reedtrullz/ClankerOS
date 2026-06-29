@@ -13542,6 +13542,7 @@ def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
         [
             "<section id='goal-timeline'><h2>Timeline</h2>",
             _goal_timeline_command_bar(state, items),
+            _goal_timeline_digest(root, state, items),
             "<details class='goal-timeline-metadata' data-goal-timeline-metadata='true'><summary>Timeline metadata</summary>",
             _kv(
                 [
@@ -13554,6 +13555,121 @@ def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
             ),
             "</details>",
             _ul([_timeline_line(item) for item in items]),
+            "</section>",
+        ]
+    )
+
+
+def _goal_timeline_digest(
+    root: Path,
+    state: dict[str, Any],
+    items: list[dict[str, str]],
+) -> str:
+    goal = state["goal"]
+    next_action = _goal_next_action(root, state)
+    form_available = bool(_goal_next_action_form(state, next_action))
+    action_href = "#goal-next-action-form" if form_available else next_action.href
+    action_label = "Use Goal action form" if form_available else next_action.href
+    gates, gate_counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
+    first = items[0] if items else {}
+    latest = items[-1] if items else {}
+    first_at = _format_time(first.get("at") or "") if first else "none"
+    latest_at = _format_time(latest.get("at") or "") if latest else "none"
+    latest_href = latest.get("href") or f"/goals/{quote(goal.id)}"
+    latest_message = latest.get("message") or "No goal timeline events yet"
+    latest_kind = _timeline_item_family(latest) if latest else "none"
+    artifact_items = [
+        item
+        for item in items
+        if _timeline_item_family(item) == "artifact"
+        or str(item.get("href") or "").startswith("/artifacts?path=")
+    ]
+    latest_artifact = artifact_items[-1] if artifact_items else {}
+    latest_artifact_href = latest_artifact.get("href") or ""
+    latest_artifact_label = latest_artifact.get("message") or "No artifact recorded yet"
+    latest_artifact_at = (
+        _format_time(latest_artifact.get("at") or "") if latest_artifact else "none"
+    )
+    artifact_surface: str | SafeHtml = "none"
+    if latest_artifact_href:
+        artifact_surface = SafeHtml(
+            f"<a href='{_e(latest_artifact_href)}'>{_e(latest_artifact_label)}</a>"
+        )
+    status = "available" if items else "empty"
+    return "".join(
+        [
+            "<section id='goal-timeline-digest' class='panel goal-timeline-digest' data-goal-timeline-digest='true'><h3>Goal Timeline Digest</h3>",
+            "<p class='muted'>A scan-first digest of the chronological Goal record before the full event list.</p>",
+            "<div class='goal-timeline-grid' data-goal-timeline-digest-actions='true'>",
+            "<article class='goal-timeline-card goal-timeline-primary' data-goal-timeline-digest-span='true'>"
+            "<h3>Span</h3>"
+            f"<p>{len(items)} events · {first_at} to {latest_at}</p>"
+            "<a class='goal-timeline-action' data-goal-timeline-digest-primary='true' href='#goal-timeline'>Event list</a>"
+            "</article>",
+            "<article class='goal-timeline-card' data-goal-timeline-digest-latest='true'>"
+            "<h3>Latest</h3>"
+            f"<p>{_e(latest_kind)} · {_e(latest_message)}</p>"
+            f"<a class='goal-timeline-link' href='{_e(latest_href)}'>Open latest</a>"
+            "</article>",
+            "<article class='goal-timeline-card' data-goal-timeline-digest-artifact='true'>"
+            "<h3>Artifact</h3>"
+            f"<p>{_e(latest_artifact_label)} · {_e(latest_artifact_at)}</p>"
+            f"<a class='goal-timeline-link' href='{_e(latest_artifact_href or '#goal-artifact-command-bar')}'>Latest artifact</a>"
+            "</article>",
+            "<article class='goal-timeline-card' data-goal-timeline-digest-next='true'>"
+            "<h3>Next</h3>"
+            f"<p>{_e(current_gate.replace('_', ' '))} · {_e(next_action.action)}</p>"
+            f"<a class='goal-timeline-link' href='{_e(action_href)}'>{_e(action_label)}</a>"
+            "</article>",
+            "<article class='goal-timeline-card' data-goal-timeline-digest-safety='true'>"
+            "<h3>Safety</h3>"
+            "<p>Read-only digest; confirmed forms own writes and local effects.</p>"
+            "<a class='goal-timeline-link' href='#goal-timeline-digest'>Evidence</a>"
+            "</article>",
+            "</div>",
+            "<details class='goal-timeline-digest-evidence' data-goal-timeline-digest-evidence='true'><summary>Goal timeline digest evidence</summary>",
+            _kv(
+                [
+                    ("timeline_digest_status", status),
+                    ("timeline_digest_goal", goal.id),
+                    ("timeline_digest_project", goal.project_id),
+                    ("timeline_digest_items", str(len(items))),
+                    ("timeline_digest_first_at", first_at),
+                    ("timeline_digest_latest_at", latest_at),
+                    ("timeline_digest_latest_kind", latest_kind),
+                    ("timeline_digest_latest_message", latest_message),
+                    (
+                        "timeline_digest_latest_surface",
+                        SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>"),
+                    ),
+                    ("timeline_digest_artifact_events", str(len(artifact_items))),
+                    ("timeline_digest_latest_artifact_at", latest_artifact_at),
+                    ("timeline_digest_latest_artifact", artifact_surface),
+                    ("timeline_digest_current_gate", current_gate),
+                    ("timeline_digest_gate_progress", f"{gate_counts.get('done', 0)}/{len(gates)} gates done"),
+                    ("timeline_digest_next_action", next_action.action),
+                    (
+                        "timeline_digest_next_surface",
+                        SafeHtml(f"<a href='{_e(action_href)}'>{_e(action_label)}</a>"),
+                    ),
+                    ("timeline_digest_action_form_available", str(form_available).lower()),
+                    ("timeline_digest_source", "goal_timeline_items_and_goal_workflow_gates"),
+                    ("timeline_digest_write_on_get", "false"),
+                    ("timeline_digest_provider_calls_taken", "0"),
+                    ("timeline_digest_network_actions_taken", "0"),
+                    ("timeline_digest_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"timeline_digest_span: {len(items)} events {first_at}->{latest_at}",
+                    f"timeline_digest_latest: {_e(latest_kind)} {_e(latest_message)}",
+                    f"timeline_digest_artifact: {artifact_surface}",
+                    f"timeline_digest_next: {_e(next_action.action)} <a href='{_e(action_href)}'>{_e(action_label)}</a>",
+                    "timeline_digest_safety: read-only local chronology digest",
+                ]
+            ),
+            "</details>",
             "</section>",
         ]
     )
@@ -34145,7 +34261,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-attention-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .skills-usage-grid {{ grid-template-columns:1fr; }} }}

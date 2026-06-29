@@ -1,5 +1,31 @@
 # Status
 
+## 2026-06-29 Goal Timeline Digest UX
+
+- Added a visible read-only `Goal Timeline Digest` to `/goals/<goal_id>` after
+  the Goal Timeline Command Bar and before metadata plus the full
+  chronological list.
+- The digest turns the long timeline into five scan-first cards: Span, Latest,
+  Artifact, Next, and Safety.
+- It is sourced from existing Goal timeline items and workflow gates, linking
+  to the latest local event, latest artifact, and current next-action surface
+  without adding storage or action authority.
+- Collapsed digest evidence records item count, first/latest timestamps,
+  latest kind/message/surface, artifact event count, latest artifact, current
+  gate, gate progress, next action/surface, form availability, and zero-effect
+  counters.
+- Updated README, local app docs, operating summary, current status focus, and
+  fixture-backed Goal route assertions.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  focused `tests/test_first_milestone.py` demo route coverage
+  (`1 passed, 515 deselected in 37.34s`), `python3 -m compileall -q agent_os tests`,
+  bounded `app-smoke-test`, bounded `app-demo-smoke-test`, and
+  `git diff --check`.
+- Non-claims: no browser screenshot QA for this slice, no write on GET, no
+  approval or execution on GET, no app-side GitHub polling, no provider calls,
+  no external mutation, no PR creation, and no deploy from ClankerOS itself.
+
 ## 2026-06-29 Saved Workspace Goal Title-First UX
 
 - Made saved workspace and return-to-work Goal identity title-first.

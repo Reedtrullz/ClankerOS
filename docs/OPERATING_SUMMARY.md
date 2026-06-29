@@ -426,8 +426,11 @@ Core layers for the bootstrap:
   to distinguish at a glance. The Goal timeline starts with a read-only
   `Goal Timeline Command Bar` that exposes visible Now, Latest, Families,
   Flow, and Safety cards before collapsed total-event, latest-linked-event,
-  event-family, run/task/note, and zero-effect evidence plus timeline
-  metadata. The Activity Log likewise opens with visible Now, Latest, Signals,
+  event-family, run/task/note, and zero-effect evidence. A read-only
+  `Goal Timeline Digest` follows with Span, Latest, Artifact, Next, and Safety
+  cards, plus collapsed evidence for item counts, current gate, latest
+  artifact, next surface, and zero-effect counters before timeline metadata
+  and the full chronological list. The Activity Log likewise opens with visible Now, Latest, Signals,
   Window, and Safety cards before collapsed recent-event evidence and
   metadata. Goal pages include a browser-native progress
   bar and a large Current Phase banner that explains the phase reason,

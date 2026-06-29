@@ -11196,6 +11196,44 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "timeline_command_external_effects_created</dt><dd>false" in goal.body
     assert "timeline_command_now:" in goal.body
     assert "timeline_command_safety: read-only local timeline" in goal.body
+    assert "Goal Timeline Digest" in goal.body
+    assert "data-goal-timeline-digest='true'" in goal.body
+    assert "data-goal-timeline-digest-actions='true'" in goal.body
+    assert "data-goal-timeline-digest-span='true'" in goal.body
+    assert "data-goal-timeline-digest-primary='true'" in goal.body
+    assert "data-goal-timeline-digest-latest='true'" in goal.body
+    assert "data-goal-timeline-digest-artifact='true'" in goal.body
+    assert "data-goal-timeline-digest-next='true'" in goal.body
+    assert "data-goal-timeline-digest-safety='true'" in goal.body
+    assert "data-goal-timeline-digest-evidence='true'" in goal.body
+    assert goal.body.index("data-goal-timeline-command-bar='true'") < goal.body.index(
+        "data-goal-timeline-digest='true'"
+    )
+    assert goal.body.index("data-goal-timeline-digest='true'") < goal.body.index(
+        "data-goal-timeline-metadata='true'"
+    )
+    assert f"timeline_digest_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"timeline_digest_project</dt><dd>{result.project_id}" in goal.body
+    assert "timeline_digest_status</dt><dd>available" in goal.body
+    assert "timeline_digest_items</dt><dd>" in goal.body
+    assert "timeline_digest_latest_kind</dt><dd>" in goal.body
+    assert "timeline_digest_latest_message</dt><dd>" in goal.body
+    assert "timeline_digest_latest_surface</dt><dd><a href='" in goal.body
+    assert "timeline_digest_artifact_events</dt><dd>" in goal.body
+    assert "timeline_digest_latest_artifact</dt><dd><a href='/artifacts?path=" in goal.body
+    assert "timeline_digest_current_gate</dt><dd>commit_request" in goal.body
+    assert "timeline_digest_gate_progress</dt><dd>8/15 gates done" in goal.body
+    assert "timeline_digest_next_action</dt><dd>Create commit request" in goal.body
+    assert "timeline_digest_next_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "timeline_digest_action_form_available</dt><dd>true" in goal.body
+    assert "timeline_digest_source</dt><dd>goal_timeline_items_and_goal_workflow_gates" in goal.body
+    assert "timeline_digest_write_on_get</dt><dd>false" in goal.body
+    assert "timeline_digest_provider_calls_taken</dt><dd>0" in goal.body
+    assert "timeline_digest_network_actions_taken</dt><dd>0" in goal.body
+    assert "timeline_digest_external_effects_created</dt><dd>false" in goal.body
+    assert "timeline_digest_latest:" in goal.body
+    assert "timeline_digest_next: Create commit request" in goal.body
+    assert "timeline_digest_safety: read-only local chronology digest" in goal.body
     assert "timeline_links_enabled</dt><dd>true" in goal.body
     assert "timeline_artifact_records</dt><dd>" in goal.body
     assert "class='timeline-link'" in goal.body
