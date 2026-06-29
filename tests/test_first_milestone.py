@@ -14775,6 +14775,27 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "run_continuation_primary_surface</dt><dd>"
         f"<a href='/approvals?run_id={result.coder_worktree_run_id}'>/approvals</a>"
     ) in run_notice.body
+    search_approvals = render_local_app_route(tmp_path, "/search?q=approval")
+    assert search_approvals.status == 200
+    assert "Global Search" in search_approvals.body
+    assert "Search Result Map" in search_approvals.body
+    assert "data-search-result-lane='decisions' data-search-result-status='ready'" in search_approvals.body
+    assert "search_result_map_decisions_results</dt><dd>" in search_approvals.body
+    assert "search_command_approval_results</dt><dd>" in search_approvals.body
+    assert "kind=coder_worktree_approval" in search_approvals.body
+    assert "action=approve-coder-worktree" in search_approvals.body
+    assert "kind=coder_worktree_commit_approval" in search_approvals.body
+    assert "action=approve-coder-commit" in search_approvals.body
+    assert "typed_commit_message_required=true" in search_approvals.body
+    assert commit_approval.id in search_approvals.body
+    assert (
+        f"<a href='/approvals?run_id={result.coder_worktree_run_id}'>"
+        f"Commit approval {commit_approval.id}</a>"
+    ) in search_approvals.body
+    assert "search_command_write_on_get</dt><dd>false" in search_approvals.body
+    assert "search_command_network_actions_taken</dt><dd>0" in search_approvals.body
+    assert "search_command_external_effects_created</dt><dd>false" in search_approvals.body
+    assert "search_command_raw_filesystem_browsing</dt><dd>false" in search_approvals.body
     demo_after_commit_request = render_local_app_route(tmp_path, "/demo")
     assert demo_after_commit_request.status == 200
     assert "current_gate: approve_or_reject_commit_request" in demo_after_commit_request.body

@@ -5019,6 +5019,69 @@ def _search_results(root: Path, storage: Storage, term: str) -> list[dict[str, s
                 }
             )
 
+    def delegation_goal_id(delegation_id: str) -> str:
+        delegation = storage.get_subagent_delegation(delegation_id)
+        return delegation.parent_goal_id if delegation is not None else ""
+
+    for approval in list_coder_worktree_approvals(root, limit=100):
+        goal_id = delegation_goal_id(approval.delegation_id)
+        href = (
+            f"/approvals?goal_id={quote(goal_id)}"
+            if approval.status == "pending_operator_approval" and goal_id
+            else f"/workflow?delegation_id={quote(approval.delegation_id)}"
+        )
+        add(
+            "approval",
+            f"Worktree approval {approval.id}",
+            href,
+            (
+                f"kind=coder_worktree_approval id={approval.id} goal={goal_id or 'none'} "
+                f"delegation={approval.delegation_id} source_run={approval.source_run_id or 'none'} "
+                f"project={approval.project_id} status={approval.status} "
+                f"action=approve-coder-worktree request_artifact={approval.request_artifact_path}"
+            ),
+        )
+    for approval in list_coder_worktree_commit_approvals(root, limit=100):
+        goal_id = delegation_goal_id(approval.delegation_id)
+        href = (
+            f"/approvals?run_id={quote(approval.run_id)}"
+            if approval.status == "pending_operator_approval"
+            else f"/runs/{quote(approval.run_id)}"
+        )
+        add(
+            "approval",
+            f"Commit approval {approval.id}",
+            href,
+            (
+                f"kind=coder_worktree_commit_approval id={approval.id} goal={goal_id or 'none'} "
+                f"run={approval.run_id} delegation={approval.delegation_id} "
+                f"source_run={approval.source_run_id or 'none'} project={approval.project_id} "
+                f"status={approval.status} action=approve-coder-commit "
+                f"changed_files={len(approval.changed_files)} typed_commit_message_required=true "
+                f"request_artifact={approval.request_artifact_path}"
+            ),
+        )
+    for publication in list_coder_publications(root, limit=100):
+        goal_id = delegation_goal_id(publication.delegation_id)
+        href = (
+            f"/approvals?run_id={quote(publication.run_id)}"
+            if publication.status == "pending_operator_approval"
+            else f"/runs/{quote(publication.run_id)}"
+        )
+        add(
+            "approval",
+            f"Publication approval {publication.id}",
+            href,
+            (
+                f"kind=coder_publication_approval id={publication.id} goal={goal_id or 'none'} "
+                f"run={publication.run_id} delegation={publication.delegation_id} "
+                f"source_run={publication.source_run_id or 'none'} project={publication.project_id} "
+                f"status={publication.status} action=approve-coder-publication "
+                f"remote_target={publication.remote}/{publication.target_branch} "
+                f"request_artifact={publication.request_artifact_path}"
+            ),
+        )
+
     for row in _goal_rows(storage, limit=200):
         goal_id = str(row["id"])
         goal_state = _goal_state(root, storage, goal_id)

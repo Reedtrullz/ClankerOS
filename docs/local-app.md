@@ -517,7 +517,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   known artifacts, incidents, recommendations, memory, runs, approvals, and
   skill records. Goal results include live local phase, one next action, and
   remaining-work counts, so searches like `Ready to commit` or
-  `Create commit request` return the relevant Goal. It is content-first and
+  `Create commit request` return the relevant Goal. Approval results now cover
+  coder worktree approvals, coder commit approvals, and publication approvals,
+  including scoped links to the relevant approval queue, workflow, or run
+  detail surface. It is content-first and
   opens with a visible `Search Operator Workbench` before shared route/focus
   diagnostics, with cards for the current query, first useful hit, result
   list, and `/resume`. Search state, workbench evidence, and command evidence

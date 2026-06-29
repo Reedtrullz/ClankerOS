@@ -197,8 +197,12 @@ Core layers for the bootstrap:
   `/search` for bounded global search across indexed goals, projects,
   delegations, known artifacts, incidents, recommendations, memory, runs,
   approvals, and skills, with goal results including live local phase, one
-  recommended next action, and remaining-work counts. It is content-first and
-  opens with a visible `Search Operator Workbench` before shared route/focus
+  recommended next action, and remaining-work counts. Search now indexes the
+first-class coder worktree, coder commit, and publication approval records,
+so approval queries can route directly to scoped approval, workflow, or run
+surfaces instead of relying only on legacy approval rows. It is content-first
+and
+opens with a visible `Search Operator Workbench` before shared route/focus
   diagnostics, with cards for query, first useful hit, result list, and
   `/resume`. A visible read-only `Search Result Map` follows with Goals,
   Projects, Work, Decisions, Knowledge, and Artifacts lane cards before the

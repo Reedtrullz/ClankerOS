@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/search` now indexes first-class operator approvals, not only legacy
+  approval rows. Worktree, commit, and publication approvals appear in the
+  Decisions lane and route to scoped `/approvals?goal_id=...`,
+  `/approvals?run_id=...`, workflow, or run surfaces with zero-effect search
+  evidence.
 - The First Run Guide now includes a read-only `First Run Next Step` panel
   between the launchpad and progress strip. It gives fresh operators one
   primary same-page action for the current first-run gate, plus setup,
@@ -366,6 +371,9 @@ Latest status focus:
   visible Query, Open, Results, and Resume cards, then follows with a
   `Search Result Map` for Goals, Projects, Work, Decisions, Knowledge, and
   Artifacts lane cards before command evidence or the flat result list. Search
+  now indexes coder worktree approvals, coder commit approvals, and publication
+  approvals as first-class decision results with scoped approval/workflow/run
+  links instead of relying only on legacy approval rows. Search
   state, result-map, workbench, and command evidence stay collapsed by default
   while preserving bounded indexed-search proof and zero-effect counters in
   the DOM.

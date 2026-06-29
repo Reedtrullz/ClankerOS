@@ -604,7 +604,11 @@ Use `/search` for bounded global search across indexed goals, projects,
 delegations, known artifacts, incidents, recommendations, memory, runs, and
 approvals. Goal search results include live local phase, one next action, and
 remaining-work counts, so action or phase searches can return the Goal to
-continue. `/search` is now content-first and opens with a visible
+continue. Approval search now includes the first-class coder worktree, commit,
+and publication approval queues, with scoped links back to the matching
+`/approvals?goal_id=...`, `/approvals?run_id=...`, workflow, or run surface
+instead of only the older generic approval rows. `/search` is now
+content-first and opens with a visible
 `Search Operator Workbench` before shared route/focus diagnostics, turning the
 query, first useful hit, result list, and `/resume` into four browser cards.
 It now follows with a visible read-only `Search Result Map` for Goals,

@@ -1,5 +1,23 @@
 # Status
 
+## 2026-06-29 Search Approval Results UX
+
+- Added first-class coder approval records to `/search`: worktree approval,
+  commit approval, and publication approval rows now appear as decision results
+  with scoped links back to `/approvals?goal_id=...`, `/approvals?run_id=...`,
+  workflow, or run detail surfaces.
+- This makes the browser search useful for daily unblock work: searching
+  `approval` can find the actual pending gate instead of only older generic
+  approval rows.
+- Updated README, local app docs, operating summary, and docs status to
+  describe the expanded indexed scope.
+- Verification: `python3 -m py_compile agent_os/local_app.py`; focused pytest
+  `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`
+  passed with `1 passed in 39.68s`.
+- Non-claims: no new action authority, no write on GET, no approval decision,
+  no execution, no provider calls, no non-loopback network actions, no push, no
+  PR, no deploy, and no external mutation from the app.
+
 ## 2026-06-29 First Run Next Step UX
 
 - Added a visible read-only `First Run Next Step` panel to the First Run Guide
