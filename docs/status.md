@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Confirmed local action result pages now include an `Action Resume Receipt`
+  immediately after `Action Complete`, so operators can see the saved
+  `.clanker/app/workspace.json` resume route, project/Goal, artifact, last
+  action/result, updater, readiness, and zero-effect boundary before dense
+  payload details.
 - Confirmation pages now open with a read-only `Action Preflight` before the
   existing confirmation review. It turns the final browser safety checkpoint
   into visible Confirm, Returns, Local Write, Context, and Boundary cards,

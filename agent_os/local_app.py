@@ -30147,6 +30147,13 @@ def _action_result_page(
                 next_href=next_href,
                 result_rows=result_rows,
             ),
+            _action_result_resume_receipt_section(
+                root,
+                action=action,
+                message=message,
+                location=safe_location,
+                next_href=next_href,
+            ),
             "<section id='action-result-details'><h2>Action Result Details</h2>",
             "<p>Action completed. Review the local result before continuing.</p>",
             _non_claim_banner(),
@@ -30164,6 +30171,123 @@ def _action_result_page(
             _action_result_continuation_section(root, safe_location, message),
             _action_result_workflow_map_section(root),
             "<p class='muted'>This page is a local readback only. Follow the next-page link after checking the payload, artifacts, and safety boundary.</p>",
+            "</section>",
+        ]
+    )
+
+
+def _action_result_resume_receipt_section(
+    root: Path,
+    *,
+    action: str,
+    message: str,
+    location: str,
+    next_href: str,
+) -> str:
+    state = _load_workspace_state(root)
+    open_project = str(state.get("open_project") or "").strip()
+    open_goal = str(state.get("open_goal") or "").strip()
+    filters = str(state.get("filters") or "").strip()
+    expanded = str(state.get("expanded_panels") or "").strip()
+    last_artifact = str(state.get("last_viewed_artifact") or "").strip()
+    resume_surface = _safe_local_return_path(state.get("resume_surface")) or ""
+    updated_by = str(state.get("updated_by") or "operator").strip() or "operator"
+    updated_at = str(state.get("updated_at") or "never").strip() or "never"
+    last_action = str(state.get("last_action") or action).strip() or action
+    last_result = str(state.get("last_action_result") or message).strip() or message
+    last_status = str(state.get("last_action_status") or "completed").strip() or "completed"
+    last_location = _safe_local_return_path(state.get("last_action_location")) or location
+    last_next_href = _safe_local_return_path(state.get("last_action_next_href")) or next_href
+    workspace_available = any([open_project, open_goal, filters, expanded, last_artifact, resume_surface])
+    receipt_status = "saved_workspace" if workspace_available else "action_remembered"
+    readiness = _workspace_resume_readiness(
+        root,
+        open_project=open_project,
+        open_goal=open_goal,
+        filters=filters,
+        expanded=expanded,
+        last_artifact=last_artifact,
+    )
+    resume_href = resume_surface or "/resume"
+    resume_label = resume_surface or "/resume"
+    _goal_href, goal_label, goal_label_source, goal_surface = _goal_display_link(root, open_goal)
+    project_surface: str | SafeHtml = (
+        SafeHtml(f"<a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>")
+        if open_project
+        else "none"
+    )
+    artifact_surface: str | SafeHtml = _artifact_link(last_artifact) if last_artifact else "none"
+    context_label = goal_label if open_goal else (open_project or "no saved context")
+    return "".join(
+        [
+            "<section id='action-resume-receipt' class='panel action-resume-receipt' data-action-resume-receipt='true'><h2>Action Resume Receipt</h2>",
+            "<p class='muted'>This is the saved return point after the confirmed local action.</p>",
+            "<div class='action-resume-receipt-grid' data-action-resume-receipt-cards='true'>",
+            "<article class='action-resume-receipt-card action-resume-receipt-primary'><h3>Resume</h3>",
+            f"<p>{_e(resume_label)}</p>",
+            f"<a class='action-resume-receipt-action' data-action-resume-receipt-primary='true' href='{_e(resume_href)}'>Open saved point</a></article>",
+            "<article class='action-resume-receipt-card'><h3>Context</h3>",
+            f"<p>{_e(context_label)}</p>",
+            "<a class='action-resume-receipt-link' href='#action-resume-receipt-evidence'>Saved context</a></article>",
+            "<article class='action-resume-receipt-card'><h3>Artifact</h3>",
+            f"<p>{artifact_surface}</p>",
+            "<a class='action-resume-receipt-link' href='#action-resume-receipt-evidence'>Receipt evidence</a></article>",
+            "<article class='action-resume-receipt-card'><h3>Last Action</h3>",
+            f"<p>{_e(last_action)}</p>",
+            f"<a class='action-resume-receipt-link' href='{_e(last_next_href)}'>Open action notice</a></article>",
+            "<article class='action-resume-receipt-card'><h3>Boundary</h3>",
+            "<p>No provider call, network action, push, PR, deploy, or external mutation.</p>",
+            "<a class='action-resume-receipt-link' href='#action-resume-receipt-evidence'>Safety evidence</a></article>",
+            "</div>",
+            "<details id='action-resume-receipt-evidence' class='action-resume-receipt-evidence' data-action-resume-receipt-evidence='true'><summary>Resume receipt evidence</summary>",
+            _kv(
+                [
+                    ("action_resume_receipt_status", receipt_status),
+                    ("action_resume_receipt_source", ".clanker/app/workspace.json"),
+                    ("action_resume_receipt_workspace_available", str(workspace_available).lower()),
+                    ("action_resume_receipt_action", action),
+                    ("action_resume_receipt_result", message),
+                    ("action_resume_receipt_open_project", project_surface),
+                    ("action_resume_receipt_open_goal", goal_surface if open_goal else "none"),
+                    ("action_resume_receipt_goal_id", open_goal or "none"),
+                    ("action_resume_receipt_goal_label_source", goal_label_source),
+                    ("action_resume_receipt_filters", filters or "none"),
+                    ("action_resume_receipt_expanded_panels", expanded or "none"),
+                    ("action_resume_receipt_last_artifact", artifact_surface),
+                    (
+                        "action_resume_receipt_resume_surface",
+                        SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"),
+                    ),
+                    ("action_resume_receipt_resume_hub", SafeHtml("<a href='/resume'>/resume</a>")),
+                    ("action_resume_receipt_last_action", last_action),
+                    ("action_resume_receipt_last_result", last_result),
+                    ("action_resume_receipt_last_status", last_status),
+                    ("action_resume_receipt_last_location", SafeHtml(f"<a href='{_e(last_location)}'>{_e(last_location)}</a>")),
+                    ("action_resume_receipt_last_notice", SafeHtml(f"<a href='{_e(last_next_href)}'>{_e(last_location)}</a>")),
+                    ("action_resume_receipt_next_page", SafeHtml(f"<a href='{_e(next_href)}'>{_e(location)}</a>")),
+                    ("action_resume_receipt_updated_by", updated_by),
+                    ("action_resume_receipt_updated_at", updated_at),
+                    ("action_resume_receipt_readiness", str(readiness["status"])),
+                    ("action_resume_receipt_come_back_tomorrow_ready", str(readiness["ready"]).lower()),
+                    ("action_resume_receipt_write_on_get", "false"),
+                    ("action_resume_receipt_provider_calls_taken", "0"),
+                    ("action_resume_receipt_network_actions_taken", "0"),
+                    ("action_resume_receipt_external_effects_created", "false"),
+                    ("action_resume_receipt_push_created", "false"),
+                    ("action_resume_receipt_pr_created", "false"),
+                    ("action_resume_receipt_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"action_resume_receipt_saved_point: <a href='{_e(resume_href)}'>{_e(resume_label)}</a>",
+                    f"action_resume_receipt_context: project={_e(open_project or 'none')} goal={_e(open_goal or 'none')}",
+                    f"action_resume_receipt_artifact: {artifact_surface}",
+                    f"action_resume_receipt_last_action: {_e(last_action)} -> {_e(last_result)}",
+                    "action_resume_receipt_safety: read-only saved workspace receipt after confirmed local action",
+                ]
+            ),
+            "</details>",
             "</section>",
         ]
     )
@@ -33999,7 +34123,7 @@ def _html_page(
     .action-error-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .action-error-evidence summary {{ cursor:pointer; font-weight:700; }}
     .action-error-evidence:not([open]) > :not(summary) {{ display:none; }}
-    #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:128px; }}
+    #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:128px; }}
     .action-result-command-bar {{ border-left:4px solid var(--ok); margin-bottom:16px; }}
     .action-result-command-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
     .action-result-command-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
@@ -34012,6 +34136,18 @@ def _html_page(
     .action-result-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .action-result-command-evidence summary {{ cursor:pointer; font-weight:700; }}
     .action-result-command-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .action-resume-receipt {{ border-left:4px solid var(--accent); margin-bottom:16px; }}
+    .action-resume-receipt-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .action-resume-receipt-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .action-resume-receipt-card h3 {{ margin-top:0; }}
+    .action-resume-receipt-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .action-resume-receipt-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .action-resume-receipt-action, .action-resume-receipt-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .action-resume-receipt-action {{ background:var(--accent); color:#fff; }}
+    .action-resume-receipt-link {{ background:var(--surface); color:var(--accent); }}
+    .action-resume-receipt-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .action-resume-receipt-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .action-resume-receipt-evidence:not([open]) > :not(summary) {{ display:none; }}
     .action-continuation {{ border:1px solid var(--line); background:var(--panel); padding:14px; margin:16px 0; }}
     .action-continuation-action {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .action-continuation-action summary {{ cursor:pointer; font-weight:700; }}
@@ -35232,7 +35368,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #goal-attention-digest {{ scroll-margin-top:260px; }} .goal-attention-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-attention-grid {{ grid-template-columns:1fr; }} }}

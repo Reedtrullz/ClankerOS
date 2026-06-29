@@ -953,7 +953,11 @@ submit. Confirmed actions now return an
 action-first `Action Complete` surface before the raw details, with visible
 Continue, Completed, Artifact, Workflow, and Boundary cards plus collapsed
 result-command evidence preserving the target notice surface, result, primary
-artifact, confirmation source, and zero-effect counters. The existing
+artifact, confirmation source, and zero-effect counters. An `Action Resume
+Receipt` follows immediately, reading `.clanker/app/workspace.json` back as
+visible Resume, Context, Artifact, Last Action, and Boundary cards with
+collapsed evidence for the saved project, Goal, exact `resume_surface`, latest
+artifact, updater, last action/result, readiness, and zero-effect counters. The existing
 `Action Result Details` section remains below it with the payload, result
 fields, artifact links, next-page link, and safety boundary. Successful
 results also show an

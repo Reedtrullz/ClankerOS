@@ -1,5 +1,32 @@
 # Status
 
+## 2026-06-29 Action Resume Receipt UX
+
+- Added a read-only `Action Resume Receipt` immediately after the
+  `Action Complete` command bar on confirmed local action result pages.
+- The receipt turns the saved workspace state into visible Resume, Context,
+  Artifact, Last Action, and Boundary cards before the dense payload/result
+  details.
+- Collapsed receipt evidence records `.clanker/app/workspace.json` as the
+  source, saved project and Goal, exact `resume_surface`, latest artifact,
+  updater, last action/result, resume readiness, no write on GET, and
+  no-provider/no-network/no-push/no-PR/no-deploy counters.
+- Updated README, local app docs, operating summary, and status entry point so
+  the post-action resume receipt is documented as part of the daily browser
+  loop.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 60.70s`; `python3 -m compileall -q agent_os
+  tests`; `python3 -m agent_os.cli --root /tmp/clankeros-receipt.bEDTuO
+  app-smoke-test`; `python3 -m agent_os.cli --root
+  /tmp/clankeros-receipt.bEDTuO app-demo-smoke-test`; `git diff --check`.
+- Non-claims: no automatic resume execution, no new action authority, no write
+  on GET, no provider calls, no non-loopback network actions, no push, no PR,
+  no deploy, and no external mutation.
+
 ## 2026-06-29 Action Preflight Confirmation UX
 
 - Added a read-only `Action Preflight` block to every local app confirmation

@@ -1048,8 +1048,12 @@ Core layers for the bootstrap:
   decision, or bounded local execution; confirmed action result pages
   now open with an action-first `Action Complete` surface containing Continue,
   Completed, Artifact, Workflow, and Boundary cards plus collapsed
-  result-command evidence, before preserving the submitted payload, local
-  result fields, artifact links, next-page link, safety boundary, and an
+  result-command evidence. An `Action Resume Receipt` follows immediately and
+  reads `.clanker/app/workspace.json` back as Resume, Context, Artifact, Last
+  Action, and Boundary cards, with collapsed evidence for the saved project,
+  Goal, exact resume surface, latest artifact, updater, last action/result,
+  readiness, and zero-effect counters, before preserving the submitted payload,
+  local result fields, artifact links, next-page link, safety boundary, and an
   `Action Continuation` block from the refreshed saved goal state with phase,
   one next action, target surface, and the same confirmed local action form
   when available; when no saved Goal exists, the continuation falls back to

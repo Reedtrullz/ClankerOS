@@ -1038,7 +1038,12 @@ command, and the no-provider/no-network/no-push/no-PR/no-deploy boundary.
 Confirmed actions render
 `Action Result Details` with the
 attempted action, submitted payload, result fields, artifact links when paths
-are returned, a next-page link, and the safety boundary. They also render an
+are returned, a next-page link, and the safety boundary. Before those dense
+details, the result page now includes an `Action Resume Receipt` that reads the
+saved workspace back as visible Resume, Context, Artifact, Last Action, and
+Boundary cards, with collapsed evidence for the exact `resume_surface`, saved
+project/Goal, latest artifact, updater, last action/result, readiness, and
+zero-effect counters. They also render an
 `Action Continuation` block from the refreshed saved goal state, including the
 current phase, one next action, target surface, and the same confirmed local
 action form when available, so the operator can keep moving without guessing

@@ -6115,6 +6115,29 @@ def test_local_app_routes_render_modern_workflow_and_health(
     )
     assert workspace_result.status == 200
     assert "workspace_saved" in workspace_result.body
+    assert "Action Resume Receipt" in workspace_result.body
+    assert "data-action-resume-receipt='true'" in workspace_result.body
+    assert workspace_result.body.index("Action Complete") < workspace_result.body.index(
+        "Action Resume Receipt"
+    )
+    assert workspace_result.body.index("Action Resume Receipt") < workspace_result.body.index(
+        "Action Result Details"
+    )
+    assert "action_resume_receipt_status</dt><dd>saved_workspace" in workspace_result.body
+    assert "action_resume_receipt_source</dt><dd>.clanker/app/workspace.json" in workspace_result.body
+    assert "action_resume_receipt_workspace_available</dt><dd>true" in workspace_result.body
+    assert "action_resume_receipt_open_project</dt><dd><a href='/projects/first-app'>first-app</a>" in workspace_result.body
+    assert "action_resume_receipt_goal_id</dt><dd>goal_demo" in workspace_result.body
+    assert (
+        "action_resume_receipt_resume_surface</dt><dd>"
+        "<a href='/goals/goal_demo#goal-timeline-command-bar'>"
+        "/goals/goal_demo#goal-timeline-command-bar</a>"
+    ) in workspace_result.body
+    assert "action_resume_receipt_updated_by</dt><dd>operator" in workspace_result.body
+    assert "action_resume_receipt_last_action</dt><dd>save-workspace" in workspace_result.body
+    assert "action_resume_receipt_last_result</dt><dd>workspace_saved: .clanker/app/workspace.json" in workspace_result.body
+    assert "action_resume_receipt_write_on_get</dt><dd>false" in workspace_result.body
+    assert "action_resume_receipt_external_effects_created</dt><dd>false" in workspace_result.body
     workspace_json = tmp_path / ".clanker" / "app" / "workspace.json"
     assert workspace_json.exists()
     workspace_data = json.loads(workspace_json.read_text(encoding="utf-8"))
@@ -12598,6 +12621,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert daily_loop_workspace.status == 200
     assert "workspace_saved" in daily_loop_workspace.body
     assert f"href='/goals/{result.goal_id}?notice=workspace_saved" in daily_loop_workspace.body
+    assert "Action Resume Receipt" in daily_loop_workspace.body
+    assert "data-action-resume-receipt-primary='true'" in daily_loop_workspace.body
+    assert (
+        f"action_resume_receipt_goal_id</dt><dd>{result.goal_id}"
+        in daily_loop_workspace.body
+    )
+    assert "action_resume_receipt_updated_by</dt><dd>goal-daily-loop" in daily_loop_workspace.body
+    assert "action_resume_receipt_come_back_tomorrow_ready</dt><dd>true" in daily_loop_workspace.body
+    assert "action_resume_receipt_safety: read-only saved workspace receipt after confirmed local action" in daily_loop_workspace.body
     daily_loop_workspace_json = json.loads(
         (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
     )
