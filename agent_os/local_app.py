@@ -15422,6 +15422,7 @@ def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
 
 def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
     items = _goal_timeline_items(root, state)
+    goal = state["goal"]
     operator_note_count = sum(1 for item in items if item.get("kind") == "operator_note")
     artifact_count = sum(1 for item in items if item.get("kind") == "artifact")
     return "".join(
@@ -15429,7 +15430,7 @@ def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
             "<section id='goal-timeline'><h2>Timeline</h2>",
             _goal_timeline_command_bar(state, items),
             _goal_timeline_digest(root, state, items),
-            _goal_timeline_lane_filter(items),
+            _goal_timeline_lane_filter(goal.id, items),
             "<details class='goal-timeline-metadata' data-goal-timeline-metadata='true'><summary>Timeline metadata</summary>",
             _kv(
                 [
@@ -15447,7 +15448,7 @@ def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
     )
 
 
-def _goal_timeline_lane_filter(items: list[dict[str, str]]) -> str:
+def _goal_timeline_lane_filter(goal_id: str, items: list[dict[str, str]]) -> str:
     lane_order = ["artifact", "approval", "delegation", "run", "task", "operator_note", "event"]
     lane_counts = {lane: 0 for lane in lane_order}
     for item in items:
@@ -15473,13 +15474,19 @@ def _goal_timeline_lane_filter(items: list[dict[str, str]]) -> str:
             )
         )
     lane_summary = ", ".join(f"{lane}={lane_counts[lane]}" for lane in lane_order)
+    storage_key = f"clankeros-goal-timeline-lane:{goal_id}"
     return "".join(
         [
-            "<section id='goal-timeline-filter' class='panel goal-timeline-filter' data-goal-timeline-filter='true'>",
+            "<section id='goal-timeline-filter' class='panel goal-timeline-filter' data-goal-timeline-filter='true' "
+            f"data-goal-timeline-filter-storage-key='{_e(storage_key)}'>",
             "<h3>Timeline Lane Filter</h3>",
             "<p class='muted'>Filter the rendered chronology in this browser tab without changing Goal state.</p>",
             "<div class='goal-timeline-filter-buttons' data-goal-timeline-filter-buttons='true'>",
             "".join(buttons),
+            "</div>",
+            "<div class='goal-timeline-filter-memory' data-goal-timeline-filter-memory='true'>",
+            "<span class='goal-timeline-filter-memory-status' data-goal-timeline-filter-view-status='true'>View: default</span>",
+            "<button type='button' class='goal-timeline-filter-reset' data-goal-timeline-filter-reset='true'>Reset lane</button>",
             "</div>",
             f"<p class='muted' data-goal-timeline-filter-status='true'>Showing {len(items)} of {len(items)} events.</p>",
             "<details class='goal-timeline-filter-evidence' data-goal-timeline-filter-evidence='true'><summary>Goal timeline filter evidence</summary>",
@@ -15497,7 +15504,13 @@ def _goal_timeline_lane_filter(items: list[dict[str, str]]) -> str:
                     ("timeline_filter_operator_note_events", str(lane_counts["operator_note"])),
                     ("timeline_filter_event_events", str(lane_counts["event"])),
                     ("timeline_filter_source", "data-timeline-kind"),
-                    ("timeline_filter_persistence", "none"),
+                    ("timeline_filter_persistence", "browser_local_view_memory"),
+                    ("timeline_lane_view_memory_status", "available"),
+                    ("timeline_lane_view_memory_storage", f"localStorage:{storage_key}"),
+                    ("timeline_lane_view_memory_fields", "lane goal"),
+                    ("timeline_lane_view_memory_default", "all"),
+                    ("timeline_lane_view_memory_reset", "available"),
+                    ("timeline_lane_view_memory_write_on_get", "false"),
                     ("timeline_filter_write_on_get", "false"),
                     ("timeline_filter_provider_calls_taken", "0"),
                     ("timeline_filter_network_actions_taken", "0"),
@@ -15509,6 +15522,8 @@ def _goal_timeline_lane_filter(items: list[dict[str, str]]) -> str:
                     f"timeline_filter_lanes: {_e(lane_summary)}",
                     "timeline_filter_action: click a lane button to hide unmatched rendered timeline rows",
                     "timeline_filter_reset: click All to show the complete chronology",
+                    "timeline_lane_view_memory: restores the selected lane from browser storage for this Goal",
+                    "timeline_lane_view_reset: clears the browser-local Timeline lane view",
                     "timeline_filter_safety: client-side display filter only",
                 ]
             ),
@@ -37373,9 +37388,13 @@ def _html_page(
     .goal-timeline-filter-button {{ display:inline-flex; gap:6px; align-items:center; min-height:34px; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:6px; padding:7px 10px; }}
     .goal-timeline-filter-button[data-goal-timeline-filter-active='true'] {{ border-color:var(--accent); background:var(--accent); color:#fff; }}
     .goal-timeline-filter-button span {{ font-variant-numeric:tabular-nums; }}
+    .goal-timeline-filter-memory {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0; }}
+    .goal-timeline-filter-memory-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .goal-timeline-filter-reset {{ min-height:32px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 10px; }}
     .goal-timeline-filter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-timeline-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-timeline-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
+    @media (max-width: 640px) {{ .goal-timeline-filter-button, .goal-timeline-filter-reset {{ width:100%; justify-content:center; }} .goal-timeline-filter-memory {{ align-items:stretch; }} .goal-timeline-filter-memory-status {{ width:100%; }} }}
     .goal-timeline-grid, .goal-activity-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
     .goal-timeline-card, .goal-activity-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
     .goal-timeline-card h3, .goal-activity-card h3 {{ margin-top:0; }}
@@ -37809,11 +37828,67 @@ def _html_page(
       input.focus();
       setClipboardStatus("Set job_name to " + (jobName || "blank") + ".");
     }}
-    function setGoalTimelineFilter(filterKind) {{
+    function timelineLaneStorageKey(filterPanel) {{
+      var key = filterPanel ? filterPanel.getAttribute("data-goal-timeline-filter-storage-key") : "";
+      return key || "clankeros-goal-timeline-lane";
+    }}
+    function setTimelineLaneViewStatus(filterPanel, message) {{
+      var status = filterPanel ? filterPanel.querySelector("[data-goal-timeline-filter-view-status='true']") : null;
+      if (status) {{ status.textContent = message; }}
+    }}
+    function normalizeTimelineLane(filterPanel, filterKind) {{
+      var normalized = filterKind || "all";
+      var buttons = filterPanel ? Array.prototype.slice.call(filterPanel.querySelectorAll("[data-goal-timeline-filter-kind]")) : [];
+      var found = buttons.some(function(button) {{
+        return (button.getAttribute("data-goal-timeline-filter-kind") || "all") === normalized;
+      }});
+      return found ? normalized : "all";
+    }}
+    function saveTimelineLaneState(filterPanel, lane) {{
+      if (!window.localStorage || !filterPanel) {{ return; }}
+      try {{
+        window.localStorage.setItem(timelineLaneStorageKey(filterPanel), JSON.stringify({{ lane: lane }}));
+        setTimelineLaneViewStatus(filterPanel, "View: saved");
+      }} catch (error) {{
+        setTimelineLaneViewStatus(filterPanel, "View: local only");
+      }}
+    }}
+    function restoreTimelineLaneState() {{
       var timeline = document.getElementById("goal-timeline");
       var filterPanel = document.querySelector("[data-goal-timeline-filter='true']");
       if (!timeline || !filterPanel) {{ return; }}
-      var normalized = filterKind || "all";
+      if (!window.localStorage) {{
+        setTimelineLaneViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+      try {{
+        var raw = window.localStorage.getItem(timelineLaneStorageKey(filterPanel));
+        if (!raw) {{
+          setTimelineLaneViewStatus(filterPanel, "View: default");
+          return false;
+        }}
+        var saved = JSON.parse(raw);
+        updateTimelineLane(saved && typeof saved.lane === "string" ? saved.lane : "all", {{ save: false }});
+        setTimelineLaneViewStatus(filterPanel, "View: restored");
+        return true;
+      }} catch (error) {{
+        setTimelineLaneViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+    }}
+    function clearTimelineLaneState() {{
+      var filterPanel = document.querySelector("[data-goal-timeline-filter='true']");
+      if (filterPanel && window.localStorage) {{
+        try {{ window.localStorage.removeItem(timelineLaneStorageKey(filterPanel)); }} catch (error) {{}}
+      }}
+      updateTimelineLane("all", {{ save: false }});
+      setTimelineLaneViewStatus(filterPanel, "View: reset");
+    }}
+    function updateTimelineLane(filterKind, options) {{
+      var timeline = document.getElementById("goal-timeline");
+      var filterPanel = document.querySelector("[data-goal-timeline-filter='true']");
+      if (!timeline || !filterPanel) {{ return; }}
+      var normalized = normalizeTimelineLane(filterPanel, filterKind || "all");
       var events = Array.prototype.slice.call(timeline.querySelectorAll("[data-timeline-event='true']"));
       var shown = 0;
       events.forEach(function(eventNode) {{
@@ -37836,6 +37911,15 @@ def _html_page(
       var status = filterPanel.querySelector("[data-goal-timeline-filter-status='true']");
       if (status) {{
         status.textContent = "Showing " + shown + " of " + events.length + " events" + (normalized === "all" ? "." : " in " + normalized.replace("_", " ") + ".");
+      }}
+      if (!options || options.save !== false) {{ saveTimelineLaneState(filterPanel, normalized); }}
+    }}
+    function initializeTimelineLaneState() {{
+      var filterPanel = document.querySelector("[data-goal-timeline-filter='true']");
+      if (!filterPanel) {{ return; }}
+      if (!restoreTimelineLaneState()) {{
+        updateTimelineLane("all", {{ save: false }});
+        setTimelineLaneViewStatus(filterPanel, "View: default");
       }}
     }}
     if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
@@ -37865,10 +37949,16 @@ def _html_page(
         fillCiJobName(fillJobButton.getAttribute("data-fill-ci-job") || "");
         return;
       }}
+      var timelineFilterReset = target.closest ? target.closest("[data-goal-timeline-filter-reset='true']") : null;
+      if (timelineFilterReset) {{
+        event.preventDefault();
+        clearTimelineLaneState();
+        return;
+      }}
       var timelineFilterButton = target.closest ? target.closest("[data-goal-timeline-filter-kind]") : null;
       if (timelineFilterButton) {{
         event.preventDefault();
-        setGoalTimelineFilter(timelineFilterButton.getAttribute("data-goal-timeline-filter-kind") || "all");
+        updateTimelineLane(timelineFilterButton.getAttribute("data-goal-timeline-filter-kind") || "all");
         return;
       }}
       var opener = target.closest ? target.closest("[data-open-details='true']") : null;
@@ -37913,6 +38003,7 @@ def _html_page(
       }}
     }}
     openCurrentHashDetails();
+    initializeTimelineLaneState();
     restoreWorkspacePanels();
     window.addEventListener("hashchange", openCurrentHashDetails);
     document.addEventListener("keydown", function(event) {{

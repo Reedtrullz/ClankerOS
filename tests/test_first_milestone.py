@@ -12141,6 +12141,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "timeline_digest_safety: read-only local chronology digest" in goal.body
     assert "Timeline Lane Filter" in goal.body
     assert "data-goal-timeline-filter='true'" in goal.body
+    assert (
+        f"data-goal-timeline-filter-storage-key='clankeros-goal-timeline-lane:{result.goal_id}'"
+        in goal.body
+    )
     assert "data-goal-timeline-filter-buttons='true'" in goal.body
     assert "data-goal-timeline-filter-kind='all'" in goal.body
     assert "data-goal-timeline-filter-kind='artifact'" in goal.body
@@ -12149,6 +12153,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-timeline-filter-kind='task'" in goal.body
     assert "data-goal-timeline-filter-active='true'" in goal.body
     assert "data-goal-timeline-filter-status='true'" in goal.body
+    assert "data-goal-timeline-filter-memory='true'" in goal.body
+    assert "data-goal-timeline-filter-view-status='true'>View: default</span>" in goal.body
+    assert "data-goal-timeline-filter-reset='true'>Reset lane</button>" in goal.body
     assert "Goal timeline filter evidence" in goal.body
     assert "data-goal-timeline-filter-evidence='true'" in goal.body
     assert "timeline_filter_status</dt><dd>available" in goal.body
@@ -12159,19 +12166,36 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "timeline_filter_run_events</dt><dd>" in goal.body
     assert "timeline_filter_task_events</dt><dd>" in goal.body
     assert "timeline_filter_source</dt><dd>data-timeline-kind" in goal.body
-    assert "timeline_filter_persistence</dt><dd>none" in goal.body
+    assert "timeline_filter_persistence</dt><dd>browser_local_view_memory" in goal.body
+    assert "timeline_lane_view_memory_status</dt><dd>available" in goal.body
+    assert (
+        f"timeline_lane_view_memory_storage</dt><dd>localStorage:clankeros-goal-timeline-lane:{result.goal_id}"
+        in goal.body
+    )
+    assert "timeline_lane_view_memory_fields</dt><dd>lane goal" in goal.body
+    assert "timeline_lane_view_memory_default</dt><dd>all" in goal.body
+    assert "timeline_lane_view_memory_reset</dt><dd>available" in goal.body
+    assert "timeline_lane_view_memory_write_on_get</dt><dd>false" in goal.body
     assert "timeline_filter_write_on_get</dt><dd>false" in goal.body
     assert "timeline_filter_provider_calls_taken</dt><dd>0" in goal.body
     assert "timeline_filter_network_actions_taken</dt><dd>0" in goal.body
     assert "timeline_filter_external_effects_created</dt><dd>false" in goal.body
     assert "timeline_filter_action: click a lane button" in goal.body
     assert "timeline_filter_reset: click All" in goal.body
+    assert "timeline_lane_view_memory: restores the selected lane from browser storage" in goal.body
+    assert "timeline_lane_view_reset: clears the browser-local Timeline lane view" in goal.body
     assert goal.body.index("data-goal-timeline-digest='true'") < goal.body.index(
         "data-goal-timeline-filter='true'"
     )
     assert goal.body.index("data-goal-timeline-filter='true'") < goal.body.index(
         "data-goal-timeline-metadata='true'"
     )
+    assert "function restoreTimelineLaneState()" in goal.body
+    assert "function updateTimelineLane(filterKind, options)" in goal.body
+    assert "window.localStorage.setItem(timelineLaneStorageKey(filterPanel)" in goal.body
+    assert "window.localStorage.removeItem(timelineLaneStorageKey(filterPanel))" in goal.body
+    assert 'updateTimelineLane(saved && typeof saved.lane === "string" ? saved.lane : "all", { save: false })' in goal.body
+    assert "updateTimelineLane(\"all\", { save: false })" in goal.body
     assert "timeline_links_enabled</dt><dd>true" in goal.body
     assert "timeline_artifact_records</dt><dd>" in goal.body
     assert "class='timeline-link'" in goal.body

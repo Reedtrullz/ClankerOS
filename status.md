@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-29 Timeline Lane View Memory UX
+
+- Added browser-local view memory to `/goals/<goal_id>#goal-timeline-filter`
+  so the selected Timeline lane restores per Goal across reloads from
+  `localStorage:clankeros-goal-timeline-lane:<goal_id>`.
+- Added visible `View: default/saved/restored/reset` status and a `Reset lane`
+  control that clears the per-Goal browser-local lane state and returns to the
+  full chronology.
+- Preserved the server-rendered default All lane, existing lane buttons,
+  rendered timeline rows, count text, and lane-filter safety evidence. The
+  helper writes only to browser local storage after browser interaction; GET
+  rendering remains read-only.
+- The behavior is browser-local Timeline view restoration only: no Goal state
+  write on GET, no provider calls, no network actions, no execution, no
+  approval, no push, no PR, no deploy, and no external mutation.
+- Updated README, local app docs, operating summary, docs status, and the
+  fixture-backed Goal route regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state --tb=short` passed with
+  `1 passed, 515 deselected in 29.53s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55614` showed Artifact lane saved, reloaded with
+  `View: restored`, `Showing 19 of 29 events in artifact`, only artifact rows
+  visible, Reset lane returned All with `Showing 29 of 29 events`, reload after
+  reset stayed default, mobile `390x844` stacked lane buttons and Reset lane at
+  `329px` width inside a `358px` panel, no horizontal overflow, and no console
+  warnings/errors.
+
 ## 2026-06-29 Goal Board View Memory UX
 
 - Added browser-local view memory to `/goals#goal-board-filter` so the Goal

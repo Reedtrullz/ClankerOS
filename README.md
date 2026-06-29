@@ -539,7 +539,9 @@ the current useful event, newest artifact, and next action before reading every
 row. A browser-local `Timeline Lane Filter` follows the digest so the operator
 can switch the rendered chronology between all events, artifacts, approvals,
 delegations, runs, tasks, notes, and generic events without changing Goal
-state or leaving the page. The Activity Log now starts
+state or leaving the page. The selected lane is remembered per Goal in
+`localStorage:clankeros-goal-timeline-lane:<goal_id>` across reloads, with a
+Reset lane control for returning to the full chronology. The Activity Log now starts
 with a read-only `Goal Activity Command Bar` that exposes visible Now, Latest,
 Signals, Window, and Safety cards before collapsed activity evidence and
 metadata, then the recent human-readable event list. Progress starts with a read-only Goal Progress

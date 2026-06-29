@@ -249,7 +249,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Artifact, Next, and Safety cards, then a browser-local `Timeline Lane Filter`
   for switching the rendered chronology between all events, artifacts,
   approvals, delegations, runs, tasks, notes, and generic events before the
-  full chronological list. It uses local polling
+  full chronological list. The selected timeline lane is remembered per Goal
+  in `localStorage:clankeros-goal-timeline-lane:<goal_id>` and can be cleared
+  with Reset lane without writing Goal state. It uses local polling
   refresh, pauses refresh while the
   operator is editing a form or the tab is hidden, and does not contact GitHub
   or providers. The Current Phase banner is the primary operator state readback:

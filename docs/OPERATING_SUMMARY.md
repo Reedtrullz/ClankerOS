@@ -464,9 +464,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   artifact, next surface, and zero-effect counters. A browser-local
   `Timeline Lane Filter` follows the digest, using existing
   `data-timeline-kind` markers to hide or show rendered artifact, approval,
-  delegation, run, task, note, and generic event rows without persistence,
-  network access, or local writes before timeline metadata and the full
-  chronological list. The Activity Log likewise opens with visible Now, Latest, Signals,
+  delegation, run, task, note, and generic event rows. It remembers the
+  selected lane per Goal in
+  `localStorage:clankeros-goal-timeline-lane:<goal_id>` and exposes Reset lane
+  to clear that browser-local view, while keeping GET rendering free of Goal
+  writes, network access, and external effects before timeline metadata and the
+  full chronological list. The Activity Log likewise opens with visible Now, Latest, Signals,
   Window, and Safety cards before collapsed recent-event evidence and
   metadata. Goal pages include a browser-native progress
   bar and a large Current Phase banner that explains the phase reason,

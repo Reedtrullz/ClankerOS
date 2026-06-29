@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals/<goal_id>#goal-timeline-filter` now remembers the selected Timeline
+  lane per Goal in `localStorage:clankeros-goal-timeline-lane:<goal_id>`, shows
+  visible View status, and provides Reset lane while preserving read-only GET
+  behavior and no-provider/no-network/no-external-effect boundaries.
 - `/goals` active, paused, and completed lanes now render scan-first Goal cards
   instead of dense text rows. Each card links to the Goal, project, and current
   next-action surface while showing phase, progress, next action, waiting
