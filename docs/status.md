@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The command palette now adds focused Goal section jump commands to its local
+  filtered results, so typing `timeline`, `approval`, `artifact`, `memory`,
+  `git`, or `remaining` can navigate directly to the current Goal's core
+  browser sections. These are local route/anchor links only and keep GET
+  rendering read-only with no provider call, network action, or external
+  mutation.
 - Shared Recent Items now has a browser-local `Find Recent` filter that narrows
   already-rendered shortcut rows by local text search. It remembers query view
   state in `localStorage:clankeros-recent-items-filter`, exposes Reset filter,

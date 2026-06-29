@@ -537,8 +537,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Palette Focus` launcher for continuing the current Goal action, jumping to
   search, resuming the saved workspace, or staying on the current page. Its
   search box now narrows a visible `Palette Results` list of local routes and
-  recent work as the operator types, while the existing Search button still
-  opens full indexed `/search` results. The
+  recent work as the operator types, and it now adds the focused Goal's core
+  section anchors so queries like `timeline`, `approval`, `artifact`, `memory`,
+  `git`, or `remaining` can jump straight to the Goal page. The existing
+  Search button still opens full indexed `/search` results. The
   route-aware `Current Page` readback, keyboard shortcuts, long open list, and
   route-aware Finish Today target stay available inside collapsed
   `Palette evidence and shortcuts`; the

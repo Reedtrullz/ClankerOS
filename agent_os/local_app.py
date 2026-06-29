@@ -140,6 +140,20 @@ GLOBAL_KEYBOARD_SHORTCUTS = {
     "m": "Toggle focus mode",
     "t": "Toggle theme",
 }
+COMMAND_PALETTE_GOAL_SECTIONS = [
+    ("Next action", "goal-next-action", "current recommendation action form"),
+    ("Timeline", "goal-timeline", "chronological activity artifacts"),
+    ("Evidence", "goal-evidence", "proof verification artifacts"),
+    ("Delegations", "goal-delegations", "scout delegation contracts"),
+    ("Runs", "goal-runs", "execution run evidence"),
+    ("Approvals", "goal-approvals", "operator approval gates"),
+    ("Artifacts", "goal-artifacts", "produced files patches handoffs"),
+    ("Memory", "goal-memory", "project memory operator notes"),
+    ("Skills used", "goal-skills-used", "skills usage generated skills"),
+    ("Git status", "goal-git-status", "branch commit diff posture"),
+    ("Operator notes", "goal-operator-notes", "human notes future context"),
+    ("Remaining work", "goal-remaining-work", "completion blockers open work"),
+]
 WORKFLOW_STEPS = [
     ("Goal / task", "goal, tasks", "local_state", "none", "goal row, task rows"),
     ("Delegate scout", "delegate", "local_state", "task", "delegation row"),
@@ -36956,6 +36970,12 @@ def _command_palette(
 ) -> str:
     commands = [(label, href, "route") for label, href in NAV_ITEMS]
     commands.extend(_recent_operator_links(root, limit=6))
+    goal_section_links, goal_section_context = _command_palette_goal_section_links(
+        root,
+        focus_context,
+        current_path,
+    )
+    commands.extend(goal_section_links)
     seen: set[str] = set()
     open_rows = []
     result_rows = []
@@ -37007,8 +37027,11 @@ def _command_palette(
                 [
                     ("palette_filter_status", "available"),
                     ("palette_filter_result_count", str(result_count)),
-                    ("palette_filter_source", "nav_and_recent_local_items"),
+                    ("palette_filter_source", "nav_recent_and_goal_sections"),
                     ("palette_filter_scope", "browser_local_commands"),
+                    ("palette_filter_goal_section_count", str(len(goal_section_links))),
+                    ("palette_filter_goal_section_source", goal_section_context["source"]),
+                    ("palette_filter_goal_section_goal", goal_section_context["goal"]),
                     ("palette_filter_write_on_get", "false"),
                     ("palette_filter_provider_calls_taken", "0"),
                     ("palette_filter_network_actions_taken", "0"),
@@ -37018,6 +37041,7 @@ def _command_palette(
             _ul(
                 [
                     "palette_filter_action: type in command-palette-search",
+                    *goal_section_context["lines"],
                     "palette_filter_empty_state: show local no-match message",
                     "palette_filter_safety: client-side filtering only",
                 ]
@@ -37039,6 +37063,48 @@ def _command_palette(
             "</dialog>",
         ]
     )
+
+
+def _command_palette_goal_section_links(
+    root: Path,
+    focus_context: dict[str, Any],
+    current_path: str,
+) -> tuple[list[tuple[str, str, str]], dict[str, Any]]:
+    parsed = urlparse(current_path or "/")
+    path = parsed.path or "/"
+    goal_id = ""
+    source = "none"
+    if path.startswith("/goals/"):
+        goal_id = unquote(path.removeprefix("/goals/")).strip()
+        source = "current_route"
+    if not goal_id and focus_context.get("status") == "available":
+        goal = focus_context.get("goal")
+        if goal is not None:
+            goal_id = str(goal.id)
+            source = str(focus_context.get("source") or "operator_focus")
+
+    if not goal_id:
+        return [], {
+            "source": "none",
+            "goal": "none",
+            "lines": ["palette_goal_section_commands: none"],
+        }
+
+    goal_label, label_source = _goal_display_label(root, goal_id)
+    display = goal_label or goal_id
+    links: list[tuple[str, str, str]] = []
+    lines: list[str] = [
+        f"palette_goal_section_commands: goal={_e(goal_id)} source={_e(source)} label_source={_e(label_source)}",
+    ]
+    for label, anchor, search_terms in COMMAND_PALETTE_GOAL_SECTIONS:
+        href = f"/goals/{quote(goal_id)}#{anchor}"
+        command_label = f"Goal {label}: {display}"
+        links.append((_compact_label(command_label, 96), href, f"goal section {search_terms}"))
+        lines.append(
+            f"palette_goal_section_command: {_e(label)} "
+            f"surface=<a href='{_e(href)}'>{_e(anchor)}</a>"
+        )
+    return links, {"source": source, "goal": goal_id, "lines": lines}
 
 
 def _command_palette_quick_switch(

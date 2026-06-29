@@ -5085,13 +5085,17 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "No local palette matches. Press Search to search all indexed ClankerOS state." in root.body
     assert "data-command-palette-filter-evidence='true'" in root.body
     assert "palette_filter_status</dt><dd>available" in root.body
-    assert "palette_filter_source</dt><dd>nav_and_recent_local_items" in root.body
+    assert "palette_filter_source</dt><dd>nav_recent_and_goal_sections" in root.body
     assert "palette_filter_scope</dt><dd>browser_local_commands" in root.body
+    assert "palette_filter_goal_section_count</dt><dd>0" in root.body
+    assert "palette_filter_goal_section_source</dt><dd>none" in root.body
+    assert "palette_filter_goal_section_goal</dt><dd>none" in root.body
     assert "palette_filter_write_on_get</dt><dd>false" in root.body
     assert "palette_filter_provider_calls_taken</dt><dd>0" in root.body
     assert "palette_filter_network_actions_taken</dt><dd>0" in root.body
     assert "palette_filter_external_effects_created</dt><dd>false" in root.body
     assert "palette_filter_action: type in command-palette-search" in root.body
+    assert "palette_goal_section_commands: none" in root.body
     assert "palette_filter_empty_state: show local no-match message" in root.body
     assert "palette_filter_safety: client-side filtering only" in root.body
     assert "data-command-palette-quick-switch='true'" in root.body
@@ -11218,6 +11222,39 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-command-palette-filter='true'" in goal.body
     assert "data-command-palette-result-list='true'" in goal.body
     assert "data-palette-result='true'" in goal.body
+    assert "palette_filter_source</dt><dd>nav_recent_and_goal_sections" in goal.body
+    assert "palette_filter_goal_section_count</dt><dd>12" in goal.body
+    assert "palette_filter_goal_section_source</dt><dd>current_route" in goal.body
+    assert f"palette_filter_goal_section_goal</dt><dd>{result.goal_id}" in goal.body
+    assert (
+        f"href='/goals/{result.goal_id}#goal-artifacts'>Goal Artifacts: "
+        "Demo the ClankerOS local operator app with fixture-backed state</a>"
+    ) in goal.body
+    assert (
+        f"href='/goals/{result.goal_id}#goal-approvals'>Goal Approvals: "
+        "Demo the ClankerOS local operator app with fixture-backed state</a>"
+    ) in goal.body
+    assert (
+        f"href='/goals/{result.goal_id}#goal-memory'>Goal Memory: "
+        "Demo the ClankerOS local operator app with fixture-backed state</a>"
+    ) in goal.body
+    assert (
+        "data-palette-search-text='goal git status: demo the clankeros local operator app "
+        f"with fixture-backed state /goals/{result.goal_id}#goal-git-status "
+        "goal section branch commit diff posture'"
+    ) in goal.body
+    assert (
+        f"palette_goal_section_commands: goal={result.goal_id} "
+        "source=current_route label_source=title"
+    ) in goal.body
+    assert (
+        f"palette_goal_section_command: Artifacts surface=<a href='/goals/{result.goal_id}#goal-artifacts'>"
+        "goal-artifacts</a>"
+    ) in goal.body
+    assert (
+        f"palette_goal_section_command: Remaining work surface=<a href='/goals/{result.goal_id}#goal-remaining-work'>"
+        "goal-remaining-work</a>"
+    ) in goal.body
     assert "data-command-palette-empty='true' hidden" in goal.body
     assert "function syncPaletteFilter()" in goal.body
     assert 'paletteSearch.addEventListener("input", syncPaletteFilter);' in goal.body

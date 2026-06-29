@@ -634,9 +634,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   The command palette now opens with a compact `Palette Focus` launcher for
   continuing the current Goal action, searching local state, resuming the saved
   workspace, or staying on the current page. Its search box narrows a visible
-  `Palette Results` list of local routes and recent work in place, with a
-  no-match state and zero-effect evidence, while the Search button still opens
-  full indexed `/search`. Its detailed route readback, keyboard shortcuts, long
+  `Palette Results` list of local routes, recent work, and the focused Goal's
+  core section anchors in place, with a no-match state and zero-effect
+  evidence, while the Search button still opens full indexed `/search`. This
+  makes palette queries such as `timeline`, `approval`, `artifact`, `memory`,
+  `git`, or `remaining` jump directly to the Goal page sections. Its detailed
+  route readback, keyboard shortcuts, long
   open list, and zero-effect counters are still available inside collapsed
   `Palette evidence and shortcuts`, while the goal-aware `Continue Current
   Goal` form remains directly below search.

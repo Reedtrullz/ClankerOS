@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-29 Goal Section Palette Commands
+
+- Added focused Goal section jump commands to the shared command palette's
+  browser-local filtered `Palette Results` list.
+- When the current route is a Goal page, or when Operator Focus has a lead or
+  saved Goal, the palette now adds direct links for Next action, Timeline,
+  Evidence, Delegations, Runs, Approvals, Artifacts, Memory, Skills used, Git
+  status, Operator notes, and Remaining work.
+- Operators can open the palette and type terms like `timeline`, `approval`,
+  `artifact`, `memory`, `git`, or `remaining` to jump directly to the
+  corresponding Goal section instead of scanning the full Goal page or opening
+  the Goal section finder first.
+- Palette evidence now reports the Goal-section command count, source, and
+  target Goal id. First-run/no-Goal state reports zero Goal section commands.
+- The behavior is local route/anchor navigation only: no server state write, no
+  workspace JSON write, no provider calls, no network actions, and no external
+  mutation.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `python3 -m compileall -q agent_os
+  tests` passed; focused route/demo pytest passed with `2 passed, 514
+  deselected in 68.33s`; scratch-root `python3 -m agent_os.cli --root
+  <scratch> app-smoke-test` passed across core routes with provider calls,
+  network actions, and external mutations at zero; scratch-root `python3 -m
+  agent_os.cli --root <scratch> app-demo-smoke-test` passed across
+  fixture-backed stateful routes with provider calls, network actions, and
+  external mutations at zero; direct rendered Goal readback confirmed 12
+  palette Goal-section commands and Artifacts/Git/Remaining-work links;
+  Playwright browser QA against the scratch demo Goal at
+  `http://127.0.0.1:55625/goals/goal_131ef6ff4237` confirmed `/` opened the
+  palette, `git` linked to `#goal-git-status`, `remaining` linked to
+  `#goal-remaining-work`, `artifact` included `#goal-artifacts`, no console
+  errors were emitted, and the desktop page had no horizontal overflow; final
+  `git diff --check` passed.
+
 ## 2026-06-29 Recent Items Filter UX
 
 - Added a browser-local `Find Recent` filter to the shared Recent Items

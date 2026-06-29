@@ -781,8 +781,10 @@ anchors.
 The command palette now opens with a `Palette Focus` launcher: continue the
 current Goal action, jump to search, resume the saved workspace, or stay on the
 current page. The search box also narrows a visible `Palette Results` list of
-local routes and recent work as you type, with a no-match state that leaves the
-existing Search button available for full indexed search. It also includes a
+local routes, recent work, and the focused Goal's core section anchors as you
+type, so `timeline`, `approval`, `artifact`, `memory`, `git`, or `remaining`
+can jump straight into the Goal page without scanning. A no-match state leaves
+the existing Search button available for full indexed search. It also includes a
 visible `Quick Switch` dock for Continue, Workspace, Action, Artifact, and
 Finish so the palette can recover the current Goal, exact saved workspace
 surface, last action target, latest artifact, or `/workspace#save-workspace`
