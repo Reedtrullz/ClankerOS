@@ -1,5 +1,23 @@
 # Status
 
+## 2026-06-29 Artifact Goal Title Context UX
+
+- Made stored Goal artifact pages title-first across the `Artifact Operator
+  Workbench`, `Artifact Relationship Map`, `Artifact Command Bar`, and
+  `Artifact Review Brief`.
+- Raw Goal ids are still preserved in collapsed evidence with label-source
+  fields, and synthetic/orphan artifact paths keep their existing ID fallback
+  behavior.
+- Updated README, local app docs, operating summary, docs status, and the
+  focused artifact route regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health --tb=short` passed with
+  `1 passed, 515 deselected`; `python3 -m compileall -q agent_os tests`;
+  `git diff --check`; bounded temp-root `app-smoke-test`; bounded temp-root
+  `app-demo-smoke-test`.
+
 ## 2026-06-29 Workspace Panel Restore UX
 
 - Added a shared `Workspace Panel Restore` strip to the browser shell for

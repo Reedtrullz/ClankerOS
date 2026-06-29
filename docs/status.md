@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/artifacts?path=...` now renders stored Goal context title-first across the
+  Artifact Operator Workbench, Relationship Map, Command Bar, and Review Brief.
+  Raw Goal ids and label-source fields remain in collapsed evidence, and
+  synthetic/orphan artifact paths keep their ID fallback behavior.
 - The shared browser shell now turns saved `expanded_panels` into a
   `Workspace Panel Restore` strip on `/resume`, `/workspace`, and the saved
   Goal page. It shows direct links for saved panels such as Timeline and

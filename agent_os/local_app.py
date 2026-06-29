@@ -9482,6 +9482,34 @@ def _goal_display_link(root: Path, goal_id: str) -> tuple[str, str, str, str | S
     return href, label, source, SafeHtml(f"<a href='{_e(href)}'>{_e(label)}</a>")
 
 
+def _goal_artifact_display(root: Path, goal_id: str) -> dict[str, str | SafeHtml]:
+    goal_id = str(goal_id or "").strip()
+    if not goal_id or goal_id == "unknown":
+        return {
+            "id": goal_id or "unknown",
+            "href": "/goals",
+            "label": "unknown",
+            "label_source": "none",
+            "short_surface": "unknown",
+            "route_surface": SafeHtml("<a href='/goals'>/goals</a>"),
+            "route_label": "/goals",
+        }
+    href = f"/goals/{quote(goal_id)}"
+    label, source = _goal_display_label(root, goal_id)
+    short_label = label or goal_id
+    title_first = source in {"title", "description", "original_prompt"}
+    route_label = short_label if title_first else f"/goals/{goal_id}"
+    return {
+        "id": goal_id,
+        "href": href,
+        "label": short_label,
+        "label_source": source,
+        "short_surface": SafeHtml(f"<a href='{_e(href)}'>{_e(short_label)}</a>"),
+        "route_surface": SafeHtml(f"<a href='{_e(href)}'>{_e(route_label)}</a>"),
+        "route_label": route_label,
+    }
+
+
 def _goal_recommendation_target(
     goal: Any,
     recommendation: Any | None,
@@ -28428,6 +28456,7 @@ def _artifact_viewer(
     body = "".join(
         [
             _artifact_operator_workbench(
+                root=root,
                 relative_path=repo_relative,
                 artifact_type=artifact_type,
                 render_family=render_family,
@@ -28447,6 +28476,7 @@ def _artifact_viewer(
                 truncated=truncated,
             ),
             _artifact_relationship_map(
+                root=root,
                 relative_path=repo_relative,
                 artifact_type=artifact_type,
                 render_family=render_family,
@@ -28466,6 +28496,7 @@ def _artifact_viewer(
                 workspace=workspace,
             ),
             _artifact_review_brief(
+                root=root,
                 relative_path=repo_relative,
                 artifact_type=artifact_type,
                 render_family=render_family,
@@ -28499,6 +28530,7 @@ def _artifact_viewer(
 
 def _artifact_relationship_map(
     *,
+    root: Path,
     relative_path: str,
     artifact_type: str,
     render_family: str,
@@ -28512,13 +28544,15 @@ def _artifact_relationship_map(
     delegation_id = source["delegation_id"]
     run_id = source["run_id"]
     remembered = workspace.get("last_viewed_artifact") == relative_path
+    goal_display = _goal_artifact_display(root, goal_id)
     if goal_id != "unknown":
         workflow_status = "goal_artifact"
         workflow_label = "Goal artifacts"
         workflow_href = f"/goals/{quote(goal_id)}#goal-artifact-command-bar"
         workflow_surface = f"/goals/{goal_id}#goal-artifact-command-bar"
-        goal_href = f"/goals/{quote(goal_id)}"
-        goal_label = f"/goals/{goal_id}"
+        goal_href = str(goal_display["href"])
+        goal_label = str(goal_display["route_label"])
+        goal_surface = goal_display["route_surface"]
         project_href = f"/projects/{quote(project_id)}"
         project_label = f"/projects/{project_id}"
         source_href = f"/runs/{quote(run_id)}" if run_id != "unknown" else workflow_href
@@ -28564,7 +28598,7 @@ def _artifact_relationship_map(
     resume_label = "/resume" if remembered else "Remember Artifact"
     resume_status = "saved_workspace_anchor" if remembered else "not_saved"
     goal_card_text = (
-        f"Goal {goal_id}; project {project_id}."
+        f"Goal {goal_display['label']}; project {project_id}."
         if goal_id != "unknown"
         else "No owning Goal inferred from this artifact path."
     )
@@ -28606,6 +28640,8 @@ def _artifact_relationship_map(
                     ("artifact_relationship_source_family", source["source_family"]),
                     ("artifact_relationship_project", project_id),
                     ("artifact_relationship_goal", goal_id),
+                    ("artifact_relationship_goal_label", str(goal_display["label"])),
+                    ("artifact_relationship_goal_label_source", str(goal_display["label_source"])),
                     ("artifact_relationship_delegation", delegation_id),
                     ("artifact_relationship_run", run_id),
                     ("artifact_relationship_workspace_project", workspace.get("open_project", "")),
@@ -28617,7 +28653,7 @@ def _artifact_relationship_map(
                     ),
                     (
                         "artifact_relationship_goal_surface",
-                        SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_label)}</a>"),
+                        goal_surface if goal_id != "unknown" else SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_label)}</a>"),
                     ),
                     (
                         "artifact_relationship_project_surface",
@@ -28734,6 +28770,7 @@ def _artifact_format_lens(
 
 def _artifact_operator_workbench(
     *,
+    root: Path,
     relative_path: str,
     artifact_type: str,
     render_family: str,
@@ -28746,29 +28783,34 @@ def _artifact_operator_workbench(
     project_id = context["project_id"]
     goal_id = context["goal_id"]
     remembered = workspace.get("last_viewed_artifact") == relative_path
+    goal_display = _goal_artifact_display(root, goal_id)
     if goal_id != "unknown":
         context_label = "Goal artifact"
         context_action = "Return to goal"
-        context_href = f"/goals/{quote(goal_id)}"
-        context_surface = f"/goals/{goal_id}"
+        context_href = str(goal_display["href"])
+        context_surface = str(goal_display["route_label"])
+        context_surface_value = goal_display["route_surface"]
         context_reason = "artifact_path_identifies_goal_context"
     elif context["source"] == "delegation_path":
         context_label = "Delegation artifact"
         context_action = "Review delegation runs"
         context_href = "/delegation-runs"
         context_surface = "/delegation-runs"
+        context_surface_value = SafeHtml("<a href='/delegation-runs'>/delegation-runs</a>")
         context_reason = "artifact_path_identifies_delegation_context"
     elif remembered:
         context_label = "Saved resume anchor"
         context_action = "Resume from artifact"
         context_href = "/resume"
         context_surface = "/resume"
+        context_surface_value = SafeHtml("<a href='/resume'>/resume</a>")
         context_reason = "artifact_saved_as_workspace_anchor"
     else:
         context_label = "Unclassified artifact"
         context_action = "Remember artifact"
         context_href = "#remember-artifact"
         context_surface = "Remember Artifact"
+        context_surface_value = SafeHtml("<a href='#remember-artifact'>Remember Artifact</a>")
         context_reason = "artifact_path_unclassified"
     resume_action = "Resume from artifact" if remembered else "Remember artifact"
     resume_href = "/resume" if remembered else "#remember-artifact"
@@ -28807,11 +28849,13 @@ def _artifact_operator_workbench(
                     ("artifact_workbench_context_source", context["source"]),
                     ("artifact_workbench_project", project_id),
                     ("artifact_workbench_goal", goal_id),
+                    ("artifact_workbench_goal_label", str(goal_display["label"])),
+                    ("artifact_workbench_goal_label_source", str(goal_display["label_source"])),
                     ("artifact_workbench_saved_anchor", str(remembered).lower()),
                     ("artifact_workbench_context_action", context_action),
                     (
                         "artifact_workbench_context_surface",
-                        SafeHtml(f"<a href='{_e(context_href)}'>{_e(context_surface)}</a>"),
+                        context_surface_value,
                     ),
                     ("artifact_workbench_context_reason", context_reason),
                     ("artifact_workbench_resume_action", resume_action),
@@ -28842,6 +28886,7 @@ def _artifact_operator_workbench(
 
 def _artifact_review_brief(
     *,
+    root: Path,
     relative_path: str,
     artifact_type: str,
     render_family: str,
@@ -28854,11 +28899,13 @@ def _artifact_review_brief(
     project_id = context["project_id"]
     goal_id = context["goal_id"]
     remembered = workspace.get("last_viewed_artifact") == relative_path
+    goal_display = _goal_artifact_display(root, goal_id)
     if goal_id != "unknown":
         review_status = "goal_scoped"
         primary_action = "Return to goal"
-        primary_href = f"/goals/{quote(goal_id)}"
-        primary_label = f"/goals/{goal_id}"
+        primary_href = str(goal_display["href"])
+        primary_label = str(goal_display["route_label"])
+        primary_surface = goal_display["route_surface"]
         secondary_href = f"/projects/{quote(project_id)}"
         secondary_label = f"/projects/{project_id}"
         reason = "artifact_path_identifies_goal_context"
@@ -28867,6 +28914,7 @@ def _artifact_review_brief(
         primary_action = "Resume from artifact"
         primary_href = "/resume"
         primary_label = "/resume"
+        primary_surface = SafeHtml("<a href='/resume'>/resume</a>")
         secondary_href = "/workspace"
         secondary_label = "/workspace"
         reason = "artifact_saved_as_workspace_anchor"
@@ -28875,6 +28923,7 @@ def _artifact_review_brief(
         primary_action = "Review delegation runs"
         primary_href = "/delegation-runs"
         primary_label = "/delegation-runs"
+        primary_surface = SafeHtml("<a href='/delegation-runs'>/delegation-runs</a>")
         secondary_href = "#remember-artifact"
         secondary_label = "Remember Artifact"
         reason = "artifact_path_identifies_delegation_context"
@@ -28883,6 +28932,7 @@ def _artifact_review_brief(
         primary_action = "Remember artifact"
         primary_href = "#remember-artifact"
         primary_label = "Remember Artifact"
+        primary_surface = SafeHtml("<a href='#remember-artifact'>Remember Artifact</a>")
         secondary_href = "/workspace"
         secondary_label = "/workspace"
         reason = "artifact_path_unclassified"
@@ -28891,7 +28941,7 @@ def _artifact_review_brief(
         project_value = SafeHtml(f"<a href='/projects/{quote(project_id)}'>{_e(project_id)}</a>")
     goal_value: str | SafeHtml = goal_id
     if goal_id != "unknown":
-        goal_value = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(goal_id)}</a>")
+        goal_value = goal_display["short_surface"]
     return "".join(
         [
             "<section id='artifact-review-brief' class='panel artifact-review-brief' data-artifact-review-brief='true'><h2>Artifact Review Brief</h2>",
@@ -28903,6 +28953,9 @@ def _artifact_review_brief(
                     ("artifact_review_path", relative_path),
                     ("artifact_review_project", project_value),
                     ("artifact_review_goal", goal_value),
+                    ("artifact_review_goal_id", goal_id),
+                    ("artifact_review_goal_label", str(goal_display["label"])),
+                    ("artifact_review_goal_label_source", str(goal_display["label_source"])),
                     ("artifact_review_context_source", context["source"]),
                     ("artifact_review_type", artifact_type),
                     ("artifact_review_render_family", render_family),
@@ -28915,7 +28968,7 @@ def _artifact_review_brief(
                     ("artifact_review_primary_action", primary_action),
                     (
                         "artifact_review_primary_surface",
-                        SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+                        primary_surface,
                     ),
                     (
                         "artifact_review_secondary_surface",
@@ -28959,6 +29012,8 @@ def _artifact_command_bar(
 ) -> str:
     context = _artifact_context_from_path(relative_path)
     remembered = workspace.get("last_viewed_artifact") == relative_path
+    goal_id = context["goal_id"]
+    goal_display = _goal_artifact_display(root, goal_id)
     if remembered:
         next_action = "Resume from artifact"
         target_href = "/resume"
@@ -28971,9 +29026,7 @@ def _artifact_command_bar(
         reason = "artifact_not_saved_as_resume_anchor"
     goal_value: str | SafeHtml = context["goal_id"]
     if context["goal_id"] != "unknown":
-        goal_value = SafeHtml(
-            f"<a href='/goals/{quote(context['goal_id'])}'>{_e(context['goal_id'])}</a>"
-        )
+        goal_value = goal_display["short_surface"]
     project_value: str | SafeHtml = context["project_id"]
     if context["project_id"] != "unknown":
         project_value = SafeHtml(
@@ -28996,6 +29049,9 @@ def _artifact_command_bar(
                     ("artifact_command_truncated", str(truncated).lower()),
                     ("artifact_command_project", project_value),
                     ("artifact_command_goal", goal_value),
+                    ("artifact_command_goal_id", goal_id),
+                    ("artifact_command_goal_label", str(goal_display["label"])),
+                    ("artifact_command_goal_label_source", str(goal_display["label_source"])),
                     ("artifact_command_context_source", context["source"]),
                     ("artifact_command_workspace_project", workspace.get("open_project", "")),
                     ("artifact_command_workspace_goal", workspace.get("open_goal", "")),

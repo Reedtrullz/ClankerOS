@@ -783,7 +783,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   family/renderer posture, and renders Markdown as escaped headings/lists/
   paragraphs, JSON as pretty-printed text, then shows an
   `Artifact Relationship Map` for Goal/project/delegation/run/workspace
-  return paths before dense command evidence. Patch/diff artifacts render with
+  return paths before dense command evidence. Stored Goal artifact links render
+  title-first while keeping raw Goal ids and label-source evidence in collapsed
+  proof. Patch/diff artifacts render with
   scan-friendly line classes, and text/log artifacts as inert text while
   keeping content execution disabled. It also exposes a confirmed local
   `save-workspace` form so the operator can remember the current artifact as

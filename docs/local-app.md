@@ -1022,7 +1022,9 @@ renderer, size, rendered byte count, line count, truncation state, inferred
 project/goal links when the path lives under
 `.clanker/projects/<project>/goals/<goal>/`, workspace anchor status, one next
 action, and write-on-GET/raw-filesystem/content-execution/network/external-
-effect boundaries. The command evidence links to `#remember-artifact` when
+effect boundaries. Stored Goal artifact links render title-first while raw Goal
+ids and label-source fields remain in collapsed evidence. The command evidence
+links to `#remember-artifact` when
 the artifact is not yet the saved resume anchor and to `/resume` once it is.
 
 ## Safe Actions

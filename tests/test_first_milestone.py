@@ -9183,6 +9183,64 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "artifact_review_primary_surface</dt><dd><a href='/goals/goal_demo'>/goals/goal_demo</a>" in goal_artifact_response.body
     assert "artifact_review_secondary_surface</dt><dd><a href='/projects/subject'>/projects/subject</a>" in goal_artifact_response.body
     assert "artifact_review_reason</dt><dd>artifact_path_identifies_goal_context" in goal_artifact_response.body
+    titled_system = AgentSystem(tmp_path)
+    titled_system.initialize()
+    titled_goal_id = titled_system.storage.create_goal(
+        "subject",
+        "Readable artifact title",
+    )
+    titled_goal_artifact = (
+        tmp_path
+        / ".clanker"
+        / "projects"
+        / "subject"
+        / "goals"
+        / titled_goal_id
+        / "evidence.md"
+    )
+    titled_goal_artifact.parent.mkdir(parents=True, exist_ok=True)
+    titled_goal_artifact.write_text("# Titled Goal Evidence\n", encoding="utf-8")
+    titled_goal_artifact_response = render_local_app_route(
+        tmp_path,
+        f"/artifacts?path=.clanker/projects/subject/goals/{titled_goal_id}/evidence.md",
+    )
+    assert titled_goal_artifact_response.status == 200
+    assert (
+        f"artifact_command_goal</dt><dd><a href='/goals/{titled_goal_id}'>"
+        "Readable artifact title</a>"
+        in titled_goal_artifact_response.body
+    )
+    assert f"artifact_command_goal_id</dt><dd>{titled_goal_id}" in titled_goal_artifact_response.body
+    assert "artifact_command_goal_label</dt><dd>Readable artifact title" in titled_goal_artifact_response.body
+    assert "artifact_command_goal_label_source</dt><dd>title" in titled_goal_artifact_response.body
+    assert "artifact_workbench_goal_label</dt><dd>Readable artifact title" in titled_goal_artifact_response.body
+    assert "artifact_workbench_goal_label_source</dt><dd>title" in titled_goal_artifact_response.body
+    assert (
+        f"artifact_workbench_context_surface</dt><dd><a href='/goals/{titled_goal_id}'>"
+        "Readable artifact title</a>"
+        in titled_goal_artifact_response.body
+    )
+    assert f"artifact_relationship_goal</dt><dd>{titled_goal_id}" in titled_goal_artifact_response.body
+    assert "artifact_relationship_goal_label</dt><dd>Readable artifact title" in titled_goal_artifact_response.body
+    assert "artifact_relationship_goal_label_source</dt><dd>title" in titled_goal_artifact_response.body
+    assert (
+        f"artifact_relationship_goal_surface</dt><dd><a href='/goals/{titled_goal_id}'>"
+        "Readable artifact title</a>"
+        in titled_goal_artifact_response.body
+    )
+    assert (
+        f"artifact_review_goal</dt><dd><a href='/goals/{titled_goal_id}'>"
+        "Readable artifact title</a>"
+        in titled_goal_artifact_response.body
+    )
+    assert f"artifact_review_goal_id</dt><dd>{titled_goal_id}" in titled_goal_artifact_response.body
+    assert "artifact_review_goal_label</dt><dd>Readable artifact title" in titled_goal_artifact_response.body
+    assert "artifact_review_goal_label_source</dt><dd>title" in titled_goal_artifact_response.body
+    assert (
+        f"artifact_review_primary_surface</dt><dd><a href='/goals/{titled_goal_id}'>"
+        "Readable artifact title</a>"
+        in titled_goal_artifact_response.body
+    )
 
     delegation_artifact = (
         tmp_path

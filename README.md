@@ -563,10 +563,12 @@ or log renderer, gives the format-specific read/review action, and keeps
 structure, byte counts, and inert-renderer boundaries visible before the
 content body. A visible `Artifact Relationship Map` follows it with Workflow,
 Goal, Source, Resume, and Boundary cards so Goal/project/delegation/run return
-paths are visible before dense evidence. The detailed `Artifact Command Bar`,
-`Artifact Review Brief`, format evidence, and relationship evidence stay
-collapsed by default while preserving path, type, renderer, size, line count,
-truncation state, inferred project/goal/delegation/run context,
+paths are visible before dense evidence. When the artifact path resolves to a
+stored Goal, those artifact context links are title-first while preserving raw
+Goal ids and label-source evidence for automation. The detailed `Artifact
+Command Bar`, `Artifact Review Brief`, format evidence, and relationship
+evidence stay collapsed by default while preserving path, type, renderer,
+size, line count, truncation state, inferred project/goal/delegation/run context,
 saved-resume-anchor posture, and zero-effect boundaries. The content view
 remains inert and bounded.
 
