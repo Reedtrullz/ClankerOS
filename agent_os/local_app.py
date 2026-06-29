@@ -21521,6 +21521,7 @@ def _ci_evidence_page(root: Path) -> str:
             _non_claim_banner(),
             "</section>",
             _ci_proof_workbench(root),
+            _ci_json_clipboard_assistant(root),
             _ci_evidence_summary_evidence(summary_rows),
             _ci_evidence_command_bar(root, records, snapshot_records),
             _ci_evidence_recording_guide(root),
@@ -21666,6 +21667,74 @@ def _ci_proof_workbench(root: Path) -> str:
     )
 
 
+def _ci_json_clipboard_assistant(root: Path) -> str:
+    commands = _ci_snapshot_command_context(root)
+    status_command = commands["status_command"]
+    fast_smoke_job = "Fast smoke verification"
+    full_suite_job = "Full pytest suite"
+    return "".join(
+        [
+            "<section id='ci-json-assistant' class='panel ci-json-assistant' data-ci-json-assistant='true'>",
+            "<h2>CI JSON Assistant</h2>",
+            "<p class='muted'>Copy the GitHub JSON command, paste its output into the recorder, and optionally scope proof to a completed job while the full workflow is still running.</p>",
+            "<div class='ci-json-assistant-grid' data-ci-json-assistant-cards='true'>",
+            "<article class='ci-json-assistant-card ci-json-assistant-primary' data-ci-json-assistant-copy='true'>",
+            "<h3>Copy JSON Command</h3>",
+            "<p>Replace <code>&lt;run_id&gt;</code> outside ClankerOS and copy the JSON output.</p>",
+            f"<code class='ci-json-assistant-command'>{_e(status_command)}</code>",
+            f"<button type='button' data-copy-text='{_e(status_command)}' data-copy-label='GitHub JSON command'>Copy command</button>",
+            "</article>",
+            "<article class='ci-json-assistant-card' data-ci-json-assistant-paste='true'>",
+            "<h3>Paste Clipboard</h3>",
+            "<p>Paste copied JSON into the recorder textarea when browser clipboard permission allows it.</p>",
+            "<button type='button' data-paste-clipboard-to='ci-status-json' data-paste-label='GitHub Actions JSON'>Paste JSON</button>",
+            "</article>",
+            "<article class='ci-json-assistant-card' data-ci-json-assistant-scope='true'>",
+            "<h3>Scope Job</h3>",
+            "<p>Use fast-smoke proof only as early route/CLI proof; full-suite proof requires the completed workflow.</p>",
+            f"<button type='button' data-fill-ci-job='{_e(fast_smoke_job)}'>Fast smoke</button>",
+            f"<button type='button' data-fill-ci-job='{_e(full_suite_job)}'>Full suite</button>",
+            "</article>",
+            "<article class='ci-json-assistant-card' data-ci-json-assistant-record='true'>",
+            "<h3>Record</h3>",
+            "<p>The existing confirmation page still reviews the payload before any local evidence write.</p>",
+            "<a class='ci-json-assistant-link' href='#record-ci-snapshot-json'>Open recorder</a>",
+            "</article>",
+            "</div>",
+            "<p class='muted' data-clipboard-status='true' aria-live='polite'></p>",
+            "<details class='ci-json-assistant-evidence' data-ci-json-assistant-evidence='true'><summary>CI JSON assistant evidence</summary>",
+            _kv(
+                [
+                    ("ci_json_assistant_status", "available"),
+                    ("ci_json_assistant_status_command_template", SafeHtml(f"<code>{_e(status_command)}</code>")),
+                    ("ci_json_assistant_copy_buttons_available", "true"),
+                    ("ci_json_assistant_paste_button_available", "true"),
+                    ("ci_json_assistant_status_json_target", "status_json"),
+                    ("ci_json_assistant_job_name_target", "job_name"),
+                    ("ci_json_assistant_fast_smoke_job", fast_smoke_job),
+                    ("ci_json_assistant_full_suite_job", full_suite_job),
+                    ("ci_json_assistant_confirmation_required", "true"),
+                    ("ci_json_assistant_write_on_get", "false"),
+                    ("ci_json_assistant_clipboard_scope", "browser_local_optional"),
+                    ("ci_json_assistant_github_status_fetch", "none"),
+                    ("ci_json_assistant_network_actions_taken", "0"),
+                    ("ci_json_assistant_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"ci_json_assistant_copy: <code>{_e(status_command)}</code>",
+                    "ci_json_assistant_paste: fills status_json textarea only after browser clipboard permission",
+                    "ci_json_assistant_scope: fills optional job_name field only",
+                    "ci_json_assistant_safety: existing confirmed ci-snapshot-evidence-from-gh-json form owns the local write",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
 def _ci_evidence_command_bar(
     root: Path,
     records: list[Any],
@@ -21742,10 +21811,10 @@ def _ci_snapshot_json_recording_form(root: Path) -> str:
             "<label>provider <input name='provider' value='github-actions'></label>",
             "<label>external_run_id <input name='external_run_id' value='' placeholder='optional if JSON has databaseId or URL'></label>",
             "<label>url <input name='url' value='' placeholder='optional if JSON has url'></label>",
-            "<label>job_name <input name='job_name' value='' placeholder='Fast smoke verification'></label>",
+            "<label>job_name <input name='job_name' value='' placeholder='Fast smoke verification' data-ci-job-name-input='true'></label>",
             "<label>recorded_by <input name='recorded_by' value='operator'></label>",
             "<label>note <input name='note' value='Validated from pasted GitHub Actions JSON.'></label>",
-            "<label>status_json <textarea name='status_json' rows='10' spellcheck='false'></textarea></label>",
+            "<label>status_json <textarea name='status_json' rows='10' spellcheck='false' data-ci-status-json-input='true'></textarea></label>",
             "<button type='submit'>ci-snapshot-evidence-from-gh-json</button>",
             "</form>",
             _kv(
@@ -35869,9 +35938,17 @@ def _html_page(
     .ci-proof-command:not([open]) > :not(summary) {{ display:none; }}
     .ci-proof-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .ci-proof-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
-    .ci-evidence-summary-evidence, .ci-proof-workbench-evidence, .ci-evidence-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .ci-evidence-summary-evidence summary, .ci-proof-workbench-evidence summary, .ci-evidence-command-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .ci-evidence-summary-evidence:not([open]) > :not(summary), .ci-proof-workbench-evidence:not([open]) > :not(summary), .ci-evidence-command-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .ci-json-assistant {{ border-left:4px solid var(--ok); }}
+    .ci-json-assistant-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(170px, 1fr)); gap:10px; margin:12px 0; }}
+    .ci-json-assistant-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .ci-json-assistant-card h3 {{ margin-top:0; }}
+    .ci-json-assistant-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .ci-json-assistant-card code {{ display:block; margin:0 0 10px; white-space:normal; overflow-wrap:anywhere; }}
+    .ci-json-assistant-primary {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
+    .ci-json-assistant-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .ci-evidence-summary-evidence, .ci-proof-workbench-evidence, .ci-json-assistant-evidence, .ci-evidence-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .ci-evidence-summary-evidence summary, .ci-proof-workbench-evidence summary, .ci-json-assistant-evidence summary, .ci-evidence-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .ci-evidence-summary-evidence:not([open]) > :not(summary), .ci-proof-workbench-evidence:not([open]) > :not(summary), .ci-json-assistant-evidence:not([open]) > :not(summary), .ci-evidence-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .today-current-action, .today-finish, .today-note, .today-pause {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .today-current-action summary, .today-finish summary, .today-note summary, .today-pause summary {{ cursor:pointer; font-weight:700; }}
     .today-current-action:not([open]) > :not(summary), .today-finish:not([open]) > :not(summary), .today-note:not([open]) > :not(summary), .today-pause:not([open]) > :not(summary) {{ display:none; }}
@@ -36581,7 +36658,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .workflow-scope-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #goal-attention-digest {{ scroll-margin-top:260px; }} .goal-attention-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
@@ -36682,6 +36759,55 @@ def _html_page(
       if (!href) {{ href = "/workspace#save-workspace"; }}
       window.location.href = href;
     }}
+    function setClipboardStatus(message) {{
+      var status = document.querySelector("[data-clipboard-status='true']");
+      if (status) {{ status.textContent = message; }}
+    }}
+    function copyTextToClipboard(text, label) {{
+      if (!text) {{ return; }}
+      if (!window.navigator || !navigator.clipboard || !navigator.clipboard.writeText) {{
+        setClipboardStatus("Clipboard copy is unavailable in this browser; select the command text manually.");
+        return;
+      }}
+      navigator.clipboard.writeText(text).then(function() {{
+        setClipboardStatus("Copied " + (label || "text") + ".");
+      }}, function() {{
+        setClipboardStatus("Clipboard copy was blocked; select the command text manually.");
+      }});
+    }}
+    function pasteClipboardTo(targetName, label) {{
+      var field = null;
+      if (targetName === "ci-status-json") {{
+        field = document.querySelector("[data-ci-status-json-input='true']");
+      }}
+      if (!field) {{
+        setClipboardStatus("Paste target not found.");
+        return;
+      }}
+      if (!window.navigator || !navigator.clipboard || !navigator.clipboard.readText) {{
+        setClipboardStatus("Clipboard paste is unavailable in this browser; paste into status_json manually.");
+        field.focus();
+        return;
+      }}
+      navigator.clipboard.readText().then(function(text) {{
+        field.value = text;
+        field.focus();
+        setClipboardStatus("Pasted " + (label || "clipboard text") + " into status_json.");
+      }}, function() {{
+        setClipboardStatus("Clipboard paste was blocked; paste into status_json manually.");
+        field.focus();
+      }});
+    }}
+    function fillCiJobName(jobName) {{
+      var input = document.querySelector("[data-ci-job-name-input='true']");
+      if (!input) {{
+        setClipboardStatus("Job name field not found.");
+        return;
+      }}
+      input.value = jobName || "";
+      input.focus();
+      setClipboardStatus("Set job_name to " + (jobName || "blank") + ".");
+    }}
     if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
     if (paletteSearch) {{ paletteSearch.addEventListener("input", syncPaletteFilter); }}
     if (nextActionOpen) {{ nextActionOpen.addEventListener("click", openNextAction); }}
@@ -36691,6 +36817,24 @@ def _html_page(
     syncFocusModeButton();
     document.addEventListener("click", function(event) {{
       var target = event.target || {{}};
+      var copyButton = target.closest ? target.closest("[data-copy-text]") : null;
+      if (copyButton) {{
+        event.preventDefault();
+        copyTextToClipboard(copyButton.getAttribute("data-copy-text") || "", copyButton.getAttribute("data-copy-label") || "command");
+        return;
+      }}
+      var pasteButton = target.closest ? target.closest("[data-paste-clipboard-to]") : null;
+      if (pasteButton) {{
+        event.preventDefault();
+        pasteClipboardTo(pasteButton.getAttribute("data-paste-clipboard-to") || "", pasteButton.getAttribute("data-paste-label") || "clipboard text");
+        return;
+      }}
+      var fillJobButton = target.closest ? target.closest("[data-fill-ci-job]") : null;
+      if (fillJobButton) {{
+        event.preventDefault();
+        fillCiJobName(fillJobButton.getAttribute("data-fill-ci-job") || "");
+        return;
+      }}
       var opener = target.closest ? target.closest("[data-open-details='true']") : null;
       if (!opener) {{ return; }}
       var href = opener.getAttribute("href") || "";

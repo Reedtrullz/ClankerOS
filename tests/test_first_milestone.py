@@ -2620,14 +2620,41 @@ def test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json(
     assert "ci_proof_workbench_full_suite_boundary</dt><dd>completed_workflow_run_success_required" in ci_evidence.body
     assert "ci_proof_workbench_github_status_fetch</dt><dd>none" in ci_evidence.body
     assert "ci_proof_workbench_network_actions_taken</dt><dd>0" in ci_evidence.body
+    assert "CI JSON Assistant" in ci_evidence.body
+    assert "data-ci-json-assistant='true'" in ci_evidence.body
+    assert "data-ci-json-assistant-cards='true'" in ci_evidence.body
+    assert "data-ci-json-assistant-copy='true'" in ci_evidence.body
+    assert "data-ci-json-assistant-paste='true'" in ci_evidence.body
+    assert "data-ci-json-assistant-scope='true'" in ci_evidence.body
+    assert "data-ci-json-assistant-record='true'" in ci_evidence.body
+    assert "data-copy-text='gh run view &lt;run_id&gt;" in ci_evidence.body
+    assert "data-paste-clipboard-to='ci-status-json'" in ci_evidence.body
+    assert "data-fill-ci-job='Fast smoke verification'" in ci_evidence.body
+    assert "data-fill-ci-job='Full pytest suite'" in ci_evidence.body
+    assert "data-clipboard-status='true'" in ci_evidence.body
+    assert "ci_json_assistant_status</dt><dd>available" in ci_evidence.body
+    assert "ci_json_assistant_status_command_template</dt><dd><code>gh run view &lt;run_id&gt;" in ci_evidence.body
+    assert "ci_json_assistant_copy_buttons_available</dt><dd>true" in ci_evidence.body
+    assert "ci_json_assistant_paste_button_available</dt><dd>true" in ci_evidence.body
+    assert "ci_json_assistant_status_json_target</dt><dd>status_json" in ci_evidence.body
+    assert "ci_json_assistant_job_name_target</dt><dd>job_name" in ci_evidence.body
+    assert "ci_json_assistant_clipboard_scope</dt><dd>browser_local_optional" in ci_evidence.body
+    assert "ci_json_assistant_github_status_fetch</dt><dd>none" in ci_evidence.body
+    assert "ci_json_assistant_network_actions_taken</dt><dd>0" in ci_evidence.body
+    assert "ci_json_assistant_external_effects_created</dt><dd>false" in ci_evidence.body
     assert "Record Direct Snapshot From GitHub JSON" in ci_evidence.body
     assert "action='/actions/ci-snapshot-evidence-from-gh-json'" in ci_evidence.body
     assert "status_json" in ci_evidence.body
+    assert "data-ci-status-json-input='true'" in ci_evidence.body
+    assert "data-ci-job-name-input='true'" in ci_evidence.body
     assert "external_run_id_inference</dt><dd>databaseId_or_actions_run_url" in ci_evidence.body
     assert "optional if JSON has databaseId or URL" in ci_evidence.body
     assert "network_actions_taken_by_app</dt><dd>0" in ci_evidence.body
     assert "github_status_fetch</dt><dd>none" in ci_evidence.body
     assert ci_evidence.body.index("CI Proof Workbench") < ci_evidence.body.index(
+        "CI JSON Assistant"
+    )
+    assert ci_evidence.body.index("CI JSON Assistant") < ci_evidence.body.index(
         "CI evidence summary"
     )
     assert ci_evidence.body.index("CI Proof Workbench") < ci_evidence.body.index(

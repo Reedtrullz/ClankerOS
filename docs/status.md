@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/ci-evidence` now includes a browser-local `CI JSON Assistant` between the
+  proof workbench and evidence summary. It copies the current `gh run view`
+  JSON command, optionally pastes clipboard JSON into the confirmed recorder
+  textarea, fills fast-smoke/full-suite job names, and keeps GitHub polling,
+  recording, push, PR, deploy, provider calls, and external mutation outside
+  GET and outside the helper.
 - `/goals/<goal_id>` Remaining Work now includes a `Goal Task Closeout` panel
   before the detailed checklist. When ready publication-handoff evidence (or a
   completed Goal with the same evidence) exists, the confirmed

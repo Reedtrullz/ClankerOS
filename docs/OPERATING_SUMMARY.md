@@ -191,9 +191,12 @@ Core layers for the bootstrap:
   `/ci-evidence` is now content-first and opens with a read-only
   `CI Proof Workbench` before shared diagnostics or command evidence. It shows
   Check, Record Smoke, Record Full Suite, and Manual Record cards for the
-  copy-only GitHub Actions proof loop, while summary rows, proof workbench
-  evidence, and command evidence stay collapsed by default before the JSON
-  paste form and evidence lists;
+  copy-only GitHub Actions proof loop, then a browser-local
+  `CI JSON Assistant` for copying the current `gh run view` JSON command,
+  optionally pasting clipboard JSON into the recorder textarea, and filling
+  fast-smoke or full-suite job names. Summary rows, proof workbench evidence,
+  assistant evidence, and command evidence stay collapsed by default before
+  the JSON paste form and evidence lists;
   `/search` for bounded global search across indexed goals, projects,
   delegations, known artifacts, incidents, recommendations, memory, runs,
   approvals, and skills, with goal results including live local phase, one
@@ -977,7 +980,8 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   browser-first cards for checking a pushed run, recording fast-smoke proof,
   recording full-suite proof, or using the manual record-after-success
   fallback, with copy-only `gh run view` / validated recorder templates behind
-  compact per-card command disclosures and explicit fast-smoke-versus-full-suite
+  compact per-card command disclosures, a browser-local `CI JSON Assistant`
+  for copy/paste and job-name fill, and explicit fast-smoke-versus-full-suite
   proof boundaries, while still performing no GitHub polling; a
   read-only root dashboard `Verification Snapshot` for checked-in workflow
   timeout, latest operator-supplied CI evidence, `/verification`,

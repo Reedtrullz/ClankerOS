@@ -1,5 +1,33 @@
 # Status
 
+## 2026-06-29 CI JSON Assistant UX
+
+- Added a browser-local `CI JSON Assistant` to `/ci-evidence` between the
+  `CI Proof Workbench` and the collapsed CI summary.
+- The assistant gives the operator copy buttons for the current `gh run view
+  <run_id> --json ...` command, an optional clipboard paste button targeting
+  the `status_json` recorder textarea, quick job-name fill buttons for
+  `Fast smoke verification` and `Full pytest suite`, and a direct recorder
+  link.
+- The existing confirmed `ci-snapshot-evidence-from-gh-json` form remains the
+  only write path. The helper performs no GitHub polling, no provider call, no
+  push, no PR, no deploy, no external mutation, and no write on GET; clipboard
+  use is browser-local and optional.
+- Updated README, local app docs, operating summary, docs status, and focused
+  CI evidence route assertions.
+- Verification: `python3 -m py_compile agent_os/local_app.py`; focused pytest
+  `python3 -m pytest
+  tests/test_first_milestone.py::test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json
+  -q --tb=short` passed with `1 passed in 11.06s`; `python3 -m py_compile
+  agent_os/local_app.py tests/test_first_milestone.py`; `python3 -m
+  compileall -q agent_os tests`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; `git diff --check`; Playwright browser
+  pass against `http://127.0.0.1:8792/ci-evidence` rendered the assistant,
+  filled `job_name` with both `Fast smoke verification` and `Full pytest
+  suite`, and clicked Copy command with a visible success status.
+- Non-claims at implementation time: no full local pytest suite, PR, or deploy
+  was run for this slice; GitHub CI proof is expected from the pushed branch.
+
 ## 2026-06-29 Goal Task Closeout UX
 
 - Added a visible `Goal Task Closeout` panel to `/goals/<goal_id>` between the

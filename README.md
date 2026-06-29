@@ -962,9 +962,12 @@ per-card command disclosure. Summary rows, proof workbench evidence, and the
 `CI Evidence Command Bar` evidence stay collapsed by default while preserving
 handoff/snapshot counts, proof source/status/scope, current proof posture, one
 next action, same-page targets, the direct `ci-snapshot-handoff` template, and
-the exact `gh run view` / validated recorder commands in the DOM. Fast-smoke
-proof remains labeled as early route/CLI proof only. It does not fetch GitHub
-status.
+the exact `gh run view` / validated recorder commands in the DOM. A
+browser-local `CI JSON Assistant` follows with copy buttons for the current
+`gh run view` JSON command, optional clipboard paste into the recorder
+textarea, and quick job-name fill buttons for fast-smoke or full-suite proof.
+Fast-smoke proof remains labeled as early route/CLI proof only. It does not
+fetch GitHub status.
 
 The app is local-only by default, binds to `127.0.0.1`, and refuses non-local
 binds unless `--allow-nonlocal-bind` is explicitly supplied. It does not push,

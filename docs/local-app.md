@@ -936,7 +936,10 @@ source/status/scope, whether it matches the current checkout, the one next
 recording or review action, stable same-page targets such as
 `#record-ci-snapshot-json`, `#recent-ci-evidence`, and
 `#recent-direct-snapshot-ci-evidence`, and the exact copy-only `gh run view`
-and validated recorder templates. Fast-smoke proof remains labeled as early
+and validated recorder templates. A browser-local `CI JSON Assistant` follows
+with copy buttons for the current `gh run view` JSON command, optional
+clipboard paste into the recorder textarea, and quick job-name fill buttons
+for fast-smoke or full-suite proof. Fast-smoke proof remains labeled as early
 route/CLI proof only. The `CI Evidence Recording Guide` shows a handoff-specific
 `ci-deploy-evidence` command when a local GitHub handoff exists, and a direct
 `ci-snapshot-handoff`, `ci-snapshot-evidence-from-gh-json`, and manual
