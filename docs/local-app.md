@@ -519,8 +519,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   starts with a read-only `Recent Items Command Bar` that shows one compact
   reopen action plus `/resume`, then keeps workspace/goal/delegation/run
   counts, saved project/goal/artifact context, the last confirmed action, and
-  write/provider/network/external-effect counters inside collapsed evidence,
-  with the remaining recent shortcuts in a second collapsed disclosure. The focus strip is derived from the saved
+  write/provider/network/external-effect counters inside collapsed evidence.
+  A browser-local `Find Recent` filter narrows the already-rendered shortcut
+  rows by text, remembers the query in
+  `localStorage:clankeros-recent-items-filter`, and resets without writing
+  server state, with the remaining recent shortcuts in a second collapsed
+  disclosure. The focus strip is derived from the saved
   workspace goal or current lead goal and now opens with compact action cards
   for primary action, phase, progress, waiting counts, and `/resume`, followed
   by the expandable confirmed local action form when the current next action is

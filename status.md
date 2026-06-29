@@ -1,5 +1,45 @@
 # Status
 
+## 2026-06-29 Recent Items Filter UX
+
+- Added a browser-local `Find Recent` filter to the shared Recent Items
+  sidebar on every local-app route, between the Recent Items Command Bar and
+  the collapsed shortcut list.
+- Operators can narrow already-rendered recent shortcut rows by local text
+  search across label, local href, and item kind, so Goal, delegation, run,
+  artifact, proof, fixture, or first-run shortcuts are easier to recover
+  without expanding and scanning the whole sidebar.
+- The query is remembered in
+  `localStorage:clankeros-recent-items-filter`, shows `View: default`,
+  `View: saved`, `View: restored`, or `View: reset`, and is cleared with
+  `Reset filter`.
+- Recent shortcut rows now expose stable `data-recent-items-filter-item`,
+  kind, href, and text metadata so the filter can hide unmatched rendered
+  rows without changing workspace state or route data.
+- Workspace View Memory now includes the Recent Items filter key, so
+  `/workspace#workspace-view-memory` can inspect and reset it with the rest of
+  the browser-local view state.
+- The behavior is browser-local display filtering only during GET/filter
+  interactions: no server state write, no workspace JSON write, no provider
+  calls, no network actions, and no external mutation.
+- Verification: `python3 -m py_compile agent_os/local_app.py` passed;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  passed; focused pytest for local-app route/demo coverage passed with
+  `2 passed, 514 deselected in 75.72s`; `python3 -m compileall -q agent_os
+  tests` passed; `python3 -m agent_os.cli --root <scratch> app-smoke-test`
+  passed across core routes with provider/network/external mutation counters
+  at zero; `python3 -m agent_os.cli --root <scratch> app-demo-smoke-test`
+  passed across fixture-backed stateful routes with provider/network/external
+  mutation counters at zero; post-edit `python3 -m py_compile
+  agent_os/local_app.py tests/test_first_milestone.py` and `git diff --check`
+  passed.
+- Browser QA: local throwaway app at `http://127.0.0.1:55624` showed the
+  Recent Items filter on a fixture-backed Goal page; desktop filtering,
+  no-match empty state, saved-query reload restore, reset, and no desktop
+  horizontal overflow were verified. Mobile in-app Browser control hung while
+  trying to reset the viewport after a 390px attempt, so no mobile browser proof
+  is claimed for this slice.
+
 ## 2026-06-29 Profile Routing Filter UX
 
 - Added a browser-local `Profile Routing Filter` to

@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Shared Recent Items now has a browser-local `Find Recent` filter that narrows
+  already-rendered shortcut rows by local text search. It remembers query view
+  state in `localStorage:clankeros-recent-items-filter`, exposes Reset filter,
+  is included in `/workspace#workspace-view-memory`, and keeps GET rendering
+  read-only with no server state write, provider call, network action, or
+  external effect.
 - `/profiles#profile-routing-filter` now narrows already-rendered profile
   routing rows/cards by all, Planning, Coding, Review, Docs, Cheap Model,
   Frontier Model, Storage, Configured, or local text search. It remembers

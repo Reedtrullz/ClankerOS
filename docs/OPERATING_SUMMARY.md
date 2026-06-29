@@ -288,10 +288,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   Restore, Goal, Artifact, Filters + Panels, and Tomorrow cards that make saved
   versus suggested return state explicit before the
   read-only `Workspace View Memory` panel. That panel inventories browser
-  `localStorage` view state for theme, focus mode, Goal board, search lanes,
-  timeline lanes, artifact filters, notes filters, Memory Bank filters, Skills
-  Inventory filters, Approval Queue filters, and Inbox Queue filters, and can
-  clear those browser-local values after explicit operator clicks without writing
+  `localStorage` view state for theme, focus mode, Goal board, Recent Items
+  filters, search lanes, timeline lanes, artifact filters, notes filters,
+  Memory Bank filters, Skills Inventory filters, Approval Queue filters, Inbox
+  Queue filters, and Profile Routing filters, and can clear those
+  browser-local values after explicit operator clicks without writing
   `.clanker/app/workspace.json`, calling providers, using the network, or
   mutating external systems. It sits before the
   read-only `Workspace Daily Brief` and `Workspace Workflow Map` for the saved

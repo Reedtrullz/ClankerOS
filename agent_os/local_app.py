@@ -6479,6 +6479,13 @@ def _workspace_view_memory_panel() -> str:
             "Saved Goal board query, lane, and sort",
         ),
         (
+            "recent-items",
+            "Recent Items",
+            "exact",
+            "clankeros-recent-items-filter",
+            "Shared recent shortcut text filter",
+        ),
+        (
             "search",
             "Search Lanes",
             "prefix",
@@ -6606,7 +6613,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory skills approvals inbox profiles",
+                    "workspace_view_memory_reset_scope: theme focus board recent search timeline artifacts notes memory skills approvals inbox profiles",
                 ]
             ),
             "</details>",
@@ -35928,7 +35935,13 @@ def _recent_items_panel(root: Path) -> str:
             ("Verification", "/verification", "proof"),
         ]
     rows = [
-        f"<li><a href='{_e(href)}'>{_e(label)}</a><br><span class='muted'>{_e(kind)}</span></li>"
+        (
+            f"<li data-recent-items-filter-item='true' "
+            f"data-recent-items-filter-kind='{_e(kind)}' "
+            f"data-recent-items-filter-href='{_e(href)}' "
+            f"data-recent-items-filter-text='{_e(' '.join([label, href, kind]).lower())}'>"
+            f"<a href='{_e(href)}'>{_e(label)}</a><br><span class='muted'>{_e(kind)}</span></li>"
+        )
         for label, href, kind in items
     ]
     body = "".join(
@@ -35936,6 +35949,7 @@ def _recent_items_panel(root: Path) -> str:
             "<aside class='operator-side' data-recent-items='true'>",
             "<h2>Recent Items</h2>",
             _recent_items_command_bar(root, items, used_defaults=used_defaults),
+            _recent_items_filter_panel(items=items, used_defaults=used_defaults),
             f"<details class='recent-items-list-details' data-recent-items-list-details='true'><summary>Recent shortcuts ({len(items)})</summary>",
             "<ul class='recent-items-list' data-recent-items-list='true'>",
             "".join(rows),
@@ -35945,6 +35959,61 @@ def _recent_items_panel(root: Path) -> str:
         ]
     )
     return body
+
+
+def _recent_items_filter_panel(
+    *,
+    items: list[tuple[str, str, str]],
+    used_defaults: bool,
+) -> str:
+    kind_counts: dict[str, int] = {}
+    for _, _, kind in items:
+        kind_counts[kind] = kind_counts.get(kind, 0) + 1
+    kind_summary = ", ".join(f"{key}:{value}" for key, value in sorted(kind_counts.items())) or "none"
+    return "".join(
+        [
+            "<section class='recent-items-filter' data-recent-items-filter='true' "
+            "data-recent-items-filter-storage-key='clankeros-recent-items-filter'>",
+            "<h3>Find Recent</h3>",
+            "<label class='recent-items-filter-search'>Find "
+            "<input type='search' data-recent-items-filter-query='true' placeholder='goal, run, artifact...'></label>",
+            "<div class='recent-items-filter-actions'>",
+            "<button type='button' class='recent-items-filter-reset' data-recent-items-filter-reset='true'>Reset filter</button>",
+            "<span class='recent-items-filter-memory-status' data-recent-items-filter-view-status='true'>View: default</span>",
+            "</div>",
+            (
+                f"<p class='muted' data-recent-items-filter-status='true'>"
+                f"Showing {len(items)} of {len(items)} recent items.</p>"
+            ),
+            "<p class='muted recent-items-filter-empty' data-recent-items-filter-empty='true' hidden>No recent items match this filter.</p>",
+            "<details class='recent-items-filter-evidence' data-recent-items-filter-evidence='true'>",
+            "<summary>Recent items filter evidence</summary>",
+            _kv(
+                [
+                    ("recent_items_filter_status", "available"),
+                    ("recent_items_filter_total_rows", str(len(items))),
+                    ("recent_items_filter_kind_counts", kind_summary),
+                    ("recent_items_filter_uses_defaults", str(used_defaults).lower()),
+                    ("recent_items_filter_memory_storage", "localStorage:clankeros-recent-items-filter"),
+                    ("recent_items_filter_memory_fields", "query"),
+                    ("recent_items_filter_reset", "available"),
+                    ("recent_items_filter_write_on_get", "false"),
+                    ("recent_items_filter_provider_calls_taken", "0"),
+                    ("recent_items_filter_network_actions_taken", "0"),
+                    ("recent_items_filter_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "recent_items_filter: filters already-rendered recent shortcuts only",
+                    "recent_items_filter: restores query from browser storage",
+                    "recent_items_filter_safety: no server state writes, provider calls, network actions, or external mutation",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
 
 
 def _last_action_strip(root: Path) -> str:
@@ -37866,6 +37935,19 @@ def _html_page(
     .recent-items-card-link {{ background:var(--surface); color:var(--accent); }}
     .recent-items-details summary {{ cursor:pointer; font-weight:700; }}
     .recent-items-details:not([open]) > :not(summary) {{ display:none; }}
+    .recent-items-filter {{ border:1px solid var(--line); border-left:4px solid var(--warn); background:var(--surface); padding:9px; margin:10px 0; display:grid; gap:8px; }}
+    .recent-items-filter h3 {{ margin:0; }}
+    .recent-items-filter-search {{ display:grid; gap:5px; color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .recent-items-filter-search input {{ width:100%; min-height:34px; font-size:13px; text-transform:none; font-weight:400; }}
+    .recent-items-filter-actions {{ display:grid; gap:6px; }}
+    .recent-items-filter-reset {{ min-height:32px; width:100%; border:1px solid var(--line); background:var(--surface); color:var(--ink); }}
+    .recent-items-filter-memory-status {{ color:var(--muted); min-height:24px; display:inline-flex; align-items:center; }}
+    .recent-items-filter-empty {{ margin:0; }}
+    .recent-items-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .recent-items-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .recent-items-filter dl {{ grid-template-columns:1fr; gap:4px; }}
+    .recent-items-filter ul {{ margin-top:8px; }}
+    .recent-items-filter li {{ border:1px solid var(--line); background:var(--panel); padding:6px 7px; overflow-wrap:anywhere; }}
     .recent-items-list-details summary {{ cursor:pointer; font-weight:700; }}
     .recent-items-list-details:not([open]) > :not(summary) {{ display:none; }}
     .recent-items-command-bar dl {{ grid-template-columns:1fr; gap:4px; }}
@@ -39584,6 +39666,90 @@ def _html_page(
       input.focus();
       setClipboardStatus("Set job_name to " + (jobName || "blank") + ".");
     }}
+    function recentItemsFilterStorageKey(filterPanel) {{
+      var key = filterPanel ? filterPanel.getAttribute("data-recent-items-filter-storage-key") : "";
+      return key || "clankeros-recent-items-filter";
+    }}
+    function setRecentItemsFilterViewStatus(filterPanel, message) {{
+      var status = filterPanel ? filterPanel.querySelector("[data-recent-items-filter-view-status='true']") : null;
+      if (status) {{ status.textContent = message; }}
+    }}
+    function saveRecentItemsFilterState(filterPanel, state) {{
+      if (!window.localStorage || !filterPanel) {{ return; }}
+      try {{
+        window.localStorage.setItem(recentItemsFilterStorageKey(filterPanel), JSON.stringify(state));
+        setRecentItemsFilterViewStatus(filterPanel, "View: saved");
+      }} catch (error) {{
+        setRecentItemsFilterViewStatus(filterPanel, "View: local only");
+      }}
+    }}
+    function restoreRecentItemsFilterState() {{
+      var filterPanel = document.querySelector("[data-recent-items-filter='true']");
+      if (!filterPanel) {{ return; }}
+      if (!window.localStorage) {{
+        setRecentItemsFilterViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+      try {{
+        var raw = window.localStorage.getItem(recentItemsFilterStorageKey(filterPanel));
+        if (!raw) {{
+          setRecentItemsFilterViewStatus(filterPanel, "View: default");
+          return false;
+        }}
+        var saved = JSON.parse(raw);
+        updateRecentItemsFilter({{
+          query: saved && typeof saved.query === "string" ? saved.query : "",
+          save: false
+        }});
+        setRecentItemsFilterViewStatus(filterPanel, "View: restored");
+        return true;
+      }} catch (error) {{
+        setRecentItemsFilterViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+    }}
+    function clearRecentItemsFilterState() {{
+      var filterPanel = document.querySelector("[data-recent-items-filter='true']");
+      if (filterPanel && window.localStorage) {{
+        try {{ window.localStorage.removeItem(recentItemsFilterStorageKey(filterPanel)); }} catch (error) {{}}
+      }}
+      updateRecentItemsFilter({{ query: "", save: false }});
+      setRecentItemsFilterViewStatus(filterPanel, "View: reset");
+    }}
+    function updateRecentItemsFilter(options) {{
+      var filterPanel = document.querySelector("[data-recent-items-filter='true']");
+      if (!filterPanel) {{ return; }}
+      options = options || {{}};
+      var queryInput = filterPanel.querySelector("[data-recent-items-filter-query='true']");
+      var query = Object.prototype.hasOwnProperty.call(options, "query") ? String(options.query || "") : (queryInput ? queryInput.value || "" : "");
+      if (queryInput && queryInput.value !== query) {{ queryInput.value = query; }}
+      var queryText = query.toLowerCase().trim();
+      var rows = Array.prototype.slice.call(document.querySelectorAll("[data-recent-items-filter-item='true']"));
+      var shown = 0;
+      rows.forEach(function(item) {{
+        var itemText = item.getAttribute("data-recent-items-filter-text") || item.textContent.toLowerCase();
+        var match = !queryText || itemText.indexOf(queryText) !== -1;
+        item.hidden = !match;
+        if (match) {{ shown += 1; }}
+      }});
+      var status = filterPanel.querySelector("[data-recent-items-filter-status='true']");
+      if (status) {{
+        status.textContent = "Showing " + shown + " of " + rows.length + " recent items" + (queryText ? " matching text " + queryText : "") + ".";
+      }}
+      var empty = filterPanel.querySelector("[data-recent-items-filter-empty='true']");
+      if (empty) {{ empty.hidden = shown !== 0; }}
+      if (options.save !== false) {{
+        saveRecentItemsFilterState(filterPanel, {{ query: query }});
+      }}
+    }}
+    function initializeRecentItemsFilterState() {{
+      var filterPanel = document.querySelector("[data-recent-items-filter='true']");
+      if (!filterPanel) {{ return; }}
+      if (!restoreRecentItemsFilterState()) {{
+        updateRecentItemsFilter({{ query: "", save: false }});
+        setRecentItemsFilterViewStatus(filterPanel, "View: default");
+      }}
+    }}
     function searchResultLaneStorageKey(filterPanel) {{
       var key = filterPanel ? filterPanel.getAttribute("data-search-result-filter-storage-key") : "";
       return key || "clankeros-search-result-lane";
@@ -40556,6 +40722,12 @@ def _html_page(
         fillCiJobName(fillJobButton.getAttribute("data-fill-ci-job") || "");
         return;
       }}
+      var recentItemsFilterReset = target.closest ? target.closest("[data-recent-items-filter-reset='true']") : null;
+      if (recentItemsFilterReset) {{
+        event.preventDefault();
+        clearRecentItemsFilterState();
+        return;
+      }}
       var searchFilterReset = target.closest ? target.closest("[data-search-result-filter-reset='true']") : null;
       if (searchFilterReset) {{
         event.preventDefault();
@@ -40663,6 +40835,10 @@ def _html_page(
     }});
     document.addEventListener("input", function(event) {{
       var target = event.target || {{}};
+      var recentItemsFilterQuery = target.closest ? target.closest("[data-recent-items-filter-query='true']") : null;
+      if (recentItemsFilterQuery) {{
+        updateRecentItemsFilter({{ query: recentItemsFilterQuery.value || "" }});
+      }}
       var artifactFilterQuery = target.closest ? target.closest("[data-goal-artifact-filter-query='true']") : null;
       if (artifactFilterQuery) {{
         updateGoalArtifactFilter({{ query: artifactFilterQuery.value || "" }});
@@ -40728,6 +40904,7 @@ def _html_page(
       }}
     }}
     openCurrentHashDetails();
+    initializeRecentItemsFilterState();
     initializeSearchResultLaneState();
     initializeGoalArtifactFilterState();
     initializeTimelineLaneState();

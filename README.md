@@ -760,11 +760,14 @@ The recent-items sidebar now starts with a read-only `Recent Items
 Command Bar` plus a visible return dock for Recent, Workspace, Action, and
 Artifact, so the operator can reopen the latest surface, saved project/Goal,
 last action notice, or saved artifact without expanding the longer shortcut
-list. When an exact saved `resume_surface` exists, the Workspace card opens
+list. A browser-local `Find Recent` filter narrows the already-rendered
+shortcut rows by text, remembers the query in
+`localStorage:clankeros-recent-items-filter`, and resets without writing server
+state. When an exact saved `resume_surface` exists, the Workspace card opens
 that route directly. Workspace/goal/delegation/run counts, saved workspace
-context, last action, artifact targets, and zero-effect counters stay inside collapsed
-evidence and the remaining recent shortcuts stay in a second collapsed
-disclosure. The focus strip keeps the saved or lead
+context, last action, artifact targets, filter evidence, and zero-effect
+counters stay inside collapsed evidence and the remaining recent shortcuts stay
+in a second collapsed disclosure. The focus strip keeps the saved or lead
 goal's primary action, phase, progress, waiting counts, and resume link visible
 as compact action cards outside the Goal page. It can expand the same confirmed
 local action form when the current next action is browser-available, while the

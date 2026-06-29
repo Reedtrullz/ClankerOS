@@ -5417,6 +5417,28 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-recent-items-artifact-card='true' href='/workspace'>Open workspace</a>" in root.body
     assert "data-recent-items-details='true'" in root.body
     assert "<summary>Recent item evidence</summary>" in root.body
+    assert "data-recent-items-filter='true'" in root.body
+    assert "data-recent-items-filter-storage-key='clankeros-recent-items-filter'" in root.body
+    assert "data-recent-items-filter-query='true'" in root.body
+    assert "data-recent-items-filter-reset='true'>Reset filter" in root.body
+    assert "data-recent-items-filter-view-status='true'>View: default" in root.body
+    assert "data-recent-items-filter-status='true'>Showing 3 of 3 recent items." in root.body
+    assert "data-recent-items-filter-empty='true' hidden" in root.body
+    assert "data-recent-items-filter-evidence='true'" in root.body
+    assert "data-recent-items-filter-item='true' data-recent-items-filter-kind='first-run' data-recent-items-filter-href='/goals'" in root.body
+    assert "data-recent-items-filter-item='true' data-recent-items-filter-kind='fixture' data-recent-items-filter-href='/demo'" in root.body
+    assert "data-recent-items-filter-item='true' data-recent-items-filter-kind='proof' data-recent-items-filter-href='/verification'" in root.body
+    assert "recent_items_filter_total_rows</dt><dd>3" in root.body
+    assert "recent_items_filter_kind_counts</dt><dd>first-run:1, fixture:1, proof:1" in root.body
+    assert "recent_items_filter_uses_defaults</dt><dd>true" in root.body
+    assert "recent_items_filter_memory_storage</dt><dd>localStorage:clankeros-recent-items-filter" in root.body
+    assert "recent_items_filter_memory_fields</dt><dd>query" in root.body
+    assert "recent_items_filter_write_on_get</dt><dd>false" in root.body
+    assert "recent_items_filter_provider_calls_taken</dt><dd>0" in root.body
+    assert "recent_items_filter_network_actions_taken</dt><dd>0" in root.body
+    assert "recent_items_filter_external_effects_created</dt><dd>false" in root.body
+    assert "window.localStorage.setItem(recentItemsFilterStorageKey(filterPanel), JSON.stringify(state))" in root.body
+    assert "window.localStorage.removeItem(recentItemsFilterStorageKey(filterPanel))" in root.body
     assert "data-recent-items-list-details='true'" in root.body
     assert "<summary>Recent shortcuts (3)</summary>" in root.body
     assert "data-recent-items-list='true'" in root.body
@@ -5427,6 +5449,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "data-recent-items-details='true'"
     )
     assert root.body.index("data-recent-items-details='true'") < root.body.index(
+        "data-recent-items-filter='true'"
+    )
+    assert root.body.index("data-recent-items-filter='true'") < root.body.index(
         "data-recent-items-list-details='true'"
     )
     assert root.body.index("data-recent-items-list-details='true'") < root.body.index(
@@ -6329,10 +6354,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 12
+    assert workspace.body.count("class='workspace-view-memory-card") == 13
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
     assert "data-workspace-view-memory-card='goal-board'" in workspace.body
+    assert "data-workspace-view-memory-card='recent-items'" in workspace.body
     assert "data-workspace-view-memory-card='search'" in workspace.body
     assert "data-workspace-view-memory-card='timeline'" in workspace.body
     assert "data-workspace-view-memory-card='artifacts'" in workspace.body
@@ -6345,6 +6371,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-theme'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-focus-mode'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-goal-board-view'" in workspace.body
+    assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-recent-items-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-memory-inventory-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-skills-inventory-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-approval-queue-filter'" in workspace.body
@@ -6358,8 +6385,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>12" in workspace.body
-    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>13" in workspace.body
+    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-recent-items-filter, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
     assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
@@ -6370,13 +6397,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_external_effects_created</dt><dd>false" in workspace.body
     assert "workspace_view_memory_raw_filesystem_browsing</dt><dd>false" in workspace.body
     assert "workspace_view_memory_card: theme mode=exact key=clankeros-theme" in workspace.body
+    assert "workspace_view_memory_card: recent-items mode=exact key=clankeros-recent-items-filter" in workspace.body
     assert "workspace_view_memory_card: search mode=prefix key=clankeros-search-result-lane:" in workspace.body
     assert "workspace_view_memory_card: memory mode=exact key=clankeros-memory-inventory-filter" in workspace.body
     assert "workspace_view_memory_card: skills mode=exact key=clankeros-skills-inventory-filter" in workspace.body
     assert "workspace_view_memory_card: approvals mode=exact key=clankeros-approval-queue-filter" in workspace.body
     assert "workspace_view_memory_card: inbox mode=exact key=clankeros-inbox-queue-filter" in workspace.body
     assert "workspace_view_memory_card: profiles mode=exact key=clankeros-profile-routing-filter" in workspace.body
-    assert "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory skills approvals inbox profiles" in workspace.body
+    assert "workspace_view_memory_reset_scope: theme focus board recent search timeline artifacts notes memory skills approvals inbox profiles" in workspace.body
     assert "window.localStorage.removeItem(key)" in workspace.body
     assert "candidate.indexOf(key) === 0" in workspace.body
     assert "delete document.documentElement.dataset.theme" in workspace.body
@@ -11371,6 +11399,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-recent-items-artifact-card='true' href='/workspace'>Open workspace</a>" in goal.body
     assert "data-recent-items-details='true'" in goal.body
     assert "<summary>Recent item evidence</summary>" in goal.body
+    assert "data-recent-items-filter='true'" in goal.body
+    assert "data-recent-items-filter-storage-key='clankeros-recent-items-filter'" in goal.body
+    assert "data-recent-items-filter-query='true'" in goal.body
+    assert "data-recent-items-filter-reset='true'>Reset filter" in goal.body
+    assert "data-recent-items-filter-view-status='true'>View: default" in goal.body
+    assert "data-recent-items-filter-status='true'>Showing 3 of 3 recent items." in goal.body
+    assert "data-recent-items-filter-empty='true' hidden" in goal.body
+    assert "data-recent-items-filter-evidence='true'" in goal.body
+    assert "data-recent-items-filter-item='true' data-recent-items-filter-kind='goal'" in goal.body
+    assert "data-recent-items-filter-item='true' data-recent-items-filter-kind='delegation'" in goal.body
+    assert "data-recent-items-filter-item='true' data-recent-items-filter-kind='run'" in goal.body
+    assert "recent_items_filter_total_rows</dt><dd>3" in goal.body
+    assert "recent_items_filter_kind_counts</dt><dd>delegation:1, goal:1, run:1" in goal.body
+    assert "recent_items_filter_uses_defaults</dt><dd>false" in goal.body
+    assert "recent_items_filter_memory_storage</dt><dd>localStorage:clankeros-recent-items-filter" in goal.body
+    assert "recent_items_filter_memory_fields</dt><dd>query" in goal.body
+    assert "recent_items_filter_write_on_get</dt><dd>false" in goal.body
+    assert "recent_items_filter_network_actions_taken</dt><dd>0" in goal.body
+    assert "recent_items_filter_external_effects_created</dt><dd>false" in goal.body
     assert "data-recent-items-list-details='true'" in goal.body
     assert "<summary>Recent shortcuts (3)</summary>" in goal.body
     assert "data-recent-items-list='true'" in goal.body
@@ -11381,6 +11428,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "data-recent-items-details='true'"
     )
     assert goal.body.index("data-recent-items-details='true'") < goal.body.index(
+        "data-recent-items-filter='true'"
+    )
+    assert goal.body.index("data-recent-items-filter='true'") < goal.body.index(
         "data-recent-items-list-details='true'"
     )
     assert goal.body.index("data-recent-items-list-details='true'") < goal.body.index(
