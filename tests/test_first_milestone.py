@@ -7540,7 +7540,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert f"inbox_next_id</dt><dd>{delegation.id}" in inbox.body
     assert "inbox_next_project</dt><dd>first-target" in inbox.body
     assert f"inbox_next_goal</dt><dd>{created_goal_id}" in inbox.body
-    assert f"inbox_next_goal_surface</dt><dd><a href='/goals/{created_goal_id}'>{created_goal_id}</a>" in inbox.body
+    assert "inbox_next_goal_label</dt><dd>Create a browser-first first-run workflow" in inbox.body
+    assert "inbox_next_goal_label_source</dt><dd>title" in inbox.body
+    assert (
+        f"inbox_next_goal_surface</dt><dd><a href='/goals/{created_goal_id}'>"
+        "Create a browser-first first-run workflow</a>"
+        in inbox.body
+    )
     assert f"inbox_next_delegation</dt><dd>{delegation.id}" in inbox.body
     assert "inbox_next_action</dt><dd>Inspect delegation" in inbox.body
     assert "inbox_next_action_name</dt><dd>inspect-delegation" in inbox.body
@@ -7560,7 +7566,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert f"inbox_workbench_first_id</dt><dd>{delegation.id}" in inbox.body
     assert "inbox_workbench_first_project</dt><dd>first-target" in inbox.body
     assert f"inbox_workbench_first_goal</dt><dd>{created_goal_id}" in inbox.body
-    assert f"inbox_workbench_goal_surface</dt><dd><a href='/goals/{created_goal_id}'>{created_goal_id}</a>" in inbox.body
+    assert "inbox_workbench_goal_label</dt><dd>Create a browser-first first-run workflow" in inbox.body
+    assert "inbox_workbench_goal_label_source</dt><dd>title" in inbox.body
+    assert (
+        f"inbox_workbench_goal_surface</dt><dd><a href='/goals/{created_goal_id}'>"
+        "Create a browser-first first-run workflow</a>"
+        in inbox.body
+    )
     assert f"inbox_workbench_first_delegation</dt><dd>{delegation.id}" in inbox.body
     assert "inbox_workbench_first_run</dt><dd>none" in inbox.body
     assert "inbox_workbench_next_action</dt><dd>Inspect delegation" in inbox.body
@@ -7577,7 +7589,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "inbox_workbench_now: Inspect delegation" in inbox.body
     assert "inbox_workbench_click: <a href='#inbox-subagent-delegations'>Subagent Delegations</a>" in inbox.body
     assert f"inbox_workbench_inspect: <a href='/delegations/{delegation.id}'>Delegation</a>" in inbox.body
-    assert f"inbox_workbench_goal: <a href='/goals/{created_goal_id}'>{created_goal_id}</a>" in inbox.body
+    assert (
+        f"inbox_workbench_goal: <a href='/goals/{created_goal_id}'>"
+        "Create a browser-first first-run workflow</a>"
+        in inbox.body
+    )
     assert "inbox_workbench_finish: <a href='#inbox-finish-today'>Finish Today</a>" in inbox.body
     assert "id='inbox-finish-today'" in inbox.body
     assert "name='filters' value='inbox:subagent_delegation:" in inbox.body
@@ -13239,7 +13255,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"approval_workbench_first_id</dt><dd>{result.approval_id}" in approvals.body
     assert "approval_workbench_first_project</dt><dd>local-app-demo" in approvals.body
     assert f"approval_workbench_first_goal</dt><dd>{result.goal_id}" in approvals.body
-    assert f"approval_workbench_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in approvals.body
+    assert (
+        "approval_workbench_goal_label</dt><dd>"
+        "Demo the ClankerOS local operator app with fixture-backed state"
+        in approvals.body
+    )
+    assert "approval_workbench_goal_label_source</dt><dd>title" in approvals.body
+    assert (
+        f"approval_workbench_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        "Demo the ClankerOS local operator app with fixture-backed state</a>"
+        in approvals.body
+    )
     assert f"approval_workbench_first_delegation</dt><dd>{result.delegation_id}" in approvals.body
     assert "approval_workbench_first_run</dt><dd>not_created_yet" in approvals.body
     assert f"approval_workbench_first_source_run</dt><dd>{result.run_id}" in approvals.body
@@ -13269,7 +13295,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "approval_workbench_now: Approve worktree" in approvals.body
     assert "approval_workbench_click: <a href='#pending-worktree-approvals'>Pending Worktree Approvals</a>" in approvals.body
     assert f"approval_workbench_inspect: <a href='/workflow?delegation_id={result.delegation_id}'>Workflow</a>" in approvals.body
-    assert f"approval_workbench_goal: <a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in approvals.body
+    assert (
+        f"approval_workbench_goal: <a href='/goals/{result.goal_id}'>"
+        "Demo the ClankerOS local operator app with fixture-backed state</a>"
+        in approvals.body
+    )
     assert "approval_workbench_after: run approved worktree from goal or run surface" in approvals.body
     assert "approval_workbench_finish: <a href='#approval-finish-today'>Finish Today</a>" in approvals.body
     assert "approval_workbench_safety: confirmed local decision artifact only" in approvals.body
@@ -13391,7 +13421,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"inbox_workbench_first_id</dt><dd>{result.approval_id}" in inbox.body
     assert "inbox_workbench_first_project</dt><dd>local-app-demo" in inbox.body
     assert f"inbox_workbench_first_goal</dt><dd>{result.goal_id}" in inbox.body
-    assert f"inbox_workbench_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in inbox.body
+    assert (
+        "inbox_workbench_goal_label</dt><dd>"
+        "Demo the ClankerOS local operator app with fixture-backed state"
+        in inbox.body
+    )
+    assert "inbox_workbench_goal_label_source</dt><dd>title" in inbox.body
+    assert (
+        f"inbox_workbench_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        "Demo the ClankerOS local operator app with fixture-backed state</a>"
+        in inbox.body
+    )
     assert f"inbox_workbench_first_delegation</dt><dd>{result.delegation_id}" in inbox.body
     assert "inbox_workbench_first_run</dt><dd>not_created_yet" in inbox.body
     assert "inbox_workbench_next_action</dt><dd>Approve worktree" in inbox.body
@@ -13418,7 +13458,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "inbox_workbench_now: Approve worktree" in inbox.body
     assert "inbox_workbench_click: <a href='#inbox-pending-worktree-approvals'>Pending Worktree Approvals</a>" in inbox.body
     assert f"inbox_workbench_inspect: <a href='/workflow?delegation_id={result.delegation_id}'>Workflow</a>" in inbox.body
-    assert f"inbox_workbench_goal: <a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in inbox.body
+    assert (
+        f"inbox_workbench_goal: <a href='/goals/{result.goal_id}'>"
+        "Demo the ClankerOS local operator app with fixture-backed state</a>"
+        in inbox.body
+    )
     assert "inbox_workbench_finish: <a href='#inbox-finish-today'>Finish Today</a>" in inbox.body
     assert "inbox_workbench_safety: read-only queue guidance; confirmed local actions elsewhere" in inbox.body
     assert "id='inbox-finish-today'" in inbox.body

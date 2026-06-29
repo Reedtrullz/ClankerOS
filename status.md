@@ -1,5 +1,26 @@
 # Status
 
+## 2026-06-29 Queue Goal Title-First UX
+
+- Made `/inbox` and `/approvals` queue Goal links title-first.
+- `Inbox Next Item Brief`, `Inbox Operator Workbench`, and
+  `Approval Operator Workbench` now render the human Goal title in visible
+  Goal cards, list readbacks, and Goal links when a Goal title is available.
+- Raw Goal ids remain available through explicit `*_goal` fields, with new
+  `*_goal_label` and `*_goal_label_source` fields recording the visible label
+  and whether it came from `title` or a fallback.
+- Updated README, local app docs, operating summary, current status focus, and
+  first-run/demo route assertions for the queue title-first contract.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  focused `tests/test_first_milestone.py` route coverage
+  (`2 passed, 514 deselected in 57.44s`), `python3 -m compileall -q agent_os tests`,
+  bounded `app-smoke-test`, bounded `app-demo-smoke-test`, and
+  `git diff --check`.
+- Non-claims: no browser screenshot QA for this slice, no write on GET, no
+  approval or execution on GET, no app-side GitHub polling, no provider calls,
+  no external mutation, no PR creation, and no deploy from ClankerOS itself.
+
 ## 2026-06-29 Shared Goal Navigation Title-First UX
 
 - Made shared Goal identity in browser navigation title-first.

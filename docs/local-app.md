@@ -679,7 +679,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   first attention item, Goal/delegation/run/evidence routing when available, a
   continuation surface, and a confirmed `save-workspace` form in a collapsed
   Finish Today section that can store the queue as a resume point without
-  writing on GET. The read-only
+  writing on GET. Goal cards and queue goal links use the human Goal title when
+  available, while the raw Goal id and label source remain in collapsed
+  evidence for auditability. The read-only
   `Inbox Command Bar` follows with total local queue size, counts by queue
   type, the first attention item, target section, reason, and
   write-on-GET/network/external-effect boundaries inside collapsed evidence.
@@ -690,7 +692,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   route/focus diagnostics or command readback, with do/inspect/Goal/finish
   cards, the first pending decision, parent Goal, request/evidence artifacts,
   confirmation posture, and a collapsed confirmed `save-workspace` form that
-  can store the queue as a resume point without writing on GET. A read-only
+  can store the queue as a resume point without writing on GET. Goal links use
+  the human Goal title when available, while the raw Goal id and label source
+  remain in collapsed evidence. A read-only
   `Approval Queue Command Bar` follows with total pending decisions, pending
   counts by approval type, the first recommended decision, the same-page form
   target, the follow-up after approval, and the zero-effect boundary inside
@@ -984,7 +988,8 @@ Pending publication approvals show the relevant run link and the
 `coder-publication-handoff` follow-up while preserving the explicit
 `push_created=false`, `pr_created=false`, and `deploy_created=false` boundary.
 The page starts with `Approval Operator Workbench`, so the first screen names
-the pending decision and inspection target before the queue evidence. The
+the pending decision, parent Goal title, and inspection target before the queue
+evidence. The
 `Approval Queue Command Bar` still records total pending decisions, the first
 queue action, target section, after-decision guidance, and the
 write-on-GET/network/external-effect boundary inside collapsed evidence.

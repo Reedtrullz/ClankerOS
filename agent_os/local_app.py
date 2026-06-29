@@ -21361,7 +21361,10 @@ def _inbox_next_item_brief(root: Path, inbox: dict[str, object]) -> str:
         if delegation_row is not None and delegation_row.parent_goal_id:
             goal = delegation_row.parent_goal_id
     goal_href = f"/goals/{quote(goal)}" if goal != "none" else "/goals"
-    goal_label = goal if goal != "none" else "/goals"
+    goal_label = "/goals"
+    goal_label_source = "none"
+    if goal != "none":
+        goal_label, goal_label_source = _goal_display_label(root, goal)
     queue_surface = SafeHtml(f"<a href='{_e(queue_href)}'>{_e(queue_label)}</a>")
     inspect_surface = SafeHtml(f"<a href='{_e(inspect_href)}'>{_e(inspect_label)}</a>")
     goal_surface = SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_label)}</a>")
@@ -21395,7 +21398,7 @@ def _inbox_next_item_brief(root: Path, inbox: dict[str, object]) -> str:
             "<article class='inbox-next-card' data-inbox-next-card='inspect'><h3>Inspect</h3>",
             f"<p>{_e(reason)}</p><a class='inbox-next-link' href='{_e(inspect_href)}'>{_e(inspect_label)}</a></article>",
             "<article class='inbox-next-card' data-inbox-next-card='evidence'><h3>Evidence</h3>",
-            f"<p>{_e(project)} · {_e(goal)}</p><a class='inbox-next-link' href='{_e(evidence_href)}'>{_e(evidence_label)}</a></article>",
+            f"<p>{_e(project)} · {_e(goal_label)}</p><a class='inbox-next-link' href='{_e(evidence_href)}'>{_e(evidence_label)}</a></article>",
             "<article class='inbox-next-card' data-inbox-next-card='after'><h3>After</h3>",
             f"<p>{_e(after_action)}</p><a class='inbox-next-link' href='{_e(after_href)}'>{_e(after_label)}</a></article>",
             "<article class='inbox-next-card' data-inbox-next-card='safety'><h3>Safety</h3>",
@@ -21411,6 +21414,8 @@ def _inbox_next_item_brief(root: Path, inbox: dict[str, object]) -> str:
                     ("inbox_next_id", item_id),
                     ("inbox_next_project", project),
                     ("inbox_next_goal", goal),
+                    ("inbox_next_goal_label", goal_label),
+                    ("inbox_next_goal_label_source", goal_label_source),
                     ("inbox_next_goal_surface", goal_surface),
                     ("inbox_next_delegation", delegation),
                     ("inbox_next_run", run_id),
@@ -22017,7 +22022,10 @@ def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
         if delegation is not None and delegation.parent_goal_id:
             first_goal = delegation.parent_goal_id
     goal_href = f"/goals/{quote(first_goal)}" if first_goal != "none" else "/goals"
-    goal_label = first_goal if first_goal != "none" else "/goals"
+    goal_label = "/goals"
+    goal_label_source = "none"
+    if first_goal != "none":
+        goal_label, goal_label_source = _goal_display_label(root, first_goal)
     primary_surface = SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")
     inspect_surface = SafeHtml(f"<a href='{_e(inspect_href)}'>{_e(inspect_label)}</a>")
     goal_surface = SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_label)}</a>")
@@ -22069,7 +22077,7 @@ def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
             "</article>",
             "<article class='inbox-workbench-card'>",
             "<h3>Goal</h3>",
-            f"<p>{_e(first_goal)}</p>",
+            f"<p>{_e(goal_label)}</p>",
             f"<a class='inbox-workbench-link' href='{_e(goal_href)}'>{_e(goal_label)}</a>",
             "</article>",
             "<article class='inbox-workbench-card'>",
@@ -22095,6 +22103,8 @@ def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
                     ("inbox_workbench_first_id", first_id),
                     ("inbox_workbench_first_project", first_project),
                     ("inbox_workbench_first_goal", first_goal),
+                    ("inbox_workbench_goal_label", goal_label),
+                    ("inbox_workbench_goal_label_source", goal_label_source),
                     ("inbox_workbench_goal_surface", goal_surface),
                     ("inbox_workbench_first_delegation", first_delegation),
                     ("inbox_workbench_first_run", first_run),
@@ -22389,7 +22399,10 @@ def _approval_operator_workbench(
 
     form_available = total > 0
     goal_href = f"/goals/{quote(first_goal)}" if first_goal != "none" else "/goals"
-    goal_label = first_goal if first_goal != "none" else "/goals"
+    goal_label = "/goals"
+    goal_label_source = "none"
+    if first_goal != "none":
+        goal_label, goal_label_source = _goal_display_label(root, first_goal)
     goal_surface = SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_label)}</a>")
     target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
     inspect_surface = SafeHtml(f"<a href='{_e(inspect_href)}'>{_e(inspect_label)}</a>")
@@ -22451,7 +22464,7 @@ def _approval_operator_workbench(
             "</div>",
             "<div class='approval-workbench-card'>",
             "<h3>Goal</h3>",
-            f"<p>{_e(first_goal)}</p>",
+            f"<p>{_e(goal_label)}</p>",
             f"<a class='approval-workbench-link' href='{_e(goal_href)}'>{_e(goal_label)}</a>",
             "</div>",
             "<div class='approval-workbench-card'>",
@@ -22475,6 +22488,8 @@ def _approval_operator_workbench(
                     ("approval_workbench_first_id", first_id),
                     ("approval_workbench_first_project", first_project),
                     ("approval_workbench_first_goal", first_goal),
+                    ("approval_workbench_goal_label", goal_label),
+                    ("approval_workbench_goal_label_source", goal_label_source),
                     ("approval_workbench_goal_surface", goal_surface),
                     ("approval_workbench_first_delegation", first_delegation),
                     ("approval_workbench_first_run", first_run),

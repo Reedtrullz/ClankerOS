@@ -958,7 +958,9 @@ Core layers for the bootstrap:
   do/inspect/Goal/finish cards, Goal/delegation/run/evidence routing, a
   continuation surface, and a confirmed `save-workspace` form in a collapsed
   Finish Today section that stores the queue as a future resume point without
-  writing on GET. A visible read-only `Inbox Triage Board` follows with
+  writing on GET. Inbox and approval queue Goal cards now use the human Goal
+  title when available, while raw Goal ids and label-source fields stay in
+  collapsed evidence for durable review. A visible read-only `Inbox Triage Board` follows with
   Attention, Decisions, Work, Publication, and Finish Today lane cards so the
   operator can see queue counts and first targets before the long category
   lists. A read-only `Inbox Next Item Brief` then promotes the first queue

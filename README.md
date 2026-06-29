@@ -825,7 +825,9 @@ even if unrelated approvals also exist. The page now opens with the
 readback, showing do/inspect/Goal/finish cards, the first pending decision, the
 parent Goal when known, request and evidence artifact links, confirmation
 posture, and a collapsed confirmed `save-workspace` form so an approval queue
-can become tomorrow's resume point without writing on GET. The read-only
+can become tomorrow's resume point without writing on GET. The Goal card and
+goal links are title-first when the parent Goal has a title, while raw Goal ids
+remain in the collapsed evidence fields for durable review. The read-only
 `Approval Queue Command Bar` follows with total pending worktree, commit, and
 publication decisions, the scoped or global first recommended decision, the
 same-page form target, the follow-up after approval, and the zero-effect
@@ -847,7 +849,9 @@ route/focus diagnostics or command readback, so the first screen is the next
 queue action. Its do/inspect/Goal/finish cards resolve Goal, delegation, run,
 evidence, and continuation surfaces when available, and include a confirmed
 `save-workspace` form in a collapsed Finish Today section so the queue can
-become tomorrow's resume point without writing on GET. A visible read-only
+become tomorrow's resume point without writing on GET. Goal cards and queue
+goal links are title-first when possible, while raw Goal ids and label-source
+evidence stay available in the collapsed readback. A visible read-only
 `Inbox Triage Board` follows with Attention, Decisions, Work, Publication,
 and Finish Today lane cards, turning the long queue lists into count-backed
 first targets before dense evidence. A read-only `Inbox Next Item Brief`

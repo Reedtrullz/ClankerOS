@@ -4,6 +4,10 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/inbox` and `/approvals` queue Goal links are now title-first: Inbox Next
+  Item Brief, Inbox Operator Workbench, and Approval Operator Workbench show
+  the human Goal title in visible Goal cards and links while retaining raw Goal
+  ids plus label-source fields in collapsed evidence.
 - `/goals/<goal_id>` now opens with a title-first Goal summary: the H1 and
   browser title use the human Goal title/intent, while the Goal id remains
   visible as metadata with project, status, phase, and local refresh evidence.
