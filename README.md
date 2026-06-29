@@ -382,8 +382,12 @@ the first waiting queue and safe next click are visible before deeper command
 evidence. A read-only `Goal Decision Queue` follows with exact Goal-scoped
 operator rows for the current action plus pending approvals, incidents,
 recommendations, or blocked tasks, linking to the existing confirmed action
-form or scoped approval surfaces without deciding anything on GET. The dock,
-meter, digest, and decision queue precede the Goal Command Bar, Goal Operator
+form or scoped approval surfaces without deciding anything on GET. It includes
+a browser-local `Goal Decision Filter` for narrowing those already-rendered
+rows by current action, approval type, incidents, recommendations, blocked
+work, or text while restoring lane/query per Goal from
+`localStorage:clankeros-goal-decision-filter:<goal_id>`. The dock, meter,
+digest, and decision queue precede the Goal Command Bar, Goal Operator
 Workbench, Goal Daily Loop, Goal Return Brief, Goal Session Digest, Goal
 Activity Pulse, Goal Continuation Rail,
 next action, next recommendation, Goal Workflow Map, Goal Coder Handoff

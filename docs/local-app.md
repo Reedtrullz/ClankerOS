@@ -256,7 +256,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Goal Decision Queue` follows with concrete Goal-scoped decision rows for
   the current action plus pending approvals, incidents, recommendations, or
   blocked tasks, linking to existing confirmed forms and scoped review
-  surfaces without adding write authority. The dock, meter, digest, and
+  surfaces without adding write authority. A browser-local `Goal Decision
+  Filter` narrows those already-rendered rows by lane or text, remembers
+  lane/query per Goal in
+  `localStorage:clankeros-goal-decision-filter:<goal_id>`, and resets from
+  `/workspace#workspace-view-memory`. The dock, meter, digest, and
   decision queue appear before the Goal Command Bar, Goal Operator Workbench,
   Goal Daily Loop, Goal Return Brief,
   Goal Continuation Rail, next action, next recommendation, Goal Workflow Map,

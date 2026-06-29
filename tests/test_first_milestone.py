@@ -6481,7 +6481,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 18
+    assert workspace.body.count("class='workspace-view-memory-card") == 19
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
     assert "data-workspace-view-memory-card='goal-board'" in workspace.body
@@ -6500,6 +6500,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-card='approvals'" in workspace.body
     assert "data-workspace-view-memory-card='inbox'" in workspace.body
     assert "data-workspace-view-memory-card='profiles'" in workspace.body
+    assert "data-workspace-view-memory-card='decisions'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-theme'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-focus-mode'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-goal-board-view'" in workspace.body
@@ -6514,6 +6515,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-profile-routing-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-search-result-lane:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-timeline-lane:'" in workspace.body
+    assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-decision-filter:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-artifact-filter:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-notes-filter:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-note-draft:'" in workspace.body
@@ -6522,9 +6524,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>18" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>19" in workspace.body
     assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
-    assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:, clankeros-goal-note-draft:, clankeros-action-form-draft:" in workspace.body
+    assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-decision-filter:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:, clankeros-goal-note-draft:, clankeros-action-form-draft:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
     assert "workspace_view_memory_workspace_json_write</dt><dd>false" in workspace.body
@@ -6539,6 +6541,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: open-panels mode=prefix key=clankeros-open-panels:" in workspace.body
     assert "workspace_view_memory_card: scroll-position mode=prefix key=clankeros-scroll-position:" in workspace.body
     assert "workspace_view_memory_card: search mode=prefix key=clankeros-search-result-lane:" in workspace.body
+    assert "workspace_view_memory_card: decisions mode=prefix key=clankeros-goal-decision-filter:" in workspace.body
     assert "workspace_view_memory_card: note-drafts mode=prefix key=clankeros-goal-note-draft:" in workspace.body
     assert "workspace_view_memory_card: form-drafts mode=prefix key=clankeros-action-form-draft:" in workspace.body
     assert "workspace_view_memory_card: memory mode=exact key=clankeros-memory-inventory-filter" in workspace.body
@@ -6546,7 +6549,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: approvals mode=exact key=clankeros-approval-queue-filter" in workspace.body
     assert "workspace_view_memory_card: inbox mode=exact key=clankeros-inbox-queue-filter" in workspace.body
     assert "workspace_view_memory_card: profiles mode=exact key=clankeros-profile-routing-filter" in workspace.body
-    assert "workspace_view_memory_reset_scope: theme focus board recent route-history open-panels scroll-position search timeline artifacts notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
+    assert "workspace_view_memory_reset_scope: theme focus board recent route-history open-panels scroll-position search timeline decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
     assert "window.localStorage.removeItem(key)" in workspace.body
     assert "candidate.indexOf(key) === 0" in workspace.body
     assert "delete document.documentElement.dataset.theme" in workspace.body
@@ -11542,7 +11545,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-command-palette-result-list='true'" in goal.body
     assert "data-palette-result='true'" in goal.body
     assert "palette_filter_source</dt><dd>nav_recent_and_goal_sections" in goal.body
-    assert "palette_filter_goal_section_count</dt><dd>13" in goal.body
+    assert "palette_filter_goal_section_count</dt><dd>14" in goal.body
     assert "palette_filter_goal_section_source</dt><dd>current_route" in goal.body
     assert f"palette_filter_goal_section_goal</dt><dd>{result.goal_id}" in goal.body
     assert (
@@ -12060,7 +12063,53 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-decision-kind='worktree_approval'" in goal.body
     assert "data-goal-decision-primary='true'" in goal.body
     assert "data-goal-decision-primary='false'" in goal.body
+    assert "data-goal-decision-item-id='Create commit request'" in goal.body
+    assert "data-goal-decision-text='" in goal.body
+    assert "Goal Decision Filter" in goal.body
+    assert "id='goal-decision-filter'" in goal.body
+    assert "data-goal-decision-filter='true'" in goal.body
+    assert f"data-goal-decision-filter-storage-key='clankeros-goal-decision-filter:{result.goal_id}'" in goal.body
+    assert f"data-goal-decision-filter-goal='{result.goal_id}'" in goal.body
+    assert "data-goal-decision-filter-controls='true'" in goal.body
+    assert "data-goal-decision-filter-kind='all'" in goal.body
+    assert "data-goal-decision-filter-kind='current_action'" in goal.body
+    assert "data-goal-decision-filter-kind='worktree_approval'" in goal.body
+    assert "data-goal-decision-filter-active='true'" in goal.body
+    assert "data-goal-decision-filter-query='true'" in goal.body
+    assert "data-goal-decision-filter-reset='true'>Reset filter</button>" in goal.body
+    assert "data-goal-decision-filter-view-status='true'>View: default</span>" in goal.body
+    assert "data-goal-decision-filter-status='true'>Showing 2 of 2 decision rows." in goal.body
+    assert "data-goal-decision-filter-empty='true' hidden" in goal.body
+    assert "data-goal-decision-filter-evidence='true'" in goal.body
     assert "data-goal-decision-evidence='true'" in goal.body
+    assert "goal_decision_filter_status</dt><dd>available" in goal.body
+    assert f"goal_decision_filter_goal</dt><dd>{result.goal_id}" in goal.body
+    assert "goal_decision_filter_scope</dt><dd>browser_local_rendered_decisions" in goal.body
+    assert "goal_decision_filter_total_rows</dt><dd>2" in goal.body
+    assert "goal_decision_filter_current_action_rows</dt><dd>1" in goal.body
+    assert "goal_decision_filter_worktree_approval_rows</dt><dd>1" in goal.body
+    assert "goal_decision_filter_commit_approval_rows</dt><dd>0" in goal.body
+    assert "goal_decision_filter_publication_approval_rows</dt><dd>0" in goal.body
+    assert "goal_decision_filter_incident_rows</dt><dd>0" in goal.body
+    assert "goal_decision_filter_recommendation_rows</dt><dd>0" in goal.body
+    assert "goal_decision_filter_blocked_task_rows</dt><dd>0" in goal.body
+    assert "goal_decision_filter_lanes</dt><dd>all current_action worktree_approval commit_approval publication_approval incident recommendation blocked_task" in goal.body
+    assert "goal_decision_filter_persistence</dt><dd>browser_local_view_memory" in goal.body
+    assert f"goal_decision_filter_memory_storage</dt><dd>localStorage:clankeros-goal-decision-filter:{result.goal_id}" in goal.body
+    assert "goal_decision_filter_memory_fields</dt><dd>lane query" in goal.body
+    assert "goal_decision_filter_default</dt><dd>all" in goal.body
+    assert "goal_decision_filter_reset</dt><dd>available" in goal.body
+    assert "goal_decision_filter_write_on_get</dt><dd>false" in goal.body
+    assert "goal_decision_filter_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_decision_filter_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_decision_filter_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_decision_filter_lanes: current_action=1, worktree_approval=1" in goal.body
+    assert "goal_decision_filter: filters already-rendered Goal decision rows only" in goal.body
+    assert "goal_decision_filter: restores lane and query from browser storage for this Goal" in goal.body
+    assert "goal_decision_filter_safety: no approval, execution, push, PR, deploy, provider call, or network action" in goal.body
+    assert "function updateGoalDecisionFilter(options)" in goal.body
+    assert "window.localStorage.setItem(goalDecisionFilterStorageKey(filterPanel)" in goal.body
+    assert "window.localStorage.removeItem(goalDecisionFilterStorageKey(filterPanel))" in goal.body
     assert "goal_decision_queue_status</dt><dd>waiting_on_operator" in goal.body
     assert f"goal_decision_queue_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_decision_queue_project</dt><dd>{result.project_id}" in goal.body
@@ -12093,6 +12142,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "data-goal-decision-queue='true'"
     )
     assert goal.body.index("data-goal-decision-queue='true'") < goal.body.index(
+        "data-goal-decision-filter='true'"
+    )
+    assert goal.body.index("data-goal-decision-filter='true'") < goal.body.index(
         "data-goal-command-bar='true'"
     )
     assert "goal_section_index_status</dt><dd>available" in goal.body
@@ -12100,7 +12152,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-section-index-actions='true'" in goal.body
     assert "data-goal-section-finder='true'" in goal.body
     assert "data-goal-section-finder-input='true'" in goal.body
-    assert "data-goal-section-finder-count='true'>59 sections" in goal.body
+    assert "data-goal-section-finder-count='true'>60 sections" in goal.body
     assert "data-goal-section-finder-first='true' href='#goal-summary'>Summary</a>" in goal.body
     assert "data-goal-section-finder-results='true'" in goal.body
     assert "data-goal-section-result='true' data-goal-section-label='approval command'" in goal.body
@@ -12114,7 +12166,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-section-index-primary='true' href='#goal-next-action'>Next action</a>" in goal.body
     assert "goal_section_switchboard_status</dt><dd>available" in goal.body
     assert "goal_section_finder_status</dt><dd>available" in goal.body
-    assert "goal_section_finder_result_count</dt><dd>59" in goal.body
+    assert "goal_section_finder_result_count</dt><dd>60" in goal.body
     assert "goal_section_finder_default_first</dt><dd>goal-summary" in goal.body
     assert "goal_section_switchboard_card_count</dt><dd>5" in goal.body
     assert "goal_section_switchboard_primary</dt><dd>goal-next-action" in goal.body
@@ -12128,6 +12180,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_section_finder_default: <a href='#goal-summary'>Summary</a>" in goal.body
     assert "goal_section_finder_target: Summary -> #goal-summary" in goal.body
     assert "goal_section_finder_target: Decision queue -> #goal-decision-queue" in goal.body
+    assert "goal_section_finder_target: Decision filter -> #goal-decision-filter" in goal.body
     assert "goal_section_switchboard_safety: read-only local anchor navigation" in goal.body
     assert goal.body.index("data-goal-section-index-actions='true'") < goal.body.index(
         "data-goal-section-finder='true'"
@@ -12213,7 +12266,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>59" in goal.body
+    assert "goal_section_count</dt><dd>60" in goal.body
     assert "data-goal-section-index-evidence='true'" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "data-goal-command-strip='true'" in goal.body

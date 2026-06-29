@@ -268,6 +268,37 @@
   warnings, had no desktop horizontal overflow at `1280x900`, and stacked to
   one `329px` column with no horizontal overflow at mobile `390x844`.
 
+## 2026-06-29 Goal Decision Filter
+
+- Added a browser-local `Goal Decision Filter` inside
+  `/goals/<goal_id>#goal-decision-queue`, after the rendered queue rows and
+  before queue evidence.
+- The filter narrows already-rendered Goal decision rows by all/current action,
+  worktree approval, commit approval, publication approval, incidents,
+  recommendations, blocked tasks, or local text search. Rows now carry
+  `data-goal-decision-kind`, `data-goal-decision-item-id`, and
+  `data-goal-decision-text` metadata so filtering never needs a server write.
+- The selected lane/query are restored per Goal from
+  `localStorage:clankeros-goal-decision-filter:<goal_id>`, the filter is
+  discoverable through the command palette and Goal Section Index, and
+  `/workspace#workspace-view-memory` can inspect/reset the prefix with the
+  other browser-local view state.
+- Safety: read-only GET rendering; no approval, execution, push, PR, deploy,
+  provider call, network action, or external mutation authority added.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed;
+  `python3 -m compileall -q agent_os tests` passed; focused local-app pytest
+  passed for `test_local_app_routes_render_modern_workflow_and_health` and
+  `test_local_app_demo_scenario_populates_fixture_state`; Playwright browser
+  QA against throwaway demo Goal `goal_dbee795d326b` at
+  `http://127.0.0.1:55631/goals/goal_dbee795d326b` confirmed Worktree lane
+  filtering shows only the `worktree_approval` row, reload restores
+  `localStorage:clankeros-goal-decision-filter:<goal_id>`, text query
+  `commit` shows only the `current_action` row, Reset restores both rows and
+  clears storage, console warnings/errors were zero, desktop `1280x900` had no
+  horizontal overflow, and mobile `390x844` stacked filter controls at 300px
+  with no horizontal overflow.
+
 ## 2026-06-29 Goal Decision Queue
 
 - Added a read-only `Goal Decision Queue` to `/goals/<goal_id>` after the

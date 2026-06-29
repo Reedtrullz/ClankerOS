@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals/<goal_id>#goal-decision-filter` now narrows already-rendered Goal
+  Decision Queue rows by all, current action, approval type, incidents,
+  recommendations, blocked work, or local text search. It remembers lane/query
+  per Goal in `localStorage:clankeros-goal-decision-filter:<goal_id>`, is
+  discoverable through the Goal section index and command palette, can be reset
+  from `/workspace#workspace-view-memory`, and keeps GET rendering read-only
+  with no decision, approval, execution, provider call, network action, push,
+  PR, deploy, or external effect.
 - `/resume` now starts with a read-only `Browser Resume` panel that uses this
   browser's `localStorage:clankeros-route-history` to reopen the most recent
   non-resume route, reports route-scoped scroll/open-panel memory when present,
@@ -102,9 +110,10 @@ Latest status focus:
   network actions, raw filesystem browsing, or external effects.
 - `/workspace#workspace-view-memory` now exposes browser-local view memory
   for theme, focus mode, Goal board view, open panels, scroll position, search
-  lanes, timeline lanes, artifact filters, notes filters, note drafts, setup
-  form drafts, Memory Bank filters, Skills Inventory filters, Approval Queue
-  filters, Inbox Queue filters, and Profile Routing filters. It can refresh or clear those
+  lanes, timeline lanes, decision filters, artifact filters, notes filters,
+  note drafts, setup form drafts, Memory Bank filters, Skills Inventory
+  filters, Approval Queue filters, Inbox Queue filters, and Profile Routing
+  filters. It can refresh or clear those
   `localStorage` values after explicit clicks while preserving read-only GET
   behavior, `.clanker/app/workspace.json`, no raw filesystem browsing, and
   no-provider/no-network/no-external-effect boundaries.

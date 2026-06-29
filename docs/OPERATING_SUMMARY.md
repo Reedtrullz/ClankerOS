@@ -531,7 +531,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   incidents, recommendations, and blocked tasks; those rows link only to the
   existing confirmed Goal action form, scoped approvals, incidents,
   recommendations, or risk surfaces and preserve zero write/provider/network/
-  external-effect counters. The page also includes a
+  external-effect counters. A browser-local `Goal Decision Filter` then
+  narrows those rendered rows by lane or text, restores lane/query per Goal
+  from `localStorage:clankeros-goal-decision-filter:<goal_id>`, and is
+  included in `/workspace#workspace-view-memory` reset coverage. The page also includes a
   read-only `Goal Command Bar` near the top that opens with visible Now,
   Phase, Progress, Proof, and Resume cards while keeping phase, one primary
   action, target local surface, progress, waiting counts, `/resume`, latest
