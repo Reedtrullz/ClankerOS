@@ -222,6 +222,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   is used. Fresh checkouts still expose
   confirmed local `register-project` and `create-goal` forms for a fresh
   checkout, and those forms restore unsent browser-local drafts after reloads.
+  The same scoped form-draft memory is applied to goal workflow forms for
+  worktree approval, safe local run commands, commit request/approval, local
+  commit messages, publication request/approval, and manual `complete-goal`
+  notes; successful confirmed actions clear only the submitted draft key.
 - `/goals/<goal_id>` - goal-centered workbench that is content-first: the Goal
   summary, large Current Phase banner, jump bar, action dock, and progress meter
   appear before shared route/focus diagnostics. The summary is now title-first:
@@ -938,7 +942,9 @@ local workflow, run, approvals, and inbox surfaces. `Demo Gate Actions`
 renders the active local gate form, such as `coder-commit-request`,
 `approve-coder-commit`, `commit-coder-worktree`,
 `coder-publication-request`, `approve-coder-publication`, or
-`coder-publication-handoff`; every write still goes through the normal
+`coder-publication-handoff`; supported text fields use browser-local draft
+memory so reloads do not discard unsent notes, messages, or safe command text,
+and every write still goes through the normal
 confirmation page and existing local safety checks. Once the publication
 handoff is ready, the demo gate keeps push/PR work as a manual action outside
 ClankerOS, then renders the confirmed local `complete-goal` form and advances

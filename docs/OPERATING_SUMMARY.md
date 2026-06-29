@@ -294,9 +294,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   read-only `Workspace View Memory` panel. That panel inventories browser
   `localStorage` view state for theme, focus mode, Goal board, Recent Items
   filters, open panels, scroll position, search lanes, timeline lanes, artifact
-  filters, notes filters, note drafts, setup form drafts, Memory Bank filters, Skills Inventory filters,
-  Approval Queue filters, Inbox Queue filters, and Profile Routing filters, and can clear those
-  browser-local values after explicit operator clicks without writing
+  filters, notes filters, note drafts, setup and workflow form drafts, Memory
+  Bank filters, Skills Inventory filters, Approval Queue filters, Inbox Queue
+  filters, and Profile Routing filters, and can clear those browser-local
+  values after explicit operator clicks without writing
   `.clanker/app/workspace.json`, calling providers, using the network, or
   mutating external systems. It sits before the
   read-only `Workspace Daily Brief` and `Workspace Workflow Map` for the saved
@@ -306,8 +307,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   progress instead: empty checkouts point those sections at the same-page
   `Workspace First-Run Action` `register-project` form and
   registered-project/no-goal workspaces point at the same-page `create-goal`
-  form while preserving the saved project link. Home, Recent
-  Items, and the command palette also prefer the exact saved `resume_surface`
+  form while preserving the saved project link. Goal workflow forms use the
+  same scoped browser-local draft memory for worktree approval notes, safe
+  local run commands, commit/publication messages, approval notes, and manual
+  `complete-goal` notes, with cleanup after confirmed local success. Home,
+  Recent Items, and the command palette also prefer the exact saved `resume_surface`
   when one exists, while retaining `/resume` as the hub; `/memory` for project/global/
   generated memories, proposed memories, operator notes, future work, and pin
   actions. It is action-first and opens with a visible
@@ -1171,7 +1175,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   handoff, and PR-body artifacts as those gates become available, plus a
   state-aware `Demo Gate Actions` panel that names the current gate, local
   form action, required input, expected output artifact, and renders the safe
-  confirmed local form for the active gate when one exists. At the manual
+  confirmed local form for the active gate when one exists. Supported active
+  gate text fields preserve unsent drafts in browser-local storage across
+  reloads until cleared or confirmed. At the manual
   push/PR boundary it keeps publication outside ClankerOS, exposes only the
   confirmed local `complete-goal` form, and advances completed fixture Goals
   to `review_completed_goal_evidence`, plus `Manual

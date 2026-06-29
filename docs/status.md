@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal workflow forms now share the browser-local
+  `localStorage:clankeros-action-form-draft:<action>:<scope>` draft system:
+  worktree approval/run, commit request/approval, local commit, publication
+  request/approval, and manual `complete-goal` notes/messages/commands restore
+  after reloads, can be cleared from `/workspace#workspace-view-memory`, and
+  are cleared after the submitted confirmed local action succeeds.
 - First-run setup and daily Goal creation forms now keep unsent
   `register-project` and `create-goal` edits in browser-local
   `localStorage:clankeros-action-form-draft:<action>:<scope>` entries. The

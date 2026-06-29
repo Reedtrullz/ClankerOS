@@ -6937,7 +6937,7 @@ def _workspace_view_memory_panel() -> str:
             "Form Drafts",
             "prefix",
             "clankeros-action-form-draft:",
-            "Setup and Goal creation form drafts",
+            "Setup and Goal workflow form drafts",
         ),
         (
             "memory",
@@ -35995,8 +35995,38 @@ def _form(action: str, fields: dict[str, str]) -> str:
     )
 
 
-ACTION_FORM_DRAFT_ACTIONS = {"register-project", "create-goal"}
+ACTION_FORM_DRAFT_ACTIONS = {
+    "register-project",
+    "create-goal",
+    "coder-worktree-approval",
+    "approve-coder-worktree",
+    "run-coder-worktree",
+    "coder-commit-request",
+    "approve-coder-commit",
+    "commit-coder-worktree",
+    "coder-publication-request",
+    "approve-coder-publication",
+    "complete-goal",
+}
 ACTION_FORM_DRAFT_STORAGE_PREFIX = "clankeros-action-form-draft:"
+ACTION_FORM_DRAFT_SCOPE_FIELDS = (
+    "goal_id",
+    "run_id",
+    "delegation_id",
+    "approval_id",
+    "publication_id",
+    "project_id",
+    "open_goal",
+    "open_project",
+    "name",
+)
+ACTION_FORM_DRAFT_TEXTAREA_FIELDS = {
+    "prompt",
+    "message",
+    "note",
+    "command",
+    "verify_command",
+}
 
 
 def _action_form_draft_scope(action: str, values: dict[str, str]) -> str:
@@ -36005,7 +36035,20 @@ def _action_form_draft_scope(action: str, values: dict[str, str]) -> str:
     elif action == "register-project":
         raw = values.get("name") or "project"
     else:
-        raw = action
+        raw = next(
+            (
+                str(values.get(field) or "").strip()
+                for field in ACTION_FORM_DRAFT_SCOPE_FIELDS
+                if str(values.get(field) or "").strip()
+            ),
+            "",
+        )
+        if not raw:
+            raw = "|".join(
+                f"{key}={values[key]}"
+                for key in sorted(values)
+                if not key.startswith("_action_draft_")
+            ) or action
     scope = re.sub(r"[^A-Za-z0-9_.-]+", "-", str(raw).strip()).strip("-").lower()
     if not scope:
         scope = hashlib.sha256(str(raw).encode("utf-8")).hexdigest()[:12]
@@ -36018,6 +36061,12 @@ def _action_form_draft_storage_key(action: str, values: dict[str, str]) -> str:
 
 def _is_safe_action_form_draft_key(value: str) -> bool:
     return value.startswith(ACTION_FORM_DRAFT_STORAGE_PREFIX) and len(value) <= 240
+
+
+def _action_form_draft_textarea_rows(key: str) -> int:
+    if key in {"command", "verify_command"}:
+        return 3
+    return 4
 
 
 def _input_form(
@@ -36048,9 +36097,10 @@ def _input_form(
             if draft_enabled
             else ""
         )
-        if action == "create-goal" and key == "prompt":
+        if draft_enabled and key in ACTION_FORM_DRAFT_TEXTAREA_FIELDS:
             field = (
-                f"<textarea name='{_e(key)}' rows='4' spellcheck='true'"
+                f"<textarea name='{_e(key)}' "
+                f"rows='{_action_form_draft_textarea_rows(key)}' spellcheck='true'"
                 f"{draft_attrs}>{_e(value)}</textarea>"
             )
         else:
@@ -36098,7 +36148,7 @@ def _input_form(
             ),
             _ul(
                 [
-                    "action_form_draft_persistence: browser-local setup and Goal creation forms",
+                    "action_form_draft_persistence: browser-local setup and Goal workflow forms",
                     "action_form_draft_reset: clear draft button or Workspace View Memory",
                     "action_form_draft_safety: unsent form text stays in browser localStorage",
                 ]

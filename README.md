@@ -269,8 +269,8 @@ title-first when possible, while still retaining exact saved Goal id and route
 evidence for restoration. A read-only `Workspace View Memory` panel follows to
 inspect and clear browser-local view state such as theme, focus mode, Goal
 board filters, open panels, scroll position, search lanes, timeline lanes,
-artifact filters, notes filters, note drafts, setup form drafts, Memory Bank
-filters, and Skills Inventory filters from `localStorage` without changing
+artifact filters, notes filters, note drafts, setup and workflow form drafts,
+Memory Bank filters, and Skills Inventory filters from `localStorage` without changing
 `.clanker/app/workspace.json`.
 The read-only
 `Workspace Daily Brief` and `Workspace Workflow Map` then follow with the
@@ -307,7 +307,10 @@ request, publication decision, publication handoff, and PR-body artifact as
 those gates become available. The `Demo Gate Actions` panel names the current
 gate, the local form action, required input, expected output artifact, and
 renders the safe confirmed local form when the current step can be driven from
-the app. Once the publication handoff is ready, the demo keeps push/PR work
+the app. Draft-backed workflow fields preserve unsent operator notes,
+messages, and safe local command text across reloads until the operator clears
+them or the confirmed local action succeeds. Once the publication handoff is
+ready, the demo keeps push/PR work
 outside ClankerOS and exposes the confirmed local `complete-goal` form so the
 operator can record that manual publication finished and review completed Goal
 evidence.
@@ -344,7 +347,10 @@ cockpit also includes a confirmed local
 so an operator can add the next goal for a registered project without
 switching to the CLI. Setup and Goal creation forms keep unsent edits in
 browser-local `localStorage:clankeros-action-form-draft:<action>:<scope>`
-until the operator clears them or the confirmed local action succeeds.
+until the operator clears them or the confirmed local action succeeds. The
+same browser-local draft behavior is used for goal workflow forms that collect
+worktree approval notes, safe run commands, commit/publication messages,
+publication approval notes, and manual `complete-goal` notes.
 Use `/goals/<goal_id>` as the
 goal-centered workbench: the page is now content-first, so the Goal summary,
 large Current Phase banner, jump bar, action dock, progress meter, and

@@ -16808,6 +16808,12 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert "action='/actions/coder-worktree-approval'" in after_plan.body
     assert f"name='delegation_id' value='{delegation_id}'" in after_plan.body
     assert "Approve bounded worktree execution from goal page" in after_plan.body
+    assert "data-action-draft-action='coder-worktree-approval'" in after_plan.body
+    assert (
+        "data-action-draft-storage-key="
+        f"'clankeros-action-form-draft:coder-worktree-approval:{delegation_id}'"
+    ) in after_plan.body
+    assert "<textarea name='note' rows='4' spellcheck='true' data-action-draft-input='true'" in after_plan.body
     assert "does not approve execution" in after_plan.body
     assert "external_effects_created</dt><dd>false" in after_plan.body
 
@@ -16836,6 +16842,12 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     )
     assert approval_result.status == 200
     assert "coder_worktree_approval:" in approval_result.body
+    assert "data-action-result-form-draft-cleanup='true'" in approval_result.body
+    assert "data-action-result-form-draft-action='coder-worktree-approval'" in approval_result.body
+    assert (
+        "data-action-result-form-draft-key="
+        f"'clankeros-action-form-draft:coder-worktree-approval:{delegation_id}'"
+    ) in approval_result.body
     approvals = list_coder_worktree_approvals(tmp_path, delegation_id=delegation_id)
     assert len(approvals) == 1
     approval_id = approvals[0].id
@@ -16856,6 +16868,12 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert "next_action_form_available</dt><dd>true" in pending_approval.body
     assert "Approve Worktree" in pending_approval.body
     assert "action='/actions/approve-coder-worktree'" in pending_approval.body
+    assert "data-action-draft-action='approve-coder-worktree'" in pending_approval.body
+    assert (
+        "data-action-draft-storage-key="
+        f"'clankeros-action-form-draft:approve-coder-worktree:{approval_id}'"
+    ) in pending_approval.body
+    assert "<textarea name='note' rows='4' spellcheck='true' data-action-draft-input='true'" in pending_approval.body
     assert "Approved bounded execution from goal page" in pending_approval.body
     assert "does not run the worktree" in pending_approval.body
     assert "push, create a PR, or deploy" in pending_approval.body
@@ -16885,6 +16903,12 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     )
     assert approval_decision.status == 200
     assert "approved_coder_worktree:" in approval_decision.body
+    assert "data-action-result-form-draft-cleanup='true'" in approval_decision.body
+    assert "data-action-result-form-draft-action='approve-coder-worktree'" in approval_decision.body
+    assert (
+        "data-action-result-form-draft-key="
+        f"'clankeros-action-form-draft:approve-coder-worktree:{approval_id}'"
+    ) in approval_decision.body
     approved = list_coder_worktree_approvals(
         tmp_path,
         delegation_id=delegation_id,
@@ -16941,6 +16965,13 @@ def test_goal_runs_approved_worktree_from_browser_action(
     assert f"name='delegation_id' value='{delegation_id}'" in approved_goal.body
     assert f"approval_id</dt><dd>{approval_id}" in approved_goal.body
     assert "name='command'" in approved_goal.body
+    assert "data-action-draft-action='run-coder-worktree'" in approved_goal.body
+    assert (
+        "data-action-draft-storage-key="
+        f"'clankeros-action-form-draft:run-coder-worktree:{delegation_id}'"
+    ) in approved_goal.body
+    assert "<textarea name='command' rows='3' spellcheck='true' data-action-draft-input='true'" in approved_goal.body
+    assert "<textarea name='verify_command' rows='3' spellcheck='true' data-action-draft-input='true'" in approved_goal.body
     assert "name='verify' value='yes'" in approved_goal.body
     assert "safe_command_validator</dt><dd>enabled" in approved_goal.body
     assert "browser_execution_exposed</dt><dd>confirmed_local_only" in approved_goal.body
@@ -17002,6 +17033,12 @@ def test_goal_runs_approved_worktree_from_browser_action(
     )
     assert run_response.status == 200
     assert "run_coder_worktree: completed" in run_response.body
+    assert "data-action-result-form-draft-cleanup='true'" in run_response.body
+    assert "data-action-result-form-draft-action='run-coder-worktree'" in run_response.body
+    assert (
+        "data-action-result-form-draft-key="
+        f"'clankeros-action-form-draft:run-coder-worktree:{delegation_id}'"
+    ) in run_response.body
     assert "status</dt><dd>completed" in run_response.body
     assert "changed_files_within_allowed_files</dt><dd>true" in run_response.body
     assert "commit_created</dt><dd>false" in run_response.body
@@ -17087,6 +17124,13 @@ def test_goal_next_action_card_exposes_reviewed_commit_request_form(
     assert "Create Commit Request" in after_review.body
     assert "action='/actions/coder-commit-request'" in after_review.body
     assert f"name='run_id' value='{run_id}'" in after_review.body
+    assert "data-action-draft-action='coder-commit-request'" in after_review.body
+    assert (
+        "data-action-draft-storage-key="
+        f"'clankeros-action-form-draft:coder-commit-request:{run_id}'"
+    ) in after_review.body
+    assert "<textarea name='message' rows='4' spellcheck='true' data-action-draft-input='true'" in after_review.body
+    assert "<textarea name='note' rows='4' spellcheck='true' data-action-draft-input='true'" in after_review.body
     assert "Implement bounded change from approved worktree run" in after_review.body
     assert "Request local commit after review from goal page" in after_review.body
     assert "does not stage, commit, push" in after_review.body
@@ -17121,6 +17165,12 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         },
     )
     assert commit_request.status == 200
+    assert "data-action-result-form-draft-cleanup='true'" in commit_request.body
+    assert "data-action-result-form-draft-action='coder-commit-request'" in commit_request.body
+    assert (
+        "data-action-result-form-draft-key="
+        f"'clankeros-action-form-draft:coder-commit-request:{run_id}'"
+    ) in commit_request.body
     commit_approval = next(
         item
         for item in list_coder_worktree_commit_approvals(
@@ -17149,6 +17199,12 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "Approve Commit" in pending_commit_goal.body
     assert "action='/actions/approve-coder-commit'" in pending_commit_goal.body
     assert f"name='approval_id' value='{commit_approval.id}'" in pending_commit_goal.body
+    assert "data-action-draft-action='approve-coder-commit'" in pending_commit_goal.body
+    assert (
+        "data-action-draft-storage-key="
+        f"'clankeros-action-form-draft:approve-coder-commit:{commit_approval.id}'"
+    ) in pending_commit_goal.body
+    assert "<textarea name='note' rows='4' spellcheck='true' data-action-draft-input='true'" in pending_commit_goal.body
     assert "Approved local commit from goal page" in pending_commit_goal.body
     assert "does not stage, commit, push" in pending_commit_goal.body
 
@@ -17163,6 +17219,12 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         },
     )
     assert approve_commit.status == 200
+    assert "data-action-result-form-draft-cleanup='true'" in approve_commit.body
+    assert "data-action-result-form-draft-action='approve-coder-commit'" in approve_commit.body
+    assert (
+        "data-action-result-form-draft-key="
+        f"'clankeros-action-form-draft:approve-coder-commit:{commit_approval.id}'"
+    ) in approve_commit.body
     commit_decision_md = (
         tmp_path
         / Path(commit_approval.source_run_evidence_path)
@@ -17185,6 +17247,12 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "Commit Approved Worktree" in approved_commit_goal.body
     assert "action='/actions/commit-coder-worktree'" in approved_commit_goal.body
     assert f"name='run_id' value='{run_id}'" in approved_commit_goal.body
+    assert "data-action-draft-action='commit-coder-worktree'" in approved_commit_goal.body
+    assert (
+        "data-action-draft-storage-key="
+        f"'clankeros-action-form-draft:commit-coder-worktree:{run_id}'"
+    ) in approved_commit_goal.body
+    assert "<textarea name='message' rows='4' spellcheck='true' data-action-draft-input='true'" in approved_commit_goal.body
     assert "Creates one local commit only inside the isolated coder worktree" in approved_commit_goal.body
 
     commit_response = render_local_app_route(
@@ -17199,6 +17267,12 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         },
     )
     assert commit_response.status == 200
+    assert "data-action-result-form-draft-cleanup='true'" in commit_response.body
+    assert "data-action-result-form-draft-action='commit-coder-worktree'" in commit_response.body
+    assert (
+        "data-action-result-form-draft-key="
+        f"'clankeros-action-form-draft:commit-coder-worktree:{run_id}'"
+    ) in commit_response.body
     commit_md = tmp_path / Path(commit_approval.source_run_evidence_path) / "coder_commit" / "commit.md"
     assert commit_md.exists()
     commit_workspace = json.loads(
@@ -17214,6 +17288,12 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "Create Publication Request" in publication_request_goal.body
     assert "action='/actions/coder-publication-request'" in publication_request_goal.body
     assert f"name='run_id' value='{run_id}'" in publication_request_goal.body
+    assert "data-action-draft-action='coder-publication-request'" in publication_request_goal.body
+    assert (
+        "data-action-draft-storage-key="
+        f"'clankeros-action-form-draft:coder-publication-request:{run_id}'"
+    ) in publication_request_goal.body
+    assert "<textarea name='note' rows='4' spellcheck='true' data-action-draft-input='true'" in publication_request_goal.body
     assert "Request publication handoff from goal page" in publication_request_goal.body
     assert "does not push, create a PR, deploy" in publication_request_goal.body
 
@@ -17230,6 +17310,12 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         },
     )
     assert publication_request.status == 200
+    assert "data-action-result-form-draft-cleanup='true'" in publication_request.body
+    assert "data-action-result-form-draft-action='coder-publication-request'" in publication_request.body
+    assert (
+        "data-action-result-form-draft-key="
+        f"'clankeros-action-form-draft:coder-publication-request:{run_id}'"
+    ) in publication_request.body
     publication = next(
         item
         for item in list_coder_publications(
@@ -17256,6 +17342,12 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "Approve Publication" in pending_publication_goal.body
     assert "action='/actions/approve-coder-publication'" in pending_publication_goal.body
     assert f"name='publication_id' value='{publication.id}'" in pending_publication_goal.body
+    assert "data-action-draft-action='approve-coder-publication'" in pending_publication_goal.body
+    assert (
+        "data-action-draft-storage-key="
+        f"'clankeros-action-form-draft:approve-coder-publication:{publication.id}'"
+    ) in pending_publication_goal.body
+    assert "<textarea name='note' rows='4' spellcheck='true' data-action-draft-input='true'" in pending_publication_goal.body
     assert "Approved publication handoff from goal page" in pending_publication_goal.body
 
     approve_publication = render_local_app_route(
@@ -17269,6 +17361,12 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         },
     )
     assert approve_publication.status == 200
+    assert "data-action-result-form-draft-cleanup='true'" in approve_publication.body
+    assert "data-action-result-form-draft-action='approve-coder-publication'" in approve_publication.body
+    assert (
+        "data-action-result-form-draft-key="
+        f"'clankeros-action-form-draft:approve-coder-publication:{publication.id}'"
+    ) in approve_publication.body
     approved_publication = next(
         item
         for item in list_coder_publications(tmp_path, status="approved", limit=10)
@@ -17340,6 +17438,12 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "Complete Goal" in manual_publish_goal.body
     assert "action='/actions/complete-goal'" in manual_publish_goal.body
     assert f"name='goal_id' value='{goal_id}'" in manual_publish_goal.body
+    assert "data-action-draft-action='complete-goal'" in manual_publish_goal.body
+    assert (
+        "data-action-draft-storage-key="
+        f"'clankeros-action-form-draft:complete-goal:{goal_id}'"
+    ) in manual_publish_goal.body
+    assert "<textarea name='note' rows='4' spellcheck='true' data-action-draft-input='true'" in manual_publish_goal.body
     open_task = next(task for task in storage.list_tasks(goal_id) if task.status != "completed")
     assert "Goal Task Closeout" in manual_publish_goal.body
     assert "data-goal-task-closeout='true'" in manual_publish_goal.body
@@ -17438,6 +17542,12 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     )
     assert complete_response.status == 200
     assert "goal_completed:" in complete_response.body
+    assert "data-action-result-form-draft-cleanup='true'" in complete_response.body
+    assert "data-action-result-form-draft-action='complete-goal'" in complete_response.body
+    assert (
+        "data-action-result-form-draft-key="
+        f"'clankeros-action-form-draft:complete-goal:{goal_id}'"
+    ) in complete_response.body
     assert "network_actions_taken</dt><dd>0" in complete_response.body
     assert "external_mutations_taken</dt><dd>0" in complete_response.body
     complete_workspace = json.loads(

@@ -1,5 +1,46 @@
 # Status
 
+## 2026-06-29 Browser-Local Workflow Form Drafts
+
+- Extended browser-local action form draft memory from setup forms to the
+  high-friction Goal workflow forms: `coder-worktree-approval`,
+  `approve-coder-worktree`, `run-coder-worktree`, `coder-commit-request`,
+  `approve-coder-commit`, `commit-coder-worktree`,
+  `coder-publication-request`, `approve-coder-publication`, and
+  `complete-goal`.
+- Workflow draft keys are now scoped by durable local identifiers such as
+  `goal_id`, `run_id`, `delegation_id`, `approval_id`, or `publication_id`, so
+  separate pending workflow actions do not share unsent operator text. Notes,
+  messages, safe local commands, and verifier command fields render as
+  multiline draft-backed textareas.
+- Confirmed successful workflow action-result pages now clear the exact
+  submitted draft key. `/workspace#workspace-view-memory` labels the shared
+  `clankeros-action-form-draft:` prefix as setup and Goal workflow drafts so
+  operators can inspect or reset those browser-local entries with the other
+  view memory.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused Goal workflow pytest passed
+  with `4 passed in 45.99s`; `python3 -m compileall -q agent_os tests`
+  passed; `git diff --check` passed; bounded scratch-root `app-smoke-test`
+  passed across core routes with provider/network/external mutation counters
+  at zero; bounded scratch-root `app-demo-smoke-test` passed across
+  fixture-backed routes with the same zero-effect counters.
+- Browser verification: Playwright against throwaway local app
+  `http://127.0.0.1:56916` confirmed `coder-commit-request` draft save to
+  `clankeros-action-form-draft:coder-commit-request:run_9e32837ada72`, reload
+  restore of the commit message and multiline note, Workspace View Memory
+  `Form Drafts` reset clearing that key, confirmed action cleanup after the
+  commit request succeeds, transition to the next draft-backed
+  `approve-coder-commit` form, mobile viewport `390x844` with no horizontal
+  overflow, zero browser console errors/warnings, and cleanup of the scratch
+  server/root plus Playwright snapshots.
+- Non-claims: workflow form draft memory is browser-local unsent text only. It
+  does not write `.clanker/app/workspace.json`, approve or execute work,
+  create commit/publication requests, commit, mark goals complete, bypass the
+  confirmed action review page, call providers, fetch GitHub, push, create
+  PRs, deploy, or mutate external systems without the existing explicit
+  confirmed local action.
+
 ## 2026-06-29 Browser-Local Setup Form Drafts
 
 - Added browser-local draft memory for confirmed `register-project` and
