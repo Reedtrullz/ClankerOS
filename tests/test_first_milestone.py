@@ -4821,6 +4821,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "register-project" in root.body
     assert "create-goal" in root.body
     assert "data-command-palette='true'" in root.body
+    assert "data-command-palette-filter-supported='true'" in root.body
     assert "data-command-palette-focus='true'" in root.body
     assert "data-command-palette-focus-grid='true'" in root.body
     assert "data-command-palette-focus-continue='true'" in root.body
@@ -4843,6 +4844,32 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "palette_focus_write_on_get</dt><dd>false" in root.body
     assert "palette_focus_network_actions_taken</dt><dd>0" in root.body
     assert "palette_focus_external_effects_created</dt><dd>false" in root.body
+    assert "data-command-palette-filter-input='true'" in root.body
+    assert "Filter commands or search local state" in root.body
+    assert "data-command-palette-filter='true'" in root.body
+    assert "data-command-palette-filter-item-count='" in root.body
+    assert "data-command-palette-filter-write-on-get='false'" in root.body
+    assert "data-command-palette-filter-provider-calls-taken='0'" in root.body
+    assert "data-command-palette-filter-network-actions-taken='0'" in root.body
+    assert "data-command-palette-filter-external-effects-created='false'" in root.body
+    assert "data-command-palette-filter-status='true'" in root.body
+    assert "data-command-palette-filter-count='true'" in root.body
+    assert "data-command-palette-result-list='true'" in root.body
+    assert "data-palette-result='true'" in root.body
+    assert "data-palette-search-text='dashboard / route'" in root.body
+    assert "data-command-palette-empty='true' hidden" in root.body
+    assert "No local palette matches. Press Search to search all indexed ClankerOS state." in root.body
+    assert "data-command-palette-filter-evidence='true'" in root.body
+    assert "palette_filter_status</dt><dd>available" in root.body
+    assert "palette_filter_source</dt><dd>nav_and_recent_local_items" in root.body
+    assert "palette_filter_scope</dt><dd>browser_local_commands" in root.body
+    assert "palette_filter_write_on_get</dt><dd>false" in root.body
+    assert "palette_filter_provider_calls_taken</dt><dd>0" in root.body
+    assert "palette_filter_network_actions_taken</dt><dd>0" in root.body
+    assert "palette_filter_external_effects_created</dt><dd>false" in root.body
+    assert "palette_filter_action: type in command-palette-search" in root.body
+    assert "palette_filter_empty_state: show local no-match message" in root.body
+    assert "palette_filter_safety: client-side filtering only" in root.body
     assert "data-command-palette-quick-switch='true'" in root.body
     assert "data-command-palette-quick-switch-cards='true'" in root.body
     assert (
@@ -4892,6 +4919,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "id='command-palette-search'"
     )
     assert root.body.index("id='command-palette-search'") < root.body.index(
+        "data-command-palette-filter='true'"
+    )
+    assert root.body.index("data-command-palette-filter='true'") < root.body.index(
         "data-command-palette-quick-switch='true'"
     )
     assert root.body.index("data-command-palette-quick-switch='true'") < root.body.index(
@@ -5281,6 +5311,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert 'root.dataset.focusMode = "true";' in root.body
     assert "function toggleFocusMode()" in root.body
     assert 'if (focusToggle) { focusToggle.addEventListener("click", toggleFocusMode); }' in root.body
+    assert "var paletteResults = palette ? Array.prototype.slice.call" in root.body
+    assert "function syncPaletteFilter()" in root.body
+    assert 'paletteSearch.addEventListener("input", syncPaletteFilter);' in root.body
+    assert 'item.hidden = !match;' in root.body
+    assert "paletteEmpty.hidden = shown !== 0;" in root.body
     assert 'if (event.key === "Escape") { closePalette(); return; }' in root.body
     assert 'if (nextActionOpen) { nextActionOpen.addEventListener("click", openNextAction); }' in root.body
     assert 'if (event.key === "n") { event.preventDefault(); openNextAction(); }' in root.body
@@ -10125,6 +10160,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert 'aria-keyshortcuts="m"' in goal.body
     assert 'if (event.key === "m") { event.preventDefault(); toggleFocusMode(); }' in goal.body
     assert "data-command-palette='true'" in goal.body
+    assert "data-command-palette-filter-supported='true'" in goal.body
+    assert "data-command-palette-filter='true'" in goal.body
+    assert "data-command-palette-result-list='true'" in goal.body
+    assert "data-palette-result='true'" in goal.body
+    assert "data-command-palette-empty='true' hidden" in goal.body
+    assert "function syncPaletteFilter()" in goal.body
+    assert 'paletteSearch.addEventListener("input", syncPaletteFilter);' in goal.body
+    assert "palette_filter_write_on_get</dt><dd>false" in goal.body
+    assert "palette_filter_network_actions_taken</dt><dd>0" in goal.body
+    assert "palette_filter_external_effects_created</dt><dd>false" in goal.body
     assert "data-command-palette-focus='true'" in goal.body
     assert "data-command-palette-focus-grid='true'" in goal.body
     assert "data-command-palette-focus-continue='true'" in goal.body
@@ -10199,6 +10244,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "id='command-palette-search'"
     )
     assert goal.body.index("id='command-palette-search'") < goal.body.index(
+        "data-command-palette-filter='true'"
+    )
+    assert goal.body.index("data-command-palette-filter='true'") < goal.body.index(
         "data-command-palette-quick-switch='true'"
     )
     assert goal.body.index("data-command-palette-quick-switch='true'") < goal.body.index(

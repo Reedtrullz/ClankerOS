@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared command palette now has a visible browser-local `Palette Results`
+  list. Typing in `command-palette-search` filters local routes and recent work
+  in place, shows a no-match state when needed, and keeps the existing Search
+  button for full indexed `/search`; no writes, provider calls, network
+  actions, or external effects are introduced.
 - The shared browser shell now has a local Focus mode: the header `Focus`
   control and `m` shortcut persist `data-focus-mode="true"` in
   `localStorage:clankeros-focus-mode`, collapse Recent Items, Route Context,

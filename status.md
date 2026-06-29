@@ -1,5 +1,33 @@
 # Status
 
+## 2026-06-29 Command Palette Results Filter UX
+
+- Added a visible browser-local `Palette Results` list to the shared command
+  palette on every route.
+- Typing in `command-palette-search` now filters local route/recent-work
+  commands in place, updates the visible match count, and shows a no-match
+  state without leaving the palette.
+- The existing Search button still opens full indexed `/search` results, so
+  palette filtering improves launcher navigation without replacing global
+  search.
+- Evidence attributes and collapsed filter evidence record item count, source,
+  scope, no write on GET, provider/network/external effects at `0`, and
+  client-side filtering only.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest
+  `python3 -m pytest -q tests/test_first_milestone.py -k
+  local_app_demo_scenario_populates_fixture_state` passed with `1 passed, 515
+  deselected in 38.14s`; Playwright DOM check against a temp-root local app
+  confirmed `/` opens the palette, `workflow` narrows to `1` result, a no-match
+  query shows the empty state, and `demo` restores `3` results;
+  `python3 -m compileall -q agent_os tests`; bounded temp-root
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`; bounded
+  temp-root `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`;
+  `git diff --check`.
+- Non-claims: no new search backend, no server persistence, no retained browser
+  screenshot artifact, no write on GET, no provider calls, no external
+  mutation, no PR creation, and no deploy from ClankerOS itself.
+
 ## 2026-06-29 Browser Focus Mode UX
 
 - Added browser-local Focus mode to the shared app shell on every route.

@@ -558,10 +558,13 @@ Core layers for the bootstrap:
   anchors, while other pages link back to Home/Today/Goals first-run anchors.
   The command palette now opens with a compact `Palette Focus` launcher for
   continuing the current Goal action, searching local state, resuming the saved
-  workspace, or staying on the current page. Its detailed route readback,
-  keyboard shortcuts, long open list, and zero-effect counters are still
-  available inside collapsed `Palette evidence and shortcuts`, while the
-  goal-aware `Continue Current Goal` form remains directly below search.
+  workspace, or staying on the current page. Its search box narrows a visible
+  `Palette Results` list of local routes and recent work in place, with a
+  no-match state and zero-effect evidence, while the Search button still opens
+  full indexed `/search`. Its detailed route readback, keyboard shortcuts, long
+  open list, and zero-effect counters are still available inside collapsed
+  `Palette evidence and shortcuts`, while the goal-aware `Continue Current
+  Goal` form remains directly below search.
   They also include a read-only `Goal Operator Notes Command Bar` before the
   confirmed `save-goal-note` form. It opens with visible Now, Artifact,
   Resume, Capture, and Safety cards, while command evidence and note details
@@ -780,7 +783,8 @@ Core layers for the bootstrap:
   Continue, Workspace, Action, Artifact, and Finish, so the keyboard launcher
   can reopen the current Goal, saved workspace, latest local action target,
   latest artifact, or `/workspace#save-workspace` handoff without expanding
-  the sidebar. It also starts with the same
+  the sidebar. The visible `Palette Results` list filters local routes and
+  recent work on input before falling back to full `/search`. It also starts with the same
   current-page route context, parent link, resolved Goal/Project/run context,
   focus target, `/resume`, and zero-effect readbacks inside the
   keyboard-driven surface. The shared focus strip and command palette include

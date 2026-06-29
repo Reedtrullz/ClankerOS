@@ -508,6 +508,11 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-focus-mode-storage=\"localStorage:clankeros-focus-mode\"",
                 "data-focus-mode-write-on-get=\"false\"",
                 "if (event.key === \"m\") { event.preventDefault(); toggleFocusMode(); }",
+                "data-command-palette-filter-supported='true'",
+                "data-command-palette-filter='true'",
+                "data-command-palette-result-list='true'",
+                "data-command-palette-empty='true'",
+                "function syncPaletteFilter()",
                 "Demo Operator Workbench",
                 "data-demo-operator-workbench='true'",
                 "data-demo-workbench-primary='true'",
@@ -32835,26 +32840,73 @@ def _command_palette(
     commands = [(label, href, "route") for label, href in NAV_ITEMS]
     commands.extend(_recent_operator_links(root, limit=6))
     seen: set[str] = set()
-    rows = []
+    open_rows = []
+    result_rows = []
     for label, href, kind in commands:
         key = f"{href}:{label}"
         if key in seen:
             continue
         seen.add(key)
-        rows.append(
+        search_text = " ".join([label, href, kind]).lower()
+        open_rows.append(
             f"<li><a href='{_e(href)}'{_shortcut_attrs(label, href)}>{_e(label)}</a> "
             f"<span class='muted'>{_e(kind)}</span></li>"
         )
+        result_rows.append(
+            "<li class='palette-result-item' data-palette-result='true' "
+            f"data-palette-search-text='{_e(search_text)}'>"
+            f"<a href='{_e(href)}'{_shortcut_attrs(label, href)}>{_e(label)}</a> "
+            f"<span class='muted'>{_e(kind)} · {_e(href)}</span></li>"
+        )
+    result_count = len(result_rows)
     return "".join(
         [
-            "<dialog id='command-palette' class='command-palette' data-command-palette='true'>",
+            "<dialog id='command-palette' class='command-palette' data-command-palette='true' data-command-palette-filter-supported='true'>",
             "<form method='dialog'><button class='icon-button' type='submit'>Close</button></form>",
             "<h2>Command Palette</h2>",
             _command_palette_focus(focus_context, current_path, title),
             "<form action='/search' method='get' class='command-grid'>",
-            "<input id='command-palette-search' name='q' autocomplete='off' placeholder='Search local state'>",
+            "<input id='command-palette-search' name='q' autocomplete='off' placeholder='Filter commands or search local state' data-command-palette-filter-input='true'>",
             "<button type='submit'>Search</button>",
             "</form>",
+            "<section class='palette-results' data-command-palette-filter='true' "
+            f"data-command-palette-filter-item-count='{result_count}' "
+            "data-command-palette-filter-write-on-get='false' "
+            "data-command-palette-filter-provider-calls-taken='0' "
+            "data-command-palette-filter-network-actions-taken='0' "
+            "data-command-palette-filter-external-effects-created='false'>",
+            "<h3>Palette Results</h3>",
+            "<p class='muted'>Type to narrow local routes and recent work. Press Search to run global search.</p>",
+            "<p class='muted' data-command-palette-filter-status='true'>"
+            "<span data-command-palette-filter-count='true'>"
+            f"{result_count}</span> local commands available</p>",
+            "<ul class='palette-result-list' data-command-palette-result-list='true'>",
+            "".join(result_rows),
+            "</ul>",
+            "<p class='muted' data-command-palette-empty='true' hidden>No local palette matches. Press Search to search all indexed ClankerOS state.</p>",
+            "<details class='palette-filter-evidence' data-command-palette-filter-evidence='true'>",
+            "<summary data-command-palette-filter-evidence-summary='true'>Palette filter evidence</summary>",
+            _kv(
+                [
+                    ("palette_filter_status", "available"),
+                    ("palette_filter_result_count", str(result_count)),
+                    ("palette_filter_source", "nav_and_recent_local_items"),
+                    ("palette_filter_scope", "browser_local_commands"),
+                    ("palette_filter_write_on_get", "false"),
+                    ("palette_filter_provider_calls_taken", "0"),
+                    ("palette_filter_network_actions_taken", "0"),
+                    ("palette_filter_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "palette_filter_action: type in command-palette-search",
+                    "palette_filter_empty_state: show local no-match message",
+                    "palette_filter_safety: client-side filtering only",
+                ]
+            ),
+            "</details>",
+            "</section>",
             _command_palette_quick_switch(root, focus_context),
             _command_palette_continue(focus_context),
             "<details class='palette-evidence' data-command-palette-evidence='true'>",
@@ -32864,7 +32916,7 @@ def _command_palette(
             _shortcut_help_list(),
             "<h3>Open</h3>",
             "<ul data-command-palette-open-list='true'>",
-            "".join(rows),
+            "".join(open_rows),
             "</ul>",
             "</details>",
             "</dialog>",
@@ -33748,8 +33800,8 @@ def _html_page(
     .recent-items-command-bar ul {{ margin-top:8px; }}
     .recent-items-command-bar li {{ border:1px solid var(--line); background:var(--panel); padding:6px 7px; overflow-wrap:anywhere; }}
     .recent-items-list {{ margin-top:10px; }}
-    .palette-focus, .palette-route-context, .palette-continue {{ border:1px solid var(--line); background:var(--panel); padding:10px; margin:10px 0; }}
-    .palette-focus h3, .palette-route-context h3, .palette-continue h3 {{ margin-top:0; }}
+    .palette-focus, .palette-results, .palette-route-context, .palette-continue {{ border:1px solid var(--line); background:var(--panel); padding:10px; margin:10px 0; }}
+    .palette-focus h3, .palette-results h3, .palette-route-context h3, .palette-continue h3 {{ margin-top:0; }}
     .palette-focus-grid {{ display:grid; grid-template-columns:minmax(220px, 1.35fr) repeat(3, minmax(140px, 1fr)); gap:8px; align-items:stretch; margin:10px 0; }}
     .palette-focus-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; display:grid; gap:6px; align-content:start; }}
     .palette-focus-card-primary {{ background:var(--panel); border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
@@ -33760,6 +33812,11 @@ def _html_page(
     .palette-focus-secondary {{ background:var(--surface); color:var(--accent); }}
     .palette-focus-details summary, .palette-evidence summary {{ cursor:pointer; font-weight:700; }}
     .palette-focus-details:not([open]) > :not(summary), .palette-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .palette-result-list {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:8px; margin:10px 0; }}
+    .palette-result-item {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; display:grid; gap:4px; align-content:start; }}
+    .palette-result-item a {{ font-weight:700; }}
+    .palette-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .palette-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
     .palette-route-context dl {{ grid-template-columns:minmax(160px, 210px) 1fr; }}
     .palette-route-context ul {{ list-style:none; padding:0; margin:10px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
     .palette-route-context li {{ min-width:0; padding:7px 9px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -35119,12 +35176,29 @@ def _html_page(
     var palette = document.getElementById("command-palette");
     var paletteOpen = document.getElementById("palette-open");
     var paletteSearch = document.getElementById("command-palette-search");
+    var paletteResults = palette ? Array.prototype.slice.call(palette.querySelectorAll("[data-palette-result='true']")) : [];
+    var paletteEmpty = palette ? palette.querySelector("[data-command-palette-empty='true']") : null;
+    var paletteFilterCount = palette ? palette.querySelector("[data-command-palette-filter-count='true']") : null;
     var themeToggle = document.getElementById("theme-toggle");
     var focusToggle = document.getElementById("focus-toggle");
     var nextActionOpen = document.getElementById("next-action-open");
+    function syncPaletteFilter() {{
+      if (!paletteSearch || !paletteResults.length) {{ return; }}
+      var query = String(paletteSearch.value || "").trim().toLowerCase();
+      var shown = 0;
+      paletteResults.forEach(function(item) {{
+        var text = String(item.getAttribute("data-palette-search-text") || "");
+        var match = !query || text.indexOf(query) !== -1;
+        item.hidden = !match;
+        if (match) {{ shown += 1; }}
+      }});
+      if (paletteEmpty) {{ paletteEmpty.hidden = shown !== 0; }}
+      if (paletteFilterCount) {{ paletteFilterCount.textContent = String(shown); }}
+    }}
     function openPalette() {{
       if (!palette) {{ return; }}
       if (palette.showModal) {{ palette.showModal(); }} else {{ palette.removeAttribute("hidden"); }}
+      syncPaletteFilter();
       if (paletteSearch) {{ paletteSearch.focus(); }}
     }}
     function closePalette() {{
@@ -35155,6 +35229,7 @@ def _html_page(
       window.location.href = href;
     }}
     if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
+    if (paletteSearch) {{ paletteSearch.addEventListener("input", syncPaletteFilter); }}
     if (nextActionOpen) {{ nextActionOpen.addEventListener("click", openNextAction); }}
     if (themeToggle) {{ themeToggle.addEventListener("click", toggleTheme); }}
     if (focusToggle) {{ focusToggle.addEventListener("click", toggleFocusMode); }}

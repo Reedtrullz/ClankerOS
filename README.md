@@ -692,10 +692,13 @@ forms, while other pages link back to those Home/Today/Goals first-run
 anchors.
 The command palette now opens with a `Palette Focus` launcher: continue the
 current Goal action, jump to search, resume the saved workspace, or stay on the
-current page. It also includes a visible `Quick Switch` dock for Continue,
-Workspace, Action, Artifact, and Finish so the palette can recover the current
-Goal, exact saved workspace surface, last action target, latest artifact, or
-`/workspace#save-workspace` handoff without opening the sidebar. The
+current page. The search box also narrows a visible `Palette Results` list of
+local routes and recent work as you type, with a no-match state that leaves the
+existing Search button available for full indexed search. It also includes a
+visible `Quick Switch` dock for Continue, Workspace, Action, Artifact, and
+Finish so the palette can recover the current Goal, exact saved workspace
+surface, last action target, latest artifact, or `/workspace#save-workspace`
+handoff without opening the sidebar. The
 route-aware `Current Page` readback, keyboard shortcuts, and long open list
 live in collapsed `Palette evidence and shortcuts`, while the
 goal-aware `Continue Current Goal` block and its confirmed local action form

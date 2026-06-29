@@ -482,7 +482,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Create Project` or `Create First Goal` forms, and other pages link back to
   the Home/Today/Goals first-run anchors. The command palette starts with a
   `Palette Focus` launcher for continuing the current Goal action, jumping to
-  search, resuming the saved workspace, or staying on the current page. The
+  search, resuming the saved workspace, or staying on the current page. Its
+  search box now narrows a visible `Palette Results` list of local routes and
+  recent work as the operator types, while the existing Search button still
+  opens full indexed `/search` results. The
   route-aware `Current Page` readback, keyboard shortcuts, and long open list
   stay available inside collapsed `Palette evidence and shortcuts`; the
   goal-aware `Continue Current Goal` block, compact Goal continuation readback,
