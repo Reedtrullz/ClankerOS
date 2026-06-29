@@ -432,7 +432,11 @@ Goal Remaining Work now opens with visible Now, Gate Progress, Waiting, Open
 Work, and Finish cards; detailed command proof and the full remaining-work
 checklist stay collapsed while preserving current gate, done/pending/waiting
 gate counts, open task/incident/recommendation counts, pending approvals, one
-next local surface, and zero-effect boundaries. The Next Recommendation
+next local surface, and zero-effect boundaries. It now also includes a
+confirmed `complete-goal-task` closeout for ready publication-handoff evidence,
+so a reviewed local workflow can update the task row, linked plan step when
+present, refreshed `TASKS.md`/`PLAN.md`, workspace resume point, and timeline
+event without running fresh verification or taking external action. The Next Recommendation
 section names whether the recommendation
 comes from an open task recommendation or from current phase plus local goal
 records, then points at the local target surface without writing on GET.

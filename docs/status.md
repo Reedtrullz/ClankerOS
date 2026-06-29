@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals/<goal_id>` Remaining Work now includes a `Goal Task Closeout` panel
+  before the detailed checklist. When ready publication-handoff evidence (or a
+  completed Goal with the same evidence) exists, the confirmed
+  `complete-goal-task` browser action marks one selected open task completed,
+  updates a linked plan step when present, refreshes `TASKS.md`/`PLAN.md`,
+  saves the resume point, and records a timeline event without fresh
+  verification, approval, push, PR, deploy, provider call, network action, or
+  external mutation.
 - `/search` now indexes first-class operator approvals, not only legacy
   approval rows. Worktree, commit, and publication approvals appear in the
   Decisions lane and route to scoped `/approvals?goal_id=...`,

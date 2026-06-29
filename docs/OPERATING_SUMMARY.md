@@ -652,7 +652,14 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   task/incident/recommendation counts, pending approvals, and
   done/pending/waiting status for scout, context-pack, implementation handoff,
   coder prep, worktree, review, commit, publication, and manual publish gates
-  without taking action.
+  without taking action. A `Goal Task Closeout` panel follows the command cards
+  and exposes a confirmed `complete-goal-task` action only when ready local
+  publication-handoff evidence or a completed Goal can back the bookkeeping.
+  The action marks one selected open task completed, updates the linked plan
+  step when present, refreshes `TASKS.md` and plan artifacts, saves the
+  workspace resume point, and records a timeline event. It does not run fresh
+  verification, approve anything, push, create PRs, deploy, call providers, or
+  mutate external systems.
   Goal `Memory` now links to `/memory`, shows project/global memory artifacts,
   goal-scoped memory entry counts, generated memory count, operator-note
   status, future-work count, latest memory summaries, and the fact that

@@ -63,7 +63,11 @@ from agent_os.engine import AgentSystem
 from agent_os.ids import new_id
 from agent_os.implementation_handoff import summarize_implementation_handoff
 from agent_os.memory_entries import MemoryEntryError
-from agent_os.planning import PlanningError, create_goal_lifecycle
+from agent_os.planning import (
+    PlanningError,
+    create_goal_lifecycle,
+    refresh_goal_planning_artifacts,
+)
 from agent_os.project_registry import register_project
 from agent_os.run_review import write_run_review
 from agent_os.storage import Storage, utc_now
@@ -190,6 +194,7 @@ ACTION_CATALOG = [
     ("pause-goal", "local state", "goal detail", "yes", "yes", "non-paused incomplete local goal", "goal status=paused"),
     ("resume-goal", "local state", "goal detail", "yes", "yes", "goal status=paused", "goal status=active"),
     ("save-goal-note", "local artifact", "goal detail", "yes", "yes", "goal id plus operator note text", ".clanker/projects/<project>/goals/<goal>/operator-notes.md"),
+    ("complete-goal-task", "local state", "goal detail", "yes", "yes", "goal id, task id, and ready local publication evidence", "task status=completed, linked plan step when present, plus refreshed TASKS.md/PLAN.md"),
     ("save-workspace", "local state", "workspace", "yes", "yes", "open project/goal, filters, panels, last artifact", ".clanker/app/workspace.json"),
     ("pin-memory", "local state", "memory", "yes", "yes", "proposed memory entry", "memory status=active when evidence exists"),
 ]
@@ -914,6 +919,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-operator-notes-evidence='true'",
                 "data-goal-operator-notes-list='true'",
                 "data-goal-operator-notes-form='true'",
+                "data-goal-task-closeout='true'",
+                "data-goal-task-closeout-actions='true'",
+                "data-goal-task-closeout-evidence='true'",
                 "data-goal-remaining-work-actions='true'",
                 "data-goal-remaining-work-now='true'",
                 "data-goal-remaining-work-progress='true'",
@@ -18112,8 +18120,10 @@ def _goal_remaining_work_section(
     next_action: GoalNextAction,
 ) -> str:
     lines = _goal_remaining_work_lines(root, state, next_action)
-    return _goal_remaining_work_command_bar(root, state, next_action, lines) + "".join(
+    return "".join(
         [
+            _goal_remaining_work_command_bar(root, state, next_action, lines),
+            _goal_task_closeout_panel(root, state),
             "<section id='goal-remaining-work' class='goal-remaining-work-checklist' data-goal-remaining-work-checklist='true'>",
             "<h2>Remaining Work</h2>",
             "<details class='goal-remaining-work-list' data-goal-remaining-work-list='true'>",
@@ -18123,6 +18133,296 @@ def _goal_remaining_work_section(
             "</section>",
         ]
     )
+
+
+def _goal_task_closeout_panel(root: Path, state: dict[str, Any]) -> str:
+    candidate = _goal_task_closeout_candidate(root, state)
+    status = candidate["status"]
+    form_available = candidate["form_available"] == "true"
+    task_id = candidate["task_id"]
+    goal = state["goal"]
+    primary_href = "#goal-task-closeout-form" if form_available else candidate["target_href"]
+    primary_label = "Close task from evidence" if form_available else candidate["target_label"]
+    first_artifact = candidate["first_artifact"]
+    first_artifact_surface: str | SafeHtml = (
+        SafeHtml(_artifact_link(first_artifact)) if first_artifact != "none" else "none"
+    )
+    form_html = _goal_task_closeout_form(root, state, candidate) if form_available else ""
+    return "".join(
+        [
+            "<section id='goal-task-closeout' class='panel goal-task-closeout' data-goal-task-closeout='true'><h3>Goal Task Closeout</h3>",
+            "<p class='muted'>Reconcile a ready local workflow evidence chain into task and plan-step progress.</p>",
+            "<div class='goal-remaining-work-grid' data-goal-task-closeout-actions='true'>",
+            "<div class='goal-remaining-work-card goal-remaining-work-primary' data-goal-task-closeout-now='true'>",
+            "<h3>Now</h3>",
+            f"<strong>{_e(status.replace('_', ' '))}</strong>",
+            f"<p>{_e(candidate['reason'])}</p>",
+            f"<a class='goal-remaining-work-action' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            "</div>",
+            "<div class='goal-remaining-work-card' data-goal-task-closeout-task='true'>",
+            "<h3>Task</h3>",
+            f"<strong>{_e(task_id)}</strong>",
+            f"<p>{_e(candidate['task_description'])}</p>",
+            "<a class='goal-remaining-work-link' href='#goal-progress-command-bar'>Progress</a>",
+            "</div>",
+            "<div class='goal-remaining-work-card' data-goal-task-closeout-evidence-card='true'>",
+            "<h3>Evidence</h3>",
+            f"<strong>{_e(candidate['artifact_count'])} artifact(s)</strong>",
+            f"<p>{first_artifact_surface}</p>",
+            "</div>",
+            "<div class='goal-remaining-work-card' data-goal-task-closeout-plan='true'>",
+            "<h3>Plan</h3>",
+            f"<strong>{_e(candidate['plan_step_status'])}</strong>",
+            f"<p>{_e(candidate['plan_step_id'])}</p>",
+            "<a class='goal-remaining-work-link' href='#goal-completion-criteria'>Criteria</a>",
+            "</div>",
+            "<div class='goal-remaining-work-card' data-goal-task-closeout-safety='true'>",
+            "<h3>Safety</h3>",
+            "<p>Confirmed local bookkeeping only. No fresh execution or external effects.</p>",
+            "<a class='goal-remaining-work-link' href='#goal-task-closeout-evidence'>Evidence</a>",
+            "</div>",
+            "</div>",
+            form_html,
+            "<details id='goal-task-closeout-evidence' class='goal-task-closeout-evidence' data-goal-task-closeout-evidence='true'><summary>Goal task closeout evidence</summary>",
+            _kv(
+                [
+                    ("goal_task_closeout_status", status),
+                    ("goal_task_closeout_goal", goal.id),
+                    ("goal_task_closeout_project", goal.project_id),
+                    ("goal_task_closeout_task_id", task_id),
+                    ("goal_task_closeout_task_status", candidate["task_status"]),
+                    ("goal_task_closeout_task_description", candidate["task_description"]),
+                    ("goal_task_closeout_open_tasks", candidate["open_tasks"]),
+                    ("goal_task_closeout_delegation_id", candidate["delegation_id"]),
+                    ("goal_task_closeout_run_id", candidate["run_id"]),
+                    ("goal_task_closeout_publication_id", candidate["publication_id"]),
+                    ("goal_task_closeout_publication_status", candidate["publication_status"]),
+                    ("goal_task_closeout_artifacts", candidate["artifact_count"]),
+                    ("goal_task_closeout_first_artifact", first_artifact_surface),
+                    ("goal_task_closeout_plan_step_id", candidate["plan_step_id"]),
+                    ("goal_task_closeout_plan_step_status", candidate["plan_step_status"]),
+                    ("goal_task_closeout_target_surface", SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")),
+                    ("goal_task_closeout_form_available", candidate["form_available"]),
+                    ("goal_task_closeout_confirmation_required", candidate["form_available"]),
+                    ("goal_task_closeout_requires_ready_publication_evidence", "true"),
+                    ("goal_task_closeout_fresh_verification_run", "false"),
+                    ("goal_task_closeout_write_on_get", "false"),
+                    ("goal_task_closeout_provider_calls_taken", "0"),
+                    ("goal_task_closeout_network_actions_taken", "0"),
+                    ("goal_task_closeout_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_task_closeout_now: {_e(status)}",
+                    f"goal_task_closeout_task: {_e(task_id)} status={_e(candidate['task_status'])}",
+                    f"goal_task_closeout_evidence: {_e(candidate['artifact_count'])} local artifact(s)",
+                    f"goal_task_closeout_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    "goal_task_closeout_safety: confirmed local bookkeeping only",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _goal_task_closeout_form(
+    root: Path,
+    state: dict[str, Any],
+    candidate: dict[str, str],
+) -> str:
+    goal = state["goal"]
+    return "".join(
+        [
+            "<form id='goal-task-closeout-form' class='goal-task-closeout-form' data-goal-task-closeout-form='true' method='post' action='/actions/complete-goal-task'>",
+            f"<input type='hidden' name='goal_id' value='{_e(goal.id)}'>",
+            f"<input type='hidden' name='task_id' value='{_e(candidate['task_id'])}'>",
+            f"<input type='hidden' name='return_to' value='/goals/{_e(quote(goal.id))}#goal-task-closeout'>",
+            "<label>closed_by <input name='closed_by' value='operator'></label>",
+            "<label>note <input name='note' value='Close task from ready local workflow evidence.'></label>",
+            "<button type='submit'>complete-goal-task</button>",
+            "</form>",
+        ]
+    )
+
+
+def _goal_task_closeout_candidate(root: Path, state: dict[str, Any]) -> dict[str, str]:
+    goal = state.get("goal")
+    if goal is None:
+        return _goal_task_closeout_candidate_record(status="goal_not_found")
+    open_tasks = [task for task in state["tasks"] if task.status != "completed"]
+    if not open_tasks:
+        return _goal_task_closeout_candidate_record(
+            status="no_open_tasks",
+            goal_id=goal.id,
+            project_id=goal.project_id,
+            reason="all task rows are already completed",
+            target_href="#goal-progress-command-bar",
+            target_label="Review progress",
+        )
+    task = _goal_task_closeout_task(state, open_tasks)
+    delegations = [
+        delegation
+        for delegation in state["delegations"]
+        if delegation.parent_task_id == task.id
+    ]
+    delegation = delegations[0] if delegations else None
+    plan_step = state.get("plan_steps")
+    linked_step = next(
+        (
+            step
+            for step in (plan_step or [])
+            if getattr(step, "task_id", None) == task.id
+        ),
+        None,
+    )
+    publication = _goal_ready_publication(state)
+    artifacts = _goal_task_closeout_artifacts(root, state, task, publication)
+    base = {
+        "goal_id": goal.id,
+        "project_id": goal.project_id,
+        "task_id": task.id,
+        "task_status": task.status,
+        "task_description": task.description,
+        "open_tasks": str(len(open_tasks)),
+        "delegation_id": delegation.id if delegation is not None else "none",
+        "run_id": getattr(publication, "run_id", None) or _goal_task_closeout_run_id(state),
+        "publication_id": getattr(publication, "id", "none") if publication is not None else "none",
+        "publication_status": getattr(publication, "status", "none") if publication is not None else "none",
+        "artifact_count": str(len(artifacts)),
+        "first_artifact": artifacts[0] if artifacts else "none",
+        "artifacts_joined": "|".join(artifacts),
+        "plan_step_id": linked_step.id if linked_step is not None else "none",
+        "plan_step_status": linked_step.status if linked_step is not None else "none",
+    }
+    if delegation is None:
+        return _goal_task_closeout_candidate_record(
+            **base,
+            status="waiting_for_task_delegation",
+            reason="the first open task has no linked workflow delegation yet",
+            target_href="#goal-next-action",
+            target_label="Continue workflow",
+        )
+    if publication is None and goal.status != "completed":
+        return _goal_task_closeout_candidate_record(
+            **base,
+            status="waiting_for_publication_handoff",
+            reason="publication handoff evidence is not ready yet",
+            target_href="#goal-next-action",
+            target_label="Continue workflow",
+        )
+    if not artifacts:
+        return _goal_task_closeout_candidate_record(
+            **base,
+            status="missing_closeout_artifacts",
+            reason="ready state exists but no local closeout artifacts were found",
+            target_href="#goal-evidence",
+            target_label="Inspect evidence",
+        )
+    return _goal_task_closeout_candidate_record(
+        **base,
+        status="ready_to_close_task",
+        reason="ready publication handoff evidence can close this task row",
+        target_href="#goal-task-closeout-form",
+        target_label="Close task from evidence",
+        form_available="true",
+    )
+
+
+def _goal_task_closeout_candidate_record(**overrides: str) -> dict[str, str]:
+    record = {
+        "status": "not_ready",
+        "reason": "task closeout is not ready",
+        "goal_id": "none",
+        "project_id": "none",
+        "task_id": "none",
+        "task_status": "none",
+        "task_description": "none",
+        "open_tasks": "0",
+        "delegation_id": "none",
+        "run_id": "none",
+        "publication_id": "none",
+        "publication_status": "none",
+        "artifact_count": "0",
+        "first_artifact": "none",
+        "artifacts_joined": "",
+        "plan_step_id": "none",
+        "plan_step_status": "none",
+        "target_href": "#goal-remaining-work",
+        "target_label": "Review remaining work",
+        "form_available": "false",
+    }
+    record.update({key: str(value) for key, value in overrides.items()})
+    return record
+
+
+def _goal_task_closeout_task(state: dict[str, Any], open_tasks: list[Any]) -> Any:
+    delegated_task_ids = {
+        delegation.parent_task_id
+        for delegation in state["delegations"]
+        if getattr(delegation, "parent_task_id", None)
+    }
+    return next(
+        (task for task in open_tasks if task.id in delegated_task_ids),
+        open_tasks[0],
+    )
+
+
+def _goal_task_closeout_run_id(state: dict[str, Any]) -> str:
+    run = next(
+        (item for item in state.get("worktree_runs", []) if item.status == "completed"),
+        None,
+    )
+    if run is not None:
+        return run.id
+    run_row = next((row for row in state.get("runs", []) if row["status"] == "completed"), None)
+    return str(run_row["id"]) if run_row is not None else "none"
+
+
+def _goal_task_closeout_artifacts(
+    root: Path,
+    state: dict[str, Any],
+    task: Any,
+    publication: Any | None,
+) -> list[str]:
+    artifacts: list[str] = []
+
+    def add(path: str | Path | None) -> None:
+        if not path:
+            return
+        relative = _repo_relative_artifact_path(root, path)
+        if relative == "none" or relative in artifacts:
+            return
+        candidate = root / relative
+        if candidate.exists():
+            artifacts.append(relative)
+
+    for artifact in getattr(task, "artifacts", []) or []:
+        add(artifact)
+    if publication is not None:
+        handoff = getattr(publication, "handoff_artifact_path", None)
+        add(handoff)
+        if handoff:
+            handoff_path = Path(str(handoff))
+            add(handoff_path.with_suffix(".md"))
+            add(handoff_path.parent / "pr_body.md")
+        add(getattr(publication, "request_artifact_path", None))
+        request_path = getattr(publication, "request_artifact_path", None)
+        if request_path:
+            add(Path(str(request_path)).with_suffix(".md"))
+        add(getattr(publication, "decision_artifact_path", None))
+        decision_path = getattr(publication, "decision_artifact_path", None)
+        if decision_path:
+            add(Path(str(decision_path)).with_suffix(".md"))
+    for run in state.get("worktree_runs", []):
+        if run.status != "completed":
+            continue
+        evidence_path = getattr(run, "evidence_path", None)
+        add(evidence_path)
+        if evidence_path:
+            add(Path(str(evidence_path)) / "summary.md")
+    return artifacts
 
 
 def _goal_remaining_work_command_bar(
@@ -30050,6 +30350,21 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                     "updated_by": "save-goal-note",
                 },
             )
+        elif action == "complete-goal-task":
+            result = _complete_goal_task_from_form(root, storage, form)
+            message = f"goal_task_completed: {result['task_id']}"
+            location = f"/goals/{quote(result['goal_id'])}#goal-task-closeout"
+            _write_workspace_state(
+                root,
+                {
+                    **_load_workspace_state(root),
+                    "open_project": result["project_id"],
+                    "open_goal": result["goal_id"],
+                    "last_viewed_artifact": result["primary_artifact"],
+                    "resume_surface": location,
+                    "updated_by": "complete-goal-task",
+                },
+            )
         elif action == "save-workspace":
             resume_surface = (
                 _safe_local_return_path(_one(form, "resume_surface"))
@@ -30677,6 +30992,108 @@ def _append_goal_operator_note(
         "appended_by": author,
         "network_actions_taken": 0,
         "external_mutations_taken": 0,
+    }
+
+
+def _complete_goal_task_from_form(
+    root: Path,
+    storage: Storage,
+    form: dict[str, list[str]],
+) -> dict[str, Any]:
+    goal_id = _required(form, "goal_id")
+    task_id = _required(form, "task_id")
+    state = _goal_state(root, storage, goal_id)
+    goal = state.get("goal")
+    if goal is None:
+        raise ValueError("goal not found")
+    task = storage.get_task(task_id)
+    if task.goal_id != goal.id:
+        raise ValueError("task does not belong to submitted goal")
+    if task.status == "completed":
+        raise ValueError("complete-goal-task only supports open tasks")
+    candidate = _goal_task_closeout_candidate(root, state)
+    if candidate["status"] != "ready_to_close_task":
+        raise ValueError(f"task closeout is not ready: {candidate['status']}")
+    if candidate["task_id"] != task.id:
+        raise ValueError("submitted task is not the ready closeout candidate")
+    closed_by = (_one(form, "closed_by") or "operator").strip() or "operator"
+    note = (_one(form, "note") or "").strip()
+    artifacts = [
+        item for item in candidate["artifacts_joined"].split("|") if item
+    ]
+    evidence = {
+        "source": "local_app_goal_task_closeout",
+        "goal_id": goal.id,
+        "project_id": goal.project_id,
+        "task_id": task.id,
+        "previous_task_status": task.status,
+        "new_task_status": "completed",
+        "closed_by": closed_by,
+        "note": note or "Closed from ready local workflow evidence.",
+        "closeout_status": candidate["status"],
+        "closeout_reason": candidate["reason"],
+        "delegation_id": candidate["delegation_id"],
+        "run_id": candidate["run_id"],
+        "publication_id": candidate["publication_id"],
+        "publication_status": candidate["publication_status"],
+        "artifacts": artifacts,
+        "operator_confirmed": True,
+        "fresh_verification_run": False,
+        "provider_calls_taken_by_clankeros": 0,
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
+        "push_created": False,
+        "pr_created": False,
+        "deploy_created": False,
+    }
+    storage.mark_task_completed(task.id, evidence=evidence, artifacts=artifacts)
+    step = storage.update_plan_step_for_task(task.id, status="completed")
+    refreshed_paths = refresh_goal_planning_artifacts(root, storage, goal.id)
+    refreshed_relative = [
+        _repo_relative_artifact_path(root, path) for path in refreshed_paths
+    ]
+    storage.record_event(
+        run_id=new_id("local_app_action"),
+        goal_id=goal.id,
+        task_id=task.id,
+        event_type="task.completed",
+        message=f"completed task {task.id} from local app closeout",
+        payload={
+            "source": "local_app_goal_task_closeout",
+            "closed_by": closed_by,
+            "publication_id": candidate["publication_id"],
+            "artifacts": artifacts,
+            "refreshed_artifacts": refreshed_relative,
+            "network_actions_taken": 0,
+            "external_mutations_taken": 0,
+        },
+    )
+    primary_artifact = (
+        next((item for item in refreshed_relative if item.endswith("TASKS.md")), None)
+        or (artifacts[0] if artifacts else _goal_file_path(goal.project_id, goal.id, "TASKS.md").as_posix())
+    )
+    return {
+        "status": "goal_task_completed",
+        "goal_id": goal.id,
+        "project_id": goal.project_id,
+        "task_id": task.id,
+        "previous_task_status": task.status,
+        "new_task_status": "completed",
+        "plan_step_id": step.id if step is not None else "none",
+        "plan_step_status": step.status if step is not None else "none",
+        "artifacts": artifacts,
+        "artifact_count": len(artifacts),
+        "refreshed_artifacts": refreshed_relative,
+        "primary_artifact": primary_artifact,
+        "closed_by": closed_by,
+        "note": note or "Closed from ready local workflow evidence.",
+        "fresh_verification_run": False,
+        "provider_calls_taken_by_clankeros": 0,
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
+        "push_created": False,
+        "pr_created": False,
+        "deploy_created": False,
     }
 
 

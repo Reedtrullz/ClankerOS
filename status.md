@@ -1,5 +1,27 @@
 # Status
 
+## 2026-06-29 Goal Task Closeout UX
+
+- Added a visible `Goal Task Closeout` panel to `/goals/<goal_id>` between the
+  Remaining Work command cards and the detailed checklist.
+- The panel shows one task, local evidence posture, linked plan-step posture,
+  and safety boundary; it only exposes the confirmed `complete-goal-task`
+  action when ready publication-handoff evidence or an already completed Goal
+  can back the task closeout.
+- Confirmed `complete-goal-task` marks the selected task completed, updates the
+  linked plan step when present, refreshes `TASKS.md` and plan artifacts, saves
+  the workspace resume point, and records a goal-scoped timeline event.
+- Updated README, local app docs, operating summary, docs status, app-demo
+  smoke markers, and focused Goal workflow assertions.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest
+  `python3 -m pytest
+  tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms
+  -q --tb=short` passed with `1 passed in 25.76s`.
+- Non-claims: no fresh verification run, no automatic task completion on GET,
+  no approval, no execution, no provider calls, no non-loopback network action,
+  no push, no PR, no deploy, and no external mutation from the app.
+
 ## 2026-06-29 Search Approval Results UX
 
 - Added first-class coder approval records to `/search`: worktree approval,

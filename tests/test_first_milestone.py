@@ -15842,6 +15842,81 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "Complete Goal" in manual_publish_goal.body
     assert "action='/actions/complete-goal'" in manual_publish_goal.body
     assert f"name='goal_id' value='{goal_id}'" in manual_publish_goal.body
+    open_task = next(task for task in storage.list_tasks(goal_id) if task.status != "completed")
+    assert "Goal Task Closeout" in manual_publish_goal.body
+    assert "data-goal-task-closeout='true'" in manual_publish_goal.body
+    assert "data-goal-task-closeout-actions='true'" in manual_publish_goal.body
+    assert "data-goal-task-closeout-evidence='true'" in manual_publish_goal.body
+    assert "data-goal-task-closeout-form='true'" in manual_publish_goal.body
+    assert "goal_task_closeout_status</dt><dd>ready_to_close_task" in manual_publish_goal.body
+    assert f"goal_task_closeout_task_id</dt><dd>{open_task.id}" in manual_publish_goal.body
+    assert "goal_task_closeout_publication_status</dt><dd>ready_for_operator" in manual_publish_goal.body
+    assert "goal_task_closeout_form_available</dt><dd>true" in manual_publish_goal.body
+    assert "goal_task_closeout_confirmation_required</dt><dd>true" in manual_publish_goal.body
+    assert "goal_task_closeout_fresh_verification_run</dt><dd>false" in manual_publish_goal.body
+    assert "action='/actions/complete-goal-task'" in manual_publish_goal.body
+    assert f"name='task_id' value='{open_task.id}'" in manual_publish_goal.body
+
+    closeout_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/complete-goal-task",
+        method="POST",
+        form={
+            "goal_id": [goal_id],
+            "task_id": [open_task.id],
+            "closed_by": ["operator"],
+            "note": ["Ready publication handoff reviewed."],
+        },
+    )
+    assert closeout_confirmation.status == 409
+    assert "Confirm complete-goal-task" in closeout_confirmation.body
+    assert "action_confirmation_review_action</dt><dd>complete-goal-task" in closeout_confirmation.body
+    assert "action_confirmation_review_output_artifact</dt><dd>task status=completed, linked plan step when present, plus refreshed TASKS.md/PLAN.md" in closeout_confirmation.body
+    assert storage.get_task(open_task.id).status == open_task.status
+
+    closeout_response = render_local_app_route(
+        tmp_path,
+        "/actions/complete-goal-task",
+        method="POST",
+        form={
+            "goal_id": [goal_id],
+            "task_id": [open_task.id],
+            "closed_by": ["operator"],
+            "note": ["Ready publication handoff reviewed."],
+            "confirm": ["yes"],
+        },
+    )
+    assert closeout_response.status == 200
+    assert "goal_task_completed:" in closeout_response.body
+    assert "new_task_status</dt><dd>completed" in closeout_response.body
+    assert "plan_step_status</dt><dd>none" in closeout_response.body
+    assert "fresh_verification_run</dt><dd>false" in closeout_response.body
+    assert "network_actions_taken</dt><dd>0" in closeout_response.body
+    assert "external_mutations_taken</dt><dd>0" in closeout_response.body
+    closed_task = storage.get_task(open_task.id)
+    assert closed_task.status == "completed"
+    assert closed_task.evidence["source"] == "local_app_goal_task_closeout"
+    assert closed_task.evidence["operator_confirmed"] is True
+    assert closed_task.evidence["fresh_verification_run"] is False
+    assert closed_task.evidence["network_actions_taken"] == 0
+    assert closed_task.artifacts
+    assert storage.get_plan_step_by_task(open_task.id) is None
+    goal_dir = tmp_path / ".clanker" / "projects" / "subject" / "goals" / goal_id
+    assert f"### {open_task.id}" in (goal_dir / "TASKS.md").read_text(encoding="utf-8")
+    assert "- status: completed" in (goal_dir / "TASKS.md").read_text(encoding="utf-8")
+    assert not (goal_dir / "PLAN.md").exists()
+    closeout_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert closeout_workspace["open_project"] == "subject"
+    assert closeout_workspace["open_goal"] == goal_id
+    assert closeout_workspace["last_viewed_artifact"].endswith("/TASKS.md")
+    assert closeout_workspace["resume_surface"] == f"/goals/{goal_id}#goal-task-closeout"
+    assert closeout_workspace["updated_by"] == "complete-goal-task"
+    after_closeout_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert "goal_progress_meter_completed_tasks</dt><dd>1" in after_closeout_goal.body
+    assert "goal_remaining_work_command_open_tasks</dt><dd>0" in after_closeout_goal.body
+    assert "goal_task_closeout_status</dt><dd>no_open_tasks" in after_closeout_goal.body
 
     complete_confirmation = render_local_app_route(
         tmp_path,

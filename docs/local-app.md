@@ -452,7 +452,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   open task/incident/recommendation counts, pending approvals, and
   done/pending/waiting status for scout, context-pack, handoff, coder prep,
   worktree, review, commit, publication, and manual publish gates without
-  taking any action.
+  taking any action. A `Goal Task Closeout` panel sits between the command
+  cards and checklist; once a ready publication handoff or completed Goal has
+  local artifacts, its confirmed `complete-goal-task` action reconciles one
+  open task into `completed`, updates the linked plan step when present,
+  refreshes `TASKS.md` and any plan artifacts, saves the resume point, and
+  records a timeline event without fresh execution, provider calls, network
+  actions, pushes, PRs, deploys, or external mutations.
 - `/goals/<goal_id>` includes `Goal Section Index`, a read-only in-page map
   of stable anchors for summary, live state, command bar, workflow map,
   current phase, next action, next
