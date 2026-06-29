@@ -565,8 +565,13 @@ area with a read-only `Goal Artifact Command Bar` that opens with visible Open,
 Latest, Types, Inventory, and Safety cards. It summarizes artifact record
 counts, available/missing posture, render-family counts, source-family counts,
 the latest artifact, and one next bounded artifact review click while keeping
-command evidence, the detailed artifact list, and typed explorer groups
-collapsed by default. Each artifact page starts with
+command evidence and the detailed artifact list collapsed by default. The
+typed explorer now starts with a browser-local `Goal Artifact Filter` for
+type, source, and text narrowing over the already-rendered artifact rows; the
+selected filter is remembered per Goal in
+`localStorage:clankeros-goal-artifact-filter:<goal_id>` and Reset filter clears
+that browser-local view without reading arbitrary filesystem paths. Each
+artifact page starts with
 a visible `Artifact Operator Workbench` for opening the inert content,
 returning to the owning Goal/delegation context, remembering or resuming from
 the artifact, and checking the safety proof. It now follows with a visible

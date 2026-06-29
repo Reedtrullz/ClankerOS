@@ -801,8 +801,13 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   record counts, available/missing posture, render-family counts,
   source-family counts, the latest artifact, one bounded review click, and
   zero-effect counters through visible Open, Latest, Types, Inventory, and
-  Safety cards before collapsed command evidence, the collapsed detailed
-  artifact list, and collapsed typed explorer groups.
+  Safety cards before collapsed command evidence and the collapsed detailed
+  artifact list. The typed explorer now starts with a browser-local
+  `Goal Artifact Filter` that narrows already-rendered artifact rows by
+  Markdown/JSON/Patch/Text type, source, or text query, restores that view per
+  Goal from `localStorage:clankeros-goal-artifact-filter:<goal_id>`, and
+  exposes Reset filter while preserving read-only GET, no-provider,
+  no-network, no-raw-filesystem, and no-external-effect boundaries.
   The artifact
   viewer now opens with an `Artifact Operator Workbench`, reports render
   family/renderer posture, and renders Markdown as escaped headings/lists/

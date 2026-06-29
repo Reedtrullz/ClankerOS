@@ -1,5 +1,44 @@
 # Status
 
+## 2026-06-29 Goal Artifact Filter UX
+
+- Added a browser-local `Goal Artifact Filter` to
+  `/goals/<goal_id>#goal-artifact-filter` at the top of the typed Goal
+  Artifact Explorer.
+- Operators can narrow already-rendered Goal artifact rows by artifact type,
+  source, and text query without reading new paths or submitting a new request.
+- The selected type/source/query view is remembered per Goal in
+  `localStorage:clankeros-goal-artifact-filter:<goal_id>` and can be cleared
+  with `Reset filter`; the visible status reports `View: default`,
+  `View: saved`, `View: restored`, or `View: reset`.
+- Goal artifact rows now expose stable `data-goal-artifact-item`,
+  type/source/status, and text metadata so the filter can hide unmatched
+  rendered rows without changing the server-side artifact registry.
+- The behavior is browser-local display filtering only: no write on GET, no
+  provider calls, no network actions, no execution, no approval, no push, no
+  PR, no deploy, no raw filesystem browsing, and no external mutation.
+- Updated README, local app docs, operating summary, docs status, demo smoke
+  expectations, and the fixture-backed Goal route regression.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state --tb=short` passed with
+  `1 passed, 515 deselected in 38.83s`; focused route/demo pytest `python3 -m
+  pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 52.23s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55616` showed the Goal Artifact Filter with 21
+  artifacts, Patch filtering to 1 visible artifact and 20
+  hidden rows, source `coder_run` plus text `diff.patch` filtering to the exact
+  diff artifact, reload restoring source/text with `View: restored`, Reset
+  filter returning All with `Showing 21 of 21 artifacts`, reload after reset
+  staying default, mobile `390x844` stacking type buttons, source, query, and
+  Reset filter at `329px` width inside a `358px` panel, no horizontal overflow,
+  no framework overlay, and no console warnings/errors.
+
 ## 2026-06-29 Search Result Filter UX
 
 - Added a browser-local `Search Result Filter` to

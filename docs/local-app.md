@@ -752,7 +752,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Safety cards, summarizes artifact record counts, available/missing posture,
   render-family counts, source-family counts, the latest artifact, one bounded
   review click, and zero-effect counters, and keeps command evidence, the
-  detailed artifact list, and typed explorer groups collapsed by default. The Goal timeline backfills
+  detailed artifact list, and typed explorer groups collapsed by default. The
+  typed explorer starts with a browser-local `Goal Artifact Filter` that
+  narrows already-rendered artifact rows by type, source, and text, remembers
+  that view per Goal in
+  `localStorage:clankeros-goal-artifact-filter:<goal_id>`, and exposes Reset
+  filter without writing Goal state, contacting providers, using the network,
+  or browsing raw filesystem paths. The Goal timeline backfills
   generic `Artifact recorded` entries
   from the same bounded artifact registry after workflow-specific timeline
   events are added, so artifacts such as context-pack JSON, handoff JSON,

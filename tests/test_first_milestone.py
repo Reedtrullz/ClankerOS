@@ -12565,6 +12565,28 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Artifact Explorer" in goal.body
     assert "data-goal-artifact-explorer='true'" in goal.body
     assert "data-goal-artifact-explorer-evidence='true'" in goal.body
+    assert "Goal Artifact Filter" in goal.body
+    assert "data-goal-artifact-filter='true'" in goal.body
+    assert (
+        f"data-goal-artifact-filter-storage-key='clankeros-goal-artifact-filter:{result.goal_id}'"
+        in goal.body
+    )
+    assert "data-goal-artifact-filter-buttons='true'" in goal.body
+    assert "data-goal-artifact-filter-kind='all'" in goal.body
+    assert "data-goal-artifact-filter-kind='markdown'" in goal.body
+    assert "data-goal-artifact-filter-kind='json'" in goal.body
+    assert "data-goal-artifact-filter-kind='patch'" in goal.body
+    assert "data-goal-artifact-filter-kind='text'" in goal.body
+    assert "data-goal-artifact-filter-active='true'" in goal.body
+    assert "data-goal-artifact-filter-controls='true'" in goal.body
+    assert "data-goal-artifact-filter-query='true'" in goal.body
+    assert "data-goal-artifact-filter-source='true'" in goal.body
+    assert "data-goal-artifact-filter-memory='true'" in goal.body
+    assert "data-goal-artifact-filter-view-status='true'>View: default</span>" in goal.body
+    assert "data-goal-artifact-filter-reset='true'>Reset filter</button>" in goal.body
+    assert "data-goal-artifact-filter-status='true'>Showing 21 of 21 artifacts.</p>" in goal.body
+    assert "data-goal-artifact-filter-empty='true' hidden" in goal.body
+    assert "data-goal-artifact-filter-evidence='true'" in goal.body
     assert "data-goal-artifact-groups='true'" in goal.body
     assert "data-goal-artifact-group='markdown'" in goal.body
     assert "data-goal-artifact-group='json'" in goal.body
@@ -12576,6 +12598,60 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "json_artifacts</dt><dd>" in goal.body
     assert "patch_artifacts</dt><dd>" in goal.body
     assert "text_artifacts</dt><dd>" in goal.body
+    assert "goal_artifact_filter_status</dt><dd>available" in goal.body
+    assert "goal_artifact_filter_scope</dt><dd>browser_local_rendered_artifacts" in goal.body
+    assert f"goal_artifact_filter_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_artifact_filter_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_artifact_filter_total_records</dt><dd>21" in goal.body
+    assert "goal_artifact_filter_markdown_artifacts</dt><dd>5" in goal.body
+    assert "goal_artifact_filter_json_artifacts</dt><dd>10" in goal.body
+    assert "goal_artifact_filter_patch_artifacts</dt><dd>1" in goal.body
+    assert "goal_artifact_filter_text_artifacts</dt><dd>5" in goal.body
+    assert "goal_artifact_filter_sources</dt><dd>coder_prep=3, coder_run=10, delegation=1, delegation_metadata=4, worktree_plan=3" in goal.body
+    assert "goal_artifact_filter_source_count</dt><dd>5" in goal.body
+    assert "goal_artifact_filter_source</dt><dd>data-goal-artifact-item" in goal.body
+    assert "goal_artifact_filter_persistence</dt><dd>browser_local_view_memory" in goal.body
+    assert (
+        f"goal_artifact_filter_memory_storage</dt><dd>localStorage:clankeros-goal-artifact-filter:{result.goal_id}"
+        in goal.body
+    )
+    assert "goal_artifact_filter_memory_fields</dt><dd>type source query goal" in goal.body
+    assert "goal_artifact_filter_default_type</dt><dd>all" in goal.body
+    assert "goal_artifact_filter_default_source</dt><dd>all" in goal.body
+    assert "goal_artifact_filter_reset</dt><dd>available" in goal.body
+    assert "goal_artifact_filter_raw_filesystem_browsing</dt><dd>false" in goal.body
+    assert "goal_artifact_filter_write_on_get</dt><dd>false" in goal.body
+    assert "goal_artifact_filter_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_artifact_filter_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_artifact_filter_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_artifact_filter_action: narrow rendered artifact rows" in goal.body
+    assert "goal_artifact_filter_memory: restores type/source/query from browser storage per Goal" in goal.body
+    assert "goal_artifact_filter_reset: clears the browser-local artifact filter" in goal.body
+    assert "data-goal-artifact-item='true'" in goal.body
+    assert "data-goal-artifact-type='markdown'" in goal.body
+    assert "data-goal-artifact-type='json'" in goal.body
+    assert "data-goal-artifact-type='patch'" in goal.body
+    assert "data-goal-artifact-type='text'" in goal.body
+    assert "data-goal-artifact-source='coder_run'" in goal.body
+    assert "data-goal-artifact-status='available'" in goal.body
+    assert "data-goal-artifact-text='" in goal.body
+    assert goal.body.index("data-goal-artifact-list='true'") < goal.body.index(
+        "data-goal-artifact-explorer='true'"
+    )
+    assert goal.body.index("data-goal-artifact-explorer='true'") < goal.body.index(
+        "data-goal-artifact-filter='true'"
+    )
+    assert goal.body.index("data-goal-artifact-filter='true'") < goal.body.index(
+        "data-goal-artifact-groups='true'"
+    )
+    assert "function restoreGoalArtifactFilterState()" in goal.body
+    assert "function updateGoalArtifactFilter(options)" in goal.body
+    assert "window.localStorage.setItem(goalArtifactFilterStorageKey(filterPanel)" in goal.body
+    assert "window.localStorage.removeItem(goalArtifactFilterStorageKey(filterPanel))" in goal.body
+    assert 'type: saved && typeof saved.type === "string" ? saved.type : "all"' in goal.body
+    assert 'source: saved && typeof saved.source === "string" ? saved.source : "all"' in goal.body
+    assert 'query: saved && typeof saved.query === "string" ? saved.query : ""' in goal.body
+    assert 'updateGoalArtifactFilter({ type: "all", source: "all", query: "", save: false })' in goal.body
     assert "context_pack.md" in goal.body
     assert "context_pack.json" in goal.body
     assert "implementation_handoff.md" in goal.body

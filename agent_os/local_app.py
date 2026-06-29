@@ -864,6 +864,8 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-artifact-evidence='true'",
                 "data-goal-artifact-list='true'",
                 "data-goal-artifact-explorer-evidence='true'",
+                "data-goal-artifact-filter='true'",
+                "data-goal-artifact-filter-evidence='true'",
                 "data-goal-artifact-groups='true'",
                 "data-goal-memory-actions='true'",
                 "data-goal-memory-now='true'",
@@ -17767,13 +17769,105 @@ def _goal_artifact_explorer(
     *,
     records: list[dict[str, str]] | None = None,
 ) -> str:
+    goal = state["goal"]
     if records is None:
         records = _goal_artifact_records(root, state)
     groups = {kind: [] for kind in ["markdown", "json", "patch", "text"]}
+    sources: dict[str, int] = {}
     for record in records:
         groups[record["kind"]].append(record)
+        sources[record["source"]] = sources.get(record["source"], 0) + 1
+    type_buttons = [
+        (
+            "<button type='button' class='goal-artifact-filter-button' "
+            "data-goal-artifact-filter-kind='all' data-goal-artifact-filter-active='true' aria-pressed='true'>"
+            f"All <span>{len(records)}</span></button>"
+        )
+    ]
+    for kind, label in [
+        ("markdown", "Markdown"),
+        ("json", "JSON"),
+        ("patch", "Patch"),
+        ("text", "Text"),
+    ]:
+        type_buttons.append(
+            (
+                "<button type='button' class='goal-artifact-filter-button' "
+                f"data-goal-artifact-filter-kind='{_e(kind)}' aria-pressed='false'>{_e(label)} "
+                f"<span>{len(groups[kind])}</span></button>"
+            )
+        )
+    source_options = [
+        f"<option value='{_e(source)}'>{_e(source)} ({count})</option>"
+        for source, count in sorted(sources.items())
+    ]
+    source_summary = (
+        ", ".join(f"{source}={count}" for source, count in sorted(sources.items()))
+        if sources
+        else "none"
+    )
+    storage_key = f"clankeros-goal-artifact-filter:{goal.id}"
+    filter_status = "available" if records else "empty"
     sections = [
         "<section id='goal-artifact-explorer' class='goal-artifact-explorer' data-goal-artifact-explorer='true'><h2>Goal Artifact Explorer</h2>",
+        "<div id='goal-artifact-filter' class='goal-artifact-filter' data-goal-artifact-filter='true' "
+        f"data-goal-artifact-filter-storage-key='{_e(storage_key)}'>",
+        "<h3>Goal Artifact Filter</h3>",
+        "<p class='muted'>Filter rendered Goal artifacts by type, source, or text without reading new paths.</p>",
+        "<div class='goal-artifact-filter-buttons' data-goal-artifact-filter-buttons='true'>",
+        "".join(type_buttons),
+        "</div>",
+        "<div class='goal-artifact-filter-controls' data-goal-artifact-filter-controls='true'>",
+        "<label>Find <input type='search' data-goal-artifact-filter-query='true' placeholder='handoff, diff, status, run...'></label>",
+        "<label>Source <select data-goal-artifact-filter-source='true'>",
+        f"<option value='all'>All sources ({len(records)})</option>",
+        "".join(source_options),
+        "</select></label>",
+        "</div>",
+        "<div class='goal-artifact-filter-memory' data-goal-artifact-filter-memory='true'>",
+        "<span class='goal-artifact-filter-memory-status' data-goal-artifact-filter-view-status='true'>View: default</span>",
+        "<button type='button' class='goal-artifact-filter-reset' data-goal-artifact-filter-reset='true'>Reset filter</button>",
+        "</div>",
+        f"<p class='muted' data-goal-artifact-filter-status='true'>Showing {len(records)} of {len(records)} artifacts.</p>",
+        "<p class='muted goal-artifact-filter-empty' data-goal-artifact-filter-empty='true' hidden>No artifacts match this filter.</p>",
+        "<details class='goal-artifact-filter-evidence' data-goal-artifact-filter-evidence='true'><summary>Goal artifact filter evidence</summary>",
+        _kv(
+            [
+                ("goal_artifact_filter_status", filter_status),
+                ("goal_artifact_filter_scope", "browser_local_rendered_artifacts"),
+                ("goal_artifact_filter_goal", goal.id),
+                ("goal_artifact_filter_project", goal.project_id),
+                ("goal_artifact_filter_total_records", str(len(records))),
+                ("goal_artifact_filter_markdown_artifacts", str(len(groups["markdown"]))),
+                ("goal_artifact_filter_json_artifacts", str(len(groups["json"]))),
+                ("goal_artifact_filter_patch_artifacts", str(len(groups["patch"]))),
+                ("goal_artifact_filter_text_artifacts", str(len(groups["text"]))),
+                ("goal_artifact_filter_sources", source_summary),
+                ("goal_artifact_filter_source_count", str(len(sources))),
+                ("goal_artifact_filter_source", "data-goal-artifact-item"),
+                ("goal_artifact_filter_persistence", "browser_local_view_memory"),
+                ("goal_artifact_filter_memory_storage", f"localStorage:{storage_key}"),
+                ("goal_artifact_filter_memory_fields", "type source query goal"),
+                ("goal_artifact_filter_default_type", "all"),
+                ("goal_artifact_filter_default_source", "all"),
+                ("goal_artifact_filter_reset", "available"),
+                ("goal_artifact_filter_raw_filesystem_browsing", "false"),
+                ("goal_artifact_filter_write_on_get", "false"),
+                ("goal_artifact_filter_provider_calls_taken", "0"),
+                ("goal_artifact_filter_network_actions_taken", "0"),
+                ("goal_artifact_filter_external_effects_created", "false"),
+            ]
+        ),
+        _ul(
+            [
+                "goal_artifact_filter_action: narrow rendered artifact rows by type, source, or text",
+                "goal_artifact_filter_memory: restores type/source/query from browser storage per Goal",
+                "goal_artifact_filter_reset: clears the browser-local artifact filter",
+                "goal_artifact_filter_safety: client-side display filter only",
+            ]
+        ),
+        "</details>",
+        "</div>",
         "<details class='goal-artifact-explorer-evidence' data-goal-artifact-explorer-evidence='true'><summary>Artifact explorer evidence</summary>",
         _kv(
             [
@@ -17799,10 +17893,15 @@ def _goal_artifact_explorer(
     ]:
         items = [
             (
+                "<span data-goal-artifact-item='true' "
+                f"data-goal-artifact-type='{_e(record['kind'])}' "
+                f"data-goal-artifact-source='{_e(record['source'])}' "
+                f"data-goal-artifact-status='{_e(record['status'])}' "
+                f"data-goal-artifact-text='{_e(' '.join([record['label'], record['path'], record['kind'], record['status'], record['source']]).lower())}'>"
                 f"{_e(record['label'])}: {_artifact_link(record['path'])} "
                 f"artifact_type={_e(record['kind'])} "
                 f"status={_e(record['status'])} "
-                f"source={_e(record['source'])}"
+                f"source={_e(record['source'])}</span>"
             )
             for record in groups[kind]
         ]
@@ -36721,10 +36820,24 @@ def _html_page(
     .goal-artifact-action, .goal-artifact-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .goal-artifact-action {{ background:var(--accent); color:#fff; }}
     .goal-artifact-link {{ background:var(--surface); color:var(--accent); }}
-    .goal-artifact-command-evidence, .goal-artifact-list, .goal-artifact-explorer-evidence, .goal-artifact-group {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .goal-artifact-command-evidence summary, .goal-artifact-list summary, .goal-artifact-explorer-evidence summary, .goal-artifact-group summary {{ cursor:pointer; font-weight:700; }}
-    .goal-artifact-command-evidence:not([open]) > :not(summary), .goal-artifact-list:not([open]) > :not(summary), .goal-artifact-explorer-evidence:not([open]) > :not(summary), .goal-artifact-group:not([open]) > :not(summary) {{ display:none; }}
+    .goal-artifact-filter {{ margin:12px 0; border:1px solid var(--line); border-left:4px solid var(--ok); background:var(--panel); padding:12px; }}
+    .goal-artifact-filter h3 {{ margin-top:0; }}
+    .goal-artifact-filter-buttons {{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }}
+    .goal-artifact-filter-button {{ display:inline-flex; gap:6px; align-items:center; min-height:34px; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:6px; padding:7px 10px; }}
+    .goal-artifact-filter-button[data-goal-artifact-filter-active='true'] {{ border-color:var(--accent); background:var(--accent); color:#fff; }}
+    .goal-artifact-filter-button span {{ font-variant-numeric:tabular-nums; }}
+    .goal-artifact-filter-controls {{ display:grid; grid-template-columns:minmax(220px, 1fr) minmax(180px, 280px); gap:10px; align-items:end; margin:10px 0; }}
+    .goal-artifact-filter-controls label {{ display:grid; gap:4px; color:var(--muted); }}
+    .goal-artifact-filter-controls input, .goal-artifact-filter-controls select {{ width:100%; min-height:34px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 8px; }}
+    .goal-artifact-filter-memory {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0; }}
+    .goal-artifact-filter-memory-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .goal-artifact-filter-reset {{ min-height:32px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 10px; }}
+    .goal-artifact-filter-empty {{ margin:10px 0 0; }}
+    .goal-artifact-command-evidence, .goal-artifact-list, .goal-artifact-explorer-evidence, .goal-artifact-filter-evidence, .goal-artifact-group {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-artifact-command-evidence summary, .goal-artifact-list summary, .goal-artifact-explorer-evidence summary, .goal-artifact-filter-evidence summary, .goal-artifact-group summary {{ cursor:pointer; font-weight:700; }}
+    .goal-artifact-command-evidence:not([open]) > :not(summary), .goal-artifact-list:not([open]) > :not(summary), .goal-artifact-explorer-evidence:not([open]) > :not(summary), .goal-artifact-filter-evidence:not([open]) > :not(summary), .goal-artifact-group:not([open]) > :not(summary) {{ display:none; }}
     .goal-artifact-groups {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin:12px 0; }}
+    @media (max-width: 640px) {{ .goal-artifact-filter-button, .goal-artifact-filter-reset {{ width:100%; justify-content:center; }} .goal-artifact-filter-controls {{ grid-template-columns:1fr; }} .goal-artifact-filter-memory {{ align-items:stretch; }} .goal-artifact-filter-memory-status {{ width:100%; }} }}
     .goal-memory-command-bar {{ border-left:4px solid var(--accent); }}
     .goal-memory-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-memory-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -38034,6 +38147,135 @@ def _html_page(
         setSearchResultLaneViewStatus(filterPanel, "View: default");
       }}
     }}
+    function goalArtifactFilterStorageKey(filterPanel) {{
+      var key = filterPanel ? filterPanel.getAttribute("data-goal-artifact-filter-storage-key") : "";
+      return key || "clankeros-goal-artifact-filter";
+    }}
+    function setGoalArtifactFilterViewStatus(filterPanel, message) {{
+      var status = filterPanel ? filterPanel.querySelector("[data-goal-artifact-filter-view-status='true']") : null;
+      if (status) {{ status.textContent = message; }}
+    }}
+    function normalizeGoalArtifactType(filterPanel, filterKind) {{
+      var normalized = filterKind || "all";
+      var buttons = filterPanel ? Array.prototype.slice.call(filterPanel.querySelectorAll("[data-goal-artifact-filter-kind]")) : [];
+      var found = buttons.some(function(button) {{
+        return (button.getAttribute("data-goal-artifact-filter-kind") || "all") === normalized;
+      }});
+      return found ? normalized : "all";
+    }}
+    function normalizeGoalArtifactSource(filterPanel, source) {{
+      var normalized = source || "all";
+      var select = filterPanel ? filterPanel.querySelector("[data-goal-artifact-filter-source='true']") : null;
+      var options = select ? Array.prototype.slice.call(select.options) : [];
+      var found = options.some(function(option) {{ return option.value === normalized; }});
+      return found ? normalized : "all";
+    }}
+    function selectedGoalArtifactType(filterPanel) {{
+      var active = filterPanel ? filterPanel.querySelector("[data-goal-artifact-filter-kind][aria-pressed='true']") : null;
+      return active ? active.getAttribute("data-goal-artifact-filter-kind") || "all" : "all";
+    }}
+    function saveGoalArtifactFilterState(filterPanel, state) {{
+      if (!window.localStorage || !filterPanel) {{ return; }}
+      try {{
+        window.localStorage.setItem(goalArtifactFilterStorageKey(filterPanel), JSON.stringify(state));
+        setGoalArtifactFilterViewStatus(filterPanel, "View: saved");
+      }} catch (error) {{
+        setGoalArtifactFilterViewStatus(filterPanel, "View: local only");
+      }}
+    }}
+    function restoreGoalArtifactFilterState() {{
+      var filterPanel = document.querySelector("[data-goal-artifact-filter='true']");
+      if (!filterPanel) {{ return; }}
+      if (!window.localStorage) {{
+        setGoalArtifactFilterViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+      try {{
+        var raw = window.localStorage.getItem(goalArtifactFilterStorageKey(filterPanel));
+        if (!raw) {{
+          setGoalArtifactFilterViewStatus(filterPanel, "View: default");
+          return false;
+        }}
+        var saved = JSON.parse(raw);
+        updateGoalArtifactFilter({{
+          type: saved && typeof saved.type === "string" ? saved.type : "all",
+          source: saved && typeof saved.source === "string" ? saved.source : "all",
+          query: saved && typeof saved.query === "string" ? saved.query : "",
+          save: false
+        }});
+        setGoalArtifactFilterViewStatus(filterPanel, "View: restored");
+        return true;
+      }} catch (error) {{
+        setGoalArtifactFilterViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+    }}
+    function clearGoalArtifactFilterState() {{
+      var filterPanel = document.querySelector("[data-goal-artifact-filter='true']");
+      if (filterPanel && window.localStorage) {{
+        try {{ window.localStorage.removeItem(goalArtifactFilterStorageKey(filterPanel)); }} catch (error) {{}}
+      }}
+      updateGoalArtifactFilter({{ type: "all", source: "all", query: "", save: false }});
+      setGoalArtifactFilterViewStatus(filterPanel, "View: reset");
+    }}
+    function updateGoalArtifactFilter(options) {{
+      var filterPanel = document.querySelector("[data-goal-artifact-filter='true']");
+      if (!filterPanel) {{ return; }}
+      options = options || {{}};
+      var queryInput = filterPanel.querySelector("[data-goal-artifact-filter-query='true']");
+      var sourceSelect = filterPanel.querySelector("[data-goal-artifact-filter-source='true']");
+      var selectedType = normalizeGoalArtifactType(filterPanel, Object.prototype.hasOwnProperty.call(options, "type") ? options.type : selectedGoalArtifactType(filterPanel));
+      var selectedSource = normalizeGoalArtifactSource(filterPanel, Object.prototype.hasOwnProperty.call(options, "source") ? options.source : (sourceSelect ? sourceSelect.value : "all"));
+      var query = Object.prototype.hasOwnProperty.call(options, "query") ? String(options.query || "") : (queryInput ? queryInput.value || "" : "");
+      if (queryInput && queryInput.value !== query) {{ queryInput.value = query; }}
+      if (sourceSelect && sourceSelect.value !== selectedSource) {{ sourceSelect.value = selectedSource; }}
+      var queryText = query.toLowerCase().trim();
+      var artifacts = Array.prototype.slice.call(document.querySelectorAll("[data-goal-artifact-item='true']"));
+      var shown = 0;
+      artifacts.forEach(function(artifactNode) {{
+        var type = artifactNode.getAttribute("data-goal-artifact-type") || "text";
+        var source = artifactNode.getAttribute("data-goal-artifact-source") || "unknown";
+        var text = artifactNode.getAttribute("data-goal-artifact-text") || artifactNode.textContent.toLowerCase();
+        var match = (selectedType === "all" || type === selectedType)
+          && (selectedSource === "all" || source === selectedSource)
+          && (!queryText || text.indexOf(queryText) !== -1);
+        var row = artifactNode.closest ? artifactNode.closest("li") : artifactNode.parentElement;
+        if (row) {{ row.hidden = !match; }}
+        artifactNode.hidden = !match;
+        if (match) {{ shown += 1; }}
+      }});
+      Array.prototype.slice.call(filterPanel.querySelectorAll("[data-goal-artifact-filter-kind]")).forEach(function(button) {{
+        var active = (button.getAttribute("data-goal-artifact-filter-kind") || "all") === selectedType;
+        if (active) {{
+          button.setAttribute("data-goal-artifact-filter-active", "true");
+          button.setAttribute("aria-pressed", "true");
+        }} else {{
+          button.removeAttribute("data-goal-artifact-filter-active");
+          button.setAttribute("aria-pressed", "false");
+        }}
+      }});
+      var status = filterPanel.querySelector("[data-goal-artifact-filter-status='true']");
+      if (status) {{
+        var parts = [];
+        if (selectedType !== "all") {{ parts.push("type " + selectedType); }}
+        if (selectedSource !== "all") {{ parts.push("source " + selectedSource); }}
+        if (queryText) {{ parts.push("text " + queryText); }}
+        status.textContent = "Showing " + shown + " of " + artifacts.length + " artifacts" + (parts.length ? " matching " + parts.join(", ") : "") + ".";
+      }}
+      var empty = filterPanel.querySelector("[data-goal-artifact-filter-empty='true']");
+      if (empty) {{ empty.hidden = shown !== 0; }}
+      if (options.save !== false) {{
+        saveGoalArtifactFilterState(filterPanel, {{ type: selectedType, source: selectedSource, query: query }});
+      }}
+    }}
+    function initializeGoalArtifactFilterState() {{
+      var filterPanel = document.querySelector("[data-goal-artifact-filter='true']");
+      if (!filterPanel) {{ return; }}
+      if (!restoreGoalArtifactFilterState()) {{
+        updateGoalArtifactFilter({{ type: "all", source: "all", query: "", save: false }});
+        setGoalArtifactFilterViewStatus(filterPanel, "View: default");
+      }}
+    }}
     function timelineLaneStorageKey(filterPanel) {{
       var key = filterPanel ? filterPanel.getAttribute("data-goal-timeline-filter-storage-key") : "";
       return key || "clankeros-goal-timeline-lane";
@@ -38167,6 +38409,18 @@ def _html_page(
         updateSearchResultLane(searchFilterButton.getAttribute("data-search-result-filter-kind") || "all");
         return;
       }}
+      var artifactFilterReset = target.closest ? target.closest("[data-goal-artifact-filter-reset='true']") : null;
+      if (artifactFilterReset) {{
+        event.preventDefault();
+        clearGoalArtifactFilterState();
+        return;
+      }}
+      var artifactFilterButton = target.closest ? target.closest("[data-goal-artifact-filter-kind]") : null;
+      if (artifactFilterButton) {{
+        event.preventDefault();
+        updateGoalArtifactFilter({{ type: artifactFilterButton.getAttribute("data-goal-artifact-filter-kind") || "all" }});
+        return;
+      }}
       var timelineFilterReset = target.closest ? target.closest("[data-goal-timeline-filter-reset='true']") : null;
       if (timelineFilterReset) {{
         event.preventDefault();
@@ -38186,6 +38440,20 @@ def _html_page(
       var details = document.querySelector(href);
       if (details && details.tagName && details.tagName.toLowerCase() === "details") {{
         details.open = true;
+      }}
+    }});
+    document.addEventListener("input", function(event) {{
+      var target = event.target || {{}};
+      var artifactFilterQuery = target.closest ? target.closest("[data-goal-artifact-filter-query='true']") : null;
+      if (artifactFilterQuery) {{
+        updateGoalArtifactFilter({{ query: artifactFilterQuery.value || "" }});
+      }}
+    }});
+    document.addEventListener("change", function(event) {{
+      var target = event.target || {{}};
+      var artifactFilterSource = target.closest ? target.closest("[data-goal-artifact-filter-source='true']") : null;
+      if (artifactFilterSource) {{
+        updateGoalArtifactFilter({{ source: artifactFilterSource.value || "all" }});
       }}
     }});
     function openCurrentHashDetails() {{
@@ -38222,6 +38490,7 @@ def _html_page(
     }}
     openCurrentHashDetails();
     initializeSearchResultLaneState();
+    initializeGoalArtifactFilterState();
     initializeTimelineLaneState();
     restoreWorkspacePanels();
     window.addEventListener("hashchange", openCurrentHashDetails);

@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals/<goal_id>#goal-artifact-filter` now adds a browser-local Goal
+  Artifact Filter at the top of the typed Goal Artifact Explorer. It narrows
+  already-rendered artifacts by type, source, or text, remembers that view per
+  Goal in `localStorage:clankeros-goal-artifact-filter:<goal_id>`, and
+  provides Reset filter while preserving read-only GET behavior and
+  no-provider/no-network/no-raw-filesystem/no-external-effect boundaries.
 - `/search#search-result-filter` now adds a browser-local Search Result Filter
   after the Search Result Map. It narrows already-rendered results by all,
   goals, projects, work, decisions, knowledge, or artifacts, remembers the
