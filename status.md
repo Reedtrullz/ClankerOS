@@ -1,5 +1,28 @@
 # Status
 
+## 2026-06-29 Shared Goal Navigation Title-First UX
+
+- Made shared Goal identity in browser navigation title-first.
+- Breadcrumbs, the shared Route Context strip, and command-palette route
+  evidence now render visible Goal links with the human Goal title/intent
+  instead of the raw Goal id.
+- The raw Goal id remains available through explicit `*_goal_id` evidence
+  fields, and title-source fields record whether the label came from `title`
+  or a safe fallback.
+- The same title-first label now follows the Goal into related run pages, so a
+  deep run route still points back to the recognizable work object.
+- Updated README, local app docs, operating summary, current status focus, and
+  fixture-backed Goal/run route assertions for the shared navigation contract.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  and focused `tests/test_first_milestone.py` demo route coverage
+  (`1 passed, 515 deselected in 38.05s`), `python3 -m compileall -q agent_os tests`,
+  bounded `app-smoke-test`, bounded `app-demo-smoke-test`, and
+  `git diff --check`.
+- Non-claims: no browser QA for this slice, no write on GET, no approval or
+  execution on GET, no app-side GitHub polling, no provider calls, no external
+  mutation, no PR creation, and no deploy from ClankerOS itself.
+
 ## 2026-06-29 Goal Summary Title-First UX
 
 - Made `/goals/<goal_id>` title-first at the top of the operator surface.

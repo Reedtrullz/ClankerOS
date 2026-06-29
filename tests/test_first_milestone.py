@@ -10137,7 +10137,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "palette_route_parent_surface</dt><dd><a href='/goals'>Goals</a>" in goal.body
     assert (
         f"palette_route_current_goal</dt><dd><a href='/goals/{result.goal_id}'>"
+        "Demo the ClankerOS local operator app with fixture-backed state</a>"
     ) in goal.body
+    assert f"palette_route_current_goal_id</dt><dd>{result.goal_id}" in goal.body
+    assert (
+        "palette_route_current_goal_label</dt><dd>Demo the ClankerOS local operator app "
+        "with fixture-backed state"
+    ) in goal.body
+    assert "palette_route_current_goal_label_source</dt><dd>title" in goal.body
     assert "palette_route_current_project</dt><dd><a href='/projects/local-app-demo'>" in goal.body
     assert "palette_route_phase</dt><dd>Ready to commit" in goal.body
     assert "palette_route_focus_status</dt><dd>available" in goal.body
@@ -10254,7 +10261,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-route-context-back='true' href='/goals'>Goals</a>" in goal.body
     assert (
         f"data-route-context-goal='true' href='/goals/{result.goal_id}'>"
-        f"{result.goal_id}</a>"
+        "Demo the ClankerOS local operator app with fixture-backed state</a>"
     ) in goal.body
     assert (
         f"data-route-context-project='true' href='/projects/{result.project_id}'>"
@@ -10271,7 +10278,26 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "breadcrumb_family</dt><dd>goal"
     )
     assert "breadcrumb_family</dt><dd>goal" in goal.body
-    assert f"breadcrumb_current_goal</dt><dd><a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in goal.body
+    assert (
+        f"breadcrumb_current_goal</dt><dd><a href='/goals/{result.goal_id}'>"
+        "Demo the ClankerOS local operator app with fixture-backed state</a>"
+    ) in goal.body
+    assert f"breadcrumb_current_goal_id</dt><dd>{result.goal_id}" in goal.body
+    assert (
+        "breadcrumb_current_goal_label</dt><dd>Demo the ClankerOS local operator app "
+        "with fixture-backed state"
+    ) in goal.body
+    assert "breadcrumb_current_goal_label_source</dt><dd>title" in goal.body
+    assert (
+        f"route_goal</dt><dd><a href='/goals/{result.goal_id}'>"
+        "Demo the ClankerOS local operator app with fixture-backed state</a>"
+    ) in goal.body
+    assert f"route_goal_id</dt><dd>{result.goal_id}" in goal.body
+    assert (
+        "route_goal_label</dt><dd>Demo the ClankerOS local operator app with fixture-backed state"
+        in goal.body
+    )
+    assert "route_goal_label_source</dt><dd>title" in goal.body
     assert f"breadcrumb_current_project</dt><dd><a href='/projects/{result.project_id}'>{result.project_id}</a>" in goal.body
     assert "breadcrumb_phase</dt><dd>Ready to commit" in goal.body
     assert "breadcrumb_focus_status</dt><dd>available" in goal.body
@@ -13420,7 +13446,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "data-route-context-details='true'"
     )
     assert "breadcrumb_family</dt><dd>run" in run_page.body
-    assert f"breadcrumb_current_goal</dt><dd><a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in run_page.body
+    assert (
+        f"breadcrumb_current_goal</dt><dd><a href='/goals/{result.goal_id}'>"
+        "Demo the ClankerOS local operator app with fixture-backed state</a>"
+    ) in run_page.body
+    assert f"breadcrumb_current_goal_id</dt><dd>{result.goal_id}" in run_page.body
+    assert "breadcrumb_current_goal_label_source</dt><dd>title" in run_page.body
     assert f"breadcrumb_current_project</dt><dd><a href='/projects/{result.project_id}'>{result.project_id}</a>" in run_page.body
     assert f"breadcrumb_current_item</dt><dd>{result.coder_worktree_run_id}" in run_page.body
     assert "breadcrumb_phase</dt><dd>Ready to commit" in run_page.body

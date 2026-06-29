@@ -388,6 +388,10 @@ Core layers for the bootstrap:
   route/focus diagnostics. The summary is title-first and uses the human Goal
   title/intent as both the page heading and browser title, while retaining the
   Goal id as metadata with project, status, phase, and local refresh posture.
+  The shared breadcrumb/Route Context/command-palette route evidence layer now
+  uses the same human Goal title for visible Goal links, while preserving
+  explicit Goal id evidence fields so review and automation do not lose the
+  stable identifier.
   The in-flow read-only `Goal Jump Bar` covers phase, action, workflow,
   timeline, evidence, artifacts, notes, git, and remaining work. Visible `1`-`9`
   key badges and `aria-keyshortcuts` jump to those local anchors without

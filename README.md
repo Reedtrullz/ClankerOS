@@ -303,7 +303,10 @@ large Current Phase banner, jump bar, action dock, and progress meter appear
 before shared route/focus diagnostics. The summary itself is title-first: it
 uses the human Goal title/intent as the page heading, keeps the Goal id as
 metadata instead of the headline, and preserves the project, status, phase,
-and local refresh posture in the readback. The Goal Jump Bar covers phase, action,
+and local refresh posture in the readback. Shared Goal navigation now follows
+the same rule: breadcrumbs, Route Context, and command-palette route evidence
+show the human Goal title while retaining explicit Goal id evidence fields for
+review and automation. The Goal Jump Bar covers phase, action,
 workflow, timeline, evidence, artifacts, notes, git, and remaining work. Its visible `1`-`9` key badges and
 `aria-keyshortcuts` jump to those local anchors without submitting forms,
 while jump-state evidence stays collapsed by default,

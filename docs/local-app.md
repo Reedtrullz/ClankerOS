@@ -192,7 +192,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   appear before shared route/focus diagnostics. The summary is now title-first:
   the H1 and browser title use the human Goal title/intent, while the Goal id
   stays visible as metadata alongside project, status, phase, and local refresh
-  evidence. The in-flow read-only
+  evidence. Shared navigation mirrors that identity: breadcrumbs, Route
+  Context, and command-palette route evidence show the human Goal title while
+  preserving explicit Goal id evidence fields. The in-flow read-only
   `Goal Jump Bar` covers phase, action, workflow, timeline, evidence,
   artifacts, notes, git, and remaining work. Its visible `1`-`9` key badges
   and `aria-keyshortcuts` jump to those local anchors without submitting

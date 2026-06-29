@@ -8737,6 +8737,18 @@ def _goal_summary_parts(goal: Any) -> tuple[str, str, str]:
     return goal_id or "Untitled Goal", goal_id or "Untitled Goal", "id"
 
 
+def _goal_display_label(root: Path, goal_id: str) -> tuple[str, str]:
+    goal_id = str(goal_id or "").strip()
+    if not goal_id:
+        return "", "none"
+    try:
+        goal = _storage(root).get_goal(goal_id)
+        title, _intent, source = _goal_summary_parts(goal)
+        return title, source
+    except Exception:
+        return goal_id, "id_fallback"
+
+
 def _goals(root: Path) -> str:
     storage = _storage(root)
     rows = _goal_rows(storage, limit=100)
@@ -30638,6 +30650,10 @@ def _breadcrumbs(
         current_project=current_project,
         current_item=current_item,
     )
+    current_goal_label, current_goal_label_source = _goal_display_label(root, current_goal)
+    saved_goal_label, saved_goal_label_source = _goal_display_label(root, saved_goal)
+    if family == "goal" and current_goal_label:
+        crumbs = [("Dashboard", "/"), ("Goals", "/goals"), (current_goal_label, None)]
     current_href = current_path or path or "/"
     focus_status = str(focus_context.get("status", "state_unavailable"))
     focus_target = str(focus_context.get("target_href") or "/health")
@@ -30670,10 +30686,13 @@ def _breadcrumbs(
         ),
         (
             "breadcrumb_current_goal",
-            SafeHtml(f"<a href='/goals/{quote(current_goal)}'>{_e(current_goal)}</a>")
+            SafeHtml(f"<a href='/goals/{quote(current_goal)}'>{_e(current_goal_label)}</a>")
             if current_goal
             else "none",
         ),
+        ("breadcrumb_current_goal_id", current_goal or "none"),
+        ("breadcrumb_current_goal_label", current_goal_label or "none"),
+        ("breadcrumb_current_goal_label_source", current_goal_label_source),
         (
             "breadcrumb_current_project",
             SafeHtml(f"<a href='/projects/{quote(current_project)}'>{_e(current_project)}</a>")
@@ -30687,10 +30706,13 @@ def _breadcrumbs(
         ("breadcrumb_phase", current_phase),
         (
             "breadcrumb_saved_goal",
-            SafeHtml(f"<a href='/goals/{quote(saved_goal)}'>{_e(saved_goal)}</a>")
+            SafeHtml(f"<a href='/goals/{quote(saved_goal)}'>{_e(saved_goal_label)}</a>")
             if saved_goal
             else "none",
         ),
+        ("breadcrumb_saved_goal_id", saved_goal or "none"),
+        ("breadcrumb_saved_goal_label", saved_goal_label or "none"),
+        ("breadcrumb_saved_goal_label_source", saved_goal_label_source),
         (
             "breadcrumb_saved_project",
             SafeHtml(f"<a href='/projects/{quote(saved_project)}'>{_e(saved_project)}</a>")
@@ -30725,10 +30747,13 @@ def _breadcrumbs(
         ),
         (
             "route_goal",
-            SafeHtml(f"<a href='/goals/{quote(current_goal)}'>{_e(current_goal)}</a>")
+            SafeHtml(f"<a href='/goals/{quote(current_goal)}'>{_e(current_goal_label)}</a>")
             if current_goal
             else "none",
         ),
+        ("route_goal_id", current_goal or "none"),
+        ("route_goal_label", current_goal_label or "none"),
+        ("route_goal_label_source", current_goal_label_source),
         (
             "route_project",
             SafeHtml(f"<a href='/projects/{quote(current_project)}'>{_e(current_project)}</a>")
@@ -30746,7 +30771,7 @@ def _breadcrumbs(
     if focus_status == "available":
         next_action = focus_context["next_action"]
         primary_focus_label = str(getattr(next_action, "action", "") or focus_target_label)
-    goal_label = current_goal or saved_goal or "No goal yet"
+    goal_label = current_goal_label or saved_goal_label or "No goal yet"
     goal_href = (
         f"/goals/{quote(current_goal)}"
         if current_goal
@@ -32285,6 +32310,8 @@ def _command_palette_route_context(
     state = _load_workspace_state(root)
     saved_goal = str(state.get("open_goal") or "").strip()
     saved_project = str(state.get("open_project") or "").strip()
+    current_goal_label, current_goal_label_source = _goal_display_label(root, current_goal)
+    saved_goal_label, saved_goal_label_source = _goal_display_label(root, saved_goal)
     current_href = current_path or path or "/"
     focus_status = str(focus_context.get("status", "state_unavailable"))
     focus_target = str(focus_context.get("target_href") or "/health")
@@ -32307,10 +32334,13 @@ def _command_palette_route_context(
         ),
         (
             "palette_route_current_goal",
-            SafeHtml(f"<a href='/goals/{quote(current_goal)}'>{_e(current_goal)}</a>")
+            SafeHtml(f"<a href='/goals/{quote(current_goal)}'>{_e(current_goal_label)}</a>")
             if current_goal
             else "none",
         ),
+        ("palette_route_current_goal_id", current_goal or "none"),
+        ("palette_route_current_goal_label", current_goal_label or "none"),
+        ("palette_route_current_goal_label_source", current_goal_label_source),
         (
             "palette_route_current_project",
             SafeHtml(f"<a href='/projects/{quote(current_project)}'>{_e(current_project)}</a>")
@@ -32321,10 +32351,13 @@ def _command_palette_route_context(
         ("palette_route_phase", current_phase),
         (
             "palette_route_saved_goal",
-            SafeHtml(f"<a href='/goals/{quote(saved_goal)}'>{_e(saved_goal)}</a>")
+            SafeHtml(f"<a href='/goals/{quote(saved_goal)}'>{_e(saved_goal_label)}</a>")
             if saved_goal
             else "none",
         ),
+        ("palette_route_saved_goal_id", saved_goal or "none"),
+        ("palette_route_saved_goal_label", saved_goal_label or "none"),
+        ("palette_route_saved_goal_label_source", saved_goal_label_source),
         (
             "palette_route_saved_project",
             SafeHtml(f"<a href='/projects/{quote(saved_project)}'>{_e(saved_project)}</a>")

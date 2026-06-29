@@ -7,6 +7,9 @@ Latest status focus:
 - `/goals/<goal_id>` now opens with a title-first Goal summary: the H1 and
   browser title use the human Goal title/intent, while the Goal id remains
   visible as metadata with project, status, phase, and local refresh evidence.
+- Shared Goal navigation is title-first too: breadcrumbs, Route Context, and
+  command-palette route evidence now show the human Goal title for visible Goal
+  links while retaining explicit Goal id evidence fields.
 - `/goals/<goal_id>` is now content-first in the shared app shell: the Goal
   summary, Current Phase banner, jump bar, action dock, and progress meter
   render before Route Context and Operator Focus diagnostics, so a direct Goal
