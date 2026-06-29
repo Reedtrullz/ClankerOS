@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-29 Workspace View Memory UX
+
+- Added a visible `Workspace View Memory` panel to
+  `/workspace#workspace-view-memory` after the Workspace Restore Map and
+  before the Workspace Daily Brief.
+- The panel inventories browser-local view state for theme, focus mode, Goal
+  board view, search result lanes, timeline lanes, artifact filters, and
+  operator-note filters.
+- Operators can refresh the inventory, reset one view-memory family, or reset
+  all known ClankerOS view-memory keys. Resetting theme or focus mode also
+  updates the current page shell immediately, so clearing Focus mode returns
+  the header button from `Focus On` to `Focus` without waiting for a reload.
+- The behavior only reads or removes browser `localStorage` values after
+  explicit browser clicks. It does not write `.clanker/app/workspace.json`,
+  browse raw filesystem paths, call providers, use the network, push, create
+  PRs, deploy, or mutate external systems.
+- Updated README, local app docs, operating summary, docs status, demo smoke
+  expectations, and the fixture-backed first-milestone workspace regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; `git diff --check`; focused route/demo
+  pytest `python3 -m pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 61.77s`; bounded temp-root `app-smoke-test`;
+  bounded temp-root `app-demo-smoke-test`; in-app Browser QA against a
+  throwaway demo server on `127.0.0.1:55618` showed theme/focus stored,
+  Goal board query `commit` plus title sort stored, Search Work lane stored,
+  `Reset all view memory` clearing four browser values, Focus returning from
+  `Focus On` to `Focus`, desktop `1280x900` and mobile `390x844` with no
+  horizontal overflow, no framework error overlay, and no console
+  warnings/errors.
+
 ## 2026-06-29 Goal Operator Notes Browser UX
 
 - Added a visible `Goal Notes Browser` to

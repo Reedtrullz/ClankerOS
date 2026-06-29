@@ -6196,6 +6196,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert workspace.body.index("data-workspace-operator-workbench='true'") < workspace.body.index("data-workspace-daily-brief='true'")
     assert workspace.body.index("data-workspace-operator-workbench='true'") < workspace.body.index("data-route-context='true'")
     assert workspace.body.index("data-workspace-operator-workbench='true'") < workspace.body.index("data-workspace-restore-map='true'")
+    assert workspace.body.index("data-workspace-restore-map='true'") < workspace.body.index("data-workspace-view-memory='true'")
+    assert workspace.body.index("data-workspace-view-memory='true'") < workspace.body.index("data-workspace-daily-brief='true'")
     assert workspace.body.index("data-workspace-restore-map='true'") < workspace.body.index("data-workspace-daily-brief='true'")
     assert workspace.body.index("data-workspace-state-details='true'") < workspace.body.index("id='save-workspace'")
     assert "Workspace Restore Map" in workspace.body
@@ -6237,6 +6239,51 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "<a href='#workspace-first-run-action-form'>Create Project</a>"
     ) in workspace.body
     assert "workspace_restore_map_safety: read-only restore guidance" in workspace.body
+    assert "Workspace View Memory" in workspace.body
+    assert "data-workspace-view-memory='true'" in workspace.body
+    assert "data-workspace-view-memory-toolbar='true'" in workspace.body
+    assert "data-workspace-view-memory-status='true'>Inspecting browser-local view memory." in workspace.body
+    assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
+    assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
+    assert "data-workspace-view-memory-grid='true'" in workspace.body
+    assert workspace.body.count("class='workspace-view-memory-card") == 7
+    assert "data-workspace-view-memory-card='theme'" in workspace.body
+    assert "data-workspace-view-memory-card='focus'" in workspace.body
+    assert "data-workspace-view-memory-card='goal-board'" in workspace.body
+    assert "data-workspace-view-memory-card='search'" in workspace.body
+    assert "data-workspace-view-memory-card='timeline'" in workspace.body
+    assert "data-workspace-view-memory-card='artifacts'" in workspace.body
+    assert "data-workspace-view-memory-card='notes'" in workspace.body
+    assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-theme'" in workspace.body
+    assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-focus-mode'" in workspace.body
+    assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-goal-board-view'" in workspace.body
+    assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-search-result-lane:'" in workspace.body
+    assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-timeline-lane:'" in workspace.body
+    assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-artifact-filter:'" in workspace.body
+    assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-notes-filter:'" in workspace.body
+    assert "data-workspace-view-memory-reset='true'>Reset" in workspace.body
+    assert "data-workspace-view-memory-evidence='true'" in workspace.body
+    assert "workspace_view_memory_status</dt><dd>available" in workspace.body
+    assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>7" in workspace.body
+    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view" in workspace.body
+    assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:" in workspace.body
+    assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
+    assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
+    assert "workspace_view_memory_workspace_json_write</dt><dd>false" in workspace.body
+    assert "workspace_view_memory_write_on_get</dt><dd>false" in workspace.body
+    assert "workspace_view_memory_provider_calls_taken</dt><dd>0" in workspace.body
+    assert "workspace_view_memory_network_actions_taken</dt><dd>0" in workspace.body
+    assert "workspace_view_memory_external_effects_created</dt><dd>false" in workspace.body
+    assert "workspace_view_memory_raw_filesystem_browsing</dt><dd>false" in workspace.body
+    assert "workspace_view_memory_card: theme mode=exact key=clankeros-theme" in workspace.body
+    assert "workspace_view_memory_card: search mode=prefix key=clankeros-search-result-lane:" in workspace.body
+    assert "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes" in workspace.body
+    assert "window.localStorage.removeItem(key)" in workspace.body
+    assert "candidate.indexOf(key) === 0" in workspace.body
+    assert "delete document.documentElement.dataset.theme" in workspace.body
+    assert "delete document.documentElement.dataset.focusMode" in workspace.body
+    assert 'focusToggle.textContent = "Focus"' in workspace.body
     assert "workspace_save_defaults_status</dt><dd>first_run" in workspace.body
     assert "workspace_save_defaults_source</dt><dd>first_run_progress" in workspace.body
     assert "workspace_save_defaults_open_project</dt><dd>none" in workspace.body

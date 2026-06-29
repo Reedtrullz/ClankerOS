@@ -588,7 +588,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   readback, and a Finish Today link that opens the collapsed `save-workspace`
   form. The read-only `Workspace Restore Map` uses the human Goal title for
   the visible Goal card when available, while retaining the exact saved Goal
-  id, label source, and route evidence. The read-only `Workspace Daily Brief` and `Workspace Workflow Map`
+  id, label source, and route evidence. A read-only `Workspace View Memory`
+  panel follows, showing browser-local `localStorage` view state for theme,
+  focus mode, Goal board view, search lanes, timeline lanes, artifact filters,
+  and notes filters with Refresh plus reset controls. It only clears
+  browser-local view memory after explicit clicks and does not write
+  `.clanker/app/workspace.json`. The read-only `Workspace Daily Brief` and `Workspace Workflow Map`
   follow with the saved goal's current gate, lifecycle progress, next surface,
   and zero-effect counters, while saved-state and restore-link readbacks stay
   inside collapsed evidence. Before a saved Goal exists, the same daily brief,

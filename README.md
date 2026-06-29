@@ -258,7 +258,11 @@ read-only `Workspace Restore Map` follows with Restore, Goal, Artifact,
 Filters + Panels, and Tomorrow cards that distinguish saved workspace state
 from suggested defaults before the longer checklist. The Goal card is
 title-first when possible, while still retaining exact saved Goal id and route
-evidence for restoration. The read-only
+evidence for restoration. A read-only `Workspace View Memory` panel follows to
+inspect and clear browser-local view state such as theme, focus mode, Goal
+board filters, search lanes, timeline lanes, artifact filters, and notes
+filters from `localStorage` without changing `.clanker/app/workspace.json`.
+The read-only
 `Workspace Daily Brief` and `Workspace Workflow Map` then follow with the
 saved goal's current gate, gate counts, and finish posture, while saved-state
 and restore-link readbacks stay inside collapsed evidence.

@@ -992,6 +992,10 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-workspace-workbench-evidence='true'",
                 "data-workspace-state-details='true'",
                 "data-workspace-restore-details='true'",
+                "Workspace View Memory",
+                "data-workspace-view-memory='true'",
+                "data-workspace-view-memory-evidence='true'",
+                "workspace_view_memory_status</dt><dd>available",
                 "data-workspace-save-details='true'",
                 "save-workspace",
                 "workspace_path",
@@ -6354,6 +6358,7 @@ def _workspace_page(root: Path) -> str:
             _workspace_operator_workbench(root, state, open_project, open_goal, last_artifact),
             _workspace_action_form_section(root, open_goal),
             _workspace_restore_map(root, state, open_project, open_goal, last_artifact, save_defaults),
+            _workspace_view_memory_panel(),
             _workspace_daily_brief(root, state, open_project, open_goal, last_artifact),
             _workspace_workflow_map_section(root, open_goal),
             state_evidence,
@@ -6426,6 +6431,245 @@ def _workspace_save_defaults(root: Path, state: dict[str, str]) -> dict[str, str
         "lead_goal": lead_goal_id,
         "lead_project": lead_project,
     }
+
+
+def _workspace_view_memory_panel() -> str:
+    cards = [
+        (
+            "theme",
+            "Theme",
+            "exact",
+            "clankeros-theme",
+            "Dark or light theme",
+        ),
+        (
+            "focus",
+            "Focus Mode",
+            "exact",
+            "clankeros-focus-mode",
+            "Reduced chrome while working",
+        ),
+        (
+            "goal-board",
+            "Goal Board",
+            "exact",
+            "clankeros-goal-board-view",
+            "Saved Goal board query, lane, and sort",
+        ),
+        (
+            "search",
+            "Search Lanes",
+            "prefix",
+            "clankeros-search-result-lane:",
+            "Per-query search result lanes",
+        ),
+        (
+            "timeline",
+            "Timeline Lanes",
+            "prefix",
+            "clankeros-goal-timeline-lane:",
+            "Per-Goal timeline lane filters",
+        ),
+        (
+            "artifacts",
+            "Artifact Filters",
+            "prefix",
+            "clankeros-goal-artifact-filter:",
+            "Per-Goal artifact type, source, and text filters",
+        ),
+        (
+            "notes",
+            "Notes Filters",
+            "prefix",
+            "clankeros-goal-notes-filter:",
+            "Per-Goal operator-note text filters",
+        ),
+    ]
+    card_html = []
+    evidence_lines = []
+    exact_keys = []
+    prefix_keys = []
+    for key, title, mode, storage_key, summary in cards:
+        if mode == "exact":
+            exact_keys.append(storage_key)
+        else:
+            prefix_keys.append(storage_key)
+        card_html.append(
+            "".join(
+                [
+                    (
+                        f"<article class='workspace-view-memory-card' "
+                        f"data-workspace-view-memory-card='{_e(key)}' "
+                        f"data-workspace-view-memory-mode='{_e(mode)}' "
+                        f"data-workspace-view-memory-key='{_e(storage_key)}'>"
+                    ),
+                    f"<h3>{_e(title)}</h3>",
+                    f"<p>{_e(summary)}</p>",
+                    "<p class='workspace-view-memory-state' data-workspace-view-memory-state='true'>Unknown until inspected.</p>",
+                    "<button type='button' class='workspace-view-memory-reset' data-workspace-view-memory-reset='true'>Reset</button>",
+                    "</article>",
+                ]
+            )
+        )
+        evidence_lines.append(
+            f"workspace_view_memory_card: {_e(key)} mode={_e(mode)} key={_e(storage_key)}"
+        )
+    return "".join(
+        [
+            "<section id='workspace-view-memory' class='panel workspace-view-memory' data-workspace-view-memory='true'>",
+            "<h2>Workspace View Memory</h2>",
+            "<p class='muted'>Inspect and clear browser-local view state that can affect tomorrow's return path without changing saved project data.</p>",
+            "<div class='workspace-view-memory-toolbar' data-workspace-view-memory-toolbar='true'>",
+            "<span data-workspace-view-memory-status='true'>Inspecting browser-local view memory.</span>",
+            "<button type='button' class='workspace-view-memory-refresh' data-workspace-view-memory-refresh='true'>Refresh</button>",
+            "<button type='button' class='workspace-view-memory-reset-all' data-workspace-view-memory-reset-all='true'>Reset all view memory</button>",
+            "</div>",
+            "<div class='workspace-view-memory-grid' data-workspace-view-memory-grid='true'>",
+            "".join(card_html),
+            "</div>",
+            "<details class='workspace-view-memory-evidence' data-workspace-view-memory-evidence='true'><summary>Workspace view memory evidence</summary>",
+            _kv(
+                [
+                    ("workspace_view_memory_status", "available"),
+                    ("workspace_view_memory_source", "browser localStorage"),
+                    ("workspace_view_memory_card_count", str(len(cards))),
+                    ("workspace_view_memory_exact_keys", ", ".join(exact_keys)),
+                    ("workspace_view_memory_prefix_keys", ", ".join(prefix_keys)),
+                    ("workspace_view_memory_reset_all_supported", "true"),
+                    ("workspace_view_memory_reset_requires_click", "true"),
+                    ("workspace_view_memory_workspace_json_write", "false"),
+                    ("workspace_view_memory_write_on_get", "false"),
+                    ("workspace_view_memory_provider_calls_taken", "0"),
+                    ("workspace_view_memory_network_actions_taken", "0"),
+                    ("workspace_view_memory_external_effects_created", "false"),
+                    ("workspace_view_memory_raw_filesystem_browsing", "false"),
+                ]
+            ),
+            _ul(
+                evidence_lines
+                + [
+                    "workspace_view_memory_safety: browser-local view state only",
+                    "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes",
+                ]
+            ),
+            "</details>",
+            """<script>
+(function () {
+  var root = document.querySelector("[data-workspace-view-memory='true']");
+  if (!root) return;
+  var cards = Array.prototype.slice.call(root.querySelectorAll("[data-workspace-view-memory-card]"));
+  var status = root.querySelector("[data-workspace-view-memory-status='true']");
+  var refresh = root.querySelector("[data-workspace-view-memory-refresh='true']");
+  var resetAll = root.querySelector("[data-workspace-view-memory-reset-all='true']");
+  function setStatus(message) {
+    if (status) status.textContent = message;
+  }
+  function keysForCard(card) {
+    if (!window.localStorage) return [];
+    var key = card.getAttribute("data-workspace-view-memory-key") || "";
+    var mode = card.getAttribute("data-workspace-view-memory-mode") || "exact";
+    if (!key) return [];
+    if (mode === "prefix") {
+      var keys = [];
+      for (var index = 0; index < window.localStorage.length; index += 1) {
+        var candidate = window.localStorage.key(index) || "";
+        if (candidate.indexOf(key) === 0) keys.push(candidate);
+      }
+      return keys.sort();
+    }
+    return window.localStorage.getItem(key) === null ? [] : [key];
+  }
+  function summarize(raw) {
+    if (raw === null || raw === undefined || raw === "") return "Stored";
+    if (raw === "true" || raw === "false") return raw;
+    try {
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return Object.keys(parsed).sort().map(function (key) {
+          var value = String(parsed[key] || "");
+          if (value.length > 32) value = value.slice(0, 29) + "...";
+          return key + "=" + value;
+        }).join(", ") || "Stored object";
+      }
+    } catch (error) {}
+    return raw.length > 48 ? raw.slice(0, 45) + "..." : raw;
+  }
+  function updateCard(card) {
+    var state = card.querySelector("[data-workspace-view-memory-state='true']");
+    var key = card.getAttribute("data-workspace-view-memory-key") || "";
+    var mode = card.getAttribute("data-workspace-view-memory-mode") || "exact";
+    if (!window.localStorage) {
+      card.setAttribute("data-workspace-view-memory-state-value", "unavailable");
+      if (state) state.textContent = "localStorage unavailable.";
+      return 0;
+    }
+    var keys = keysForCard(card);
+    card.setAttribute("data-workspace-view-memory-count", String(keys.length));
+    if (!keys.length) {
+      card.setAttribute("data-workspace-view-memory-state-value", "empty");
+      if (state) state.textContent = mode === "prefix" ? "No saved views for " + key : "Not set.";
+      return 0;
+    }
+    card.setAttribute("data-workspace-view-memory-state-value", "stored");
+    if (state) {
+      if (mode === "prefix") {
+        state.textContent = keys.length + " saved view" + (keys.length === 1 ? "" : "s") + ".";
+      } else {
+        state.textContent = summarize(window.localStorage.getItem(keys[0]));
+      }
+    }
+    return keys.length;
+  }
+  function refreshState(message) {
+    var stored = 0;
+    cards.forEach(function (card) { stored += updateCard(card); });
+    setStatus(message || ("View memory: " + stored + " saved browser value" + (stored === 1 ? "" : "s") + "."));
+  }
+  function resetCard(card) {
+    if (!window.localStorage) return 0;
+    var keys = keysForCard(card);
+    keys.forEach(function (key) { window.localStorage.removeItem(key); });
+    keys.forEach(function (key) {
+      if (key === "clankeros-theme") {
+        delete document.documentElement.dataset.theme;
+      }
+      if (key === "clankeros-focus-mode") {
+        delete document.documentElement.dataset.focusMode;
+        var focusToggle = document.querySelector("[data-focus-mode-toggle='true']");
+        if (focusToggle) {
+          focusToggle.setAttribute("aria-pressed", "false");
+          focusToggle.textContent = "Focus";
+          focusToggle.title = "Toggle focus mode (m)";
+        }
+      }
+    });
+    updateCard(card);
+    return keys.length;
+  }
+  cards.forEach(function (card) {
+    var button = card.querySelector("[data-workspace-view-memory-reset='true']");
+    if (!button) return;
+    button.addEventListener("click", function () {
+      var removed = resetCard(card);
+      setStatus("Reset " + removed + " browser value" + (removed === 1 ? "" : "s") + ".");
+    });
+  });
+  if (refresh) {
+    refresh.addEventListener("click", function () { refreshState("View memory refreshed."); });
+  }
+  if (resetAll) {
+    resetAll.addEventListener("click", function () {
+      var removed = 0;
+      cards.forEach(function (card) { removed += resetCard(card); });
+      setStatus("Reset " + removed + " browser value" + (removed === 1 ? "" : "s") + ".");
+    });
+  }
+  refreshState();
+})();
+</script>""",
+            "</section>",
+        ]
+    )
 
 
 def _workspace_restore_map(
@@ -37313,9 +37557,18 @@ def _html_page(
     .workspace-restore-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
     .workspace-restore-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .workspace-restore-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
-    .workspace-workbench-evidence, .workspace-restore-map-evidence, .workspace-state-details, .workspace-restore-details, .workspace-save-details {{ margin:12px 0; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .workspace-workbench-evidence summary, .workspace-restore-map-evidence summary, .workspace-state-details summary, .workspace-restore-details summary, .workspace-save-details summary {{ cursor:pointer; font-weight:700; }}
-    .workspace-workbench-evidence:not([open]) > :not(summary), .workspace-restore-map-evidence:not([open]) > :not(summary), .workspace-state-details:not([open]) > :not(summary), .workspace-restore-details:not([open]) > :not(summary), .workspace-save-details:not([open]) > :not(summary) {{ display:none; }}
+    .workspace-view-memory {{ border-left:4px solid var(--ok); }}
+    .workspace-view-memory-toolbar {{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:10px 0; }}
+    .workspace-view-memory-toolbar span {{ color:var(--muted); }}
+    .workspace-view-memory-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .workspace-view-memory-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .workspace-view-memory-card h3 {{ margin-top:0; }}
+    .workspace-view-memory-card p {{ margin:0 0 10px; }}
+    .workspace-view-memory-state {{ color:var(--muted); }}
+    .workspace-view-memory-reset, .workspace-view-memory-refresh, .workspace-view-memory-reset-all {{ max-width:100%; }}
+    .workspace-workbench-evidence, .workspace-restore-map-evidence, .workspace-view-memory-evidence, .workspace-state-details, .workspace-restore-details, .workspace-save-details {{ margin:12px 0; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .workspace-workbench-evidence summary, .workspace-restore-map-evidence summary, .workspace-view-memory-evidence summary, .workspace-state-details summary, .workspace-restore-details summary, .workspace-save-details summary {{ cursor:pointer; font-weight:700; }}
+    .workspace-workbench-evidence:not([open]) > :not(summary), .workspace-restore-map-evidence:not([open]) > :not(summary), .workspace-view-memory-evidence:not([open]) > :not(summary), .workspace-state-details:not([open]) > :not(summary), .workspace-restore-details:not([open]) > :not(summary), .workspace-save-details:not([open]) > :not(summary) {{ display:none; }}
     .workspace-save-details > section {{ margin:10px 0 0; }}
     .resume-command-bar {{ border-left:4px solid var(--accent); }}
     .resume-hero-action {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:#fff; overflow-wrap:anywhere; text-decoration:none; }}
@@ -38152,6 +38405,7 @@ def _html_page(
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
     @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .workflow-scope-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #goal-attention-digest {{ scroll-margin-top:260px; }} .goal-attention-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}

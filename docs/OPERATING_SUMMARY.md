@@ -287,6 +287,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   browser-available, followed by a read-only `Workspace Restore Map` with
   Restore, Goal, Artifact, Filters + Panels, and Tomorrow cards that make saved
   versus suggested return state explicit before the
+  read-only `Workspace View Memory` panel. That panel inventories browser
+  `localStorage` view state for theme, focus mode, Goal board, search lanes,
+  timeline lanes, artifact filters, and notes filters, and can clear those
+  browser-local values after explicit operator clicks without writing
+  `.clanker/app/workspace.json`, calling providers, using the network, or
+  mutating external systems. It sits before the
   read-only `Workspace Daily Brief` and `Workspace Workflow Map` for the saved
   goal's phase, current gate, resume readiness, finish posture, and zero-effect
   counters. Saved-state and restore-link readbacks stay inside collapsed

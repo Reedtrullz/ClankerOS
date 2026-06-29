@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/workspace#workspace-view-memory` now exposes browser-local view memory
+  for theme, focus mode, Goal board view, search lanes, timeline lanes,
+  artifact filters, and notes filters. It can refresh or clear those
+  `localStorage` values after explicit clicks while preserving read-only GET
+  behavior, `.clanker/app/workspace.json`, no raw filesystem browsing, and
+  no-provider/no-network/no-external-effect boundaries.
 - `/goals/<goal_id>#goal-operator-notes-browser` now renders existing
   `operator-notes.md` sections as scan-first note cards with local text search,
   visible View status, per-Goal browser-local query memory in
