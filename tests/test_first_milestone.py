@@ -5358,6 +5358,23 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_empty_state_illustration" in root.body
     assert "register-project" in root.body
     assert "create-goal" in root.body
+    assert "data-action-form-brief-action='register-project'" in root.body
+    assert "First project setup" in root.body
+    assert "These defaults register this checkout as the first ClankerOS project." in root.body
+    assert "data-action-form-field='name'" in root.body
+    assert "data-action-form-field='path'" in root.body
+    assert "data-action-form-field='test_command'" in root.body
+    assert "data-action-form-field='allowed_write_roots'" in root.body
+    assert "<span class='action-form-label'>Project name</span>" in root.body
+    assert "<span class='action-form-label'>Project path</span>" in root.body
+    assert "<span class='action-form-label'>Verification command</span>" in root.body
+    assert "<span class='action-form-label'>Allowed write roots</span>" in root.body
+    assert "Absolute path to the local git checkout ClankerOS should manage." in root.body
+    assert "Default local verifier for this project." in root.body
+    assert "Comma-separated local roots this project is allowed to write inside." in root.body
+    assert "<dt>Confirmation</dt><dd>required before local write</dd>" in root.body
+    assert "<dt>External effects</dt><dd>none</dd>" in root.body
+    assert ">Create project</button>" in root.body
     assert "data-command-palette='true'" in root.body
     assert "data-command-palette-filter-supported='true'" in root.body
     assert "data-command-palette-keyboard-nav='true'" in root.body
@@ -9354,6 +9371,18 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "data-action-draft-status='true'>Draft: default" in register_result.body
     assert "data-action-draft-reset='true'>Clear draft" in register_result.body
     assert "action_form_draft_memory_storage</dt><dd>localStorage:clankeros-action-form-draft:create-goal:clankeros" in register_result.body
+    assert "data-action-form-brief-action='create-goal'" in register_result.body
+    assert "First Goal setup" in register_result.body
+    assert "This creates the Goal, plan, contract, and starter task records" in register_result.body
+    assert "data-action-form-field='project_id'" in register_result.body
+    assert "data-action-form-field='prompt'" in register_result.body
+    assert "data-action-form-field='created_by_profile'" in register_result.body
+    assert "<span class='action-form-label'>Project</span>" in register_result.body
+    assert "<span class='action-form-label'>Goal intent</span>" in register_result.body
+    assert "<span class='action-form-label'>Profile</span>" in register_result.body
+    assert "Plain-language Goal ClankerOS should work toward." in register_result.body
+    assert "Planning profile label for the first Goal. No provider routing is activated." in register_result.body
+    assert ">Create Goal</button>" in register_result.body
     assert "Action Result Workflow Map" in register_result.body
     assert "data-action-result-workflow-map='true'" in register_result.body
     assert "action_result_workflow_status</dt><dd>first_run" in register_result.body
@@ -9490,6 +9519,10 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "name='project_id' value='clankeros'" in register_resume.body
     assert "data-action-draft-storage-key='clankeros-action-form-draft:create-goal:clankeros'" in register_resume.body
     assert "<textarea name='prompt' rows='4' spellcheck='true' data-action-draft-input='true'" in register_resume.body
+    assert "data-action-form-brief-action='create-goal'" in register_resume.body
+    assert "First Goal setup" in register_resume.body
+    assert "<span class='action-form-label'>Goal intent</span>" in register_resume.body
+    assert ">Create Goal</button>" in register_resume.body
     assert "data-resume-state-details='true'" in register_resume.body
     assert "data-resume-workbench-primary='true'" in register_resume.body
     assert "data-resume-workbench-evidence='true'" in register_resume.body

@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- First-run action forms now read like product surfaces instead of raw action
+  payloads: `register-project` and `create-goal` forms include a short action
+  brief, human field labels, field help, confirmation/external-effect notes,
+  and outcome-named buttons such as `Create project` and `Create Goal`, while
+  preserving the existing confirmed-local-action flow, browser-local drafts,
+  and zero provider/network/external-effect posture.
 - `/demo#demo-fixture-action` now lets the operator create or refresh the
   deterministic local demo fixture from the browser through the existing
   confirmation flow. It records the action in the safe action catalog, sets

@@ -94,7 +94,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `.clanker/app/workspace.json`, so `/resume` can restore the new project or
   goal without a separate manual save step. Those setup forms keep unsent
   edits in browser-local `localStorage:clankeros-action-form-draft:<action>:<scope>`
-  until cleared or until the confirmed local action succeeds. After
+  until cleared or until the confirmed local action succeeds. They now open
+  with a short action brief, human field labels, field help, explicit
+  confirmation/external-effect notes, and outcome-named buttons such as
+  `Create project` and `Create Goal`, so first-run setup can be completed from
+  the browser without knowing raw action ids. After
   `register-project`, the
   local `Action Result Details` page also reads first-run progress and renders
   an inline confirmed `create-goal` continuation, plus Home and Today fallback

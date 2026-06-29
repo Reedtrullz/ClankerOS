@@ -416,7 +416,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   browser project registration and first goal creation, keeps unsent setup and
   Goal creation edits in browser-local
   `localStorage:clankeros-action-form-draft:<action>:<scope>` until cleared or
-  confirmed-success cleanup, and now refreshes the
+  confirmed-success cleanup, gives those setup forms action briefs, human
+  labels, field help, confirmation/external-effect notes, and outcome-named
+  buttons like `Create project` / `Create Goal`, and now refreshes the
   same saved workspace anchor after
   confirmed first-run scout delegation, context-pack generation, and delegation
   run actions so `/resume`, Home, and `/workspace` return to the newest local

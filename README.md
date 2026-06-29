@@ -401,6 +401,10 @@ so an operator can add the next goal for a registered project without
 switching to the CLI. Setup and Goal creation forms keep unsent edits in
 browser-local `localStorage:clankeros-action-form-draft:<action>:<scope>`
 until the operator clears them or the confirmed local action succeeds. The
+shared action forms now open with a short action brief, human field labels,
+field help, explicit confirmation/external-effect notes, and outcome-named
+buttons such as `Create project` and `Create Goal`, so first-run setup is
+usable without knowing the internal action ids. The
 same browser-local draft behavior is used for goal workflow forms that collect
 worktree approval notes, safe run commands, commit/publication messages,
 publication approval notes, and manual `complete-goal` notes.

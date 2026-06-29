@@ -1,5 +1,48 @@
 # Status
 
+## 2026-06-30 First-Run Form Guidance UX
+
+- Made shared confirmed action forms more usable in first-run flows:
+  `register-project` now presents `First project setup`, human labels for
+  project name/path/verifier/write roots, field help, explicit confirmation and
+  external-effect notes, and an outcome button labeled `Create project`.
+- Added matching guidance for `create-goal` continuation forms after project
+  registration, including `First Goal setup`, human labels for project, Goal
+  intent, and profile, field help, and an outcome button labeled `Create Goal`.
+- Kept the existing safety model: GET rendering remains read-only, browser
+  drafts still use `localStorage:clankeros-action-form-draft:<action>:<scope>`,
+  and writes still require the existing confirmation screen before local state
+  changes.
+- Updated README, local app docs, operating summary, and latest-status docs so
+  the first-run path is described as guided browser setup rather than raw
+  action-id forms.
+- Verification: `df -h /System/Volumes/Data` showed 81Gi free before the local
+  loop; `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed; focused
+  pytest `python3 -m pytest tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health` passed with `1 passed,
+  515 deselected in 41.25s`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  first_run_browser_actions_persist_resume_workspace` passed with `1 passed,
+  515 deselected in 17.79s`; `python3 -m agent_os.cli app-smoke-test` passed
+  with all route markers matched and provider/network/external-mutation
+  counters at 0.
+- Browser verification: in-app browser against throwaway scratch app
+  `http://127.0.0.1:62122/` confirmed the desktop dashboard title
+  `Dashboard - ClankerOS Local Operator`, meaningful DOM content, no framework
+  overlay, no console warnings/errors, the `First project setup` brief, human
+  labels and help text, `Create project` submit text, no desktop overflow at
+  `1280px`, successful navigation to `/actions/register-project`, confirmation
+  page title `Confirm Action - ClankerOS Local Operator`, submitted
+  `register-project` payload and safety context, no confirmation-page overflow,
+  and no console warnings/errors. Mobile `390x844` at
+  `/#first-run-create-project` confirmed the form, labels, four help rows,
+  `Create project` button, 358px form width inside 390px, no overflow, and no
+  console warnings/errors.
+- Non-claims: this does not create projects, goals, delegations, context
+  packs, runs, approvals, execution, provider calls, non-loopback network
+  actions, pushes, PRs, deploys, or external mutations.
+
 ## 2026-06-30 Browser Demo Fixture Action UX
 
 - Made demo fixture setup first-class in the browser: `/demo#demo-fixture-action`

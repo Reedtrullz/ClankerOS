@@ -38233,6 +38233,93 @@ def _action_form_draft_textarea_rows(key: str) -> int:
     return 4
 
 
+ACTION_FORM_COPY: dict[str, dict[str, str]] = {
+    "register-project": {
+        "title": "First project setup",
+        "body": "These defaults register this checkout as the first ClankerOS project. Review them, then confirm the local write on the next screen.",
+        "button": "Create project",
+    },
+    "create-goal": {
+        "title": "First Goal setup",
+        "body": "This creates the Goal, plan, contract, and starter task records that the browser workflow will use next.",
+        "button": "Create Goal",
+    },
+    "save-workspace": {
+        "title": "Save return point",
+        "body": "Store the current project, Goal, filters, expanded panels, and artifact pointer for tomorrow's resume surface.",
+        "button": "Save workspace",
+    },
+    "save-goal-note": {
+        "title": "Capture operator note",
+        "body": "Append a local note to this Goal so future you can recover context from the browser.",
+        "button": "Save note",
+    },
+    "pause-goal": {
+        "title": "Pause Goal",
+        "body": "Move this Goal out of the active lane until you explicitly resume it.",
+        "button": "Pause Goal",
+    },
+}
+
+
+ACTION_FORM_FIELD_LABELS = {
+    "allowed_write_roots": "Allowed write roots",
+    "created_by_profile": "Profile",
+    "expanded_panels": "Expanded panels",
+    "filters": "Saved filters",
+    "last_viewed_artifact": "Last viewed artifact",
+    "message": "Message",
+    "name": "Project name",
+    "note": "Note",
+    "open_goal": "Open Goal",
+    "open_project": "Open project",
+    "path": "Project path",
+    "project_id": "Project",
+    "prompt": "Goal intent",
+    "resume_surface": "Resume surface",
+    "test_command": "Verification command",
+}
+
+
+ACTION_FORM_FIELD_HELP = {
+    "allowed_write_roots": "Comma-separated local roots this project is allowed to write inside.",
+    "created_by_profile": "Planning profile label for the first Goal. No provider routing is activated.",
+    "expanded_panels": "Panel ids to reopen when the workspace is restored.",
+    "filters": "Human-readable filter context to remember for resume.",
+    "last_viewed_artifact": "Repo-relative artifact path to reopen from the resume surface.",
+    "message": "Short local message for the action evidence.",
+    "name": "Short project id shown throughout ClankerOS.",
+    "note": "Context to preserve for future operator review.",
+    "open_goal": "Goal id to restore as the active work surface.",
+    "open_project": "Project id to restore as the active project.",
+    "path": "Absolute path to the local git checkout ClankerOS should manage.",
+    "project_id": "Existing local project that owns this Goal.",
+    "prompt": "Plain-language Goal ClankerOS should work toward.",
+    "resume_surface": "Browser route to open when resuming work.",
+    "test_command": "Default local verifier for this project.",
+}
+
+
+def _action_form_copy(action: str) -> dict[str, str]:
+    fallback = action.replace("-", " ").title()
+    return ACTION_FORM_COPY.get(
+        action,
+        {
+            "title": fallback,
+            "body": "Confirmed local action. Review the fields, then confirm on the next screen before anything is written.",
+            "button": fallback,
+        },
+    )
+
+
+def _action_form_field_label(key: str) -> str:
+    return ACTION_FORM_FIELD_LABELS.get(key, key.replace("_", " ").title())
+
+
+def _action_form_field_help(key: str) -> str:
+    return ACTION_FORM_FIELD_HELP.get(key, "Submitted exactly as shown after confirmation.")
+
+
 def _input_form(
     action: str,
     hidden_fields: dict[str, str],
@@ -38254,6 +38341,24 @@ def _input_form(
             "<input type='hidden' name='_action_draft_storage_key' "
             f"value='{_e(draft_storage_key)}'>"
         )
+    copy = _action_form_copy(action)
+    field_names = ", ".join(text_fields.keys())
+    brief = "".join(
+        [
+            (
+                "<div class='action-form-brief' data-action-form-brief='true' "
+                f"data-action-form-brief-action='{_e(action)}'>"
+            ),
+            f"<strong>{_e(copy['title'])}</strong>",
+            f"<p>{_e(copy['body'])}</p>",
+            "<dl>",
+            ("<dt>Fields</dt><dd>" + _e(field_names or "none") + "</dd>"),
+            "<dt>Confirmation</dt><dd>required before local write</dd>",
+            "<dt>External effects</dt><dd>none</dd>",
+            "</dl>",
+            "</div>",
+        ]
+    )
     for key, value in text_fields.items():
         draft_attrs = (
             " data-action-draft-input='true'"
@@ -38269,11 +38374,22 @@ def _input_form(
             )
         else:
             field = f"<input name='{_e(key)}' value='{_e(value)}'{draft_attrs}>"
-        inputs += f"<label>{_e(key)} {field}</label>"
+        inputs += "".join(
+            [
+                (
+                    "<label class='action-form-field' "
+                    f"data-action-form-field='{_e(key)}'>"
+                ),
+                f"<span class='action-form-label'>{_e(_action_form_field_label(key))}</span>",
+                field,
+                f"<span class='action-form-help'>{_e(_action_form_field_help(key))}</span>",
+                "</label>",
+            ]
+        )
     if not draft_enabled:
         return (
             f"<form method='post' action='/actions/{_e(action)}'>"
-            f"{inputs}<button type='submit'>{_e(action)}</button></form>"
+            f"{brief}{inputs}<button type='submit'>{_e(copy['button'])}</button></form>"
         )
     return "".join(
         [
@@ -38288,6 +38404,7 @@ def _input_form(
                 "data-action-draft-network-actions-taken='0' "
                 "data-action-draft-external-effects-created='false'>"
             ),
+            brief,
             inputs,
             "<div class='action-draft-toolbar' data-action-draft-toolbar='true'>",
             "<span class='action-draft-status' data-action-draft-status='true'>Draft: default</span>",
@@ -38318,7 +38435,7 @@ def _input_form(
                 ]
             ),
             "</details>",
-            f"<button type='submit'>{_e(action)}</button>",
+            f"<button type='submit'>{_e(copy['button'])}</button>",
             "</form>",
         ]
     )
@@ -42124,9 +42241,15 @@ def _html_page(
     .goal-note-draft-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-note-draft-evidence:not([open]) > :not(summary) {{ display:none; }}
     .action-draft-form {{ display:grid; gap:10px; margin:10px 0; }}
-    .action-draft-form label {{ display:grid; gap:6px; color:var(--muted); }}
-    .action-draft-form input, .action-draft-form textarea {{ width:100%; min-height:36px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:7px 9px; }}
-    .action-draft-form textarea {{ min-height:110px; resize:vertical; }}
+    .action-form-brief {{ border:1px solid var(--line); border-radius:6px; background:var(--surface); padding:12px; display:grid; gap:8px; overflow-wrap:anywhere; }}
+    .action-form-brief strong {{ font-size:16px; }}
+    .action-form-brief p {{ margin:0; color:var(--muted); }}
+    .action-form-brief dl {{ margin:0; grid-template-columns:minmax(120px, 180px) 1fr; }}
+    .action-form-field {{ display:grid; gap:6px; color:var(--muted); }}
+    .action-form-label {{ color:var(--ink); font-weight:700; }}
+    .action-form-help {{ color:var(--muted); font-size:12px; line-height:1.35; }}
+    .action-form-field input, .action-form-field textarea {{ width:100%; min-height:36px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:7px 9px; }}
+    .action-form-field textarea {{ min-height:110px; resize:vertical; }}
     .action-draft-toolbar {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }}
     .action-draft-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
     .action-draft-reset {{ min-height:32px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 10px; }}
