@@ -544,6 +544,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-open-panel-memory='true'",
                 "data-open-panel-memory-storage-prefix='clankeros-open-panels:'",
                 "function initializeOpenPanelMemoryState()",
+                "data-scroll-position-memory='true'",
+                "data-scroll-position-memory-storage-prefix='clankeros-scroll-position:'",
+                "function initializeScrollPositionMemoryState()",
                 "data-command-palette-route-history='true'",
                 "data-command-palette-route-history-storage-key='clankeros-route-history'",
                 "function syncPaletteFilter()",
@@ -1040,6 +1043,8 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-workspace-view-memory-evidence='true'",
                 "data-workspace-view-memory-card='open-panels'",
                 "data-workspace-view-memory-key='clankeros-open-panels:'",
+                "data-workspace-view-memory-card='scroll-position'",
+                "data-workspace-view-memory-key='clankeros-scroll-position:'",
                 "workspace_view_memory_status</dt><dd>available",
                 "data-workspace-save-details='true'",
                 "save-workspace",
@@ -6815,6 +6820,13 @@ def _workspace_view_memory_panel() -> str:
             "Route-scoped expanded details panels",
         ),
         (
+            "scroll-position",
+            "Scroll Position",
+            "prefix",
+            "clankeros-scroll-position:",
+            "Route-scoped return position",
+        ),
+        (
             "search",
             "Search Lanes",
             "prefix",
@@ -6942,7 +6954,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus board recent route-history open-panels search timeline artifacts notes memory skills approvals inbox profiles",
+                    "workspace_view_memory_reset_scope: theme focus board recent route-history open-panels scroll-position search timeline artifacts notes memory skills approvals inbox profiles",
                 ]
             ),
             "</details>",
@@ -40528,7 +40540,7 @@ def _html_page(
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .run-evidence-map dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
-<body data-open-panel-memory='true' data-open-panel-memory-storage-prefix='clankeros-open-panels:' data-open-panel-memory-write-on-get='false' data-open-panel-memory-provider-calls-taken='0' data-open-panel-memory-network-actions-taken='0' data-open-panel-memory-external-effects-created='false'>
+<body data-open-panel-memory='true' data-open-panel-memory-storage-prefix='clankeros-open-panels:' data-open-panel-memory-write-on-get='false' data-open-panel-memory-provider-calls-taken='0' data-open-panel-memory-network-actions-taken='0' data-open-panel-memory-external-effects-created='false' data-scroll-position-memory='true' data-scroll-position-memory-storage-prefix='clankeros-scroll-position:' data-scroll-position-memory-write-on-get='false' data-scroll-position-memory-provider-calls-taken='0' data-scroll-position-memory-network-actions-taken='0' data-scroll-position-memory-external-effects-created='false'>
   <header>
     <strong>ClankerOS Local Operator</strong>
     <nav>{nav}</nav>
@@ -41926,6 +41938,137 @@ def _html_page(
         details.addEventListener("toggle", saveOpenPanelMemoryState);
       }});
     }}
+    var scrollPositionMemorySaveTimer = null;
+    var scrollPositionMemoryReadyToSave = false;
+    function scrollPositionMemoryRoot() {{
+      return document.body && document.body.getAttribute("data-scroll-position-memory") === "true" ? document.body : null;
+    }}
+    function scrollPositionMemoryStoragePrefix() {{
+      var positionRoot = scrollPositionMemoryRoot();
+      return (positionRoot && positionRoot.getAttribute("data-scroll-position-memory-storage-prefix")) || "clankeros-scroll-position:";
+    }}
+    function scrollPositionMemoryRoute() {{
+      return window.location.pathname + window.location.search;
+    }}
+    function scrollPositionMemoryStorageKey() {{
+      return scrollPositionMemoryStoragePrefix() + scrollPositionMemoryRoute();
+    }}
+    function maxScrollableY() {{
+      var documentElement = document.documentElement || {{}};
+      var body = document.body || {{}};
+      var scrollHeight = Math.max(
+        Number(documentElement.scrollHeight || 0),
+        Number(body.scrollHeight || 0)
+      );
+      return Math.max(0, scrollHeight - Number(window.innerHeight || 0));
+    }}
+    function normalizeScrollPositionState(raw) {{
+      if (!raw) {{ return null; }}
+      try {{
+        var parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") {{ return null; }}
+        var x = Number(parsed.x || 0);
+        var y = Number(parsed.y || 0);
+        if (!isFinite(x) || !isFinite(y)) {{ return null; }}
+        return {{
+          x: Math.max(0, Math.round(x)),
+          y: Math.max(0, Math.round(y)),
+          maxY: Math.max(0, Math.round(Number(parsed.maxY || 0))),
+          updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : ""
+        }};
+      }} catch (error) {{
+        return null;
+      }}
+    }}
+    function loadScrollPositionMemoryState() {{
+      if (!window.localStorage) {{ return null; }}
+      try {{
+        return normalizeScrollPositionState(window.localStorage.getItem(scrollPositionMemoryStorageKey()));
+      }} catch (error) {{
+        return null;
+      }}
+    }}
+    function updateScrollPositionMemoryAttributes(status, x, y) {{
+      var positionRoot = scrollPositionMemoryRoot();
+      if (!positionRoot) {{ return; }}
+      positionRoot.setAttribute("data-scroll-position-memory-route-key", scrollPositionMemoryStorageKey());
+      positionRoot.setAttribute("data-scroll-position-memory-status", status);
+      positionRoot.setAttribute("data-scroll-position-memory-x", String(Math.max(0, Math.round(Number(x || 0)))));
+      positionRoot.setAttribute("data-scroll-position-memory-y", String(Math.max(0, Math.round(Number(y || 0)))));
+    }}
+    function saveScrollPositionMemoryState() {{
+      if (!scrollPositionMemoryReadyToSave) {{ return; }}
+      if (window.location.hash) {{
+        updateScrollPositionMemoryAttributes("hash-skip", window.scrollX || 0, window.scrollY || 0);
+        return;
+      }}
+      var x = Math.max(0, Math.round(Number(window.scrollX || window.pageXOffset || 0)));
+      var y = Math.max(0, Math.round(Number(window.scrollY || window.pageYOffset || 0)));
+      updateScrollPositionMemoryAttributes(window.localStorage ? "saved" : "unavailable", x, y);
+      if (!window.localStorage) {{ return; }}
+      try {{
+        window.localStorage.setItem(scrollPositionMemoryStorageKey(), JSON.stringify({{
+          route: scrollPositionMemoryRoute(),
+          x: x,
+          y: y,
+          maxY: maxScrollableY(),
+          updatedAt: new Date().toISOString()
+        }}));
+      }} catch (error) {{
+        updateScrollPositionMemoryAttributes("local-only", x, y);
+      }}
+    }}
+    function scheduleSaveScrollPositionMemoryState() {{
+      if (!scrollPositionMemoryReadyToSave) {{ return; }}
+      if (window.location.hash) {{
+        updateScrollPositionMemoryAttributes("hash-skip", window.scrollX || 0, window.scrollY || 0);
+        return;
+      }}
+      if (scrollPositionMemorySaveTimer) {{
+        window.clearTimeout(scrollPositionMemorySaveTimer);
+      }}
+      scrollPositionMemorySaveTimer = window.setTimeout(function() {{
+        scrollPositionMemorySaveTimer = null;
+        saveScrollPositionMemoryState();
+      }}, 160);
+    }}
+    function restoreScrollPositionMemoryState() {{
+      var positionRoot = scrollPositionMemoryRoot();
+      if (!positionRoot) {{ return; }}
+      if (window.location.hash) {{
+        updateScrollPositionMemoryAttributes("hash-skip", window.scrollX || 0, window.scrollY || 0);
+        return;
+      }}
+      if (!window.localStorage) {{
+        updateScrollPositionMemoryAttributes("unavailable", window.scrollX || 0, window.scrollY || 0);
+        return;
+      }}
+      var saved = loadScrollPositionMemoryState();
+      if (!saved) {{
+        updateScrollPositionMemoryAttributes("default", window.scrollX || 0, window.scrollY || 0);
+        return;
+      }}
+      var targetX = Math.max(0, saved.x);
+      var targetY = Math.min(Math.max(0, saved.y), maxScrollableY());
+      window.requestAnimationFrame(function() {{
+        window.scrollTo(targetX, targetY);
+        window.setTimeout(function() {{
+          updateScrollPositionMemoryAttributes("restored", window.scrollX || targetX, window.scrollY || targetY);
+        }}, 80);
+      }});
+    }}
+    function initializeScrollPositionMemoryState() {{
+      if (!scrollPositionMemoryRoot()) {{ return; }}
+      try {{
+        if ("scrollRestoration" in window.history) {{ window.history.scrollRestoration = "manual"; }}
+      }} catch (error) {{}}
+      restoreScrollPositionMemoryState();
+      window.setTimeout(function() {{
+        scrollPositionMemoryReadyToSave = true;
+      }}, 240);
+      window.addEventListener("scroll", scheduleSaveScrollPositionMemoryState, {{ passive: true }});
+      window.addEventListener("beforeunload", saveScrollPositionMemoryState);
+    }}
     if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
     if (paletteSearch) {{ paletteSearch.addEventListener("input", syncPaletteFilter); }}
     if (nextActionOpen) {{ nextActionOpen.addEventListener("click", openNextAction); }}
@@ -42153,9 +42296,13 @@ def _html_page(
     initializeProfileFilterState();
     restoreWorkspacePanels();
     initializeOpenPanelMemoryState();
+    initializeScrollPositionMemoryState();
     window.addEventListener("hashchange", function() {{
       openCurrentHashDetails();
       rememberCurrentRoute();
+      if (window.location.hash) {{
+        updateScrollPositionMemoryAttributes("hash-skip", window.scrollX || 0, window.scrollY || 0);
+      }}
     }});
     document.addEventListener("keydown", function(event) {{
       var target = event.target || {{}};

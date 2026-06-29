@@ -293,9 +293,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   versus suggested return state explicit before the
   read-only `Workspace View Memory` panel. That panel inventories browser
   `localStorage` view state for theme, focus mode, Goal board, Recent Items
-  filters, search lanes, timeline lanes, artifact filters, notes filters,
-  Memory Bank filters, Skills Inventory filters, Approval Queue filters, Inbox
-  Queue filters, and Profile Routing filters, and can clear those
+  filters, open panels, scroll position, search lanes, timeline lanes, artifact
+  filters, notes filters, Memory Bank filters, Skills Inventory filters,
+  Approval Queue filters, Inbox Queue filters, and Profile Routing filters, and can clear those
   browser-local values after explicit operator clicks without writing
   `.clanker/app/workspace.json`, calling providers, using the network, or
   mutating external systems. It sits before the
@@ -898,7 +898,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   after the browser has saved state for that route, so expanded evidence panels
   survive reloads on long operator pages; `/workspace#workspace-view-memory`
   inventories and clears those browser-local entries without changing
-  `.clanker/app/workspace.json`.
+  `.clanker/app/workspace.json`. The same shell remembers route-scoped scroll
+  position in `localStorage:clankeros-scroll-position:<route>` after operator
+  scrolling, restores long pages near the prior working spot, and skips that
+  restoration when the URL contains a hash anchor.
   The command palette now also includes a visible `Quick Switch` dock for
   Continue, Workspace, Action, Artifact, and Finish, so the keyboard launcher
   can reopen the current Goal, saved workspace, latest local action target,

@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-29 Browser-Local Scroll Position
+
+- Added shared browser-local scroll-position memory to the app shell, backed by
+  route-scoped `localStorage:clankeros-scroll-position:<route>` entries.
+- The shell records the route scroll position only after operator scrolling,
+  restores long pages near the prior working position on reload, and marks
+  hash-anchor routes as `hash-skip` so anchor navigation does not overwrite the
+  route-scoped saved position.
+- `/workspace#workspace-view-memory` now includes a `Scroll Position` prefix
+  card and reset scope, so route-scoped return position can be inspected or
+  cleared with the other browser-local view state.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused route/demo pytest passed with
+  `2 passed, 514 deselected in 50.55s`; `python3 -m compileall -q agent_os
+  tests` passed; `git diff --check` passed; bounded scratch-root
+  `app-smoke-test` passed across core routes with provider/network/external
+  mutation counters at zero; bounded scratch-root `app-demo-smoke-test` passed
+  across fixture-backed routes with the same zero-effect counters; Chrome
+  Playwright against throwaway demo Goal
+  `http://127.0.0.1:61904/goals/goal_768833a78f32` confirmed no key on first
+  load, save to `clankeros-scroll-position:/goals/goal_768833a78f32` after
+  scrolling to `y=900`, reload restore at `y=900`, hash navigation to
+  `#goal-timeline` reported `hash-skip` and did not overwrite the saved
+  position, Workspace View Memory reset removed the key, mobile viewport
+  `390px` had no horizontal overflow, and console warning/error logs were
+  empty.
+- Non-claims: scroll-position memory is browser-local view state only. It does
+  not write `.clanker/app/workspace.json`, record workflow memory, approve or
+  execute work, call providers, fetch GitHub, push, create PRs, deploy, or
+  mutate external systems.
+
 ## 2026-06-29 Browser-Local Open Panels
 
 - Added shared browser-local open-panel memory to the app shell, backed by

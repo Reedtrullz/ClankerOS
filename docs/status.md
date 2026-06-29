@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared app shell now remembers route-scoped scroll position in
+  browser-local `localStorage:clankeros-scroll-position:<route>` after operator
+  scrolling, restores long pages near the same working position on return, and
+  skips restoration when a hash anchor is present. `/workspace#workspace-view-memory`
+  can inspect and reset these entries with the other browser-local view state.
 - The shared app shell now remembers route-scoped open/closed `<details>`
   panels in browser-local `localStorage:clankeros-open-panels:<route>` entries
   after a page has saved panel state, so evidence/detail panels survive local

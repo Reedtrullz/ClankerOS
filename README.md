@@ -268,9 +268,10 @@ from suggested defaults before the longer checklist. The Goal card is
 title-first when possible, while still retaining exact saved Goal id and route
 evidence for restoration. A read-only `Workspace View Memory` panel follows to
 inspect and clear browser-local view state such as theme, focus mode, Goal
-board filters, search lanes, timeline lanes, artifact filters, and notes
-filters, Memory Bank filters, and Skills Inventory filters from
-`localStorage` without changing `.clanker/app/workspace.json`.
+board filters, open panels, scroll position, search lanes, timeline lanes,
+artifact filters, and notes filters, Memory Bank filters, and Skills
+Inventory filters from `localStorage` without changing
+`.clanker/app/workspace.json`.
 The read-only
 `Workspace Daily Brief` and `Workspace Workflow Map` then follow with the
 saved goal's current gate, gate counts, and finish posture, while saved-state
@@ -782,7 +783,11 @@ and can be cleared with an explicit click without touching server state. The
 shared shell also remembers open/closed route panels in route-scoped
 `localStorage:clankeros-open-panels:<route>` entries, so expanded evidence and
 details survive reloads on the same page while `/workspace#workspace-view-memory`
-can inspect or reset them with the other browser-local view state. A
+can inspect or reset them with the other browser-local view state. It also
+remembers route-scoped scroll position in
+`localStorage:clankeros-scroll-position:<route>` after the operator scrolls, so
+long Goal pages reopen near the same working position while hash anchors still
+take precedence. A
 browser-local `Find Recent` filter narrows the already-rendered
 shortcut rows by text, remembers the query in
 `localStorage:clankeros-recent-items-filter`, and resets without writing server

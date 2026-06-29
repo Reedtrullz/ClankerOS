@@ -540,7 +540,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   without writing server state. The shared shell also stores route-scoped open
   `<details>` panel state in `localStorage:clankeros-open-panels:<route>`, so
   expanded evidence panels survive local reloads on that same page and can be
-  inspected or reset from `/workspace#workspace-view-memory`. A browser-local `Find Recent` filter narrows the already-rendered shortcut
+  inspected or reset from `/workspace#workspace-view-memory`. It also stores
+  route-scoped scroll position in
+  `localStorage:clankeros-scroll-position:<route>` after operator scrolls, skips
+  restoration when a hash anchor is present, and can be inspected or reset from
+  the same view-memory panel. A browser-local `Find Recent` filter narrows the already-rendered shortcut
   rows by text, remembers the query in
   `localStorage:clankeros-recent-items-filter`, and resets without writing
   server state, with the remaining recent shortcuts in a second collapsed
@@ -622,8 +626,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   the visible Goal card when available, while retaining the exact saved Goal
   id, label source, and route evidence. A read-only `Workspace View Memory`
   panel follows, showing browser-local `localStorage` view state for theme,
-  focus mode, Goal board view, search lanes, timeline lanes, artifact filters,
-  notes filters, Memory Bank filters, and Skills Inventory filters with
+  focus mode, Goal board view, open panels, scroll position, search lanes,
+  timeline lanes, artifact filters, notes filters, Memory Bank filters, and
+  Skills Inventory filters with
   Refresh plus reset controls. It only clears
   browser-local view memory after explicit clicks and does not write
   `.clanker/app/workspace.json`. The read-only `Workspace Daily Brief` and `Workspace Workflow Map`
