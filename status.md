@@ -29,6 +29,12 @@
   overflow. Screenshot:
   `.playwright-cli/page-2026-06-29T21-42-45-397Z.png`. Browser, server, and
   scratch root were cleaned up.
+- GitHub evidence: Actions run `28404670806` completed `Fast smoke
+  verification` successfully for commit
+  `95c745fa8a9a48e97c6647013853be759386d41e`, including compile, local CLI
+  smoke, focused local-app pytest smoke, and whitespace. `Full pytest suite`
+  started and was running `Run full test suite` at final check:
+  https://github.com/Reedtrullz/ClankerOS/actions/runs/28404670806.
 - Non-claims: this does not create projects, goals, delegations, context
   packs, runs, approvals, execution, pushes, PRs, deploys, provider calls,
   non-loopback network actions, server writes on GET, or external mutations.
