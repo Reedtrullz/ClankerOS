@@ -5622,6 +5622,38 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "inbox_command_empty: no local operator queue items" in empty_inbox.body
     assert "inbox_command_write_on_get</dt><dd>false" in empty_inbox.body
     assert "inbox_command_external_effects_created</dt><dd>false" in empty_inbox.body
+    assert "Inbox Queue Filter" in empty_inbox.body
+    assert "data-inbox-queue-filter='true'" in empty_inbox.body
+    assert "data-inbox-filter-storage-key='clankeros-inbox-queue-filter'" in empty_inbox.body
+    assert "data-inbox-filter-scope-goal='none'" in empty_inbox.body
+    assert "data-inbox-filter-scope-run='none'" in empty_inbox.body
+    assert "data-inbox-filter-controls='true'" in empty_inbox.body
+    assert "data-inbox-filter-kind='all' aria-pressed='true'>All" in empty_inbox.body
+    assert "data-inbox-filter-kind='attention'" in empty_inbox.body
+    assert "data-inbox-filter-kind='decisions'" in empty_inbox.body
+    assert "data-inbox-filter-kind='work'" in empty_inbox.body
+    assert "data-inbox-filter-kind='publication'" in empty_inbox.body
+    assert "data-inbox-filter-kind='scoped_goal'" in empty_inbox.body
+    assert "data-inbox-filter-kind='scoped_run'" in empty_inbox.body
+    assert "data-inbox-filter-query='true'" in empty_inbox.body
+    assert "data-inbox-filter-reset='true'>Reset filter" in empty_inbox.body
+    assert "data-inbox-filter-view-status='true'>View: default" in empty_inbox.body
+    assert "data-inbox-filter-status='true'>Showing 0 of 0 inbox rows." in empty_inbox.body
+    assert "data-inbox-filter-empty='true' hidden" in empty_inbox.body
+    assert "data-inbox-filter-evidence='true'" in empty_inbox.body
+    assert "inbox_filter_total_rendered_rows</dt><dd>0" in empty_inbox.body
+    assert "inbox_filter_attention_rows</dt><dd>0" in empty_inbox.body
+    assert "inbox_filter_decision_rows</dt><dd>0" in empty_inbox.body
+    assert "inbox_filter_work_rows</dt><dd>0" in empty_inbox.body
+    assert "inbox_filter_publication_rows</dt><dd>0" in empty_inbox.body
+    assert "inbox_filter_lanes</dt><dd>all attention decisions work publication scoped_goal scoped_run" in empty_inbox.body
+    assert "inbox_filter_memory_storage</dt><dd>localStorage:clankeros-inbox-queue-filter" in empty_inbox.body
+    assert "inbox_filter_memory_fields</dt><dd>lane query" in empty_inbox.body
+    assert "inbox_filter_decides_on_get</dt><dd>false" in empty_inbox.body
+    assert "inbox_filter_approves_on_get</dt><dd>false" in empty_inbox.body
+    assert "inbox_filter_executes_work_on_get</dt><dd>false" in empty_inbox.body
+    assert "inbox_filter_network_actions_taken</dt><dd>0" in empty_inbox.body
+    assert "inbox_filter_external_effects_created</dt><dd>false" in empty_inbox.body
     assert "Inbox Operator Workbench" in empty_inbox.body
     assert "data-inbox-operator-workbench='true'" in empty_inbox.body
     assert "data-inbox-workbench-actions='true'" in empty_inbox.body
@@ -5657,6 +5689,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     )
     assert empty_inbox.body.index("data-inbox-next-item-brief='true'") < empty_inbox.body.index(
         "data-inbox-command-bar='true'"
+    )
+    assert empty_inbox.body.index("data-inbox-command-bar='true'") < empty_inbox.body.index(
+        "data-inbox-queue-filter='true'"
+    )
+    assert empty_inbox.body.index("data-inbox-queue-filter='true'") < empty_inbox.body.index(
+        "id='inbox-summary'"
     )
     assert empty_inbox.body.index("data-inbox-operator-workbench='true'") < empty_inbox.body.index(
         "data-route-context='true'"
@@ -6246,7 +6284,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 10
+    assert workspace.body.count("class='workspace-view-memory-card") == 11
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
     assert "data-workspace-view-memory-card='goal-board'" in workspace.body
@@ -6257,12 +6295,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-card='memory'" in workspace.body
     assert "data-workspace-view-memory-card='skills'" in workspace.body
     assert "data-workspace-view-memory-card='approvals'" in workspace.body
+    assert "data-workspace-view-memory-card='inbox'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-theme'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-focus-mode'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-goal-board-view'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-memory-inventory-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-skills-inventory-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-approval-queue-filter'" in workspace.body
+    assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-inbox-queue-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-search-result-lane:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-timeline-lane:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-artifact-filter:'" in workspace.body
@@ -6271,8 +6311,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>10" in workspace.body
-    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>11" in workspace.body
+    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-goal-board-view, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter" in workspace.body
     assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-artifact-filter:, clankeros-goal-notes-filter:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
@@ -6287,7 +6327,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: memory mode=exact key=clankeros-memory-inventory-filter" in workspace.body
     assert "workspace_view_memory_card: skills mode=exact key=clankeros-skills-inventory-filter" in workspace.body
     assert "workspace_view_memory_card: approvals mode=exact key=clankeros-approval-queue-filter" in workspace.body
-    assert "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory skills approvals" in workspace.body
+    assert "workspace_view_memory_card: inbox mode=exact key=clankeros-inbox-queue-filter" in workspace.body
+    assert "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory skills approvals inbox" in workspace.body
     assert "window.localStorage.removeItem(key)" in workspace.body
     assert "candidate.indexOf(key) === 0" in workspace.body
     assert "delete document.documentElement.dataset.theme" in workspace.body
@@ -8088,6 +8129,24 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "inbox_command_click: <a href='#inbox-subagent-delegations'>Subagent Delegations</a>" in inbox.body
     assert "inbox_command_write_on_get</dt><dd>false" in inbox.body
     assert "inbox_command_external_effects_created</dt><dd>false" in inbox.body
+    assert "Inbox Queue Filter" in inbox.body
+    assert "data-inbox-queue-filter='true'" in inbox.body
+    assert "data-inbox-filter-storage-key='clankeros-inbox-queue-filter'" in inbox.body
+    assert "data-inbox-filter-scope-goal='none'" in inbox.body
+    assert "data-inbox-filter-scope-run='none'" in inbox.body
+    assert "data-inbox-filter-status='true'>Showing 2 of 2 inbox rows." in inbox.body
+    assert inbox.body.count("<span data-inbox-filter-item='true'") == 2
+    assert "data-inbox-filter-row-lane='work' data-inbox-filter-row-kind='subagent_delegation'" in inbox.body
+    assert "data-inbox-filter-row-lane='work' data-inbox-filter-row-kind='delegation_run'" in inbox.body
+    assert "data-inbox-filter-project='first-target'" in inbox.body
+    assert f"data-inbox-filter-goal='{created_goal_id}'" in inbox.body
+    assert f"data-inbox-filter-delegation='{delegation.id}'" in inbox.body
+    assert "inbox_filter_total_rendered_rows</dt><dd>2" in inbox.body
+    assert "inbox_filter_work_rows</dt><dd>2" in inbox.body
+    assert "inbox_filter_decision_rows</dt><dd>0" in inbox.body
+    assert "inbox_filter_memory_storage</dt><dd>localStorage:clankeros-inbox-queue-filter" in inbox.body
+    assert "inbox_filter_network_actions_taken</dt><dd>0" in inbox.body
+    assert "inbox_filter_external_effects_created</dt><dd>false" in inbox.body
     assert "Inbox Operator Workbench" in inbox.body
     assert "data-inbox-operator-workbench='true'" in inbox.body
     assert "data-inbox-workbench-actions='true'" in inbox.body
@@ -8122,6 +8181,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     )
     assert inbox.body.index("data-inbox-next-item-brief='true'") < inbox.body.index(
         "data-inbox-command-bar='true'"
+    )
+    assert inbox.body.index("data-inbox-command-bar='true'") < inbox.body.index(
+        "data-inbox-queue-filter='true'"
+    )
+    assert inbox.body.index("data-inbox-queue-filter='true'") < inbox.body.index(
+        "id='inbox-summary'"
     )
     assert inbox.body.index("data-inbox-operator-workbench='true'") < inbox.body.index(
         "data-route-context='true'"
@@ -15032,6 +15097,48 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "inbox_command_now: Approve worktree" in inbox.body
     assert "inbox_command_click: <a href='#inbox-pending-worktree-approvals'>Pending Worktree Approvals</a>" in inbox.body
     assert "inbox_command_safety: read-only queue guidance" in inbox.body
+    assert "Inbox Queue Filter" in inbox.body
+    assert "data-inbox-queue-filter='true'" in inbox.body
+    assert "data-inbox-filter-storage-key='clankeros-inbox-queue-filter'" in inbox.body
+    assert "data-inbox-filter-scope-goal='none'" in inbox.body
+    assert "data-inbox-filter-scope-run='none'" in inbox.body
+    assert "data-inbox-filter-controls='true'" in inbox.body
+    assert "data-inbox-filter-kind='all' aria-pressed='true'>All" in inbox.body
+    assert "data-inbox-filter-kind='attention'" in inbox.body
+    assert "data-inbox-filter-kind='decisions'" in inbox.body
+    assert "data-inbox-filter-kind='work'" in inbox.body
+    assert "data-inbox-filter-kind='publication'" in inbox.body
+    assert "data-inbox-filter-kind='scoped_goal'" in inbox.body
+    assert "data-inbox-filter-kind='scoped_run'" in inbox.body
+    assert "data-inbox-filter-query='true'" in inbox.body
+    assert "data-inbox-filter-reset='true'>Reset filter" in inbox.body
+    assert "data-inbox-filter-view-status='true'>View: default" in inbox.body
+    assert "data-inbox-filter-status='true'>Showing 4 of 4 inbox rows." in inbox.body
+    assert "data-inbox-filter-empty='true' hidden" in inbox.body
+    assert "data-inbox-filter-evidence='true'" in inbox.body
+    assert inbox.body.count("<span data-inbox-filter-item='true'") == 4
+    assert "data-inbox-filter-row-lane='decisions' data-inbox-filter-row-kind='worktree_approval'" in inbox.body
+    assert "data-inbox-filter-row-lane='work' data-inbox-filter-row-kind='coder_worktree_run'" in inbox.body
+    assert "data-inbox-filter-row-lane='work' data-inbox-filter-row-kind='delegation_run'" in inbox.body
+    assert "data-inbox-filter-project='local-app-demo'" in inbox.body
+    assert f"data-inbox-filter-goal='{result.goal_id}'" in inbox.body
+    assert f"data-inbox-filter-delegation='{result.delegation_id}'" in inbox.body
+    assert f"data-inbox-filter-source-run='{result.run_id}'" in inbox.body
+    assert f"data-inbox-filter-run='{result.coder_worktree_run_id}'" in inbox.body
+    assert "inbox_filter_total_rendered_rows</dt><dd>4" in inbox.body
+    assert "inbox_filter_attention_rows</dt><dd>0" in inbox.body
+    assert "inbox_filter_decision_rows</dt><dd>1" in inbox.body
+    assert "inbox_filter_work_rows</dt><dd>3" in inbox.body
+    assert "inbox_filter_publication_rows</dt><dd>0" in inbox.body
+    assert "inbox_filter_memory_storage</dt><dd>localStorage:clankeros-inbox-queue-filter" in inbox.body
+    assert "inbox_filter_memory_fields</dt><dd>lane query" in inbox.body
+    assert "inbox_filter_decides_on_get</dt><dd>false" in inbox.body
+    assert "inbox_filter_approves_on_get</dt><dd>false" in inbox.body
+    assert "inbox_filter_executes_work_on_get</dt><dd>false" in inbox.body
+    assert "inbox_filter_network_actions_taken</dt><dd>0" in inbox.body
+    assert "inbox_filter_external_effects_created</dt><dd>false" in inbox.body
+    assert "window.localStorage.setItem(inboxFilterStorageKey(filterPanel), JSON.stringify(state))" in inbox.body
+    assert "window.localStorage.removeItem(inboxFilterStorageKey(filterPanel))" in inbox.body
     assert "Inbox Operator Workbench" in inbox.body
     assert "data-inbox-operator-workbench='true'" in inbox.body
     assert "data-inbox-workbench-actions='true'" in inbox.body
@@ -15052,6 +15159,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     )
     assert inbox.body.index("data-inbox-triage-board='true'") < inbox.body.index(
         "data-inbox-command-bar='true'"
+    )
+    assert inbox.body.index("data-inbox-command-bar='true'") < inbox.body.index(
+        "data-inbox-queue-filter='true'"
+    )
+    assert inbox.body.index("data-inbox-queue-filter='true'") < inbox.body.index(
+        "id='inbox-summary'"
     )
     assert inbox.body.index("data-inbox-operator-workbench='true'") < inbox.body.index(
         "data-route-context='true'"
@@ -15132,6 +15245,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "coder_worktree_runs: 1" in inbox.body
     assert "Pending Worktree Approvals" in inbox.body
     assert "Coder Worktree Runs" in inbox.body
+    scoped_inbox = render_local_app_route(tmp_path, f"/inbox?goal_id={result.goal_id}")
+    assert scoped_inbox.status == 200
+    assert f"data-inbox-filter-scope-goal='{result.goal_id}'" in scoped_inbox.body
+    assert "data-inbox-filter-scope-run='none'" in scoped_inbox.body
+    assert "data-inbox-filter-status='true'>Showing 4 of 4 inbox rows." in scoped_inbox.body
 
     run_page = render_local_app_route(tmp_path, f"/runs/{result.coder_worktree_run_id}")
     assert run_page.status == 200

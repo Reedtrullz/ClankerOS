@@ -372,7 +372,14 @@ def render_local_app_route(
         if path == "/delegation-runs":
             return page("Delegation Runs", _delegation_runs(root))
         if path == "/inbox":
-            return page("Inbox", _inbox(root))
+            return page(
+                "Inbox",
+                _inbox(
+                    root,
+                    run_id=_one(query, "run_id"),
+                    goal_id=_one(query, "goal_id"),
+                ),
+            )
         if path == "/approvals":
             return page(
                 "Approvals",
@@ -1164,6 +1171,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-inbox-next-actions='true'",
                 "data-inbox-next-evidence='true'",
                 "data-inbox-command-evidence='true'",
+                "Inbox Queue Filter",
+                "data-inbox-queue-filter='true'",
+                "data-inbox-filter-evidence='true'",
                 "data-inbox-finish-details='true'",
                 "Pending Worktree Approvals",
                 "Coder Worktree Runs",
@@ -6514,6 +6524,13 @@ def _workspace_view_memory_panel() -> str:
             "clankeros-approval-queue-filter",
             "Approval queue lane and text filter",
         ),
+        (
+            "inbox",
+            "Inbox Filters",
+            "exact",
+            "clankeros-inbox-queue-filter",
+            "Inbox queue lane and text filter",
+        ),
     ]
     card_html = []
     evidence_lines = []
@@ -6579,7 +6596,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory skills approvals",
+                    "workspace_view_memory_reset_scope: theme focus board search timeline artifacts notes memory skills approvals inbox",
                 ]
             ),
             "</details>",
@@ -24876,8 +24893,99 @@ def _delegation_run_command_bar(
     )
 
 
-def _inbox(root: Path) -> str:
+def _inbox(root: Path, *, run_id: str | None = None, goal_id: str | None = None) -> str:
     inbox = collect_inbox_items(root)
+    storage = _storage(root)
+    steering_review_lines = [
+        _inbox_filter_line(root, storage, item, "attention", "steering_review", _steering_review_line(item))
+        for item in inbox["steering_reviews"]
+    ]
+    pending_approval_lines = [
+        _inbox_filter_line(root, storage, item, "decisions", "approval_request", _operator_approval_line(item))
+        for item in inbox["pending_approvals"]
+    ]
+    open_incident_lines = [
+        _inbox_filter_line(root, storage, item, "attention", "incident", _incident_line(item))
+        for item in inbox["open_incidents"]
+    ]
+    subagent_delegation_lines = [
+        _inbox_filter_line(root, storage, item, "work", "subagent_delegation", _delegation_line(item))
+        for item in inbox["subagent_delegations"]
+    ]
+    delegation_run_lines = [
+        _inbox_filter_line(
+            root,
+            storage,
+            delegation,
+            "work",
+            "delegation_run",
+            _delegation_run_line(root, storage, delegation, project_id=project),
+            metadata=metadata,
+            project_id=project,
+        )
+        for delegation, project, metadata in _delegation_run_records(root, storage, limit=20)
+    ]
+    worktree_approval_lines = [
+        _inbox_filter_line(root, storage, item, "decisions", "worktree_approval", _approval_line(item))
+        for item in inbox["coder_worktree_approvals"]
+    ]
+    coder_run_lines = [
+        _inbox_filter_line(root, storage, item, "work", "coder_worktree_run", _coder_run_line(root, item))
+        for item in inbox["coder_worktree_runs"]
+    ]
+    commit_approval_lines = [
+        _inbox_filter_line(
+            root,
+            storage,
+            item,
+            "decisions",
+            "commit_approval",
+            _commit_inbox_follow_up_line(item),
+        )
+        for item in inbox["coder_worktree_commit_approvals"]
+    ]
+    local_commit_lines = [
+        _inbox_filter_line(root, storage, item, "publication", "local_coder_commit", _commit_line(item))
+        for item in inbox["coder_worktree_commits"]
+    ]
+    publication_request_lines = [
+        _inbox_filter_line(
+            root,
+            storage,
+            item,
+            "decisions",
+            "publication_request",
+            _publication_inbox_follow_up_line(root, item),
+        )
+        for item in inbox["coder_publication_requests"]
+    ]
+    publication_handoff_lines = [
+        _inbox_filter_line(
+            root,
+            storage,
+            item,
+            "publication",
+            "publication_handoff",
+            _publication_line(root, item),
+        )
+        for item in inbox["coder_publication_handoffs"]
+    ]
+    total_filter_items = sum(
+        len(lines)
+        for lines in [
+            steering_review_lines,
+            pending_approval_lines,
+            open_incident_lines,
+            subagent_delegation_lines,
+            delegation_run_lines,
+            worktree_approval_lines,
+            coder_run_lines,
+            commit_approval_lines,
+            local_commit_lines,
+            publication_request_lines,
+            publication_handoff_lines,
+        ]
+    )
     return "".join(
         [
             "<section class='hero'><h1>Operator Inbox</h1>",
@@ -24887,6 +24995,20 @@ def _inbox(root: Path) -> str:
             _inbox_triage_board(inbox),
             _inbox_next_item_brief(root, inbox),
             _inbox_command_bar(root, inbox),
+            _inbox_queue_filter(
+                total_filter_items,
+                attention_count=len(steering_review_lines) + len(open_incident_lines),
+                decision_count=(
+                    len(pending_approval_lines)
+                    + len(worktree_approval_lines)
+                    + len(commit_approval_lines)
+                    + len(publication_request_lines)
+                ),
+                work_count=len(subagent_delegation_lines) + len(delegation_run_lines) + len(coder_run_lines),
+                publication_count=len(local_commit_lines) + len(publication_handoff_lines),
+                goal_id=goal_id,
+                run_id=run_id,
+            ),
             _list_section(
                 "Inbox Summary",
                 _inbox_summary_lines(root)
@@ -24895,71 +25017,305 @@ def _inbox(root: Path) -> str:
             ),
             _list_section(
                 "Steering Reviews",
-                [_steering_review_line(item) for item in inbox["steering_reviews"]],
+                steering_review_lines,
                 anchor_id="inbox-steering-reviews",
             ),
             _list_section(
                 "Pending Approval Requests",
-                [_operator_approval_line(item) for item in inbox["pending_approvals"]],
+                pending_approval_lines,
                 anchor_id="inbox-pending-approval-requests",
             ),
             _list_section(
                 "Open Incidents",
-                [_incident_line(item) for item in inbox["open_incidents"]],
+                open_incident_lines,
                 "/incidents",
                 anchor_id="inbox-open-incidents",
             ),
             _list_section(
                 "Subagent Delegations",
-                [_delegation_line(item) for item in inbox["subagent_delegations"]],
+                subagent_delegation_lines,
                 anchor_id="inbox-subagent-delegations",
             ),
             _list_section(
                 "Delegation Runs",
-                _delegation_run_lines(root, _storage(root), limit=20),
+                delegation_run_lines,
                 "/delegation-runs",
                 anchor_id="inbox-delegation-runs",
             ),
             _list_section(
                 "Pending Worktree Approvals",
-                [_approval_line(item) for item in inbox["coder_worktree_approvals"]],
+                worktree_approval_lines,
                 "/approvals",
                 anchor_id="inbox-pending-worktree-approvals",
             ),
             _list_section(
                 "Coder Worktree Runs",
-                [_coder_run_line(root, item) for item in inbox["coder_worktree_runs"]],
+                coder_run_lines,
                 anchor_id="inbox-coder-worktree-runs",
             ),
             _list_section(
                 "Pending Commit Approvals",
-                [
-                    _commit_inbox_follow_up_line(item)
-                    for item in inbox["coder_worktree_commit_approvals"]
-                ],
+                commit_approval_lines,
                 "/approvals",
                 anchor_id="inbox-pending-commit-approvals",
             ),
             _list_section(
                 "Local Coder Commits",
-                [_commit_line(item) for item in inbox["coder_worktree_commits"]],
+                local_commit_lines,
                 anchor_id="inbox-local-coder-commits",
             ),
             _list_section(
                 "Pending Publication Requests",
-                [
-                    _publication_inbox_follow_up_line(root, item)
-                    for item in inbox["coder_publication_requests"]
-                ],
+                publication_request_lines,
                 "/approvals",
                 anchor_id="inbox-pending-publication-requests",
             ),
             _list_section(
                 "Publication Handoffs",
-                [_publication_line(root, item) for item in inbox["coder_publication_handoffs"]],
+                publication_handoff_lines,
                 anchor_id="inbox-publication-handoffs",
             ),
             _non_claim_banner(),
+        ]
+    )
+
+
+def _inbox_filter_context(
+    root: Path,
+    storage: Storage,
+    item: Any,
+    kind: str,
+    *,
+    metadata: dict[str, Any] | None = None,
+    project_id: str | None = None,
+) -> dict[str, str]:
+    metadata = metadata or {}
+    item_id = str(getattr(item, "id", "") or "none")
+    status = str(getattr(item, "status", "") or "unknown")
+    project = str(project_id or getattr(item, "project_id", "") or "")
+    goal = str(getattr(item, "goal_id", "") or "")
+    delegation = str(getattr(item, "delegation_id", "") or "")
+    run = str(getattr(item, "run_id", "") or "")
+    source_run = str(getattr(item, "source_run_id", "") or "")
+
+    if kind in {"subagent_delegation", "delegation_run"}:
+        delegation = item_id
+        goal = str(getattr(item, "parent_goal_id", "") or goal)
+        project = project or _task_project(storage, getattr(item, "parent_task_id", "")) or ""
+        run = str(metadata.get("execution_run_id") or metadata.get("run_id") or run or "")
+    if kind == "coder_worktree_run":
+        run = item_id
+    if run and (not delegation or not goal or not project):
+        coder_run = get_coder_worktree_run(storage, run)
+        if coder_run is not None:
+            delegation = delegation or coder_run.delegation_id
+            project = project or coder_run.project_id
+    if delegation and not goal:
+        delegation_row = storage.get_subagent_delegation(delegation)
+        if delegation_row is not None:
+            goal = delegation_row.parent_goal_id or goal
+            project = project or _task_project(storage, delegation_row.parent_task_id) or ""
+    if goal and not project:
+        try:
+            project = storage.get_goal(goal).project_id
+        except KeyError:
+            project = ""
+
+    artifact_values = [
+        getattr(item, "report_path", ""),
+        getattr(item, "evidence_path", ""),
+        getattr(item, "result_artifact_path", ""),
+        getattr(item, "request_artifact_path", ""),
+        getattr(item, "source_plan_path", ""),
+        getattr(item, "review_path", ""),
+        getattr(item, "commit_artifact_path", ""),
+        getattr(item, "handoff_artifact_path", ""),
+        getattr(item, "source_commit_artifact_path", ""),
+        metadata.get("execution_evidence_dir", ""),
+        metadata.get("evidence_dir", ""),
+        metadata.get("context_pack_md", ""),
+        metadata.get("context_pack_json", ""),
+        metadata.get("implementation_handoff_md", ""),
+        metadata.get("implementation_handoff_json", ""),
+    ]
+    artifacts = " ".join(
+        _repo_relative_artifact_path(root, value)
+        for value in artifact_values
+        if value
+    )
+    changed_files = " ".join(str(path) for path in (getattr(item, "changed_files", []) or []))
+    extra = " ".join(
+        str(value)
+        for value in [
+            getattr(item, "task_id", ""),
+            getattr(item, "parent_task_id", ""),
+            getattr(item, "reason", ""),
+            getattr(item, "summary", ""),
+            getattr(item, "title", ""),
+            getattr(item, "category", ""),
+            getattr(item, "assigned_profile", ""),
+            getattr(item, "recommended_next_action", ""),
+            getattr(item, "commit_sha", ""),
+            getattr(item, "remote", ""),
+            getattr(item, "target_branch", ""),
+            metadata.get("next_recommended_action", ""),
+            artifacts,
+            changed_files,
+        ]
+        if value
+    )
+    return {
+        "id": item_id,
+        "status": status,
+        "project": project or "none",
+        "goal": goal or "none",
+        "delegation": delegation or "none",
+        "run": run or "none",
+        "source_run": source_run or "none",
+        "extra": extra,
+    }
+
+
+def _inbox_filter_line(
+    root: Path,
+    storage: Storage,
+    item: Any,
+    lane: str,
+    kind: str,
+    rendered: str,
+    *,
+    metadata: dict[str, Any] | None = None,
+    project_id: str | None = None,
+) -> str:
+    context = _inbox_filter_context(
+        root,
+        storage,
+        item,
+        kind,
+        metadata=metadata,
+        project_id=project_id,
+    )
+    rendered_text = re.sub(r"<[^>]+>", " ", rendered)
+    text = " ".join(
+        [
+            lane,
+            kind,
+            context["id"],
+            context["status"],
+            context["project"],
+            context["goal"],
+            context["delegation"],
+            context["run"],
+            context["source_run"],
+            context["extra"],
+            rendered_text,
+        ]
+    ).lower()
+    return (
+        f"<span data-inbox-filter-item='true' "
+        f"data-inbox-filter-row-lane='{_e(lane)}' "
+        f"data-inbox-filter-row-kind='{_e(kind)}' "
+        f"data-inbox-filter-status='{_e(context['status'])}' "
+        f"data-inbox-filter-project='{_e(context['project'])}' "
+        f"data-inbox-filter-goal='{_e(context['goal'])}' "
+        f"data-inbox-filter-delegation='{_e(context['delegation'])}' "
+        f"data-inbox-filter-run='{_e(context['run'])}' "
+        f"data-inbox-filter-source-run='{_e(context['source_run'])}' "
+        f"data-inbox-filter-text='{_e(text)}'>{rendered}</span>"
+    )
+
+
+def _inbox_queue_filter(
+    total_items: int,
+    *,
+    attention_count: int,
+    decision_count: int,
+    work_count: int,
+    publication_count: int,
+    goal_id: str | None,
+    run_id: str | None,
+) -> str:
+    scoped_goal = goal_id or "none"
+    scoped_run = run_id or "none"
+    lanes = [
+        ("all", "All"),
+        ("attention", "Attention"),
+        ("decisions", "Decisions"),
+        ("work", "Work"),
+        ("publication", "Publication"),
+        ("scoped_goal", "Scoped Goal"),
+        ("scoped_run", "Scoped Run"),
+    ]
+    buttons = "".join(
+        [
+            (
+                f"<button type='button' class='inbox-filter-button' "
+                f"data-inbox-filter-kind='{_e(key)}' "
+                f"aria-pressed='{'true' if key == 'all' else 'false'}'>{_e(label)}</button>"
+            )
+            for key, label in lanes
+        ]
+    )
+    return "".join(
+        [
+            "<section id='inbox-queue-filter' class='panel inbox-queue-filter' "
+            "data-inbox-queue-filter='true' "
+            "data-inbox-filter-storage-key='clankeros-inbox-queue-filter' "
+            f"data-inbox-filter-scope-goal='{_e(scoped_goal)}' "
+            f"data-inbox-filter-scope-run='{_e(scoped_run)}'>",
+            "<h2>Inbox Queue Filter</h2>",
+            "<p class='muted'>Narrow already-rendered inbox rows by lane, route scope, or text without taking action.</p>",
+            "<div class='inbox-filter-controls' data-inbox-filter-controls='true'>",
+            buttons,
+            "<label class='inbox-filter-search'>Find "
+            "<input type='search' data-inbox-filter-query='true' placeholder='inbox item, goal, run, project...'></label>",
+            "<button type='button' class='inbox-filter-reset' data-inbox-filter-reset='true'>Reset filter</button>",
+            "<span class='inbox-filter-memory-status' data-inbox-filter-view-status='true'>View: default</span>",
+            "</div>",
+            (
+                f"<p class='muted' data-inbox-filter-status='true'>"
+                f"Showing {total_items} of {total_items} inbox rows.</p>"
+            ),
+            "<p class='muted' data-inbox-filter-empty='true' hidden>No inbox rows match this filter.</p>",
+            "<details class='inbox-filter-evidence' data-inbox-filter-evidence='true'>"
+            "<summary>Inbox queue filter evidence</summary>",
+            _kv(
+                [
+                    ("inbox_filter_status", "available"),
+                    ("inbox_filter_total_rendered_rows", str(total_items)),
+                    ("inbox_filter_attention_rows", str(attention_count)),
+                    ("inbox_filter_decision_rows", str(decision_count)),
+                    ("inbox_filter_work_rows", str(work_count)),
+                    ("inbox_filter_publication_rows", str(publication_count)),
+                    ("inbox_filter_scope_goal", scoped_goal),
+                    ("inbox_filter_scope_run", scoped_run),
+                    ("inbox_filter_lanes", "all attention decisions work publication scoped_goal scoped_run"),
+                    ("inbox_filter_persistence", "browser_local_view_memory"),
+                    ("inbox_filter_memory_storage", "localStorage:clankeros-inbox-queue-filter"),
+                    ("inbox_filter_memory_fields", "lane query"),
+                    ("inbox_filter_default", "all"),
+                    ("inbox_filter_reset", "available"),
+                    ("inbox_filter_decides_on_get", "false"),
+                    ("inbox_filter_approves_on_get", "false"),
+                    ("inbox_filter_executes_work_on_get", "false"),
+                    ("inbox_filter_provider_calls_taken", "0"),
+                    ("inbox_filter_network_actions_taken", "0"),
+                    ("inbox_filter_external_effects_created", "false"),
+                    ("inbox_filter_push_created", "false"),
+                    ("inbox_filter_pr_created", "false"),
+                    ("inbox_filter_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "inbox_filter: filters already-rendered local inbox rows only",
+                    "inbox_filter: restores lane and query from browser storage",
+                    "inbox_filter: scoped lanes fall back to all when the current route has no matching scope",
+                    "inbox_filter_safety: no approval, execution, push, PR, deploy, provider call, or network action",
+                ]
+            ),
+            "</details>",
+            "</section>",
         ]
     )
 
@@ -38731,6 +39087,16 @@ def _html_page(
     .inbox-command-evidence:not([open]) > :not(summary), .inbox-workbench-evidence:not([open]) > :not(summary), .inbox-finish-details:not([open]) > :not(summary) {{ display:none; }}
     .inbox-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .inbox-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .inbox-queue-filter {{ border-left:4px solid var(--ok); }}
+    .inbox-filter-controls {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0; }}
+    .inbox-filter-button, .inbox-filter-reset {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border:1px solid var(--line); background:var(--surface); color:var(--text); }}
+    .inbox-filter-button[aria-pressed="true"] {{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }}
+    .inbox-filter-search {{ display:inline-flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:min(100%, 280px); }}
+    .inbox-filter-search input {{ min-width:min(100%, 230px); }}
+    .inbox-filter-memory-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .inbox-filter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .inbox-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .inbox-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
     .inbox-triage-board {{ border-left:4px solid var(--accent); }}
     .inbox-triage-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(170px, 1fr)); gap:10px; margin:12px 0; }}
     .inbox-triage-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
@@ -38862,6 +39228,7 @@ def _html_page(
     @media (max-width: 860px) {{ .skills-usage-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .approval-decision-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 640px) {{ .approval-filter-button, .approval-filter-reset, .approval-filter-search, .approval-filter-search input {{ width:100%; }} .approval-filter-controls {{ align-items:stretch; }} .approval-filter-memory-status {{ width:100%; }} }}
+    @media (max-width: 640px) {{ .inbox-filter-button, .inbox-filter-reset, .inbox-filter-search, .inbox-filter-search input {{ width:100%; }} .inbox-filter-controls {{ align-items:stretch; }} .inbox-filter-memory-status {{ width:100%; }} }}
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .run-evidence-map dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
@@ -39698,6 +40065,140 @@ def _html_page(
         setApprovalFilterViewStatus(filterPanel, "View: default");
       }}
     }}
+    function inboxFilterStorageKey(filterPanel) {{
+      var key = filterPanel ? filterPanel.getAttribute("data-inbox-filter-storage-key") : "";
+      return key || "clankeros-inbox-queue-filter";
+    }}
+    function setInboxFilterViewStatus(filterPanel, message) {{
+      var status = filterPanel ? filterPanel.querySelector("[data-inbox-filter-view-status='true']") : null;
+      if (status) {{ status.textContent = message; }}
+    }}
+    function inboxFilterScopeGoal(filterPanel) {{
+      var value = filterPanel ? filterPanel.getAttribute("data-inbox-filter-scope-goal") || "none" : "none";
+      return value && value !== "none" ? value : "";
+    }}
+    function inboxFilterScopeRun(filterPanel) {{
+      var value = filterPanel ? filterPanel.getAttribute("data-inbox-filter-scope-run") || "none" : "none";
+      return value && value !== "none" ? value : "";
+    }}
+    function normalizeInboxFilterLane(filterPanel, lane) {{
+      var normalized = lane || "all";
+      if (normalized === "scoped_goal" && !inboxFilterScopeGoal(filterPanel)) {{ normalized = "all"; }}
+      if (normalized === "scoped_run" && !inboxFilterScopeRun(filterPanel)) {{ normalized = "all"; }}
+      var buttons = filterPanel ? Array.prototype.slice.call(filterPanel.querySelectorAll("[data-inbox-filter-kind]")) : [];
+      var found = buttons.some(function(button) {{
+        return (button.getAttribute("data-inbox-filter-kind") || "all") === normalized;
+      }});
+      return found ? normalized : "all";
+    }}
+    function selectedInboxFilterLane(filterPanel) {{
+      var active = filterPanel ? filterPanel.querySelector("[data-inbox-filter-kind][aria-pressed='true']") : null;
+      return active ? active.getAttribute("data-inbox-filter-kind") || "all" : "all";
+    }}
+    function saveInboxFilterState(filterPanel, state) {{
+      if (!window.localStorage || !filterPanel) {{ return; }}
+      try {{
+        window.localStorage.setItem(inboxFilterStorageKey(filterPanel), JSON.stringify(state));
+        setInboxFilterViewStatus(filterPanel, "View: saved");
+      }} catch (error) {{
+        setInboxFilterViewStatus(filterPanel, "View: local only");
+      }}
+    }}
+    function restoreInboxFilterState() {{
+      var filterPanel = document.querySelector("[data-inbox-queue-filter='true']");
+      if (!filterPanel) {{ return; }}
+      if (!window.localStorage) {{
+        setInboxFilterViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+      try {{
+        var raw = window.localStorage.getItem(inboxFilterStorageKey(filterPanel));
+        if (!raw) {{
+          setInboxFilterViewStatus(filterPanel, "View: default");
+          return false;
+        }}
+        var saved = JSON.parse(raw);
+        updateInboxFilter({{
+          lane: saved && typeof saved.lane === "string" ? saved.lane : "all",
+          query: saved && typeof saved.query === "string" ? saved.query : "",
+          save: false
+        }});
+        setInboxFilterViewStatus(filterPanel, "View: restored");
+        return true;
+      }} catch (error) {{
+        setInboxFilterViewStatus(filterPanel, "View: default");
+        return false;
+      }}
+    }}
+    function clearInboxFilterState() {{
+      var filterPanel = document.querySelector("[data-inbox-queue-filter='true']");
+      if (filterPanel && window.localStorage) {{
+        try {{ window.localStorage.removeItem(inboxFilterStorageKey(filterPanel)); }} catch (error) {{}}
+      }}
+      updateInboxFilter({{ lane: "all", query: "", save: false }});
+      setInboxFilterViewStatus(filterPanel, "View: reset");
+    }}
+    function updateInboxFilter(options) {{
+      var filterPanel = document.querySelector("[data-inbox-queue-filter='true']");
+      if (!filterPanel) {{ return; }}
+      options = options || {{}};
+      var queryInput = filterPanel.querySelector("[data-inbox-filter-query='true']");
+      var lane = normalizeInboxFilterLane(filterPanel, Object.prototype.hasOwnProperty.call(options, "lane") ? options.lane : selectedInboxFilterLane(filterPanel));
+      var query = Object.prototype.hasOwnProperty.call(options, "query") ? String(options.query || "") : (queryInput ? queryInput.value || "" : "");
+      if (queryInput && queryInput.value !== query) {{ queryInput.value = query; }}
+      var queryText = query.toLowerCase().trim();
+      var scopedGoal = inboxFilterScopeGoal(filterPanel);
+      var scopedRun = inboxFilterScopeRun(filterPanel);
+      var rows = Array.prototype.slice.call(document.querySelectorAll("[data-inbox-filter-item='true']"));
+      var shown = 0;
+      rows.forEach(function(item) {{
+        var itemLane = item.getAttribute("data-inbox-filter-row-lane") || "";
+        var goal = item.getAttribute("data-inbox-filter-goal") || "";
+        var run = item.getAttribute("data-inbox-filter-run") || "";
+        var sourceRun = item.getAttribute("data-inbox-filter-source-run") || "";
+        var itemText = item.getAttribute("data-inbox-filter-text") || item.textContent.toLowerCase();
+        var laneMatch = lane === "all"
+          || itemLane === lane
+          || (lane === "scoped_goal" && scopedGoal && goal === scopedGoal)
+          || (lane === "scoped_run" && scopedRun && (run === scopedRun || sourceRun === scopedRun));
+        var textMatch = !queryText || itemText.indexOf(queryText) !== -1;
+        var match = laneMatch && textMatch;
+        var listItem = item.closest ? item.closest("li") : item.parentElement;
+        if (listItem) {{ listItem.hidden = !match; }}
+        item.hidden = !match;
+        if (match) {{ shown += 1; }}
+      }});
+      Array.prototype.slice.call(filterPanel.querySelectorAll("[data-inbox-filter-kind]")).forEach(function(button) {{
+        var active = (button.getAttribute("data-inbox-filter-kind") || "all") === lane;
+        if (active) {{
+          button.setAttribute("data-inbox-filter-active", "true");
+          button.setAttribute("aria-pressed", "true");
+        }} else {{
+          button.removeAttribute("data-inbox-filter-active");
+          button.setAttribute("aria-pressed", "false");
+        }}
+      }});
+      var status = filterPanel.querySelector("[data-inbox-filter-status='true']");
+      if (status) {{
+        var parts = [];
+        if (lane !== "all") {{ parts.push("lane " + lane.replace("_", " ")); }}
+        if (queryText) {{ parts.push("text " + queryText); }}
+        status.textContent = "Showing " + shown + " of " + rows.length + " inbox rows" + (parts.length ? " matching " + parts.join(", ") : "") + ".";
+      }}
+      var empty = filterPanel.querySelector("[data-inbox-filter-empty='true']");
+      if (empty) {{ empty.hidden = shown !== 0; }}
+      if (options.save !== false) {{
+        saveInboxFilterState(filterPanel, {{ lane: lane, query: query }});
+      }}
+    }}
+    function initializeInboxFilterState() {{
+      var filterPanel = document.querySelector("[data-inbox-queue-filter='true']");
+      if (!filterPanel) {{ return; }}
+      if (!restoreInboxFilterState()) {{
+        updateInboxFilter({{ lane: "all", query: "", save: false }});
+        setInboxFilterViewStatus(filterPanel, "View: default");
+      }}
+    }}
     if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
     if (paletteSearch) {{ paletteSearch.addEventListener("input", syncPaletteFilter); }}
     if (nextActionOpen) {{ nextActionOpen.addEventListener("click", openNextAction); }}
@@ -39797,6 +40298,18 @@ def _html_page(
         updateApprovalFilter({{ lane: approvalFilterButton.getAttribute("data-approval-filter-kind") || "all" }});
         return;
       }}
+      var inboxFilterReset = target.closest ? target.closest("[data-inbox-filter-reset='true']") : null;
+      if (inboxFilterReset) {{
+        event.preventDefault();
+        clearInboxFilterState();
+        return;
+      }}
+      var inboxFilterButton = target.closest ? target.closest("[data-inbox-filter-kind]") : null;
+      if (inboxFilterButton) {{
+        event.preventDefault();
+        updateInboxFilter({{ lane: inboxFilterButton.getAttribute("data-inbox-filter-kind") || "all" }});
+        return;
+      }}
       var opener = target.closest ? target.closest("[data-open-details='true']") : null;
       if (!opener) {{ return; }}
       var href = opener.getAttribute("href") || "";
@@ -39823,6 +40336,10 @@ def _html_page(
       var approvalFilterQuery = target.closest ? target.closest("[data-approval-filter-query='true']") : null;
       if (approvalFilterQuery) {{
         updateApprovalFilter({{ query: approvalFilterQuery.value || "" }});
+      }}
+      var inboxFilterQuery = target.closest ? target.closest("[data-inbox-filter-query='true']") : null;
+      if (inboxFilterQuery) {{
+        updateInboxFilter({{ query: inboxFilterQuery.value || "" }});
       }}
     }});
     document.addEventListener("change", function(event) {{
@@ -39871,6 +40388,7 @@ def _html_page(
     initializeMemoryInventoryFilterState();
     initializeSkillsInventoryFilterState();
     initializeApprovalFilterState();
+    initializeInboxFilterState();
     restoreWorkspacePanels();
     window.addEventListener("hashchange", openCurrentHashDetails);
     document.addEventListener("keydown", function(event) {{

@@ -289,9 +289,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   versus suggested return state explicit before the
   read-only `Workspace View Memory` panel. That panel inventories browser
   `localStorage` view state for theme, focus mode, Goal board, search lanes,
-  timeline lanes, artifact filters, notes filters, and the Memory Bank
-  inventory filter, and can clear those browser-local values after explicit
-  operator clicks without writing
+  timeline lanes, artifact filters, notes filters, Memory Bank filters, Skills
+  Inventory filters, Approval Queue filters, and Inbox Queue filters, and can
+  clear those browser-local values after explicit operator clicks without writing
   `.clanker/app/workspace.json`, calling providers, using the network, or
   mutating external systems. It sits before the
   read-only `Workspace Daily Brief` and `Workspace Workflow Map` for the saved
@@ -1094,7 +1094,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   read-only
   `Inbox Command Bar` follows with total local queue size, queue-type counts,
   the first attention item, target section, reason, and zero-effect boundary
-  inside collapsed evidence while preserving read-only run links and
+  inside collapsed evidence. A browser-local `Inbox Queue Filter` then narrows
+  already-rendered rows by attention, decisions, work, publication, current
+  route scope, or text, remembers lane/query in
+  `localStorage:clankeros-inbox-queue-filter`, and resets without deciding,
+  approving, executing, calling providers, or mutating external systems while
+  preserving read-only run links and
   next-action cues for pending commit/publication rows,
   with `/approvals` starting from both a queue summary and a read-only
   `Approval Decision Brief` that links the first local decision to its

@@ -798,6 +798,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Inbox Command Bar` follows with total local queue size, counts by queue
   type, the first attention item, target section, reason, and
   write-on-GET/network/external-effect boundaries inside collapsed evidence.
+  A browser-local `Inbox Queue Filter` then narrows already-rendered rows by
+  attention, decisions, work, publication, current route scope, or text,
+  remembers lane/query in `localStorage:clankeros-inbox-queue-filter`, and
+  resets without deciding, approving, executing, or calling providers.
   Pending commit and publication rows include run links, approval-queue links,
   and next-action cues without exposing decision forms on the inbox page.
 - `/approvals` - pending worktree, commit, and publication approvals. The page

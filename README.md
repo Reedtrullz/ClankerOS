@@ -974,7 +974,10 @@ bounded artifact target or queue fallback, and follow-up without opening the
 long lists. The read-only
 `Inbox Command Bar` follows with total local queue size, counts by queue type,
 the first attention item, its target section, and the no-write/no-network
-boundary inside collapsed evidence.
+boundary inside collapsed evidence. A browser-local `Inbox Queue Filter` then
+narrows already-rendered inbox rows by lane, current route scope, or text,
+remembers lane/query in `localStorage:clankeros-inbox-queue-filter`, and resets
+without deciding, approving, executing, or calling providers.
 
 Use `/verification` when you want the local-vs-GitHub testing split in one
 place. It reads the checked-in GitHub Actions workflow, lists the compact local

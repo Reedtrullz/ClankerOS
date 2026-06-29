@@ -1,5 +1,47 @@
 # Status
 
+## 2026-06-29 Inbox Queue Filter UX
+
+- Added a browser-local `Inbox Queue Filter` to
+  `/inbox#inbox-queue-filter` after the Inbox Command Bar and before the
+  dense queue summaries/lists.
+- Operators can narrow already-rendered inbox rows by All, Attention,
+  Decisions, Work, Publication, Scoped Goal, Scoped Run, or local text search
+  across row kind, status, project, Goal, delegation, run, source run,
+  rendered row text, and linked evidence/artifact metadata.
+- The selected lane/query view is remembered in
+  `localStorage:clankeros-inbox-queue-filter` and cleared with
+  `Reset filter`; scoped lanes fall back to All when the current route has no
+  matching `goal_id` or `run_id` scope.
+- Inbox rows now expose stable `data-inbox-filter-item`, lane, kind, status,
+  project, Goal, delegation, run, source-run, and text metadata so the filter
+  can hide unmatched rendered rows without changing inbox records or granting
+  any decision authority.
+- Workspace View Memory now includes the Inbox Queue filter key, so
+  `/workspace#workspace-view-memory` can inspect and reset it with the rest of
+  the browser-local view state.
+- The behavior is browser-local display filtering only: no write on GET, no
+  decision, no approval, no execution, no provider calls, no network actions,
+  no push, no PR, no deploy, and no external mutation.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused route/demo pytest `python3 -m
+  pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 67.06s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55622` showed scoped `/inbox?goal_id=...` with four
+  rendered rows, no desktop overflow, Decisions + text `worktree` filtering
+  to one visible worktree-approval row, reload restoring that saved view,
+  Publication + `worktree` showing the empty state with zero visible rows,
+  Reset filter returning All with four visible rows and staying default after
+  reload, saved Scoped Goal falling back to All on unscoped `/inbox`, mobile
+  `390x844` stacking lane buttons, query, Reset filter, and status at `329px`
+  width inside a `358px` panel, Work + `run` filtering to two visible rows,
+  no horizontal overflow, no console warnings/errors, and the browser
+  viewport reset after QA. GitHub Actions proof remains pending after push.
+
 ## 2026-06-29 Approval Queue Filter UX
 
 - Added a browser-local `Approval Queue Filter` to
