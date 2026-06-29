@@ -9258,6 +9258,173 @@ def _safe_local_return_path(value: str | None) -> str:
     return candidate
 
 
+def _workspace_expanded_panel_keys(value: str) -> list[str]:
+    keys: list[str] = []
+    seen: set[str] = set()
+    for raw_key in str(value or "").replace(";", ",").split(","):
+        key = raw_key.strip().lower().replace("_", "-")
+        if not key or key in seen:
+            continue
+        if not re.fullmatch(r"[a-z0-9-]+", key):
+            continue
+        seen.add(key)
+        keys.append(key)
+    return keys
+
+
+def _workspace_panel_restore_target(
+    key: str,
+    *,
+    saved_goal: str,
+    same_goal_page: bool,
+    fallback_href: str,
+) -> dict[str, str]:
+    goal_targets = {
+        "overview": ("Overview", "goal-overview", ".goal-overview-details, .goal-overview-evidence"),
+        "daily-loop": ("Daily Loop", "goal-daily-loop", ".goal-daily-loop-evidence, #goal-pause, #goal-finish-today"),
+        "day-plan": ("Day Plan", "home-day-plan", ""),
+        "next-action": ("Next Action", "goal-next-action", ".goal-next-action-details, #goal-next-action-form"),
+        "timeline": ("Timeline", "goal-timeline", ".goal-timeline-metadata, .goal-timeline-command-evidence, .goal-timeline-filter-evidence"),
+        "evidence": ("Evidence", "goal-evidence-command-bar", ".goal-evidence-command-evidence, .goal-verification-evidence, .goal-ci-handoff-evidence"),
+        "artifacts": ("Artifacts", "goal-artifact-command-bar", ".goal-artifact-evidence, .goal-artifact-explorer-evidence"),
+        "notes": ("Notes", "goal-operator-notes-command-bar", ".goal-operator-notes-evidence, #goal-operator-note-form"),
+        "approvals": ("Approvals", "goal-approvals", ".goal-approval-evidence, .goal-approval-command-evidence"),
+        "runs": ("Runs", "goal-runs", ".goal-run-evidence, .goal-run-command-evidence"),
+        "memory": ("Memory", "goal-memory", ".goal-memory-evidence, .goal-memory-command-evidence"),
+        "skills": ("Skills", "goal-skills-used", ".goal-skills-evidence, .goal-skills-command-evidence"),
+    }
+    if key in goal_targets:
+        label, anchor, selectors = goal_targets[key]
+        if saved_goal:
+            href = f"#{anchor}" if same_goal_page else f"/goals/{quote(saved_goal)}#{anchor}"
+        else:
+            href = fallback_href
+        mapped = "true"
+    else:
+        label = key.replace("-", " ").title()
+        anchor = ""
+        selectors = ""
+        href = fallback_href
+        mapped = "false"
+    return {
+        "key": key,
+        "label": label,
+        "href": href or "/workspace",
+        "anchor": anchor,
+        "selectors": selectors,
+        "mapped": mapped,
+    }
+
+
+def _workspace_panel_restore_strip(root: Path, current_path: str) -> str:
+    workspace = _load_workspace_state(root)
+    panel_keys = _workspace_expanded_panel_keys(workspace.get("expanded_panels", ""))
+    if not panel_keys:
+        return ""
+
+    route_path = urlparse(current_path or "/").path or "/"
+    saved_goal = workspace.get("open_goal", "").strip()
+    saved_project = workspace.get("open_project", "").strip()
+    resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
+    saved_goal_path = f"/goals/{quote(saved_goal)}" if saved_goal else ""
+    same_goal_page = bool(saved_goal_path and route_path == saved_goal_path)
+    resume_hub = route_path in {"/resume", "/workspace"}
+    saved_surface_route = bool(resume_surface and route_path == (urlparse(resume_surface).path or ""))
+    if same_goal_page:
+        restore_status = "saved_goal_current"
+    elif resume_hub:
+        restore_status = "resume_hub"
+    elif saved_surface_route:
+        restore_status = "saved_surface_current"
+    else:
+        return ""
+
+    auto_open = "true" if same_goal_page else "false"
+    fallback_href = resume_surface or saved_goal_path or "/workspace"
+    targets = [
+        _workspace_panel_restore_target(
+            key,
+            saved_goal=saved_goal,
+            same_goal_page=same_goal_page,
+            fallback_href=fallback_href,
+        )
+        for key in panel_keys
+    ]
+    target_cards = []
+    target_lines = []
+    for target in targets:
+        selector_attr = (
+            f" data-workspace-panel-target-selector='{_e(target['selectors'])}'"
+            if target["selectors"]
+            else ""
+        )
+        target_cards.append(
+            "<article class='workspace-panel-restore-card' "
+            f"data-workspace-panel-key='{_e(target['key'])}' "
+            f"data-workspace-panel-mapped='{_e(target['mapped'])}'{selector_attr}>"
+            f"<h3>{_e(target['label'])}</h3>"
+            f"<p>{_e(target['key'])}</p>"
+            f"<a class='workspace-panel-restore-link' href='{_e(target['href'])}'>{_e(target['label'])}</a>"
+            "</article>"
+        )
+        target_lines.append(
+            f"workspace_panel_restore_target: {_e(target['key'])} "
+            f"<a href='{_e(target['href'])}'>{_e(target['label'])}</a>"
+        )
+
+    status_text = (
+        "Restoring saved panels on this Goal page."
+        if auto_open == "true"
+        else "Saved panels are ready to reopen from here."
+    )
+    resume_surface_value: str | SafeHtml = (
+        SafeHtml(f"<a href='{_e(resume_surface)}'>{_e(resume_surface)}</a>")
+        if resume_surface
+        else "none"
+    )
+    return "".join(
+        [
+            "<section class='workspace-panel-restore' "
+            "data-workspace-panel-restore='true' "
+            f"data-workspace-panel-restore-status='{_e(restore_status)}' "
+            f"data-workspace-panel-restore-keys='{_e(','.join(panel_keys))}' "
+            f"data-workspace-panel-restore-auto-open='{auto_open}'>",
+            "<h2>Workspace Panel Restore</h2>",
+            f"<p class='muted' data-workspace-panel-restore-status-text='true'>{_e(status_text)}</p>",
+            "<div class='workspace-panel-restore-grid' data-workspace-panel-restore-actions='true'>",
+            "".join(target_cards),
+            "</div>",
+            "<details class='workspace-panel-restore-evidence' data-workspace-panel-restore-evidence='true'>",
+            "<summary>Workspace panel restore evidence</summary>",
+            _kv(
+                [
+                    ("workspace_panel_restore_status", restore_status),
+                    ("workspace_panel_restore_source", ".clanker/app/workspace.json"),
+                    ("workspace_panel_restore_current_path", route_path),
+                    ("workspace_panel_restore_saved_project", saved_project or "none"),
+                    ("workspace_panel_restore_saved_goal", saved_goal or "none"),
+                    ("workspace_panel_restore_resume_surface", resume_surface_value),
+                    ("workspace_panel_restore_saved_panels", ",".join(panel_keys) or "none"),
+                    ("workspace_panel_restore_target_count", str(len(targets))),
+                    ("workspace_panel_restore_auto_open", auto_open),
+                    ("workspace_panel_restore_write_on_get", "false"),
+                    ("workspace_panel_restore_provider_calls_taken_by_clankeros", "0"),
+                    ("workspace_panel_restore_network_actions_taken", "0"),
+                    ("workspace_panel_restore_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                target_lines
+                + [
+                    "workspace_panel_restore_safety: browser-local details opening only; confirmed save-workspace owns writes",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
 def _json_loads_safe(value: str, fallback: Any) -> Any:
     try:
         return json.loads(value)
@@ -35443,6 +35610,7 @@ def _html_page(
     focus_strip = _operator_focus_strip(focus_context)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
+    workspace_panel_restore = _workspace_panel_restore_strip(root, current_path)
     content_first_paths = {"/", "/actions", "/approvals", "/artifacts", "/ci-evidence", "/delegation-runs", "/demo", "/dogfooding", "/goals", "/health", "/inbox", "/incidents", "/memory", "/profiles", "/projects", "/resume", "/search", "/skills", "/today", "/verification", "/workflow", "/workspace"}
     if (
         current_route_path in content_first_paths
@@ -35492,6 +35660,19 @@ def _html_page(
     .operator-ribbon dl {{ grid-template-columns:minmax(170px, 230px) 1fr; }}
     .operator-ribbon ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
     .operator-ribbon li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .workspace-panel-restore {{ border-left:4px solid var(--accent); margin:0 0 16px; padding:12px; background:var(--panel); }}
+    .workspace-panel-restore h2 {{ font-size:15px; margin-top:0; }}
+    .workspace-panel-restore-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(155px, 1fr)); gap:8px; align-items:stretch; margin:10px 0; }}
+    .workspace-panel-restore-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:9px 10px; display:grid; gap:6px; align-content:start; }}
+    .workspace-panel-restore-card h3 {{ margin:0; font-size:13px; }}
+    .workspace-panel-restore-card p {{ margin:0; color:var(--muted); overflow-wrap:anywhere; }}
+    .workspace-panel-restore-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; width:100%; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
+    .workspace-panel-restore-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
+    .workspace-panel-restore-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .workspace-panel-restore-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .workspace-panel-restore dl {{ grid-template-columns:minmax(190px, 250px) 1fr; }}
+    .workspace-panel-restore ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
+    .workspace-panel-restore li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--panel); overflow-wrap:anywhere; }}
     .operator-side {{ position:sticky; top:74px; border:1px solid var(--line); background:var(--panel); padding:12px; }}
     .operator-side h2 {{ font-size:14px; }}
     .operator-side ul, .command-palette ul {{ list-style:none; padding:0; margin:0; display:grid; gap:7px; }}
@@ -36936,7 +37117,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .workflow-scope-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #goal-attention-digest {{ scroll-margin-top:260px; }} .goal-attention-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
@@ -36962,6 +37143,7 @@ def _html_page(
   {palette}
   <main>
     {operator_ribbon}
+    {workspace_panel_restore}
     <div class="operator-shell" data-operator-shell="true">
       {recent_panel}
       <article class="operator-main" data-operator-main="true">
@@ -37165,7 +37347,32 @@ def _html_page(
         target.open = true;
       }}
     }}
+    function restoreWorkspacePanels() {{
+      var restore = document.querySelector("[data-workspace-panel-restore='true']");
+      if (!restore || restore.getAttribute("data-workspace-panel-restore-auto-open") !== "true") {{ return; }}
+      var opened = 0;
+      Array.prototype.slice.call(restore.querySelectorAll("[data-workspace-panel-target-selector]")).forEach(function(card) {{
+        var raw = card.getAttribute("data-workspace-panel-target-selector") || "";
+        raw.split(",").forEach(function(selector) {{
+          selector = selector.trim();
+          if (!selector) {{ return; }}
+          Array.prototype.slice.call(document.querySelectorAll(selector)).forEach(function(node) {{
+            var details = node.tagName && node.tagName.toLowerCase() === "details" ? node : (node.closest ? node.closest("details") : null);
+            if (details && !details.open) {{
+              details.open = true;
+              opened += 1;
+            }}
+          }});
+        }});
+      }});
+      restore.setAttribute("data-workspace-panel-restore-opened-count", String(opened));
+      var status = restore.querySelector("[data-workspace-panel-restore-status-text='true']");
+      if (status) {{
+        status.textContent = opened ? "Restored " + opened + " saved panel detail(s)." : "Saved panel anchors are ready.";
+      }}
+    }}
     openCurrentHashDetails();
+    restoreWorkspacePanels();
     window.addEventListener("hashchange", openCurrentHashDetails);
     document.addEventListener("keydown", function(event) {{
       var target = event.target || {{}};

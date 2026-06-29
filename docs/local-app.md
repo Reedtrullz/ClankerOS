@@ -127,7 +127,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   evidence collapsed by default. Saved Goal links on Home, `/resume`,
   `/workspace`, and the Goal resume snapshot are title-first when a title
   exists, while raw Goal ids and label-source fields remain available in
-  collapsed evidence for review and automation. The workbench turns the saved context into
+  collapsed evidence for review and automation. The shared
+  `Workspace Panel Restore` strip reads saved `expanded_panels`, appears on
+  `/resume`, `/workspace`, and the saved Goal page, links back to the matching
+  Goal panels, and browser-locally opens the saved Goal details without a GET
+  write, provider call, or network action. The workbench turns the saved context into
   do/check/unblock/finish cards, same-page action-form routing, blocker
   routing, last-artifact readback, and a `/workspace#save-workspace` finish
   surface. A read-only `Resume Command Bar` follows with readiness, current

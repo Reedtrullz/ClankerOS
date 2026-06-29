@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared browser shell now turns saved `expanded_panels` into a
+  `Workspace Panel Restore` strip on `/resume`, `/workspace`, and the saved
+  Goal page. It shows direct links for saved panels such as Timeline and
+  Evidence, auto-opens matching details only on the saved Goal page, and keeps
+  GET requests read-only with explicit no-provider/no-network/no-external
+  counters.
 - `/goals/<goal_id>` now promotes open task recommendation commands into
   copy-only `Goal Recovery Commands` cards inside `Next Recommendation`.
   Operators can copy the stored `recommended_commands`, open the evidence

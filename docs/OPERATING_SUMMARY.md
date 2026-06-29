@@ -146,7 +146,11 @@ Core layers for the bootstrap:
   before shared route/focus diagnostics or command readback. It shows saved
   `resume_surface`, goal, project, artifact, filters, expanded panels, and
   zero-effect counters inside collapsed saved-state/command/workbench
-  evidence, while the visible workbench turns the saved context into
+  evidence. The shared `Workspace Panel Restore` strip now treats saved
+  `expanded_panels` as actionable return context on `/resume`, `/workspace`,
+  and the saved Goal page; it links to saved Goal panels and browser-locally
+  reopens matching details on the saved Goal page without writing state,
+  calling providers, or using the network. The visible workbench turns the saved context into
   do/check/unblock/finish cards with same-page action-form routing when
   available, readiness repair, blocker routing, last-artifact readback, and the
   existing `/workspace#save-workspace` finish surface. When `resume_surface`

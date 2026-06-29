@@ -103,6 +103,12 @@ artifacts, the operator inbox, approvals, incidents, and demo state:
 python3 -m agent_os.cli app
 ```
 
+Saved workspace panels are also treated as return-to-work context. When
+`.clanker/app/workspace.json` contains `expanded_panels`, `/resume`,
+`/workspace`, and the saved Goal page show a `Workspace Panel Restore` strip
+with direct panel links; the saved Goal page browser-locally reopens matching
+details panels without writing state, calling providers, or using the network.
+
 The root `/` page is the Goal-First Home board. It now leads with the actual
 Home operating surface before the shared route/focus diagnostics, and keeps
 Home state plus board evidence collapsed by default. The `Home Operator Board`

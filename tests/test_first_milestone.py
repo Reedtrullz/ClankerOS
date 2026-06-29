@@ -13497,6 +13497,19 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert resume_artifact in resume.body
     assert "resume_filters</dt><dd>active" in resume.body
     assert "resume_expanded_panels</dt><dd>timeline,evidence" in resume.body
+    assert "data-workspace-panel-restore='true'" in resume.body
+    assert "data-workspace-panel-restore-status='resume_hub'" in resume.body
+    assert "data-workspace-panel-restore-keys='timeline,evidence'" in resume.body
+    assert "data-workspace-panel-restore-auto-open='false'" in resume.body
+    assert "workspace_panel_restore_status</dt><dd>resume_hub" in resume.body
+    assert "workspace_panel_restore_saved_panels</dt><dd>timeline,evidence" in resume.body
+    assert "workspace_panel_restore_auto_open</dt><dd>false" in resume.body
+    assert "workspace_panel_restore_write_on_get</dt><dd>false" in resume.body
+    assert "workspace_panel_restore_network_actions_taken</dt><dd>0" in resume.body
+    assert (
+        f"workspace_panel_restore_target: timeline <a href='/goals/{result.goal_id}#goal-timeline'>Timeline</a>"
+        in resume.body
+    )
     assert (
         f"resume_saved_surface</dt><dd><a href='/goals/{result.goal_id}'>"
         f"/goals/{result.goal_id}</a>"
@@ -13542,6 +13555,28 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workspace_restore_last_artifact" in restored_goal.body
     assert resume_artifact in restored_goal.body
     assert "workspace_restore_write_on_get</dt><dd>false" in restored_goal.body
+    assert "data-workspace-panel-restore='true'" in restored_goal.body
+    assert "data-workspace-panel-restore-status='saved_goal_current'" in restored_goal.body
+    assert "data-workspace-panel-restore-keys='timeline,evidence'" in restored_goal.body
+    assert "data-workspace-panel-restore-auto-open='true'" in restored_goal.body
+    assert "workspace_panel_restore_status</dt><dd>saved_goal_current" in restored_goal.body
+    assert "workspace_panel_restore_target_count</dt><dd>2" in restored_goal.body
+    assert "workspace_panel_restore_auto_open</dt><dd>true" in restored_goal.body
+    assert "workspace_panel_restore_write_on_get</dt><dd>false" in restored_goal.body
+    assert "workspace_panel_restore_provider_calls_taken_by_clankeros</dt><dd>0" in restored_goal.body
+    assert "workspace_panel_restore_external_effects_created</dt><dd>false" in restored_goal.body
+    assert (
+        "data-workspace-panel-target-selector='.goal-timeline-metadata, "
+        ".goal-timeline-command-evidence, .goal-timeline-filter-evidence'"
+        in restored_goal.body
+    )
+    assert "workspace_panel_restore_target: timeline <a href='#goal-timeline'>Timeline</a>" in restored_goal.body
+    assert (
+        "workspace_panel_restore_target: evidence "
+        "<a href='#goal-evidence-command-bar'>Evidence</a>"
+        in restored_goal.body
+    )
+    assert "function restoreWorkspacePanels()" in restored_goal.body
 
     delegation_runs = render_local_app_route(tmp_path, "/delegation-runs")
     assert delegation_runs.status == 200

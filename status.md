@@ -1,5 +1,27 @@
 # Status
 
+## 2026-06-29 Workspace Panel Restore UX
+
+- Added a shared `Workspace Panel Restore` strip to the browser shell for
+  `/resume`, `/workspace`, and the saved Goal page whenever
+  `.clanker/app/workspace.json` contains `expanded_panels`.
+- Saved panels such as Timeline and Evidence now become direct links from the
+  return-to-work surfaces. On the saved Goal page, a browser-local helper
+  reopens matching details panels so the operator lands back near the useful
+  sections instead of only seeing a saved-state readback.
+- The restore strip exposes DOM evidence for source, current path, saved
+  project/Goal, saved panels, target count, auto-open posture, and explicit
+  no-write/no-provider/no-network/no-external-effect counters.
+- Updated README, local app docs, operating summary, docs status, and the
+  fixture-backed demo workspace regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state --tb=short` passed with
+  `1 passed, 515 deselected`; `python3 -m compileall -q agent_os tests`;
+  `git diff --check`; bounded temp-root `app-smoke-test`; bounded temp-root
+  `app-demo-smoke-test`.
+
 ## 2026-06-29 Goal Recovery Command Routing UX
 
 - Made open task recommendations with stored `recommended_commands` route the
