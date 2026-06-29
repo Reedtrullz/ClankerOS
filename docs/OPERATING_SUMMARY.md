@@ -893,7 +893,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   records local app routes in `localStorage:clankeros-route-history`, dedupes
   by href, keeps the 12 most recent entries, exposes a clear button, and adds
   those viewed routes to the command palette after localStorage readback
-  without writing server state.
+  without writing server state. The shared shell also remembers route-scoped
+  open/closed `<details>` panels in `localStorage:clankeros-open-panels:<route>`
+  after the browser has saved state for that route, so expanded evidence panels
+  survive reloads on long operator pages; `/workspace#workspace-view-memory`
+  inventories and clears those browser-local entries without changing
+  `.clanker/app/workspace.json`.
   The command palette now also includes a visible `Quick Switch` dock for
   Continue, Workspace, Action, Artifact, and Finish, so the keyboard launcher
   can reopen the current Goal, saved workspace, latest local action target,

@@ -537,7 +537,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   A browser-local `Viewed Pages` panel records local app routes in
   `localStorage:clankeros-route-history`, dedupes by href, keeps the 12 most
   recent entries, surfaces them in the sidebar, and exposes a clear button
-  without writing server state. A browser-local `Find Recent` filter narrows the already-rendered shortcut
+  without writing server state. The shared shell also stores route-scoped open
+  `<details>` panel state in `localStorage:clankeros-open-panels:<route>`, so
+  expanded evidence panels survive local reloads on that same page and can be
+  inspected or reset from `/workspace#workspace-view-memory`. A browser-local `Find Recent` filter narrows the already-rendered shortcut
   rows by text, remembers the query in
   `localStorage:clankeros-recent-items-filter`, and resets without writing
   server state, with the remaining recent shortcuts in a second collapsed

@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared app shell now remembers route-scoped open/closed `<details>`
+  panels in browser-local `localStorage:clankeros-open-panels:<route>` entries
+  after a page has saved panel state, so evidence/detail panels survive local
+  reloads on long operator pages. `/workspace#workspace-view-memory` can
+  inspect and reset these entries without writing `.clanker/app/workspace.json`
+  or touching providers, network, or external systems.
 - The shared app shell now includes a browser-local `Viewed Pages` panel and
   palette integration backed by `localStorage:clankeros-route-history`, so
   operator route hops are searchable and reopenable without server writes,

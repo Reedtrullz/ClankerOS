@@ -541,6 +541,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-command-palette-empty='true'",
                 "data-browser-route-history='true'",
                 "data-browser-route-history-storage-key='clankeros-route-history'",
+                "data-open-panel-memory='true'",
+                "data-open-panel-memory-storage-prefix='clankeros-open-panels:'",
+                "function initializeOpenPanelMemoryState()",
                 "data-command-palette-route-history='true'",
                 "data-command-palette-route-history-storage-key='clankeros-route-history'",
                 "function syncPaletteFilter()",
@@ -1035,6 +1038,8 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "Workspace View Memory",
                 "data-workspace-view-memory='true'",
                 "data-workspace-view-memory-evidence='true'",
+                "data-workspace-view-memory-card='open-panels'",
+                "data-workspace-view-memory-key='clankeros-open-panels:'",
                 "workspace_view_memory_status</dt><dd>available",
                 "data-workspace-save-details='true'",
                 "save-workspace",
@@ -6803,6 +6808,13 @@ def _workspace_view_memory_panel() -> str:
             "Browser-local route history",
         ),
         (
+            "open-panels",
+            "Open Panels",
+            "prefix",
+            "clankeros-open-panels:",
+            "Route-scoped expanded details panels",
+        ),
+        (
             "search",
             "Search Lanes",
             "prefix",
@@ -6930,7 +6942,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus board recent route-history search timeline artifacts notes memory skills approvals inbox profiles",
+                    "workspace_view_memory_reset_scope: theme focus board recent route-history open-panels search timeline artifacts notes memory skills approvals inbox profiles",
                 ]
             ),
             "</details>",
@@ -40516,7 +40528,7 @@ def _html_page(
     @media (max-width: 860px) {{ .home-operator-board dl, .goal-board-command-bar dl, .goal-board-workbench dl, .run-command-bar dl, .run-operator-workbench dl, .run-gate-map dl, .run-continuation-strip dl, .run-evidence-map dl, .delegation-run-continuation dl, .approval-queue-command-bar dl, .approval-operator-workbench dl, .approval-decision-brief dl {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
-<body>
+<body data-open-panel-memory='true' data-open-panel-memory-storage-prefix='clankeros-open-panels:' data-open-panel-memory-write-on-get='false' data-open-panel-memory-provider-calls-taken='0' data-open-panel-memory-network-actions-taken='0' data-open-panel-memory-external-effects-created='false'>
   <header>
     <strong>ClankerOS Local Operator</strong>
     <nav>{nav}</nav>
@@ -41820,6 +41832,100 @@ def _html_page(
         setProfileFilterViewStatus(filterPanel, "View: default");
       }}
     }}
+    function openPanelMemoryRoot() {{
+      return document.body && document.body.getAttribute("data-open-panel-memory") === "true" ? document.body : null;
+    }}
+    function openPanelMemoryStoragePrefix() {{
+      var panelRoot = openPanelMemoryRoot();
+      return (panelRoot && panelRoot.getAttribute("data-open-panel-memory-storage-prefix")) || "clankeros-open-panels:";
+    }}
+    function openPanelMemoryRoute() {{
+      return window.location.pathname + window.location.search;
+    }}
+    function openPanelMemoryStorageKey() {{
+      return openPanelMemoryStoragePrefix() + openPanelMemoryRoute();
+    }}
+    function rememberableDetailsPanels() {{
+      return Array.prototype.slice.call(document.querySelectorAll("details[id]")).filter(function(details) {{
+        if (!details.id) {{ return false; }}
+        if (details.closest && details.closest("#command-palette")) {{ return false; }}
+        return details.getAttribute("data-open-panel-memory-ignore") !== "true";
+      }});
+    }}
+    function normalizeOpenPanelMemoryState(raw) {{
+      if (!raw) {{ return null; }}
+      try {{
+        var parsed = JSON.parse(raw);
+        var openIds = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.open) ? parsed.open : []);
+        return openIds
+          .filter(function(id) {{ return typeof id === "string" && id.length > 0; }})
+          .slice(0, 96);
+      }} catch (error) {{
+        return null;
+      }}
+    }}
+    function loadOpenPanelMemoryState() {{
+      if (!window.localStorage) {{ return null; }}
+      try {{
+        var raw = window.localStorage.getItem(openPanelMemoryStorageKey());
+        return normalizeOpenPanelMemoryState(raw);
+      }} catch (error) {{
+        return null;
+      }}
+    }}
+    function updateOpenPanelMemoryAttributes(status, opened, total) {{
+      var panelRoot = openPanelMemoryRoot();
+      if (!panelRoot) {{ return; }}
+      panelRoot.setAttribute("data-open-panel-memory-route-key", openPanelMemoryStorageKey());
+      panelRoot.setAttribute("data-open-panel-memory-status", status);
+      panelRoot.setAttribute("data-open-panel-memory-open-count", String(opened));
+      panelRoot.setAttribute("data-open-panel-memory-total-panels", String(total));
+    }}
+    function saveOpenPanelMemoryState() {{
+      var panels = rememberableDetailsPanels();
+      var openIds = panels.filter(function(details) {{ return details.open; }}).map(function(details) {{ return details.id; }});
+      updateOpenPanelMemoryAttributes(window.localStorage ? "saved" : "unavailable", openIds.length, panels.length);
+      if (!window.localStorage) {{ return; }}
+      try {{
+        window.localStorage.setItem(openPanelMemoryStorageKey(), JSON.stringify({{
+          route: openPanelMemoryRoute(),
+          open: openIds.slice(0, 96),
+          updatedAt: new Date().toISOString()
+        }}));
+      }} catch (error) {{
+        updateOpenPanelMemoryAttributes("local-only", openIds.length, panels.length);
+      }}
+    }}
+    function restoreOpenPanelMemoryState() {{
+      var panels = rememberableDetailsPanels();
+      if (!panels.length) {{
+        updateOpenPanelMemoryAttributes("no-panels", 0, 0);
+        return;
+      }}
+      if (!window.localStorage) {{
+        updateOpenPanelMemoryAttributes("unavailable", panels.filter(function(details) {{ return details.open; }}).length, panels.length);
+        return;
+      }}
+      var savedOpenIds = loadOpenPanelMemoryState();
+      if (savedOpenIds === null) {{
+        updateOpenPanelMemoryAttributes("default", panels.filter(function(details) {{ return details.open; }}).length, panels.length);
+        return;
+      }}
+      var opened = 0;
+      panels.forEach(function(details) {{
+        var shouldOpen = savedOpenIds.indexOf(details.id) !== -1;
+        details.open = shouldOpen;
+        if (shouldOpen) {{ opened += 1; }}
+      }});
+      updateOpenPanelMemoryAttributes("restored", opened, panels.length);
+    }}
+    function initializeOpenPanelMemoryState() {{
+      if (!openPanelMemoryRoot()) {{ return; }}
+      restoreOpenPanelMemoryState();
+      rememberableDetailsPanels().forEach(function(details) {{
+        details.addEventListener("toggle", saveOpenPanelMemoryState);
+      }});
+    }}
     if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
     if (paletteSearch) {{ paletteSearch.addEventListener("input", syncPaletteFilter); }}
     if (nextActionOpen) {{ nextActionOpen.addEventListener("click", openNextAction); }}
@@ -42046,6 +42152,7 @@ def _html_page(
     initializeInboxFilterState();
     initializeProfileFilterState();
     restoreWorkspacePanels();
+    initializeOpenPanelMemoryState();
     window.addEventListener("hashchange", function() {{
       openCurrentHashDetails();
       rememberCurrentRoute();

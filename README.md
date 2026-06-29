@@ -778,7 +778,11 @@ last action notice, or saved artifact without expanding the longer shortcut
 list. It also includes a browser-local `Viewed Pages` panel backed by
 `localStorage:clankeros-route-history`, which records the local app pages
 visited in this browser, dedupes them by route, caps the list at 12 entries,
-and can be cleared with an explicit click without touching server state. A
+and can be cleared with an explicit click without touching server state. The
+shared shell also remembers open/closed route panels in route-scoped
+`localStorage:clankeros-open-panels:<route>` entries, so expanded evidence and
+details survive reloads on the same page while `/workspace#workspace-view-memory`
+can inspect or reset them with the other browser-local view state. A
 browser-local `Find Recent` filter narrows the already-rendered
 shortcut rows by text, remembers the query in
 `localStorage:clankeros-recent-items-filter`, and resets without writing server

@@ -1,5 +1,33 @@
 # Status
 
+## 2026-06-29 Browser-Local Open Panels
+
+- Added shared browser-local open-panel memory to the app shell, backed by
+  route-scoped `localStorage:clankeros-open-panels:<route>` entries.
+- The shell records stable `<details id=...>` panels after a browser has saved
+  state for that route, restores the exact open/closed set after reload, and
+  keeps first visits on the server-rendered default panel posture.
+- `/workspace#workspace-view-memory` now includes an `Open Panels` prefix card
+  and reset scope, so route-scoped panel state can be inspected or cleared with
+  the other browser-local view state.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused route/demo pytest passed with
+  `2 passed, 514 deselected in 61.10s`; `python3 -m compileall -q agent_os
+  tests` passed; `git diff --check` passed; bounded scratch-root
+  `app-smoke-test` passed across core routes with provider/network/external
+  mutation counters at zero; bounded scratch-root `app-demo-smoke-test` passed
+  across fixture-backed routes with the same zero-effect counters; Playwright
+  against throwaway demo Goal `http://127.0.0.1:61892/goals/goal_e64c2fe6e0d1`
+  confirmed route key `clankeros-open-panels:/goals/goal_e64c2fe6e0d1`,
+  saving two open panels, reload-restoring the same two, closing one and
+  reload-restoring only the remaining panel, Workspace View Memory reset
+  removing the saved key, no desktop or mobile horizontal overflow, and zero
+  console warnings/errors.
+- Non-claims: open-panel memory is browser-local view state only. It does not
+  write `.clanker/app/workspace.json`, record workflow memory, approve or
+  execute work, call providers, fetch GitHub, push, create PRs, deploy, or
+  mutate external systems.
+
 ## 2026-06-29 Browser-Local Viewed Pages
 
 - Added a shared browser-local `Viewed Pages` panel to the app shell, backed by
