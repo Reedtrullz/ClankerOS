@@ -919,6 +919,9 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-goal-operator-notes-form-card='true'",
                 "data-goal-operator-notes-safety='true'",
                 "data-goal-operator-notes-evidence='true'",
+                "data-goal-operator-notes-browser='true'",
+                "data-goal-operator-notes-filter='true'",
+                "data-goal-operator-notes-filter-evidence='true'",
                 "data-goal-operator-notes-list='true'",
                 "data-goal-operator-notes-form='true'",
                 "data-goal-task-closeout='true'",
@@ -19047,10 +19050,12 @@ def _commit_refs_match(record_commit: str, full_commit: str, short_commit: str) 
 def _goal_operator_note_lines(root: Path, state: dict[str, Any]) -> list[str]:
     goal = state["goal"]
     note_path = _goal_operator_notes_path(goal)
+    entries = _goal_operator_note_entries(root, state)
     if (root / note_path).exists():
         return [
             f"operator_notes: {_artifact_link(note_path.as_posix())}",
             "operator_notes_status: available",
+            f"operator_note_entries: {len(entries)}",
             "note_append_form_available: true",
         ]
     return [
@@ -19060,6 +19065,62 @@ def _goal_operator_note_lines(root: Path, state: dict[str, Any]) -> list[str]:
     ]
 
 
+def _goal_operator_note_entries(root: Path, state: dict[str, Any]) -> list[dict[str, str]]:
+    goal = state["goal"]
+    note_path = _goal_operator_notes_path(goal)
+    absolute_path = root / note_path
+    if not absolute_path.exists():
+        return []
+    text = absolute_path.read_text(encoding="utf-8")
+    sections: list[dict[str, Any]] = []
+    current: dict[str, Any] | None = None
+    for line in text.splitlines():
+        heading = re.match(r"^##\s+(.+?)\s*$", line)
+        if heading:
+            if current is not None:
+                sections.append(current)
+            current = {
+                "timestamp": heading.group(1),
+                "author": "unknown",
+                "body_lines": [],
+            }
+            continue
+        if current is None:
+            continue
+        stripped = line.strip()
+        if stripped.startswith("- author:"):
+            current["author"] = stripped.removeprefix("- author:").strip() or "unknown"
+            continue
+        if stripped.startswith("- goal:") or stripped.startswith("- project:"):
+            continue
+        if not stripped and not current["body_lines"]:
+            continue
+        current["body_lines"].append(line.rstrip())
+    if current is not None:
+        sections.append(current)
+
+    entries: list[dict[str, str]] = []
+    for index, section in enumerate(sections, start=1):
+        body_lines = [line for line in section["body_lines"]]
+        while body_lines and not body_lines[-1].strip():
+            body_lines.pop()
+        body = "\n".join(body_lines).strip()
+        timestamp = str(section["timestamp"]).strip() or f"note {index}"
+        author = str(section["author"]).strip() or "unknown"
+        search_text = " ".join([timestamp, author, body]).strip().lower()
+        entries.append(
+            {
+                "id": f"goal-operator-note-{index}",
+                "index": str(index),
+                "timestamp": timestamp,
+                "author": author,
+                "body": body or "(empty note)",
+                "search_text": search_text,
+            }
+        )
+    return entries
+
+
 def _goal_operator_notes_section(root: Path, state: dict[str, Any]) -> str:
     goal = state["goal"]
     return "".join(
@@ -19067,6 +19128,7 @@ def _goal_operator_notes_section(root: Path, state: dict[str, Any]) -> str:
             "<section id='goal-operator-notes'><h2>Operator Notes</h2>",
             "<p class='muted'>Append a goal-scoped local note for tomorrow's resume context. This writes only the operator-notes artifact.</p>",
             _goal_operator_notes_command_bar(root, state),
+            _goal_operator_notes_browser(root, state),
             "<details class='goal-operator-notes-list' data-goal-operator-notes-list='true'><summary>Operator notes details</summary>",
             _ul(_goal_operator_note_lines(root, state)),
             "</details>",
@@ -19082,13 +19144,185 @@ def _goal_operator_notes_section(root: Path, state: dict[str, Any]) -> str:
     )
 
 
+def _goal_operator_notes_browser(root: Path, state: dict[str, Any]) -> str:
+    goal = state["goal"]
+    note_path = _goal_operator_notes_path(goal)
+    entries = _goal_operator_note_entries(root, state)
+    storage_key = f"clankeros-goal-notes-filter:{goal.id}"
+    note_exists = (root / note_path).exists()
+    note_artifact: str | SafeHtml = (
+        SafeHtml(_artifact_link(note_path.as_posix()))
+        if note_exists
+        else "not_started"
+    )
+    latest = entries[-1] if entries else None
+    latest_label = (
+        f"{latest['timestamp']} by {latest['author']}" if latest is not None else "none"
+    )
+    cards: list[str] = []
+    for entry in reversed(entries):
+        cards.append(
+            "".join(
+                [
+                    (
+                        f"<article id='{_e(entry['id'])}' class='goal-operator-note-card' "
+                        "data-goal-operator-note-item='true' "
+                        f"data-goal-operator-note-author='{_e(entry['author'])}' "
+                        f"data-goal-operator-note-timestamp='{_e(entry['timestamp'])}' "
+                        f"data-goal-operator-note-text='{_e(entry['search_text'])}'>"
+                    ),
+                    "<div class='goal-operator-note-meta'>",
+                    f"<strong>{_e(entry['timestamp'])}</strong>",
+                    f"<span>{_e(entry['author'])}</span>",
+                    "</div>",
+                    f"<p class='goal-operator-note-body'>{_e(entry['body'])}</p>",
+                    "</article>",
+                ]
+            )
+        )
+    if not cards:
+        cards.append(
+            "<article class='goal-operator-note-card goal-operator-note-empty' "
+            "data-goal-operator-note-empty-card='true'><h3>No notes yet</h3>"
+            "<p>Capture the first operator note below so tomorrow's resume has context.</p></article>"
+        )
+    return "".join(
+        [
+            (
+                "<section id='goal-operator-notes-browser' class='panel goal-operator-notes-browser' "
+                "data-goal-operator-notes-browser='true' data-goal-operator-notes-filter='true' "
+                f"data-goal-operator-notes-storage-key='{_e(storage_key)}'>"
+            ),
+            "<h3>Goal Notes Browser</h3>",
+            "<p class='muted'>Scan and narrow saved operator notes without opening the raw Markdown artifact.</p>",
+            "<div class='goal-operator-notes-filter-row' data-goal-operator-notes-filter-controls='true'>",
+            "<label>Find note <input type='search' data-goal-operator-notes-filter-query='true' placeholder='resume, blocker, publish...'></label>",
+            f"<span class='goal-operator-notes-filter-count' data-goal-operator-notes-filter-status='true'>Showing {len(entries)} of {len(entries)} notes.</span>",
+            "</div>",
+            "<div class='goal-operator-notes-filter-memory' data-goal-operator-notes-filter-memory='true'>",
+            "<span class='goal-operator-notes-filter-memory-status' data-goal-operator-notes-filter-view-status='true'>View: default</span>",
+            "<button type='button' class='goal-operator-notes-filter-reset' data-goal-operator-notes-filter-reset='true'>Reset notes</button>",
+            "</div>",
+            "<p class='muted goal-operator-notes-filter-empty' data-goal-operator-notes-filter-empty='true' hidden>No operator notes match this filter.</p>",
+            "<div class='goal-operator-note-cards' data-goal-operator-note-cards='true'>",
+            "".join(cards),
+            "</div>",
+            "<details class='goal-operator-notes-filter-evidence' data-goal-operator-notes-filter-evidence='true'><summary>Goal notes browser evidence</summary>",
+            _kv(
+                [
+                    ("goal_operator_notes_filter_status", "available" if entries else "empty"),
+                    ("goal_operator_notes_filter_goal", goal.id),
+                    ("goal_operator_notes_filter_project", goal.project_id),
+                    ("goal_operator_notes_filter_total_entries", str(len(entries))),
+                    ("goal_operator_notes_filter_rendered_entries", str(len(entries))),
+                    ("goal_operator_notes_filter_latest", latest_label),
+                    ("goal_operator_notes_filter_note_artifact", note_artifact),
+                    ("goal_operator_notes_filter_memory_storage", f"localStorage:{storage_key}"),
+                    ("goal_operator_notes_filter_memory_fields", "query"),
+                    ("goal_operator_notes_filter_default_query", ""),
+                    ("goal_operator_notes_filter_raw_filesystem_browsing", "false"),
+                    ("goal_operator_notes_filter_write_on_get", "false"),
+                    ("goal_operator_notes_filter_provider_calls_taken", "0"),
+                    ("goal_operator_notes_filter_network_actions_taken", "0"),
+                    ("goal_operator_notes_filter_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"goal_operator_notes_filter_default: {len(entries)} note(s)",
+                    "goal_operator_notes_filter_persistence: browser-local per Goal",
+                    "goal_operator_notes_filter_safety: filters already-rendered operator note cards only",
+                ]
+            ),
+            "</details>",
+            """<script>
+(function () {
+  var root = document.querySelector("[data-goal-operator-notes-filter='true']");
+  if (!root) return;
+  var input = root.querySelector("[data-goal-operator-notes-filter-query='true']");
+  var status = root.querySelector("[data-goal-operator-notes-filter-status='true']");
+  var viewStatus = root.querySelector("[data-goal-operator-notes-filter-view-status='true']");
+  var reset = root.querySelector("[data-goal-operator-notes-filter-reset='true']");
+  var empty = root.querySelector("[data-goal-operator-notes-filter-empty='true']");
+  var items = Array.prototype.slice.call(root.querySelectorAll("[data-goal-operator-note-item='true']"));
+  function storageKey() {
+    return root.getAttribute("data-goal-operator-notes-storage-key") || "";
+  }
+  function setViewStatus(message) {
+    if (viewStatus) viewStatus.textContent = message;
+  }
+  function saveState() {
+    if (!window.localStorage) return;
+    try {
+      window.localStorage.setItem(storageKey(), JSON.stringify({ query: input ? input.value : "" }));
+      setViewStatus("View: saved");
+    } catch (error) {}
+  }
+  function update(options) {
+    options = options || {};
+    var query = input && input.value ? input.value.trim().toLowerCase() : "";
+    var visible = 0;
+    items.forEach(function (item) {
+      var text = item.getAttribute("data-goal-operator-note-text") || "";
+      var matched = !query || text.indexOf(query) !== -1;
+      item.hidden = !matched;
+      if (matched) visible += 1;
+    });
+    if (status) {
+      status.textContent = query
+        ? "Showing " + visible + " of " + items.length + " notes matching text " + query + "."
+        : "Showing " + visible + " of " + items.length + " notes.";
+    }
+    if (empty) empty.hidden = visible !== 0 || items.length === 0;
+    if (options.persist !== false) saveState();
+  }
+  function restoreState() {
+    if (!window.localStorage) {
+      update({ persist: false });
+      return;
+    }
+    try {
+      var raw = window.localStorage.getItem(storageKey());
+      if (!raw) {
+        update({ persist: false });
+        setViewStatus("View: default");
+        return;
+      }
+      var state = JSON.parse(raw);
+      if (input && state && typeof state.query === "string") input.value = state.query;
+      update({ persist: false });
+      setViewStatus("View: restored");
+    } catch (error) {
+      update({ persist: false });
+      setViewStatus("View: default");
+    }
+  }
+  if (input) input.addEventListener("input", function () { update({ source: "query" }); });
+  if (reset) {
+    reset.addEventListener("click", function () {
+      if (input) input.value = "";
+      if (window.localStorage) {
+        try { window.localStorage.removeItem(storageKey()); } catch (error) {}
+      }
+      update({ persist: false });
+      setViewStatus("View: reset");
+    });
+  }
+  restoreState();
+})();
+</script>""",
+            "</section>",
+        ]
+    )
+
+
 def _goal_operator_notes_command_bar(root: Path, state: dict[str, Any]) -> str:
     goal = state["goal"]
     note_path = _goal_operator_notes_path(goal)
     absolute_path = root / note_path
     note_exists = absolute_path.exists()
-    note_text = absolute_path.read_text(encoding="utf-8") if note_exists else ""
-    entry_count = sum(1 for line in note_text.splitlines() if line.startswith("## "))
+    entries = _goal_operator_note_entries(root, state)
+    entry_count = len(entries)
     note_size = absolute_path.stat().st_size if note_exists else 0
     updated_at = _artifact_time(root, note_path.as_posix()) if note_exists else None
     workspace = _load_workspace_state(root)
@@ -36601,7 +36835,7 @@ def _html_page(
     .goal-progress-meter-card p {{ margin:0; color:var(--muted); overflow-wrap:anywhere; }}
     .goal-progress-meter-primary {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
     .goal-progress-meter-card progress {{ width:100%; height:14px; accent-color:var(--ok); }}
-    .goal-progress-meter-action, .goal-progress-meter-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; width:max-content; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .goal-progress-meter-action, .goal-progress-meter-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .goal-progress-meter-action {{ background:var(--accent); color:#fff; }}
     .goal-progress-meter-link {{ background:var(--surface); color:var(--accent); }}
     .goal-progress-meter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
@@ -36893,11 +37127,27 @@ def _html_page(
     .goal-operator-notes-action, .goal-operator-notes-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .goal-operator-notes-action {{ background:var(--accent); color:#fff; }}
     .goal-operator-notes-link {{ background:var(--surface); color:var(--accent); }}
-    .goal-operator-notes-evidence, .goal-operator-notes-list {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .goal-operator-notes-evidence summary, .goal-operator-notes-list summary {{ cursor:pointer; font-weight:700; }}
-    .goal-operator-notes-evidence:not([open]) > :not(summary), .goal-operator-notes-list:not([open]) > :not(summary) {{ display:none; }}
+    .goal-operator-notes-browser {{ border-left:4px solid var(--ok); }}
+    .goal-operator-notes-filter-row {{ display:grid; grid-template-columns:minmax(220px, 1fr) auto; gap:10px; align-items:end; margin:10px 0; }}
+    .goal-operator-notes-filter-row label {{ display:grid; gap:4px; color:var(--muted); }}
+    .goal-operator-notes-filter-row input {{ width:100%; min-height:34px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 8px; }}
+    .goal-operator-notes-filter-count {{ color:var(--muted); white-space:nowrap; }}
+    .goal-operator-notes-filter-memory {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0; }}
+    .goal-operator-notes-filter-memory-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .goal-operator-notes-filter-reset {{ min-height:32px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 10px; }}
+    .goal-operator-notes-filter-empty {{ margin:10px 0; }}
+    .goal-operator-note-cards {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin:10px 0; }}
+    .goal-operator-note-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .goal-operator-note-meta {{ display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; color:var(--muted); font-size:12px; }}
+    .goal-operator-note-meta strong, .goal-operator-note-meta span {{ overflow-wrap:anywhere; }}
+    .goal-operator-note-body {{ white-space:pre-wrap; margin:10px 0 0; overflow-wrap:anywhere; }}
+    .goal-operator-note-empty h3 {{ margin-top:0; }}
+    .goal-operator-notes-evidence, .goal-operator-notes-filter-evidence, .goal-operator-notes-list {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-operator-notes-evidence summary, .goal-operator-notes-filter-evidence summary, .goal-operator-notes-list summary {{ cursor:pointer; font-weight:700; }}
+    .goal-operator-notes-evidence:not([open]) > :not(summary), .goal-operator-notes-filter-evidence:not([open]) > :not(summary), .goal-operator-notes-list:not([open]) > :not(summary) {{ display:none; }}
     .goal-operator-notes-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-operator-notes-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    @media (max-width: 640px) {{ .goal-operator-notes-filter-row {{ grid-template-columns:1fr; }} .goal-operator-notes-filter-count {{ white-space:normal; }} .goal-operator-notes-filter-reset {{ width:100%; }} .goal-operator-notes-filter-memory {{ align-items:stretch; }} .goal-operator-notes-filter-memory-status {{ width:100%; }} }}
     .goal-remaining-work-command-bar {{ border-left:4px solid var(--warn); }}
     .goal-remaining-work-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-remaining-work-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -37901,7 +38151,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .workflow-scope-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #goal-attention-digest {{ scroll-margin-top:260px; }} .goal-attention-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}

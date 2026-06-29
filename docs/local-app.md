@@ -378,7 +378,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   form that returns to the same goal page after saving without writing on GET.
   Operator Notes starts with a read-only `Goal Operator Notes Command Bar`
   that opens with visible Now, Artifact, Resume, Capture, and Safety cards
-  before collapsed command evidence and collapsed note details. The confirmed
+  before collapsed command evidence and collapsed note details. A `Goal Notes
+  Browser` follows with already-rendered note cards, text search, per-Goal
+  browser-local query memory in
+  `localStorage:clankeros-goal-notes-filter:<goal_id>`, and Reset notes while
+  keeping GET read-only and avoiding raw filesystem browsing. The confirmed
   `save-goal-note` form appends local resume context to
   `.clanker/projects/<project>/goals/<goal>/operator-notes.md`; it does not
   overwrite previous notes. Saved operator notes also appear as linked

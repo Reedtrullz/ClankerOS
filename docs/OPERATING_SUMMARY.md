@@ -620,11 +620,15 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   Goal` form remains directly below search.
   They also include a read-only `Goal Operator Notes Command Bar` before the
   confirmed `save-goal-note` form. It opens with visible Now, Artifact,
-  Resume, Capture, and Safety cards, while command evidence and note details
-  stay collapsed and preserve the goal-scoped `operator-notes.md` path,
-  timestamped entry count, artifact size, workspace resume-anchor posture, one
-  review or capture target, and no-write/no-provider/no-network/
-  no-external-effect boundaries. The confirmed note form appends local
+  Resume, Capture, and Safety cards, then a visible `Goal Notes Browser`
+  renders the existing `operator-notes.md` sections as scan-first cards with
+  text search, per-Goal browser-local query memory in
+  `localStorage:clankeros-goal-notes-filter:<goal_id>`, Reset notes, and
+  no-write/no-provider/no-network/no-raw-filesystem/no-external-effect
+  boundaries. Command evidence and note details stay collapsed and preserve
+  the goal-scoped path, timestamped entry count, artifact size, workspace
+  resume-anchor posture, one review or capture target, and safety counters.
+  The confirmed note form appends local
   operator resume context to the artifact; saved operator notes also become
   linked `Operator note saved` entries in the Goal timeline and recent
   Activity Log with zero external effects, and the confirmed note action now

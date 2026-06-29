@@ -1,5 +1,40 @@
 # Status
 
+## 2026-06-29 Goal Operator Notes Browser UX
+
+- Added a visible `Goal Notes Browser` to
+  `/goals/<goal_id>#goal-operator-notes-browser` after the Goal Operator Notes
+  Command Bar and before the confirmed append form.
+- The browser parses the existing goal-scoped `operator-notes.md` sections and
+  renders them as scan-first note cards with timestamp, author, and body text,
+  so saved resume notes can be reviewed without opening the raw Markdown file.
+- Operators can narrow already-rendered note cards with local text search; the
+  query is remembered per Goal in
+  `localStorage:clankeros-goal-notes-filter:<goal_id>` and cleared with
+  `Reset notes`.
+- The behavior is read-only display filtering on GET: note creation still goes
+  only through the confirmed `save-goal-note` action, previous notes are not
+  overwritten, no raw filesystem browsing is exposed, and no provider,
+  network, push, PR, deploy, or external mutation is performed.
+- Hardened an existing progress-meter action width rule found during Browser QA
+  so desktop Goal pages do not overflow horizontally.
+- Updated README, local app docs, operating summary, docs status, demo smoke
+  expectations, and the fixture-backed first-milestone Goal note regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused route/demo pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 52.04s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55617` showed the Goal Notes Browser with one saved
+  note, text filter `publication` saving `View: saved` and `Showing 1 of 1
+  notes matching text publication.`, reload restoring the query with `View:
+  restored`, Reset notes returning `Showing 1 of 1 notes.`, desktop
+  `1280x900` and mobile `390x844` both with no horizontal overflow, no
+  framework error overlay, and no console warnings/errors.
+
 ## 2026-06-29 Goal Artifact Filter UX
 
 - Added a browser-local `Goal Artifact Filter` to

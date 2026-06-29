@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals/<goal_id>#goal-operator-notes-browser` now renders existing
+  `operator-notes.md` sections as scan-first note cards with local text search,
+  visible View status, per-Goal browser-local query memory in
+  `localStorage:clankeros-goal-notes-filter:<goal_id>`, and Reset notes while
+  preserving confirmed-only appends, read-only GET behavior, no raw filesystem
+  browsing, and no-provider/no-network/no-external-effect boundaries.
 - `/goals/<goal_id>#goal-artifact-filter` now adds a browser-local Goal
   Artifact Filter at the top of the typed Goal Artifact Explorer. It narrows
   already-rendered artifacts by type, source, or text, remembers that view per

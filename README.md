@@ -548,10 +548,13 @@ metadata, then the recent human-readable event list. Progress starts with a read
 Command Bar, then uses a real browser progress bar.
 Operator Notes starts with a read-only `Goal Operator Notes Command Bar` that
 opens with visible Now, Artifact, Resume, Capture, and Safety cards before
-collapsed command evidence and collapsed note details. The confirmed
-`save-goal-note` form remains the local write path and appends resume context
-to the goal-scoped `operator-notes.md` artifact without overwriting earlier
-notes.
+collapsed command evidence and collapsed note details. A `Goal Notes Browser`
+follows it with already-rendered note cards, text search, per-Goal browser-local
+view memory in `localStorage:clankeros-goal-notes-filter:<goal_id>`, and Reset
+notes; it reads only the goal-scoped `operator-notes.md` artifact and does not
+open arbitrary filesystem paths. The confirmed `save-goal-note` form remains
+the local write path and appends resume context to the artifact without
+overwriting earlier notes.
 The Goal Resume Snapshot reads `.clanker/app/workspace.json` and opens with
 visible Now, Current, Saved, Artifact, and Safety cards before collapsed
 resume evidence, collapsed `Goal Workspace Restore State`, and a collapsed

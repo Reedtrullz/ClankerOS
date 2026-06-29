@@ -7131,7 +7131,35 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "goal_operator_notes_now: Review operator notes" in noted_goal_page.body
     assert f"goal_operator_notes_click: <a href='/artifacts?path=.clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md'>operator-notes.md</a>" in noted_goal_page.body
     assert "goal_operator_notes_reason: goal_operator_notes_artifact_available" in noted_goal_page.body
+    assert "Goal Notes Browser" in noted_goal_page.body
+    assert "data-goal-operator-notes-browser='true'" in noted_goal_page.body
+    assert "data-goal-operator-notes-filter='true'" in noted_goal_page.body
+    assert f"data-goal-operator-notes-storage-key='clankeros-goal-notes-filter:{created_goal_id}'" in noted_goal_page.body
+    assert "data-goal-operator-notes-filter-query='true'" in noted_goal_page.body
+    assert "data-goal-operator-notes-filter-memory='true'" in noted_goal_page.body
+    assert "data-goal-operator-notes-filter-view-status='true'>View: default" in noted_goal_page.body
+    assert "data-goal-operator-notes-filter-reset='true'>Reset notes" in noted_goal_page.body
+    assert "data-goal-operator-notes-filter-status='true'>Showing 1 of 1 notes." in noted_goal_page.body
+    assert "data-goal-operator-notes-filter-empty='true' hidden" in noted_goal_page.body
+    assert "data-goal-operator-note-cards='true'" in noted_goal_page.body
+    assert "data-goal-operator-note-item='true'" in noted_goal_page.body
+    assert "data-goal-operator-note-author='operator'" in noted_goal_page.body
+    assert "Resume by checking the scout delegation state first." in noted_goal_page.body
+    assert "data-goal-operator-notes-filter-evidence='true'" in noted_goal_page.body
+    assert "goal_operator_notes_filter_status</dt><dd>available" in noted_goal_page.body
+    assert "goal_operator_notes_filter_total_entries</dt><dd>1" in noted_goal_page.body
+    assert "goal_operator_notes_filter_rendered_entries</dt><dd>1" in noted_goal_page.body
+    assert f"goal_operator_notes_filter_memory_storage</dt><dd>localStorage:clankeros-goal-notes-filter:{created_goal_id}" in noted_goal_page.body
+    assert "goal_operator_notes_filter_memory_fields</dt><dd>query" in noted_goal_page.body
+    assert "goal_operator_notes_filter_raw_filesystem_browsing</dt><dd>false" in noted_goal_page.body
+    assert "goal_operator_notes_filter_write_on_get</dt><dd>false" in noted_goal_page.body
+    assert "goal_operator_notes_filter_provider_calls_taken</dt><dd>0" in noted_goal_page.body
+    assert "goal_operator_notes_filter_network_actions_taken</dt><dd>0" in noted_goal_page.body
+    assert "goal_operator_notes_filter_external_effects_created</dt><dd>false" in noted_goal_page.body
+    assert "window.localStorage.setItem(storageKey(), JSON.stringify({ query:" in noted_goal_page.body
+    assert "window.localStorage.removeItem(storageKey())" in noted_goal_page.body
     assert "operator_notes_status: available" in noted_goal_page.body
+    assert "operator_note_entries: 1" in noted_goal_page.body
     assert f".clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md" in noted_goal_page.body
     assert "timeline_operator_note_artifacts</dt><dd>1" in noted_goal_page.body
     assert "activity_log_operator_notes_included</dt><dd>true" in noted_goal_page.body
@@ -12971,6 +12999,27 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-operator-notes-form-card='true'" in goal.body
     assert "data-goal-operator-notes-safety='true'" in goal.body
     assert "data-goal-operator-notes-evidence='true'" in goal.body
+    assert "data-goal-operator-notes-browser='true'" in goal.body
+    assert "data-goal-operator-notes-filter='true'" in goal.body
+    assert "Goal Notes Browser" in goal.body
+    assert f"data-goal-operator-notes-storage-key='clankeros-goal-notes-filter:{result.goal_id}'" in goal.body
+    assert "data-goal-operator-notes-filter-query='true'" in goal.body
+    assert "data-goal-operator-notes-filter-memory='true'" in goal.body
+    assert "data-goal-operator-notes-filter-view-status='true'>View: default" in goal.body
+    assert "data-goal-operator-notes-filter-reset='true'>Reset notes" in goal.body
+    assert "data-goal-operator-notes-filter-status='true'>Showing 0 of 0 notes." in goal.body
+    assert "data-goal-operator-note-empty-card='true'" in goal.body
+    assert "data-goal-operator-notes-filter-evidence='true'" in goal.body
+    assert "goal_operator_notes_filter_status</dt><dd>empty" in goal.body
+    assert "goal_operator_notes_filter_total_entries</dt><dd>0" in goal.body
+    assert "goal_operator_notes_filter_rendered_entries</dt><dd>0" in goal.body
+    assert f"goal_operator_notes_filter_memory_storage</dt><dd>localStorage:clankeros-goal-notes-filter:{result.goal_id}" in goal.body
+    assert "goal_operator_notes_filter_memory_fields</dt><dd>query" in goal.body
+    assert "goal_operator_notes_filter_raw_filesystem_browsing</dt><dd>false" in goal.body
+    assert "goal_operator_notes_filter_write_on_get</dt><dd>false" in goal.body
+    assert "goal_operator_notes_filter_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_operator_notes_filter_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_operator_notes_filter_external_effects_created</dt><dd>false" in goal.body
     assert "data-goal-operator-notes-list='true'" in goal.body
     assert "data-goal-operator-notes-form='true'" in goal.body
     assert "Goal operator notes evidence" in goal.body
