@@ -452,8 +452,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   the operator jump around the long Goal workbench.
 - Every app page includes a shared operator shell with a global
   `Operator Focus` strip, a read-only `Route Context` breadcrumb strip, recent
-  local items, a command palette, a dark/light theme toggle, and keyboard
-  shortcuts for home, goals, and palette search. After a confirmed local
+  local items, a command palette, local Focus mode, a dark/light theme toggle,
+  and keyboard shortcuts for home, goals, and palette search. Focus mode uses
+  the header `Focus` button or `m` shortcut to collapse Recent Items, Route
+  Context, Operator Focus, and Last Action strips while keeping the Operator
+  Ribbon and current page body visible. It is persisted only in
+  `localStorage:clankeros-focus-mode`, so it does not write ClankerOS server
+  state or call providers. After a confirmed local
   action, the shell renders a read-only `Last Action` strip from
   `.clanker/app/workspace.json` with the action kind, result, target notice
   surface, saved project/goal context, timestamp, and no-write/provider/

@@ -645,8 +645,12 @@ counts, evidence links, and no-resolution/no-retry/no-network boundaries.
 
 The app shell also includes a global `Operator Ribbon`, `Operator Focus`
 strip, a read-only `Route Context` breadcrumb strip, recent local items, a
-command palette, keyboard shortcuts, and a dark/light theme toggle on every
-page. The shared shortcut layer now includes `w` for `/workspace` and `f` for
+command palette, keyboard shortcuts, local Focus mode, and a dark/light theme
+toggle on every page. Focus mode uses the header `Focus` button or `m`
+shortcut to hide Recent Items, Route Context, Operator Focus, and Last Action
+strips while keeping the Operator Ribbon and page body visible. It is stored in
+`localStorage:clankeros-focus-mode` only and does not write server state. The
+shared shortcut layer now includes `w` for `/workspace` and `f` for
 `/workspace#save-workspace`, plus `n` for the current recommended next action,
 so return-to-work, Finish Today, and the main next click are available without
 opening the palette. If a browser-confirmed action form is available, `n` opens

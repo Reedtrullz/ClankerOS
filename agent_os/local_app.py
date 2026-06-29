@@ -133,6 +133,7 @@ GLOBAL_KEYBOARD_SHORTCUTS = {
     "s": "Open search",
     "w": "Open workspace",
     "f": "Finish today",
+    "m": "Toggle focus mode",
     "t": "Toggle theme",
 }
 WORKFLOW_STEPS = [
@@ -501,6 +502,12 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
             [
                 "data-operator-ribbon='true'",
                 "data-operator-ribbon-cards='true'",
+                "data-focus-mode-supported=\"true\"",
+                "id=\"focus-toggle\"",
+                "data-focus-mode-toggle=\"true\"",
+                "data-focus-mode-storage=\"localStorage:clankeros-focus-mode\"",
+                "data-focus-mode-write-on-get=\"false\"",
+                "if (event.key === \"m\") { event.preventDefault(); toggleFocusMode(); }",
                 "Demo Operator Workbench",
                 "data-demo-operator-workbench='true'",
                 "data-demo-workbench-primary='true'",
@@ -33694,6 +33701,9 @@ def _html_page(
     .operator-shell {{ display:grid; grid-template-columns:minmax(180px, 240px) minmax(0, 1fr); gap:24px; align-items:start; }}
     .operator-shell > *, article, aside, section, dl, dt, dd {{ min-width:0; max-width:100%; }}
     .operator-main {{ min-width:0; max-width:100%; }}
+    :root[data-focus-mode="true"] main {{ max-width:1180px; }}
+    :root[data-focus-mode="true"] .operator-shell {{ grid-template-columns:minmax(0, 1fr); }}
+    :root[data-focus-mode="true"] .operator-side, :root[data-focus-mode="true"] .route-context-strip, :root[data-focus-mode="true"] .operator-focus-strip, :root[data-focus-mode="true"] .last-action-strip {{ display:none; }}
     .operator-ribbon {{ border-left:4px solid var(--accent); margin:0 0 16px; padding:12px; }}
     .operator-ribbon-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(155px, 1fr)); gap:8px; align-items:stretch; }}
     .operator-ribbon-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:9px 10px; display:grid; gap:6px; align-content:start; }}
@@ -35081,10 +35091,11 @@ def _html_page(
   <header>
     <strong>ClankerOS Local Operator</strong>
     <nav>{nav}</nav>
-    <div class="header-actions" data-keyboard-shortcuts="true" data-next-action-href="{_e(next_shortcut['href'])}" data-next-action-label="{_e(next_shortcut['label'])}" data-next-action-status="{_e(next_shortcut['status'])}" data-next-action-source="{_e(next_shortcut['source'])}" data-next-action-form-available="{_e(next_shortcut['form_available'])}" data-next-action-confirmation-required="{_e(next_shortcut['confirmation_required'])}" data-next-action-write-on-get="{_e(next_shortcut['write_on_get'])}" data-next-action-provider-calls-taken="{_e(next_shortcut['provider_calls_taken'])}" data-next-action-network-actions-taken="{_e(next_shortcut['network_actions_taken'])}" data-next-action-external-effects-created="{_e(next_shortcut['external_effects_created'])}">
-      <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: slash opens command palette; Escape closes it; n opens next action; h opens home; y opens today; g opens goals; r opens resume; s opens search; w opens workspace; f opens Finish Today; t toggles theme.</span>
+    <div class="header-actions" data-keyboard-shortcuts="true" data-focus-mode-supported="true" data-focus-mode-storage="localStorage:clankeros-focus-mode" data-focus-mode-write-on-get="false" data-focus-mode-provider-calls-taken="0" data-focus-mode-network-actions-taken="0" data-focus-mode-external-effects-created="false" data-next-action-href="{_e(next_shortcut['href'])}" data-next-action-label="{_e(next_shortcut['label'])}" data-next-action-status="{_e(next_shortcut['status'])}" data-next-action-source="{_e(next_shortcut['source'])}" data-next-action-form-available="{_e(next_shortcut['form_available'])}" data-next-action-confirmation-required="{_e(next_shortcut['confirmation_required'])}" data-next-action-write-on-get="{_e(next_shortcut['write_on_get'])}" data-next-action-provider-calls-taken="{_e(next_shortcut['provider_calls_taken'])}" data-next-action-network-actions-taken="{_e(next_shortcut['network_actions_taken'])}" data-next-action-external-effects-created="{_e(next_shortcut['external_effects_created'])}">
+      <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: slash opens command palette; Escape closes it; n opens next action; h opens home; y opens today; g opens goals; r opens resume; s opens search; w opens workspace; f opens Finish Today; m toggles focus mode; t toggles theme.</span>
       <button class="icon-button" id="palette-open" type="button" data-shortcut="/" aria-keyshortcuts="/" aria-describedby="keyboard-shortcuts-help" title="Open command palette (/)">Palette</button>
       <button class="icon-button" id="next-action-open" type="button" data-shortcut="n" aria-keyshortcuts="n" aria-describedby="keyboard-shortcuts-help" data-next-action-button="true" data-next-action-href="{_e(next_shortcut['href'])}" title="Open next action (n)">Next</button>
+      <button class="icon-button" id="focus-toggle" type="button" data-shortcut="m" aria-keyshortcuts="m" aria-pressed="false" aria-describedby="keyboard-shortcuts-help" data-focus-mode-toggle="true" title="Toggle focus mode (m)">Focus</button>
       <button class="icon-button" id="theme-toggle" type="button" data-shortcut="t" aria-keyshortcuts="t" aria-describedby="keyboard-shortcuts-help" title="Toggle theme (t)">Theme</button>
     </div>
   </header>
@@ -35103,10 +35114,13 @@ def _html_page(
     var root = document.documentElement;
     var storedTheme = window.localStorage ? localStorage.getItem("clankeros-theme") : "";
     if (storedTheme === "dark") {{ root.dataset.theme = "dark"; }}
+    var storedFocusMode = window.localStorage ? localStorage.getItem("clankeros-focus-mode") : "";
+    if (storedFocusMode === "true") {{ root.dataset.focusMode = "true"; }}
     var palette = document.getElementById("command-palette");
     var paletteOpen = document.getElementById("palette-open");
     var paletteSearch = document.getElementById("command-palette-search");
     var themeToggle = document.getElementById("theme-toggle");
+    var focusToggle = document.getElementById("focus-toggle");
     var nextActionOpen = document.getElementById("next-action-open");
     function openPalette() {{
       if (!palette) {{ return; }}
@@ -35122,6 +35136,19 @@ def _html_page(
       root.dataset.theme = next;
       if (window.localStorage) {{ localStorage.setItem("clankeros-theme", next); }}
     }}
+    function syncFocusModeButton() {{
+      if (!focusToggle) {{ return; }}
+      var active = root.dataset.focusMode === "true";
+      focusToggle.setAttribute("aria-pressed", active ? "true" : "false");
+      focusToggle.textContent = active ? "Focus On" : "Focus";
+      focusToggle.setAttribute("title", active ? "Leave focus mode (m)" : "Enter focus mode (m)");
+    }}
+    function toggleFocusMode() {{
+      var next = root.dataset.focusMode === "true" ? "" : "true";
+      if (next) {{ root.dataset.focusMode = next; }} else {{ delete root.dataset.focusMode; }}
+      if (window.localStorage) {{ localStorage.setItem("clankeros-focus-mode", next); }}
+      syncFocusModeButton();
+    }}
     function openNextAction() {{
       var href = nextActionOpen ? nextActionOpen.getAttribute("data-next-action-href") : "";
       if (!href) {{ return; }}
@@ -35130,6 +35157,8 @@ def _html_page(
     if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
     if (nextActionOpen) {{ nextActionOpen.addEventListener("click", openNextAction); }}
     if (themeToggle) {{ themeToggle.addEventListener("click", toggleTheme); }}
+    if (focusToggle) {{ focusToggle.addEventListener("click", toggleFocusMode); }}
+    syncFocusModeButton();
     document.addEventListener("click", function(event) {{
       var target = event.target || {{}};
       var opener = target.closest ? target.closest("[data-open-details='true']") : null;
@@ -35166,6 +35195,7 @@ def _html_page(
       if (event.key === "w") {{ event.preventDefault(); window.location.href = "/workspace"; }}
       if (event.key === "f") {{ event.preventDefault(); window.location.href = "/workspace#save-workspace"; }}
       if (event.key === "y") {{ event.preventDefault(); window.location.href = "/today"; }}
+      if (event.key === "m") {{ event.preventDefault(); toggleFocusMode(); }}
       if (event.key === "t") {{ event.preventDefault(); toggleTheme(); }}
       if (/^[1-9]$/.test(event.key)) {{
         var goalJump = document.querySelector("[data-goal-jump-shortcut='" + event.key + "']");

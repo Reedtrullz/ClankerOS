@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared browser shell now has a local Focus mode: the header `Focus`
+  control and `m` shortcut persist `data-focus-mode="true"` in
+  `localStorage:clankeros-focus-mode`, collapse Recent Items, Route Context,
+  Operator Focus, and Last Action strips, keep the Operator Ribbon plus page
+  body visible, and expose no-write/no-provider/no-network/no-external-effect
+  evidence in the DOM.
 - Goal Timeline now has a visible read-only `Goal Timeline Digest` after the
   Timeline Command Bar and before metadata/the full event list, with Span,
   Latest, Artifact, Next, and Safety cards plus collapsed item/gate/artifact/

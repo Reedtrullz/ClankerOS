@@ -5221,9 +5221,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "breadcrumb_back: <a href='/'>Dashboard</a>" in root.body
     assert "breadcrumb_safety: read-only local route context" in root.body
     assert "id=\"theme-toggle\"" in root.body
+    assert 'id="focus-toggle"' in root.body
+    assert 'data-focus-mode-toggle="true"' in root.body
+    assert 'data-focus-mode-supported="true"' in root.body
+    assert 'data-focus-mode-storage="localStorage:clankeros-focus-mode"' in root.body
+    assert 'data-focus-mode-write-on-get="false"' in root.body
+    assert 'data-focus-mode-provider-calls-taken="0"' in root.body
+    assert 'data-focus-mode-network-actions-taken="0"' in root.body
+    assert 'data-focus-mode-external-effects-created="false"' in root.body
     assert "data-shortcut=\"/\"" in root.body
     assert "data-keyboard-shortcuts=\"true\"" in root.body
     assert "aria-keyshortcuts=\"/\"" in root.body
+    assert 'aria-keyshortcuts="m"' in root.body
     assert "aria-keyshortcuts=\"t\"" in root.body
     assert "aria-keyshortcuts='h'" in root.body
     assert "aria-keyshortcuts='y'" in root.body
@@ -5246,6 +5255,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Keyboard shortcuts: slash opens command palette" in root.body
     assert "n opens next action" in root.body
     assert "w opens workspace; f opens Finish Today" in root.body
+    assert "m toggles focus mode" in root.body
     assert "Keyboard Shortcuts" in root.body
     assert "data-shortcut-help='true'" in root.body
     assert "<kbd>/</kbd> <span>Open command palette</span>" in root.body
@@ -5255,7 +5265,22 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "<kbd>s</kbd> <span>Open search</span>" in root.body
     assert "<kbd>w</kbd> <span>Open workspace</span>" in root.body
     assert "<kbd>f</kbd> <span>Finish today</span>" in root.body
+    assert "<kbd>m</kbd> <span>Toggle focus mode</span>" in root.body
     assert "<kbd>t</kbd> <span>Toggle theme</span>" in root.body
+    assert (
+        ':root[data-focus-mode="true"] .operator-shell { '
+        "grid-template-columns:minmax(0, 1fr); }"
+    ) in root.body
+    assert (
+        ':root[data-focus-mode="true"] .operator-side, '
+        ':root[data-focus-mode="true"] .route-context-strip, '
+        ':root[data-focus-mode="true"] .operator-focus-strip, '
+        ':root[data-focus-mode="true"] .last-action-strip { display:none; }'
+    ) in root.body
+    assert 'localStorage.getItem("clankeros-focus-mode")' in root.body
+    assert 'root.dataset.focusMode = "true";' in root.body
+    assert "function toggleFocusMode()" in root.body
+    assert 'if (focusToggle) { focusToggle.addEventListener("click", toggleFocusMode); }' in root.body
     assert 'if (event.key === "Escape") { closePalette(); return; }' in root.body
     assert 'if (nextActionOpen) { nextActionOpen.addEventListener("click", openNextAction); }' in root.body
     assert 'if (event.key === "n") { event.preventDefault(); openNextAction(); }' in root.body
@@ -5264,6 +5289,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert 'if (event.key === "w") { event.preventDefault(); window.location.href = "/workspace"; }' in root.body
     assert 'if (event.key === "f") { event.preventDefault(); window.location.href = "/workspace#save-workspace"; }' in root.body
     assert 'if (event.key === "y") { event.preventDefault(); window.location.href = "/today"; }' in root.body
+    assert 'if (event.key === "m") { event.preventDefault(); toggleFocusMode(); }' in root.body
     assert 'if (event.key === "t") { event.preventDefault(); toggleTheme(); }' in root.body
     assert "implementation-handoff" in root.body
     assert "Recent Implementation Handoffs" in root.body
@@ -10088,6 +10114,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in goal.body
     )
     assert "goal_summary_title_source</dt><dd>title" in goal.body
+    assert 'id="focus-toggle"' in goal.body
+    assert 'data-focus-mode-toggle="true"' in goal.body
+    assert 'data-focus-mode-supported="true"' in goal.body
+    assert 'data-focus-mode-storage="localStorage:clankeros-focus-mode"' in goal.body
+    assert 'data-focus-mode-write-on-get="false"' in goal.body
+    assert 'data-focus-mode-provider-calls-taken="0"' in goal.body
+    assert 'data-focus-mode-network-actions-taken="0"' in goal.body
+    assert 'data-focus-mode-external-effects-created="false"' in goal.body
+    assert 'aria-keyshortcuts="m"' in goal.body
+    assert 'if (event.key === "m") { event.preventDefault(); toggleFocusMode(); }' in goal.body
     assert "data-command-palette='true'" in goal.body
     assert "data-command-palette-focus='true'" in goal.body
     assert "data-command-palette-focus-grid='true'" in goal.body

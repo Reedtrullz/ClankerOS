@@ -1,5 +1,26 @@
 # Status
 
+## 2026-06-29 Browser Focus Mode UX
+
+- Added browser-local Focus mode to the shared app shell on every route.
+- The header `Focus` button and `m` shortcut toggle `data-focus-mode="true"`
+  and persist the presentation preference in
+  `localStorage:clankeros-focus-mode`.
+- Focus mode hides the Recent Items side rail, Route Context strip, Operator
+  Focus strip, and Last Action strip while keeping the Operator Ribbon and page
+  body visible.
+- Evidence attributes record no write on GET, provider/network/external effects
+  at `0`, and browser-local storage only.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  focused `tests/test_first_milestone.py` demo route coverage
+  (`1 passed, 515 deselected in 37.46s`), `python3 -m compileall -q agent_os tests`,
+  bounded `app-smoke-test`, bounded `app-demo-smoke-test`, and
+  `git diff --check`.
+- Non-claims: no server persistence for Focus mode, no browser screenshot QA
+  for this slice, no write on GET, no provider calls, no external mutation, no
+  PR creation, and no deploy from ClankerOS itself.
+
 ## 2026-06-29 Goal Coder Handoff Digest UX
 
 - Added a visible read-only `Goal Coder Handoff Digest` to `/goals/<goal_id>`

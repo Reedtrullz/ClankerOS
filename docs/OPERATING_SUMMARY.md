@@ -547,7 +547,11 @@ Core layers for the bootstrap:
   `/resume`, followed by the expandable confirmed local action form when the
   current next action is browser-available and collapsed `Focus evidence` for
   the full readback and no-write/no-provider/no-network/no-external-effect
-  boundaries outside the Goal page. When
+  boundaries outside the Goal page. The header `Focus` control and `m`
+  shortcut now provide a browser-local Focus mode that stores
+  `data-focus-mode="true"` in `localStorage:clankeros-focus-mode`, hides Recent
+  Items, Route Context, Operator Focus, and Last Action strips, and keeps the
+  Operator Ribbon plus page body visible without writing server state. When
   no Goal exists yet, the shared shell now treats that as first-run progress:
   Home, Today, and Goals point `Route Context`, `Operator Focus`, and the
   command palette at their same-page `Create Project` or `Create First Goal`
@@ -746,8 +750,11 @@ Core layers for the bootstrap:
   the next-session resume anchor without writing on GET. Every page shares
   a browser operator shell with a read-only `Operator Ribbon`, `Route Context`
   breadcrumb strip, recent local items, a read-only `Last Action` strip after
-  confirmed local actions, a command palette, keyboard shortcuts, and a theme
-  toggle. The ribbon sits above the shell and keeps the current page's primary
+  confirmed local actions, a command palette, keyboard shortcuts, local Focus
+  mode, and a theme toggle. Focus mode is toggled by the header `Focus` control
+  or `m`, persists only in browser `localStorage`, and collapses the side rails
+  while keeping the ribbon and page content available. The ribbon sits above the
+  shell and keeps the current page's primary
   action, Goal/project, attention count, `/resume`, `/search`, and collapsed
   zero-effect readback visible before the page-specific workbench. The last
   action strip reads `.clanker/app/workspace.json` and exposes the latest
