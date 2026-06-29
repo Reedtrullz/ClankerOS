@@ -443,6 +443,11 @@ records, then points at the local target surface without writing on GET. When
 an open task recommendation includes `recommended_commands`, the Goal page
 also shows copy-only `Goal Recovery Commands` cards with clipboard buttons,
 evidence links, and explicit no-execute/no-retry/no-replan/no-write counters.
+Those cards are now the primary Goal-local target for recommendation recovery:
+the Goal Next Action, header `Next` shortcut, attention digest, ribbon, daily
+loop, workbench, session digest, overview, incident, and remaining-work cards
+route to `/goals/<goal_id>#goal-recovery-commands` when stored commands exist,
+with incident triage preserved as a secondary surface.
 The in-flow Goal Jump Bar keeps the most-used in-page anchors one click or
 one keypress away without covering later controls. The in-flow Goal Action
 Dock keeps the current action, gate, proof, and resume route visible near the

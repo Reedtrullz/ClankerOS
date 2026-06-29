@@ -1,5 +1,27 @@
 # Status
 
+## 2026-06-29 Goal Recovery Command Routing UX
+
+- Made open task recommendations with stored `recommended_commands` route the
+  Goal's primary recovery affordances to
+  `/goals/<goal_id>#goal-recovery-commands` instead of sending the operator to
+  `/incidents` first.
+- Updated the Goal Next Action, header `Next` shortcut context, operator
+  ribbon, attention digest, Goal board/workbench/daily-loop/session/overview/
+  incident/remaining-work surfaces, and `Next Recommendation` rows to point at
+  the copy-only recovery-command cards when they exist.
+- Preserved `/incidents#incident-recommendations` as the secondary triage
+  surface and kept all recovery commands copy-only with no execute/retry/
+  replan/write/provider/network/external effects on GET.
+- Updated README, local app docs, operating summary, docs status, and the
+  fixture-backed blocked-task recommendation regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; `python3 -m compileall -q agent_os tests`;
+  focused pytest `python3 -m pytest tests/test_first_milestone.py -q -k
+  task_recommendations_surfaces_blocked_planned_task` passed with `1 passed,
+  515 deselected`; bounded temp-root `app-smoke-test`; bounded temp-root
+  `app-demo-smoke-test`; `git diff --check`.
+
 ## 2026-06-29 Goal Recovery Command Cards UX
 
 - Added copy-only `Goal Recovery Commands` cards inside `/goals/<goal_id>`

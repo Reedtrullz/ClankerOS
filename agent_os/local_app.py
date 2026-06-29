@@ -9272,6 +9272,14 @@ class GoalNextAction:
     reason: str
 
 
+@dataclass(frozen=True)
+class GoalRecommendationTarget:
+    action: str
+    href: str
+    label: str
+    reason: str
+
+
 def _goal_summary_parts(goal: Any) -> tuple[str, str, str]:
     title = str(getattr(goal, "title", "") or "").strip()
     description = str(getattr(goal, "description", "") or "").strip()
@@ -9305,6 +9313,27 @@ def _goal_display_link(root: Path, goal_id: str) -> tuple[str, str, str, str | S
     label, source = _goal_display_label(root, goal_id)
     href = f"/goals/{quote(goal_id)}"
     return href, label, source, SafeHtml(f"<a href='{_e(href)}'>{_e(label)}</a>")
+
+
+def _goal_recommendation_target(
+    goal: Any,
+    recommendation: Any | None,
+) -> GoalRecommendationTarget:
+    goal_id = str(getattr(goal, "id", "") or "").strip()
+    if goal_id and recommendation is not None and _recommended_commands(recommendation):
+        href = f"/goals/{quote(goal_id)}#goal-recovery-commands"
+        return GoalRecommendationTarget(
+            "Review recovery commands",
+            href,
+            "Goal Recovery Commands",
+            "open_recommendation_recovery_commands",
+        )
+    return GoalRecommendationTarget(
+        "Review recommendation",
+        "/incidents#incident-recommendations",
+        "/incidents#incident-recommendations",
+        "open_recommendations",
+    )
 
 
 def _goals(root: Path) -> str:
@@ -9713,6 +9742,10 @@ def _goal_board_workbench(
     }.get(selected_bucket, "#active-goals")
     lane_surface = SafeHtml(f"<a href='{_e(lane_anchor)}'>{_e(lane_anchor[1:].replace('-', ' ').title())}</a>")
     open_incidents = sum(1 for row in state["incidents"] if row["status"] == "open")
+    open_recommendation = next(
+        (row for row in state["recommendations"] if row["status"] == "open"),
+        None,
+    )
     open_recommendations = sum(
         1 for row in state["recommendations"] if row["status"] == "open"
     )
@@ -9731,9 +9764,10 @@ def _goal_board_workbench(
         attention_href = "/incidents"
         attention_reason = "open_incidents"
     elif open_recommendations:
-        attention_action = "Review recommendations"
-        attention_href = "/incidents"
-        attention_reason = "open_recommendations"
+        target = _goal_recommendation_target(goal, open_recommendation)
+        attention_action = target.action
+        attention_href = target.href
+        attention_reason = target.reason
     else:
         attention_action = "Switch goal lane"
         attention_href = lane_anchor
@@ -10234,6 +10268,10 @@ def _goal_attention_digest(
     open_tasks = sum(1 for task in tasks if task.status not in {"completed", "cancelled"})
     blocked_tasks = sum(1 for task in tasks if task.status in {"blocked", "failed"})
     open_incidents = sum(1 for row in state["incidents"] if row["status"] == "open")
+    open_recommendation = next(
+        (row for row in state["recommendations"] if row["status"] == "open"),
+        None,
+    )
     open_recommendations = sum(
         1 for row in state["recommendations"] if row["status"] == "open"
     )
@@ -10264,6 +10302,13 @@ def _goal_attention_digest(
     form_available = bool(_goal_next_action_form(state, next_action))
     primary_href = "#goal-next-action-form" if form_available else next_action.href
     primary_label = "Use Goal action form" if form_available else next_action.action
+    if open_recommendations:
+        recommendation_target = _goal_recommendation_target(goal, open_recommendation)
+        recommendation_href = recommendation_target.href
+        recommendation_label = recommendation_target.action
+    else:
+        recommendation_href = "#goal-next-recommendation"
+        recommendation_label = "Recommendation"
     if open_incidents:
         queue_kind = "incident"
         queue_href = "#goal-incident-command-bar"
@@ -10281,9 +10326,10 @@ def _goal_attention_digest(
         queue_href = f"/approvals?goal_id={quote(goal.id)}"
         queue_label = "Review worktree approval"
     elif open_recommendations:
+        target = _goal_recommendation_target(goal, open_recommendation)
         queue_kind = "recommendation"
-        queue_href = "#goal-next-recommendation"
-        queue_label = "Inspect recommendation"
+        queue_href = target.href
+        queue_label = target.action
     elif blocked_tasks:
         queue_kind = "blocked_task"
         queue_href = "#goal-risk-command-bar"
@@ -10331,7 +10377,7 @@ def _goal_attention_digest(
             "<h3>Recommendations</h3>",
             f"<strong>{open_recommendations} open</strong>",
             "<p>Review the current recommendation before changing course.</p>",
-            "<a class='goal-attention-link' href='#goal-next-recommendation'>Recommendation</a>",
+            f"<a class='goal-attention-link' href='{_e(recommendation_href)}'>{_e(recommendation_label)}</a>",
             "</article>",
             "<article class='goal-attention-card' data-goal-attention-open-work='true'>",
             "<h3>Open Work</h3>",
@@ -10731,6 +10777,10 @@ def _goal_operator_workbench(
     pending_gates = counts.get("pending", 0)
     waiting_gates = counts.get("waiting", 0)
     open_incidents = sum(1 for row in state["incidents"] if row["status"] == "open")
+    open_recommendation = next(
+        (row for row in state["recommendations"] if row["status"] == "open"),
+        None,
+    )
     open_recommendations = sum(
         1 for row in state["recommendations"] if row["status"] == "open"
     )
@@ -10760,9 +10810,10 @@ def _goal_operator_workbench(
         unblock_reason = "pending_approvals"
         unblock_href = "/approvals"
     elif open_recommendations:
-        unblock_action = "Review recommendation"
-        unblock_reason = "open_recommendations"
-        unblock_href = "/incidents"
+        target = _goal_recommendation_target(goal, open_recommendation)
+        unblock_action = target.action
+        unblock_reason = target.reason
+        unblock_href = target.href
     else:
         unblock_action = "Inspect remaining work"
         unblock_reason = "no_blockers"
@@ -11773,6 +11824,10 @@ def _goal_daily_loop(
         and (artifact_matches_latest or not latest_artifact)
     )
     open_incidents = sum(1 for row in state["incidents"] if row["status"] == "open")
+    open_recommendation = next(
+        (row for row in state["recommendations"] if row["status"] == "open"),
+        None,
+    )
     open_recommendations = sum(
         1 for row in state["recommendations"] if row["status"] == "open"
     )
@@ -11794,10 +11849,13 @@ def _goal_daily_loop(
         unblock_action = "Review approval"
         unblock_reason = "pending_approvals"
     elif open_recommendations:
-        unblock_href = "/incidents"
-        unblock_surface = SafeHtml("<a href='/incidents'>/incidents</a>")
-        unblock_action = "Review recommendation"
-        unblock_reason = "open_recommendations"
+        target = _goal_recommendation_target(goal, open_recommendation)
+        unblock_href = target.href
+        unblock_surface = SafeHtml(
+            f"<a href='{_e(target.href)}'>{_e(target.label)}</a>"
+        )
+        unblock_action = target.action
+        unblock_reason = target.reason
     else:
         unblock_href = "#goal-remaining-work"
         unblock_surface = SafeHtml("<a href='#goal-remaining-work'>Remaining Work</a>")
@@ -11985,6 +12043,10 @@ def _goal_return_brief(
         + _count_status(state["publications"], "pending_operator_approval")
     )
     open_incidents = sum(1 for row in state["incidents"] if row["status"] == "open")
+    open_recommendation = next(
+        (row for row in state["recommendations"] if row["status"] == "open"),
+        None,
+    )
     open_recommendations = sum(
         1 for row in state["recommendations"] if row["status"] == "open"
     )
@@ -11999,10 +12061,13 @@ def _goal_return_brief(
         blocker_action = "Review approvals"
         blocker_surface = SafeHtml("<a href='/approvals'>/approvals</a>")
     elif open_recommendations:
-        blocker_status = "open_recommendations"
-        blocker_href = "/incidents"
-        blocker_action = "Review recommendations"
-        blocker_surface = SafeHtml("<a href='/incidents'>/incidents</a>")
+        target = _goal_recommendation_target(goal, open_recommendation)
+        blocker_status = target.reason
+        blocker_href = target.href
+        blocker_action = target.action
+        blocker_surface = SafeHtml(
+            f"<a href='{_e(target.href)}'>{_e(target.label)}</a>"
+        )
     else:
         blocker_status = "none"
         blocker_href = "#goal-remaining-work"
@@ -12162,6 +12227,10 @@ def _goal_session_digest(
         + _count_status(state["publications"], "pending_operator_approval")
     )
     open_incidents = sum(1 for row in state["incidents"] if row["status"] == "open")
+    open_recommendation = next(
+        (row for row in state["recommendations"] if row["status"] == "open"),
+        None,
+    )
     open_recommendations = sum(
         1 for row in state["recommendations"] if row["status"] == "open"
     )
@@ -12175,9 +12244,10 @@ def _goal_session_digest(
         waiting_href = "/approvals"
         waiting_label = "Review approvals"
     elif open_recommendations:
-        waiting_status = "open_recommendations"
-        waiting_href = "/incidents"
-        waiting_label = "Review recommendations"
+        target = _goal_recommendation_target(goal, open_recommendation)
+        waiting_status = target.reason
+        waiting_href = target.href
+        waiting_label = target.action
     else:
         waiting_status = "clear"
         waiting_href = "#goal-remaining-work-command-bar"
@@ -12825,7 +12895,8 @@ def _goal_next_action(root: Path, state: dict[str, Any]) -> GoalNextAction:
         return GoalNextAction("Inspect incident", "/incidents", str(open_incident["summary"]))
     recommendation = next((row for row in state["recommendations"] if row["status"] == "open"), None)
     if recommendation is not None:
-        return GoalNextAction("Review recommendation", "/incidents", str(recommendation["reason"]))
+        target = _goal_recommendation_target(goal, recommendation)
+        return GoalNextAction(target.action, target.href, str(recommendation["reason"]))
     for status, action, href in [
         ("ready_for_operator", "Manual publish outside ClankerOS", None),
         ("approved", "Create publication handoff", None),
@@ -13025,15 +13096,23 @@ def _goal_next_recommendation_section(
     if recommendation is not None:
         evidence_path = str(recommendation["evidence_path"] or "")
         recovery_commands = _goal_recovery_command_cards(recommendation)
+        target = _goal_recommendation_target(state["goal"], recommendation)
         rows: list[tuple[str, str | SafeHtml]] = [
             ("next_recommendation_status", "open_task_recommendation"),
             ("next_recommendation_source", "task_recommendations"),
             ("next_recommendation_id", str(recommendation["id"])),
             ("next_recommendation_type", str(recommendation["recommendation_type"])),
             ("next_recommendation_task_id", str(recommendation["task_id"])),
-            ("next_recommendation_action", next_action.action),
+            ("next_recommendation_action", target.action),
             ("next_recommendation_reason", str(recommendation["reason"])),
-            ("next_recommendation_surface", SafeHtml("<a href='/incidents'>/incidents</a>")),
+            (
+                "next_recommendation_surface",
+                SafeHtml(f"<a href='{_e(target.href)}'>{_e(target.label)}</a>"),
+            ),
+            (
+                "next_recommendation_triage_surface",
+                SafeHtml("<a href='/incidents#incident-recommendations'>Incident recommendations</a>"),
+            ),
             (
                 "next_recommendation_evidence",
                 SafeHtml(_artifact_link(evidence_path)) if evidence_path else "missing",
@@ -13762,6 +13841,10 @@ def _goal_overview_command_bar(
         + _count_status(publications, "pending_operator_approval")
     )
     open_incidents = sum(1 for row in incidents if row["status"] == "open")
+    open_recommendation = next(
+        (row for row in recommendations if row["status"] == "open"),
+        None,
+    )
     open_recommendations = sum(
         1 for row in recommendations if row["status"] == "open"
     )
@@ -13776,8 +13859,9 @@ def _goal_overview_command_bar(
         waiting_href = "#goal-incidents"
         waiting_label = "Incidents"
     elif open_recommendations:
-        waiting_href = "#goal-next-recommendation"
-        waiting_label = "Recommendation"
+        target = _goal_recommendation_target(goal, open_recommendation)
+        waiting_href = target.href
+        waiting_label = target.label
     target_surface = SafeHtml(
         f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
     )
@@ -16216,14 +16300,15 @@ def _goal_incident_command_bar(
         target_surface = SafeHtml("<a href='/incidents#incident-open'>Open Incidents</a>")
         reason = "open_goal_incident"
     elif open_recommendations:
+        target = _goal_recommendation_target(goal, open_recommendations[0])
         status = "recommendations_open"
-        next_action = "Review recovery recommendation"
-        target_href = "/incidents#incident-recommendations"
-        target_label = "Task Recommendations"
+        next_action = target.action
+        target_href = target.href
+        target_label = target.label
         target_surface = SafeHtml(
-            "<a href='/incidents#incident-recommendations'>Task Recommendations</a>"
+            f"<a href='{_e(target.href)}'>{_e(target.label)}</a>"
         )
-        reason = "open_goal_recommendations"
+        reason = target.reason
     elif resolved_incidents:
         status = "resolved_history"
         next_action = "Review resolved incidents"
@@ -18639,8 +18724,9 @@ def _goal_remaining_work_command_bar(
         waiting_href = "/incidents"
         waiting_label = "Inspect incidents"
     elif open_recommendations:
-        waiting_href = "/incidents"
-        waiting_label = "Review recommendations"
+        target = _goal_recommendation_target(goal, open_recommendations[0])
+        waiting_href = target.href
+        waiting_label = target.action
     else:
         waiting_href = "#goal-remaining-work"
         waiting_label = "Review gates"
@@ -34046,9 +34132,21 @@ def _operator_status_ribbon(
             attention_action = "Review approvals"
             attention_href = "/approvals"
         elif int(open_recommendations):
+            goal_state = focus_context.get("goal_state")
+            open_recommendation = None
+            if isinstance(goal_state, dict):
+                open_recommendation = next(
+                    (
+                        row
+                        for row in goal_state.get("recommendations", [])
+                        if row["status"] == "open"
+                    ),
+                    None,
+                )
+            target = _goal_recommendation_target(goal, open_recommendation)
             attention_status = "needs_recommendation_review"
-            attention_action = "Review recommendations"
-            attention_href = "/incidents#incident-recommendations"
+            attention_action = target.action
+            attention_href = target.href
         else:
             attention_status = "clear"
             attention_action = "Continue goal"

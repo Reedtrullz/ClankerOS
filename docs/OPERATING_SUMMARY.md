@@ -543,7 +543,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   records write-on-GET and external-effect boundaries. Open task
   recommendations with stored `recommended_commands` now render copy-only
   `Goal Recovery Commands` cards with clipboard buttons, evidence links, and
-  explicit no-execute/no-retry/no-replan/no-write counters. They also include a
+  explicit no-execute/no-retry/no-replan/no-write counters. When those cards
+  exist, Goal-local Next Action, header shortcut, attention digest, ribbon,
+  daily loop, workbench, session digest, overview, incident, and
+  remaining-work surfaces route to the recovery-command anchor first while
+  keeping incident recommendations available as secondary triage. They also include a
   first-class `Goal Live State` surface that opens with visible Now, Phase,
   Refresh, Pause Rules, and Safety cards, including a local `Refresh now`
   control and collapsed detailed refresh evidence. Its five-second local page

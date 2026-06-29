@@ -1161,14 +1161,56 @@ def test_task_recommendations_surfaces_blocked_planned_task(
 
     goal_page = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert goal_page.status == 200
+    recovery_href = f"/goals/{goal_id}#goal-recovery-commands"
+    assert f'data-next-action-href="{recovery_href}"' in goal_page.body
+    assert 'data-next-action-label="Review recovery commands"' in goal_page.body
+    assert "recommended_action</dt><dd>Review recovery commands" in goal_page.body
+    assert (
+        "next_action_focus_primary_surface</dt><dd>"
+        f"<a href='{recovery_href}'>Goal Next Action</a>"
+    ) in goal_page.body
+    assert (
+        "operator_ribbon_attention_action</dt><dd>Review recovery commands"
+        in goal_page.body
+    )
+    assert (
+        "operator_ribbon_attention_surface</dt><dd>"
+        f"<a href='{recovery_href}'>{recovery_href}</a>"
+    ) in goal_page.body
     assert "Next Recommendation" in goal_page.body
     assert "next_recommendation_status</dt><dd>open_task_recommendation" in goal_page.body
     assert "next_recommendation_source</dt><dd>task_recommendations" in goal_page.body
     assert f"next_recommendation_id</dt><dd>{recommendation.id}" in goal_page.body
+    assert "next_recommendation_action</dt><dd>Review recovery commands" in goal_page.body
+    assert (
+        "next_recommendation_surface</dt><dd>"
+        f"<a href='{recovery_href}'>Goal Recovery Commands</a>"
+    ) in goal_page.body
+    assert (
+        "next_recommendation_triage_surface</dt><dd>"
+        "<a href='/incidents#incident-recommendations'>Incident recommendations</a>"
+    ) in goal_page.body
     assert "Goal Recovery Commands" in goal_page.body
     assert "data-goal-recovery-commands='true'" in goal_page.body
     assert "data-goal-recovery-command-list='true'" in goal_page.body
     assert goal_page.body.count("data-goal-recovery-command-card='true'") == 3
+    assert (
+        "data-goal-attention-recommendations='true'><h3>Recommendations</h3>"
+        f"<strong>1 open</strong><p>Review the current recommendation before changing course.</p><a class='goal-attention-link' href='{recovery_href}'>Review recovery commands</a>"
+    ) in goal_page.body
+    assert (
+        "goal_attention_digest_first_queue_surface</dt><dd>"
+        f"<a href='{recovery_href}'>Review recovery commands</a>"
+    ) in goal_page.body
+    assert "goal_workbench_unblock_action</dt><dd>Review recovery commands" in goal_page.body
+    assert (
+        "goal_daily_loop_unblock_surface</dt><dd>"
+        f"<a href='{recovery_href}'>Goal Recovery Commands</a>"
+    ) in goal_page.body
+    assert (
+        "goal_remaining_work_command_waiting_surface</dt><dd>"
+        f"<a href='{recovery_href}'>Review recovery commands</a>"
+    ) in goal_page.body
     assert "data-clipboard-status='true'" in goal_page.body
     for command in recommendation.recommended_commands:
         escaped_command = html.escape(command, quote=True)

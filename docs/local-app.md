@@ -346,7 +346,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   task recommendation already includes `recommended_commands`, the same Goal
   page now renders copy-only `Goal Recovery Commands` cards with clipboard
   buttons, recommendation evidence links, and explicit no-execute/no-retry/
-  no-replan/no-write counters. Skills Used
+  no-replan/no-write counters. The Goal page's next-action shortcut,
+  operator ribbon, attention digest, daily loop, workbench, session digest,
+  overview, incident, and remaining-work surfaces point directly at those
+  cards when they exist, while incident recommendations remain available as a
+  secondary triage link. Skills Used
   starts with a read-only `Goal Skills Command Bar` that summarizes task skill
   tags, matching generated or available skill records, usage and project
   counts, delegation profile usage, one `/skills` or `/profiles` review
