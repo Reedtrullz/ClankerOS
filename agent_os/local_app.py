@@ -127,8 +127,9 @@ ROUTE_KEYBOARD_SHORTCUTS = {
     "/workspace": "w",
 }
 GLOBAL_KEYBOARD_SHORTCUTS = {
+    "?": "Open keyboard help",
     "/": "Open command palette",
-    "Escape": "Close command palette",
+    "Escape": "Close dialogs",
     "n": "Open next action",
     "h": "Open home",
     "y": "Open today",
@@ -39886,6 +39887,42 @@ def _shortcut_help_list() -> str:
     return "<ul class='shortcut-list' data-shortcut-help='true'>" + "".join(rows) + "</ul>"
 
 
+def _shortcut_help_dialog() -> str:
+    return "".join(
+        [
+            "<dialog id='shortcut-help-dialog' class='shortcut-help-dialog' "
+            "data-shortcut-help-dialog='true' data-shortcut-help-write-on-get='false' "
+            "data-shortcut-help-provider-calls-taken='0' data-shortcut-help-network-actions-taken='0' "
+            "data-shortcut-help-external-effects-created='false'>",
+            "<form method='dialog'><button class='icon-button' type='submit'>Close</button></form>",
+            "<h2>Keyboard Shortcuts</h2>",
+            "<p class='muted'>Local navigation shortcuts for spending the day in the browser app.</p>",
+            _shortcut_help_list(),
+            "<details class='shortcut-help-evidence' data-shortcut-help-dialog-evidence='true'><summary>Shortcut help evidence</summary>",
+            _kv(
+                [
+                    ("shortcut_help_status", "available"),
+                    ("shortcut_help_open_keyboard", "?"),
+                    ("shortcut_help_open_button", "Keys"),
+                    ("shortcut_help_shortcut_count", str(len(GLOBAL_KEYBOARD_SHORTCUTS))),
+                    ("shortcut_help_write_on_get", "false"),
+                    ("shortcut_help_provider_calls_taken", "0"),
+                    ("shortcut_help_network_actions_taken", "0"),
+                    ("shortcut_help_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "shortcut_help_action: open keyboard help dialog",
+                    "shortcut_help_safety: browser-local dialog only; no state write or external effect",
+                ]
+            ),
+            "</details>",
+            "</dialog>",
+        ]
+    )
+
+
 def _command_palette_continue(focus_context: dict[str, Any]) -> str:
     status = str(focus_context.get("status", "state_unavailable"))
     if status == "state_unavailable":
@@ -41996,10 +42033,15 @@ def _html_page(
     a {{ color:var(--accent); }}
     progress {{ width:100%; max-width:420px; height:14px; accent-color:var(--accent); }}
     .timeline-link {{ display:inline-block; }}
-    .command-palette {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); max-width:860px; width:min(860px, calc(100vw - 32px)); }}
-    .command-palette::backdrop {{ background:rgba(15,20,25,.45); }}
+    .command-palette, .shortcut-help-dialog {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); max-width:860px; width:min(860px, calc(100vw - 32px)); }}
+    .command-palette::backdrop, .shortcut-help-dialog::backdrop {{ background:rgba(15,20,25,.45); }}
     .command-grid {{ display:grid; grid-template-columns:1fr auto; gap:8px; }}
     .shortcut-list kbd {{ display:inline-block; min-width:52px; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:2px 6px; background:var(--panel); color:var(--ink); font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; }}
+    .shortcut-list {{ list-style:none; padding:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:8px; }}
+    .shortcut-list li {{ min-width:0; border:1px solid var(--line); background:var(--panel); padding:8px 9px; display:flex; gap:8px; align-items:center; overflow-wrap:anywhere; }}
+    .shortcut-help-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .shortcut-help-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .shortcut-help-evidence:not([open]) > :not(summary) {{ display:none; }}
     .sr-only {{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }}
     label {{ display:block; min-width:0; }}
     input, textarea, select {{ min-width:0; max-width:100%; }}
@@ -42028,7 +42070,8 @@ def _html_page(
     <strong>ClankerOS Local Operator</strong>
     <nav>{nav}</nav>
     <div class="header-actions" data-keyboard-shortcuts="true" data-focus-mode-supported="true" data-focus-mode-storage="localStorage:clankeros-focus-mode" data-focus-mode-write-on-get="false" data-focus-mode-provider-calls-taken="0" data-focus-mode-network-actions-taken="0" data-focus-mode-external-effects-created="false" data-next-action-href="{_e(next_shortcut['href'])}" data-next-action-label="{_e(next_shortcut['label'])}" data-next-action-status="{_e(next_shortcut['status'])}" data-next-action-source="{_e(next_shortcut['source'])}" data-next-action-form-available="{_e(next_shortcut['form_available'])}" data-next-action-confirmation-required="{_e(next_shortcut['confirmation_required'])}" data-next-action-write-on-get="{_e(next_shortcut['write_on_get'])}" data-next-action-provider-calls-taken="{_e(next_shortcut['provider_calls_taken'])}" data-next-action-network-actions-taken="{_e(next_shortcut['network_actions_taken'])}" data-next-action-external-effects-created="{_e(next_shortcut['external_effects_created'])}" data-finish-today-href="{_e(finish_shortcut['href'])}" data-finish-today-label="{_e(finish_shortcut['label'])}" data-finish-today-source="{_e(finish_shortcut['source'])}" data-finish-today-target="{_e(finish_shortcut['target'])}" data-finish-today-surface="{_e(finish_shortcut['surface'])}" data-finish-today-confirmation-required="{_e(finish_shortcut['confirmation_required'])}" data-finish-today-write-on-get="{_e(finish_shortcut['write_on_get'])}" data-finish-today-provider-calls-taken="{_e(finish_shortcut['provider_calls_taken'])}" data-finish-today-network-actions-taken="{_e(finish_shortcut['network_actions_taken'])}" data-finish-today-external-effects-created="{_e(finish_shortcut['external_effects_created'])}">
-      <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: slash opens command palette; Escape closes it; n opens next action; h opens home; y opens today; g opens goals; r opens resume; s opens search; w opens workspace; f opens Finish Today; m toggles focus mode; t toggles theme.</span>
+      <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: question mark opens keyboard help; slash opens command palette; Escape closes dialogs; n opens next action; h opens home; y opens today; g opens goals; r opens resume; s opens search; w opens workspace; f opens Finish Today; m toggles focus mode; t toggles theme.</span>
+      <button class="icon-button" id="shortcut-help-open" type="button" data-shortcut-help-open="true" data-shortcut="?" aria-keyshortcuts="?" aria-describedby="keyboard-shortcuts-help" title="Open keyboard help (?)">Keys</button>
       <button class="icon-button" id="palette-open" type="button" data-shortcut="/" aria-keyshortcuts="/" aria-describedby="keyboard-shortcuts-help" title="Open command palette (/)">Palette</button>
       <button class="icon-button" id="next-action-open" type="button" data-shortcut="n" aria-keyshortcuts="n" aria-describedby="keyboard-shortcuts-help" data-next-action-button="true" data-next-action-href="{_e(next_shortcut['href'])}" title="Open next action (n)">Next</button>
       <button class="icon-button" id="finish-today-open" type="button" data-shortcut="f" aria-keyshortcuts="f" aria-describedby="keyboard-shortcuts-help" data-finish-today-button="true" data-finish-today-href="{_e(finish_shortcut['href'])}" title="Open Finish Today (f)">Finish</button>
@@ -42036,6 +42079,7 @@ def _html_page(
       <button class="icon-button" id="theme-toggle" type="button" data-shortcut="t" aria-keyshortcuts="t" aria-describedby="keyboard-shortcuts-help" title="Toggle theme (t)">Theme</button>
     </div>
   </header>
+  {_shortcut_help_dialog()}
   {palette}
   <main>
     {operator_ribbon}
@@ -42055,6 +42099,8 @@ def _html_page(
     var storedFocusMode = window.localStorage ? localStorage.getItem("clankeros-focus-mode") : "";
     if (storedFocusMode === "true") {{ root.dataset.focusMode = "true"; }}
     var palette = document.getElementById("command-palette");
+    var shortcutHelp = document.getElementById("shortcut-help-dialog");
+    var shortcutHelpOpen = document.getElementById("shortcut-help-open");
     var paletteOpen = document.getElementById("palette-open");
     var paletteSearch = document.getElementById("command-palette-search");
     var paletteResults = palette ? Array.prototype.slice.call(palette.querySelectorAll("[data-palette-result='true']")) : [];
@@ -42174,6 +42220,14 @@ def _html_page(
     function closePalette() {{
       if (!palette) {{ return; }}
       if (palette.close) {{ palette.close(); }} else {{ palette.setAttribute("hidden", "hidden"); }}
+    }}
+    function openShortcutHelp() {{
+      if (!shortcutHelp) {{ return; }}
+      if (shortcutHelp.showModal) {{ shortcutHelp.showModal(); }} else {{ shortcutHelp.removeAttribute("hidden"); }}
+    }}
+    function closeShortcutHelp() {{
+      if (!shortcutHelp) {{ return; }}
+      if (shortcutHelp.close) {{ shortcutHelp.close(); }} else {{ shortcutHelp.setAttribute("hidden", "hidden"); }}
     }}
     function toggleTheme() {{
       var next = root.dataset.theme === "dark" ? "" : "dark";
@@ -44216,6 +44270,7 @@ def _html_page(
         }});
       }});
     }}
+    if (shortcutHelpOpen) {{ shortcutHelpOpen.addEventListener("click", openShortcutHelp); }}
     if (paletteOpen) {{ paletteOpen.addEventListener("click", openPalette); }}
     if (paletteSearch) {{ paletteSearch.addEventListener("input", syncPaletteFilter); }}
     if (paletteSearch) {{ paletteSearch.addEventListener("keydown", handlePaletteSearchKeydown); }}
@@ -44492,8 +44547,9 @@ def _html_page(
       var target = event.target || {{}};
       var tag = String(target.tagName || "").toLowerCase();
       if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) {{ return; }}
-      if (event.key === "Escape") {{ closePalette(); return; }}
+      if (event.key === "Escape") {{ closePalette(); closeShortcutHelp(); return; }}
       if (tag === "input" || tag === "textarea" || tag === "select") {{ return; }}
+      if (event.key === "?") {{ event.preventDefault(); openShortcutHelp(); }}
       if (event.key === "/") {{ event.preventDefault(); openPalette(); }}
       if (event.key === "n") {{ event.preventDefault(); openNextAction(); }}
       if (event.key === "g") {{ event.preventDefault(); window.location.href = "/goals"; }}

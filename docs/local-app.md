@@ -562,7 +562,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Operator Focus` strip, a read-only `Route Context` breadcrumb strip, recent
   local items, a command palette, local Focus mode, a dark/light theme toggle,
   and keyboard shortcuts for home, goals, and palette search. The header
-  includes a visible `Finish` control and the `f` shortcut resolves to the
+  includes a visible `Keys` control and the `?` shortcut for opening a
+  browser-local keyboard-help dialog, so shortcut discovery is available
+  without expanding palette evidence. It also includes a visible `Finish`
+  control and the `f` shortcut resolves to the
   route-local Finish Today form on `/today` (`#today-finish`) and
   `/goals/<goal_id>` (`#goal-finish-today`), falling back to
   `/workspace#save-workspace` on other routes. Focus mode uses

@@ -899,7 +899,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   a browser operator shell with a read-only `Operator Ribbon`, `Route Context`
   breadcrumb strip, recent local items, a read-only `Last Action` strip after
   confirmed local actions, a command palette, keyboard shortcuts, local Focus
-  mode, and a theme toggle. Focus mode is toggled by the header `Focus` control
+  mode, and a theme toggle. The shared header includes a visible `Keys`
+  control plus `?` shortcut that opens a browser-local keyboard-help dialog
+  with the same shortcut list and zero-effect evidence outside the palette.
+  Focus mode is toggled by the header `Focus` control
   or `m`, persists only in browser `localStorage`, and collapses the side rails
   while keeping the ribbon and page content available. The ribbon sits above the
   shell and keeps the current page's primary

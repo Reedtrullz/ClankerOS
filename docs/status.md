@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared browser shell now has first-class shortcut discovery: a visible
+  `Keys` header control and `?` shortcut open a browser-local Keyboard
+  Shortcuts dialog with the same shortcut list, no state write, no provider
+  call, no network action, no approval/execution/push/PR/deploy, and no
+  external effect on GET.
 - The shared command palette now supports active-result keyboard navigation:
   `Palette Results` render as a local listbox, ArrowDown/ArrowUp move through
   visible local commands, Enter opens the active local route/anchor, and the

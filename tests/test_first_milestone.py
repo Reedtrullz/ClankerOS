@@ -5748,6 +5748,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert 'data-focus-mode-external-effects-created="false"' in root.body
     assert "data-shortcut=\"/\"" in root.body
     assert "data-keyboard-shortcuts=\"true\"" in root.body
+    assert 'id="shortcut-help-open"' in root.body
+    assert 'data-shortcut-help-open="true"' in root.body
+    assert 'aria-keyshortcuts="?"' in root.body
     assert "aria-keyshortcuts=\"/\"" in root.body
     assert 'aria-keyshortcuts="m"' in root.body
     assert "aria-keyshortcuts=\"t\"" in root.body
@@ -5781,14 +5784,22 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert 'data-finish-today-provider-calls-taken="0"' in root.body
     assert 'data-finish-today-network-actions-taken="0"' in root.body
     assert 'data-finish-today-external-effects-created="false"' in root.body
-    assert "Keyboard shortcuts: slash opens command palette" in root.body
+    assert "Keyboard shortcuts: question mark opens keyboard help" in root.body
+    assert "slash opens command palette" in root.body
     assert "n opens next action" in root.body
     assert "w opens workspace; f opens Finish Today" in root.body
     assert "m toggles focus mode" in root.body
+    assert "id='shortcut-help-dialog'" in root.body
+    assert "data-shortcut-help-dialog='true'" in root.body
+    assert "data-shortcut-help-write-on-get='false'" in root.body
+    assert "data-shortcut-help-provider-calls-taken='0'" in root.body
+    assert "data-shortcut-help-network-actions-taken='0'" in root.body
+    assert "data-shortcut-help-external-effects-created='false'" in root.body
     assert "Keyboard Shortcuts" in root.body
     assert "data-shortcut-help='true'" in root.body
+    assert "<kbd>?</kbd> <span>Open keyboard help</span>" in root.body
     assert "<kbd>/</kbd> <span>Open command palette</span>" in root.body
-    assert "<kbd>Escape</kbd> <span>Close command palette</span>" in root.body
+    assert "<kbd>Escape</kbd> <span>Close dialogs</span>" in root.body
     assert "<kbd>n</kbd> <span>Open next action</span>" in root.body
     assert "<kbd>r</kbd> <span>Open resume</span>" in root.body
     assert "<kbd>s</kbd> <span>Open search</span>" in root.body
@@ -5796,6 +5807,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "<kbd>f</kbd> <span>Finish today</span>" in root.body
     assert "<kbd>m</kbd> <span>Toggle focus mode</span>" in root.body
     assert "<kbd>t</kbd> <span>Toggle theme</span>" in root.body
+    assert "Shortcut help evidence" in root.body
+    assert "data-shortcut-help-dialog-evidence='true'" in root.body
+    assert "shortcut_help_open_keyboard</dt><dd>?" in root.body
+    assert "shortcut_help_shortcut_count</dt><dd>13" in root.body
+    assert "shortcut_help_write_on_get</dt><dd>false" in root.body
+    assert "shortcut_help_provider_calls_taken</dt><dd>0" in root.body
+    assert "shortcut_help_network_actions_taken</dt><dd>0" in root.body
+    assert "shortcut_help_external_effects_created</dt><dd>false" in root.body
+    assert "shortcut_help_safety: browser-local dialog only; no state write or external effect" in root.body
     assert (
         ':root[data-focus-mode="true"] .operator-shell { '
         "grid-template-columns:minmax(0, 1fr); }"
@@ -5809,6 +5829,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert 'localStorage.getItem("clankeros-focus-mode")' in root.body
     assert 'root.dataset.focusMode = "true";' in root.body
     assert "function toggleFocusMode()" in root.body
+    assert "var shortcutHelp = document.getElementById(\"shortcut-help-dialog\");" in root.body
+    assert "function openShortcutHelp()" in root.body
+    assert "function closeShortcutHelp()" in root.body
+    assert 'if (shortcutHelpOpen) { shortcutHelpOpen.addEventListener("click", openShortcutHelp); }' in root.body
     assert 'if (focusToggle) { focusToggle.addEventListener("click", toggleFocusMode); }' in root.body
     assert "var paletteResults = palette ? Array.prototype.slice.call" in root.body
     assert "function syncPaletteFilter()" in root.body
@@ -5820,7 +5844,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert 'paletteSearch.addEventListener("keydown", handlePaletteSearchKeydown);' in root.body
     assert 'item.hidden = !match;' in root.body
     assert "paletteEmpty.hidden = shown !== 0;" in root.body
-    assert 'if (event.key === "Escape") { closePalette(); return; }' in root.body
+    assert 'if (event.key === "Escape") { closePalette(); closeShortcutHelp(); return; }' in root.body
+    assert 'if (event.key === "?") { event.preventDefault(); openShortcutHelp(); }' in root.body
     assert 'if (nextActionOpen) { nextActionOpen.addEventListener("click", openNextAction); }' in root.body
     assert 'if (finishTodayOpen) { finishTodayOpen.addEventListener("click", openFinishToday); }' in root.body
     assert 'if (event.key === "n") { event.preventDefault(); openNextAction(); }' in root.body

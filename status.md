@@ -1,5 +1,35 @@
 # Status
 
+## 2026-06-29 Keyboard Shortcut Help Dialog UX
+
+- Promoted shortcut discovery into the shared browser shell. Every route now
+  exposes a visible `Keys` header control plus the `?` shortcut, opening a
+  local `Keyboard Shortcuts` dialog without requiring the operator to expand
+  command-palette evidence first.
+- The dialog reuses the global shortcut list, now including `?`, and records
+  explicit no-effect evidence for write-on-GET, provider calls, network
+  actions, and external effects.
+- Updated README, local app docs, operating summary, docs status, and focused
+  first-milestone assertions for the visible button, dialog metadata, shortcut
+  count, script hooks, and safety counters.
+- Safety: browser-local dialog only; no server write, provider call, network
+  action, approval, execution, push, PR, deploy, or external mutation
+  authority added.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed; focused
+  local-app pytest passed with `2 passed in 65.66s`.
+- Browser verification: Playwright against throwaway demo `/profiles` at
+  `http://127.0.0.1:62106/profiles` confirmed the visible `Keys` button had
+  `aria-keyshortcuts="?"`, clicking it opened `Keyboard Shortcuts` with 13
+  rows and zero-effect attributes, pressing `?` opened the same dialog after
+  Escape closed it, mobile `390x844` kept the dialog at `358px` inside a
+  `390px` viewport with no horizontal overflow, and console warnings/errors
+  were zero. The scratch root, browser, and server were cleaned up.
+- Non-claims: this does not make shortcuts execute work beyond local
+  navigation/dialog opening, approve decisions, submit forms, call providers,
+  fetch GitHub, push, create PRs, deploy, mutate external systems, or write
+  `.clanker/app/workspace.json`.
+
 ## 2026-06-29 Command Palette Active Result Keyboard UX
 
 - Promoted `Palette Results` from a filter-only list into a keyboard-operated
