@@ -41546,8 +41546,12 @@ def _operator_focus_evidence(
     )
 
 
-def _next_action_shortcut_context(focus_context: dict[str, Any]) -> dict[str, str]:
+def _next_action_shortcut_context(
+    focus_context: dict[str, Any],
+    current_path: str = "",
+) -> dict[str, str]:
     status = str(focus_context.get("status", "state_unavailable"))
+    route_path = urlparse(current_path or "/").path or "/"
     source = str(focus_context.get("source") or status)
     action = "Open health"
     href = "/health"
@@ -41564,9 +41568,19 @@ def _next_action_shortcut_context(focus_context: dict[str, Any]) -> dict[str, st
         form_available = str(bool(action_form)).lower()
         confirmation_required = form_available
         if action_form:
-            href = "#operator-focus-current-action"
+            goal = focus_context.get("goal")
+            if goal is not None:
+                goal_path = f"/goals/{quote(goal.id)}"
+                href = (
+                    "#goal-action-dock-form"
+                    if route_path == goal_path
+                    else f"{goal_path}#goal-action-dock-form"
+                )
+                source = f"{source}_goal_action_dock_form"
+            else:
+                href = "#operator-focus-current-action"
+                source = f"{source}_action_form"
             label = next_action.action
-            source = f"{source}_action_form"
         else:
             href = next_action.href
             label = next_action.action
@@ -43261,7 +43275,7 @@ def _html_page(
     nav_secondary_count = len(NAV_ITEMS) - nav_primary_count
     recent_panel = _recent_items_panel(root)
     focus_context = _operator_focus_context(root, current_path)
-    next_shortcut = _next_action_shortcut_context(focus_context)
+    next_shortcut = _next_action_shortcut_context(focus_context, current_path)
     finish_shortcut = _finish_today_shortcut_context(current_path)
     operator_ribbon = _operator_status_ribbon(root, focus_context, current_path, title)
     breadcrumbs = _breadcrumbs(root, current_path, title, focus_context)

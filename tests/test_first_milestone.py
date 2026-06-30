@@ -11294,6 +11294,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"<a class='operator-ribbon-action' href='/goals/{result.goal_id}#goal-action-dock-form'>"
         "Create commit request</a>"
     ) in dashboard.body
+    assert (
+        f'data-next-action-href="/goals/{result.goal_id}#goal-action-dock-form"'
+        in dashboard.body
+    )
+    assert 'data-next-action-source="lead_goal_goal_action_dock_form"' in dashboard.body
     assert "operator_ribbon_status</dt><dd>available" in dashboard.body
     assert "operator_ribbon_source</dt><dd>lead_goal" in dashboard.body
     assert f"operator_ribbon_goal</dt><dd><a href='/goals/{result.goal_id}'" in dashboard.body
@@ -12614,7 +12619,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-operator-focus-details='true'" in goal.body
     assert "<summary>Focus evidence</summary>" in goal.body
     assert "data-operator-focus-summary='true'" in goal.body
-    assert 'data-next-action-href="#operator-focus-current-action"' in goal.body
+    assert 'data-next-action-href="#goal-action-dock-form"' in goal.body
+    assert 'data-next-action-source="lead_goal_goal_action_dock_form"' in goal.body
     assert 'data-next-action-status="available"' in goal.body
     assert 'data-next-action-form-available="true"' in goal.body
     assert 'data-next-action-confirmation-required="true"' in goal.body

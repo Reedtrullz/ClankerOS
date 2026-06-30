@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-30 Goal Dock Shortcut UX
+
+- Repointed the shared header `n` / next-action shortcut at the Goal Action
+  Dock whenever the current Goal action already has a confirmed browser form.
+  On the Goal page it now uses the same-page `#goal-action-dock-form` target;
+  from other routes it opens `/goals/<goal_id>#goal-action-dock-form`.
+- Kept the lower shared `Operator Focus` form as a fallback/readback copy, but
+  made the global shortcut prefer the top-of-page Goal action surface so the
+  operator lands on the page's primary action dock instead of a secondary strip.
+- Added route coverage for both the dashboard/global path and the Goal-page
+  same-page hash, including the `lead_goal_goal_action_dock_form` source
+  evidence.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, focused
+  `tests/test_first_milestone.py -k
+  test_local_app_demo_scenario_populates_fixture_state` (`1 passed, 515
+  deselected`), focused `tests/test_first_milestone.py -k
+  test_local_app_routes_render_modern_workflow_and_health` (`1 passed, 515
+  deselected`), `python3 -m agent_os.cli --root "$scratch" app-smoke-test`,
+  and `git diff --check`.
+- Browser QA used a disposable demo app at `127.0.0.1:55737` for
+  `goal_bce63387c7ef`. Desktop 1280px verified the Dashboard header shortcut
+  shows `Create commit request`, points to
+  `/goals/<goal_id>#goal-action-dock-form`, clicks through to the Goal dock,
+  and then exposes same-page `#goal-action-dock-form` from the Goal page. The
+  actual `n` key on the Goal page scrolled to the dock/form
+  `/actions/coder-commit-request`. Mobile 390x844 verified the same visible
+  action button, same-page dock target, clean browser logs, no framework
+  overlay, and no horizontal overflow.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are still pending
+  for this slice.
+
 ## 2026-06-30 Focus Mode Current Action UX
 
 - Updated browser-local Focus mode so it no longer hides the shared

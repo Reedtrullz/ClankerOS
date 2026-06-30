@@ -838,8 +838,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   `More` opens automatically when the current route is secondary. The shell
   also exposes a global next-action shortcut. `n` opens the current
   recommended next-action target and displays the resolved action label in the
-  shared header instead of a generic `Next` label, `w` opens `/workspace`, and
-  `f` opens the
+  shared header instead of a generic `Next` label. When the current Goal action
+  has a confirmed browser form, `n` opens the Goal Action Dock, using
+  `#goal-action-dock-form` on that Goal page or
+  `/goals/<goal_id>#goal-action-dock-form` from other routes. `w` opens
+  `/workspace`, and `f` opens the
   route-local Finish Today form on `/today` (`#today-finish`) or
   `/goals/<goal_id>` (`#goal-finish-today`) before falling back to
   `/workspace#save-workspace` elsewhere. The palette can be closed with Escape

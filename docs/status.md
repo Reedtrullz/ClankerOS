@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared header `n` / next-action shortcut now opens the Goal Action Dock
+  when the current Goal action has a confirmed browser form. On the Goal page
+  it uses `#goal-action-dock-form`; from other routes it opens
+  `/goals/<goal_id>#goal-action-dock-form`, while preserving the same
+  confirmation-gated form, no-write GET posture, and zero provider/network/
+  external-effect boundaries.
 - Browser-local Focus mode now keeps the shared `Operator Focus` strip visible
   while hiding surrounding chrome. The shell records
   `data-focus-mode-keeps-current-action="true"` so the `n` shortcut and
