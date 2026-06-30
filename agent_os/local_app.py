@@ -17252,7 +17252,15 @@ def _goal_return_brief(
     latest_item = _goal_latest_timeline_item(root, state)
     latest_message = latest_item.get("message", "none") if latest_item else "none"
     latest_surface = latest_item.get("href", "#goal-timeline") if latest_item else "#goal-timeline"
+    latest_action_label = (
+        _timeline_item_action_label(latest_item, fallback="Open timeline")
+        if latest_item
+        else "Open timeline"
+    )
     latest_surface_value = SafeHtml(
+        f"<a href='{_e(latest_surface)}'>{_e(latest_action_label)}</a>"
+    )
+    latest_raw_surface_value = SafeHtml(
         f"<a href='{_e(latest_surface)}'>{_e(latest_surface)}</a>"
     )
     latest_artifact = _goal_latest_artifact_path(root, state)
@@ -17312,7 +17320,6 @@ def _goal_return_brief(
     workspace_matches_project = saved_project == goal.project_id
     done = counts.get("done", 0)
     total = len(gates)
-    latest_label = "Open latest activity" if latest_item else "Open timeline"
     return_cards = "".join(
         [
             "<div class='goal-return-card goal-return-primary'>",
@@ -17323,7 +17330,7 @@ def _goal_return_brief(
             "<div class='goal-return-card'>",
             "<h3>Latest</h3>",
             f"<p>{_e(latest_message)}</p>",
-            f"<a class='goal-return-link' data-goal-return-latest='true' href='{_e(latest_surface)}'>{_e(latest_label)}</a>",
+            f"<a class='goal-return-link' data-goal-return-latest='true' href='{_e(latest_surface)}'>{_e(latest_action_label)}</a>",
             "</div>",
             "<div class='goal-return-card'>",
             "<h3>Blocker</h3>",
@@ -17370,7 +17377,9 @@ def _goal_return_brief(
                     ("goal_return_saved_project_matches_current", str(workspace_matches_project).lower()),
                     ("goal_return_saved_artifact", SafeHtml(_artifact_link(saved_artifact)) if saved_artifact else "none"),
                     ("goal_return_latest_activity_message", latest_message),
+                    ("goal_return_latest_activity_label", latest_action_label),
                     ("goal_return_latest_activity_surface", latest_surface_value),
+                    ("goal_return_latest_activity_raw_surface", latest_raw_surface_value),
                     ("goal_return_latest_artifact", latest_artifact_value),
                     ("goal_return_ci_status", ci_state["latest_status"]),
                     ("goal_return_ci_source", ci_state["latest_source"]),
@@ -17391,7 +17400,8 @@ def _goal_return_brief(
                 [
                     f"goal_return_now: {_e(next_action.action)}",
                     f"goal_return_continue: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
-                    f"goal_return_latest: {_e(latest_message)}",
+                    f"goal_return_latest: <a href='{_e(latest_surface)}'>{_e(latest_action_label)}</a>",
+                    f"goal_return_latest_raw: {latest_raw_surface_value}",
                     f"goal_return_artifact: {_artifact_link(latest_artifact) if latest_artifact else 'none'}",
                     f"goal_return_unblock: {_e(blocker_status)} -> {blocker_surface}",
                     "goal_return_finish: <a href='#goal-finish-today'>Finish Today</a>",
@@ -17424,6 +17434,17 @@ def _goal_session_digest(
     latest_at_label = _format_time(latest_at) if latest_at else "none"
     latest_href = latest.get("href", "#goal-timeline-command-bar") if latest else "#goal-timeline-command-bar"
     latest_kind = _timeline_item_family(latest) if latest else "none"
+    latest_action_label = (
+        _timeline_item_action_label(latest, fallback="Open timeline")
+        if latest
+        else "Open timeline"
+    )
+    latest_surface_value = SafeHtml(
+        f"<a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>"
+    )
+    latest_raw_surface_value = SafeHtml(
+        f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>"
+    )
     latest_artifact = _goal_latest_artifact_path(root, state)
     latest_artifact_href = _artifact_href(root, latest_artifact) if latest_artifact else "#goal-artifact-command-bar"
     latest_artifact_label = "Open latest artifact" if latest_artifact else "Open artifacts"
@@ -17559,7 +17580,9 @@ def _goal_session_digest(
                     ("goal_session_digest_latest_kind", latest_kind),
                     ("goal_session_digest_latest_at", latest_at_label),
                     ("goal_session_digest_latest_message", latest_message),
-                    ("goal_session_digest_latest_surface", SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>")),
+                    ("goal_session_digest_latest_label", latest_action_label),
+                    ("goal_session_digest_latest_surface", latest_surface_value),
+                    ("goal_session_digest_latest_raw_surface", latest_raw_surface_value),
                     ("goal_session_digest_latest_artifact", SafeHtml(_artifact_link(latest_artifact)) if latest_artifact else "none"),
                     ("goal_session_digest_waiting_items", str(waiting_items)),
                     ("goal_session_digest_pending_approvals", str(pending_approvals)),
@@ -17580,7 +17603,8 @@ def _goal_session_digest(
                 [
                     f"goal_session_digest_continue: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
                     f"goal_session_digest_since_save: {_e(save_status)} latest_after_save={str(latest_after_save).lower()}",
-                    f"goal_session_digest_latest: {_e(latest_kind)} {_e(latest_at_label)} -> <a href='{_e(latest_href)}'>{_e(latest_href)}</a>",
+                    f"goal_session_digest_latest: {_e(latest_kind)} {_e(latest_at_label)} -> <a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>",
+                    f"goal_session_digest_latest_raw: {latest_raw_surface_value}",
                     f"goal_session_digest_artifact: {_artifact_link(latest_artifact) if latest_artifact else 'none'}",
                     f"goal_session_digest_waiting: approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations} -> <a href='{_e(waiting_href)}'>{_e(waiting_label)}</a>",
                     "goal_session_digest_finish: <a href='#goal-finish-today'>Finish Today</a>",

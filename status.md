@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-30 Goal Return Latest Label UX
+
+- Made the Goal Return Brief and Goal Session Digest use concrete latest-event
+  labels instead of generic `Open latest activity` copy or raw href text. For
+  the ready-to-commit demo Goal, both return-to-work surfaces now show
+  `Execution completed: <run_id>.` while opening the same `/runs/<run_id>`
+  local run page.
+- Preserved exact target evidence with new raw-surface rows and list entries:
+  `goal_return_latest_activity_raw_surface` and
+  `goal_session_digest_latest_raw_surface`. The visible resume UI is more
+  operator-readable while review/replay can still inspect the exact local
+  route.
+- Updated focused demo coverage for the Goal Return Brief and Goal Session
+  Digest latest labels, human-labeled links, raw href evidence, and collapsed
+  evidence list entries.
+- Verification passed locally: data volume precheck/postcheck had `72Gi`
+  free; `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; `git diff --check --
+  agent_os/local_app.py tests/test_first_milestone.py`; focused route/demo
+  pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`); and temp-root `python3 -m agent_os.cli --root "$scratch"
+  app-demo-smoke-test` with all demo routes matched and provider/network/
+  external mutation counters at `0`.
+- GitHub readback for the previous commit
+  `f8a73332487551183133d42d7da263a161cf5f2a` showed Actions run
+  `28476649818` with `Fast smoke verification` successful and `Full pytest
+  suite` still in progress before this new slice was committed.
+- Non-claim: remote GitHub Actions proof for this slice is not claimed by this
+  entry and should be read back after push. This change only adjusts read-only
+  labels and evidence rows; it did not deploy, create a PR, call providers,
+  write on GET, push from the app, or add any external mutation path.
+
 ## 2026-06-30 Home Today Goal Latest Label UX
 
 - Replaced generic `Open latest` labels on the Home, Today, and Goal detail

@@ -13824,7 +13824,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_return_workspace_status</dt><dd>not_started" in goal.body
     assert "goal_return_saved_goal_matches_current</dt><dd>false" in goal.body
     assert "goal_return_latest_activity_message</dt><dd>" in goal.body
-    assert "goal_return_latest_activity_surface</dt><dd><a href='" in goal.body
+    assert (
+        f"goal_return_latest_activity_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        in goal.body
+    )
+    assert (
+        f"goal_return_latest_activity_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
+        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+    ) in goal.body
+    assert (
+        f"goal_return_latest_activity_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+    ) in goal.body
     assert "goal_return_latest_artifact</dt><dd><a href='/artifacts?path=" in goal.body
     assert "goal_return_ci_status</dt><dd>success" in goal.body
     assert "goal_return_ci_source</dt><dd>direct_public_snapshot" in goal.body
@@ -13837,6 +13848,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_return_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_return_external_effects_created</dt><dd>false" in goal.body
     assert "goal_return_now: Create commit request" in goal.body
+    assert (
+        f"goal_return_latest: <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+    ) in goal.body
+    assert (
+        f"goal_return_latest_raw: <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+    ) in goal.body
     assert "goal_return_unblock: pending_approvals -> <a href='/approvals'>/approvals</a>" in goal.body
     assert "goal_return_safety: read-only return-to-work brief" in goal.body
     assert "Goal Session Digest" in goal.body
@@ -13864,7 +13883,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_session_digest_latest_after_save</dt><dd>false" in goal.body
     assert "goal_session_digest_latest_kind</dt><dd>" in goal.body
     assert "goal_session_digest_latest_message</dt><dd>" in goal.body
-    assert "goal_session_digest_latest_surface</dt><dd><a href='" in goal.body
+    assert (
+        f"goal_session_digest_latest_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        in goal.body
+    )
+    assert (
+        f"goal_session_digest_latest_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
+        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+    ) in goal.body
+    assert (
+        f"goal_session_digest_latest_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+    ) in goal.body
     assert "goal_session_digest_latest_artifact</dt><dd><a href='/artifacts?path=" in goal.body
     assert "goal_session_digest_waiting_items</dt><dd>1" in goal.body
     assert "goal_session_digest_pending_approvals</dt><dd>1" in goal.body
@@ -13879,6 +13909,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_session_digest_external_effects_created</dt><dd>false" in goal.body
     assert "goal_session_digest_continue: <a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "goal_session_digest_since_save: not_saved latest_after_save=false" in goal.body
+    assert (
+        f"-> <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+    ) in goal.body
+    assert (
+        f"goal_session_digest_latest_raw: <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+    ) in goal.body
     assert "goal_session_digest_artifact: <a href='/artifacts?path=" in goal.body
     assert "goal_session_digest_waiting: approvals=1 incidents=0 recommendations=0 -> <a href='/approvals'>Review approvals</a>" in goal.body
     assert "goal_session_digest_finish: <a href='#goal-finish-today'>Finish Today</a>" in goal.body

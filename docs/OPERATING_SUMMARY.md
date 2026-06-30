@@ -617,14 +617,15 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   A read-only `Goal Return Brief` follows the daily loop near the top of the
   Goal page as visible Continue, Latest, Blocker, Finish, and Resume cards,
   then keeps current gate, next action, resume readiness, latest activity,
-  latest artifact, CI proof posture, blocker routing, `/resume`, finish
-  surface, and zero-effect counters in collapsed return evidence without
-  writing on GET.
+  latest activity label, latest raw surface, latest artifact, CI proof
+  posture, blocker routing, `/resume`, finish surface, and zero-effect
+  counters in collapsed return evidence without writing on GET.
   A read-only `Goal Session Digest` follows it as visible Continue, Since
   Save, Latest Artifact, Waiting, and Finish Today cards. The digest is sourced
   from existing Goal state, saved workspace timestamp, latest local timeline
-  item, latest artifact, and waiting queue counts, with source and zero-effect
-  counters kept in collapsed digest evidence.
+  item, latest activity label and raw surface, latest artifact, and waiting
+  queue counts, with source and zero-effect counters kept in collapsed digest
+  evidence.
   A read-only `Goal Activity Pulse` follows the digest as visible Latest,
   Recent Three, Mix, Artifact, and Next cards, reusing the Goal timeline so a
   returning operator can see the newest linked movement before opening the
