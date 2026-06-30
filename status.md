@@ -1,5 +1,32 @@
 # Status
 
+## 2026-06-30 Guide Action Label UX
+
+- Replaced the remaining `/guide` `Use command form` and `Guide command form`
+  labels with the concrete browser action. In first-run state, the Guide
+  Command Panel `Do Now` card, Operator Recipes primary card, recipe evidence,
+  and command form-surface evidence now say `Register ClankerOS project` while
+  preserving the same `#guide-command-panel` anchor and confirmed
+  `register-project` form.
+- Preserved the existing Guide routing, first-run form, confirmation boundary,
+  action URLs, evidence rows, and zero-effect GET posture. This is an
+  orientation/copy change only; no provider calls, non-loopback network
+  actions, push, PR, deploy, or external mutation paths were added.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`, focused
+  pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health'`,
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`, and
+  `git diff --check` passed locally.
+- Browser QA used a disposable first-run app at `127.0.0.1:55513`. Desktop
+  `/guide` verified `Suggested Use Guide`, visible `Register ClankerOS project`
+  labels in Operator Recipes and the Guide Command Panel, no `Use command form`
+  or `Guide command form` copy, clean browser logs, `scrollWidth=1280`, and a
+  primary recipe click to `#guide-command-panel` with the form present. Mobile
+  390x844 repeated the label sweep with no old guide form labels, clean logs,
+  and `scrollWidth=390`.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
 ## 2026-06-30 Workbench Action Label UX
 
 - Replaced the remaining visible workbench action-form labels on Workflow,

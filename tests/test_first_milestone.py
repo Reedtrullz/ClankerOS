@@ -4483,6 +4483,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "guide_command_current_step</dt><dd>create_project" in guide.body
     assert "guide_command_primary_action</dt><dd>Register ClankerOS project" in guide.body
     assert "guide_command_action_name</dt><dd>register-project" in guide.body
+    assert "guide_command_form_surface</dt><dd><a href='#guide-command-panel'>Register ClankerOS project</a>" in guide.body
     assert "guide_command_form_available</dt><dd>true" in guide.body
     assert "guide_command_confirmation_required</dt><dd>true" in guide.body
     assert "guide_command_write_on_get</dt><dd>false" in guide.body
@@ -4506,7 +4507,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-guide-recipe-key='next_action' data-guide-recipe-primary='true'" in guide.body
     assert "data-guide-recipe-key='setup' data-guide-recipe-primary='false'" in guide.body
     assert "href='/today#first-run-create-project'>Create Project</a>" in guide.body
-    assert "href='#guide-command-panel'>Use command form</a>" in guide.body
+    assert "href='#guide-command-panel'>Register ClankerOS project</a>" in guide.body
     assert "data-guide-recipes-evidence='true'" in guide.body
     assert "guide_recipes_status</dt><dd>available" in guide.body
     assert "guide_recipes_mode</dt><dd>first_run" in guide.body
@@ -4525,7 +4526,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "guide_recipes_network_actions_taken</dt><dd>0" in guide.body
     assert "guide_recipes_external_effects_created</dt><dd>false" in guide.body
     assert "guide_recipe_path: start_today -> setup -> next_action -> unblock -> proof -> finish -> resume" in guide.body
-    assert "guide_recipe_next_action: <a href='#guide-command-panel'>Use command form</a>" in guide.body
+    assert "guide_recipe_next_action: <a href='#guide-command-panel'>Register ClankerOS project</a>" in guide.body
     assert "guide_recipe_safety: read-only intent recipes; existing confirmed forms own writes" in guide.body
     assert "data-guide-daily-loop='true'" in guide.body
     assert "data-guide-daily-loop-cards='true'" in guide.body

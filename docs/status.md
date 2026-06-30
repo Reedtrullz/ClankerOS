@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The in-app Suggested Use Guide now names the current first-run action in its
+  primary browser path. The Guide Command Panel, Operator Recipes primary card,
+  recipe evidence, and form-surface evidence say `Register ClankerOS project`
+  instead of `Use command form` or `Guide command form`, while preserving the
+  same `#guide-command-panel` anchor, confirmed `register-project` form, and
+  zero-effect GET posture.
 - Workflow, Approval, Inbox, Delegation Run Continuation, and Run workbench
   surfaces now label the primary same-page action form with the actual next
   operator move. Links and evidence rows say `Request commit for reviewed run`,

@@ -2081,7 +2081,7 @@ def _guide_operator_recipes(
         setup_body = f"Continue first-run setup at {first_run_step.replace('_', ' ')}."
 
     next_href = "#guide-command-panel" if action_form_available else primary_href
-    next_label = "Use command form" if action_form_available else primary_label
+    next_label = primary_action if action_form_available else primary_label
     cards = [
         (
             "start_today",
@@ -2267,7 +2267,9 @@ def _guide_command_panel(
         if goal_id:
             goal_value = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(goal_id)}</a>")
         if form_available:
-            form_surface = SafeHtml("<a href='#guide-command-panel'>Guide command form</a>")
+            form_surface = SafeHtml(
+                f"<a href='#guide-command-panel'>{_e(primary_action)}</a>"
+            )
     elif status == "available":
         goal = focus.get("goal")
         goal_id = str(getattr(goal, "id", "")) if goal is not None else ""
@@ -2286,7 +2288,9 @@ def _guide_command_panel(
                 form_available = bool(form)
                 form_source = "goal_next_action_form" if form_available else "goal_next_action_link"
             if form_available:
-                form_surface = SafeHtml("<a href='#guide-command-panel'>Guide command form</a>")
+                form_surface = SafeHtml(
+                    f"<a href='#guide-command-panel'>{_e(primary_action)}</a>"
+                )
         current_step = "goal_next_action"
 
     rows: list[tuple[str, str | SafeHtml]] = [
@@ -2316,7 +2320,7 @@ def _guide_command_panel(
                 "Do Now",
                 primary_action,
                 "#guide-command-panel" if form_available else primary_href,
-                "Use command form" if form_available else primary_label,
+                primary_action if form_available else primary_label,
                 primary=True,
                 data_attr="data-guide-command-card",
                 key_attr="data-guide-command-card-key",
