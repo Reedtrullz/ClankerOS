@@ -255,7 +255,12 @@ surfaces instead of relying only on legacy approval rows. It is content-first
 and
 opens with a visible `Search Operator Workbench` before shared route/focus
   diagnostics, with cards for query, first useful hit, result list, and
-  `/resume`. A visible read-only `Search Result Map` follows with Goals,
+  `/resume`. A visible read-only `Search Suggestions` panel now appears
+  before the workbench, deriving quick links from the current Goal, next
+  action, registered projects, approvals, decisions, memory, skills, and known
+  artifacts when local state exists, or routing first-run users to `/goals`
+  and `/demo` when search has nothing indexed yet. A visible read-only
+  `Search Result Map` follows with Goals,
   Projects, Work, Decisions, Knowledge, and Artifacts lane cards before the
   flat result list. A browser-local `Search Result Filter` follows the map,
   narrowing already-rendered results to all, goals, projects, work, decisions,

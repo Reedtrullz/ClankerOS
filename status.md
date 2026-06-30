@@ -1,5 +1,31 @@
 # Status
 
+## 2026-07-01 Search Suggestions UX
+
+- Added a visible read-only `Search Suggestions` panel to `/search` before the
+  `Search Operator Workbench`, so operators can start from current local state
+  instead of guessing query strings.
+- Suggestions derive from the current Goal title, next action, registered
+  projects, approvals, incidents/recommendations, memory, skills, and known
+  artifact paths when present. Empty first-run search falls back to `/goals`
+  and `/demo` links instead of showing only a blank form.
+- Preserved search trust boundaries: suggestions are GET-only links over
+  indexed local state, record source/query/surface evidence, and report zero
+  provider calls, network actions, external effects, and raw filesystem
+  browsing.
+- Local verification: `df -h /System/Volumes/Data` showed 73Gi free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  passed; focused pytest
+  `tests/test_first_milestone.py -k 'test_local_app_routes_render_modern_workflow_and_health or test_local_app_demo_scenario_populates_fixture_state'`
+  passed (`2 passed, 515 deselected`); and
+  `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+  passed with all route markers matched and provider/network/external
+  mutation counters at `0`.
+- Non-claim: this change only improves browser search discovery. It does not
+  write search state on GET, browse raw filesystem paths, call providers,
+  poll GitHub, perform network work, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
 ## 2026-07-01 Memory Workbench Pin Form UX
 
 - Made `/memory` usable from the top workbench when proposed memories are

@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/search` now opens with visible `Search Suggestions` before the
+  `Search Operator Workbench`. Populated local state produces quick searches
+  for the current Goal, next action, projects, approvals, decisions, memory,
+  skills, and artifacts; empty first-run state falls back to `/goals` and
+  `/demo`. Local proof includes py-compile, focused route/demo pytest (`2
+  passed, 515 deselected`), and the disposable-root app demo smoke test with
+  all route markers matched and provider/network/external-mutation counters
+  at `0`.
 - `/memory` now lets the operator pin the next proposed memory directly from
   the top `Memory Operator Workbench`. When a proposed memory exists, the
   workbench renders a same-page `pin-memory` form before collapsed evidence;
