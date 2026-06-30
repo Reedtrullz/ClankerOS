@@ -7198,8 +7198,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_restore_map_source</dt><dd>saved_workspace_state" in workspace_saved.body
     assert (
         "workspace_restore_map_primary_surface</dt><dd><a href='/goals/goal_demo#goal-timeline-command-bar'>"
-        "Open saved surface</a>"
+        "Open saved Goal: goal_demo</a>"
     ) in workspace_saved.body
+    assert "Open saved surface" not in workspace_saved.body
     assert (
         "workspace_restore_map_saved_resume_surface</dt><dd><a href='/goals/goal_demo#goal-timeline-command-bar'>"
         "/goals/goal_demo#goal-timeline-command-bar</a>"
@@ -7215,7 +7216,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Browser Resume" in resume_saved.body
     assert "data-browser-resume='true'" in resume_saved.body
     assert "browser_resume_canonical_workspace</dt><dd>.clanker/app/workspace.json" in resume_saved.body
-    assert "Open saved surface for goal_demo" in resume_saved.body
+    assert "Open saved Goal: goal_demo" in resume_saved.body
+    assert "Open saved surface" not in resume_saved.body
     assert (
         "resume_saved_surface</dt><dd><a href='/goals/goal_demo#goal-timeline-command-bar'>"
         "/goals/goal_demo#goal-timeline-command-bar</a>"
@@ -10131,7 +10133,8 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     )
     assert f"resume_goal_id: {created_goal_id}" in resume.body
     assert "resume_goal_label_source: title" in resume.body
-    assert "Open saved surface for Make ClankerOS resumable after first-run goal creation." in resume.body
+    assert "Open saved Goal: Make ClankerOS resumable after first-run goal creation." in resume.body
+    assert "Open saved surface" not in resume.body
     assert "Resume Operator Workbench" in resume.body
     assert "data-resume-state-details='true'" in resume.body
     assert "data-resume-workbench-primary='true'" in resume.body
@@ -15779,7 +15782,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"resume_saved_surface</dt><dd><a href='/goals/{result.goal_id}'>"
         f"/goals/{result.goal_id}</a>"
     ) in resume.body
-    assert "Open saved surface for Demo the ClankerOS local operator app with fixture-backed state" in resume.body
+    assert "Open saved Goal: Demo the ClankerOS local operator app with fixture-backed state" in resume.body
+    assert "Open saved surface" not in resume.body
     assert "Resume Next Action" in resume.body
     assert "resume_current_phase</dt><dd>Ready to commit" in resume.body
     assert "resume_next_action</dt><dd>Create commit request" in resume.body

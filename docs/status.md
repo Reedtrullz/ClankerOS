@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Saved workspace return labels now name the actual destination instead of
+  saying `Open saved surface`. Resume and Workspace saved Goal return points
+  say `Open saved Goal: <Goal title>`, saved projects say
+  `Open saved project: <project>`, and Workflow finish points say
+  `Open workflow`, while preserving the same saved `resume_surface` hrefs,
+  confirmation-gated `save-workspace` flow, collapsed exact-route evidence,
+  and zero-effect GET posture.
 - Shared Recent Items and Quick Switch launchers now name the destination or
   action directly. Primary recent shortcuts say `Open Goal`, `Open run`,
   `Open delegation`, or `Open Goal cockpit` instead of `Open recent item`;

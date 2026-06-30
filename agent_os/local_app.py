@@ -7026,13 +7026,18 @@ def _resume_page(root: Path) -> str:
     next_label = str(first_run_context["target_label"]) if first_run_context else "Open Goal Cockpit"
     if resume_surface:
         next_href = resume_surface
-        next_label = f"Open saved surface for {goal_label}" if open_goal else f"Open saved surface {resume_surface}"
+        next_label = _saved_workspace_surface_action_label(
+            root,
+            resume_surface,
+            open_goal=open_goal,
+            open_project=open_project,
+        )
     elif open_goal:
         next_href = goal_href
-        next_label = f"Open saved goal {goal_label}"
+        next_label = _saved_workspace_surface_action_label(root, goal_href, open_goal=open_goal)
     elif first_run_context is None and open_project:
         next_href = f"/projects/{quote(open_project)}"
-        next_label = f"Open saved project {open_project}"
+        next_label = _saved_workspace_surface_action_label(root, next_href, open_project=open_project)
     elif first_run_context is None and last_artifact:
         next_href = f"/artifacts?path={quote(last_artifact)}"
         next_label = "Open saved artifact"
@@ -8567,7 +8572,12 @@ def _workspace_restore_map(
         status = "saved_surface"
         source = "saved_workspace_state"
         primary_href = saved_resume_surface
-        primary_label = "Open saved surface"
+        primary_label = _saved_workspace_surface_action_label(
+            root,
+            saved_resume_surface,
+            open_goal=open_goal or save_defaults["open_goal"],
+            open_project=open_project or save_defaults["open_project"],
+        )
     elif open_goal:
         status = "saved_goal"
         source = "saved_workspace_state"
@@ -12365,6 +12375,32 @@ def _local_surface_action_label(value: str, *, fallback: str = "Open saved page"
         return "Open demo"
     if path == "/verification":
         return "Open verification"
+    if path == "/workflow":
+        return "Open workflow"
+    if path == "/actions":
+        return "Open actions"
+    if path == "/inbox":
+        return "Open inbox"
+    if path == "/approvals":
+        return "Open approvals"
+    if path == "/incidents":
+        return "Open incidents"
+    if path == "/search":
+        return "Open search"
+    if path == "/memory":
+        return "Open memory"
+    if path == "/skills":
+        return "Open skills"
+    if path == "/profiles":
+        return "Open profiles"
+    if path == "/dogfooding":
+        return "Open dogfooding"
+    if path == "/delegation-runs":
+        return "Open delegation runs"
+    if path == "/ci-evidence":
+        return "Open CI evidence"
+    if path == "/health":
+        return "Open health"
     return fallback
 
 
@@ -12609,6 +12645,33 @@ def _goal_display_link(root: Path, goal_id: str) -> tuple[str, str, str, str | S
     label, source = _goal_display_label(root, goal_id)
     href = f"/goals/{quote(goal_id)}"
     return href, label, source, SafeHtml(f"<a href='{_e(href)}'>{_e(label)}</a>")
+
+
+def _saved_workspace_surface_action_label(
+    root: Path,
+    value: str,
+    *,
+    open_goal: str = "",
+    open_project: str = "",
+    fallback: str = "Open saved page",
+) -> str:
+    local_value = _safe_local_return_path(value)
+    if not local_value:
+        return fallback
+    path = urlparse(local_value).path
+    if path.startswith("/goals/"):
+        goal_id = unquote(path[len("/goals/") :].split("/", 1)[0]).strip() or open_goal
+        if goal_id:
+            label, _source = _goal_display_label(root, goal_id)
+            if label:
+                return f"Open saved Goal: {_compact_label(label, 72)}"
+        return "Open saved Goal"
+    if path.startswith("/projects/"):
+        project = open_project or unquote(path[len("/projects/") :].split("/", 1)[0]).strip()
+        if project:
+            return f"Open saved project: {_compact_label(project, 56)}"
+        return "Open saved project"
+    return _local_surface_action_label(local_value, fallback=fallback)
 
 
 def _goal_artifact_display(root: Path, goal_id: str) -> dict[str, str | SafeHtml]:
@@ -24870,13 +24933,20 @@ def _workflow_finish_today(
     last_artifact_value: str | SafeHtml = (
         SafeHtml(_artifact_link(last_artifact)) if last_artifact else "none"
     )
+    current_label = _saved_workspace_surface_action_label(
+        root,
+        resume_surface,
+        open_goal=open_goal,
+        open_project=open_project,
+        fallback="Open workflow",
+    )
     return "".join(
         [
             "<section id='workflow-finish-today' class='panel workflow-finish-today' data-workflow-finish-today='true'><h2>Workflow Finish Today</h2>",
             "<p class='muted'>Save the current workflow scope as tomorrow's browser return point. This uses the existing confirmed workspace-save action.</p>",
             "<div class='workflow-finish-grid' data-workflow-finish-actions='true'>",
             "<article class='workflow-finish-card workflow-finish-primary' data-workflow-finish-current='true'><h3>Current</h3>",
-            f"<p>{_e(str(context['current_stage']))} · {_e(str(context['scope']))}</p><a class='workflow-finish-action' href='{_e(resume_surface)}'>Open saved surface</a></article>",
+            f"<p>{_e(str(context['current_stage']))} · {_e(str(context['scope']))}</p><a class='workflow-finish-action' href='{_e(resume_surface)}'>{_e(current_label)}</a></article>",
             "<article class='workflow-finish-card' data-workflow-finish-save='true'><h3>Save</h3>",
             f"<p>{_e(save_status)}</p><a class='workflow-finish-link' data-open-details='true' href='#workflow-save-workspace'>Save workspace</a></article>",
             "<article class='workflow-finish-card' data-workflow-finish-resume='true'><h3>Resume</h3>",
@@ -38011,7 +38081,7 @@ def _action_result_next_step_context(
                     "source": "saved_workspace_goal_after_action",
                     "mode": "goal",
                     "goal": goal_id,
-                    "next_action": "Open saved surface",
+                    "next_action": _local_surface_action_label(location, fallback="Open next surface"),
                     "lines": [
                         f"action_result_next_step_missing_goal: {_e(goal_id)}",
                         f"action_result_next_step_open: <a href='{_e(next_href)}'>{_e(location)}</a>",
@@ -43069,7 +43139,18 @@ def _recent_operator_links(root: Path, *, limit: int) -> list[tuple[str, str, st
         links.append((f"Last action: {last_action}", last_action_href, "workspace action"))
     if any([open_goal, open_project, last_artifact, resume_surface]):
         if resume_surface:
-            links.append((f"Resume saved surface {resume_surface}", resume_surface, "workspace surface"))
+            links.append(
+                (
+                    _saved_workspace_surface_action_label(
+                        root,
+                        resume_surface,
+                        open_goal=open_goal,
+                        open_project=open_project,
+                    ),
+                    resume_surface,
+                    "workspace surface",
+                )
+            )
         else:
             links.append(("Resume workspace", "/resume", "workspace"))
     if open_goal:

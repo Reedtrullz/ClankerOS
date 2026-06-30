@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-30 Saved Return Label UX
+
+- Replaced the remaining visible `Open saved surface` return labels in Resume,
+  Workspace restore, Workflow finish, action-result fallback state, and recent
+  operator links with route-aware product labels. Saved Goal return points now
+  say `Open saved Goal: <Goal title>` when a title is available, saved
+  projects say `Open saved project: <project>`, and workflow return points say
+  `Open workflow`.
+- Preserved the same saved `resume_surface` hrefs, workspace JSON readback,
+  confirmation-gated `save-workspace` action, local route targets, browser
+  route history, command palette/recent-item behavior, and zero-effect GET
+  posture. Exact saved routes remain visible in collapsed evidence; only the
+  operator-facing action labels changed.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_first_run_browser_actions_persist_resume_workspace or
+  test_local_app_demo_scenario_populates_fixture_state'`, and
+  `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` passed
+  locally.
+- Browser QA used a disposable fixture-backed app at `127.0.0.1:53611` for
+  `goal_f43859de7526`. After a confirmed local `save-workspace` POST wrote the
+  saved route with `network_actions_taken=0` and
+  `external_effects_created=false`, desktop `/resume` showed
+  `Open saved Goal: Demo the ClankerOS local operator app with fixture-backed
+  state`, contained no `Open saved surface` copy, clicked through to the saved
+  Goal route, had clean logs, and kept `scrollWidth=1280`. Desktop
+  `/workspace` showed the same saved-Goal label, and `/workflow` showed
+  `Open workflow` in the finish card. Mobile 390x844 verified `/resume` and
+  `/workspace` with the same new label, no old label, clean logs, and
+  `scrollWidth=390`.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
 ## 2026-06-30 Recent Items Action Label UX
 
 - Replaced the shared Recent Items and Quick Switch generic launcher labels
