@@ -13421,10 +13421,22 @@ def _goal_board_command_bar(
     project_surface = SafeHtml(
         f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a>"
     )
-    next_surface = SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>")
+    action_form_available = bool(action_form)
+    primary_href = _goal_board_action_href(
+        goal.id,
+        next_action.href,
+        action_form_available,
+    )
+    primary_label = _goal_action_cta_label(next_action, action_form_available)
+    next_surface = SafeHtml(
+        f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
+    )
+    source_surface = SafeHtml(
+        f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
+    )
     lines = [
         f"goal_board_now: {_e(next_action.action)}",
-        f"goal_board_click: <a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
+        f"goal_board_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
         f"goal_board_open: <a href='/goals/{quote(goal.id)}'>{_e(goal.id)}</a>",
         (
             "goal_board_waiting: "
@@ -13452,6 +13464,7 @@ def _goal_board_command_bar(
                     ("goal_board_primary_phase", phase),
                     ("goal_board_primary_action", next_action.action),
                     ("goal_board_primary_surface", next_surface),
+                    ("goal_board_primary_source_surface", source_surface),
                     ("goal_board_primary_reason", next_action.reason),
                     ("goal_board_progress", _goal_progress_label(state)),
                     ("goal_board_open_tasks", str(open_tasks)),
@@ -13459,7 +13472,7 @@ def _goal_board_command_bar(
                     ("goal_board_pending_approvals", str(pending_approvals)),
                     ("goal_board_open_incidents", str(open_incidents)),
                     ("goal_board_open_recommendations", str(open_recommendations)),
-                    ("goal_board_action_form_available", str(bool(action_form)).lower()),
+                    ("goal_board_action_form_available", str(action_form_available).lower()),
                     ("goal_board_action_form_surface", next_surface),
                     ("goal_board_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
                     (

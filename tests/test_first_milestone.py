@@ -12363,7 +12363,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_board_primary_project</dt><dd><a href='/projects/local-app-demo'" in goals.body
     assert "goal_board_primary_phase</dt><dd>Ready to commit" in goals.body
     assert "goal_board_primary_action</dt><dd>Create commit request" in goals.body
-    assert f"goal_board_primary_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goals.body
+    assert (
+        f"goal_board_primary_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in goals.body
+    assert f"goal_board_primary_source_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goals.body
     assert "goal_board_primary_reason</dt><dd>reviewed_run=" in goals.body
     assert "goal_board_progress</dt><dd>0/1 tasks completed" in goals.body
     assert "goal_board_open_tasks</dt><dd>1" in goals.body
@@ -12377,6 +12381,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_board_network_actions_taken</dt><dd>0" in goals.body
     assert "goal_board_external_effects_created</dt><dd>false" in goals.body
     assert "goal_board_now: Create commit request" in goals.body
+    assert (
+        f"goal_board_click: <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in goals.body
     assert "goal_board_waiting: approvals=1 incidents=0 recommendations=0" in goals.body
     assert "Goal Board Workbench" in goals.body
     assert "data-goal-board-workbench='true'" in goals.body
