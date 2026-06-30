@@ -4,6 +4,20 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Today Activity Digest and Goal Session Digest latest-artifact cards now name
+  the concrete artifact/event they open instead of generic latest-artifact
+  copy, and the Coder Handoff Execute/Ship cards name the concrete selected
+  run instead of generic latest-run copy. The demo Today surface now labels the
+  latest artifact with concrete coder-run copy, such as `Artifact recorded:
+  coder run <run_id> verification stderr.` or `Open coder run <run_id>
+  review`, and the Goal Session Digest labels its latest artifact action as
+  `Open coder run <run_id> review`, while preserving exact raw href evidence
+  through `today_activity_digest_latest_artifact_raw_surface` and
+  `goal_session_digest_latest_artifact_raw_surface`. Local proof includes
+  py-compile, focused route/demo pytest (`2 passed, 515 deselected`), and
+  temp-root `app-demo-smoke-test` with all demo route markers matched and
+  provider/network/external-mutation counters at `0`. Remote GitHub Actions
+  proof for this slice should be read back after push.
 - Project Goal Map Work cards now label the exact workflow target when a coder
   run exists: `Open run <run_id> workflow` replaces generic `Open latest run
   workflow` copy on `/projects/<project_id>`. Collapsed evidence now records

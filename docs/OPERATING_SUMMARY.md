@@ -123,7 +123,9 @@ Core layers for the bootstrap:
   Notes, and Safety cards plus a compact recent timeline list for the lead Goal
   or current first-run step, preserving source, item-count, latest-event,
   artifact, operator-note, and zero-effect evidence in a collapsed details
-  block before the denser reused activity inventory.
+  block before the denser reused activity inventory. Its Artifacts card now
+  uses the latest artifact event label while preserving the exact raw artifact
+  href in evidence.
   A read-only `Today Operator Workbench` follows with do/check/unblock/finish
   cards for the current action, timeline/evidence review, first blocker, and
   finish-today resume save target. A read-only `Today Decision Queue` follows
@@ -627,7 +629,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   from existing Goal state, saved workspace timestamp, latest local timeline
   item, latest activity label and raw surface, latest artifact, and waiting
   queue counts, with source and zero-effect counters kept in collapsed digest
-  evidence.
+  evidence. Its Latest Artifact card now names the concrete latest artifact
+  record, such as `Open coder run <run_id> review`, while preserving the exact
+  raw artifact href in evidence.
+  The `Goal Coder Handoff Digest` Execute and Ship cards also name the
+  concrete selected run when they open a run surface, rather than using
+  generic latest-run copy.
   A read-only `Goal Activity Pulse` follows the digest as visible Latest,
   Recent Three, Mix, Artifact, and Next cards, reusing the Goal timeline so a
   returning operator can see the newest linked movement before opening the

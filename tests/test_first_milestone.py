@@ -12109,6 +12109,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
     )
     assert "today_activity_digest_window_surface</dt><dd><a href='/goals/" in today.body
     assert "today_activity_digest_artifacts</dt><dd>" in today.body
+    assert (
+        "today_activity_digest_latest_artifact_label</dt><dd>"
+        in today.body
+    )
+    assert (
+        f"today_activity_digest_latest_artifact_label</dt><dd>Open coder run {result.coder_worktree_run_id}"
+        in today.body
+        or f"today_activity_digest_latest_artifact_label</dt><dd>Artifact recorded: coder run {result.coder_worktree_run_id}"
+        in today.body
+    )
+    assert (
+        "today_activity_digest_latest_artifact</dt><dd><a href='/artifacts?path="
+    ) in today.body
+    assert (
+        f"coder run {result.coder_worktree_run_id}"
+    ) in today.body
+    assert (
+        "today_activity_digest_latest_artifact_raw_surface</dt><dd><a href='/artifacts?path="
+    ) in today.body
     assert "today_activity_digest_operator_notes</dt><dd>" in today.body
     assert "today_activity_digest_write_on_get</dt><dd>false" in today.body
     assert "today_activity_digest_provider_calls_taken</dt><dd>0" in today.body
@@ -13897,7 +13916,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"goal_session_digest_latest_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
         f"/runs/{result.coder_worktree_run_id}</a>"
     ) in goal.body
+    assert (
+        "goal_session_digest_latest_artifact_label</dt><dd>"
+        f"Open coder run {result.coder_worktree_run_id} review"
+    ) in goal.body
     assert "goal_session_digest_latest_artifact</dt><dd><a href='/artifacts?path=" in goal.body
+    assert "goal_session_digest_latest_artifact_raw_surface</dt><dd><a href='/artifacts?path=" in goal.body
     assert "goal_session_digest_waiting_items</dt><dd>1" in goal.body
     assert "goal_session_digest_pending_approvals</dt><dd>1" in goal.body
     assert "goal_session_digest_open_incidents</dt><dd>0" in goal.body
@@ -14461,7 +14485,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-timeline-metadata='true'" in goal.body
     assert "Goal timeline command evidence" in goal.body
     assert "Timeline metadata" in goal.body
-    assert "Open latest" in goal.body
+    assert "Open latest" not in goal.body
     assert "<a href='#goal-timeline-command-bar'>Timeline command</a>" in goal.body
     assert f"timeline_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert "timeline_command_status</dt><dd>available" in goal.body

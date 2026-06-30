@@ -1,5 +1,40 @@
 # Status
 
+## 2026-06-30 Session Artifact Card Label UX
+
+- Made the Today Activity Digest and Goal Session Digest latest-artifact cards
+  name the concrete artifact/event they open instead of relying on generic
+  latest-artifact copy. In the demo state, Today now labels the artifact card
+  with concrete coder-run copy such as `Artifact recorded: coder run <run_id>
+  verification stderr.` or `Open coder run <run_id> review`, and the Goal
+  Session Digest uses `Open coder run <run_id> review`.
+- Also made the Goal Coder Handoff Digest Execute and Ship cards name the
+  concrete selected run when they open a run surface, replacing the last
+  generic latest-run labels in `agent_os/local_app.py`.
+- Preserved exact audit evidence with raw-surface rows:
+  `today_activity_digest_latest_artifact_raw_surface` and
+  `goal_session_digest_latest_artifact_raw_surface`. The visible browser UI is
+  more operator-readable while review/replay can still inspect exact
+  `/artifacts?path=...` targets.
+- Added `_goal_latest_artifact_record` so surfaces that need a human label can
+  reuse the same latest existing artifact selection as the artifact path
+  helper without changing artifact viewer behavior.
+- Updated focused route/demo coverage for concrete Today and Goal Session
+  artifact labels, raw artifact href evidence, and absence of stale `Open
+  latest` copy on the rendered demo Goal page.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused route/demo pytest
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`); and temp-root `python3 -m agent_os.cli --root "$scratch"
+  app-demo-smoke-test` with all demo routes matched and provider/network/
+  external mutation counters at `0`.
+- Non-claim: remote GitHub Actions proof for this slice is pending until it is
+  pushed and read back. This change only adjusts read-only labels and evidence
+  rows; it did not deploy, create a PR, call providers, write on GET, push
+  from the app, or add any external mutation path.
+
 ## 2026-06-30 Project Goal Map Run Workflow Label UX
 
 - Made the `/projects/<project_id>` Project Goal Map Work card name the

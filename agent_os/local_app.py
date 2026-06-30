@@ -2802,6 +2802,7 @@ def _today_activity_digest(
         recent_heading = "First Run Movement"
         total_item_count = len(items)
         artifact_items: list[dict[str, str]] = []
+        artifact_available = False
         operator_notes = 0
         latest_action_label_override = target_label
     else:
@@ -2832,15 +2833,25 @@ def _today_activity_digest(
             if _timeline_item_family(item) == "artifact"
             or str(item.get("href") or "").startswith("/artifacts?path=")
         ]
+        latest_artifact_record = _goal_latest_artifact_record(root, state)
         operator_notes = sum(
             1 for item in items if _timeline_item_family(item) == "operator_note"
         )
-        artifact_href = (
-            artifact_items[-1].get("href")
-            if artifact_items
-            else f"/goals/{quote(goal_id)}#goal-artifacts"
-        )
-        artifact_label = "Open latest artifact" if artifact_items else "Goal artifacts"
+        if artifact_items:
+            artifact_href = artifact_items[-1].get("href") or f"/goals/{quote(goal_id)}#goal-artifacts"
+            artifact_label = _timeline_item_action_label(
+                artifact_items[-1],
+                fallback="Open artifact",
+            )
+            artifact_available = True
+        elif latest_artifact_record is not None:
+            artifact_href = _artifact_href(root, latest_artifact_record["path"])
+            artifact_label = _compact_label(f"Open {latest_artifact_record['label']}", 84)
+            artifact_available = True
+        else:
+            artifact_href = f"/goals/{quote(goal_id)}#goal-artifacts"
+            artifact_label = "Goal artifacts"
+            artifact_available = False
         latest_action_label_override = ""
 
     latest = items[-1] if items else {}
@@ -2859,9 +2870,14 @@ def _today_activity_digest(
     latest_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>")
     latest_raw_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>")
     artifact_surface: str | SafeHtml = "none"
-    if artifact_items:
+    artifact_raw_surface: str | SafeHtml = "none"
+    if artifact_available:
+        artifact_latest_href = artifact_href
         artifact_surface = SafeHtml(
-            f"<a href='{_e(artifact_items[-1].get('href') or '')}'>{_e(artifact_items[-1].get('message') or artifact_label)}</a>"
+            f"<a href='{_e(artifact_latest_href)}'>{_e(artifact_label)}</a>"
+        )
+        artifact_raw_surface = SafeHtml(
+            f"<a href='{_e(artifact_latest_href)}'>{_e(artifact_latest_href)}</a>"
         )
     window_surface = SafeHtml(f"<a href='{_e(window_href)}'>{_e(window_label)}</a>")
     note_surface = SafeHtml(f"<a href='{_e(note_href)}'>{_e(note_label)}</a>")
@@ -2907,7 +2923,9 @@ def _today_activity_digest(
                     ("today_activity_digest_latest_raw_surface", latest_raw_surface),
                     ("today_activity_digest_window_surface", window_surface),
                     ("today_activity_digest_artifacts", str(len(artifact_items))),
+                    ("today_activity_digest_latest_artifact_label", artifact_label),
                     ("today_activity_digest_latest_artifact", artifact_surface),
+                    ("today_activity_digest_latest_artifact_raw_surface", artifact_raw_surface),
                     ("today_activity_digest_operator_notes", str(operator_notes)),
                     ("today_activity_digest_notes_surface", note_surface),
                     ("today_activity_digest_write_on_get", "false"),
@@ -16462,7 +16480,11 @@ def _goal_coder_handoff_digest(
     execute_label = (
         "Review approvals"
         if worktree_pending or worktree_approved
-        else ("Open latest run" if latest_run_id != "none" else "Open run command")
+        else (
+            _compact_label(f"Open run {latest_run_id}", 84)
+            if latest_run_id != "none"
+            else "Open run command"
+        )
     )
     approval_surface = SafeHtml(
         f"<a href='/approvals?goal_id={quote(goal.id)}'>/approvals?goal_id={_e(goal.id)}</a>"
@@ -16474,7 +16496,11 @@ def _goal_coder_handoff_digest(
     )
     if publication_ready or committed_commits:
         ship_href = run_href
-        ship_label = "Open latest run"
+        ship_label = (
+            _compact_label(f"Open run {latest_run_id}", 84)
+            if latest_run_id != "none"
+            else "Open run"
+        )
     else:
         ship_href = "#goal-ci-handoff"
         ship_label = "Review CI handoff"
@@ -17445,9 +17471,28 @@ def _goal_session_digest(
     latest_raw_surface_value = SafeHtml(
         f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>"
     )
-    latest_artifact = _goal_latest_artifact_path(root, state)
+    latest_artifact_record = _goal_latest_artifact_record(root, state)
+    latest_artifact = (
+        latest_artifact_record["path"]
+        if latest_artifact_record is not None
+        else _goal_latest_artifact_path(root, state)
+    )
     latest_artifact_href = _artifact_href(root, latest_artifact) if latest_artifact else "#goal-artifact-command-bar"
-    latest_artifact_label = "Open latest artifact" if latest_artifact else "Open artifacts"
+    if latest_artifact_record is not None:
+        latest_artifact_label = _compact_label(
+            f"Open {latest_artifact_record['label']}",
+            84,
+        )
+    elif latest_artifact:
+        latest_artifact_label = _compact_label(
+            f"Open {Path(latest_artifact).name}",
+            84,
+        )
+    else:
+        latest_artifact_label = "Open artifacts"
+    latest_artifact_raw_surface = SafeHtml(
+        f"<a href='{_e(latest_artifact_href)}'>{_e(latest_artifact_href)}</a>"
+    )
     workspace_goal_matches = saved_goal == goal.id
     workspace_project_matches = saved_project == goal.project_id
     workspace_saved = bool(workspace_updated and workspace_updated != "never")
@@ -17583,7 +17628,9 @@ def _goal_session_digest(
                     ("goal_session_digest_latest_label", latest_action_label),
                     ("goal_session_digest_latest_surface", latest_surface_value),
                     ("goal_session_digest_latest_raw_surface", latest_raw_surface_value),
+                    ("goal_session_digest_latest_artifact_label", latest_artifact_label),
                     ("goal_session_digest_latest_artifact", SafeHtml(_artifact_link(latest_artifact)) if latest_artifact else "none"),
+                    ("goal_session_digest_latest_artifact_raw_surface", latest_artifact_raw_surface),
                     ("goal_session_digest_waiting_items", str(waiting_items)),
                     ("goal_session_digest_pending_approvals", str(pending_approvals)),
                     ("goal_session_digest_open_incidents", str(open_incidents)),
@@ -23258,7 +23305,7 @@ def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, 
     return records
 
 
-def _goal_latest_artifact_path(root: Path, state: dict[str, Any]) -> str:
+def _goal_latest_artifact_record(root: Path, state: dict[str, Any]) -> dict[str, str] | None:
     records = _goal_artifact_records(root, state)
     existing = [
         record
@@ -23266,15 +23313,21 @@ def _goal_latest_artifact_path(root: Path, state: dict[str, Any]) -> str:
         if (root / record["path"]).exists()
     ]
     if not existing:
-        note_path = _goal_operator_notes_path(state["goal"])
-        if (root / note_path).exists():
-            return note_path.as_posix()
-        return ""
-    latest = max(
+        return None
+    return max(
         existing,
         key=lambda record: (root / record["path"]).stat().st_mtime,
     )
-    return latest["path"]
+
+
+def _goal_latest_artifact_path(root: Path, state: dict[str, Any]) -> str:
+    latest_record = _goal_latest_artifact_record(root, state)
+    if latest_record is not None:
+        return latest_record["path"]
+    note_path = _goal_operator_notes_path(state["goal"])
+    if (root / note_path).exists():
+        return note_path.as_posix()
+    return ""
 
 
 def _add_packet_artifacts(
