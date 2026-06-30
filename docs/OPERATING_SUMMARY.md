@@ -1212,7 +1212,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   do/inspect/Goal/finish cards, Goal/delegation/run/evidence routing, a
   continuation surface, and a confirmed `save-workspace` form in a collapsed
   Finish Today section that stores the queue as a future resume point without
-  writing on GET. Inbox and approval queue Goal cards now use the human Goal
+  writing on GET. Approval-backed worktree, commit, and publication Inbox
+  items can render their existing confirmation-gated local decision form
+  directly in the workbench; `/inbox?run_id=<coder_run_id>` scopes that top
+  workbench queue to the run so commit/publication approvals are not masked by
+  unrelated global items. Inbox and approval queue Goal cards now use the human Goal
   title when available, while raw Goal ids and label-source fields stay in
   collapsed evidence for durable review. A visible read-only `Inbox Triage Board` follows with
   Attention, Decisions, Work, Publication, and Finish Today lane cards so the

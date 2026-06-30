@@ -6292,6 +6292,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "inbox_workbench_primary_surface</dt><dd><a href='/goals'>/goals</a>" in empty_inbox.body
     assert "inbox_workbench_action_form_available</dt><dd>false" in empty_inbox.body
     assert "inbox_workbench_confirmation_required</dt><dd>false" in empty_inbox.body
+    assert "data-inbox-workbench-action-form='true'" not in empty_inbox.body
     assert "inbox_workbench_finish_form_available</dt><dd>true" in empty_inbox.body
     assert "inbox_workbench_write_on_get</dt><dd>false" in empty_inbox.body
     assert "inbox_workbench_approves_on_get</dt><dd>false" in empty_inbox.body
@@ -9038,6 +9039,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "inbox_workbench_reason</dt><dd>pending" in inbox.body
     assert "inbox_workbench_after_action</dt><dd>continue delegation workflow" in inbox.body
     assert "inbox_workbench_action_form_available</dt><dd>false" in inbox.body
+    assert "data-inbox-workbench-action-form='true'" not in inbox.body
     assert "inbox_workbench_write_on_get</dt><dd>false" in inbox.body
     assert "inbox_workbench_approves_on_get</dt><dd>false" in inbox.body
     assert "inbox_workbench_executes_work_on_get</dt><dd>false" in inbox.body
@@ -9050,6 +9052,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
         in inbox.body
     )
     assert "inbox_workbench_finish: <a href='#inbox-finish-today'>Finish Today</a>" in inbox.body
+    assert "inbox_workbench_safety: GET is read-only; available local actions require confirmation" in inbox.body
     assert "id='inbox-finish-today'" in inbox.body
     assert "name='filters' value='inbox:subagent_delegation:" in inbox.body
     assert "inbox-workbench,summary,approvals,runs,incidents" in inbox.body
@@ -16804,14 +16807,27 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "inbox_workbench_first_run</dt><dd>not_created_yet" in inbox.body
     assert "inbox_workbench_next_action</dt><dd>Approve worktree" in inbox.body
     assert "inbox_workbench_action_name</dt><dd>approve-coder-worktree" in inbox.body
-    assert "inbox_workbench_primary_surface</dt><dd><a href='#inbox-pending-worktree-approvals'>Pending Worktree Approvals</a>" in inbox.body
+    assert "data-inbox-workbench-action-form='true'" in inbox.body
+    assert "data-inbox-workbench-action-kind='worktree_approval'" in inbox.body
+    assert "data-inbox-workbench-action-name='approve-coder-worktree'" in inbox.body
+    assert inbox.body.index("id='inbox-workbench-action-form'") < inbox.body.index(
+        "data-inbox-workbench-evidence='true'"
+    )
+    assert inbox.body.index("id='inbox-workbench-action-form'") < inbox.body.index(
+        "id='inbox-pending-worktree-approvals'"
+    )
+    assert "action='/actions/approve-coder-worktree'" in inbox.body
+    assert f"name='approval_id' value='{result.approval_id}'" in inbox.body
+    assert "inbox_workbench_primary_surface</dt><dd><a href='#inbox-workbench-action-form'>Inbox Workbench Action Form</a>" in inbox.body
+    assert "inbox_workbench_queue_surface</dt><dd><a href='#inbox-pending-worktree-approvals'>Pending Worktree Approvals</a>" in inbox.body
     assert f"inbox_workbench_inspection_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'>Workflow</a>" in inbox.body
-    assert "inbox_workbench_decision_surface</dt><dd><a href='/approvals'>/approvals</a>" in inbox.body
+    assert "inbox_workbench_decision_surface</dt><dd><a href='#inbox-workbench-action-form'>#inbox-workbench-action-form</a>" in inbox.body
+    assert "inbox_workbench_source_decision_surface</dt><dd><a href='/approvals'>/approvals</a>" in inbox.body
     assert "inbox_workbench_reason</dt><dd>bounded_worktree_plan_waiting_for_operator" in inbox.body
     assert "inbox_workbench_evidence_artifact</dt><dd><a href='/artifacts?path=" in inbox.body
     assert "inbox_workbench_after_action</dt><dd>run approved worktree from Goal or workflow surface" in inbox.body
-    assert "inbox_workbench_action_form_available</dt><dd>false" in inbox.body
-    assert "inbox_workbench_confirmation_required</dt><dd>false" in inbox.body
+    assert "inbox_workbench_action_form_available</dt><dd>true" in inbox.body
+    assert "inbox_workbench_confirmation_required</dt><dd>true" in inbox.body
     assert "inbox_workbench_finish_form_available</dt><dd>true" in inbox.body
     assert "inbox_workbench_source</dt><dd>operator_inbox_queue_state" in inbox.body
     assert "inbox_workbench_write_on_get</dt><dd>false" in inbox.body
@@ -16824,7 +16840,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "inbox_workbench_pr_created</dt><dd>false" in inbox.body
     assert "inbox_workbench_deploy_created</dt><dd>false" in inbox.body
     assert "inbox_workbench_now: Approve worktree" in inbox.body
-    assert "inbox_workbench_click: <a href='#inbox-pending-worktree-approvals'>Pending Worktree Approvals</a>" in inbox.body
+    assert "inbox_workbench_click: <a href='#inbox-workbench-action-form'>Inbox Workbench Action Form</a>" in inbox.body
+    assert "inbox_workbench_queue: <a href='#inbox-pending-worktree-approvals'>Pending Worktree Approvals</a>" in inbox.body
     assert f"inbox_workbench_inspect: <a href='/workflow?delegation_id={result.delegation_id}'>Workflow</a>" in inbox.body
     assert (
         f"inbox_workbench_goal: <a href='/goals/{result.goal_id}'>"
@@ -16832,7 +16849,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in inbox.body
     )
     assert "inbox_workbench_finish: <a href='#inbox-finish-today'>Finish Today</a>" in inbox.body
-    assert "inbox_workbench_safety: read-only queue guidance; confirmed local actions elsewhere" in inbox.body
+    assert "inbox_workbench_safety: GET is read-only; available local actions require confirmation" in inbox.body
     assert "id='inbox-finish-today'" in inbox.body
     assert "name='filters' value='inbox:worktree_approval:" in inbox.body
     assert "inbox-workbench,summary,approvals,runs,incidents" in inbox.body
@@ -17454,6 +17471,21 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"/runs/{result.coder_worktree_run_id}" in inbox_after_commit_request.body
     assert "next_inbox_action_after_approval: commit-coder-worktree" in inbox_after_commit_request.body
     assert "typed_commit_message_required: true" in inbox_after_commit_request.body
+    assert "inbox_workbench_first_kind</dt><dd>worktree_approval" in inbox_after_commit_request.body
+    scoped_commit_inbox = render_local_app_route(
+        tmp_path,
+        f"/inbox?run_id={result.coder_worktree_run_id}",
+    )
+    assert scoped_commit_inbox.status == 200
+    assert "inbox_workbench_scope_status</dt><dd>run_scoped" in scoped_commit_inbox.body
+    assert f"inbox_workbench_scope_run</dt><dd>{result.coder_worktree_run_id}" in scoped_commit_inbox.body
+    assert "inbox_workbench_first_kind</dt><dd>commit_approval" in scoped_commit_inbox.body
+    assert "data-inbox-workbench-action-kind='commit_approval'" in scoped_commit_inbox.body
+    assert "data-inbox-workbench-action-name='approve-coder-commit'" in scoped_commit_inbox.body
+    assert "inbox_workbench_primary_surface</dt><dd><a href='#inbox-workbench-action-form'>Inbox Workbench Action Form</a>" in scoped_commit_inbox.body
+    assert "inbox_workbench_queue_surface</dt><dd><a href='#inbox-pending-commit-approvals'>Pending Commit Approvals</a>" in scoped_commit_inbox.body
+    assert "action='/actions/approve-coder-commit'" in scoped_commit_inbox.body
+    assert f"name='approval_id' value='{commit_approval.id}'" in scoped_commit_inbox.body
 
     commit_approval_confirmation = render_local_app_route(
         tmp_path,
@@ -17650,6 +17682,21 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in inbox_after_publication_request.body
     )
     assert "push_created=false pr_created=false deploy_created=false" in inbox_after_publication_request.body
+    assert "inbox_workbench_first_kind</dt><dd>worktree_approval" in inbox_after_publication_request.body
+    scoped_publication_inbox = render_local_app_route(
+        tmp_path,
+        f"/inbox?run_id={result.coder_worktree_run_id}",
+    )
+    assert scoped_publication_inbox.status == 200
+    assert "inbox_workbench_scope_status</dt><dd>run_scoped" in scoped_publication_inbox.body
+    assert f"inbox_workbench_scope_run</dt><dd>{result.coder_worktree_run_id}" in scoped_publication_inbox.body
+    assert "inbox_workbench_first_kind</dt><dd>publication_request" in scoped_publication_inbox.body
+    assert "data-inbox-workbench-action-kind='publication_request'" in scoped_publication_inbox.body
+    assert "data-inbox-workbench-action-name='approve-coder-publication'" in scoped_publication_inbox.body
+    assert "inbox_workbench_primary_surface</dt><dd><a href='#inbox-workbench-action-form'>Inbox Workbench Action Form</a>" in scoped_publication_inbox.body
+    assert "inbox_workbench_queue_surface</dt><dd><a href='#inbox-pending-publication-requests'>Pending Publication Requests</a>" in scoped_publication_inbox.body
+    assert "action='/actions/approve-coder-publication'" in scoped_publication_inbox.body
+    assert f"name='publication_id' value='{publication.id}'" in scoped_publication_inbox.body
     demo_after_publication_request = render_local_app_route(tmp_path, "/demo")
     assert demo_after_publication_request.status == 200
     assert "current_gate: approve_or_reject_publication_request" in demo_after_publication_request.body

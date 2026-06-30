@@ -1102,15 +1102,21 @@ push/PR boundary.
 
 Use `/inbox` when you want the read-only operator queue. Pending commit and
 publication items include the same run links and next-action cues, but the
-actual decision forms stay on `/approvals` and the state-aware run detail
-pages. The page now opens with the `Inbox Operator Workbench` before shared
+first approval-backed workbench item can also render the same confirmed local
+decision form inline. Use `/inbox?run_id=<coder_run_id>` when you arrived from
+a run and want that run's commit or publication approval promoted to the top
+workbench action, even if unrelated global approvals still exist. The page now
+opens with the `Inbox Operator Workbench` before shared
 route/focus diagnostics or command readback, so the first screen is the next
 queue action. Its do/inspect/Goal/finish cards resolve Goal, delegation, run,
 evidence, and continuation surfaces when available, and include a confirmed
 `save-workspace` form in a collapsed Finish Today section so the queue can
 become tomorrow's resume point without writing on GET. Goal cards and queue
 goal links are title-first when possible, while raw Goal ids and label-source
-evidence stay available in the collapsed readback. A visible read-only
+evidence stay available in the collapsed readback. Inline Inbox approval
+forms reuse the existing `/actions/<action>` confirmation route and do not
+approve, execute, commit, push, create PRs, deploy, call providers, or use
+non-loopback network actions on GET. A visible read-only
 `Inbox Triage Board` follows with Attention, Decisions, Work, Publication,
 and Finish Today lane cards, turning the long queue lists into count-backed
 first targets before dense evidence. A read-only `Inbox Next Item Brief`

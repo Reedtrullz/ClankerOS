@@ -936,7 +936,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   first attention item, Goal/delegation/run/evidence routing when available, a
   continuation surface, and a confirmed `save-workspace` form in a collapsed
   Finish Today section that can store the queue as a resume point without
-  writing on GET. Goal cards and queue goal links use the human Goal title when
+  writing on GET. When the first workbench item is an approval-backed coder
+  worktree, commit, or publication decision, the workbench renders the same
+  confirmed local decision form inline before evidence. `/inbox?run_id=<coder_run_id>`
+  scopes the top workbench queue to that run, so commit and publication
+  approvals from a run can be handled without being masked by unrelated global
+  approvals. Goal cards and queue goal links use the human Goal title when
   available, while the raw Goal id and label source remain in collapsed
   evidence for auditability. The read-only
   `Inbox Command Bar` follows with total local queue size, counts by queue
@@ -947,7 +952,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   remembers lane/query in `localStorage:clankeros-inbox-queue-filter`, and
   resets without deciding, approving, executing, or calling providers.
   Pending commit and publication rows include run links, approval-queue links,
-  and next-action cues without exposing decision forms on the inbox page.
+  and next-action cues; any inline Inbox decision form still posts through the
+  existing `/actions/<action>` confirmation screen before local writes.
 - `/approvals` - pending worktree, commit, and publication approvals. The page
   is now action-first: `Approval Operator Workbench` renders before shared
   route/focus diagnostics or command readback, with do/inspect/Goal/finish
@@ -1272,9 +1278,10 @@ evidence. The
 `Approval Queue Command Bar` still records total pending decisions, the first
 queue action, target section, after-decision guidance, and the
 write-on-GET/network/external-effect boundary inside collapsed evidence.
-The `/inbox` page keeps the same commit/publication continuation cues in a
-read-only queue form: it links to the run and approval queue and names the next
-action after approval, but it does not render the approval decision forms.
+The `/inbox` page keeps the same commit/publication continuation cues in the
+long queue rows, and the top workbench can now render the relevant
+confirmation-gated approval form when that decision is the active global or
+run-scoped Inbox item.
 Confirmation pages show the submitted action payload as visible read-only
 fields plus the safety boundary before resubmitting with `confirm=yes`, so the
 operator can review exactly what will be written before a local artifact,

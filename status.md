@@ -1,5 +1,41 @@
 # Status
 
+## 2026-06-30 Scoped Inbox Inline Approval UX
+
+- Made `/inbox` directly actionable for the first approval-backed coder
+  worktree, commit, or publication decision by rendering an
+  `#inbox-workbench-action-form` in the `Inbox Operator Workbench` before
+  workbench evidence.
+- Added server-side route scoping for the top Inbox workbench. `/inbox`
+  preserves global queue priority, while `/inbox?run_id=<coder_run_id>`
+  promotes that run's pending commit or publication approval into the inline
+  workbench form instead of letting unrelated global approvals mask it.
+- Kept the existing authority boundary intact: the inline Inbox forms reuse
+  the existing `/actions/<action>` confirmation route, write nothing on GET,
+  and do not execute work, stage, commit, push, create PRs, deploy, call
+  providers, use non-loopback network actions, or mutate external systems.
+- Updated README, local app docs, operating summary, and latest-status docs so
+  Inbox is described as a scoped, confirmation-gated action surface rather
+  than only a read-only queue.
+- Verification: `df -h /System/Volumes/Data` showed 80Gi free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `git diff --check`, focused pytest
+  `tests/test_first_milestone.py -q -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'`, and
+  `python3 -m agent_os.cli app-smoke-test` passed locally.
+- Browser QA: launched a disposable demo app at `127.0.0.1:62132`, created a
+  pending commit approval for run `run_83672a134b48`, opened
+  `/inbox?run_id=run_83672a134b48`, verified the workbench primary action
+  targets `#inbox-workbench-action-form`, the form is
+  `approve-coder-commit` for commit approval
+  `coder_worktree_commit_approval_9e5d262c0edf`, and submitting it reaches
+  `Confirm approve-coder-commit` with `confirm=yes` available but without
+  approving. Desktop and 390x844 mobile had no horizontal overflow and no
+  console warnings/errors. The disposable root was removed afterward.
+- Non-claim: the full pytest suite and CI proof remain delegated to GitHub
+  Actions for this slice.
+
 ## 2026-06-30 Today Current Action Form UX
 
 - Made `/today` directly actionable from the daily command center when the

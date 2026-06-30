@@ -28222,6 +28222,7 @@ def _delegation_run_command_bar(
 
 def _inbox(root: Path, *, run_id: str | None = None, goal_id: str | None = None) -> str:
     inbox = collect_inbox_items(root)
+    scoped_inbox = _scoped_inbox_for_route(root, inbox, run_id=run_id, goal_id=goal_id)
     storage = _storage(root)
     steering_review_lines = [
         _inbox_filter_line(root, storage, item, "attention", "steering_review", _steering_review_line(item))
@@ -28318,10 +28319,10 @@ def _inbox(root: Path, *, run_id: str | None = None, goal_id: str | None = None)
             "<section class='hero'><h1>Operator Inbox</h1>",
             "<p class='muted'>Read-only local operator queue assembled from steering reviews, approvals, incidents, delegations, coder runs, commits, and publication handoffs.</p>",
             "</section>",
-            _inbox_operator_workbench(root, inbox),
-            _inbox_triage_board(inbox),
-            _inbox_next_item_brief(root, inbox),
-            _inbox_command_bar(root, inbox),
+            _inbox_operator_workbench(root, scoped_inbox),
+            _inbox_triage_board(scoped_inbox),
+            _inbox_next_item_brief(root, scoped_inbox),
+            _inbox_command_bar(root, scoped_inbox),
             _inbox_queue_filter(
                 total_filter_items,
                 attention_count=len(steering_review_lines) + len(open_incident_lines),
@@ -28405,6 +28406,77 @@ def _inbox(root: Path, *, run_id: str | None = None, goal_id: str | None = None)
             _non_claim_banner(),
         ]
     )
+
+
+def _inbox_scope_context(root: Path, storage: Storage, item: Any, kind: str) -> dict[str, str]:
+    context = _inbox_filter_context(root, storage, item, kind)
+    run_id = "" if context["run"] == "none" else context["run"]
+    delegation_id = "" if context["delegation"] == "none" else context["delegation"]
+    if run_id:
+        coder_run = get_coder_worktree_run(storage, run_id)
+        if coder_run is not None:
+            delegation_id = delegation_id or coder_run.delegation_id
+            context["delegation"] = delegation_id or context["delegation"]
+            context["project"] = context["project"] if context["project"] != "none" else coder_run.project_id
+    if delegation_id:
+        delegation = storage.get_subagent_delegation(delegation_id)
+        if delegation is not None:
+            if context["goal"] == "none" and delegation.parent_goal_id:
+                context["goal"] = delegation.parent_goal_id
+            if context["project"] in {"none", "unknown"}:
+                context["project"] = _task_project(storage, delegation.parent_task_id) or context["project"]
+    return context
+
+
+def _scoped_inbox_for_route(
+    root: Path,
+    inbox: dict[str, object],
+    *,
+    run_id: str | None,
+    goal_id: str | None,
+) -> dict[str, object]:
+    scope_run = (run_id or "").strip()
+    scope_goal = (goal_id or "").strip()
+    if not scope_run and not scope_goal:
+        unscoped = dict(inbox)
+        unscoped["scope_status"] = "unscoped"
+        unscoped["scope_run"] = "none"
+        unscoped["scope_goal"] = "none"
+        return unscoped
+
+    storage = _storage(root)
+    scoped = dict(inbox)
+    inbox_keys: list[tuple[str, str]] = [
+        ("steering_reviews", "steering_review"),
+        ("pending_approvals", "approval_request"),
+        ("open_incidents", "incident"),
+        ("subagent_delegations", "subagent_delegation"),
+        ("coder_worktree_approvals", "worktree_approval"),
+        ("coder_worktree_runs", "coder_worktree_run"),
+        ("coder_worktree_commit_approvals", "commit_approval"),
+        ("coder_worktree_commits", "local_coder_commit"),
+        ("coder_publication_requests", "publication_request"),
+        ("coder_publication_handoffs", "publication_handoff"),
+    ]
+
+    def matches_scope(item: Any, kind: str) -> bool:
+        context = _inbox_scope_context(root, storage, item, kind)
+        item_run = "" if context["run"] == "none" else context["run"]
+        item_goal = "" if context["goal"] == "none" else context["goal"]
+        if scope_run:
+            return item_run == scope_run
+        return item_goal == scope_goal
+
+    total = 0
+    for key, kind in inbox_keys:
+        filtered = [item for item in list(inbox[key]) if matches_scope(item, kind)]
+        scoped[key] = filtered
+        total += len(filtered)
+    scoped["count"] = total
+    scoped["scope_status"] = "run_scoped" if scope_run else "goal_scoped"
+    scoped["scope_run"] = scope_run or "none"
+    scoped["scope_goal"] = scope_goal or "none"
+    return scoped
 
 
 def _inbox_filter_context(
@@ -29343,6 +29415,65 @@ def _inbox_command_bar(root: Path, inbox: dict[str, object]) -> str:
     )
 
 
+def _inbox_workbench_action_form(kind: str, item: Any | None) -> str:
+    if item is None:
+        return ""
+    if kind == "worktree_approval":
+        title = "Approve Worktree"
+        description = (
+            "Records the local operator decision for the bounded worktree request. "
+            "It does not run the worktree, commit, push, create a PR, deploy, call providers, or use the network."
+        )
+        action_name = "approve-coder-worktree"
+        form = _input_form(
+            action_name,
+            {"approval_id": item.id, "decided_by": "operator"},
+            {"note": "Approved bounded execution"},
+        )
+    elif kind == "commit_approval":
+        title = "Approve Commit"
+        description = (
+            "Records the local operator decision for the reviewed commit request. "
+            "It does not stage, commit, push, create a PR, deploy, call providers, or use the network."
+        )
+        action_name = "approve-coder-commit"
+        form = _input_form(
+            action_name,
+            {"approval_id": item.id, "decided_by": "operator"},
+            {"note": "Approved local commit"},
+        )
+    elif kind == "publication_request":
+        title = "Approve Publication"
+        description = (
+            "Records the local operator decision to prepare publication handoff artifacts. "
+            "It does not push, create a PR, deploy, call providers, or use the network."
+        )
+        action_name = "approve-coder-publication"
+        form = _input_form(
+            action_name,
+            {"publication_id": item.id, "decided_by": "operator"},
+            {"note": "Approved publication handoff preparation"},
+        )
+    else:
+        return ""
+
+    return "".join(
+        [
+            (
+                "<section id='inbox-workbench-action-form' "
+                "class='inbox-workbench-action-form' "
+                "data-inbox-workbench-action-form='true' "
+                f"data-inbox-workbench-action-kind='{_e(kind)}' "
+                f"data-inbox-workbench-action-name='{_e(action_name)}'>"
+            ),
+            f"<h3>{_e(title)}</h3>",
+            f"<p class='muted'>{_e(description)}</p>",
+            form,
+            "</section>",
+        ]
+    )
+
+
 def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
     storage = _storage(root)
     steering_reviews = list(inbox["steering_reviews"])
@@ -29356,6 +29487,9 @@ def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
     coder_publication_requests = list(inbox["coder_publication_requests"])
     coder_publication_handoffs = list(inbox["coder_publication_handoffs"])
     total = int(inbox["count"])
+    scope_status = str(inbox.get("scope_status") or "unscoped")
+    scope_goal = str(inbox.get("scope_goal") or "none")
+    scope_run = str(inbox.get("scope_run") or "none")
     status = "empty_queue"
     first_kind = "none"
     first_id = "none"
@@ -29373,6 +29507,7 @@ def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
     evidence_path = "none"
     after_action = "none"
     decision_surface = "/goals"
+    action_item: Any | None = None
 
     if open_incidents:
         item = open_incidents[0]
@@ -29445,6 +29580,7 @@ def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
         evidence_path = _repo_relative_artifact_path(root, item.source_plan_path)
         after_action = "run approved worktree from Goal or workflow surface"
         decision_surface = "/approvals"
+        action_item = item
     elif coder_worktree_commit_approvals:
         item = coder_worktree_commit_approvals[0]
         status = "attention_ready"
@@ -29463,6 +29599,7 @@ def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
         evidence_path = _repo_relative_artifact_path(root, item.review_path)
         after_action = "commit approved worktree with typed message"
         decision_surface = "/approvals"
+        action_item = item
     elif coder_publication_requests:
         item = coder_publication_requests[0]
         status = "attention_ready"
@@ -29481,6 +29618,7 @@ def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
         evidence_path = _repo_relative_artifact_path(root, item.request_artifact_path)
         after_action = "prepare publication handoff for manual push/PR"
         decision_surface = "/approvals"
+        action_item = item
     elif coder_worktree_runs:
         item = coder_worktree_runs[0]
         status = "attention_ready"
@@ -29563,10 +29701,23 @@ def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
     goal_label_source = "none"
     if first_goal != "none":
         goal_label, goal_label_source = _goal_display_label(root, first_goal)
+    queue_href = primary_href
+    queue_label = primary_label
+    source_decision_surface = decision_surface
+    action_form = _inbox_workbench_action_form(first_kind, action_item)
+    action_form_available = bool(action_form)
+    if action_form_available:
+        primary_href = "#inbox-workbench-action-form"
+        primary_label = "Inbox Workbench Action Form"
+        decision_surface = primary_href
     primary_surface = SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")
+    queue_surface = SafeHtml(f"<a href='{_e(queue_href)}'>{_e(queue_label)}</a>")
     inspect_surface = SafeHtml(f"<a href='{_e(inspect_href)}'>{_e(inspect_label)}</a>")
     goal_surface = SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_label)}</a>")
     decision_surface_link = SafeHtml(f"<a href='{_e(decision_surface)}'>{_e(decision_surface)}</a>")
+    source_decision_surface_link = SafeHtml(
+        f"<a href='{_e(source_decision_surface)}'>{_e(source_decision_surface)}</a>"
+    )
     evidence_artifact = SafeHtml(_artifact_link(evidence_path))
     finish_form = _input_form(
         "save-workspace",
@@ -29585,14 +29736,19 @@ def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
     lines = [
         f"inbox_workbench_now: {_e(next_action)}",
         f"inbox_workbench_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+        f"inbox_workbench_queue: <a href='{_e(queue_href)}'>{_e(queue_label)}</a>",
         f"inbox_workbench_inspect: <a href='{_e(inspect_href)}'>{_e(inspect_label)}</a>",
         f"inbox_workbench_goal: <a href='{_e(goal_href)}'>{_e(goal_label)}</a>",
         f"inbox_workbench_after: {_e(after_action)}",
         "inbox_workbench_finish: <a href='#inbox-finish-today'>Finish Today</a>",
-        "inbox_workbench_safety: read-only queue guidance; confirmed local actions elsewhere",
+        "inbox_workbench_safety: GET is read-only; available local actions require confirmation",
     ]
     if total == 0:
         lines.append("inbox_workbench_empty: no local operator queue items")
+    if scope_status != "unscoped":
+        lines.append(
+            f"inbox_workbench_scope: status={_e(scope_status)} goal={_e(scope_goal)} run={_e(scope_run)}"
+        )
     return "".join(
         [
             (
@@ -29623,10 +29779,14 @@ def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
             "<a class='inbox-workbench-link' data-open-details='true' href='#inbox-finish-today'>Open save form</a>",
             "</article>",
             "</div>",
+            action_form,
             "<details class='inbox-workbench-evidence' data-inbox-workbench-evidence='true'><summary>Inbox workbench evidence</summary>",
             _kv(
                 [
                     ("inbox_workbench_status", status),
+                    ("inbox_workbench_scope_status", scope_status),
+                    ("inbox_workbench_scope_goal", scope_goal),
+                    ("inbox_workbench_scope_run", scope_run),
                     ("inbox_workbench_total_items", str(total)),
                     ("inbox_workbench_steering_reviews", str(len(steering_reviews))),
                     ("inbox_workbench_pending_approvals", str(len(pending_approvals))),
@@ -29648,13 +29808,15 @@ def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
                     ("inbox_workbench_next_action", next_action),
                     ("inbox_workbench_action_name", action_name),
                     ("inbox_workbench_primary_surface", primary_surface),
+                    ("inbox_workbench_queue_surface", queue_surface),
                     ("inbox_workbench_inspection_surface", inspect_surface),
                     ("inbox_workbench_decision_surface", decision_surface_link),
+                    ("inbox_workbench_source_decision_surface", source_decision_surface_link),
                     ("inbox_workbench_reason", reason),
                     ("inbox_workbench_evidence_artifact", evidence_artifact),
                     ("inbox_workbench_after_action", after_action),
-                    ("inbox_workbench_action_form_available", "false"),
-                    ("inbox_workbench_confirmation_required", "false"),
+                    ("inbox_workbench_action_form_available", str(action_form_available).lower()),
+                    ("inbox_workbench_confirmation_required", str(action_form_available).lower()),
                     ("inbox_workbench_finish_form_available", "true"),
                     ("inbox_workbench_finish_confirmation_required", "true"),
                     ("inbox_workbench_saved_artifact", evidence_artifact),
@@ -44019,6 +44181,9 @@ def _html_page(
     .inbox-operator-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .inbox-operator-workbench li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .inbox-workbench-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .inbox-workbench-action-form {{ margin:12px 0 0; padding:12px; border:1px solid var(--accent); background:var(--panel); box-shadow:inset 3px 0 0 var(--accent); overflow-wrap:anywhere; }}
+    .inbox-workbench-action-form h3 {{ margin-top:0; }}
+    .inbox-workbench-action-form > p {{ margin:0 0 10px; }}
     .inbox-workbench-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
     .inbox-workbench-card h3 {{ margin-top:0; }}
     .inbox-workbench-card p {{ margin:0 0 10px; color:var(--muted); }}
@@ -44118,7 +44283,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #resume-workbench-action-form, #approval-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 640px) {{ .action-form-brief dl {{ grid-template-columns:1fr; gap:4px; }} .action-form-brief dd {{ word-break:normal; overflow-wrap:anywhere; }} }}
     @media (max-width: 860px) {{ .workflow-scope-grid {{ grid-template-columns:1fr; }} }}

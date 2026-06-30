@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/inbox` now promotes the first approval-backed coder worktree, commit, or
+  publication decision into an inline `#inbox-workbench-action-form` inside the
+  `Inbox Operator Workbench`. `/inbox` keeps global queue priority, while
+  `/inbox?run_id=<coder_run_id>` scopes the top workbench queue to a run so
+  commit and publication approvals can be handled without unrelated global
+  approvals masking them. The forms still post through the existing
+  `/actions/<action>` confirmation screen and keep GET read-only with no
+  provider, non-loopback network, push, PR, deploy, or external mutation.
 - `/today` now makes the daily cockpit directly actionable when the lead Goal's
   next action has a confirmed browser form. The command center renders the
   form visibly as `#today-current-action` before command evidence, while note,
