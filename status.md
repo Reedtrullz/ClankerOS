@@ -1,5 +1,31 @@
 # Status
 
+## 2026-07-01 Memory Workbench Pin Form UX
+
+- Made `/memory` usable from the top workbench when proposed memories are
+  waiting: the `Memory Operator Workbench` now opens a same-page
+  `pin-memory` form for the first proposed memory before collapsed evidence.
+- Preserved the existing trust boundary. The top form uses the existing
+  confirmed `pin-memory` POST action, keeps GET read-only, records evidence
+  rows for form availability, target memory id, action, confirmation
+  requirement, and zero provider/network/external effects, and renders no form
+  in empty memory states.
+- Updated focused route/demo coverage for the proposed-memory happy path,
+  empty-state absence, DOM ordering before workbench evidence, and hidden
+  `memory_id` handoff to the existing action.
+- Local verification: `df -h /System/Volumes/Data` showed 74Gi free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  passed; focused pytest
+  `tests/test_first_milestone.py -k 'test_local_app_routes_render_modern_workflow_and_health or test_local_app_demo_scenario_populates_fixture_state'`
+  passed (`2 passed, 515 deselected`); and
+  `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+  passed with all route markers matched and provider/network/external
+  mutation counters at `0`.
+- Non-claim: this change is a browser UX improvement for confirmed local
+  memory pinning only. It does not write on GET, browse raw filesystem paths,
+  call providers, perform network work, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
 ## 2026-07-01 Goal Artifact Reader Focus UX
 
 - Made the Goal Artifact Reader show a visible selected-artifact focus strip

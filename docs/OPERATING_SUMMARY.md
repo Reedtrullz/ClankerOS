@@ -364,8 +364,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   actions. It is action-first and opens with a visible
   `Memory Operator Workbench` before shared route/focus diagnostics and
   command readback, with cards for the next memory action, proposed pins,
-  operator notes, and `/resume` or goal context. A visible read-only
-  `Memory Pinboard` follows with Active Pins, Proposed Pins, Project, Global,
+  operator notes, and `/resume` or goal context. When proposed memories exist,
+  the workbench also opens a same-page `pin-memory` form for the first
+  proposed memory before collapsed evidence; the write still happens only
+  through the confirmed POST action. A visible read-only `Memory Pinboard`
+  follows with Active Pins, Proposed Pins, Project, Global,
   Generated, Operator Notes, and Future Work lanes. A browser-local
   `Memory Inventory Filter` then narrows already-rendered memory rows by lane
   or text and restores lane/query from
@@ -838,7 +841,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   collapsed command evidence and the detailed memory readback. The `/memory` surface now starts with a read-only
   `Memory Operator Workbench` so proposed-memory pins, operator-note review,
   future work, saved workspace resume, and empty-bank starts have one visible
-  next click before shared diagnostics or inventory. Confirmed `/memory` pinning promotes only entries
+  next click before shared diagnostics or inventory. Proposed memories also
+  expose the first confirmed pin form directly in that top workbench so the
+  operator does not have to scroll to the dense memory list. Confirmed
+  `/memory` pinning promotes only entries
   with existing evidence artifacts and refreshes saved workspace state to that
   artifact with zero provider, network, or external mutation effects.
   The shared browser shell now exposes accessible shortcut metadata for Home,

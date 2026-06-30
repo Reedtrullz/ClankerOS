@@ -9951,6 +9951,26 @@ def _memory_operator_workbench(
         if workspace.get("open_goal")
         else "Start from goal context first"
     )
+    first_proposed = proposed[0] if proposed else None
+    pin_form_href = "#memory-workbench-pin-form" if first_proposed else "#memory-proposed"
+    pin_form_label = "Pin memory" if first_proposed else "Proposed Memories"
+    pin_form_html = ""
+    if first_proposed:
+        pin_form_html = "".join(
+            [
+                "<details id='memory-workbench-pin-form' class='memory-workbench-pin-form' data-memory-workbench-pin-form='true' open>",
+                "<summary>Pin next proposed memory</summary>",
+                f"<p class='muted'>{_e(_memory_entry_card_summary(first_proposed))}</p>",
+                _form(
+                    "pin-memory",
+                    {
+                        "memory_id": first_proposed.id,
+                        "note": "Pinned from Memory Operator Workbench",
+                    },
+                ),
+                "</details>",
+            ]
+        )
     rows: list[tuple[str, str | SafeHtml]] = [
         ("memory_workbench_status", status),
         ("memory_workbench_total_entries", str(len(entries))),
@@ -9967,6 +9987,11 @@ def _memory_operator_workbench(
         ("memory_workbench_workspace_goal", workspace.get("open_goal", "")),
         ("memory_workbench_workspace_artifact", workspace.get("last_viewed_artifact", "")),
         ("memory_workbench_pin_memory_available", str(bool(proposed)).lower()),
+        ("memory_workbench_pin_form_available", str(bool(first_proposed)).lower()),
+        ("memory_workbench_pin_memory_id", first_proposed.id if first_proposed else "none"),
+        ("memory_workbench_pin_form_surface", SafeHtml(f"<a href='{_e(pin_form_href)}'>{_e(pin_form_label)}</a>")),
+        ("memory_workbench_pin_form_action", "pin-memory" if first_proposed else "none"),
+        ("memory_workbench_pin_form_confirmation_required", str(bool(first_proposed)).lower()),
         ("memory_workbench_write_on_get", "false"),
         ("memory_workbench_raw_filesystem_browsing", "false"),
         ("memory_workbench_provider_calls_taken", "0"),
@@ -9987,12 +10012,13 @@ def _memory_operator_workbench(
             "<article class='memory-workbench-card'><h3>Resume</h3>",
             f"<p>{_e(resume_summary)}</p><a class='memory-workbench-link' href='{_e(resume_href)}'>{_e(resume_label)}</a></article>",
             "</div>",
+            pin_form_html,
             "<details class='memory-workbench-evidence' data-memory-workbench-evidence='true'><summary>Memory workbench evidence</summary>",
             _kv(rows),
             _ul(
                 [
                     f"memory_workbench_now: <a href='{_e(target_href)}'>{_e(next_action)}</a>",
-                    f"memory_workbench_pin: <a href='#memory-proposed'>Review proposed</a>",
+                    f"memory_workbench_pin: <a href='{_e(pin_form_href)}'>{_e(pin_form_label)}</a>",
                     f"memory_workbench_notes: <a href='#memory-operator-notes'>Review notes</a>",
                     f"memory_workbench_resume: <a href='{_e(resume_href)}'>{_e(resume_label)}</a>",
                     "memory_workbench_safety: read-only memory guidance; confirmed pin form only when submitted",

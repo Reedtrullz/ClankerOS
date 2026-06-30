@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/memory` now lets the operator pin the next proposed memory directly from
+  the top `Memory Operator Workbench`. When a proposed memory exists, the
+  workbench renders a same-page `pin-memory` form before collapsed evidence;
+  the write still goes through the existing confirmed POST action. Empty
+  memory states render no top pin form. Local proof includes py-compile,
+  focused route/demo pytest (`2 passed, 515 deselected`), and the
+  disposable-root app demo smoke test with all route markers matched and
+  provider/network/external-mutation counters at `0`.
 - Goal Artifact Reader now opens with a visible selected-artifact focus strip
   for Selected, Type, Source, Open, and Safety. Its toolbar/focus/full-preview
   links now say concrete actions such as `Open coder run <run_id> review`
