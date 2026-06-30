@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal detail pages now use Goal-first shell ordering: the main Goal cockpit
+  renders before Recent Items, the Workspace Panel Restore strip moves after
+  Goal content, and the Goal Action Dock sits before the jump bar. Summary and
+  Current Phase surfaces are compact scan-first cards with collapsed exact
+  evidence blocks that preserve no-write/no-external-effect rows. Local proof
+  includes py-compile, diff check, focused route/demo pytest, and in-app
+  Browser QA on desktop 1280x720 plus mobile 390x844; pushed GitHub Actions
+  and full-suite proof are still pending for this slice.
 - The first-screen `/today` Resume affordance now uses the exact saved
   `resume_surface` when one exists. A saved `/today#today-current-action`
   route appears in both the shared operator ribbon and Today Command Center as

@@ -4400,6 +4400,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert root.status == 200
     assert "ClankerOS Local Operator" in root.body
     assert 'data-operator-shell="true"' in root.body
+    assert 'data-operator-shell-goal-first="false"' in root.body
     assert 'class="operator-main" data-operator-main="true"' in root.body
     assert "data-operator-ribbon='true'" in root.body
     assert "data-operator-ribbon-cards='true'" in root.body
@@ -6128,6 +6129,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
         ':root[data-focus-mode="true"] .operator-shell { '
         "grid-template-columns:minmax(0, 1fr); }"
     ) in root.body
+    assert (
+        ".operator-shell-goal-first { "
+        "grid-template-columns:minmax(0, 1fr) minmax(180px, 240px); }"
+    ) in root.body
+    assert ".goal-summary-grid, .goal-phase-grid { display:grid;" in root.body
+    assert ".goal-summary-evidence:not([open]) > :not(summary)" in root.body
     assert (
         ':root[data-focus-mode="true"] .operator-side, '
         ':root[data-focus-mode="true"] .route-context-strip, '
@@ -11327,6 +11334,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     dashboard = render_local_app_route(tmp_path, "/")
     assert dashboard.status == 200
+    assert 'data-operator-shell-goal-first="false"' in dashboard.body
     assert "data-operator-ribbon='true'" in dashboard.body
     assert "data-operator-ribbon-cards='true'" in dashboard.body
     assert "data-operator-ribbon-now='true' data-operator-ribbon-primary='true'" in dashboard.body
@@ -12498,6 +12506,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "with fixture-backed state</h1>"
     ) in goal.body
     assert f"<p class='muted' data-goal-summary-id='true'>Goal {result.goal_id}</p>" in goal.body
+    assert "data-goal-summary-grid='true'" in goal.body
+    assert "data-goal-summary-project='true'" in goal.body
+    assert "data-goal-summary-status-card='true'" in goal.body
+    assert "data-goal-summary-phase-card='true'" in goal.body
+    assert "data-goal-summary-refresh-card='true'" in goal.body
+    assert "data-goal-summary-evidence='true'" in goal.body
+    assert "<summary>Goal summary evidence</summary>" in goal.body
+    assert "goal_summary_write_on_get</dt><dd>false" in goal.body
+    assert "goal_summary_external_effects_created</dt><dd>false" in goal.body
     assert f"goal_id</dt><dd>{result.goal_id}" in goal.body
     assert (
         "goal_intent</dt><dd>Demo the ClankerOS local operator app with fixture-backed state"
@@ -12736,6 +12753,22 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert 'data-next-action-form-available="true"' in goal.body
     assert 'data-next-action-confirmation-required="true"' in goal.body
     assert 'data-next-action-write-on-get="false"' in goal.body
+    assert (
+        'class="operator-shell operator-shell-goal-first" data-operator-shell="true" '
+        'data-operator-shell-goal-first="true"'
+    ) in goal.body
+    assert goal.body.index('data-operator-shell-goal-first="true"') < goal.body.index(
+        "id='goal-summary'"
+    )
+    assert goal.body.index('class="operator-main" data-operator-main="true"') < goal.body.index(
+        "data-recent-items='true'"
+    )
+    assert goal.body.index("id='goal-action-dock'") < goal.body.index(
+        "data-workspace-panel-restore='true'"
+    )
+    assert goal.body.index("data-recent-items='true'") < goal.body.index(
+        "data-workspace-panel-restore='true'"
+    )
     assert "id='operator-focus-current-action' class='operator-focus-action' data-operator-focus-action='true'" in goal.body
     assert goal.body.index("data-operator-focus-focus='true'") < goal.body.index(
         "data-operator-focus-action='true'"
@@ -12889,7 +12922,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert goal.body.index("id='goal-progress-meter'") < route_context_position
     assert route_context_position < operator_focus_position
     assert goal_phase_position < goal.body.index("id='goal-action-dock'")
-    assert goal.body.index("id='goal-jump-bar'") < goal.body.index("id='goal-action-dock'")
+    assert goal.body.index("id='goal-action-dock'") < goal.body.index("id='goal-jump-bar'")
     assert goal.body.index("id='goal-action-dock'") < goal.body.index("id='goal-progress-meter'")
     assert goal.body.index("id='goal-progress-meter'") < goal.body.index("id='goal-attention-digest'")
     assert goal.body.index("id='goal-attention-digest'") < goal.body.index("id='goal-command-bar'")
@@ -13734,6 +13767,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_ci_handoff_safety: read-only local GitHub Actions handoff" in goal.body
     assert "Current Phase" in goal.body
     assert "Ready to commit" in goal.body
+    assert "data-goal-phase-banner='true'" in goal.body
+    assert "data-goal-phase-grid='true'" in goal.body
+    assert "data-goal-phase-next='true'" in goal.body
+    assert "data-goal-phase-attention='true'" in goal.body
+    assert "data-goal-phase-latest='true'" in goal.body
+    assert "data-goal-phase-evidence='true'" in goal.body
+    assert "<summary>Current phase evidence</summary>" in goal.body
     assert "current_phase_banner</dt><dd>Ready to commit" in goal.body
     assert "current_phase_is_large_banner</dt><dd>true" in goal.body
     assert "phase_reason</dt><dd>reviewed worktree run is ready for commit request" in goal.body
@@ -13741,6 +13781,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "next_recommended_action</dt><dd>Create commit request" in goal.body
     assert "latest_activity</dt><dd>" in goal.body
     assert "operator_always_knows_what_is_happening</dt><dd>true" in goal.body
+    assert "phase_banner_write_on_get</dt><dd>false" in goal.body
     assert "phase_banner_external_effects_created</dt><dd>false" in goal.body
     assert "Next Action" in goal.body
     assert "data-goal-next-action-focus='true'" in goal.body

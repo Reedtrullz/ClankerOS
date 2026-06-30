@@ -1,5 +1,41 @@
 # Status
 
+## 2026-06-30 Goal Detail First-Screen UX
+
+- Made Goal detail pages use Goal-first shell ordering. The main Goal cockpit
+  now renders before Recent Items, and the Workspace Panel Restore strip moves
+  after the Goal content so the first screen starts with the active Goal
+  instead of global utility surfaces. Home, Goal index, Today, and other
+  default routes keep the existing utility-first shell.
+- Reworked the Goal summary and Current Phase banner into compact scan-first
+  cards for project, status, phase, refresh cadence, next action, attention,
+  and latest activity. Full exact evidence remains available in collapsed
+  `Goal summary evidence` and `Current phase evidence` blocks with explicit
+  no-write/no-external-effect rows.
+- Moved the Goal Action Dock before the Goal jump bar so the primary browser
+  action is nearer the top of the Goal page while preserving the same
+  confirmation-gated action form and lower detailed readback surfaces.
+- Updated route and demo regression coverage for Goal-first shell ordering,
+  collapsed evidence, summary/phase card contracts, action-before-jump
+  ordering, and unchanged non-Goal shell behavior.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check`, and focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`).
+- Browser QA used the in-app Browser against a disposable demo app at
+  `127.0.0.1:8811`. Desktop 1280x720 verified Goal-first shell order,
+  summary/phase card rendering, collapsed evidence, action dock before jump
+  bar, clean browser logs, no horizontal overflow, and click-through from the
+  dock action to the visible `/actions/coder-commit-request` form. Mobile
+  390x844 verified the same ordering, collapsed evidence, no horizontal
+  overflow, clean logs, and action click-through.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice. Mobile still spends too much of the first viewport on shared
+  header/ribbon chrome, even though the Goal action is reachable and the page
+  no longer overflows horizontally.
+
 ## 2026-06-30 Today First-Screen Resume UX
 
 - Made the first-screen `/today` Resume affordance use the exact saved
