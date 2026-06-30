@@ -1,5 +1,38 @@
 # Status
 
+## 2026-06-30 Resume Workspace Action Label UX
+
+- Replaced remaining resume, workspace, and home saved-action form labels with
+  the concrete operator move. Saved Goal return surfaces now say
+  `Create commit request` or `Create scout delegation` in the primary
+  workbench links, top action form headings, deep form evidence links, and Home
+  live-state resume target instead of `Use resume action form`,
+  `Use workspace action form`, `Resume Action Form`, `Workspace Action Form`,
+  or `Home Resume Action Form`.
+- Preserved the same local anchors and confirmation routes:
+  `#resume-workbench-action-form`, `#resume-action-form`,
+  `#workspace-action-form`, `#home-resume-action-form`, and the existing
+  `/actions/<action>` POST confirmation screens. GET remains read-only and the
+  change does not add provider calls, non-loopback network actions, push, PR,
+  deploy, or external mutation paths.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_first_run_browser_actions_persist_resume_workspace or
+  test_local_app_demo_scenario_populates_fixture_state'`, and
+  `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` passed
+  locally.
+- Browser QA used a disposable fixture-backed app at `127.0.0.1:52837`.
+  Desktop saved a workspace return point, then verified Home, Resume, and
+  Workspace expose `Create commit request`, contain none of the old form labels
+  in visible or hidden evidence text, have clean browser logs, and keep
+  `scrollWidth=1280`. The Resume primary click landed on
+  `#resume-workbench-action-form` with heading `Create commit request`. Mobile
+  390x844 verified the same Resume heading, no old labels, clean logs, and
+  `scrollWidth=390`.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
 ## 2026-06-30 First-Run Next Action State UX
 
 - Changed the post-Goal first-run state from the route-oriented

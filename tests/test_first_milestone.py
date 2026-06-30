@@ -5670,12 +5670,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "resume_workbench_top_form_available</dt><dd>true" in resume_empty.body
     assert (
         "resume_workbench_top_form_surface</dt><dd>"
-        "<a href='#resume-workbench-action-form'>Resume Workbench Action Form</a>"
+        "<a href='#resume-workbench-action-form'>Create Project</a>"
     ) in resume_empty.body
     assert "resume_workbench_top_form_source</dt><dd>first_run_progress" in resume_empty.body
     assert (
         "resume_workbench_deep_form_surface</dt><dd>"
-        "<a href='#resume-first-run-action-form'>Resume First-Run Action form</a>"
+        "<a href='#resume-first-run-action-form'>Create Project</a>"
     ) in resume_empty.body
     assert "resume_workbench_first_run_home_target</dt><dd><a href='/#first-run-create-project'>Home setup</a>" in resume_empty.body
     assert (
@@ -5715,7 +5715,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     ) in resume_empty.body
     assert (
         "resume_workbench_top_form: "
-        "<a href='#resume-workbench-action-form'>Resume Workbench Action Form</a> "
+        "<a href='#resume-workbench-action-form'>Create Project</a> "
         "reuses existing confirmed action form"
     ) in resume_empty.body
     assert "resume_workbench_finish: <a href='/workspace#save-workspace'>Finish Today</a>" in resume_empty.body
@@ -5744,7 +5744,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "Create Project</a>"
     ) in resume_empty.body
     assert "resume_next_action_form_available</dt><dd>true" in resume_empty.body
-    assert "Resume First-Run Action" in resume_empty.body
+    assert "<h2>Create Project</h2>" in resume_empty.body
     assert "id='resume-first-run-action-form'" in resume_empty.body
     assert "data-resume-first-run-action-form='true'" in resume_empty.body
     assert "data-resume-first-run-action-evidence='true'" in resume_empty.body
@@ -7089,7 +7089,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "Create Project</a>"
     ) in workspace.body
     assert "workspace_next_action_form_available: true" in workspace.body
-    assert "Workspace First-Run Action" in workspace.body
+    assert "<h2>Create Project</h2>" in workspace.body
     assert "id='workspace-first-run-action-form'" in workspace.body
     assert "data-workspace-first-run-action-form='true'" in workspace.body
     assert "data-workspace-first-run-action-evidence='true'" in workspace.body
@@ -9662,7 +9662,7 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
         "Create First Goal</a>"
     ) in register_resume.body
     assert "resume_command_first_run_form_available</dt><dd>true" in register_resume.body
-    assert "Resume First-Run Action" in register_resume.body
+    assert "<h2>Create First Goal</h2>" in register_resume.body
     assert "id='resume-first-run-action-form'" in register_resume.body
     assert "data-resume-first-run-action-form='true'" in register_resume.body
     assert "data-resume-first-run-action-evidence='true'" in register_resume.body
@@ -9724,12 +9724,12 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "resume_workbench_top_form_available</dt><dd>true" in register_resume.body
     assert (
         "resume_workbench_top_form_surface</dt><dd>"
-        "<a href='#resume-workbench-action-form'>Resume Workbench Action Form</a>"
+        "<a href='#resume-workbench-action-form'>Create First Goal</a>"
     ) in register_resume.body
     assert "resume_workbench_top_form_source</dt><dd>first_run_progress" in register_resume.body
     assert (
         "resume_workbench_deep_form_surface</dt><dd>"
-        "<a href='#resume-first-run-action-form'>Resume First-Run Action form</a>"
+        "<a href='#resume-first-run-action-form'>Create First Goal</a>"
     ) in register_resume.body
     assert "resume_workbench_unblock_action</dt><dd>Create First Goal" in register_resume.body
     assert (
@@ -9743,7 +9743,7 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     ) in register_resume.body
     assert (
         "resume_workbench_top_form: "
-        "<a href='#resume-workbench-action-form'>Resume Workbench Action Form</a> "
+        "<a href='#resume-workbench-action-form'>Create First Goal</a> "
         "reuses existing confirmed action form"
     ) in register_resume.body
     assert "id='resume-workbench-action-form' class='resume-workbench-action-form' data-resume-workbench-action-form='true'" in register_resume.body
@@ -9849,7 +9849,7 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
         "workspace_next_surface: <a href='#workspace-first-run-action-form'>Create First Goal</a>"
         in register_workspace.body
     )
-    assert "Workspace First-Run Action" in register_workspace.body
+    assert "<h2>Create First Goal</h2>" in register_workspace.body
     assert "id='workspace-first-run-action-form'" in register_workspace.body
     assert "data-workspace-first-run-action-form='true'" in register_workspace.body
     assert "data-workspace-first-run-action-evidence='true'" in register_workspace.body
@@ -10160,7 +10160,7 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     )
     assert "resume_workbench_phase</dt><dd>Ready for delegation" in resume.body
     assert "resume_workbench_next_action</dt><dd>Create scout delegation" in resume.body
-    assert "resume_workbench_primary_surface</dt><dd><a href='#resume-workbench-action-form'>Use resume action form</a>" in resume.body
+    assert "resume_workbench_primary_surface</dt><dd><a href='#resume-workbench-action-form'>Create scout delegation</a>" in resume.body
     assert f"resume_workbench_target_surface</dt><dd><a href='/goals/{created_goal_id}'>/goals/{created_goal_id}</a>" in resume.body
     assert "resume_workbench_reason</dt><dd>goal_has_no_delegation_yet" in resume.body
     assert "resume_workbench_action_form_available</dt><dd>true" in resume.body
@@ -10168,12 +10168,12 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "resume_workbench_top_form_available</dt><dd>true" in resume.body
     assert (
         "resume_workbench_top_form_surface</dt><dd>"
-        "<a href='#resume-workbench-action-form'>Resume Workbench Action Form</a>"
+        "<a href='#resume-workbench-action-form'>Create scout delegation</a>"
     ) in resume.body
     assert "resume_workbench_top_form_source</dt><dd>goal_next_action_form" in resume.body
     assert (
         "resume_workbench_deep_form_surface</dt><dd>"
-        "<a href='#resume-action-form'>Resume Next Action form</a>"
+        "<a href='#resume-action-form'>Create scout delegation</a>"
     ) in resume.body
     assert "resume_workbench_pending_approvals</dt><dd>0" in resume.body
     assert "resume_workbench_open_incidents</dt><dd>0" in resume.body
@@ -10184,11 +10184,11 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "resume_workbench_external_effects_created</dt><dd>false" in resume.body
     assert (
         "resume_workbench_click: <a href='#resume-workbench-action-form'>"
-        "Use resume action form</a>"
+        "Create scout delegation</a>"
     ) in resume.body
     assert (
         "resume_workbench_top_form: "
-        "<a href='#resume-workbench-action-form'>Resume Workbench Action Form</a> "
+        "<a href='#resume-workbench-action-form'>Create scout delegation</a> "
         "reuses existing confirmed action form"
     ) in resume.body
     assert "id='resume-workbench-action-form' class='resume-workbench-action-form' data-resume-workbench-action-form='true'" in resume.body
@@ -15518,7 +15518,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workspace_workbench_pending_gates</dt><dd>1" in restored_workspace.body
     assert "workspace_workbench_waiting_gates</dt><dd>6" in restored_workspace.body
     assert "workspace_workbench_next_action</dt><dd>Create commit request" in restored_workspace.body
-    assert "workspace_workbench_primary_surface</dt><dd><a href='#workspace-action-form'>Use workspace action form</a>" in restored_workspace.body
+    assert "workspace_workbench_primary_surface</dt><dd><a href='#workspace-action-form'>Create commit request</a>" in restored_workspace.body
     assert f"workspace_workbench_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in restored_workspace.body
     assert f"workspace_workbench_reason</dt><dd>reviewed_run={result.coder_worktree_run_id}" in restored_workspace.body
     assert "workspace_workbench_action_form_available</dt><dd>true" in restored_workspace.body
@@ -15543,7 +15543,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workspace_workbench_pr_created</dt><dd>false" in restored_workspace.body
     assert "workspace_workbench_deploy_created</dt><dd>false" in restored_workspace.body
     assert "workspace_workbench_now: Create commit request" in restored_workspace.body
-    assert "workspace_workbench_click: <a href='#workspace-action-form'>Use workspace action form</a>" in restored_workspace.body
+    assert "workspace_workbench_click: <a href='#workspace-action-form'>Create commit request</a>" in restored_workspace.body
     assert "workspace_workbench_unblock: <a href='/approvals'>Review approvals</a>" in restored_workspace.body
     assert "workspace_workbench_finish: <a data-open-details='true' href='#save-workspace'>Save Workspace</a>" in restored_workspace.body
     assert "Workspace Continuation" in restored_workspace.body
@@ -15555,7 +15555,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     )
     assert "workspace_operator_attention: Act: Create commit request" in restored_workspace.body
     assert "workspace_next_action_form_available: true" in restored_workspace.body
-    assert "Workspace Action Form" in restored_workspace.body
+    assert "<section id='workspace-action-form'><h2>Create commit request</h2>" in restored_workspace.body
     assert "id='workspace-action-form'" in restored_workspace.body
     assert "action='/actions/coder-commit-request'" in restored_workspace.body
     assert f"name='run_id' value='{result.coder_worktree_run_id}'" in restored_workspace.body
@@ -15593,7 +15593,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_live_refresh_next_action</dt><dd>Create commit request" in restored_home.body
     assert (
         "home_live_refresh_target_surface</dt><dd><a href='#home-resume-action-form'>"
-        "Home Resume Action Form</a>"
+        "Create commit request</a>"
         in restored_home.body
     )
     assert "home_live_refresh_action_form_available</dt><dd>true" in restored_home.body
@@ -15611,7 +15611,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_live_refresh_now: Create commit request" in restored_home.body
     assert (
         "home_live_refresh_target: <a href='#home-resume-action-form'>"
-        "Home Resume Action Form</a>"
+        "Create commit request</a>"
         in restored_home.body
     )
     assert "Home Operator Board" in restored_home.body
@@ -15679,7 +15679,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"home_resume_next_surface: <a href='/runs/{result.coder_worktree_run_id}'" in restored_home.body
     assert "home_resume_operator_attention: Act: Create commit request" in restored_home.body
     assert "home_resume_next_action_form_available: true" in restored_home.body
-    assert "Home Resume Action Form" in restored_home.body
+    assert "<h3 id='home-resume-action-form'>Create commit request</h3>" in restored_home.body
     assert "id='home-resume-action-form'" in restored_home.body
     assert "action='/actions/coder-commit-request'" in restored_home.body
     assert f"name='run_id' value='{result.coder_worktree_run_id}'" in restored_home.body
@@ -15786,7 +15786,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"resume_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in resume.body
     assert "resume_operator_attention</dt><dd>Act: Create commit request" in resume.body
     assert "resume_next_action_form_available</dt><dd>true" in resume.body
-    assert "Resume Action Form" in resume.body
+    assert "<div id='resume-action-form' class='resume-action-form'><h3>Create commit request</h3>" in resume.body
     assert "action='/actions/coder-commit-request'" in resume.body
     assert f"name='run_id' value='{result.coder_worktree_run_id}'" in resume.body
     assert "Resume Workflow Map" in resume.body

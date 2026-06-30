@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Resume, Workspace, and Home saved-action surfaces now name the concrete
+  operator move instead of exposing form mechanics. Primary workbench links,
+  top action headings, deep evidence links, and Home live-state resume targets
+  say actions such as `Create commit request` or `Create scout delegation`
+  rather than `Use resume action form`, `Use workspace action form`,
+  `Resume Action Form`, `Workspace Action Form`, or
+  `Home Resume Action Form`, while preserving the same local anchors,
+  confirmation-gated action routes, and zero-effect GET posture.
 - Post-Goal first-run state now names the actual operator move,
   `Create scout delegation`, instead of the route-oriented
   `Open goal to create scout delegation`. The guide, command bar, next-step

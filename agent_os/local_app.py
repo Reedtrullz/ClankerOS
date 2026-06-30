@@ -4842,7 +4842,7 @@ def _home_live_state(
         phase = _goal_current_phase(state)
         next_action = action.action
         target_href = "#home-resume-action-form" if same_page_form else action.href
-        target_label = "Home Resume Action Form" if same_page_form else action.href
+        target_label = next_action if same_page_form else action.href
         action_form_available = str(form_available).lower()
         same_page_form_available = str(same_page_form).lower()
         first_run_form_available = "false"
@@ -6023,7 +6023,7 @@ def _home_resume_action_form_section(root: Path, open_goal: str) -> str:
         return ""
     return "".join(
         [
-            "<h3 id='home-resume-action-form'>Home Resume Action Form</h3>",
+            f"<h3 id='home-resume-action-form'>{_e(next_action.action)}</h3>",
             "<p class='muted'>Run the saved goal's browser-available local next action from Home.</p>",
             _kv(
                 [
@@ -7370,7 +7370,7 @@ def _resume_operator_workbench(
             first_run_payload = _first_run_action_form_payload(root, progress_state)
             first_run_form = str(first_run_payload.get("form") or "")
             top_form_source = str(first_run_payload.get("form_source") or "first_run_progress")
-            top_form_heading = "Resume First-Run Action Form"
+            top_form_heading = str(first_run_payload.get("form_title") or target_label)
         source = "first_run_progress"
     elif open_goal:
         storage = _storage(root)
@@ -7414,7 +7414,7 @@ def _resume_operator_workbench(
             form_available = bool(action_form)
             if form_available:
                 top_form_source = "goal_next_action_form"
-                top_form_heading = "Resume Current Action Form"
+                top_form_heading = next_action
             progress = f"{done_gates}/{total_gates} gates done"
             status = (
                 "attention_ready"
@@ -7434,7 +7434,7 @@ def _resume_operator_workbench(
     top_form = action_form or first_run_form
     top_form_available = bool(top_form)
     primary_href = "#resume-workbench-action-form" if top_form_available else target_href
-    primary_label = "Use resume action form" if action_form else next_action
+    primary_label = next_action
     if open_incidents:
         unblock_href = "/incidents"
         unblock_label = "Inspect incidents"
@@ -7504,13 +7504,15 @@ def _resume_operator_workbench(
     deep_form_surface: str | SafeHtml = "not_available"
     if top_form_available:
         top_form_surface = SafeHtml(
-            "<a href='#resume-workbench-action-form'>Resume Workbench Action Form</a>"
+            f"<a href='#resume-workbench-action-form'>{_e(top_form_heading)}</a>"
         )
         if action_form:
-            deep_form_surface = SafeHtml("<a href='#resume-action-form'>Resume Next Action form</a>")
+            deep_form_surface = SafeHtml(
+                f"<a href='#resume-action-form'>{_e(next_action)}</a>"
+            )
         elif first_run_form:
             deep_form_surface = SafeHtml(
-                "<a href='#resume-first-run-action-form'>Resume First-Run Action form</a>"
+                f"<a href='#resume-first-run-action-form'>{_e(top_form_heading)}</a>"
             )
         top_form_html = "".join(
             [
@@ -7625,7 +7627,7 @@ def _resume_operator_workbench(
                     f"resume_workbench_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
                     (
                         "resume_workbench_top_form: "
-                        "<a href='#resume-workbench-action-form'>Resume Workbench Action Form</a> "
+                        f"<a href='#resume-workbench-action-form'>{_e(top_form_heading)}</a> "
                         "reuses existing confirmed action form"
                         if top_form_available
                         else "resume_workbench_top_form: unavailable"
@@ -7812,7 +7814,7 @@ def _resume_next_action_section(root: Path, open_goal: str) -> str:
                     ("resume_next_action_external_effects_created", "false"),
                 ]
             ),
-            f"<div id='resume-action-form' class='resume-action-form'><h3>Resume Action Form</h3>{form}</div>" if form else "",
+            f"<div id='resume-action-form' class='resume-action-form'><h3>{_e(next_action.action)}</h3>{form}</div>" if form else "",
             "</section>",
         ]
     )
@@ -7821,12 +7823,13 @@ def _resume_next_action_section(root: Path, open_goal: str) -> str:
 def _resume_first_run_action_form_section(root: Path, open_goal: str) -> str:
     if not _resume_should_use_first_run(root, open_goal):
         return ""
+    context = _resume_first_run_context(root)
     return _first_run_action_form_section(
         root,
-        _resume_first_run_context(root),
+        context,
         prefix="resume",
         section_id="resume-first-run-action-form",
-        title="Resume First-Run Action",
+        title=str(context["target_label"]),
     )
 
 
@@ -9057,7 +9060,7 @@ def _workspace_operator_workbench(
         target_label = f"/projects/{open_project}"
 
     primary_href = "#workspace-action-form" if form_available else target_href
-    primary_label = "Use workspace action form" if form_available else next_action
+    primary_label = next_action
     if open_incidents:
         unblock_href = "/incidents"
         unblock_label = "Inspect incidents"
@@ -9444,12 +9447,13 @@ def _workspace_action_form_section(root: Path, open_goal: str) -> str:
     if not open_goal:
         if not _workspace_should_use_first_run(root, open_goal):
             return ""
+        context = _workspace_first_run_context(root)
         return _first_run_action_form_section(
             root,
-            _workspace_first_run_context(root),
+            context,
             prefix="workspace",
             section_id="workspace-first-run-action-form",
-            title="Workspace First-Run Action",
+            title=str(context["target_label"]),
         )
     storage = _storage(root)
     state = _goal_state(root, storage, open_goal)
@@ -9459,7 +9463,7 @@ def _workspace_action_form_section(root: Path, open_goal: str) -> str:
         return ""
     return "".join(
         [
-            "<section id='workspace-action-form'><h2>Workspace Action Form</h2>",
+            f"<section id='workspace-action-form'><h2>{_e(next_action.action)}</h2>",
             "<p class='muted'>Run the saved goal's browser-available local next action from the workspace state page.</p>",
             _kv(
                 [
