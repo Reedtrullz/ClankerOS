@@ -283,10 +283,14 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   surface to inspect, stable attention/coder-prep/recent-run anchors, and
   no-write/no-provider/no-network/no-external-effect boundaries before the
   longer execution evidence index;
-  `/workflow` includes a visible read-only `Workflow Journey` between the
-  `Workflow Operator Workbench` and `Workflow Command Bar`, with nine stage
-  cards for Select, Goal + Scout, Context, Handoff, Coder Prep, Approval,
-  Execution, Commit, and Publish. A visible `Workflow Live State` panel follows
+  `/workflow` renders the current reviewed-run `coder-commit-request` form
+  inline in the `Workflow Operator Workbench` when the selected workflow is at
+  that gate, preserving the source `/runs/<id>` surface in evidence and still
+  requiring the normal `/actions/coder-commit-request` confirmation before
+  writing local artifacts. It also includes a visible read-only `Workflow
+  Journey` between the `Workflow Operator Workbench` and `Workflow Command Bar`,
+  with nine stage cards for Select, Goal + Scout, Context, Handoff, Coder Prep,
+  Approval, Execution, Commit, and Publish. A visible `Workflow Live State` panel follows
   with local page reload polling every five seconds, pause-while-editing and
   pause-while-hidden rules, and zero provider/network/external-effect
   counters. A visible `Workflow Finish Today` handoff follows with a confirmed

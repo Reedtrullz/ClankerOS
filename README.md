@@ -936,7 +936,11 @@ Use `/workflow?delegation_id=<id>` or `/workflow?run_id=<coder_run_id>` when
 you want the scoped operator map. The workflow page is action-first: it opens
 with a visible `Workflow Operator Workbench` before shared route/focus
 diagnostics and command readback, with cards for the current workflow action,
-selected state, queue attention, and `/resume`. It then shows a read-only
+selected state, queue attention, and `/resume`. When the selected workflow is
+at the reviewed-run commit request gate, the workbench also renders the
+confirmed `coder-commit-request` form inline at
+`#workflow-workbench-action-form` while preserving the owning `/runs/<id>`
+surface as source evidence. It then shows a read-only
 `Workflow Scope Picker` with direct cards for the primary pickup, recent
 delegations, recent coder runs, the parent Goal, and safety evidence, so a
 plain `/workflow` visit can choose the right delegation or run without

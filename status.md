@@ -1,5 +1,41 @@
 # Status
 
+## 2026-06-30 Workflow Inline Commit Request UX
+
+- Made scoped `/workflow?delegation_id=...` and `/workflow?run_id=...`
+  directly actionable at the reviewed-run commit request gate by rendering
+  `#workflow-workbench-action-form` inside the `Workflow Operator Workbench`.
+- The inline form reuses the existing confirmed `coder-commit-request` action
+  route, preserves `/runs/<id>` as source evidence, and carries the scoped
+  workflow route through `return_to`/`resume_surface`.
+- Kept the authority boundary intact: workflow GETs still write nothing, and
+  the inline form does not stage, commit, push, create PRs, deploy, call
+  providers, use non-loopback network actions, or mutate external systems.
+- Fixed same-page anchor behavior for local app links so mobile taps on the
+  workflow primary action actively scroll to the target form instead of only
+  changing the hash and returning to the top of the page.
+- Updated README, local app docs, operating summary, and latest-status docs so
+  `/workflow` is described as a first-class action surface when a confirmed
+  local form is available.
+- Verification: `df -h /System/Volumes/Data` showed 80Gi free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  passed; `git diff --check` passed; focused pytest
+  `tests/test_first_milestone.py -q -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` passed; `python3 -m
+  agent_os.cli app-smoke-test` passed.
+- Browser QA: launched a disposable demo app at `127.0.0.1:62137` for
+  `run_69a42bc42510`, verified desktop `/workflow?run_id=...` page identity,
+  no blank page/framework overlay/console warnings/errors, primary action
+  target `#workflow-workbench-action-form`, `coder-commit-request` form action,
+  scoped `return_to`/`resume_surface`, and POST to
+  `Confirm coder-commit-request` without pressing the final confirmation. On
+  390x844 mobile, verified no horizontal overflow and that tapping the
+  workflow primary action lands on the form with scroll memory status
+  `hash-target`. The disposable root was removed afterward.
+- Non-claim: pushed CI proof and any real commit/push are still pending for
+  this slice.
+
 ## 2026-06-30 Scoped Inbox Inline Approval UX
 
 - Made `/inbox` directly actionable for the first approval-backed coder

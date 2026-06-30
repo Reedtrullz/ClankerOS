@@ -16197,6 +16197,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Workflow Operator Workbench" in workflow_for_delegation.body
     assert "data-workflow-operator-workbench='true'" in workflow_for_delegation.body
     assert "data-workflow-workbench-primary='true'" in workflow_for_delegation.body
+    assert "data-workflow-workbench-action-form='true'" in workflow_for_delegation.body
+    assert "data-workflow-workbench-action-kind='commit_request'" in workflow_for_delegation.body
+    assert "data-workflow-workbench-action-name='coder-commit-request'" in workflow_for_delegation.body
+    assert f"data-workflow-workbench-action-run='{result.coder_worktree_run_id}'" in workflow_for_delegation.body
     assert "data-workflow-workbench-evidence='true'" in workflow_for_delegation.body
     assert "Workflow Scope Picker" in workflow_for_delegation.body
     assert "data-workflow-scope-picker='true'" in workflow_for_delegation.body
@@ -16231,6 +16235,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert workflow_for_delegation.body.index("data-workflow-journey") < workflow_for_delegation.body.index("data-workflow-command-bar")
     assert workflow_for_delegation.body.index("data-workflow-operator-workbench") < workflow_for_delegation.body.index("data-workflow-command-bar")
     assert workflow_for_delegation.body.index("data-workflow-operator-workbench") < workflow_for_delegation.body.index("data-route-context")
+    assert workflow_for_delegation.body.index("data-workflow-workbench-primary='true'") < workflow_for_delegation.body.index("data-workflow-workbench-action-form='true'")
+    assert workflow_for_delegation.body.index("data-workflow-workbench-action-form='true'") < workflow_for_delegation.body.index("data-workflow-workbench-evidence='true'")
+    assert workflow_for_delegation.body.index("data-workflow-workbench-action-form='true'") < workflow_for_delegation.body.index("data-workflow-scope-picker")
     assert "workflow_workbench_status</dt><dd>delegation_selected" in workflow_for_delegation.body
     assert "workflow_workbench_scope</dt><dd>delegation" in workflow_for_delegation.body
     assert f"workflow_workbench_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in workflow_for_delegation.body
@@ -16239,7 +16246,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_workbench_current_stage</dt><dd>Commit request" in workflow_for_delegation.body
     assert "workflow_workbench_next_action</dt><dd>request_commit_for_reviewed_run" in workflow_for_delegation.body
     assert "workflow_workbench_action_label</dt><dd>Request commit for reviewed run" in workflow_for_delegation.body
-    assert f"workflow_workbench_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_delegation.body
+    assert "workflow_workbench_next_surface</dt><dd><a href='#workflow-workbench-action-form'>Workflow Workbench Action Form</a>" in workflow_for_delegation.body
+    assert f"workflow_workbench_source_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_delegation.body
+    assert "workflow_workbench_action_form_available</dt><dd>true" in workflow_for_delegation.body
+    assert "workflow_workbench_action_form_kind</dt><dd>commit_request" in workflow_for_delegation.body
+    assert "workflow_workbench_action_form_action</dt><dd>coder-commit-request" in workflow_for_delegation.body
+    assert "workflow_workbench_action_form_surface</dt><dd><a href='#workflow-workbench-action-form'>Workflow Workbench Action Form</a>" in workflow_for_delegation.body
+    assert f"workflow_workbench_action_form_source</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_delegation.body
+    assert "workflow_workbench_action_form_blocked_reason</dt><dd>none" in workflow_for_delegation.body
+    assert "workflow_workbench_confirmation_required</dt><dd>true" in workflow_for_delegation.body
+    assert f"workflow_workbench_return_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'" in workflow_for_delegation.body
     assert "workflow_workbench_state_surface</dt><dd><a href='#workflow-stepper'>Workflow Stepper</a>" in workflow_for_delegation.body
     assert "workflow_workbench_queue_surface</dt><dd><a href='/approvals'>/approvals</a>" in workflow_for_delegation.body
     assert "workflow_workbench_resume_surface</dt><dd><a href='/resume'>/resume</a>" in workflow_for_delegation.body
@@ -16250,6 +16266,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_workbench_provider_calls_taken</dt><dd>0" in workflow_for_delegation.body
     assert "workflow_workbench_network_actions_taken</dt><dd>0" in workflow_for_delegation.body
     assert "workflow_workbench_external_effects_created</dt><dd>false" in workflow_for_delegation.body
+    assert "Request Commit" in workflow_for_delegation.body
+    assert "action='/actions/coder-commit-request'" in workflow_for_delegation.body
+    assert f"name='run_id' value='{result.coder_worktree_run_id}'" in workflow_for_delegation.body
+    assert f"name='return_to' value='/workflow?delegation_id={result.delegation_id}'" in workflow_for_delegation.body
+    assert f"name='resume_surface' value='/workflow?delegation_id={result.delegation_id}'" in workflow_for_delegation.body
+    assert "data-action-draft-action='coder-commit-request'" in workflow_for_delegation.body
+    assert f"'clankeros-action-form-draft:coder-commit-request:{result.coder_worktree_run_id}'" in workflow_for_delegation.body
+    assert "workflow_workbench_now: <a href='#workflow-workbench-action-form'>Request commit for reviewed run</a>" in workflow_for_delegation.body
+    assert f"workflow_workbench_action_form: available=true action=coder-commit-request source=<a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_delegation.body
+    assert "workflow_workbench_safety: GET is read-only; available local actions require confirmation before writing artifacts" in workflow_for_delegation.body
     assert "workflow_scope_picker_status</dt><dd>selected" in workflow_for_delegation.body
     assert "workflow_scope_picker_scope</dt><dd>delegation" in workflow_for_delegation.body
     assert f"workflow_scope_picker_selected_delegation</dt><dd>{result.delegation_id}" in workflow_for_delegation.body
@@ -16389,6 +16415,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Workflow Operator Workbench" in workflow_for_run.body
     assert "data-workflow-operator-workbench='true'" in workflow_for_run.body
     assert "data-workflow-workbench-primary='true'" in workflow_for_run.body
+    assert "data-workflow-workbench-action-form='true'" in workflow_for_run.body
+    assert "data-workflow-workbench-action-kind='commit_request'" in workflow_for_run.body
+    assert "data-workflow-workbench-action-name='coder-commit-request'" in workflow_for_run.body
+    assert f"data-workflow-workbench-action-run='{result.coder_worktree_run_id}'" in workflow_for_run.body
     assert "data-workflow-workbench-evidence='true'" in workflow_for_run.body
     assert "data-workflow-scope-picker='true'" in workflow_for_run.body
     assert "data-workflow-scope-primary='true'" in workflow_for_run.body
@@ -16408,6 +16438,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert workflow_for_run.body.index("data-workflow-journey") < workflow_for_run.body.index("data-workflow-command-bar")
     assert workflow_for_run.body.index("data-workflow-operator-workbench") < workflow_for_run.body.index("data-workflow-command-bar")
     assert workflow_for_run.body.index("data-workflow-operator-workbench") < workflow_for_run.body.index("data-route-context")
+    assert workflow_for_run.body.index("data-workflow-workbench-primary='true'") < workflow_for_run.body.index("data-workflow-workbench-action-form='true'")
+    assert workflow_for_run.body.index("data-workflow-workbench-action-form='true'") < workflow_for_run.body.index("data-workflow-workbench-evidence='true'")
+    assert workflow_for_run.body.index("data-workflow-workbench-action-form='true'") < workflow_for_run.body.index("data-workflow-scope-picker")
     assert "workflow_workbench_status</dt><dd>run_selected" in workflow_for_run.body
     assert "workflow_workbench_scope</dt><dd>run" in workflow_for_run.body
     assert f"workflow_workbench_run</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_run.body
@@ -16415,12 +16448,31 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_workbench_current_stage</dt><dd>Commit request" in workflow_for_run.body
     assert "workflow_workbench_next_action</dt><dd>request_commit_for_reviewed_run" in workflow_for_run.body
     assert "workflow_workbench_action_label</dt><dd>Request commit for reviewed run" in workflow_for_run.body
-    assert f"workflow_workbench_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_run.body
+    assert "workflow_workbench_next_surface</dt><dd><a href='#workflow-workbench-action-form'>Workflow Workbench Action Form</a>" in workflow_for_run.body
+    assert f"workflow_workbench_source_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_run.body
+    assert "workflow_workbench_action_form_available</dt><dd>true" in workflow_for_run.body
+    assert "workflow_workbench_action_form_kind</dt><dd>commit_request" in workflow_for_run.body
+    assert "workflow_workbench_action_form_action</dt><dd>coder-commit-request" in workflow_for_run.body
+    assert "workflow_workbench_action_form_surface</dt><dd><a href='#workflow-workbench-action-form'>Workflow Workbench Action Form</a>" in workflow_for_run.body
+    assert f"workflow_workbench_action_form_source</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_run.body
+    assert "workflow_workbench_action_form_blocked_reason</dt><dd>none" in workflow_for_run.body
+    assert "workflow_workbench_confirmation_required</dt><dd>true" in workflow_for_run.body
+    assert f"workflow_workbench_return_surface</dt><dd><a href='/workflow?run_id={result.coder_worktree_run_id}'" in workflow_for_run.body
     assert "workflow_workbench_selected_step_count</dt><dd>17" in workflow_for_run.body
     assert "workflow_workbench_write_on_get</dt><dd>false" in workflow_for_run.body
     assert "workflow_workbench_provider_calls_taken</dt><dd>0" in workflow_for_run.body
     assert "workflow_workbench_network_actions_taken</dt><dd>0" in workflow_for_run.body
     assert "workflow_workbench_external_effects_created</dt><dd>false" in workflow_for_run.body
+    assert "Request Commit" in workflow_for_run.body
+    assert "action='/actions/coder-commit-request'" in workflow_for_run.body
+    assert f"name='run_id' value='{result.coder_worktree_run_id}'" in workflow_for_run.body
+    assert f"name='return_to' value='/workflow?run_id={result.coder_worktree_run_id}'" in workflow_for_run.body
+    assert f"name='resume_surface' value='/workflow?run_id={result.coder_worktree_run_id}'" in workflow_for_run.body
+    assert "data-action-draft-action='coder-commit-request'" in workflow_for_run.body
+    assert f"'clankeros-action-form-draft:coder-commit-request:{result.coder_worktree_run_id}'" in workflow_for_run.body
+    assert "workflow_workbench_now: <a href='#workflow-workbench-action-form'>Request commit for reviewed run</a>" in workflow_for_run.body
+    assert f"workflow_workbench_action_form: available=true action=coder-commit-request source=<a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_run.body
+    assert "workflow_workbench_safety: GET is read-only; available local actions require confirmation before writing artifacts" in workflow_for_run.body
     assert "workflow_scope_picker_status</dt><dd>selected" in workflow_for_run.body
     assert "workflow_scope_picker_scope</dt><dd>run" in workflow_for_run.body
     assert f"workflow_scope_picker_selected_delegation</dt><dd>{result.delegation_id}" in workflow_for_run.body

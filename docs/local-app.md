@@ -786,7 +786,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   the next recommended local operator action. The page opens with a visible
   `Workflow Operator Workbench` before shared route/focus diagnostics or
   command readback, with cards for the current workflow action, selected
-  state, queue attention, and `/resume`. It follows with a read-only
+  state, queue attention, and `/resume`. When the current selected workflow is
+  ready to request a local commit, the workbench renders the confirmed
+  `coder-commit-request` form inline at `#workflow-workbench-action-form`,
+  keeps the source `/runs/<id>` route in evidence, and still writes only after
+  the `/actions/coder-commit-request` confirmation step. It follows with a
+  read-only
   `Workflow Scope Picker` that surfaces the primary pickup, recent
   delegations, recent coder runs, parent Goal, and safety evidence before the
   journey rail, so direct `/workflow` visits can pick the right scope in the

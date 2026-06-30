@@ -673,7 +673,11 @@ Latest status focus:
   zero-effect proof in the DOM.
 - `/workflow` is now action-first: it opens with the `Workflow Operator
   Workbench` before shared route/focus diagnostics or command readback, shows
-  visible Now, State, Queue, and Resume cards, then follows with a visible
+  visible Now, State, Queue, and Resume cards, renders
+  `#workflow-workbench-action-form` with the confirmed
+  `coder-commit-request` form when the selected reviewed run is ready for a
+  local commit request, keeps the source `/runs/<id>` surface in evidence, then
+  follows with a visible
   read-only `Workflow Scope Picker` for choosing the primary delegation/run
   scope, recent delegations, recent coder runs, parent Goal, and safety
   evidence before the `Workflow Journey` rail for Select, Goal + Scout, Context,
