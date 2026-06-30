@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Saved Today section anchors now get human return labels across the resume
+  surfaces. A saved `/today#today-current-action` route displays as
+  `Open Today current action` in `/resume`, `/workspace`, Recent Items, Quick
+  Switch, and the action resume receipt while preserving the exact href in
+  evidence and keeping all writes behind the existing confirmed
+  `save-workspace` boundary.
 - Today `Finish Today` now saves the exact daily action resume surface,
   `/today#today-current-action`, when the current Today action form exists.
   The form and command evidence expose the chosen `resume_surface` and reason,

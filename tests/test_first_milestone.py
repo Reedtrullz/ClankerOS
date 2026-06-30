@@ -19049,9 +19049,19 @@ def test_today_finish_today_saves_exact_resume_surface(tmp_path: Path) -> None:
     assert "Action Resume Receipt" in saved.body
     assert "action_resume_receipt_updated_by</dt><dd>today-command-center" in saved.body
     assert (
+        "data-action-resume-receipt-primary='true' "
+        "href='/today#today-current-action'>Open Today current action</a>"
+    ) in saved.body
+    assert "action_resume_receipt_primary_label</dt><dd>Open Today current action" in saved.body
+    assert (
         "action_resume_receipt_resume_surface</dt><dd>"
         "<a href='/today#today-current-action'>/today#today-current-action</a>"
     ) in saved.body
+    assert (
+        "action_resume_receipt_saved_point: <a href='/today#today-current-action'>"
+        "Open Today current action</a>"
+    ) in saved.body
+    assert "Open saved point" not in saved.body
 
     workspace = json.loads(
         (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
@@ -19066,11 +19076,33 @@ def test_today_finish_today_saves_exact_resume_surface(tmp_path: Path) -> None:
     resume = render_local_app_route(tmp_path, "/resume")
     assert resume.status == 200
     assert (
+        "data-resume-hero-primary='true' href='/today#today-current-action'>"
+        "Open Today current action</a>"
+    ) in resume.body
+    assert (
         "resume_saved_surface</dt><dd><a href='/today#today-current-action'>"
         "/today#today-current-action</a>"
     ) in resume.body
+    assert (
+        "recent_items_workspace_click: <a href='/today#today-current-action'>"
+        "Open Today current action</a>"
+    ) in resume.body
+    assert (
+        "palette_quick_switch_workspace: <a href='/today#today-current-action'>"
+        "Open Today current action</a>"
+    ) in resume.body
+    assert (
+        "workspace surface · /today#today-current-action"
+    ) in resume.body
     assert "Browser Resume" in resume.body
     assert "Open saved surface" not in resume.body
+
+    workspace_page = render_local_app_route(tmp_path, "/workspace")
+    assert workspace_page.status == 200
+    assert (
+        "workspace_restore_map_primary_surface</dt><dd>"
+        "<a href='/today#today-current-action'>Open Today current action</a>"
+    ) in workspace_page.body
 
 
 def test_local_app_cli_commands_and_bind_safety(

@@ -12503,7 +12503,9 @@ def _safe_local_return_path(value: str | None) -> str:
 
 
 def _local_surface_action_label(value: str, *, fallback: str = "Open saved page") -> str:
-    path = urlparse(value or "").path
+    parsed = urlparse(value or "")
+    path = parsed.path
+    fragment = parsed.fragment
     if path.startswith("/goals/"):
         return "Open saved Goal"
     if path.startswith("/projects/"):
@@ -12518,6 +12520,23 @@ def _local_surface_action_label(value: str, *, fallback: str = "Open saved page"
         return "Open workspace"
     if path == "/resume":
         return "Open resume"
+    if path == "/today" and fragment:
+        today_labels = {
+            "today-current-action": "Open Today current action",
+            "today-finish": "Open Today finish form",
+            "today-note": "Open Today note form",
+            "today-pause": "Open Today pause form",
+            "today-goal-queue": "Open Today goal queue",
+            "today-live-state": "Open Today live state",
+            "today-session-summary": "Open Today session summary",
+            "today-activity-digest": "Open Today activity digest",
+            "today-operator-workbench": "Open Today operator workbench",
+            "today-decision-queue": "Open Today decision queue",
+            "today-decision-filter": "Open Today decision filter",
+            "today-workflow-map": "Open Today workflow map",
+            "today-ci-handoff": "Open Today CI handoff",
+        }
+        return today_labels.get(fragment, "Open Today")
     if path == "/today":
         return "Open today"
     if path == "/goals":
@@ -38709,6 +38728,13 @@ def _action_result_resume_receipt_section(
     )
     resume_href = resume_surface or "/resume"
     resume_label = resume_surface or "/resume"
+    resume_action_label = _saved_workspace_surface_action_label(
+        root,
+        resume_href,
+        open_goal=open_goal,
+        open_project=open_project,
+        fallback=resume_label,
+    )
     _goal_href, goal_label, goal_label_source, goal_surface = _goal_display_link(root, open_goal)
     project_surface: str | SafeHtml = (
         SafeHtml(f"<a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>")
@@ -38723,8 +38749,8 @@ def _action_result_resume_receipt_section(
             "<p class='muted'>This is the saved return point after the confirmed local action.</p>",
             "<div class='action-resume-receipt-grid' data-action-resume-receipt-cards='true'>",
             "<article class='action-resume-receipt-card action-resume-receipt-primary'><h3>Resume</h3>",
-            f"<p>{_e(resume_label)}</p>",
-            f"<a class='action-resume-receipt-action' data-action-resume-receipt-primary='true' href='{_e(resume_href)}'>Open saved point</a></article>",
+            f"<p>{_e(resume_action_label)}</p>",
+            f"<a class='action-resume-receipt-action' data-action-resume-receipt-primary='true' href='{_e(resume_href)}'>{_e(resume_action_label)}</a></article>",
             "<article class='action-resume-receipt-card'><h3>Context</h3>",
             f"<p>{_e(context_label)}</p>",
             "<a class='action-resume-receipt-link' href='#action-resume-receipt-evidence'>Saved context</a></article>",
@@ -38746,6 +38772,7 @@ def _action_result_resume_receipt_section(
                     ("action_resume_receipt_workspace_available", str(workspace_available).lower()),
                     ("action_resume_receipt_action", action),
                     ("action_resume_receipt_result", message),
+                    ("action_resume_receipt_primary_label", resume_action_label),
                     ("action_resume_receipt_open_project", project_surface),
                     ("action_resume_receipt_open_goal", goal_surface if open_goal else "none"),
                     ("action_resume_receipt_goal_id", open_goal or "none"),
@@ -38779,7 +38806,7 @@ def _action_result_resume_receipt_section(
             ),
             _ul(
                 [
-                    f"action_resume_receipt_saved_point: <a href='{_e(resume_href)}'>{_e(resume_label)}</a>",
+                    f"action_resume_receipt_saved_point: <a href='{_e(resume_href)}'>{_e(resume_action_label)}</a>",
                     f"action_resume_receipt_context: project={_e(open_project or 'none')} goal={_e(open_goal or 'none')}",
                     f"action_resume_receipt_artifact: {artifact_surface}",
                     f"action_resume_receipt_last_action: {_e(last_action)} -> {_e(last_result)}",

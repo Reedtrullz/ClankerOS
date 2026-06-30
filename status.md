@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-30 Today Resume Label UX
+
+- Made saved Today section anchors first-class return labels. A saved
+  `/today#today-current-action` surface now renders as `Open Today current
+  action` instead of flattening to `Open today` or the generic action-result
+  `Open saved point` label.
+- The label helper now recognizes Today section anchors for current action,
+  finish, note, pause, goal queue, live state, session summary, activity
+  digest, operator workbench, decision queue/filter, workflow map, and CI
+  handoff while preserving raw route href evidence.
+- Updated the confirmed action resume receipt so its visible Resume card and
+  receipt line use the same human label, while evidence still exposes the
+  exact `/today#today-current-action` href.
+- Added focused regression coverage for Resume hero, Workspace restore map,
+  Recent Items, Quick Switch, and action receipt labels after a confirmed
+  Today `Finish Today` save.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, focused
+  `tests/test_first_milestone.py -k
+  'test_today_finish_today_saves_exact_resume_surface or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), and `git diff --check`.
+- Browser QA used a disposable saved-Today demo app at `127.0.0.1:8801`.
+  Desktop 1280px verified `/resume` identity, nonblank content, no framework
+  overlay, clean console, primary `Open Today current action` link to
+  `/today#today-current-action`, click-through to the visible
+  `/actions/coder-commit-request` form, and `/workspace` restore map label.
+  Mobile 390x844 verified the same labels, clean console, and no horizontal
+  overflow.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice.
+
 ## 2026-06-30 Today Exact Resume Surface UX
 
 - Updated the Today Command Center `Finish Today` flow so the confirmed
