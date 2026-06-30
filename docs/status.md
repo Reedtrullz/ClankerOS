@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Today `Finish Today` now saves the exact daily action resume surface,
+  `/today#today-current-action`, when the current Today action form exists.
+  The form and command evidence expose the chosen `resume_surface` and reason,
+  the confirmed `save-workspace` action writes that exact surface to
+  `.clanker/app/workspace.json`, and `/resume` reads it back while preserving
+  the confirmation-gated local-write boundary and zero provider/network/
+  external-effect posture.
 - `/today` now opens the daily cockpit with a first-screen `Today Session Rail`
   inside the Today Command Center. It shows the current action, attention
   count, CI proof state, and Finish Today target in one compact strip before

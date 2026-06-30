@@ -12242,6 +12242,19 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "name='return_to' value='/today'" in today.body
     assert "name='updated_by' value='today-command-center'" in today.body
     assert "name='expanded_panels' value='today,day-plan,daily-loop,next-action,timeline,evidence,artifacts,notes'" in today.body
+    assert "name='resume_surface' value='/today#today-current-action'" in today.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today.body
+    assert (
+        "today_command_finish_resume_reason</dt><dd>"
+        "today_current_action_form_available"
+    ) in today.body
+    assert (
+        "today_command_finish_resume: <a href='/today#today-current-action'>"
+        "/today#today-current-action</a>"
+    ) in today.body
     today_workspace_confirmation = render_local_app_route(
         tmp_path,
         "/actions/save-workspace",
@@ -12252,6 +12265,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
             "filters": [f"goal:{result.goal_id}"],
             "expanded_panels": ["today,day-plan,daily-loop,next-action,timeline,evidence,artifacts,notes"],
             "last_viewed_artifact": [result.review_path.relative_to(tmp_path).as_posix()],
+            "resume_surface": ["/today#today-current-action"],
             "updated_by": ["today-command-center"],
             "return_to": ["/today"],
         },
@@ -18999,6 +19013,64 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert home_after_completion.status == 200
     assert "Completed Goals" in home_after_completion.body
     assert f"href='/goals/{goal_id}'" in home_after_completion.body
+
+
+def test_today_finish_today_saves_exact_resume_surface(tmp_path: Path) -> None:
+    result = run_demo_app_scenario(tmp_path)
+    resume_artifact = result.review_path.relative_to(tmp_path).as_posix()
+
+    today = render_local_app_route(tmp_path, "/today")
+    assert today.status == 200
+    assert "id='today-finish'" in today.body
+    assert "name='resume_surface' value='/today#today-current-action'" in today.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today.body
+
+    saved = render_local_app_route(
+        tmp_path,
+        "/actions/save-workspace",
+        method="POST",
+        form={
+            "open_project": [result.project_id],
+            "open_goal": [result.goal_id],
+            "filters": [f"goal:{result.goal_id}"],
+            "expanded_panels": ["today,day-plan,daily-loop,next-action,timeline,evidence,artifacts,notes"],
+            "last_viewed_artifact": [resume_artifact],
+            "resume_surface": ["/today#today-current-action"],
+            "updated_by": ["today-command-center"],
+            "return_to": ["/today"],
+            "confirm": ["yes"],
+        },
+    )
+    assert saved.status == 200
+    assert "workspace_saved" in saved.body
+    assert "Action Resume Receipt" in saved.body
+    assert "action_resume_receipt_updated_by</dt><dd>today-command-center" in saved.body
+    assert (
+        "action_resume_receipt_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in saved.body
+
+    workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert workspace["open_project"] == result.project_id
+    assert workspace["open_goal"] == result.goal_id
+    assert workspace["filters"] == f"goal:{result.goal_id}"
+    assert workspace["last_viewed_artifact"] == resume_artifact
+    assert workspace["resume_surface"] == "/today#today-current-action"
+    assert workspace["updated_by"] == "today-command-center"
+
+    resume = render_local_app_route(tmp_path, "/resume")
+    assert resume.status == 200
+    assert (
+        "resume_saved_surface</dt><dd><a href='/today#today-current-action'>"
+        "/today#today-current-action</a>"
+    ) in resume.body
+    assert "Browser Resume" in resume.body
+    assert "Open saved surface" not in resume.body
 
 
 def test_local_app_cli_commands_and_bind_safety(

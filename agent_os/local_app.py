@@ -4505,6 +4505,8 @@ def _today_command_center(
     note_surface: str | SafeHtml = "not_available"
     first_run_form_available = "false"
     first_run_form_surface: str | SafeHtml = "not_applicable"
+    finish_resume_surface = "not_available"
+    finish_resume_reason = "finish_form_unavailable"
     if lead_goal is None:
         first_run = _first_run_progress(root, storage)
         first_run_href, first_run_label = _today_first_run_target(first_run)
@@ -4591,11 +4593,20 @@ def _today_command_center(
             and (saved_artifact_matches_latest or not latest_artifact)
             else "needs_workspace_save"
         )
+        if action_form:
+            finish_resume_surface = "/today#today-current-action"
+            finish_resume_reason = "today_current_action_form_available"
+        elif target_href.startswith("#"):
+            finish_resume_surface = f"/today{target_href}"
+            finish_resume_reason = "today_local_target"
+        else:
+            finish_resume_surface = target_href
+            finish_resume_reason = "next_action_surface"
         finish_form = "".join(
             [
                 "<details id='today-finish' class='today-finish today-finish-details' data-today-finish-details='true'><summary>Finish Today save form</summary>",
                 "<section><h3>Finish Today</h3>",
-                "<p class='muted'>Save today's lead goal, filters, expanded panels, and latest artifact as tomorrow's resume point. This writes only `.clanker/app/workspace.json` after confirmation.</p>",
+                "<p class='muted'>Save today's lead goal, filters, expanded panels, latest artifact, and exact daily action surface as tomorrow's resume point. This writes only `.clanker/app/workspace.json` after confirmation.</p>",
                 _input_form(
                     "save-workspace",
                     {
@@ -4607,6 +4618,7 @@ def _today_command_center(
                         "filters": f"goal:{goal_id}",
                         "expanded_panels": "today,day-plan,daily-loop,next-action,timeline,evidence,artifacts,notes",
                         "last_viewed_artifact": latest_artifact or "",
+                        "resume_surface": finish_resume_surface,
                         "updated_by": "today-command-center",
                     },
                 ),
@@ -4667,6 +4679,15 @@ def _today_command_center(
         ("today_command_action_form_available", str(bool(action_form)).lower()),
         ("today_command_confirmation_required", str(bool(action_form)).lower()),
         ("today_command_finish_status", finish_status),
+        (
+            "today_command_finish_resume_surface",
+            SafeHtml(
+                f"<a href='{_e(finish_resume_surface)}'>{_e(finish_resume_surface)}</a>"
+            )
+            if finish_form
+            else finish_resume_surface,
+        ),
+        ("today_command_finish_resume_reason", finish_resume_reason),
         ("today_command_finish_form_available", str(bool(finish_form)).lower()),
         ("today_command_finish_confirmation_required", str(bool(finish_form)).lower()),
         ("today_command_first_run_form_available", first_run_form_available),
@@ -4690,6 +4711,7 @@ def _today_command_center(
         f"today_command_note: available={_e(note_available)} surface=<a href='#today-note'>Capture Note</a>",
         f"today_command_pause: available={_e(pause_available)} surface=<a href='#today-pause'>Pause Goal</a>",
         f"today_command_finish: status={_e(finish_status)} surface=<a href='#today-finish'>Finish Today</a>",
+        f"today_command_finish_resume: <a href='{_e(finish_resume_surface)}'>{_e(finish_resume_surface)}</a>",
         "today_command_safety: read-only daily cockpit; confirmed local forms only",
     ]
     action_details = (

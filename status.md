@@ -1,5 +1,34 @@
 # Status
 
+## 2026-06-30 Today Exact Resume Surface UX
+
+- Updated the Today Command Center `Finish Today` flow so the confirmed
+  workspace save preserves the exact daily action surface,
+  `/today#today-current-action`, whenever the current Today action form exists.
+  The action result still returns to `/today`, but tomorrow's saved resume
+  target now lands on the daily cockpit action area instead of a broad page.
+- Added Today command evidence for the finish resume surface and the reason it
+  was chosen, and included the exact surface as a hidden `resume_surface` field
+  in the confirmation-gated `save-workspace` form.
+- Added focused regression coverage proving the rendered Today form exposes the
+  exact resume target and that a confirmed Finish Today save writes
+  `.clanker/app/workspace.json` with `resume_surface:
+  /today#today-current-action` and a matching `/resume` readback.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, focused
+  `tests/test_first_milestone.py -k
+  'test_today_finish_today_saves_exact_resume_surface or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), and `git diff --check`.
+- Browser QA used a disposable demo app at `127.0.0.1:8799`. Desktop 1280px
+  verified `/today` identity, nonblank Today Command Center content, no
+  framework overlay, clean console, hidden `resume_surface` value
+  `/today#today-current-action`, command evidence for that same target, and
+  clicking `Finish Today save form` opened the confirmation form without
+  submitting it.
+- Non-claim: full-suite proof and pushed GitHub Actions proof are pending for
+  this slice.
+
 ## 2026-06-30 Today Session Rail UX
 
 - Added a first-screen `Today Session Rail` inside the Today Command Center so
