@@ -399,7 +399,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   do/inspect/Goal/finish cards, parent Goal routing, request/evidence
   artifacts, confirmation posture, and a collapsed confirmed
   `save-workspace` form that stores the queue as a future resume point without
-  writing on GET. The read-only `Approval Queue Command Bar` follows with
+  writing on GET. A visible read-only `Approval Readiness Strip` follows the
+  workbench with Queue, Decision, Scope, Evidence, and Safety cards for the
+  focused approval item, exposing pending counts, scoped Goal/run/delegation
+  context, the existing confirmed approval form anchor, evidence artifact,
+  after-decision route, and no-write/no-approval/no-execution/no-network/
+  no-external-effect boundaries before the older queue readbacks. The read-only `Approval Queue Command Bar` follows with
   pending worktree/commit/publication counts, first recommended decision,
   target section, after-decision guidance, and zero-effect boundary inside
   collapsed evidence. The `Approval Decision Brief` then shows Decision,
@@ -1306,7 +1311,7 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   approving, executing, calling providers, or mutating external systems while
   preserving read-only run links and
   next-action cues for pending commit/publication rows,
-  with `/approvals` starting from both a queue summary and a read-only
+  with `/approvals` starting from a visible readiness strip, queue summary, and a read-only
   `Approval Decision Brief` that links the first local decision to its
   delegation, workflow, run when available, request artifact, evidence
   artifact, exact form anchor, post-decision surface, and zero-effect counters,

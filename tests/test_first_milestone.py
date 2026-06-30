@@ -9267,6 +9267,33 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Approvals" in approvals.body
     assert approvals.body.index("Approval Operator Workbench") < approvals.body.index("Approval Queue Command Bar")
     assert approvals.body.index("Approval Operator Workbench") < approvals.body.index("data-route-context='true'")
+    assert approvals.body.index("Approval Operator Workbench") < approvals.body.index("Approval Readiness Strip")
+    assert approvals.body.index("Approval Readiness Strip") < approvals.body.index("Approval Queue Command Bar")
+    assert "Approval Readiness Strip" in approvals.body
+    assert "data-approval-readiness-strip='true'" in approvals.body
+    assert "data-approval-readiness-actions='true'" in approvals.body
+    assert approvals.body.count("class='approval-readiness-card") == 5
+    assert "data-approval-readiness-card='queue'" in approvals.body
+    assert "data-approval-readiness-card='decision'" in approvals.body
+    assert "data-approval-readiness-card='scope'" in approvals.body
+    assert "data-approval-readiness-card='evidence'" in approvals.body
+    assert "data-approval-readiness-card='safety'" in approvals.body
+    assert "data-approval-readiness-evidence='true'" in approvals.body
+    assert "approval_readiness_status</dt><dd>empty" in approvals.body
+    assert "approval_readiness_total_pending</dt><dd>0" in approvals.body
+    assert "approval_readiness_first_kind</dt><dd>none" in approvals.body
+    assert "approval_readiness_decision_surface</dt><dd><a href='/goals'>/goals</a>" in approvals.body
+    assert "approval_readiness_scope_status</dt><dd>global" in approvals.body
+    assert "approval_readiness_goal_surface</dt><dd><a href='/goals'>/goals</a>" in approvals.body
+    assert "approval_readiness_evidence_surface</dt><dd>none" in approvals.body
+    assert "approval_readiness_after_decision</dt><dd>none" in approvals.body
+    assert "approval_readiness_action_form_available</dt><dd>false" in approvals.body
+    assert "approval_readiness_write_on_get</dt><dd>false" in approvals.body
+    assert "approval_readiness_approves_on_get</dt><dd>false" in approvals.body
+    assert "approval_readiness_executes_work_on_get</dt><dd>false" in approvals.body
+    assert "approval_readiness_network_actions_taken</dt><dd>0" in approvals.body
+    assert "approval_readiness_external_effects_created</dt><dd>false" in approvals.body
+    assert "approval_readiness_safety: read-only approval readiness; confirmed forms own decisions" in approvals.body
     assert "Approval Queue Command Bar" in approvals.body
     assert "data-approval-command-evidence='true'" in approvals.body
     assert "approval_queue_total_pending</dt><dd>0" in approvals.body
@@ -17522,6 +17549,37 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert approvals.status == 200
     assert approvals.body.index("Approval Operator Workbench") < approvals.body.index("Approval Queue Command Bar")
     assert approvals.body.index("Approval Operator Workbench") < approvals.body.index("data-route-context='true'")
+    assert approvals.body.index("Approval Operator Workbench") < approvals.body.index("Approval Readiness Strip")
+    assert approvals.body.index("Approval Readiness Strip") < approvals.body.index("Approval Queue Command Bar")
+    assert "Approval Readiness Strip" in approvals.body
+    assert "data-approval-readiness-strip='true'" in approvals.body
+    assert "data-approval-readiness-actions='true'" in approvals.body
+    assert approvals.body.count("class='approval-readiness-card") == 5
+    assert "data-approval-readiness-card='queue'" in approvals.body
+    assert "data-approval-readiness-card='decision'" in approvals.body
+    assert "data-approval-readiness-card='scope'" in approvals.body
+    assert "data-approval-readiness-card='evidence'" in approvals.body
+    assert "data-approval-readiness-card='safety'" in approvals.body
+    assert "data-approval-readiness-evidence='true'" in approvals.body
+    assert "approval_readiness_status</dt><dd>decision_ready" in approvals.body
+    assert "approval_readiness_total_pending</dt><dd>1" in approvals.body
+    assert "approval_readiness_worktree_pending</dt><dd>1" in approvals.body
+    assert "approval_readiness_commit_pending</dt><dd>0" in approvals.body
+    assert "approval_readiness_publication_pending</dt><dd>0" in approvals.body
+    assert "approval_readiness_first_kind</dt><dd>worktree" in approvals.body
+    assert f"approval_readiness_first_id</dt><dd>{result.approval_id}" in approvals.body
+    assert "approval_readiness_first_project</dt><dd>local-app-demo" in approvals.body
+    assert f"approval_readiness_first_goal</dt><dd>{result.goal_id}" in approvals.body
+    assert "approval_readiness_first_run</dt><dd>not_created_yet" in approvals.body
+    assert f"approval_readiness_source_run</dt><dd>{result.run_id}" in approvals.body
+    assert "approval_readiness_next_action</dt><dd>Approve worktree" in approvals.body
+    assert "approval_readiness_decision_surface</dt><dd><a href='#approval-workbench-action-form'>Approve worktree</a>" in approvals.body
+    assert f"approval_readiness_inspection_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'>Workflow</a>" in approvals.body
+    assert "approval_readiness_evidence_surface</dt><dd><a href='/artifacts?path=" in approvals.body
+    assert "approval_readiness_after_decision</dt><dd>run approved worktree from goal or run surface" in approvals.body
+    assert "approval_readiness_action_form_available</dt><dd>true" in approvals.body
+    assert "approval_readiness_confirmation_required</dt><dd>true" in approvals.body
+    assert "approval_readiness_safety: read-only approval readiness; confirmed forms own decisions" in approvals.body
     assert "Approval Queue Command Bar" in approvals.body
     assert "data-approval-queue-command-bar='true'" in approvals.body
     assert "data-approval-command-evidence='true'" in approvals.body

@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/approvals` now opens from the operator workbench into a visible
+  `Approval Readiness Strip` before the older command/filter inventory. The
+  strip summarizes queue counts, the focused approval decision, scoped
+  Goal/run/delegation context, evidence artifact routing, after-decision
+  guidance, and explicit safety boundaries while linking only to existing
+  confirmed approval forms. Local proof includes focused route/demo pytest
+  (`2 passed, 515 deselected`), compileall, and `git diff --check`.
 - `/search` now opens with visible `Search Suggestions` before the
   `Search Operator Workbench`. Populated local state produces quick searches
   for the current Goal, next action, projects, approvals, decisions, memory,

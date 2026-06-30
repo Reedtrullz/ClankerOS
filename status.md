@@ -1,5 +1,26 @@
 # Status
 
+## 2026-07-01 Approval Readiness Strip UX
+
+- Added a scan-first `Approval Readiness Strip` to `/approvals` between the
+  operator workbench and the older command/filter inventory.
+- The strip shows queue counts, the focused approval decision, scoped
+  Goal/run/delegation context, evidence artifact routing, after-decision
+  guidance, and the existing confirmed approval form anchor when a decision is
+  ready.
+- Preserved safety boundaries: read-only GET, no approval on page load, no
+  execution on page load, no provider calls, no network actions, no push, no
+  PR, no deploy, and no external effects.
+- Local verification:
+  - `PYTHONPATH=. python3 -m compileall -q agent_os tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check`: passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state"`:
+    2 passed, 515 deselected.
+- Non-claim: this only improves approval queue orientation in the browser; it
+  does not approve, reject, run work, commit, push, create PRs, deploy, call
+  providers, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Profile Routing Readiness UX
 
 - Added a scan-first `Profile Routing Readiness` strip to `/profiles` between
