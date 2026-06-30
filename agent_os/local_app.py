@@ -19264,7 +19264,17 @@ def _goal_overview_command_bar(
         target = _goal_recommendation_target(goal, open_recommendation)
         waiting_href = target.href
         waiting_label = target.label
+    action_form_available = bool(_goal_next_action_form(state, next_action))
+    target_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=action_form_available,
+    )
+    target_label = _goal_action_cta_label(next_action, action_form_available)
     target_surface = SafeHtml(
+        f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"
+    )
+    source_surface = SafeHtml(
         f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
     )
     return "".join(
@@ -19275,7 +19285,7 @@ def _goal_overview_command_bar(
             "<article class='goal-overview-card goal-overview-primary' data-goal-overview-now='true'>"
             "<h3>Now</h3>"
             f"<p>{_e(phase)} · {_e(status)}</p>"
-            f"<a class='goal-overview-action' data-goal-overview-primary='true' href='{_e(next_action.href)}'>{_e(next_action.action)}</a>"
+            f"<a class='goal-overview-action' data-goal-overview-primary='true' href='{_e(target_href)}'>{_e(target_label)}</a>"
             "</article>",
             "<article class='goal-overview-card' data-goal-overview-scope='true'>"
             "<h3>Scope</h3>"
@@ -19343,6 +19353,11 @@ def _goal_overview_command_bar(
                     ("goal_overview_command_memory_status", memory_status),
                     ("goal_overview_command_next_action", next_action.action),
                     ("goal_overview_command_target_surface", target_surface),
+                    (
+                        "goal_overview_command_action_form_available",
+                        str(action_form_available).lower(),
+                    ),
+                    ("goal_overview_command_source_surface", source_surface),
                     ("goal_overview_command_reason", next_action.reason),
                     ("goal_overview_command_source", "goal_record_and_local_state"),
                     ("goal_overview_command_write_on_get", "false"),
@@ -19354,7 +19369,7 @@ def _goal_overview_command_bar(
             _ul(
                 [
                     f"goal_overview_now: {_e(phase)} status={_e(status)}",
-                    f"goal_overview_click: <a href='{_e(next_action.href)}'>{_e(next_action.action)}</a>",
+                    f"goal_overview_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
                     (
                         "goal_overview_scope: "
                         f"project={_e(goal.project_id)} "

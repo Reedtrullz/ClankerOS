@@ -14116,7 +14116,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_overview_command_open_recommendations</dt><dd>0" in goal.body
     assert "goal_overview_command_memory_status</dt><dd>operator_notes_available" in goal.body
     assert "goal_overview_command_next_action</dt><dd>Create commit request" in goal.body
-    assert f"goal_overview_command_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert "goal_overview_command_target_surface</dt><dd><a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
+    assert "goal_overview_command_action_form_available</dt><dd>true" in goal.body
+    assert f"goal_overview_command_source_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "goal_overview_command_reason</dt><dd>reviewed_run=" in goal.body
     assert "goal_overview_command_source</dt><dd>goal_record_and_local_state" in goal.body
     assert "goal_overview_command_write_on_get</dt><dd>false" in goal.body
@@ -14124,7 +14126,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_overview_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_overview_command_external_effects_created</dt><dd>false" in goal.body
     assert "goal_overview_now: Ready to commit status=accepted" in goal.body
-    assert f"goal_overview_click: <a href='/runs/{result.coder_worktree_run_id}'>Create commit request</a>" in goal.body
+    assert "goal_overview_click: <a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "goal_overview_scope: project=local-app-demo risk=low tasks=1" in goal.body
     assert "goal_overview_waiting: approvals=1 incidents=0 recommendations=0" in goal.body
     assert "goal_overview_safety: read-only local goal overview" in goal.body
