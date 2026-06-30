@@ -17800,7 +17800,7 @@ def _goal_continuation_gate_action(
     if is_current:
         if action_form_available:
             return next_action.action, _goal_continuation_link(
-                "#goal-next-action",
+                "#goal-action-dock-form",
                 next_action.action,
             )
         return next_action.action, _goal_continuation_link(

@@ -13827,7 +13827,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_continuation_current_position</dt><dd>9/15" in goal.body
     assert "goal_continuation_step_count</dt><dd>5" in goal.body
     assert "goal_continuation_now_action</dt><dd>Create commit request" in goal.body
-    assert "goal_continuation_now_surface</dt><dd><a href='#goal-next-action'>Create commit request</a>" in goal.body
+    assert "goal_continuation_now_surface</dt><dd><a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "goal_continuation_next_gate</dt><dd>commit_approval" in goal.body
     assert "goal_continuation_next_action</dt><dd>Approve commit request" in goal.body
     assert "goal_continuation_next_surface</dt><dd><a href='/approvals'>/approvals</a>" in goal.body
@@ -13838,7 +13838,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_continuation_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_continuation_external_effects_created</dt><dd>false" in goal.body
     assert "data-continuation-gate='commit_request' data-continuation-status='pending' data-continuation-marker='current'" in goal.body
-    assert "goal_continuation_step: 1 gate=commit_request status=pending marker=current action=Create commit request" in goal.body
+    assert "goal_continuation_step: 1 gate=commit_request status=pending marker=current action=Create commit request surface=<a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "goal_continuation_step: 2 gate=commit_approval status=waiting marker=waiting action=Approve commit request" in goal.body
     assert "goal_continuation_step: 5 gate=publication_approval status=waiting marker=waiting action=Approve publication request" in goal.body
     assert "goal_continuation_safety: local browser guidance only; publication remains manual" in goal.body
@@ -13880,7 +13880,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_map_external_effects_created</dt><dd>false" in goal.body
     assert "data-workflow-gate='scout_delegation' data-gate-status='done'" in goal.body
     assert "data-workflow-gate='commit_request' data-gate-status='pending' data-gate-marker='current' data-gate-action='Create commit request'" in goal.body
-    assert "status=pending marker=current action=Create commit request surface=<a href='#goal-next-action'>Create commit request</a> next=Create commit request" in goal.body
+    assert "status=pending marker=current action=Create commit request surface=<a href='#goal-action-dock-form'>Create commit request</a> next=Create commit request" in goal.body
     assert "data-workflow-gate='commit_approval' data-gate-status='waiting' data-gate-marker='waiting' data-gate-action='Approve commit request'" in goal.body
     assert "workflow_map_gate: commit_approval status=waiting marker=waiting action=Approve commit request surface=<a href='/approvals'>/approvals</a>" in goal.body
     assert "workflow_map_gate: local_commit status=waiting marker=waiting action=Commit approved worktree surface=<a href='#goal-next-action'>Commit approved worktree</a>" in goal.body

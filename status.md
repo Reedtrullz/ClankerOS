@@ -1,5 +1,45 @@
 # Status
 
+## 2026-06-30 Goal Continuation Current Action UX
+
+- Made the Goal Continuation Rail and full Goal Workflow Map agree with the
+  rest of the Goal cockpit for the current actionable gate. When the current
+  Goal action has a confirmed browser form, the current gate now links to
+  `#goal-action-dock-form` instead of the older detailed
+  `#goal-next-action` surface. For the ready-to-commit demo Goal, the current
+  `commit_request` gate now routes to the visible `Create commit request`
+  dock form.
+- The change reuses the existing `_goal_continuation_gate_action` helper, so
+  the continuation rail and workflow map inherit the same current-gate
+  behavior without adding action authority. Future gates can still point to
+  their detailed lower workflow surfaces; only the current actionable gate is
+  promoted to the already-confirmed dock path.
+- Updated focused demo coverage so `goal_continuation_now_surface`, the first
+  continuation step line, and the workflow map current-gate row assert
+  `Create commit request -> #goal-action-dock-form`.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), and temp-root
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`.
+- Browser QA used the in-app Browser against a disposable demo app at
+  `127.0.0.1:51780` for `goal_8746c49e44ac`. Desktop 1280x720 verified page
+  identity, meaningful content, no framework overlay, clean warn/error logs,
+  no horizontal overflow, the continuation primary link href
+  `#goal-action-dock-form`, and click-through to the visible
+  `/actions/coder-commit-request` POST form. A tighter DOM read confirmed both
+  the continuation rail current gate and the full workflow map current gate
+  contain `#goal-action-dock-form` anchors labeled `Create commit request`.
+- GitHub readback for the previous commit `1075157c` showed Actions run
+  `28439852763` with `Fast smoke verification` successful and `Full pytest
+  suite` still in progress before this new slice was committed.
+- Non-claim: mobile Browser proof is not claimed for this slice; the rendered
+  proof was desktop-only. Pushed GitHub Actions proof for this new slice and
+  full-suite proof are pending. This slice did not deploy, create a PR, call
+  providers, write on GET, or mutate external systems.
+
 ## 2026-06-30 Goal Jump Bar Current Action UX
 
 - Made the Goal Jump Bar `2` shortcut action-aware. Instead of showing the

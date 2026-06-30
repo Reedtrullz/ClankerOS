@@ -4,6 +4,17 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal Continuation Rail and the full Goal Workflow Map now route the current
+  actionable gate to the visible confirmed Goal Action Dock form when one
+  exists. For the ready-to-commit demo Goal, the current `commit_request` gate
+  links to `#goal-action-dock-form` as `Create commit request` instead of the
+  older detailed `#goal-next-action` surface. Local proof includes
+  py-compile, focused route/demo pytest, temp-root app-smoke-test, and in-app
+  Browser desktop QA with clean logs, no horizontal overflow, continuation
+  click-through to the `/actions/coder-commit-request` POST form, and DOM
+  confirmation that both current lifecycle surfaces use the dock anchor.
+  Mobile Browser proof and pushed GitHub Actions proof for this new slice are
+  still pending.
 - Goal Jump Bar shortcut `2` now names and opens the real current Goal action.
   For the ready-to-commit demo Goal it displays `Create commit request` and
   links to the existing confirmed `#goal-action-dock-form` instead of the
