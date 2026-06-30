@@ -1,5 +1,51 @@
 # Status
 
+## 2026-06-30 Goal Control Strip UX
+
+- Added a first-screen `Goal Control Strip` to Goal detail pages, directly
+  after the Goal title and before the Path Rail, Review Strip, phase banner,
+  and Action Dock. It makes the daily browser workflow more usable by putting
+  the current action, state, waiting attention, proof, notes, and finish-today
+  return point in one compact operator band.
+- The strip reuses existing Goal state, workflow-gate summary, CI evidence,
+  operator notes, approval counts, and current-action helpers. It links to the
+  existing confirmation-gated surfaces such as `#goal-action-dock-form`,
+  `/approvals?goal_id=...`, `#goal-ci-handoff`,
+  `#goal-operator-note-form`, and `#goal-finish-today`; it does not add a new
+  write path.
+- Added collapsed `Goal control strip evidence` rows for Goal/project, phase,
+  current gate, gate progress, next action, primary surface, form
+  availability, waiting/approval/incident/recommendation counts, CI
+  status/source, note status/entries, finish resume surface, source, and
+  explicit no-write/no-provider/no-network/no-external-effect counters. The
+  Goal section finder now includes `Control strip`, bringing the Goal section
+  count to 64.
+- Updated route/demo regression coverage for the strip CSS contract, six
+  cards, primary/attention/proof/notes/finish link targets, evidence rows,
+  read-only counters, section finder count, and ordering
+  (`summary -> control strip -> path rail -> review strip -> phase -> action`).
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check`, focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), and temp-root
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`.
+- Browser QA used the in-app Browser against a disposable demo app at
+  `127.0.0.1:50378` for `goal_ce91a374ab64`. Desktop 1280x720 verified the
+  strip is visible in the first viewport, has six cards, no page overflow,
+  clean warn/error logs, correct ordering before Path Rail/Review Strip, and
+  click-through from `Create commit request` to the visible
+  `/actions/coder-commit-request` form, from `Capture note` to the visible
+  `/actions/save-goal-note` form, and from `Finish Today` to the open
+  `/actions/save-workspace` finish panel. Mobile 390x844 verified single-
+  column strip cards, no page overflow, first-viewport visibility, and
+  current-action click-through.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice. The strip is read-only browser orientation over existing local
+  confirmation forms; this slice did not deploy, create a PR, call providers,
+  or mutate external systems.
+
 ## 2026-06-30 Goal Path Rail UX
 
 - Added a first-screen `Goal Path Rail` to Goal detail pages, directly in the

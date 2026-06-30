@@ -4,6 +4,18 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal detail pages now include a first-screen `Goal Control Strip` after the
+  title and before the Path Rail/Review Strip. It gathers the current action,
+  state, waiting attention, proof, notes, and finish-today return point into
+  one operator band, while linking only to existing confirmation-gated browser
+  surfaces such as `#goal-action-dock-form`, `/approvals?goal_id=...`,
+  `#goal-ci-handoff`, `#goal-operator-note-form`, and `#goal-finish-today`.
+  Local proof includes py-compile, diff check, focused route/demo pytest,
+  temp-root app-smoke-test, and in-app Browser QA on desktop 1280x720 plus
+  mobile 390x844 with first-viewport strip visibility, clean logs, no page
+  overflow, single-column mobile cards, and click-through to commit-request,
+  note, and finish forms; pushed GitHub Actions and full-suite proof are still
+  pending for this slice.
 - Goal detail pages now include a first-screen `Goal Path Rail` after the
   title and before the review strip. It reuses the existing workflow-gate
   summary to show the full local lifecycle as a compact horizontal rail,
