@@ -12339,6 +12339,54 @@ def _safe_local_return_path(value: str | None) -> str:
     return candidate
 
 
+def _local_surface_action_label(value: str, *, fallback: str = "Open saved page") -> str:
+    path = urlparse(value or "").path
+    if path.startswith("/goals/"):
+        return "Open saved Goal"
+    if path.startswith("/projects/"):
+        return "Open saved project"
+    if path.startswith("/runs/"):
+        return "Open saved run"
+    if path.startswith("/delegations/"):
+        return "Open saved delegation"
+    if path.startswith("/artifacts"):
+        return "Open saved artifact"
+    if path == "/workspace":
+        return "Open workspace"
+    if path == "/resume":
+        return "Open resume"
+    if path == "/today":
+        return "Open today"
+    if path == "/goals":
+        return "Open Goals"
+    if path == "/projects":
+        return "Open Projects"
+    if path == "/demo":
+        return "Open demo"
+    if path == "/verification":
+        return "Open verification"
+    return fallback
+
+
+def _recent_item_action_label(label: str, href: str, kind: str) -> str:
+    normalized_kind = str(kind or "").lower()
+    if normalized_kind == "first-run":
+        return f"Open {_compact_label(label, 40)}"
+    if "goal" in normalized_kind:
+        return "Open Goal"
+    if normalized_kind == "delegation":
+        return "Open delegation"
+    if normalized_kind == "run":
+        return "Open run"
+    if normalized_kind == "fixture":
+        return "Open demo"
+    if normalized_kind == "proof":
+        return "Open verification"
+    if normalized_kind.startswith("workspace"):
+        return _local_surface_action_label(href, fallback="Open workspace")
+    return _local_surface_action_label(href, fallback=f"Open {_compact_label(label, 40)}")
+
+
 def _workspace_expanded_panel_keys(value: str) -> list[str]:
     keys: list[str] = []
     seen: set[str] = set()
@@ -41117,10 +41165,11 @@ def _recent_items_command_bar(
     last_action_result = str(state.get("last_action_result") or "").strip()
     last_action_href = _safe_local_return_path(state.get("last_action_next_href"))
     primary_label, primary_href, primary_kind = items[0]
+    primary_action = _recent_item_action_label(primary_label, primary_href, primary_kind)
     if resume_surface:
         workspace_label = resume_surface
         workspace_href = resume_surface
-        workspace_action = "Open saved surface"
+        workspace_action = _local_surface_action_label(resume_surface)
     elif open_goal:
         workspace_label = open_goal
         workspace_href = f"/goals/{quote(open_goal)}"
@@ -41135,7 +41184,7 @@ def _recent_items_command_bar(
         workspace_action = "Open resume"
     action_label = last_action or "No saved action"
     action_href = last_action_href or "/actions"
-    action_action = "Open last action" if last_action_href else "Open actions"
+    action_action = _action_form_copy(last_action)["title"] if last_action_href else "Open actions"
     artifact_label = Path(last_artifact).name if last_artifact else "No saved artifact"
     artifact_href = f"/artifacts?path={quote(last_artifact)}" if last_artifact else "/workspace"
     artifact_action = "Open artifact" if last_artifact else "Open workspace"
@@ -41144,11 +41193,11 @@ def _recent_items_command_bar(
     delegation_count = sum(1 for _, _, kind in items if kind == "delegation")
     run_count = sum(1 for _, _, kind in items if kind == "run")
     lines = [
-        f"recent_items_now: Open {_e(primary_label)}",
-        f"recent_items_click: <a href='{_e(primary_href)}'>{_e(primary_href)}</a>",
-        f"recent_items_workspace_click: <a href='{_e(workspace_href)}'>{_e(workspace_href)}</a>",
-        f"recent_items_last_action_click: <a href='{_e(action_href)}'>{_e(action_href)}</a>",
-        f"recent_items_last_artifact_click: <a href='{_e(artifact_href)}'>{_e(artifact_href)}</a>",
+        f"recent_items_now: <a href='{_e(primary_href)}'>{_e(primary_action)}</a>",
+        f"recent_items_click: <a href='{_e(primary_href)}'>{_e(primary_action)}</a>",
+        f"recent_items_workspace_click: <a href='{_e(workspace_href)}'>{_e(workspace_action)}</a>",
+        f"recent_items_last_action_click: <a href='{_e(action_href)}'>{_e(action_action)}</a>",
+        f"recent_items_last_artifact_click: <a href='{_e(artifact_href)}'>{_e(artifact_action)}</a>",
         "recent_items_resume: <a href='/resume'>/resume</a>",
         "recent_items_safety: read-only local navigation",
     ]
@@ -41158,13 +41207,13 @@ def _recent_items_command_bar(
             "<div class='recent-items-focus' data-recent-items-focus='true'>",
             "<span class='recent-items-label'>Reopen</span>",
             f"<strong>{_e(primary_label)}</strong>",
-            f"<a class='recent-items-primary' data-recent-items-primary='true' href='{_e(primary_href)}'>Open recent item</a>",
+            f"<a class='recent-items-primary' data-recent-items-primary='true' href='{_e(primary_href)}'>{_e(primary_action)}</a>",
             "<a class='recent-items-resume' data-recent-items-resume='true' href='/resume'>Resume workspace</a>",
             "</div>",
             "<div class='recent-items-cards' data-recent-items-cards='true'>",
             "<article class='recent-items-card recent-items-card-primary'><h4>Recent</h4>",
             f"<p>{_e(primary_label)}</p>",
-            f"<a class='recent-items-card-action' data-recent-items-card-primary='true' href='{_e(primary_href)}'>Open recent</a></article>",
+            f"<a class='recent-items-card-action' data-recent-items-card-primary='true' href='{_e(primary_href)}'>{_e(primary_action)}</a></article>",
             "<article class='recent-items-card'><h4>Workspace</h4>",
             f"<p>{_e(workspace_label)}</p>",
             f"<a class='recent-items-card-link' data-recent-items-workspace-card='true' href='{_e(workspace_href)}'>{_e(workspace_action)}</a></article>",
@@ -42283,7 +42332,7 @@ def _command_palette_quick_switch(
     if resume_surface:
         workspace_label = resume_surface
         workspace_href = resume_surface
-        workspace_action = "Open saved surface"
+        workspace_action = _local_surface_action_label(resume_surface)
         workspace_source = "saved_surface"
     elif saved_goal:
         workspace_label = saved_goal
@@ -42308,7 +42357,7 @@ def _command_palette_quick_switch(
 
     action_label = last_action or primary_action
     action_href = last_action_href or primary_href
-    action_action = "Open last action" if last_action_href else primary_label
+    action_action = _action_form_copy(last_action)["title"] if last_action_href else primary_label
     artifact_path = saved_artifact or latest_artifact
     artifact_source = "saved_workspace" if saved_artifact else ("current_goal_latest" if latest_artifact else "none")
     artifact_label = Path(artifact_path).name if artifact_path else "No saved artifact"

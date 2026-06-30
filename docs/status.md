@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Shared Recent Items and Quick Switch launchers now name the destination or
+  action directly. Primary recent shortcuts say `Open Goal`, `Open run`,
+  `Open delegation`, or `Open Goal cockpit` instead of `Open recent item`;
+  saved workspace links say `Open saved project`, `Open saved Goal`, or
+  `Open saved run` instead of `Open saved surface`; and saved last-action
+  links reuse product action titles such as `First project setup`, while
+  preserving the same local hrefs, browser-local filtering, command-palette
+  surfaces, and zero-effect GET posture.
 - Resume, Workspace, and Home saved-action surfaces now name the concrete
   operator move instead of exposing form mechanics. Primary workbench links,
   top action headings, deep evidence links, and Home live-state resume targets

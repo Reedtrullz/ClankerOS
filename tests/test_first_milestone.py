@@ -5794,10 +5794,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Recent Items Command Bar" in root.body
     assert "data-recent-items-command-bar='true'" in root.body
     assert "data-recent-items-focus='true'" in root.body
-    assert "data-recent-items-primary='true' href='/goals'>Open recent item</a>" in root.body
+    assert "data-recent-items-primary='true' href='/goals'>Open Goal cockpit</a>" in root.body
     assert "data-recent-items-resume='true' href='/resume'>Resume workspace</a>" in root.body
     assert "data-recent-items-cards='true'" in root.body
-    assert "data-recent-items-card-primary='true' href='/goals'>Open recent</a>" in root.body
+    assert "data-recent-items-card-primary='true' href='/goals'>Open Goal cockpit</a>" in root.body
     assert "data-recent-items-workspace-card='true' href='/resume'>Open resume</a>" in root.body
     assert "data-recent-items-action-card='true' href='/actions'>Open actions</a>" in root.body
     assert "data-recent-items-artifact-card='true' href='/workspace'>Open workspace</a>" in root.body
@@ -5934,10 +5934,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "recent_items_provider_calls_taken</dt><dd>0" in root.body
     assert "recent_items_network_actions_taken</dt><dd>0" in root.body
     assert "recent_items_external_effects_created</dt><dd>false" in root.body
-    assert "recent_items_now: Open Goal cockpit" in root.body
-    assert "recent_items_workspace_click: <a href='/resume'>/resume</a>" in root.body
-    assert "recent_items_last_action_click: <a href='/actions'>/actions</a>" in root.body
-    assert "recent_items_last_artifact_click: <a href='/workspace'>/workspace</a>" in root.body
+    assert "recent_items_now: <a href='/goals'>Open Goal cockpit</a>" in root.body
+    assert "recent_items_workspace_click: <a href='/resume'>Open resume</a>" in root.body
+    assert "recent_items_last_action_click: <a href='/actions'>Open actions</a>" in root.body
+    assert "recent_items_last_artifact_click: <a href='/workspace'>Open workspace</a>" in root.body
     assert "recent_items_safety: read-only local navigation" in root.body
     assert "data-breadcrumbs='true'" in root.body
     assert "data-route-context='true'" in root.body
@@ -9602,12 +9602,12 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "data-recent-items-cards='true'" in register_resume.body
     assert (
         "data-recent-items-workspace-card='true' href='/projects/clankeros'>"
-        "Open saved surface</a>"
+        "Open saved project</a>"
     ) in register_resume.body
     assert (
         "data-recent-items-action-card='true' "
         "href='/projects/clankeros?notice=project_registered%3A%20clankeros'>"
-        "Open last action</a>"
+        "First project setup</a>"
     ) in register_resume.body
     assert (
         "recent_items_workspace_surface</dt><dd>"
@@ -9616,17 +9616,17 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert (
         "recent_items_last_action_click: "
         "<a href='/projects/clankeros?notice=project_registered%3A%20clankeros'>"
-        "/projects/clankeros?notice=project_registered%3A%20clankeros</a>"
+        "First project setup</a>"
     ) in register_resume.body
     assert "data-command-palette-quick-switch='true'" in register_resume.body
     assert (
         "data-command-palette-quick-workspace='true' href='/projects/clankeros'>"
-        "Open saved surface</a>"
+        "Open saved project</a>"
     ) in register_resume.body
     assert (
         "data-command-palette-quick-action='true' "
         "href='/projects/clankeros?notice=project_registered%3A%20clankeros'>"
-        "Open last action</a>"
+        "First project setup</a>"
     ) in register_resume.body
     assert "palette_quick_switch_status</dt><dd>first_run" in register_resume.body
     assert "palette_quick_switch_workspace_source</dt><dd>saved_surface" in register_resume.body
@@ -12630,12 +12630,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-recent-items-command-bar='true'" in goal.body
     assert "data-recent-items-focus='true'" in goal.body
     assert (
-        f"data-recent-items-primary='true' href='/goals/{result.goal_id}'>Open recent item</a>"
+        f"data-recent-items-primary='true' href='/goals/{result.goal_id}'>Open Goal</a>"
     ) in goal.body
     assert "data-recent-items-resume='true' href='/resume'>Resume workspace</a>" in goal.body
     assert "data-recent-items-cards='true'" in goal.body
     assert (
-        f"data-recent-items-card-primary='true' href='/goals/{result.goal_id}'>Open recent</a>"
+        f"data-recent-items-card-primary='true' href='/goals/{result.goal_id}'>Open Goal</a>"
         in goal.body
     )
     assert "data-recent-items-workspace-card='true' href='/resume'>Open resume</a>" in goal.body
@@ -12697,10 +12697,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "recent_items_write_on_get</dt><dd>false" in goal.body
     assert "recent_items_network_actions_taken</dt><dd>0" in goal.body
     assert "recent_items_external_effects_created</dt><dd>false" in goal.body
-    assert "recent_items_now: Open Demo the ClankerOS local operator app with fixture-backed state" in goal.body
-    assert "recent_items_workspace_click: <a href='/resume'>/resume</a>" in goal.body
-    assert "recent_items_last_action_click: <a href='/actions'>/actions</a>" in goal.body
-    assert "recent_items_last_artifact_click: <a href='/workspace'>/workspace</a>" in goal.body
+    assert f"recent_items_now: <a href='/goals/{result.goal_id}'>Open Goal</a>" in goal.body
+    assert "recent_items_workspace_click: <a href='/resume'>Open resume</a>" in goal.body
+    assert "recent_items_last_action_click: <a href='/actions'>Open actions</a>" in goal.body
+    assert "recent_items_last_artifact_click: <a href='/workspace'>Open workspace</a>" in goal.body
     assert "recent_items_resume: <a href='/resume'>/resume</a>" in goal.body
     assert "data-breadcrumbs='true'" in goal.body
     assert "data-route-context='true'" in goal.body

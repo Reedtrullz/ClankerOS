@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-30 Recent Items Action Label UX
+
+- Replaced the shared Recent Items and Quick Switch generic launcher labels
+  with concrete destination/action labels. The primary recent shortcut now
+  says `Open Goal`, `Open run`, `Open delegation`, or `Open Goal cockpit`
+  instead of `Open recent item`; saved workspace shortcuts infer labels such
+  as `Open saved project`, `Open saved Goal`, or `Open saved run` instead of
+  `Open saved surface`; and saved last-action shortcuts reuse the action's
+  human title such as `First project setup`.
+- Preserved the same local hrefs, recent-item list, browser-local filtering,
+  route-history behavior, workspace JSON readback, command-palette surfaces,
+  and zero-effect GET posture. This is a navigation-label/orientation change
+  only: no provider calls, non-loopback network actions, push, PR, deploy, or
+  external mutation paths were added.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_first_run_browser_actions_persist_resume_workspace or
+  test_local_app_demo_scenario_populates_fixture_state'`, and
+  `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` passed
+  locally.
+- Browser QA used a disposable fixture-backed app at `127.0.0.1:53569` for
+  `goal_d74e3d740aeb`. Desktop verified the Recent Items rail says
+  `Open Goal`, workspace/action/artifact fallback labels are concrete, Quick
+  Switch no longer says `Open saved surface` / `Open last action`, the primary
+  recent click stays on the Goal route, browser logs are clean, and
+  `scrollWidth=1280`. Mobile 390x844 verified `Open Goal`, no old recent
+  labels, clean logs, and `scrollWidth=390`.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
 ## 2026-06-30 Resume Workspace Action Label UX
 
 - Replaced remaining resume, workspace, and home saved-action form labels with
