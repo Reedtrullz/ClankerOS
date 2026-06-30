@@ -39159,6 +39159,19 @@ def _notice_banner(root: Path, notice: str | None, current_path: str) -> str:
     open_goal = str(state.get("open_goal") or "").strip() or "none"
     updated_at = str(state.get("last_action_updated_at") or "").strip() or "unknown"
     recommendation = _action_notice_recommendation(root, current_path, state)
+    next_step_form = _action_notice_next_step_form_section(
+        root,
+        current_path,
+        recommendation,
+    )
+    next_step_form_available = bool(next_step_form)
+    primary_href = "#action-notice-next-step-form" if next_step_form_available else recommendation["href"]
+    primary_label = "Use current action" if next_step_form_available else recommendation["label"]
+    form_surface: str | SafeHtml = (
+        SafeHtml("<a href='#action-notice-next-step-form'>Action Notice Next Step</a>")
+        if next_step_form_available
+        else "not_available"
+    )
     return (
         "<section id='action-notice' class='panel action-notice' data-action-notice='true'>"
         "<h1>Action Notice</h1>"
@@ -39166,7 +39179,7 @@ def _notice_banner(root: Path, notice: str | None, current_path: str) -> str:
         "<div class='action-notice-grid' data-action-notice-actions='true'>"
         "<article class='action-notice-card action-notice-primary'><h3>Next Step</h3>"
         f"<p>{_e(recommendation['action'])}</p>"
-        f"<a class='action-notice-action' data-action-notice-primary='true' data-action-notice-next-step='true' href='{_e(recommendation['href'])}'>{_e(recommendation['label'])}</a></article>"
+        f"<a class='action-notice-action' data-action-notice-primary='true' data-action-notice-next-step='true' href='{_e(primary_href)}'>{_e(primary_label)}</a></article>"
         "<article class='action-notice-card'><h3>Continue Here</h3>"
         f"<p>{_e(current_label)}</p>"
         f"<a class='action-notice-link' data-action-notice-clean-surface='true' href='{_e(current_surface)}'>Open clean surface</a></article>"
@@ -39183,7 +39196,8 @@ def _notice_banner(root: Path, notice: str | None, current_path: str) -> str:
         "<p>No push, PR, deploy, provider call, network action, or external mutation.</p>"
         "<a class='action-notice-link' href='#action-notice-evidence'>Safety evidence</a></article>"
         "</div>"
-        "<details id='action-notice-evidence' class='action-notice-evidence' data-action-notice-evidence='true'><summary>Action notice evidence</summary>"
+        + next_step_form
+        + "<details id='action-notice-evidence' class='action-notice-evidence' data-action-notice-evidence='true'><summary>Action notice evidence</summary>"
         + _kv(
             [
                 ("action_notice_status", "available"),
@@ -39203,6 +39217,10 @@ def _notice_banner(root: Path, notice: str | None, current_path: str) -> str:
                 ("action_notice_recommended_action", recommendation["action"]),
                 (
                     "action_notice_recommended_surface",
+                    SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+                ),
+                (
+                    "action_notice_recommended_source_surface",
                     SafeHtml(f"<a href='{_e(recommendation['href'])}'>{_e(recommendation['label'])}</a>"),
                 ),
                 ("action_notice_recommended_reason", recommendation["reason"]),
@@ -39216,6 +39234,15 @@ def _notice_banner(root: Path, notice: str | None, current_path: str) -> str:
                 (
                     "action_notice_recommended_confirmation_required",
                     recommendation["confirmation_required"],
+                ),
+                (
+                    "action_notice_next_step_form_available",
+                    str(next_step_form_available).lower(),
+                ),
+                ("action_notice_next_step_form_surface", form_surface),
+                (
+                    "action_notice_next_step_form_source",
+                    "goal_next_action_form" if next_step_form_available else "none",
                 ),
                 ("action_notice_card_count", "6"),
                 ("action_notice_write_on_get", "false"),
@@ -39231,7 +39258,14 @@ def _notice_banner(root: Path, notice: str | None, current_path: str) -> str:
             [
                 (
                     f"action_notice_next_step: {_e(recommendation['action'])} -> "
-                    f"<a href='{_e(recommendation['href'])}'>{_e(recommendation['label'])}</a>"
+                    f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
+                ),
+                (
+                    "action_notice_next_step_form: "
+                    "<a href='#action-notice-next-step-form'>Action Notice Next Step</a> "
+                    "reuses existing confirmed Goal action form"
+                    if next_step_form_available
+                    else "action_notice_next_step_form: unavailable"
                 ),
                 f"action_notice_now: Continue at <a href='{_e(current_surface)}'>{_e(current_label)}</a>",
                 f"action_notice_last_action: {_e(action)}",
@@ -39240,7 +39274,98 @@ def _notice_banner(root: Path, notice: str | None, current_path: str) -> str:
             ]
         )
         + "</details>"
-        "</section>"
+        + "</section>"
+    )
+
+
+def _action_notice_next_step_form_section(
+    root: Path,
+    current_path: str,
+    recommendation: dict[str, str],
+) -> str:
+    try:
+        focus_context = _operator_focus_context(root, current_path)
+    except Exception:
+        return ""
+    if str(focus_context.get("status") or "") != "available":
+        return ""
+    goal = focus_context.get("goal")
+    goal_state = focus_context.get("goal_state")
+    next_action = focus_context.get("next_action")
+    if goal is None or not isinstance(goal_state, dict) or not isinstance(next_action, GoalNextAction):
+        return ""
+    action_form = str(focus_context.get("action_form") or "")
+    if not action_form:
+        return ""
+    phase = str(focus_context.get("phase") or "unknown")
+    try:
+        _, _, current_gate = _goal_workflow_gate_summary(root, goal_state, next_action)
+    except Exception:
+        current_gate = str(recommendation.get("current_gate") or "unknown")
+    goal_id = str(getattr(goal, "id", "") or "unknown")
+    goal_label = str(focus_context.get("goal_label") or goal_id)
+    source = str(focus_context.get("source") or recommendation.get("source") or "goal_state")
+    source_surface = str(next_action.href)
+    recommended_surface = str(recommendation.get("href") or source_surface)
+    recommended_label = str(recommendation.get("label") or next_action.action)
+    return "".join(
+        [
+            (
+                "<section id='action-notice-next-step-form' "
+                "class='action-notice-next-step-form' "
+                "data-action-notice-next-step-form='true'>"
+            ),
+            "<h2>Action Notice Next Step</h2>",
+            "<p class='muted'>Continue directly from this return notice. The same confirmation screen still appears before any local write or local execution.</p>",
+            action_form,
+            "<details id='action-notice-next-step-evidence' class='action-notice-next-step-evidence' data-action-notice-next-step-evidence='true'><summary>Notice next-step evidence</summary>",
+            _kv(
+                [
+                    ("action_notice_next_step_status", "available"),
+                    ("action_notice_next_step_source", source),
+                    (
+                        "action_notice_next_step_goal",
+                        SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(goal_label)}</a>"),
+                    ),
+                    ("action_notice_next_step_phase", phase),
+                    ("action_notice_next_step_current_gate", current_gate),
+                    ("action_notice_next_step_next_action", next_action.action),
+                    (
+                        "action_notice_next_step_primary_surface",
+                        SafeHtml("<a href='#action-notice-next-step-form'>Use current action</a>"),
+                    ),
+                    (
+                        "action_notice_next_step_recommended_surface",
+                        SafeHtml(f"<a href='{_e(recommended_surface)}'>{_e(recommended_label)}</a>"),
+                    ),
+                    (
+                        "action_notice_next_step_source_surface",
+                        SafeHtml(f"<a href='{_e(source_surface)}'>{_e(source_surface)}</a>"),
+                    ),
+                    ("action_notice_next_step_reason", next_action.reason),
+                    ("action_notice_next_step_action_form_available", "true"),
+                    ("action_notice_next_step_confirmation_required", "true"),
+                    ("action_notice_next_step_write_on_get", "false"),
+                    ("action_notice_next_step_provider_calls_taken", "0"),
+                    ("action_notice_next_step_network_actions_taken", "0"),
+                    ("action_notice_next_step_external_effects_created", "false"),
+                    ("action_notice_next_step_push_created", "false"),
+                    ("action_notice_next_step_pr_created", "false"),
+                    ("action_notice_next_step_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"action_notice_next_step_now: {_e(next_action.action)}",
+                    "action_notice_next_step_click: <a href='#action-notice-next-step-form'>Use current action</a>",
+                    f"action_notice_next_step_source: <a href='{_e(source_surface)}'>{_e(source_surface)}</a>",
+                    f"action_notice_next_step_gate: {_e(current_gate)}",
+                    "action_notice_next_step_safety: reuses existing confirmed Goal action form",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
     )
 
 
@@ -42179,7 +42304,7 @@ def _html_page(
     .last-action-strip dl {{ grid-template-columns:minmax(170px, 230px) 1fr; }}
     .last-action-strip ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
     .last-action-strip li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
-    #action-notice, #action-notice-evidence {{ scroll-margin-top:128px; }}
+    #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence {{ scroll-margin-top:128px; }}
     .action-notice {{ border-left:4px solid var(--accent); margin-bottom:16px; }}
     .action-notice-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(155px, 1fr)); gap:10px; margin:12px 0; }}
     .action-notice-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
@@ -42189,6 +42314,12 @@ def _html_page(
     .action-notice-action, .action-notice-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .action-notice-action {{ background:var(--accent); color:#fff; }}
     .action-notice-link {{ background:var(--surface); color:var(--accent); }}
+    .action-notice-next-step-form {{ border:1px solid var(--line); background:var(--panel); padding:12px; margin:10px 0 12px; }}
+    .action-notice-next-step-form h2 {{ margin:0 0 6px; font-size:18px; }}
+    .action-notice-next-step-form form {{ margin:10px 0 0; }}
+    .action-notice-next-step-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
+    .action-notice-next-step-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .action-notice-next-step-evidence:not([open]) > :not(summary) {{ display:none; }}
     .action-notice-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .action-notice-evidence summary {{ cursor:pointer; font-weight:700; }}
     .action-notice-evidence:not([open]) > :not(summary) {{ display:none; }}
@@ -43317,7 +43448,7 @@ def _html_page(
     .run-continuation-evidence:not([open]) > :not(summary) {{ display:none; }}
     .run-evidence-map {{ border-left:4px solid var(--accent); }}
     .run-evidence-map dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
-    .run-evidence-grid {{ display:grid; grid-template-columns:minmax(230px, 1.2fr) repeat(5, minmax(150px, 1fr)); gap:10px; margin:12px 0; }}
+    .run-evidence-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:10px; margin:12px 0; }}
     .run-evidence-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
     .run-evidence-card h3 {{ margin-top:0; }}
     .run-evidence-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
@@ -43849,7 +43980,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .workflow-scope-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #goal-attention-digest {{ scroll-margin-top:260px; }} .goal-attention-grid {{ grid-template-columns:1fr; }} }}

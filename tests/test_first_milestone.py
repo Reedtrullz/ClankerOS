@@ -17181,6 +17181,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-action-notice-actions='true'" in run_notice.body
     assert "data-action-notice-primary='true'" in run_notice.body
     assert "data-action-notice-evidence='true'" in run_notice.body
+    assert "Action Notice Next Step" in run_notice.body
+    assert "data-action-notice-next-step-form='true'" in run_notice.body
+    assert "data-action-notice-next-step-evidence='true'" in run_notice.body
+    assert (
+        "data-action-notice-primary='true' data-action-notice-next-step='true' "
+        "href='#action-notice-next-step-form'>Use current action</a>"
+    ) in run_notice.body
     assert f"coder_commit_request: {commit_approval.id}" in run_notice.body
     assert "action_notice_last_action</dt><dd>coder-commit-request" in run_notice.body
     assert (
@@ -17193,6 +17200,38 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"/runs/{result.coder_worktree_run_id}</a>"
     ) in run_notice.body
     assert f"action_notice_saved_goal</dt><dd>{result.goal_id}" in run_notice.body
+    assert (
+        "action_notice_recommended_surface</dt><dd>"
+        "<a href='#action-notice-next-step-form'>Use current action</a>"
+    ) in run_notice.body
+    assert (
+        "action_notice_recommended_source_surface</dt><dd>"
+        f"<a href='/goals/{result.goal_id}#goal-action-dock-form'>Use current action</a>"
+    ) in run_notice.body
+    assert "action_notice_next_step_form_available</dt><dd>true" in run_notice.body
+    assert (
+        "action_notice_next_step_form_surface</dt><dd>"
+        "<a href='#action-notice-next-step-form'>Action Notice Next Step</a>"
+    ) in run_notice.body
+    assert "action_notice_next_step_form_source</dt><dd>goal_next_action_form" in run_notice.body
+    assert "action_notice_next_step_status</dt><dd>available" in run_notice.body
+    assert "action_notice_next_step_next_action</dt><dd>Approve commit" in run_notice.body
+    assert (
+        "action_notice_next_step_primary_surface</dt><dd>"
+        "<a href='#action-notice-next-step-form'>Use current action</a>"
+    ) in run_notice.body
+    assert "action_notice_next_step_action_form_available</dt><dd>true" in run_notice.body
+    assert "action_notice_next_step_confirmation_required</dt><dd>true" in run_notice.body
+    assert "action_notice_next_step_write_on_get</dt><dd>false" in run_notice.body
+    assert "action_notice_next_step_provider_calls_taken</dt><dd>0" in run_notice.body
+    assert "action_notice_next_step_network_actions_taken</dt><dd>0" in run_notice.body
+    assert "action_notice_next_step_external_effects_created</dt><dd>false" in run_notice.body
+    assert "action_notice_next_step_form: <a href='#action-notice-next-step-form'>Action Notice Next Step</a> reuses existing confirmed Goal action form" in run_notice.body
+    assert "id='action-notice-next-step-form' class='action-notice-next-step-form' data-action-notice-next-step-form='true'" in run_notice.body
+    assert run_notice.body.index("id='action-notice-next-step-form'") < run_notice.body.index(
+        "id='action-notice-evidence'"
+    )
+    assert "action='/actions/approve-coder-commit'" in run_notice.body
     assert "action_notice_write_on_get</dt><dd>false" in run_notice.body
     assert "action_notice_network_actions_taken</dt><dd>0" in run_notice.body
     assert "action_notice_external_effects_created</dt><dd>false" in run_notice.body

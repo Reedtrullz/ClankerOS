@@ -862,7 +862,10 @@ surface, saved Goal/project context, and zero-effect counters so the operator
 can recover the last handoff after navigating away. Action notice pages now
 start with a Next Step card sourced from first-run or saved-Goal state, so
 following a completed-action notice points straight at the next confirmed form
-or workflow surface instead of only echoing the previous result. The route
+or workflow surface instead of only echoing the previous result. When the next
+saved-Goal action has a confirmed browser form, the notice renders an inline
+`Action Notice Next Step` form before the notice evidence and keeps the
+original Goal/workflow target as an evidence link. The route
 context strip now starts with a compact action-first focus grid: current page,
 next local action, back target, Goal, Project, and `/resume`. The full route
 family/path, saved workspace anchors, focus target, and zero-effect counters
@@ -1212,8 +1215,11 @@ original action result page. Following the
 next-page link now opens an action-first `Action Notice` surface on the
 target page, with visible Continue Here, Last Action, Resume, Details, and
 Boundary cards plus collapsed notice/workspace evidence so the operator can
-continue without reconstructing context from a plain banner. Action errors now
-open with an action-first
+continue without reconstructing context from a plain banner. For saved Goal
+continuations with a confirmed next action form, `Action Notice` also renders
+an inline `Action Notice Next Step` form and points the primary Next Step card
+at that form while preserving the original Goal/workflow source surface in
+evidence. Action errors now open with an action-first
 `Action Needs Attention` recovery surface before the raw error details, with
 Fix Input, Retry Surface, Error, Catalog, and Boundary cards plus collapsed
 error evidence proving no result was recorded and no external effect was

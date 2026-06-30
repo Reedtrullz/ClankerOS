@@ -1310,7 +1310,11 @@ global `Last Action` strip on later pages, so the operator can reopen the
 target notice or `/resume` after navigating away. Following the
 next-page link renders an `Action Notice` banner on the target GET page,
 preserving the action result context while the operator reviews the dashboard,
-run, delegation, or approval surface.
+run, delegation, or approval surface. For saved Goal continuations with a
+confirmed next action form, the notice also renders an inline `Action Notice
+Next Step` form before notice evidence and points the primary notice action at
+that same-page form while keeping the original Goal/workflow surface in
+collapsed evidence.
 Failed actions render `Action Error Details` with the
 attempted action, error, submitted payload, and a clear no-action-completed
 message so operators can fix inputs without guessing what happened.

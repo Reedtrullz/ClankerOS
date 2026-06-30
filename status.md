@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-30 Action Notice Inline Next Step UX
+
+- Made completed-action notice pages directly actionable for saved Goal
+  continuations. When the refreshed saved or lead Goal has a confirmed browser
+  form for its next action, `Action Notice` now renders an inline
+  `Action Notice Next Step` section before notice evidence.
+- Updated the notice primary `Next Step` card to point at
+  `#action-notice-next-step-form` when that inline form exists, while
+  preserving the original Goal/workflow source surface in collapsed evidence.
+- Kept the existing action authority intact: the notice only duplicates the
+  existing confirmed Goal action form, still routes through
+  `/actions/<action>` confirmation, and does not add provider calls,
+  non-loopback network actions, pushes, PRs, deploys, or external mutations.
+- Fixed the run notice page's later `Run Evidence` card grid to use auto-fit
+  columns so the actionable notice return path does not create horizontal
+  overflow in the operator shell.
+- Verification: `df -h /System/Volumes/Data` showed 80Gi free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `git diff --check`, and focused pytest
+  `tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state`, and `python3 -m
+  agent_os.cli app-smoke-test` passed locally.
+- Browser QA: launched a disposable fixture app at `127.0.0.1:62127`,
+  submitted the Goal Action Dock `coder-commit-request` form, confirmed the
+  local action, opened the returned run notice URL, and verified `Action
+  Notice` points its primary action to `#action-notice-next-step-form`, renders
+  `Action Notice Next Step` with an inline `/actions/approve-coder-commit`
+  form before notice evidence, reports no console warnings/errors, and has no
+  horizontal overflow at default desktop width or `390x844` mobile. The
+  disposable scratch root was removed afterward. Non-claim: the full pytest
+  suite remains delegated to GitHub Actions for this slice.
+
 ## 2026-06-30 Action Result Next Step UX
 
 - Promoted post-confirmation continuation into a top-of-page `Action Result

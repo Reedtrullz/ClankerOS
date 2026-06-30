@@ -1300,7 +1300,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   GET pages reached through a notice link now render an escaped action-first
   `Action Notice` surface with Continue Here, Last Action, Resume, Details,
   and Boundary cards plus collapsed notice/workspace evidence before the
-  target page content, without writing on GET or adding action authority;
+  target page content. When saved Goal state exposes a confirmed next action
+  form, the notice renders an inline `Action Notice Next Step` form and points
+  the primary notice action at the same-page form while preserving the
+  original Goal/workflow source surface in evidence, without writing on GET or
+  adding action authority;
   action error pages now open with an action-first `Action Needs Attention`
   recovery surface containing Fix Input, Retry Surface, Error, Catalog, and
   Boundary cards before preserving the attempted action, submitted payload,

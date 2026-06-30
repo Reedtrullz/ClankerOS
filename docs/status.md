@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Completed-action notice pages now become direct continuation surfaces for
+  saved Goal work. When the refreshed saved or lead Goal has a confirmed next
+  action form, `Action Notice` renders an inline `Action Notice Next Step`
+  section and points the primary Next Step card at
+  `#action-notice-next-step-form`, while preserving the original Goal/workflow
+  source surface in evidence and keeping all writes behind confirmation.
 - Confirmed local action result pages now include a top `Action Result Next
   Step` panel between the action command bar and the resume/details readback.
   It uses refreshed first-run or saved-Goal state to promote the next operator
