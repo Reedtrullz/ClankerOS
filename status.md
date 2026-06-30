@@ -1,5 +1,30 @@
 # Status
 
+## 2026-06-30 Project Goal Map Run Workflow Label UX
+
+- Made the `/projects/<project_id>` Project Goal Map Work card name the
+  concrete coder run it opens. When a run exists, the visible action now reads
+  `Open run <run_id> workflow` instead of generic `Open latest run workflow`
+  copy, while the empty-project case still shows `Open workflow`.
+- Preserved exact audit evidence with new rows:
+  `project_goal_map_workflow_label` and
+  `project_goal_map_workflow_raw_surface`, so the UI is operator-readable and
+  review/replay can still inspect the raw `/workflow?run_id=<run_id>` target.
+- Updated focused route/demo coverage for the run-specific workflow label,
+  raw workflow href evidence, and the empty-project `/workflow` fallback.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused route/demo pytest
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`); and temp-root `python3 -m agent_os.cli --root "$scratch"
+  app-demo-smoke-test` with all demo routes matched and provider/network/
+  external mutation counters at `0`.
+- Non-claim: remote GitHub Actions proof for this slice is pending until it is
+  pushed and read back. This change only adjusts read-only labels and evidence
+  rows; it did not deploy, create a PR, call providers, write on GET, push
+  from the app, or add any external mutation path.
+
 ## 2026-06-30 Goal Evidence Artifact Label UX
 
 - Made the Goal Evidence Command Bar and Goal Artifact Command Bar name the

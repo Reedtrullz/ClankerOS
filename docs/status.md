@@ -4,6 +4,16 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Project Goal Map Work cards now label the exact workflow target when a coder
+  run exists: `Open run <run_id> workflow` replaces generic `Open latest run
+  workflow` copy on `/projects/<project_id>`. Collapsed evidence now records
+  both `project_goal_map_workflow_label` and
+  `project_goal_map_workflow_raw_surface`, preserving the exact
+  `/workflow?run_id=<run_id>` href for review. Local proof includes
+  py-compile, focused route/demo pytest (`2 passed, 515 deselected`), and
+  temp-root `app-demo-smoke-test` with all demo route markers matched and
+  provider/network/external-mutation counters at `0`. Remote GitHub Actions
+  proof for this slice should be read back after push.
 - Goal Evidence Command Bar and Goal Artifact Command Bar latest links now name
   the concrete artifact they open instead of generic `Open latest Goal
   artifact` / `Open latest artifact` copy. The demo Goal shows labels such as

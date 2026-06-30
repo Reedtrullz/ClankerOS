@@ -33305,7 +33305,7 @@ def _project_goal_map(
     latest_delegation = delegations[0] if delegations else None
     if latest_run is not None:
         workflow_href = f"/workflow?run_id={quote(latest_run.id)}"
-        workflow_label = "Open latest run workflow"
+        workflow_label = _compact_label(f"Open run {latest_run.id} workflow", 72)
         workflow_summary = f"run={latest_run.status}"
         latest_run_id = latest_run.id
     elif latest_delegation is not None:
@@ -33446,6 +33446,11 @@ def _project_goal_map(
                     (
                         "project_goal_map_workflow_surface",
                         SafeHtml(f"<a href='{_e(workflow_href)}'>{_e(workflow_label)}</a>"),
+                    ),
+                    ("project_goal_map_workflow_label", workflow_label),
+                    (
+                        "project_goal_map_workflow_raw_surface",
+                        SafeHtml(f"<a href='{_e(workflow_href)}'>{_e(workflow_href)}</a>"),
                     ),
                     (
                         "project_goal_map_waiting_surface",

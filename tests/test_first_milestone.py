@@ -10111,6 +10111,8 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
         "<a href='/projects/clankeros#start-goal-for-this-project'>Start Goal</a>"
     ) in register_project.body
     assert "project_goal_map_workflow_surface</dt><dd><a href='/workflow'>Open workflow</a>" in register_project.body
+    assert "project_goal_map_workflow_label</dt><dd>Open workflow" in register_project.body
+    assert "project_goal_map_workflow_raw_surface</dt><dd><a href='/workflow'>/workflow</a>" in register_project.body
     assert (
         "project_goal_map_waiting_surface</dt><dd>"
         "<a href='/projects/clankeros#start-goal-for-this-project'>Start Goal</a>"
@@ -16845,7 +16847,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"project_goal_map_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>Open Goal</a>" in project.body
     assert (
         f"project_goal_map_workflow_surface</dt><dd><a href='/workflow?run_id={result.coder_worktree_run_id}'>"
-        "Open latest run workflow</a>"
+        f"Open run {result.coder_worktree_run_id} workflow</a>"
+    ) in project.body
+    assert (
+        "project_goal_map_workflow_label</dt><dd>"
+        f"Open run {result.coder_worktree_run_id} workflow"
+    ) in project.body
+    assert (
+        f"project_goal_map_workflow_raw_surface</dt><dd><a href='/workflow?run_id={result.coder_worktree_run_id}'>"
+        f"/workflow?run_id={result.coder_worktree_run_id}</a>"
     ) in project.body
     assert "project_goal_map_waiting_surface</dt><dd><a href='/approvals'>Review approvals</a>" in project.body
     assert "project_goal_map_finish_surface</dt><dd><a href='#project-finish-today'>Finish Today</a>" in project.body
