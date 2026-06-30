@@ -4456,6 +4456,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     )
     assert "operator_ribbon_safety: read-only global operator orientation" in root.body
     assert ".operator-main { order:1; } .operator-side { order:2; }" in root.body
+    assert ".action-form-brief dl { grid-template-columns:1fr; gap:4px; }" in root.body
     assert ".operator-ribbon-grid" in root.body
     assert "href='/guide'" in root.body
     guide = render_local_app_route(tmp_path, "/guide")
@@ -5654,7 +5655,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "resume_workbench_waiting_gates</dt><dd>4" in resume_empty.body
     assert "resume_workbench_next_action</dt><dd>Register ClankerOS project" in resume_empty.body
     assert (
-        "resume_workbench_primary_surface</dt><dd><a href='#resume-first-run-action-form'>"
+        "resume_workbench_primary_surface</dt><dd><a href='#resume-workbench-action-form'>"
         "Register ClankerOS project</a>"
     ) in resume_empty.body
     assert (
@@ -5665,6 +5666,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "resume_workbench_action_form_available</dt><dd>false" in resume_empty.body
     assert "resume_workbench_first_run_form_available</dt><dd>true" in resume_empty.body
     assert "resume_workbench_confirmation_required</dt><dd>true" in resume_empty.body
+    assert "resume_workbench_top_form_available</dt><dd>true" in resume_empty.body
+    assert (
+        "resume_workbench_top_form_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Resume Workbench Action Form</a>"
+    ) in resume_empty.body
+    assert "resume_workbench_top_form_source</dt><dd>first_run_progress" in resume_empty.body
+    assert (
+        "resume_workbench_deep_form_surface</dt><dd>"
+        "<a href='#resume-first-run-action-form'>Resume First-Run Action form</a>"
+    ) in resume_empty.body
     assert "resume_workbench_first_run_home_target</dt><dd><a href='/#first-run-create-project'>Home setup</a>" in resume_empty.body
     assert (
         "resume_workbench_first_run_today_target</dt><dd><a href='/today#first-run-create-project'>"
@@ -5698,11 +5709,21 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "resume_workbench_deploy_created</dt><dd>false" in resume_empty.body
     assert "resume_workbench_now: Register ClankerOS project" in resume_empty.body
     assert (
-        "resume_workbench_click: <a href='#resume-first-run-action-form'>"
+        "resume_workbench_click: <a href='#resume-workbench-action-form'>"
         "Register ClankerOS project</a>"
+    ) in resume_empty.body
+    assert (
+        "resume_workbench_top_form: "
+        "<a href='#resume-workbench-action-form'>Resume Workbench Action Form</a> "
+        "reuses existing confirmed action form"
     ) in resume_empty.body
     assert "resume_workbench_finish: <a href='/workspace#save-workspace'>Finish Today</a>" in resume_empty.body
     assert "resume_workbench_safety: confirmed local actions only; no write on GET" in resume_empty.body
+    assert "id='resume-workbench-action-form' class='resume-workbench-action-form' data-resume-workbench-action-form='true'" in resume_empty.body
+    assert resume_empty.body.index("id='resume-workbench-action-form'") < resume_empty.body.index(
+        "data-resume-workbench-evidence='true'"
+    )
+    assert "action='/actions/register-project'" in resume_empty.body
     assert "id='resume-readiness'" in resume_empty.body
     assert "resume_readiness_status</dt><dd>first_run" in resume_empty.body
     assert (
@@ -9666,16 +9687,46 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "resume_workbench_waiting_gates</dt><dd>3" in register_resume.body
     assert "resume_workbench_next_action</dt><dd>Create first goal" in register_resume.body
     assert (
+        "resume_workbench_primary_surface</dt><dd><a href='#resume-workbench-action-form'>"
+        "Create first goal</a>"
+    ) in register_resume.body
+    assert (
         "resume_workbench_target_surface</dt><dd><a href='#resume-first-run-action-form'>"
         "Create First Goal</a>"
     ) in register_resume.body
     assert "resume_workbench_reason</dt><dd>no_goal_created" in register_resume.body
+    assert "resume_workbench_action_form_available</dt><dd>false" in register_resume.body
+    assert "resume_workbench_first_run_form_available</dt><dd>true" in register_resume.body
+    assert "resume_workbench_confirmation_required</dt><dd>true" in register_resume.body
+    assert "resume_workbench_top_form_available</dt><dd>true" in register_resume.body
+    assert (
+        "resume_workbench_top_form_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Resume Workbench Action Form</a>"
+    ) in register_resume.body
+    assert "resume_workbench_top_form_source</dt><dd>first_run_progress" in register_resume.body
+    assert (
+        "resume_workbench_deep_form_surface</dt><dd>"
+        "<a href='#resume-first-run-action-form'>Resume First-Run Action form</a>"
+    ) in register_resume.body
     assert "resume_workbench_unblock_action</dt><dd>Create First Goal" in register_resume.body
     assert (
         "resume_workbench_unblock_surface</dt><dd><a href='#resume-first-run-action-form'>"
         "Create First Goal</a>"
     ) in register_resume.body
     assert "resume_workbench_source</dt><dd>first_run_progress" in register_resume.body
+    assert (
+        "resume_workbench_click: <a href='#resume-workbench-action-form'>"
+        "Create first goal</a>"
+    ) in register_resume.body
+    assert (
+        "resume_workbench_top_form: "
+        "<a href='#resume-workbench-action-form'>Resume Workbench Action Form</a> "
+        "reuses existing confirmed action form"
+    ) in register_resume.body
+    assert "id='resume-workbench-action-form' class='resume-workbench-action-form' data-resume-workbench-action-form='true'" in register_resume.body
+    assert register_resume.body.index("id='resume-workbench-action-form'") < register_resume.body.index(
+        "data-resume-workbench-evidence='true'"
+    )
     assert "resume_readiness_status</dt><dd>first_run" in register_resume.body
     assert "resume_readiness_open_project</dt><dd>present" in register_resume.body
     assert "resume_readiness_open_goal</dt><dd>missing" in register_resume.body
@@ -10086,11 +10137,21 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     )
     assert "resume_workbench_phase</dt><dd>Ready for delegation" in resume.body
     assert "resume_workbench_next_action</dt><dd>Create scout delegation" in resume.body
-    assert "resume_workbench_primary_surface</dt><dd><a href='#resume-action-form'>Use resume action form</a>" in resume.body
+    assert "resume_workbench_primary_surface</dt><dd><a href='#resume-workbench-action-form'>Use resume action form</a>" in resume.body
     assert f"resume_workbench_target_surface</dt><dd><a href='/goals/{created_goal_id}'>/goals/{created_goal_id}</a>" in resume.body
     assert "resume_workbench_reason</dt><dd>goal_has_no_delegation_yet" in resume.body
     assert "resume_workbench_action_form_available</dt><dd>true" in resume.body
     assert "resume_workbench_confirmation_required</dt><dd>true" in resume.body
+    assert "resume_workbench_top_form_available</dt><dd>true" in resume.body
+    assert (
+        "resume_workbench_top_form_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Resume Workbench Action Form</a>"
+    ) in resume.body
+    assert "resume_workbench_top_form_source</dt><dd>goal_next_action_form" in resume.body
+    assert (
+        "resume_workbench_deep_form_surface</dt><dd>"
+        "<a href='#resume-action-form'>Resume Next Action form</a>"
+    ) in resume.body
     assert "resume_workbench_pending_approvals</dt><dd>0" in resume.body
     assert "resume_workbench_open_incidents</dt><dd>0" in resume.body
     assert "resume_workbench_open_recommendations</dt><dd>0" in resume.body
@@ -10098,6 +10159,20 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "resume_workbench_source</dt><dd>saved_goal_state" in resume.body
     assert "resume_workbench_write_on_get</dt><dd>false" in resume.body
     assert "resume_workbench_external_effects_created</dt><dd>false" in resume.body
+    assert (
+        "resume_workbench_click: <a href='#resume-workbench-action-form'>"
+        "Use resume action form</a>"
+    ) in resume.body
+    assert (
+        "resume_workbench_top_form: "
+        "<a href='#resume-workbench-action-form'>Resume Workbench Action Form</a> "
+        "reuses existing confirmed action form"
+    ) in resume.body
+    assert "id='resume-workbench-action-form' class='resume-workbench-action-form' data-resume-workbench-action-form='true'" in resume.body
+    assert resume.body.index("id='resume-workbench-action-form'") < resume.body.index(
+        "data-resume-workbench-evidence='true'"
+    )
+    assert "action='/actions/delegate'" in resume.body
     assert "id='resume-action-form'" in resume.body
     assert "action='/actions/delegate'" in resume.body
     assert "resume_current_phase</dt><dd>Ready for delegation" in resume.body

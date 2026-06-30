@@ -109,6 +109,10 @@ Saved workspace panels are also treated as return-to-work context. When
 `/workspace`, and the saved Goal page show a `Workspace Panel Restore` strip
 with direct panel links; the saved Goal page browser-locally reopens matching
 details panels without writing state, calling providers, or using the network.
+The `/resume` workbench is now the quickest day-two surface: if the saved Goal
+or first-run gate has a confirmed browser action form, the workbench renders it
+at the top as `#resume-workbench-action-form` before the detailed evidence
+sections.
 
 The root `/` page is the Goal-First Home board. It now leads with the actual
 Home operating surface before the shared route/focus diagnostics, and keeps

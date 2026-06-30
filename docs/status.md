@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/resume` now turns the `Resume Operator Workbench` into the actionable
+  return surface. Saved Goal current-action forms and first-run setup forms
+  render as a top `#resume-workbench-action-form` before workbench evidence,
+  while the deeper Resume Next Action or First-Run Action section remains as
+  detailed source/fallback readback and all writes stay behind confirmation.
 - Completed-action notice pages now become direct continuation surfaces for
   saved Goal work. When the refreshed saved or lead Goal has a confirmed next
   action form, `Action Notice` renders an inline `Action Notice Next Step`

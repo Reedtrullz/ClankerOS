@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-30 Resume Workbench Action Form UX
+
+- Made `/resume` directly actionable from the top `Resume Operator Workbench`.
+  When the saved Goal has a confirmed browser action form, the workbench now
+  renders a `Resume Current Action Form` before its evidence. When the operator
+  is still in first-run setup, it renders the current `register-project` or
+  `create-goal` setup form in the same top workbench position.
+- Updated the workbench primary action to point at
+  `#resume-workbench-action-form` whenever that top form exists, while keeping
+  the deeper `Resume Next Action` or `Resume First-Run Action` section as the
+  detailed source/fallback surface in evidence.
+- Kept the existing action authority intact: `/resume` only duplicates the
+  existing confirmed local form, still routes through `/actions/<action>`
+  confirmation, writes nothing on GET, and does not add provider calls,
+  non-loopback network actions, pushes, PRs, deploys, or external mutations.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check`, and focused pytest
+  `tests/test_first_milestone.py -q -k
+  'local_app_routes_render_modern_workflow_and_health or
+  first_run_browser_actions_persist_resume_workspace'` passed locally.
+- Browser QA: launched a disposable demo app at `127.0.0.1:62128`, saved the
+  demo Goal as the workspace through confirmed `save-workspace`, opened
+  `/resume`, and verified the workbench primary action targets
+  `#resume-workbench-action-form`, the top form posts to
+  `/actions/coder-commit-request`, the top form appears before workbench
+  evidence, and the old lower `Resume Next Action` form remains present as the
+  detailed fallback. Desktop and 390x844 mobile had no horizontal overflow and
+  no console warnings/errors. The mobile action brief was corrected to a
+  one-column readout so field values do not wrap one letter per line. Non-claim:
+  the full pytest suite remains delegated to GitHub Actions for this slice.
+
 ## 2026-06-30 Action Notice Inline Next Step UX
 
 - Made completed-action notice pages directly actionable for saved Goal

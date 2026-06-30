@@ -186,7 +186,11 @@ Core layers for the bootstrap:
   calling providers, or using the network. The visible workbench turns the saved context into
   do/check/unblock/finish cards with same-page action-form routing when
   available, readiness repair, blocker routing, last-artifact readback, and the
-  existing `/workspace#save-workspace` finish surface. When `resume_surface`
+  existing `/workspace#save-workspace` finish surface. When the saved Goal or
+  current first-run gate has a confirmed browser form, the workbench renders
+  that same form as a top `#resume-workbench-action-form` before workbench
+  evidence while preserving the deeper Resume Next Action or First-Run Action
+  section as the detailed source/fallback. When `resume_surface`
   exists, `/resume` opens that exact local route as the primary return target
   before falling back to the saved Goal or project. Saved Goal links on Home,
   `/resume`, `/workspace`, and the Goal resume snapshot are title-first when a

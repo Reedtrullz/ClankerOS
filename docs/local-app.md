@@ -205,7 +205,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   write, provider call, or network action. The workbench turns the saved context into
   do/check/unblock/finish cards, same-page action-form routing, blocker
   routing, last-artifact readback, and a `/workspace#save-workspace` finish
-  surface. A read-only `Resume Command Bar` follows with readiness, current
+  surface. When the current saved Goal or first-run gate has a confirmed
+  browser form, the workbench also renders that form as
+  `#resume-workbench-action-form` before workbench evidence, so the primary
+  return card can start the next local action without sending the operator to a
+  lower diagnostic section. A read-only `Resume Command Bar` follows with readiness, current
   phase/gate, one next action, target surface, action-form availability, last
   artifact, and zero-effect counters inside collapsed evidence. It includes a
   `Resume Readiness` checklist for the saved project,
