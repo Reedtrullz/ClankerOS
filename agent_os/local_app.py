@@ -16852,7 +16852,7 @@ def _goal_continuation_gate_action(
         if action_form_available:
             return next_action.action, _goal_continuation_link(
                 "#goal-next-action",
-                "Goal action form",
+                next_action.action,
             )
         return next_action.action, _goal_continuation_link(
             next_action.href,
@@ -16864,6 +16864,8 @@ def _goal_continuation_gate_action(
     )
     if href == "outside_clankeros":
         return action, "outside_clankeros"
+    if href == "#goal-next-action" and label == "Goal action form":
+        label = action
     return action, _goal_continuation_link(href, label)
 
 
@@ -38828,7 +38830,8 @@ def _action_result_goal_gate_action(
         return action, "outside_clankeros"
     if href == "#goal-next-action":
         href = f"/goals/{quote(goal_id)}#goal-next-action"
-        label = "Goal action form"
+        if label == "Goal action form":
+            label = action
     return action, _goal_continuation_link(href, label)
 
 

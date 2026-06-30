@@ -13437,7 +13437,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert goal.body.index("id='goal-continuation-rail'") < goal.body.index("id='goal-next-action'")
     assert "data-goal-continuation-primary='true' href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "data-goal-continuation-next='true' href='/approvals'>/approvals</a>" in goal.body
-    assert "data-goal-continuation-then='true' href='#goal-next-action'>Goal action form</a>" in goal.body
+    assert "data-goal-continuation-then='true' href='#goal-next-action'>Commit approved worktree</a>" in goal.body
     assert "data-goal-continuation-publish='true' href='#goal-workflow-map'>Review boundary</a>" in goal.body
     assert "data-goal-continuation-finish='true' data-open-details='true' href='#goal-finish-today'" in goal.body
     assert "goal_continuation_status</dt><dd>available" in goal.body
@@ -13447,7 +13447,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_continuation_current_position</dt><dd>9/15" in goal.body
     assert "goal_continuation_step_count</dt><dd>5" in goal.body
     assert "goal_continuation_now_action</dt><dd>Create commit request" in goal.body
-    assert "goal_continuation_now_surface</dt><dd><a href='#goal-next-action'>Goal action form</a>" in goal.body
+    assert "goal_continuation_now_surface</dt><dd><a href='#goal-next-action'>Create commit request</a>" in goal.body
     assert "goal_continuation_next_gate</dt><dd>commit_approval" in goal.body
     assert "goal_continuation_next_action</dt><dd>Approve commit request" in goal.body
     assert "goal_continuation_next_surface</dt><dd><a href='/approvals'>/approvals</a>" in goal.body
@@ -13500,11 +13500,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_map_external_effects_created</dt><dd>false" in goal.body
     assert "data-workflow-gate='scout_delegation' data-gate-status='done'" in goal.body
     assert "data-workflow-gate='commit_request' data-gate-status='pending' data-gate-marker='current' data-gate-action='Create commit request'" in goal.body
-    assert "status=pending marker=current action=Create commit request surface=<a href='#goal-next-action'>Goal action form</a> next=Create commit request" in goal.body
+    assert "status=pending marker=current action=Create commit request surface=<a href='#goal-next-action'>Create commit request</a> next=Create commit request" in goal.body
     assert "data-workflow-gate='commit_approval' data-gate-status='waiting' data-gate-marker='waiting' data-gate-action='Approve commit request'" in goal.body
     assert "workflow_map_gate: commit_approval status=waiting marker=waiting action=Approve commit request surface=<a href='/approvals'>/approvals</a>" in goal.body
-    assert "workflow_map_gate: local_commit status=waiting marker=waiting action=Commit approved worktree surface=<a href='#goal-next-action'>Goal action form</a>" in goal.body
-    assert "workflow_map_gate: publication_request status=waiting marker=waiting action=Create publication request surface=<a href='#goal-next-action'>Goal action form</a>" in goal.body
+    assert "workflow_map_gate: local_commit status=waiting marker=waiting action=Commit approved worktree surface=<a href='#goal-next-action'>Commit approved worktree</a>" in goal.body
+    assert "workflow_map_gate: publication_request status=waiting marker=waiting action=Create publication request surface=<a href='#goal-next-action'>Create publication request</a>" in goal.body
     assert "workflow_map_gate: publication_approval status=waiting marker=waiting action=Approve publication request surface=<a href='/approvals'>/approvals</a>" in goal.body
     assert "data-workflow-gate='manual_publish' data-gate-status='waiting' data-gate-marker='waiting' data-gate-action='Manual publish outside ClankerOS'" in goal.body
     assert "workflow_map_gate: manual_publish status=waiting marker=waiting action=Manual publish outside ClankerOS surface=outside_clankeros" in goal.body
@@ -17397,7 +17397,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in commit_request.body
     assert (
         f"action_result_workflow_gate: local_commit status=waiting marker=waiting "
-        f"action=Commit approved worktree surface=<a href='/goals/{result.goal_id}#goal-next-action'>Goal action form</a>"
+        f"action=Commit approved worktree surface=<a href='/goals/{result.goal_id}#goal-next-action'>Commit approved worktree</a>"
     ) in commit_request.body
     assert "action_result_workflow_manual_boundary</dt><dd>manual_publish_outside_clankeros" in commit_request.body
     assert "action_result_workflow_safety: read-only continuation map after confirmed local action" in commit_request.body

@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal continuation rails and workflow maps now label same-page Goal action
+  surfaces with the concrete gate action instead of `Goal action form`.
+  Current and follow-on map links still use the same local
+  `#goal-next-action` anchors and confirmation-gated forms, but visible labels
+  now say moves such as `Create commit request`, `Commit approved worktree`,
+  and `Create publication request`.
 - Action-result workflow maps now label the current continuation surface with
   the concrete operator move instead of `Action continuation form`. First-run
   maps say `Create first goal`, saved Goal maps say the refreshed next action

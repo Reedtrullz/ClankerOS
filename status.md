@@ -1,5 +1,31 @@
 # Status
 
+## 2026-06-30 Goal Workflow Surface Label UX
+
+- Replaced remaining generic `Goal action form` labels in Goal continuation
+  and workflow-map action surfaces with the concrete gate action. The same
+  local anchors still point to `#goal-next-action`, but the cards and map rows
+  now say moves such as `Create commit request`, `Commit approved worktree`,
+  and `Create publication request`.
+- Action-result workflow maps that point back to a Goal action surface now use
+  the same action label for follow-on gates, for example `Commit approved
+  worktree`, while preserving the Goal route, raw evidence, and zero-effect
+  GET posture.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_demo_scenario_populates_fixture_state'`, and
+  `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` passed
+  locally.
+- Browser QA used a disposable demo app at `127.0.0.1:63814` for
+  `goal_0b73b1f8491a`. Desktop verified the Goal continuation rail and
+  workflow map expose concrete labels on `#goal-next-action` links including
+  `Create commit request`, `Commit approved worktree`, and
+  `Create publication request`, with zero clickable `Goal action form` labels,
+  no framework overlay, clean browser logs, and `scrollWidth=1280`. Mobile
+  390x844 verified the same labels, clean logs, and `scrollWidth=390`.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
 ## 2026-06-30 Action Workflow Map Label UX
 
 - Replaced the action-result workflow map's remaining generic
