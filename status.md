@@ -1,5 +1,33 @@
 # Status
 
+## 2026-06-30 First-Run Action Label UX
+
+- Replaced the remaining generic `Run First-Run Action` and inline
+  first-run form-surface labels with the concrete browser action for the
+  current first-run gate. After a new user creates the first Goal, the guide,
+  next-step card, action ladder, header next-action, and inline expander now
+  say `Create scout delegation`; later gates say `Generate context pack` and
+  `Run delegation` while preserving the same `#first-run-command-action`
+  anchor and confirmation-gated action routes.
+- Preserved the existing local confirmation flow and evidence rows. This is a
+  copy/orientation change only; GET remains read-only and first-run writes
+  still happen through the existing confirmed POST screens.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health'`, and
+  `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` passed
+  locally.
+- Browser QA used a disposable Git-initialized app root at
+  `127.0.0.1:63815`. Desktop exercised `/goals` first-run setup through
+  project registration and first-Goal creation, then verified the post-Goal
+  first-run guide exposes `Create scout delegation` on the inline command
+  summary and next-step link, posts to `/actions/delegate`, has no
+  `Run First-Run Action` copy, clean browser logs, and `scrollWidth=1280`.
+  Mobile 390x844 verified the same label/form target, clean logs, and
+  `scrollWidth=390`.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
 ## 2026-06-30 Goal Workflow Surface Label UX
 
 - Replaced remaining generic `Goal action form` labels in Goal continuation

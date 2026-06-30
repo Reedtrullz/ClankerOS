@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- First-run action surfaces now label the current browser move directly instead
+  of saying `Run First-Run Action`. After first Goal creation, the guide,
+  next-step card, action ladder, header next-action, and inline expander say
+  `Create scout delegation`; the following gates say `Generate context pack`
+  and `Run delegation` while preserving the same local anchors,
+  confirmation-gated forms, and zero-effect GET posture.
 - Goal continuation rails and workflow maps now label same-page Goal action
   surfaces with the concrete gate action instead of `Goal action form`.
   Current and follow-on map links still use the same local

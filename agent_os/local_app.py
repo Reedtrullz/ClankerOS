@@ -4028,6 +4028,18 @@ def _today_goal_queue_filter_script() -> str:
 </script>"""
 
 
+def _first_run_command_action_label(first_run: dict[str, Any]) -> str:
+    current_step = str(first_run.get("current_step") or "")
+    next_action = str(first_run.get("next_action") or "").strip()
+    if current_step == "create_first_delegation":
+        return "Create scout delegation"
+    if current_step == "generate_context_pack":
+        return next_action or "Generate context pack"
+    if current_step == "run_first_delegation":
+        return next_action or "Run delegation"
+    return next_action or "First-run action"
+
+
 def _first_run_same_page_target(first_run: dict[str, Any]) -> tuple[str, str]:
     current_step = str(first_run.get("current_step") or "")
     if current_step == "create_project":
@@ -4036,7 +4048,7 @@ def _first_run_same_page_target(first_run: dict[str, Any]) -> tuple[str, str]:
         return "#first-run-create-goal", "Create First Goal"
     surface = str(first_run.get("next_surface") or "/goals")
     if current_step in {"create_first_delegation", "generate_context_pack", "run_first_delegation"}:
-        return "#first-run-command-action", "Run First-Run Action"
+        return "#first-run-command-action", _first_run_command_action_label(first_run)
     anchor = re.search(r"href=['\"]([^'\"]+)['\"][^>]*>(.*?)</a>", surface)
     if anchor:
         label = re.sub(r"<[^>]+>", "", anchor.group(2))
@@ -11287,6 +11299,7 @@ def _first_run_command_bar(root: Path, storage: Storage, progress: dict[str, Any
     goal_id = str(progress.get("goal_id") or "")
     delegation_id = str(progress.get("delegation_id") or "")
     current_step = str(progress["current_step"])
+    command_action_label = _first_run_command_action_label(progress)
     action_form = ""
     form_available = False
     inline_form_available = False
@@ -11311,11 +11324,13 @@ def _first_run_command_bar(root: Path, storage: Storage, progress: dict[str, Any
             form_available = True
             inline_form_available = True
             confirmation_required = True
-            form_surface = SafeHtml("<a href='#first-run-command-action'>Inline first-run action</a>")
+            form_surface = SafeHtml(
+                f"<a href='#first-run-command-action'>{_e(command_action_label)}</a>"
+            )
             action_form = "".join(
                 [
                     "<details id='first-run-command-action' class='first-run-command-action' data-first-run-command-action='true' open>",
-                    "<summary>Run First-Run Action</summary>",
+                    f"<summary>{_e(command_action_label)}</summary>",
                     "<p class='muted'>Run the current first-run step from this guide. Confirmation is still required before any local write or local execution.</p>",
                     goal_form,
                     "</details>",

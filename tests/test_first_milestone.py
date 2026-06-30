@@ -7605,7 +7605,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
         in goals_after_first_goal.body
     )
     assert "data-first-run-command-action='true'" in goals_after_first_goal.body
-    assert "Run First-Run Action" in goals_after_first_goal.body
+    assert "<summary>Create scout delegation</summary>" in goals_after_first_goal.body
     assert "action='/actions/delegate'" in goals_after_first_goal.body
     assert (
         "first_run_next_step_current_step</dt><dd>create_first_delegation"
@@ -7617,7 +7617,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     )
     assert (
         "first_run_next_step_target_surface</dt><dd><a href='#first-run-command-action'>"
-        "Run First-Run Action</a>"
+        "Create scout delegation</a>"
     ) in goals_after_first_goal.body
     assert "first_run_next_step_setup_status</dt><dd>goal_created" in goals_after_first_goal.body
     assert "first_run_next_step_handoff_status</dt><dd>goal_ready" in goals_after_first_goal.body
@@ -7627,7 +7627,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_action_ladder_current_action_name</dt><dd>delegate" in goals_after_first_goal.body
     assert (
         "first_run_action_ladder_target_surface</dt><dd><a href='#first-run-command-action'>"
-        "Run First-Run Action</a>"
+        "Create scout delegation</a>"
     ) in goals_after_first_goal.body
     assert (
         f"first_run_action_ladder_proof_surface</dt><dd><a href='/goals/{created_goal_id}#goal-workflow-map'>"
@@ -8178,7 +8178,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_next_step_action</dt><dd>Generate context pack" in goals_after_delegation.body
     assert (
         "first_run_next_step_target_surface</dt><dd><a href='#first-run-command-action'>"
-        "Run First-Run Action</a>"
+        "Generate context pack</a>"
     ) in goals_after_delegation.body
     assert "first_run_next_step_handoff_status</dt><dd>delegation_created" in goals_after_delegation.body
     assert "first_run_next_step_context_pack_ready</dt><dd>false" in goals_after_delegation.body
@@ -8286,7 +8286,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_next_step_reason</dt><dd>context_pack_ready" in home_after_delegate.body
     assert (
         "first_run_next_step_target_surface</dt><dd><a href='#first-run-command-action'>"
-        "Run First-Run Action</a>"
+        "Run delegation</a>"
     ) in home_after_delegate.body
     assert "first_run_next_step_route_surface</dt><dd><a href='/goals/" in home_after_delegate.body
     assert "first_run_next_step_form_available</dt><dd>true" in home_after_delegate.body
@@ -8297,7 +8297,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_next_step_delegation_completed</dt><dd>false" in home_after_delegate.body
     assert (
         "first_run_next_step_now: Run delegation -&gt; "
-        "<a href='#first-run-command-action'>Run First-Run Action</a>"
+        "<a href='#first-run-command-action'>Run delegation</a>"
     ) in home_after_delegate.body
     assert created_goal_id in home_after_delegate.body
     created_goals = render_local_app_route(tmp_path, "/goals")
