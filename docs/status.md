@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/today` now makes the daily cockpit directly actionable when the lead Goal's
+  next action has a confirmed browser form. The command center renders the
+  form visibly as `#today-current-action` before command evidence, while note,
+  pause, and Finish Today forms remain collapsed and all writes still require
+  the existing confirmation route.
 - `/resume` now turns the `Resume Operator Workbench` into the actionable
   return surface. Saved Goal current-action forms and first-run setup forms
   render as a top `#resume-workbench-action-form` before workbench evidence,

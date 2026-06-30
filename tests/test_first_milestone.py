@@ -12113,6 +12113,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_ci_handoff_status_json: gh run view" in today.body
     assert "today_ci_handoff_safety: read-only local handoff" in today.body
     assert "data-today-current-action='true'" in today.body
+    assert "data-today-current-action-form='true'" in today.body
+    assert today.body.index("data-today-current-action-form='true'") < today.body.index(
+        "data-today-command-evidence='true'"
+    )
     assert "Run Current Action" in today.body
     assert "action='/actions/coder-commit-request'" in today.body
     assert f"name='run_id' value='{result.coder_worktree_run_id}'" in today.body

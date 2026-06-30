@@ -1,5 +1,31 @@
 # Status
 
+## 2026-06-30 Today Current Action Form UX
+
+- Made `/today` directly actionable from the daily command center when the
+  lead Goal's next action already has a confirmed browser form. The
+  `#today-current-action` section now renders visibly before Today command
+  evidence instead of living inside a collapsed details panel.
+- Kept the existing action authority intact: the visible form still posts to
+  the same `/actions/<action>` confirmation route, confirmation is required
+  before local writes or local execution, and no provider calls,
+  non-loopback network actions, pushes, PRs, deploys, or external mutations
+  are introduced.
+- Updated README, local app docs, operating summary, and latest-status docs so
+  `/today` is described as a direct action surface, not only a dashboard.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check`, focused pytest
+  `tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state`, and `python3 -m
+  agent_os.cli app-smoke-test` passed locally.
+- Browser QA: launched a disposable demo app at `127.0.0.1:62129`, opened
+  `/today`, verified `#today-current-action` rendered as a visible block
+  before `data-today-command-evidence`, verified the form posts to
+  `/actions/coder-commit-request`, and submitted it only as far as the local
+  confirmation preflight. Desktop and 390x844 mobile had no horizontal
+  overflow and no console warnings/errors. Non-claim: the full pytest suite is
+  delegated to GitHub Actions for this slice.
+
 ## 2026-06-30 Resume Workbench Action Form UX
 
 - Made `/resume` directly actionable from the top `Resume Operator Workbench`.

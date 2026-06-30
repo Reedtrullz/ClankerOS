@@ -4545,11 +4545,12 @@ def _today_command_center(
         "today_command_safety: read-only daily cockpit; confirmed local forms only",
     ]
     action_details = (
-        "<details id='today-current-action' class='today-current-action' data-today-current-action='true'>"
-        "<summary>Run Current Action</summary>"
+        "<section id='today-current-action' class='today-current-action today-current-action-form' "
+        "data-today-current-action='true' data-today-current-action-form='true'>"
+        "<h3>Run Current Action</h3>"
         "<p class='muted'>Use the current goal's browser-available next action here. Confirmation is required before any local write.</p>"
         f"{action_form}"
-        "</details>"
+        "</section>"
         if action_form
         else ""
     )
@@ -4576,11 +4577,11 @@ def _today_command_center(
             "<section id='today-command-center' class='panel today-command-center' data-today-command-center='true'><h2>Today Command Center</h2>",
             "<p class='muted'>One daily cockpit for the lead goal, operator attention, saved resume state, and end-of-day handoff.</p>",
             cards,
+            action_details,
             "<details class='today-command-evidence' data-today-command-evidence='true'><summary>Today command evidence</summary>",
             _kv(rows),
             _ul(lines),
             "</details>",
-            action_details,
             (
                 "<details id='today-note' class='today-note today-note-details' data-today-note-details='true'><summary>Capture Note form</summary>"
                 "<section><h3>Capture Note</h3>"
@@ -43186,8 +43187,10 @@ def _html_page(
     .ci-evidence-summary-evidence summary, .ci-proof-workbench-evidence summary, .ci-json-assistant-evidence summary, .ci-evidence-command-evidence summary {{ cursor:pointer; font-weight:700; }}
     .ci-evidence-summary-evidence:not([open]) > :not(summary), .ci-proof-workbench-evidence:not([open]) > :not(summary), .ci-json-assistant-evidence:not([open]) > :not(summary), .ci-evidence-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .today-current-action, .today-finish, .today-note, .today-pause {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
+    .today-current-action-form {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .today-current-action-form h3 {{ margin:0 0 6px; font-size:16px; }}
     .today-current-action summary, .today-finish summary, .today-note summary, .today-pause summary {{ cursor:pointer; font-weight:700; }}
-    .today-current-action:not([open]) > :not(summary), .today-finish:not([open]) > :not(summary), .today-note:not([open]) > :not(summary), .today-pause:not([open]) > :not(summary) {{ display:none; }}
+    details.today-current-action:not([open]) > :not(summary), .today-finish:not([open]) > :not(summary), .today-note:not([open]) > :not(summary), .today-pause:not([open]) > :not(summary) {{ display:none; }}
     .today-current-action form, .today-finish form, .today-note form, .today-pause form, .goal-pause form, .goal-finish-details form {{ margin-top:10px; }}
     .home-state-details {{ margin-top:10px; }}
     .home-state-details summary {{ cursor:pointer; font-weight:700; }}
