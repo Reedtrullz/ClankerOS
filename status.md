@@ -1,5 +1,41 @@
 # Status
 
+## 2026-06-30 Goal Review Strip Header UX
+
+- Made Goal detail pages show a first-class `Goal Review Strip` in the Goal
+  header path, immediately after the Goal title and before the summary cards,
+  phase banner, Action Dock, jump bar, and lower review surfaces.
+- The strip summarizes the latest timeline event, local proof count, latest
+  artifact, risk/remaining gate, and safety posture, with direct links to the
+  timeline/evidence/artifact/approval surfaces. It reuses existing timeline,
+  evidence, artifact, risk, gate, and remaining-work helpers instead of adding
+  new action authority.
+- Added collapsed `Goal review strip evidence` rows for source counts,
+  artifact availability, latest artifact/read surface, workflow gate progress,
+  waiting/open-work counts, risk labels, the current next action, and explicit
+  no-write/no-provider/no-network/no-external-effect counters.
+- Added the Review strip to the Goal section finder and updated route/demo
+  regression coverage for the strip cards, evidence rows, link targets,
+  section count, and ordering (`summary -> review strip -> phase -> action`).
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check`, focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), and temp-root
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`.
+- Browser QA used the in-app Browser against a disposable demo app at
+  `127.0.0.1:8814` for `goal_77c1949b806b`. Desktop 1280x720 verified the
+  review strip starts at 470px and is visible in the first viewport, has clean
+  warn/error logs, no horizontal overflow, correct link targets, and correct
+  ordering before phase/action. Mobile 390x844 verified the strip starts at
+  490px, cards stack to one column without overflow, clean logs, and tapping
+  `Read artifact` lands on visible `#goal-artifact-reader`.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice. The strip is a read-only review surface; existing confirmed
+  forms still own local writes/execution, and this slice did not push, create a
+  PR, deploy, call providers, or mutate external systems.
+
 ## 2026-06-30 Goal Summary Next Card UX
 
 - Made the Goal summary itself action-first. Goal detail pages now render a

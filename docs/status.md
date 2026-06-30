@@ -4,6 +4,17 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal detail pages now put a first-class `Goal Review Strip` directly in the
+  Goal header path, immediately after the title and before summary cards,
+  phase, Action Dock, and lower surfaces. It summarizes latest activity, local
+  proof, latest artifact, risk/remaining work, and safety posture with links
+  into existing timeline/evidence/artifact/approval surfaces and collapsed
+  evidence rows preserving counts plus no-write/no-provider/no-network/
+  no-external-effect counters. Local proof includes py-compile, diff check,
+  focused route/demo pytest, temp-root app-smoke-test, and in-app Browser QA
+  on desktop 1280x720 plus mobile 390x844 with clean logs, no overflow, first-
+  viewport visibility, and artifact-reader click-through; pushed GitHub
+  Actions and full-suite proof are still pending for this slice.
 - Goal summary is now action-first on Goal detail pages. A first `Next` card
   appears before Project/Status/Phase/Live and links to the existing
   confirmation-gated Goal Action Dock surface, such as
