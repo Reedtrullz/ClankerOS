@@ -20969,7 +20969,16 @@ def _goal_delegation_command_bar(
     next_action = "Create scout delegation"
     target_href = "#goal-next-action"
     target_label = "Next Action"
+    target_form_available = False
     reason = "goal has no delegation yet"
+    current_action = _goal_next_action(root, state)
+    current_form_available = bool(_goal_next_action_form(state, current_action))
+    current_href = _goal_primary_action_href(
+        state,
+        current_action,
+        form_available=current_form_available,
+    )
+    current_label = _goal_action_cta_label(current_action, current_form_available)
 
     if selected_delegation is not None:
         latest_delegation_id = selected_delegation.id
@@ -21114,6 +21123,29 @@ def _goal_delegation_command_bar(
             target_href = f"/workflow?delegation_id={quote(selected_delegation.id)}"
             target_label = f"/workflow?delegation_id={selected_delegation.id}"
             reason = "selected delegation has workflow state to inspect"
+    delegation_current_actions = {
+        "Create scout delegation",
+        "Generate context pack",
+        "Run delegation",
+        "Run coder prep",
+        "Create worktree plan",
+        "Request worktree approval",
+        "Run approved worktree",
+        "Open review",
+        "Create commit request",
+        "Approve commit",
+        "Commit approved worktree",
+        "Create publication request",
+        "Approve publication",
+        "Create publication handoff",
+    }
+    if current_form_available and current_action.action in delegation_current_actions:
+        if next_action != current_action.action:
+            reason = f"current_goal_action={current_action.reason}"
+        next_action = current_label
+        target_href = current_href
+        target_label = current_label
+        target_form_available = current_form_available
 
     if next_action == "Create commit request":
         status = "ready_for_commit_request"
@@ -21134,7 +21166,7 @@ def _goal_delegation_command_bar(
     latest_delegation_href = (
         f"/delegations/{quote(latest_delegation_id)}"
         if latest_delegation_id != "none"
-        else "#goal-next-action"
+        else (current_href if current_action.action == next_action else "#goal-next-action")
     )
     workflow_href = (
         f"/workflow?delegation_id={quote(latest_delegation_id)}"
@@ -21142,7 +21174,9 @@ def _goal_delegation_command_bar(
         else "/workflow"
     )
     latest_delegation_label = (
-        "Open delegation" if latest_delegation_id != "none" else "Next Action"
+        "Open delegation"
+        if latest_delegation_id != "none"
+        else (current_label if current_action.action == next_action else "Next Action")
     )
     delegation_cards = "".join(
         [
@@ -21216,6 +21250,10 @@ def _goal_delegation_command_bar(
                     ("goal_delegation_command_latest_handoff_status", latest_handoff_status),
                     ("goal_delegation_command_next_action", next_action),
                     ("goal_delegation_command_target_surface", target),
+                    (
+                        "goal_delegation_command_action_form_available",
+                        str(target_form_available).lower(),
+                    ),
                     ("goal_delegation_command_reason", reason),
                     (
                         "goal_delegation_command_source",

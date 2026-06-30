@@ -7654,6 +7654,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "goal_first_run_provider_calls_taken</dt><dd>0" in first_goal_page.body
     assert "goal_first_run_network_actions_taken</dt><dd>0" in first_goal_page.body
     assert "goal_first_run_external_effects_created</dt><dd>false" in first_goal_page.body
+    assert "goal_delegation_command_next_action</dt><dd>Create scout delegation" in first_goal_page.body
+    assert "goal_delegation_command_target_surface</dt><dd><a href='#goal-action-dock-form'>Create scout delegation</a>" in first_goal_page.body
+    assert "goal_delegation_command_action_form_available</dt><dd>true" in first_goal_page.body
+    assert "goal_delegation_click: <a href='#goal-action-dock-form'>Create scout delegation</a>" in first_goal_page.body
     assert (
         "goal_first_run_step: create_first_delegation status=current "
         "surface=<a href='#goal-action-dock-form'>Create scout delegation</a>"
@@ -8231,6 +8235,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "goal_first_run_delegation</dt><dd>" in delegated_goal_page.body
     assert "goal_first_run_context_pack_ready</dt><dd>false" in delegated_goal_page.body
     assert "goal_first_run_done_count</dt><dd>3" in delegated_goal_page.body
+    assert "goal_delegation_command_next_action</dt><dd>Generate context pack" in delegated_goal_page.body
+    assert "goal_delegation_command_target_surface</dt><dd><a href='#goal-action-dock-form'>Generate context pack</a>" in delegated_goal_page.body
+    assert "goal_delegation_command_action_form_available</dt><dd>true" in delegated_goal_page.body
+    assert "goal_delegation_click: <a href='#goal-action-dock-form'>Generate context pack</a>" in delegated_goal_page.body
     assert (
         "goal_first_run_step: generate_context_pack status=current "
         "surface=<a href='#goal-action-dock-form'>Generate context pack</a>"
@@ -8327,6 +8335,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     ) in after_context_pack_goal_page.body
     assert "goal_first_run_context_pack_ready</dt><dd>true" in after_context_pack_goal_page.body
     assert "goal_first_run_done_count</dt><dd>4" in after_context_pack_goal_page.body
+    assert "goal_delegation_command_next_action</dt><dd>Run delegation" in after_context_pack_goal_page.body
+    assert "goal_delegation_command_target_surface</dt><dd><a href='#goal-action-dock-form'>Run delegation</a>" in after_context_pack_goal_page.body
+    assert "goal_delegation_command_action_form_available</dt><dd>true" in after_context_pack_goal_page.body
+    assert "goal_delegation_click: <a href='#goal-action-dock-form'>Run delegation</a>" in after_context_pack_goal_page.body
     assert (
         "goal_first_run_step: run_first_delegation status=current "
         "surface=<a href='#goal-action-dock-form'>Run delegation</a>"
@@ -14472,7 +14484,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_delegation_command_latest_context_pack_status</dt><dd>available" in goal.body
     assert "goal_delegation_command_latest_handoff_status</dt><dd>available" in goal.body
     assert "goal_delegation_command_next_action</dt><dd>Create commit request" in goal.body
-    assert f"goal_delegation_command_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>/runs/{result.coder_worktree_run_id}</a>" in goal.body
+    assert "goal_delegation_command_target_surface</dt><dd><a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
+    assert "goal_delegation_command_action_form_available</dt><dd>true" in goal.body
     assert "goal_delegation_command_reason</dt><dd>reviewed coder run is ready for a local commit request" in goal.body
     assert "goal_delegation_command_source</dt><dd>goal_delegations_context_and_handoff_state" in goal.body
     assert "goal_delegation_command_write_on_get</dt><dd>false" in goal.body
@@ -14480,7 +14493,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_delegation_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_delegation_command_external_effects_created</dt><dd>false" in goal.body
     assert "goal_delegation_now: Create commit request" in goal.body
-    assert f"goal_delegation_click: <a href='/runs/{result.coder_worktree_run_id}'>/runs/{result.coder_worktree_run_id}</a>" in goal.body
+    assert "goal_delegation_click: <a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert f"goal_delegation_latest: {result.delegation_id} status=completed context=available handoff=available" in goal.body
     assert "goal_delegation_safety: read-only local delegation posture" in goal.body
     assert "Goal Run Command Bar" in goal.body
