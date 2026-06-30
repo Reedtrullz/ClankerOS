@@ -1,5 +1,45 @@
 # Status
 
+## 2026-06-30 Goal Mobile Compact Chrome UX
+
+- Made Goal detail pages advertise a dedicated mobile Goal-detail shell state
+  with `data-goal-detail-page='true'` and
+  `data-operator-ribbon-compact-mobile='true'`. Non-Goal pages keep
+  `data-goal-detail-page='false'` and the full operator ribbon behavior.
+- Added a mobile-only compact chrome contract for Goal detail pages. At 640px
+  and below, the shared header/nav/action rows stay on one scrollable line,
+  the page padding tightens, and the operator ribbon shows only the first-
+  screen `Now` and `Finish` cards while preserving the full evidence rows and
+  all non-mobile ribbon cards in the DOM.
+- Preserved the existing confirmation-gated action authority: the compact
+  first-screen `Now` card still links to `#goal-action-dock-form`, which uses
+  the existing `/actions/coder-commit-request` confirmation route before any
+  local write or local execution.
+- Updated route and demo regression coverage for Goal-detail mobile markers,
+  compact-ribbon evidence rows, non-Goal full-ribbon behavior, and the
+  mobile CSS contract that hides only secondary ribbon cards on Goal detail
+  viewports.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), `git diff --check`, and temp-root
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`.
+- Browser QA used the in-app Browser against a disposable demo app at
+  `127.0.0.1:8812` for `goal_45b78760a153`. Desktop 1280x720 verified all
+  six ribbon cards remain visible, Goal summary is in the first viewport,
+  logs are clean, and there is no horizontal overflow. Mobile 390x844
+  verified only `Now` and `Finish` are visible in the ribbon, the Goal summary
+  starts at 318px, the page width stays at 390px, logs are clean, and clicking
+  the visible `Create commit request` card lands on
+  `#goal-action-dock-form` with the `/actions/coder-commit-request` form
+  visible.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice. The mobile Action Dock form itself still starts below the first
+  viewport before clicking; the first-screen path is the compact `Now` action
+  and header next-action control.
+
 ## 2026-06-30 Goal Detail First-Screen UX
 
 - Made Goal detail pages use Goal-first shell ordering. The main Goal cockpit

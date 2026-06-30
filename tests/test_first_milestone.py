@@ -4399,10 +4399,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     root = render_local_app_route(tmp_path, "/")
     assert root.status == 200
     assert "ClankerOS Local Operator" in root.body
+    assert "data-goal-detail-page='false'" in root.body
     assert 'data-operator-shell="true"' in root.body
     assert 'data-operator-shell-goal-first="false"' in root.body
     assert 'class="operator-main" data-operator-main="true"' in root.body
-    assert "data-operator-ribbon='true'" in root.body
+    assert "data-operator-ribbon='true' data-operator-ribbon-compact-mobile='false'" in root.body
     assert "data-operator-ribbon-cards='true'" in root.body
     assert "data-operator-ribbon-now='true' data-operator-ribbon-primary='true'" in root.body
     assert "data-operator-ribbon-goal='true'" in root.body
@@ -6135,6 +6136,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     ) in root.body
     assert ".goal-summary-grid, .goal-phase-grid { display:grid;" in root.body
     assert ".goal-summary-evidence:not([open]) > :not(summary)" in root.body
+    assert (
+        '@media (max-width: 640px) { body[data-goal-detail-page="true"] header '
+        "{ padding:8px 10px; gap:6px; }"
+    ) in root.body
+    assert (
+        '.operator-ribbon[data-operator-ribbon-compact-mobile="true"] '
+        "[data-operator-ribbon-resume='true']"
+    ) in root.body
     assert (
         ':root[data-focus-mode="true"] .operator-side, '
         ':root[data-focus-mode="true"] .route-context-strip, '
@@ -11334,8 +11343,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     dashboard = render_local_app_route(tmp_path, "/")
     assert dashboard.status == 200
+    assert "data-goal-detail-page='false'" in dashboard.body
     assert 'data-operator-shell-goal-first="false"' in dashboard.body
-    assert "data-operator-ribbon='true'" in dashboard.body
+    assert "data-operator-ribbon='true' data-operator-ribbon-compact-mobile='false'" in dashboard.body
     assert "data-operator-ribbon-cards='true'" in dashboard.body
     assert "data-operator-ribbon-now='true' data-operator-ribbon-primary='true'" in dashboard.body
     assert "data-operator-ribbon-goal='true'" in dashboard.body
@@ -12493,6 +12503,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
 
     goal = render_local_app_route(tmp_path, f"/goals/{result.goal_id}")
     assert goal.status == 200
+    assert "data-goal-detail-page='true'" in goal.body
     assert (
         "<title>Demo the ClankerOS local operator app with fixture-backed state - "
         "ClankerOS Local Operator</title>"
@@ -12506,6 +12517,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "with fixture-backed state</h1>"
     ) in goal.body
     assert f"<p class='muted' data-goal-summary-id='true'>Goal {result.goal_id}</p>" in goal.body
+    assert "data-operator-ribbon='true' data-operator-ribbon-compact-mobile='true'" in goal.body
+    assert "operator_ribbon_compact_mobile</dt><dd>true" in goal.body
+    assert "operator_ribbon_mobile_priority_cards</dt><dd>now, finish" in goal.body
     assert "data-goal-summary-grid='true'" in goal.body
     assert "data-goal-summary-project='true'" in goal.body
     assert "data-goal-summary-status-card='true'" in goal.body

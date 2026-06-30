@@ -4,6 +4,15 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal detail pages now have a mobile compact chrome mode. At 640px and
+  below, Goal detail pages keep the header/nav/action rows to one scrollable
+  line and compact the operator ribbon to the first-screen `Now` and `Finish`
+  cards while preserving full desktop ribbon behavior, evidence rows, and the
+  existing confirmation-gated action form. In-app Browser QA verified desktop
+  all-card behavior plus mobile 390x844 no-overflow behavior and click-through
+  from the compact `Create commit request` card to
+  `#goal-action-dock-form`; pushed GitHub Actions and full-suite proof are
+  still pending for this slice.
 - Goal detail pages now use Goal-first shell ordering: the main Goal cockpit
   renders before Recent Items, the Workspace Panel Restore strip moves after
   Goal content, and the Goal Action Dock sits before the jump bar. Summary and

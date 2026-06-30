@@ -42022,6 +42022,7 @@ def _operator_status_ribbon(
 ) -> str:
     status = str(focus_context.get("status", "state_unavailable"))
     route_path = urlparse(current_path or "/").path or "/"
+    compact_mobile = "true" if route_path.startswith("/goals/") else "false"
     workspace = _load_workspace_state(root)
     saved_project = str(workspace.get("open_project") or "").strip()
     saved_goal = str(workspace.get("open_goal") or "").strip()
@@ -42160,6 +42161,8 @@ def _operator_status_ribbon(
     route_label = title or route_path
     rows: list[tuple[str, str | SafeHtml]] = [
         ("operator_ribbon_status", status),
+        ("operator_ribbon_compact_mobile", compact_mobile),
+        ("operator_ribbon_mobile_priority_cards", "now, finish" if compact_mobile == "true" else "all"),
         ("operator_ribbon_source", source),
         ("operator_ribbon_route", route_path),
         ("operator_ribbon_title", title),
@@ -42274,7 +42277,9 @@ def _operator_status_ribbon(
     ]
     return "".join(
         [
-            "<section class='operator-ribbon panel' data-operator-ribbon='true' aria-label='Operator status ribbon'>",
+            "<section class='operator-ribbon panel' data-operator-ribbon='true' "
+            f"data-operator-ribbon-compact-mobile='{compact_mobile}' "
+            "aria-label='Operator status ribbon'>",
             "<div class='operator-ribbon-grid' data-operator-ribbon-cards='true'>",
             "".join(cards),
             "</div>",
@@ -43636,6 +43641,7 @@ def _html_page(
     palette = _command_palette(root, focus_context, current_path, title)
     workspace_panel_restore = _workspace_panel_restore_strip(root, current_path)
     goal_detail_first = current_route_path.startswith("/goals/")
+    goal_detail_page = "true" if goal_detail_first else "false"
     content_first_paths = {"/", "/actions", "/approvals", "/artifacts", "/ci-evidence", "/delegation-runs", "/demo", "/dogfooding", "/goals", "/guide", "/health", "/inbox", "/incidents", "/memory", "/profiles", "/projects", "/resume", "/search", "/skills", "/today", "/verification", "/workflow", "/workspace"}
     if (
         current_route_path in content_first_paths
@@ -43712,6 +43718,7 @@ def _html_page(
     .operator-ribbon dl {{ grid-template-columns:minmax(170px, 230px) 1fr; }}
     .operator-ribbon ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
     .operator-ribbon li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    @media (max-width: 640px) {{ body[data-goal-detail-page="true"] header {{ padding:8px 10px; gap:6px; }} body[data-goal-detail-page="true"] header strong {{ font-size:13px; }} body[data-goal-detail-page="true"] .shell-nav, body[data-goal-detail-page="true"] .shell-nav-primary, body[data-goal-detail-page="true"] .header-actions {{ width:100%; flex-wrap:nowrap; overflow-x:auto; gap:6px; padding-bottom:2px; }} body[data-goal-detail-page="true"] .shell-nav a, body[data-goal-detail-page="true"] .shell-nav-more summary, body[data-goal-detail-page="true"] .icon-button {{ white-space:nowrap; }} body[data-goal-detail-page="true"] .shell-nav a {{ font-size:13px; }} body[data-goal-detail-page="true"] .icon-button {{ flex:0 0 auto; padding:6px 8px; font-size:13px; max-width:150px; overflow:hidden; text-overflow:ellipsis; }} body[data-goal-detail-page="true"] main {{ padding:10px 12px 14px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] {{ padding:8px; margin-bottom:10px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-grid {{ grid-template-columns:1fr 1fr; gap:6px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-card {{ padding:7px 8px; gap:4px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-card strong {{ font-size:13px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-action, .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-link {{ min-height:30px; padding:5px 7px; font-size:13px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-goal='true'], .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-attention='true'], .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-resume='true'], .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-search='true'] {{ display:none; }} }}
     .workspace-panel-restore {{ border-left:4px solid var(--accent); margin:0 0 16px; padding:12px; background:var(--panel); }}
     .workspace-panel-restore h2 {{ font-size:15px; margin-top:0; }}
     .workspace-panel-restore-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(155px, 1fr)); gap:8px; align-items:stretch; margin:10px 0; }}
@@ -45641,7 +45648,7 @@ def _html_page(
     @media (max-width: 640px) {{ #first-run-checklist {{ scroll-margin-top:260px; }} .first-run-checklist-item, .first-run-checklist-main {{ grid-template-columns:1fr; }} .first-run-checklist-link, .first-run-checklist-reset, .first-run-checklist-view-status {{ width:100%; justify-content:center; }} .first-run-checklist-toolbar {{ align-items:stretch; }} }}
   </style>
 </head>
-<body data-open-panel-memory='true' data-open-panel-memory-storage-prefix='clankeros-open-panels:' data-open-panel-memory-write-on-get='false' data-open-panel-memory-provider-calls-taken='0' data-open-panel-memory-network-actions-taken='0' data-open-panel-memory-external-effects-created='false' data-scroll-position-memory='true' data-scroll-position-memory-storage-prefix='clankeros-scroll-position:' data-scroll-position-memory-write-on-get='false' data-scroll-position-memory-provider-calls-taken='0' data-scroll-position-memory-network-actions-taken='0' data-scroll-position-memory-external-effects-created='false'>
+<body data-goal-detail-page='{goal_detail_page}' data-open-panel-memory='true' data-open-panel-memory-storage-prefix='clankeros-open-panels:' data-open-panel-memory-write-on-get='false' data-open-panel-memory-provider-calls-taken='0' data-open-panel-memory-network-actions-taken='0' data-open-panel-memory-external-effects-created='false' data-scroll-position-memory='true' data-scroll-position-memory-storage-prefix='clankeros-scroll-position:' data-scroll-position-memory-write-on-get='false' data-scroll-position-memory-provider-calls-taken='0' data-scroll-position-memory-network-actions-taken='0' data-scroll-position-memory-external-effects-created='false'>
   <header>
     <strong>ClankerOS Local Operator</strong>
     <nav class="shell-nav" aria-label="Shell navigation" data-shell-nav="true" data-shell-nav-primary-count="{nav_primary_count}" data-shell-nav-secondary-count="{nav_secondary_count}">{nav}</nav>
