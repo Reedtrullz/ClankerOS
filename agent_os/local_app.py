@@ -41696,6 +41696,40 @@ def _is_current_nav(path: str, href: str) -> bool:
     return path == href or path.startswith(href + "/")
 
 
+def _focus_context_target(
+    focus_context: dict[str, Any],
+    current_path: str,
+) -> tuple[str, str, str]:
+    focus_status = str(focus_context.get("status", "state_unavailable"))
+    focus_target = str(focus_context.get("target_href") or "/health")
+    focus_target_label = str(focus_context.get("target_label") or focus_target)
+    focus_source = focus_status
+    if focus_status == "available" and isinstance(
+        focus_context.get("next_action"),
+        GoalNextAction,
+    ):
+        next_action = focus_context["next_action"]
+        action_form = str(focus_context.get("action_form") or "")
+        focus_target = str(next_action.href)
+        focus_target_label = next_action.action
+        focus_source = "next_action"
+        if action_form:
+            goal = focus_context.get("goal")
+            if goal is not None:
+                goal_path = f"/goals/{quote(goal.id)}"
+                route_path = urlparse(current_path or "/").path or "/"
+                focus_target = (
+                    "#goal-action-dock-form"
+                    if route_path == goal_path
+                    else f"{goal_path}#goal-action-dock-form"
+                )
+                focus_source = "goal_action_dock_form"
+            else:
+                focus_target = "#operator-focus-current-action"
+                focus_source = "operator_focus_action_form"
+    return focus_target, focus_target_label, focus_source
+
+
 def _breadcrumbs(
     root: Path,
     current_path: str,
@@ -41762,12 +41796,10 @@ def _breadcrumbs(
         crumbs = [("Dashboard", "/"), ("Goals", "/goals"), (current_goal_label, None)]
     current_href = current_path or path or "/"
     focus_status = str(focus_context.get("status", "state_unavailable"))
-    focus_target = str(focus_context.get("target_href") or "/health")
-    focus_target_label = str(focus_context.get("target_label") or focus_target)
-    if focus_status == "available":
-        next_action = focus_context["next_action"]
-        focus_target = str(next_action.href)
-        focus_target_label = focus_target
+    focus_target, focus_target_label, focus_target_source = _focus_context_target(
+        focus_context,
+        current_path,
+    )
 
     rendered = []
     for index, (label, href) in enumerate(crumbs):
@@ -41834,6 +41866,7 @@ def _breadcrumbs(
             "breadcrumb_focus_target",
             SafeHtml(f"<a href='{_e(focus_target)}'>{_e(focus_target_label)}</a>"),
         ),
+        ("breadcrumb_focus_target_source", focus_target_source),
         ("breadcrumb_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
         ("breadcrumb_write_on_get", "false"),
         ("breadcrumb_provider_calls_taken", "0"),
@@ -41871,6 +41904,7 @@ def _breadcrumbs(
             "route_focus",
             SafeHtml(f"<a href='{_e(focus_target)}'>{_e(focus_target_label)}</a>"),
         ),
+        ("route_focus_source", focus_target_source),
         ("route_resume", SafeHtml("<a href='/resume'>/resume</a>")),
     ]
     primary_focus_label = focus_target_label
@@ -42933,7 +42967,7 @@ def _operator_status_ribbon(
     )
 
 
-def _operator_focus_strip(context: dict[str, Any]) -> str:
+def _operator_focus_strip(context: dict[str, Any], current_path: str = "/") -> str:
     status = str(context.get("status", "state_unavailable"))
     if status == "first_run":
         href = str(context.get("target_href") or "/goals")
@@ -43075,6 +43109,7 @@ def _operator_focus_strip(context: dict[str, Any]) -> str:
     goal = context["goal"]
     next_action = context["next_action"]
     action_form = str(context.get("action_form") or "")
+    focus_href, focus_label, focus_source = _focus_context_target(context, current_path)
     rows = [
         ("operator_focus_status", "available"),
         ("operator_focus_source", str(context["source"])),
@@ -43091,8 +43126,9 @@ def _operator_focus_strip(context: dict[str, Any]) -> str:
         ("operator_focus_primary_action", next_action.action),
         (
             "operator_focus_target",
-            SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"),
+            SafeHtml(f"<a href='{_e(focus_href)}'>{_e(focus_label)}</a>"),
         ),
+        ("operator_focus_target_source", focus_source),
         ("operator_focus_reason", next_action.reason),
         ("operator_focus_progress", str(context["progress"])),
         ("operator_focus_open_tasks", str(context["open_tasks"])),
@@ -43112,7 +43148,7 @@ def _operator_focus_strip(context: dict[str, Any]) -> str:
     ]
     lines = [
         f"operator_focus_now: {_e(context['attention'])}",
-        f"operator_focus_click: <a href='{_e(next_action.href)}'>{_e(next_action.action)}</a>",
+        f"operator_focus_click: <a href='{_e(focus_href)}'>{_e(focus_label)}</a>",
         f"operator_focus_progress: {_e(context['progress'])}",
         (
             "operator_focus_waiting: "
@@ -43129,7 +43165,7 @@ def _operator_focus_strip(context: dict[str, Any]) -> str:
             next_action.action,
             action=SafeHtml(
                 f"<a class='operator-focus-primary' data-operator-focus-primary='true' "
-                f"href='{_e(next_action.href)}'>{_e(next_action.action)}</a>"
+                f"href='{_e(focus_href)}'>{_e(focus_label)}</a>"
             ),
             marker="data-operator-focus-now='true'",
             primary=True,
@@ -43836,11 +43872,10 @@ def _command_palette_route_context(
     saved_goal_label, saved_goal_label_source = _goal_display_label(root, saved_goal)
     current_href = current_path or path or "/"
     focus_status = str(focus_context.get("status", "state_unavailable"))
-    focus_target = str(focus_context.get("target_href") or "/health")
-    focus_target_label = str(focus_context.get("target_label") or focus_target)
-    if focus_status == "available":
-        focus_target = str(focus_context["next_action"].href)
-        focus_target_label = focus_target
+    focus_target, focus_target_label, focus_target_source = _focus_context_target(
+        focus_context,
+        current_path,
+    )
 
     rows: list[tuple[str, str | SafeHtml]] = [
         ("palette_route_status", "available"),
@@ -43891,6 +43926,7 @@ def _command_palette_route_context(
             "palette_route_focus_target",
             SafeHtml(f"<a href='{_e(focus_target)}'>{_e(focus_target_label)}</a>"),
         ),
+        ("palette_route_focus_target_source", focus_target_source),
         ("palette_route_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
         ("palette_route_write_on_get", "false"),
         ("palette_route_provider_calls_taken", "0"),
@@ -44276,7 +44312,7 @@ def _html_page(
     finish_shortcut = _finish_today_shortcut_context(current_path)
     operator_ribbon = _operator_status_ribbon(root, focus_context, current_path, title)
     breadcrumbs = _breadcrumbs(root, current_path, title, focus_context)
-    focus_strip = _operator_focus_strip(focus_context)
+    focus_strip = _operator_focus_strip(focus_context, current_path)
     last_action_strip = _last_action_strip(root)
     palette = _command_palette(root, focus_context, current_path, title)
     workspace_panel_restore = _workspace_panel_restore_strip(root, current_path)

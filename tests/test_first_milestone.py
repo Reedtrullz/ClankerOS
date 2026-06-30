@@ -11748,7 +11748,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-operator-focus-focus='true'" in dashboard.body
     assert "data-operator-focus-now='true'" in dashboard.body
     assert (
-        f"data-operator-focus-primary='true' href='/runs/{result.coder_worktree_run_id}'>"
+        f"data-operator-focus-primary='true' href='/goals/{result.goal_id}#goal-action-dock-form'>"
         "Create commit request</a>"
     ) in dashboard.body
     assert "data-operator-focus-phase-card='true'" in dashboard.body
@@ -11771,7 +11771,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "operator_focus_phase</dt><dd>Ready to commit" in dashboard.body
     assert "operator_focus_attention</dt><dd>Act: Create commit request" in dashboard.body
     assert "operator_focus_primary_action</dt><dd>Create commit request" in dashboard.body
-    assert f"operator_focus_target</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in dashboard.body
+    assert (
+        f"operator_focus_target</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in dashboard.body
+    assert "operator_focus_target_source</dt><dd>goal_action_dock_form" in dashboard.body
     assert "operator_focus_progress</dt><dd>0/1 tasks completed" in dashboard.body
     assert "operator_focus_open_tasks</dt><dd>1" in dashboard.body
     assert "operator_focus_waiting_items</dt><dd>1" in dashboard.body
@@ -12824,8 +12828,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "palette_route_phase</dt><dd>Ready to commit" in goal.body
     assert "palette_route_focus_status</dt><dd>available" in goal.body
     assert (
-        f"palette_route_focus_target</dt><dd><a href='/runs/{result.coder_worktree_run_id}'"
+        "palette_route_focus_target</dt><dd><a href='#goal-action-dock-form'>"
+        "Create commit request</a>"
     ) in goal.body
+    assert "palette_route_focus_target_source</dt><dd>goal_action_dock_form" in goal.body
     assert "palette_route_write_on_get</dt><dd>false" in goal.body
     assert "data-command-palette-continue='true'" in goal.body
     assert "palette_continue_goal</dt><dd><a href='/goals/" in goal.body
@@ -12844,7 +12850,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-operator-focus-focus='true'" in goal.body
     assert "data-operator-focus-now='true'" in goal.body
     assert (
-        f"data-operator-focus-primary='true' href='/runs/{result.coder_worktree_run_id}'>"
+        "data-operator-focus-primary='true' href='#goal-action-dock-form'>"
         "Create commit request</a>"
     ) in goal.body
     assert "data-operator-focus-phase-card='true'" in goal.body
@@ -12969,7 +12975,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-route-context-focus='true'" in goal.body
     assert "data-route-context-current='true'" in goal.body
     assert (
-        f"data-route-context-primary='true' href='/runs/{result.coder_worktree_run_id}'>"
+        "data-route-context-primary='true' href='#goal-action-dock-form'>"
         "Create commit request</a>"
     ) in goal.body
     assert "data-route-context-back='true' href='/goals'>Goals</a>" in goal.body
@@ -13015,7 +13021,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"breadcrumb_current_project</dt><dd><a href='/projects/{result.project_id}'>{result.project_id}</a>" in goal.body
     assert "breadcrumb_phase</dt><dd>Ready to commit" in goal.body
     assert "breadcrumb_focus_status</dt><dd>available" in goal.body
-    assert f"breadcrumb_focus_target</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>/runs/{result.coder_worktree_run_id}</a>" in goal.body
+    assert (
+        "breadcrumb_focus_target</dt><dd><a href='#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in goal.body
+    assert "breadcrumb_focus_target_source</dt><dd>goal_action_dock_form" in goal.body
+    assert "route_focus_source</dt><dd>goal_action_dock_form" in goal.body
     assert "breadcrumb_parent_surface</dt><dd><a href='/goals'>Goals</a>" in goal.body
     assert "breadcrumb_back: <a href='/goals'>Goals</a>" in goal.body
     assert "breadcrumb_safety: read-only local route context" in goal.body
