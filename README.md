@@ -968,9 +968,14 @@ approvals queue, inbox, dogfooding checklist, and the explicit
 Use `/runs/<delegation_execution_run_id>` after scout/delegation execution to
 continue from the returned evidence. The read-only `Delegation Run
 Continuation` strip shows Now, Workflow, Handoff, Artifacts, and Goal cards
-before the detailed evidence, linking only to existing local surfaces such as
-the delegation page's `Safe Local Actions`, workflow map, artifact anchors,
-and parent Goal.
+before the detailed evidence. When the run has a form-backed next action such
+as `prepare_coder_from_handoff`, the strip renders that exact confirmed local
+form inline at `#delegation-run-continuation-action-form`, points the primary
+Now card there, and keeps the delegation page's `Safe Local Actions` anchor as
+source/fallback evidence. The inline form still posts through the existing
+`/actions/<action>` confirmation flow and preserves the run, project, Goal,
+handoff, return, and resume fields without writing on GET. Other cards link to
+the workflow map, artifact anchors, and parent Goal.
 
 Use `/runs/<coder_run_id>` to review the worktree evidence and gate state. The
 read-only `Run Command Bar` starts the page with the run status, review gate,

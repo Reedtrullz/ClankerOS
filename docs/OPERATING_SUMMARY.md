@@ -1038,7 +1038,13 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   do/check/unblock/finish cards, same-page action anchors, review/evidence
   links, approvals, parent Goal, and a confirmed `save-workspace` form that
   stores the run plus review/evidence artifact as a future resume point
-  without writing on GET. When the current run gate has a safe confirmed local
+  without writing on GET. Delegation execution run detail pages now render the
+  current form-backed continuation action inline at
+  `#delegation-run-continuation-action-form`; `prepare_coder_from_handoff`
+  keeps the implementation handoff, run, project, Goal, return, and resume
+  fields on the run page while preserving `/delegations/<id>#safe-local-actions`
+  as source/fallback evidence and still using the existing `/actions/<action>`
+  confirmation route. When the current coder run gate has a safe confirmed local
   action, the workbench renders it inline at `#run-workbench-action-form`,
   promotes that form as the primary Do Now target, and preserves the original
   gate surface as source evidence. Commit request, local commit, publication
@@ -1146,8 +1152,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   and next local operator actions; `/runs/<run_id>` now also recognizes
   delegation execution run ids and renders a read-only `Delegation Run
   Continuation` strip before the detailed scout evidence, with visible Now,
-  Workflow, Handoff, Artifacts, and Goal cards linked only to existing local
-  surfaces plus context-pack/handoff status, retry/incident state,
+  Workflow, Handoff, Artifacts, and Goal cards plus an inline
+  `#delegation-run-continuation-action-form` when the next action is
+  form-backed, preserving the original Safe Local Actions surface as source
+  evidence while the form posts through the existing confirmation flow; the
+  strip also keeps context-pack/handoff status, retry/incident state,
   zero-effect counters, and next-action readback; a read-only content-first
   `/actions` catalog that opens with the
   safe action header and `Action Operator Workbench` before shared route/focus

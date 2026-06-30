@@ -1,5 +1,32 @@
 # Status
 
+## 2026-06-30 Delegation Run Inline Continuation UX
+
+- Made `/runs/<delegation_execution_run_id>` directly actionable from the
+  `Delegation Run Continuation` strip by rendering the current form-backed
+  delegation continuation action inline at
+  `#delegation-run-continuation-action-form`.
+- `prepare_coder_from_handoff` now preserves the implementation handoff path,
+  delegation id, run id, project, Goal, `return_to`, and `resume_surface`
+  fields on the run page, then posts through the existing
+  `/actions/coder-prep-from-handoff` confirmation flow.
+- The continuation strip promotes the inline form as the primary Now target
+  while preserving `/delegations/<id>#safe-local-actions` as source/fallback
+  evidence and keeping GET read-only with explicit no-provider/no-network/
+  no-external-effect counters.
+- Verification: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, `python3 -m agent_os.cli app-smoke-test`, and focused pytest
+  `tests/test_first_milestone.py -k
+  test_local_app_demo_scenario_populates_fixture_state` passed locally. Browser
+  QA used a disposable root at `127.0.0.1:62149`, opened delegation execution
+  run `run_9cd549171a95`, verified page identity, no console warnings/errors,
+  no framework overlay, primary link to
+  `#delegation-run-continuation-action-form`, form action
+  `/actions/coder-prep-from-handoff`, handoff/return/resume fields, and POST to
+  `Confirm coder-prep-from-handoff` without final confirmation. At 390x844,
+  verified no horizontal overflow and the primary anchor landed on the inline
+  form. Pushed CI proof is next.
+
 ## 2026-06-30 Run Workbench Inline Action UX
 
 - Made `/runs/<coder_run_id>` directly actionable from the top `Run Operator

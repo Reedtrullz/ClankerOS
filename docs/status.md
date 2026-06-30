@@ -4,6 +4,16 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/runs/<delegation_execution_run_id>` now promotes the current form-backed
+  delegation continuation action into an inline
+  `#delegation-run-continuation-action-form` inside the `Delegation Run
+  Continuation` strip. `prepare_coder_from_handoff` preserves the
+  implementation handoff path, delegation id, run id, project, Goal,
+  `return_to`, and `resume_surface` fields on the run page, posts through the
+  existing `/actions/coder-prep-from-handoff` confirmation route, and keeps
+  `/delegations/<id>#safe-local-actions` as source/fallback evidence. GET
+  remains read-only with no provider, non-loopback network, push, PR, deploy,
+  or external mutation.
 - `/runs/<coder_run_id>` now promotes the current safe local run action into
   an inline `#run-workbench-action-form` inside the `Run Operator Workbench`.
   Commit request, local commit, publication request, and publication handoff

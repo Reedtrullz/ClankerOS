@@ -877,11 +877,16 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/runs/<run_id>` - run detail. For delegation execution run ids, the page
   opens with a read-only `Delegation Run Continuation` strip that turns scout
   evidence into visible Now, Workflow, Handoff, Artifacts, and Goal cards
-  before the detailed evidence. It links only to existing local surfaces such
-  as `/delegations/<id>#safe-local-actions`, `/workflow?delegation_id=...`,
-  artifact anchors, and the parent Goal, while preserving context-pack and
-  implementation-handoff status, retry/incident state, and zero-effect
-  counters. For coder worktree run ids, it includes a
+  before the detailed evidence. When the next action is form-backed, such as
+  `prepare_coder_from_handoff`, it renders the exact confirmed local form
+  inline at `#delegation-run-continuation-action-form`, makes the primary Now
+  link target that form, and keeps `/delegations/<id>#safe-local-actions` as
+  source/fallback evidence. The form still posts through the existing
+  `/actions/<action>` confirmation route and preserves the run, project, Goal,
+  handoff, return, and resume fields without writing on GET. It also links to
+  `/workflow?delegation_id=...`, artifact anchors, and the parent Goal while
+  preserving context-pack and implementation-handoff status, retry/incident
+  state, and zero-effect counters. For coder worktree run ids, it includes a
   read-only `Run Command Bar` that summarizes run status, review gate,
   commit/publication state, changed-file count, diff summary, next local
   action, target surface, and no-write/no-network/no-external-effect
