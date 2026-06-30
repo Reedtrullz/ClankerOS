@@ -21355,7 +21355,16 @@ def _goal_run_command_bar(
     next_action = "Create run through the next Goal action"
     target_href = "#goal-next-action"
     target_label = "Next Action"
+    target_form_available = False
     reason = "no local run records are attached to this goal"
+    current_action = _goal_next_action(root, state)
+    current_form_available = bool(_goal_next_action_form(state, current_action))
+    current_href = _goal_primary_action_href(
+        state,
+        current_action,
+        form_available=current_form_available,
+    )
+    current_label = _goal_action_cta_label(current_action, current_form_available)
 
     if selected_run is not None:
         latest_run_id = selected_run.id
@@ -21402,6 +21411,24 @@ def _goal_run_command_bar(
         target_href = f"/runs/{quote(latest_run_id)}"
         target_label = f"/runs/{latest_run_id}"
         reason = "task run evidence is available for this goal"
+    run_current_actions = {
+        "Run delegation",
+        "Run approved worktree",
+        "Open review",
+        "Create commit request",
+        "Approve commit",
+        "Commit approved worktree",
+        "Create publication request",
+        "Approve publication",
+        "Create publication handoff",
+    }
+    if current_form_available and current_action.action in run_current_actions:
+        if next_action != current_action.action:
+            reason = f"current_goal_action={current_action.reason}"
+        next_action = current_label
+        target_href = current_href
+        target_label = current_label
+        target_form_available = current_form_available
 
     if selected_run is not None and next_action == "Create commit request":
         status = "ready_for_commit_request"
@@ -21517,6 +21544,10 @@ def _goal_run_command_bar(
                     ("goal_run_command_latest_diff", SafeHtml(str(latest_diff_surface))),
                     ("goal_run_command_next_action", next_action),
                     ("goal_run_command_target_surface", target),
+                    (
+                        "goal_run_command_action_form_available",
+                        str(target_form_available).lower(),
+                    ),
                     ("goal_run_command_reason", reason),
                     ("goal_run_command_source", "goal_runs_and_coder_worktree_runs"),
                     ("goal_run_command_write_on_get", "false"),

@@ -14532,7 +14532,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_run_command_latest_diff_summary</dt><dd>files:1,added:1,deleted:0" in goal.body
     assert "goal_run_command_latest_diff</dt><dd><a href='/artifacts?path=" in goal.body
     assert "goal_run_command_next_action</dt><dd>Create commit request" in goal.body
-    assert f"goal_run_command_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}#run-approval-actions'>Run approval actions</a>" in goal.body
+    assert "goal_run_command_target_surface</dt><dd><a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
+    assert "goal_run_command_action_form_available</dt><dd>true" in goal.body
     assert "goal_run_command_reason</dt><dd>reviewed coder run is ready for a local commit request" in goal.body
     assert "goal_run_command_source</dt><dd>goal_runs_and_coder_worktree_runs" in goal.body
     assert "goal_run_command_write_on_get</dt><dd>false" in goal.body
@@ -14540,7 +14541,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_run_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_run_command_external_effects_created</dt><dd>false" in goal.body
     assert "goal_run_now: Create commit request" in goal.body
-    assert f"goal_run_click: <a href='/runs/{result.coder_worktree_run_id}#run-approval-actions'>Run approval actions</a>" in goal.body
+    assert "goal_run_click: <a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert f"goal_run_latest: {result.coder_worktree_run_id} status=completed review=reviewed" in goal.body
     assert "goal_run_safety: read-only local run posture" in goal.body
     assert "Goal Approval Command Bar" in goal.body
