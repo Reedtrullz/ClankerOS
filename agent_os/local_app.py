@@ -41338,7 +41338,7 @@ def _next_action_shortcut_context(focus_context: dict[str, Any]) -> dict[str, st
         confirmation_required = form_available
         if action_form:
             href = "#operator-focus-current-action"
-            label = "Open current action form"
+            label = next_action.action
             source = f"{source}_action_form"
         else:
             href = next_action.href
@@ -42210,7 +42210,7 @@ def _command_palette_quick_switch(
         action_form = str(focus_context.get("action_form") or "")
         primary_action = next_action.action
         primary_href = "#command-palette-continue-form" if action_form else next_action.href
-        primary_label = "Run current action" if action_form else "Open action source"
+        primary_label = next_action.action
         goal = focus_context.get("goal")
         if goal is not None:
             focus_goal_id = str(goal.id)
@@ -42424,7 +42424,7 @@ def _command_palette_focus(
         phase = str(focus_context.get("phase") or "unknown")
         primary_action = next_action.action
         primary_href = "#command-palette-continue-form" if action_form else next_action.href
-        primary_label = "Run current action" if action_form else "Open action source"
+        primary_label = next_action.action
         source = str(focus_context.get("source") or "goal_state")
         action_form_available = bool(action_form)
     elif status == "first_run":
@@ -43055,7 +43055,7 @@ def _html_page(
     header a {{ color:var(--ink); text-decoration:none; font-size:14px; margin-right:14px; }}
     header a[aria-current="page"] {{ color:var(--accent); font-weight:700; }}
     .header-actions {{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }}
-    .icon-button {{ border:1px solid var(--line); background:var(--panel); color:var(--ink); padding:7px 9px; border-radius:6px; }}
+    .icon-button {{ border:1px solid var(--line); background:var(--panel); color:var(--ink); padding:7px 9px; border-radius:6px; max-width:220px; overflow-wrap:anywhere; }}
     main {{ max-width:1280px; margin:0 auto; padding:24px; }}
     .operator-shell {{ display:grid; grid-template-columns:minmax(180px, 240px) minmax(0, 1fr); gap:24px; align-items:start; }}
     .operator-shell > *, article, aside, section, dl, dt, dd {{ min-width:0; max-width:100%; }}
@@ -44990,11 +44990,11 @@ def _html_page(
   <header>
     <strong>ClankerOS Local Operator</strong>
     <nav>{nav}</nav>
-    <div class="header-actions" data-keyboard-shortcuts="true" data-focus-mode-supported="true" data-focus-mode-storage="localStorage:clankeros-focus-mode" data-focus-mode-write-on-get="false" data-focus-mode-provider-calls-taken="0" data-focus-mode-network-actions-taken="0" data-focus-mode-external-effects-created="false" data-next-action-href="{_e(next_shortcut['href'])}" data-next-action-label="{_e(next_shortcut['label'])}" data-next-action-status="{_e(next_shortcut['status'])}" data-next-action-source="{_e(next_shortcut['source'])}" data-next-action-form-available="{_e(next_shortcut['form_available'])}" data-next-action-confirmation-required="{_e(next_shortcut['confirmation_required'])}" data-next-action-write-on-get="{_e(next_shortcut['write_on_get'])}" data-next-action-provider-calls-taken="{_e(next_shortcut['provider_calls_taken'])}" data-next-action-network-actions-taken="{_e(next_shortcut['network_actions_taken'])}" data-next-action-external-effects-created="{_e(next_shortcut['external_effects_created'])}" data-finish-today-href="{_e(finish_shortcut['href'])}" data-finish-today-label="{_e(finish_shortcut['label'])}" data-finish-today-source="{_e(finish_shortcut['source'])}" data-finish-today-target="{_e(finish_shortcut['target'])}" data-finish-today-surface="{_e(finish_shortcut['surface'])}" data-finish-today-confirmation-required="{_e(finish_shortcut['confirmation_required'])}" data-finish-today-write-on-get="{_e(finish_shortcut['write_on_get'])}" data-finish-today-provider-calls-taken="{_e(finish_shortcut['provider_calls_taken'])}" data-finish-today-network-actions-taken="{_e(finish_shortcut['network_actions_taken'])}" data-finish-today-external-effects-created="{_e(finish_shortcut['external_effects_created'])}">
+    <div class="header-actions" data-keyboard-shortcuts="true" data-focus-mode-supported="true" data-focus-mode-storage="localStorage:clankeros-focus-mode" data-focus-mode-write-on-get="false" data-focus-mode-provider-calls-taken="0" data-focus-mode-network-actions-taken="0" data-focus-mode-external-effects-created="false" data-next-action-href="{_e(next_shortcut['href'])}" data-next-action-label="{_e(next_shortcut['label'])}" data-next-action-action="{_e(next_shortcut['action'])}" data-next-action-status="{_e(next_shortcut['status'])}" data-next-action-source="{_e(next_shortcut['source'])}" data-next-action-form-available="{_e(next_shortcut['form_available'])}" data-next-action-confirmation-required="{_e(next_shortcut['confirmation_required'])}" data-next-action-write-on-get="{_e(next_shortcut['write_on_get'])}" data-next-action-provider-calls-taken="{_e(next_shortcut['provider_calls_taken'])}" data-next-action-network-actions-taken="{_e(next_shortcut['network_actions_taken'])}" data-next-action-external-effects-created="{_e(next_shortcut['external_effects_created'])}" data-finish-today-href="{_e(finish_shortcut['href'])}" data-finish-today-label="{_e(finish_shortcut['label'])}" data-finish-today-source="{_e(finish_shortcut['source'])}" data-finish-today-target="{_e(finish_shortcut['target'])}" data-finish-today-surface="{_e(finish_shortcut['surface'])}" data-finish-today-confirmation-required="{_e(finish_shortcut['confirmation_required'])}" data-finish-today-write-on-get="{_e(finish_shortcut['write_on_get'])}" data-finish-today-provider-calls-taken="{_e(finish_shortcut['provider_calls_taken'])}" data-finish-today-network-actions-taken="{_e(finish_shortcut['network_actions_taken'])}" data-finish-today-external-effects-created="{_e(finish_shortcut['external_effects_created'])}">
       <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: question mark opens keyboard help; slash opens command palette; Escape closes dialogs; n opens next action; h opens home; y opens today; g opens goals; r opens resume; s opens search; w opens workspace; f opens Finish Today; m toggles focus mode; t toggles theme.</span>
       <button class="icon-button" id="shortcut-help-open" type="button" data-shortcut-help-open="true" data-shortcut="?" aria-keyshortcuts="?" aria-describedby="keyboard-shortcuts-help" title="Open keyboard help (?)">Keys</button>
       <button class="icon-button" id="palette-open" type="button" data-shortcut="/" aria-keyshortcuts="/" aria-describedby="keyboard-shortcuts-help" title="Open command palette (/)">Palette</button>
-      <button class="icon-button" id="next-action-open" type="button" data-shortcut="n" aria-keyshortcuts="n" aria-describedby="keyboard-shortcuts-help" data-next-action-button="true" data-next-action-href="{_e(next_shortcut['href'])}" title="Open next action (n)">Next</button>
+      <button class="icon-button" id="next-action-open" type="button" data-shortcut="n" aria-keyshortcuts="n" aria-describedby="keyboard-shortcuts-help" aria-label="Open {_e(next_shortcut['label'])} (n)" data-next-action-button="true" data-next-action-href="{_e(next_shortcut['href'])}" data-next-action-button-label="{_e(next_shortcut['label'])}" title="Open {_e(next_shortcut['label'])} (n)">{_e(next_shortcut['label'])}</button>
       <button class="icon-button" id="finish-today-open" type="button" data-shortcut="f" aria-keyshortcuts="f" aria-describedby="keyboard-shortcuts-help" data-finish-today-button="true" data-finish-today-href="{_e(finish_shortcut['href'])}" title="Open Finish Today (f)">Finish</button>
       <button class="icon-button" id="focus-toggle" type="button" data-shortcut="m" aria-keyshortcuts="m" aria-pressed="false" aria-describedby="keyboard-shortcuts-help" data-focus-mode-toggle="true" title="Toggle focus mode (m)">Focus</button>
       <button class="icon-button" id="theme-toggle" type="button" data-shortcut="t" aria-keyshortcuts="t" aria-describedby="keyboard-shortcuts-help" title="Toggle theme (t)">Theme</button>

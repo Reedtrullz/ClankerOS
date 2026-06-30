@@ -613,7 +613,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   control and the `f` shortcut resolves to the
   route-local Finish Today form on `/today` (`#today-finish`) and
   `/goals/<goal_id>` (`#goal-finish-today`), falling back to
-  `/workspace#save-workspace` on other routes. Focus mode uses
+  `/workspace#save-workspace` on other routes. The `n` next-action control is
+  labeled with the resolved operator move, such as `Create Project` or
+  `Create commit request`, while preserving raw action metadata and only
+  navigating to the existing local target. Focus mode uses
   the header `Focus` button or `m` shortcut to collapse Recent Items, Route
   Context, Operator Focus, and Last Action strips while keeping the Operator
   Ribbon and current page body visible. It is persisted only in
@@ -657,8 +660,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   the Home/Today/Goals first-run anchors. The command palette starts with a
   `Palette Focus` launcher for continuing the current Goal action, jumping to
   search, resuming the saved workspace, or staying on the current page. Its
-  search box now narrows a visible `Palette Results` list of local routes and
-  recent work as the operator types, and it now adds the focused Goal's core
+  Continue and Action entries name the exact current action, such as
+  `Create commit request`, instead of generic current-action plumbing copy.
+  Its search box now narrows a visible `Palette Results` list of local routes
+  and recent work as the operator types, and it now adds the focused Goal's core
   section anchors so queries like `timeline`, `approval`, `artifact`, `memory`,
   `git`, or `remaining` can jump straight to the Goal page. ArrowDown/ArrowUp
   move through visible local commands, and Enter opens the active local result.

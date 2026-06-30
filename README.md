@@ -857,10 +857,12 @@ shared shortcut layer now includes `w` for `/workspace` and a route-aware `f`
 for Finish Today: Today opens `#today-finish`, Goal pages open
 `#goal-finish-today`, and other routes fall back to
 `/workspace#save-workspace`. `n` still opens the current recommended next
-action, so return-to-work, Finish Today, and the main next click are available
-without opening the palette. If a browser-confirmed action form is available,
-`n` opens that existing form details panel; it never submits the form or writes
-state on its own. The header also exposes a visible `Finish` control backed by
+action, and the header button is labeled with the concrete operator move, such
+as `Create Project` or `Create commit request`, so return-to-work, Finish
+Today, and the main next click are available without opening the palette. If a
+browser-confirmed action form is available, `n` opens that existing form
+details panel; it never submits the form or writes state on its own. The
+header also exposes a visible `Finish` control backed by
 the same route-aware target. The ribbon sits above the sidebar and page body
 with visible Now, Goal,
 Attention, Finish, Resume, and Search cards, so every route immediately shows
@@ -917,7 +919,9 @@ forms, while other pages link back to those Home/Today/Goals first-run
 anchors.
 The command palette now opens with a `Palette Focus` launcher: continue the
 current Goal action, jump to search, resume the saved workspace, or stay on the
-current page. The search box also narrows a visible `Palette Results` list of
+current page. Its Continue and Action cards use the exact current action copy,
+such as `Create commit request`, instead of generic "run current action"
+labels. The search box also narrows a visible `Palette Results` list of
 local routes, recent work, and the focused Goal's core section anchors as you
 type, so `timeline`, `approval`, `artifact`, `memory`, `git`, or `remaining`
 can jump straight into the Goal page without scanning. ArrowDown/ArrowUp move

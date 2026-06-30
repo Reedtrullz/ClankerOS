@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared header `n` / next-action control now displays the concrete
+  operator move, such as `Create Project` or `Create commit request`, rather
+  than the generic `Next` label. Command palette Focus and Quick Switch action
+  cards also use the exact current action text instead of generic `Run current
+  action` / `Open action source` copy, while preserving the same local anchors,
+  raw action metadata, confirmation-gated form routes, and zero-effect GET
+  posture.
 - Current-action CTAs now use the exact operator verb on Goal, Home, Action
   Notice, and delegation-run continuation surfaces instead of generic labels
   such as "Use current action" or "Continue Here." Primary links now say

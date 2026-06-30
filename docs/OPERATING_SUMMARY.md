@@ -828,7 +828,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   The shared browser shell now exposes accessible shortcut metadata for Home,
   Today, Resume, Goals, Search, Workspace, Finish Today, palette, and theme
   controls, plus a global next-action shortcut. `n` opens the current
-  recommended next-action target, `w` opens `/workspace`, and `f` opens the
+  recommended next-action target and displays the resolved action label in the
+  shared header instead of a generic `Next` label, `w` opens `/workspace`, and
+  `f` opens the
   route-local Finish Today form on `/today` (`#today-finish`) or
   `/goals/<goal_id>` (`#goal-finish-today`) before falling back to
   `/workspace#save-workspace` elsewhere. The palette can be closed with Escape
@@ -843,7 +845,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   instead of reading external docs. When a saved or lead Goal exists, the
   command palette also includes a compact Goal continuation readback for the
   current workflow gate, the next few local gates, their target surfaces, and
-  the manual publish boundary without writing on GET.
+  the manual publish boundary without writing on GET. Its Focus and Quick
+  Switch action cards use the exact current action label, such as `Create
+  commit request`, instead of generic current-action copy.
   The Goal `Skills Used` section starts with a read-only `Goal Skills Command
   Bar` that summarizes task skill tags, matching generated or available local
   skill records, usage and project counts, delegation profile usage, one
@@ -996,10 +1000,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   the current route when possible, or at the Home/Today/Goals first-run anchors
   when the current page does not render the guide.
   The shared shell also exposes `n` as a global next-action shortcut and a
-  matching header control. It resolves from the same saved-workspace or
-  lead-Goal focus context as the ribbon and palette; when a confirmed browser
-  action form is available, `n` opens the existing `Operator Focus` details
-  panel instead of submitting it. The shortcut remains local navigation only
+  matching header control labeled with the concrete operator move, such as
+  `Create Project` or `Create commit request`. It resolves from the same
+  saved-workspace or lead-Goal focus context as the ribbon and palette; when a
+  confirmed browser action form is available, `n` opens the existing
+  `Operator Focus` details panel instead of submitting it. The shortcut
+  remains local navigation only
   and records no provider, network, write, approval, execution, push, PR, or
   deploy effects on GET.
   They still write nothing on GET and only submit existing local forms after

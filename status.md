@@ -1,5 +1,34 @@
 # Status
 
+## 2026-06-30 Global Next Action Label UX
+
+- Made the shared header `n` / `Next` control show the concrete operator move,
+  such as `Create Project` or `Create commit request`, instead of the generic
+  `Next` label. The control still routes to the same local target, records the
+  raw action in `data-next-action-action`, and does not submit forms.
+- Updated command palette focus and quick-switch primary/action cards to use
+  the exact current action label, such as `Create commit request`, instead of
+  generic `Run current action` / `Open action source` copy while preserving
+  the same `#command-palette-continue-form` route and evidence rows.
+- Added bounded header-button wrapping so longer action names stay readable in
+  the shared shell without forcing layout overflow.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, `python3 -m agent_os.cli --root "$scratch"
+  app-demo-smoke-test`, and focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` passed locally.
+- Browser QA used a disposable demo app at `127.0.0.1:62855` for
+  `goal_d21a51f436cf`. Desktop verified page identity, meaningful Goal
+  content, clean console, no framework overlay, header button text
+  `Create commit request`, `data-next-action-href="#operator-focus-current-action"`,
+  form action `/actions/coder-commit-request`, click navigation to
+  `#operator-focus-current-action`, and palette Focus/Quick Switch labels of
+  `Create commit request` with no `Run current action` or `Open action source`
+  copy. 390x844 mobile verified the same header label, no horizontal overflow,
+  no framework overlay, and clean console.
+- Non-claim: full CI proof and full-suite proof are still pending for this
+  slice.
+
 ## 2026-06-30 Verb-First Current Action CTAs
 
 - Made current-action CTAs name the actual operator move instead of generic

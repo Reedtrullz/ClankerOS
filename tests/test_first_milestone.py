@@ -6007,6 +6007,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert 'data-next-action-button="true"' in root.body
     assert 'data-next-action-href="#first-run-create-project"' in root.body
     assert 'data-next-action-label="Create Project"' in root.body
+    assert 'data-next-action-action="Register ClankerOS project"' in root.body
+    assert 'data-next-action-button-label="Create Project"' in root.body
     assert 'data-next-action-status="first_run"' in root.body
     assert 'data-next-action-form-available="true"' in root.body
     assert 'data-next-action-confirmation-required="true"' in root.body
@@ -11513,7 +11515,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-command-palette-focus-continue='true'" in dashboard.body
     assert (
         "data-command-palette-focus-primary='true' href='#command-palette-continue-form'>"
-        "Run current action</a>"
+        "Create commit request</a>"
     ) in dashboard.body
     assert "data-command-palette-focus-search='true' href='#command-palette-search'>Search</a>" in dashboard.body
     assert "data-command-palette-focus-resume='true' href='/resume'>Resume workspace</a>" in dashboard.body
@@ -11525,7 +11527,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "palette_focus_primary_action</dt><dd>Create commit request" in dashboard.body
     assert (
         "palette_focus_primary_surface</dt><dd><a href='#command-palette-continue-form'>"
-        "Run current action</a>"
+        "Create commit request</a>"
     ) in dashboard.body
     assert "palette_focus_action_form_available</dt><dd>true" in dashboard.body
     assert "palette_focus_write_on_get</dt><dd>false" in dashboard.body
@@ -11535,7 +11537,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-command-palette-quick-switch-cards='true'" in dashboard.body
     assert (
         "data-command-palette-quick-primary='true' href='#command-palette-continue-form'>"
-        "Run current action</a>"
+        "Create commit request</a>"
     ) in dashboard.body
     assert (
         f"data-command-palette-quick-workspace='true' href='/goals/{result.goal_id}'>"
@@ -11543,7 +11545,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in dashboard.body
     assert (
         "data-command-palette-quick-action='true' href='#command-palette-continue-form'>"
-        "Run current action</a>"
+        "Create commit request</a>"
     ) in dashboard.body
     assert "data-command-palette-quick-artifact='true' href='/artifacts?path=" in dashboard.body
     assert (
@@ -11556,7 +11558,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "palette_quick_switch_primary_action</dt><dd>Create commit request" in dashboard.body
     assert (
         "palette_quick_switch_primary_surface</dt><dd><a href='#command-palette-continue-form'>"
-        "Run current action</a>"
+        "Create commit request</a>"
     ) in dashboard.body
     assert "palette_quick_switch_workspace_source</dt><dd>current_goal" in dashboard.body
     assert (
@@ -12454,7 +12456,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-command-palette-focus-continue='true'" in goal.body
     assert (
         "data-command-palette-focus-primary='true' href='#command-palette-continue-form'>"
-        "Run current action</a>"
+        "Create commit request</a>"
     ) in goal.body
     assert "data-command-palette-focus-search='true' href='#command-palette-search'>Search</a>" in goal.body
     assert "data-command-palette-focus-resume='true' href='/resume'>Resume workspace</a>" in goal.body
@@ -12469,7 +12471,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "palette_focus_primary_action</dt><dd>Create commit request" in goal.body
     assert (
         "palette_focus_primary_surface</dt><dd><a href='#command-palette-continue-form'>"
-        "Run current action</a>"
+        "Create commit request</a>"
     ) in goal.body
     assert (
         f"palette_focus_current_surface</dt><dd><a href='/goals/{result.goal_id}'>"
@@ -12483,7 +12485,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-command-palette-quick-switch-cards='true'" in goal.body
     assert (
         "data-command-palette-quick-primary='true' href='#command-palette-continue-form'>"
-        "Run current action</a>"
+        "Create commit request</a>"
     ) in goal.body
     assert (
         f"data-command-palette-quick-workspace='true' href='/goals/{result.goal_id}'>"
@@ -12491,7 +12493,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in goal.body
     assert (
         "data-command-palette-quick-action='true' href='#command-palette-continue-form'>"
-        "Run current action</a>"
+        "Create commit request</a>"
     ) in goal.body
     assert "data-command-palette-quick-artifact='true' href='/artifacts?path=" in goal.body
     assert (
