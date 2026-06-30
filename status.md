@@ -1,5 +1,35 @@
 # Status
 
+## 2026-06-30 Daily Workflow Action Copy UX
+
+- Replaced raw visible action ids across the daily scout-to-publication browser
+  workflow with operator-language copy while preserving raw ids in action URLs,
+  DOM metadata, workspace state, and evidence fields.
+- Added shared copy for implementation handoff review, coder prep,
+  coder-prep-from-handoff, worktree plan/approval, commit request/approval,
+  local worktree commit, publication request/approval, and publication
+  handoff. Visible buttons and confirmation/result titles now use phrases such
+  as `Prepare coder packet`, `Confirm commit request`, `Create local commit`,
+  and `Prepare publication handoff`.
+- Added field labels/help for approval, run, decision, publication, remote, and
+  target-branch fields so confirmation forms read as operator forms rather
+  than database payloads.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, `python3 -m agent_os.cli app-smoke-test`, and focused
+  pytest `tests/test_first_milestone.py -k
+  'test_local_app_demo_scenario_populates_fixture_state or
+  test_goal_next_action_card_exposes_commit_publication_gate_forms'` passed
+  locally.
+- Browser QA used a disposable demo app at `127.0.0.1:62153`, opened
+  delegation execution run `run_b70999502e0b`, verified the inline continuation
+  form now shows `Prepare coder packet` while preserving
+  `coder-prep-from-handoff` in the form action, DOM metadata, and evidence,
+  then submitted only as far as `Confirm coder prep` without final
+  confirmation. Desktop and 390x844 mobile checks had no console warnings or
+  errors, no framework overlay, no horizontal overflow, and retained the raw
+  action id in evidence.
+- Non-claim: pushed CI proof is still pending for this slice.
+
 ## 2026-06-30 Delegation Run Inline Continuation UX
 
 - Made `/runs/<delegation_execution_run_id>` directly actionable from the
@@ -23,7 +53,7 @@
   no framework overlay, primary link to
   `#delegation-run-continuation-action-form`, form action
   `/actions/coder-prep-from-handoff`, handoff/return/resume fields, and POST to
-  `Confirm coder-prep-from-handoff` without final confirmation. At 390x844,
+  the confirmation page without final confirmation. At 390x844,
   verified no horizontal overflow and the primary anchor landed on the inline
   form. Pushed CI proof is next.
 

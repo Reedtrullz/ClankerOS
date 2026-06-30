@@ -15943,6 +15943,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"data-delegation-run-continuation-action-run='{result.run_id}'" in delegation_run_page.body
     assert "data-delegation-run-continuation-confirmation-required='true'" in delegation_run_page.body
     assert "<form method='post' action='/actions/coder-prep-from-handoff'>" in delegation_run_page.body
+    assert "<button type='submit'>Prepare coder packet</button>" in delegation_run_page.body
     assert f"name='delegation_id' value='{result.delegation_id}'" in delegation_run_page.body
     assert f"name='run_id' value='{result.run_id}'" in delegation_run_page.body
     assert f"name='return_to' value='/runs/{result.run_id}'" in delegation_run_page.body
@@ -17296,7 +17297,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
         },
     )
     assert commit_request_confirmation.status == 409
-    assert "Confirm coder-commit-request" in commit_request_confirmation.body
+    assert "Confirm commit request" in commit_request_confirmation.body
+    assert "action_confirmation_action</dt><dd>coder-commit-request" in commit_request_confirmation.body
+    assert "action_confirmation_label</dt><dd>Create commit request" in commit_request_confirmation.body
     commit_request = render_local_app_route(
         tmp_path,
         "/actions/coder-commit-request",
@@ -17617,7 +17620,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
         },
     )
     assert commit_approval_confirmation.status == 409
-    assert "Confirm approve-coder-commit" in commit_approval_confirmation.body
+    assert "Confirm commit approval" in commit_approval_confirmation.body
+    assert "action_confirmation_action</dt><dd>approve-coder-commit" in commit_approval_confirmation.body
+    assert "action_confirmation_label</dt><dd>Approve commit" in commit_approval_confirmation.body
     commit_approval_response = render_local_app_route(
         tmp_path,
         "/actions/approve-coder-commit",
@@ -17666,7 +17671,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
         },
     )
     assert commit_confirmation.status == 409
-    assert "Confirm commit-coder-worktree" in commit_confirmation.body
+    assert "Confirm local commit" in commit_confirmation.body
+    assert "action_confirmation_action</dt><dd>commit-coder-worktree" in commit_confirmation.body
+    assert "action_confirmation_label</dt><dd>Commit approved worktree" in commit_confirmation.body
     commit_response = render_local_app_route(
         tmp_path,
         "/actions/commit-coder-worktree",
@@ -17721,7 +17728,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
         },
     )
     assert publication_request.status == 409
-    assert "Confirm coder-publication-request" in publication_request.body
+    assert "Confirm publication request" in publication_request.body
+    assert "action_confirmation_action</dt><dd>coder-publication-request" in publication_request.body
+    assert "action_confirmation_label</dt><dd>Create publication request" in publication_request.body
     publication_request = render_local_app_route(
         tmp_path,
         "/actions/coder-publication-request",
@@ -17835,7 +17844,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
         },
     )
     assert publication_approval_confirmation.status == 409
-    assert "Confirm approve-coder-publication" in publication_approval_confirmation.body
+    assert "Confirm publication approval" in publication_approval_confirmation.body
+    assert "action_confirmation_action</dt><dd>approve-coder-publication" in publication_approval_confirmation.body
+    assert "action_confirmation_label</dt><dd>Approve publication" in publication_approval_confirmation.body
     publication_approval = render_local_app_route(
         tmp_path,
         "/actions/approve-coder-publication",
@@ -17875,7 +17886,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
         form={"run_id": [result.coder_worktree_run_id]},
     )
     assert publication_handoff_confirmation.status == 409
-    assert "Confirm coder-publication-handoff" in publication_handoff_confirmation.body
+    assert "Confirm publication handoff" in publication_handoff_confirmation.body
+    assert "action_confirmation_action</dt><dd>coder-publication-handoff" in publication_handoff_confirmation.body
+    assert "action_confirmation_label</dt><dd>Prepare publication handoff" in publication_handoff_confirmation.body
     publication_handoff = render_local_app_route(
         tmp_path,
         "/actions/coder-publication-handoff",
@@ -18019,7 +18032,9 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
         form={"delegation_id": [delegation_id]},
     )
     assert prep_confirmation.status == 409
-    assert "Confirm coder-prep" in prep_confirmation.body
+    assert "Confirm coder prep" in prep_confirmation.body
+    assert "action_confirmation_action</dt><dd>coder-prep" in prep_confirmation.body
+    assert "action_confirmation_label</dt><dd>Prepare coder packet" in prep_confirmation.body
     prep_result = render_local_app_route(
         tmp_path,
         "/actions/coder-prep",
@@ -18056,7 +18071,9 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
         form={"delegation_id": [delegation_id]},
     )
     assert plan_confirmation.status == 409
-    assert "Confirm coder-worktree-plan" in plan_confirmation.body
+    assert "Confirm worktree plan" in plan_confirmation.body
+    assert "action_confirmation_action</dt><dd>coder-worktree-plan" in plan_confirmation.body
+    assert "action_confirmation_label</dt><dd>Create worktree plan" in plan_confirmation.body
     plan_result = render_local_app_route(
         tmp_path,
         "/actions/coder-worktree-plan",
@@ -18102,7 +18119,9 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
         },
     )
     assert approval_confirmation.status == 409
-    assert "Confirm coder-worktree-approval" in approval_confirmation.body
+    assert "Confirm worktree approval request" in approval_confirmation.body
+    assert "action_confirmation_action</dt><dd>coder-worktree-approval" in approval_confirmation.body
+    assert "action_confirmation_label</dt><dd>Request worktree approval" in approval_confirmation.body
     approval_result = render_local_app_route(
         tmp_path,
         "/actions/coder-worktree-approval",
@@ -18163,7 +18182,9 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
         },
     )
     assert approval_decision_confirmation.status == 409
-    assert "Confirm approve-coder-worktree" in approval_decision_confirmation.body
+    assert "Confirm worktree approval" in approval_decision_confirmation.body
+    assert "action_confirmation_action</dt><dd>approve-coder-worktree" in approval_decision_confirmation.body
+    assert "action_confirmation_label</dt><dd>Approve worktree" in approval_decision_confirmation.body
     approval_decision = render_local_app_route(
         tmp_path,
         "/actions/approve-coder-worktree",

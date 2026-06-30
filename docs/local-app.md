@@ -1064,12 +1064,13 @@ show the current status for commit request, commit approval, local commit,
 publication request, publication approval, publication handoff, and the final
 manual push/PR boundary outside ClankerOS, while linking back to the relevant
 local workflow, run, approvals, and inbox surfaces. `Demo Gate Actions`
-renders the active local gate form, such as `coder-commit-request`,
-`approve-coder-commit`, `commit-coder-worktree`,
-`coder-publication-request`, `approve-coder-publication`, or
-`coder-publication-handoff`; supported text fields use browser-local draft
-memory so reloads do not discard unsent notes, messages, or safe command text,
-and every write still goes through the normal
+renders the active local gate form with operator-language copy such as
+`Create commit request`, `Approve commit`, `Create local commit`,
+`Create publication request`, `Approve publication`, and
+`Prepare publication handoff`, while retaining raw action ids such as
+`coder-commit-request` in action URLs and evidence rows. Supported text fields
+use browser-local draft memory so reloads do not discard unsent notes,
+messages, or safe command text, and every write still goes through the normal
 confirmation page and existing local safety checks. Once the publication
 handoff is ready, the demo gate keeps push/PR work as a manual action outside
 ClankerOS, then renders the confirmed local `complete-goal` form and advances

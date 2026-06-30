@@ -1135,6 +1135,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   result pages use operator language (`Create scout delegation`,
   `Generate context pack`, `Run scout delegation`) while preserving raw
   `delegate`, `context-pack`, and `run-delegation` action ids in evidence.
+  The later day-to-day workflow forms now do the same for coder prep,
+  worktree planning and approval, commit request/approval/local commit, and
+  publication request/approval/handoff, so visible controls use verbs such as
+  `Prepare coder packet`, `Approve commit`, and `Prepare publication handoff`
+  while raw action ids remain in URLs, DOM metadata, and evidence.
   Active first-run Goal pages also show a
   read-only `Goal First Run Rail` between Attention and the Goal Command Bar,
   preserving the Project -> Goal -> Delegation -> Context -> Run path on the

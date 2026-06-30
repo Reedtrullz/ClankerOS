@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Daily workflow browser forms now use operator-language copy instead of raw
+  action ids for coder prep, worktree planning/approval, commit
+  request/approval/local commit, and publication request/approval/handoff.
+  Buttons and confirmation/result pages say things like `Prepare coder
+  packet`, `Confirm commit request`, `Create local commit`, and `Prepare
+  publication handoff`, while raw ids such as `coder-prep-from-handoff` and
+  `approve-coder-commit` remain available in action URLs, DOM metadata,
+  workspace state, and evidence fields.
 - `/runs/<delegation_execution_run_id>` now promotes the current form-backed
   delegation continuation action into an inline
   `#delegation-run-continuation-action-form` inside the `Delegation Run

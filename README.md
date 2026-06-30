@@ -1247,7 +1247,11 @@ continue without reconstructing context from a plain banner. For saved Goal
 continuations with a confirmed next action form, `Action Notice` also renders
 an inline `Action Notice Next Step` form and points the primary Next Step card
 at that form while preserving the original Goal/workflow source surface in
-evidence. Action errors now open with an action-first
+evidence. The daily workflow forms now use operator-language labels and
+confirmation titles for coder prep, worktree planning/approval, commit
+request/approval/local commit, and publication request/approval/handoff, while
+raw action ids remain visible in action URLs and evidence fields. Action
+errors now open with an action-first
 `Action Needs Attention` recovery surface before the raw error details, with
 Fix Input, Retry Surface, Error, Catalog, and Boundary cards plus collapsed
 error evidence proving no result was recorded and no external effect was
