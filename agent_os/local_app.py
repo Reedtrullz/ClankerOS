@@ -21619,7 +21619,16 @@ def _goal_approval_command_bar(
     next_action = "Continue Goal workflow"
     target_href = "#goal-next-action"
     target_label = "Next Action"
+    target_form_available = False
     reason = "approval gates are not the active local blocker"
+    current_action = _goal_next_action(state["root"], state)
+    current_form_available = bool(_goal_next_action_form(state, current_action))
+    current_href = _goal_primary_action_href(
+        state,
+        current_action,
+        form_available=current_form_available,
+    )
+    current_label = _goal_action_cta_label(current_action, current_form_available)
     if pending_publication:
         next_action = "Approve publication"
         target_href = "/approvals"
@@ -21689,6 +21698,10 @@ def _goal_approval_command_bar(
         target_href = "#goal-approvals"
         target_label = "Approvals"
         reason = "approval records exist but no active approval gate is waiting"
+    if current_form_available and next_action == current_action.action:
+        target_href = current_href
+        target_label = current_label
+        target_form_available = current_form_available
 
     if pending_total:
         status = "waiting_for_operator"
@@ -21761,6 +21774,10 @@ def _goal_approval_command_bar(
                     (
                         "goal_approval_command_target_surface",
                         SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"),
+                    ),
+                    (
+                        "goal_approval_command_action_form_available",
+                        str(target_form_available).lower(),
                     ),
                     ("goal_approval_command_reason", reason),
                     ("goal_approval_command_source", "goal_local_approval_records"),

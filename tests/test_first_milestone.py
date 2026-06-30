@@ -18598,6 +18598,10 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert pending_approval.status == 200
     assert "recommended_action</dt><dd>Approve worktree" in pending_approval.body
     assert "next_action_form_available</dt><dd>true" in pending_approval.body
+    assert "goal_approval_command_next_action</dt><dd>Approve worktree" in pending_approval.body
+    assert "goal_approval_command_target_surface</dt><dd><a href='#goal-action-dock-form'>Approve worktree</a>" in pending_approval.body
+    assert "goal_approval_command_action_form_available</dt><dd>true" in pending_approval.body
+    assert "goal_approval_click: <a href='#goal-action-dock-form'>Approve worktree</a>" in pending_approval.body
     assert "Approve Worktree" in pending_approval.body
     assert "action='/actions/approve-coder-worktree'" in pending_approval.body
     assert "data-action-draft-action='approve-coder-worktree'" in pending_approval.body
@@ -18663,6 +18667,10 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert approved_goal.status == 200
     assert "recommended_action</dt><dd>Run approved worktree" in approved_goal.body
     assert "next_action_form_available</dt><dd>true" in approved_goal.body
+    assert "goal_approval_command_next_action</dt><dd>Run approved worktree" in approved_goal.body
+    assert "goal_approval_command_target_surface</dt><dd><a href='#goal-action-dock-form'>Run approved worktree</a>" in approved_goal.body
+    assert "goal_approval_command_action_form_available</dt><dd>true" in approved_goal.body
+    assert "goal_approval_click: <a href='#goal-action-dock-form'>Run approved worktree</a>" in approved_goal.body
     assert "Run Approved Worktree" in approved_goal.body
     assert "action='/actions/run-coder-worktree'" in approved_goal.body
     assert "run_coder_worktree_command_template" in approved_goal.body
