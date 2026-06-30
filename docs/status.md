@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Workflow, Approval, Inbox, Delegation Run Continuation, and Run workbench
+  surfaces now label the primary same-page action form with the actual next
+  operator move. Links and evidence rows say `Request commit for reviewed run`,
+  `Approve worktree`, `Approve commit`, `Approve publication`,
+  `Prepare coder packet`, or `Create commit request` instead of generic
+  `* Workbench Action Form` copy, while preserving the same local anchors,
+  confirmation-gated forms, and zero-effect GET posture.
 - Saved workspace return labels now name the actual destination instead of
   saying `Open saved surface`. Resume and Workspace saved Goal return points
   say `Open saved Goal: <Goal title>`, saved projects say

@@ -24617,7 +24617,7 @@ def _workflow_workbench_action_form(root: Path, context: dict[str, Any]) -> dict
         "primary_href": "",
         "primary_label": "",
         "form_href": "#workflow-workbench-action-form",
-        "form_label": "Workflow Workbench Action Form",
+        "form_label": "",
         "blocked_reason": "no_same_page_form_for_action",
         "confirmation_required": False,
     }
@@ -24637,6 +24637,7 @@ def _workflow_workbench_action_form(root: Path, context: dict[str, Any]) -> dict
         return result
 
     action_name = "coder-commit-request"
+    action_label = str(context.get("action_label") or "Request commit for reviewed run")
     resume_surface = str(context["resume_surface"])
     form = _input_form(
         action_name,
@@ -24659,7 +24660,8 @@ def _workflow_workbench_action_form(root: Path, context: dict[str, Any]) -> dict
             "kind": "commit_request",
             "action_name": action_name,
             "primary_href": "#workflow-workbench-action-form",
-            "primary_label": "Workflow Workbench Action Form",
+            "primary_label": action_label,
+            "form_label": action_label,
             "blocked_reason": "none",
             "confirmation_required": True,
             "html": "".join(
@@ -30015,7 +30017,7 @@ def _inbox_operator_workbench(root: Path, inbox: dict[str, object]) -> str:
     action_form_available = bool(action_form)
     if action_form_available:
         primary_href = "#inbox-workbench-action-form"
-        primary_label = "Inbox Workbench Action Form"
+        primary_label = next_action
         decision_surface = primary_href
     primary_surface = SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")
     queue_surface = SafeHtml(f"<a href='{_e(queue_href)}'>{_e(queue_label)}</a>")
@@ -30630,7 +30632,7 @@ def _approval_operator_workbench(
     form_available = bool(action_form)
     if form_available:
         target_href = "#approval-workbench-action-form"
-        target_label = "Approval Workbench Action Form"
+        target_label = action
 
     if first_delegation != "none":
         delegation = storage.get_subagent_delegation(first_delegation)
@@ -30822,10 +30824,10 @@ def _approval_decision_brief(
         action = "Approve worktree"
         action_name = "approve-coder-worktree"
         decision_surface = SafeHtml(
-            "<a href='#approval-workbench-action-form'>Approval Workbench Action Form</a>"
+            f"<a href='#approval-workbench-action-form'>{_e(action)}</a>"
         )
         decision_href = "#approval-workbench-action-form"
-        decision_label = "Approval Workbench Action Form"
+        decision_label = action
         run_surface = "not_created_yet"
         source_run = item.source_run_id or "none"
         context_run = "not_created_yet"
@@ -30858,10 +30860,10 @@ def _approval_decision_brief(
         action = "Approve commit"
         action_name = "approve-coder-commit"
         decision_surface = SafeHtml(
-            "<a href='#approval-workbench-action-form'>Approval Workbench Action Form</a>"
+            f"<a href='#approval-workbench-action-form'>{_e(action)}</a>"
         )
         decision_href = "#approval-workbench-action-form"
-        decision_label = "Approval Workbench Action Form"
+        decision_label = action
         inspect_href = f"/runs/{quote(item.run_id)}"
         inspect_label = "Run Detail"
         run_surface = _path_link(inspect_href)
@@ -30894,10 +30896,10 @@ def _approval_decision_brief(
         action = "Approve publication"
         action_name = "approve-coder-publication"
         decision_surface = SafeHtml(
-            "<a href='#approval-workbench-action-form'>Approval Workbench Action Form</a>"
+            f"<a href='#approval-workbench-action-form'>{_e(action)}</a>"
         )
         decision_href = "#approval-workbench-action-form"
-        decision_label = "Approval Workbench Action Form"
+        decision_label = action
         inspect_href = f"/runs/{quote(item.run_id)}"
         inspect_label = "Run Detail"
         run_surface = _path_link(inspect_href)
@@ -32955,7 +32957,7 @@ def _delegation_run_continuation_strip(
     )
     action_form_available = bool(inline_action["available"])
     action_form_surface: str | SafeHtml = (
-        SafeHtml("<a href='#delegation-run-continuation-action-form'>Delegation Run Continuation Action Form</a>")
+        SafeHtml(f"<a href='#delegation-run-continuation-action-form'>{_e(action_label)}</a>")
         if action_form_available
         else "none"
     )
@@ -33335,7 +33337,7 @@ def _run_workbench_action_form(
         "primary_href": "",
         "primary_label": "",
         "form_href": "#run-workbench-action-form",
-        "form_label": "Run Workbench Action Form",
+        "form_label": "",
         "source_href": target_href,
         "source_label": target_label,
         "blocked_reason": "no_same_page_form_for_action",
@@ -33463,7 +33465,8 @@ def _run_workbench_action_form(
             "kind": kind,
             "action_name": action_name,
             "primary_href": "#run-workbench-action-form",
-            "primary_label": "Run Workbench Action Form",
+            "primary_label": next_action,
+            "form_label": next_action,
             "blocked_reason": "none",
             "confirmation_required": True,
             "html": "".join(

@@ -1,5 +1,41 @@
 # Status
 
+## 2026-06-30 Workbench Action Label UX
+
+- Replaced the remaining visible workbench action-form labels on Workflow,
+  Approval, Inbox, Delegation Run Continuation, and Run operator surfaces with
+  the concrete next local action. Primary links and evidence rows now say
+  `Request commit for reviewed run`, `Approve worktree`, `Approve commit`,
+  `Approve publication`, `Prepare coder packet`, or
+  `Create commit request` instead of exposing `* Workbench Action Form`
+  implementation copy.
+- Preserved the same local anchors and confirmation-gated forms:
+  `#workflow-workbench-action-form`, `#approval-workbench-action-form`,
+  `#inbox-workbench-action-form`,
+  `#delegation-run-continuation-action-form`, and
+  `#run-workbench-action-form`. This is a label/orientation change only; GET
+  remains read-only and no provider, push, PR, deploy, or external mutation path
+  was added.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`, focused
+  pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_first_run_browser_actions_persist_resume_workspace or
+  test_local_app_demo_scenario_populates_fixture_state'`, `git diff --check`,
+  and `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` passed
+  locally.
+- Browser QA used a disposable fixture-backed app at `127.0.0.1:54888` for
+  `goal_70819378d814`, delegation `subagent_delegation_b3ec7b97993a`, and
+  coder run `run_50746f5d839c`. Desktop verified Workflow, Approvals, Inbox,
+  and Run pages had the new concrete labels, contained none of the old exact
+  form labels, showed no framework overlay, logged no console warnings/errors,
+  and kept `scrollWidth=1280`. A same-page click on
+  `Request commit for reviewed run` landed on
+  `#workflow-workbench-action-form` with the form present and no write. Mobile
+  390x844 repeated the four-page label sweep with no old labels, clean logs,
+  and `scrollWidth=390`.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
 ## 2026-06-30 Saved Return Label UX
 
 - Replaced the remaining visible `Open saved surface` return labels in Resume,
