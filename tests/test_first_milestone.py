@@ -14862,8 +14862,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_evidence_command_json_artifacts</dt><dd>" in goal.body
     assert "goal_evidence_command_patch_artifacts</dt><dd>" in goal.body
     assert "goal_evidence_command_text_artifacts</dt><dd>" in goal.body
-    assert "goal_evidence_command_latest_surface</dt><dd><a href='/artifacts?path=" in goal.body
-    assert "goal_evidence_command_next_action</dt><dd>Open latest Goal artifact" in goal.body
+    assert f"goal_evidence_command_latest_artifact</dt><dd>coder run {result.coder_worktree_run_id} verification stderr" in goal.body
+    assert f"goal_evidence_command_latest_label</dt><dd>Open coder run {result.coder_worktree_run_id} verification stderr" in goal.body
+    assert (
+        "goal_evidence_command_latest_surface</dt><dd><a href='/artifacts?path="
+        in goal.body
+    )
+    assert f"Open coder run {result.coder_worktree_run_id} verification stderr</a>" in goal.body
+    assert "goal_evidence_command_latest_raw_surface</dt><dd><a href='/artifacts?path=" in goal.body
+    assert "goal_evidence_command_latest_artifact_surface</dt><dd><a href='/artifacts?path=" in goal.body
+    assert f"goal_evidence_command_next_action</dt><dd>Open coder run {result.coder_worktree_run_id} verification stderr" in goal.body
     assert "goal_evidence_command_target_surface</dt><dd><a href='/artifacts?path=" in goal.body
     assert "goal_evidence_command_source</dt><dd>goal_evidence_lines_and_artifact_registry" in goal.body
     assert "goal_evidence_command_write_on_get</dt><dd>false" in goal.body
@@ -14871,7 +14879,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_evidence_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_evidence_command_external_effects_created</dt><dd>false" in goal.body
     assert "data-goal-evidence-primary='true' href='/artifacts?path=" in goal.body
-    assert "Open latest Goal artifact</a>" in goal.body
+    assert f">Open coder run {result.coder_worktree_run_id} verification stderr</a>" in goal.body
+    assert f"goal_evidence_now: Open coder run {result.coder_worktree_run_id} verification stderr" in goal.body
+    assert f"goal_evidence_latest: <a href='/artifacts?path=" in goal.body
+    assert f"Open coder run {result.coder_worktree_run_id} verification stderr</a>" in goal.body
+    assert "goal_evidence_latest_raw: <a href='/artifacts?path=" in goal.body
     assert "goal_evidence_safety: read-only local evidence inventory" in goal.body
     assert "Goal Evidence Digest" in goal.body
     assert "data-goal-evidence-digest='true'" in goal.body
@@ -14951,9 +14963,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_artifact_command_latest_kind</dt><dd>markdown" in goal.body
     assert "goal_artifact_command_latest_source</dt><dd>coder_run" in goal.body
     assert "goal_artifact_command_latest_status</dt><dd>available" in goal.body
+    assert f"goal_artifact_command_latest_label</dt><dd>Open coder run {result.coder_worktree_run_id} review" in goal.body
     assert "goal_artifact_command_latest_surface</dt><dd><a href='/artifacts?path=runs/" in goal.body
+    assert f"Open coder run {result.coder_worktree_run_id} review</a>" in goal.body
+    assert "goal_artifact_command_latest_raw_surface</dt><dd><a href='/artifacts?path=runs/" in goal.body
+    assert "goal_artifact_command_latest_artifact_surface</dt><dd><a href='/artifacts?path=runs/" in goal.body
     assert "review.md" in goal.body
-    assert "goal_artifact_command_next_action</dt><dd>Open latest artifact" in goal.body
+    assert f"goal_artifact_command_next_action</dt><dd>Open coder run {result.coder_worktree_run_id} review" in goal.body
     assert f"goal_artifact_command_target_surface</dt><dd><a href='/artifacts?path=runs/" in goal.body
     assert f"coder run {result.coder_worktree_run_id} review</a>" in goal.body
     assert "goal_artifact_command_reason</dt><dd>latest available goal artifact is ready for bounded review" in goal.body
@@ -14964,8 +14980,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_artifact_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_artifact_command_external_effects_created</dt><dd>false" in goal.body
     assert "data-goal-artifact-primary='true' href='/artifacts?path=runs/" in goal.body
-    assert "Open latest artifact</a>" in goal.body
-    assert "goal_artifact_now: Open latest artifact" in goal.body
+    assert f">Open coder run {result.coder_worktree_run_id} review</a>" in goal.body
+    assert f"goal_artifact_now: Open coder run {result.coder_worktree_run_id} review" in goal.body
+    assert f"goal_artifact_latest_link: <a href='/artifacts?path=runs/" in goal.body
+    assert f"Open coder run {result.coder_worktree_run_id} review</a>" in goal.body
+    assert "goal_artifact_latest_raw: <a href='/artifacts?path=runs/" in goal.body
     assert f"goal_artifact_latest: coder run {result.coder_worktree_run_id} review kind=markdown source=coder_run status=available" in goal.body
     assert "goal_artifact_safety: read-only bounded artifact inventory" in goal.body
     assert "Goal Artifact Explorer" in goal.body

@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-30 Goal Evidence Artifact Label UX
+
+- Made the Goal Evidence Command Bar and Goal Artifact Command Bar name the
+  concrete artifact they open instead of showing generic `Open latest Goal
+  artifact` or `Open latest artifact` copy. The demo Goal now shows labels
+  such as `Open coder run <run_id> verification stderr` for the latest
+  evidence artifact and `Open coder run <run_id> review` for the latest review
+  artifact.
+- Preserved exact href evidence with new raw/artifact-surface rows:
+  `goal_evidence_command_latest_raw_surface`,
+  `goal_evidence_command_latest_artifact_surface`,
+  `goal_artifact_command_latest_raw_surface`, and
+  `goal_artifact_command_latest_artifact_surface`.
+- Updated focused demo coverage for concrete evidence/artifact action labels,
+  human-labeled latest surfaces, raw href evidence, and collapsed list entries.
+- Verification passed locally: data volume postcheck had `73Gi` free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`;
+  `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py
+  docs/OPERATING_SUMMARY.md docs/status.md status.md`; focused route/demo
+  pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`); and temp-root `python3 -m agent_os.cli --root "$scratch"
+  app-demo-smoke-test` with all demo routes matched and provider/network/
+  external mutation counters at `0`.
+- GitHub readback for the previous commit
+  `b62f2c910f158999f12446eb24af561e6fb591f6` showed Actions run
+  `28477260032` with `Fast smoke verification` successful and `Full pytest
+  suite` still in progress before this new slice was committed.
+- Non-claim: remote GitHub Actions proof for this slice is pending until it is
+  pushed and read back. This change only adjusts read-only labels and evidence
+  rows; it did not deploy, create a PR, call providers, write on GET, push
+  from the app, or add any external mutation path.
+
 ## 2026-06-30 Goal Return Latest Label UX
 
 - Made the Goal Return Brief and Goal Session Digest use concrete latest-event

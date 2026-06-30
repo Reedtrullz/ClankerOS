@@ -22274,7 +22274,7 @@ def _goal_evidence_command_bar(
         target_label = "/incidents"
         reason = "task recommendations have local evidence attached"
     elif latest_record is not None:
-        next_action = "Open latest Goal artifact"
+        next_action = _compact_label(f"Open {latest_record['label']}", 84)
         target_href = f"/artifacts?path={quote(latest_record['path'])}"
         target_label = latest_record["label"]
         reason = "goal artifacts are available in the bounded artifact viewer"
@@ -22297,13 +22297,19 @@ def _goal_evidence_command_bar(
         else "#goal-artifact-explorer"
     )
     latest_button_label = (
-        "Open latest artifact" if latest_record is not None else "Open artifact explorer"
+        _compact_label(f"Open {latest_label}", 84)
+        if latest_record is not None
+        else "Open artifact explorer"
     )
     latest_surface = (
         _artifact_link(latest_record["path"])
         if latest_record is not None
         else "none"
     )
+    latest_action_surface = SafeHtml(
+        f"<a href='{_e(latest_href)}'>{_e(latest_button_label)}</a>"
+    )
+    latest_raw_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>")
     target = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
     attention_href = "#goal-incidents" if incident_evidence_items else "/incidents"
     attention_label = "Goal Incidents" if incident_evidence_items else "/incidents"
@@ -22372,7 +22378,10 @@ def _goal_evidence_command_bar(
                     ("goal_evidence_command_patch_artifacts", str(artifact_counts["patch"])),
                     ("goal_evidence_command_text_artifacts", str(artifact_counts["text"])),
                     ("goal_evidence_command_latest_artifact", latest_label),
-                    ("goal_evidence_command_latest_surface", SafeHtml(str(latest_surface))),
+                    ("goal_evidence_command_latest_label", latest_button_label),
+                    ("goal_evidence_command_latest_surface", latest_action_surface),
+                    ("goal_evidence_command_latest_raw_surface", latest_raw_surface),
+                    ("goal_evidence_command_latest_artifact_surface", SafeHtml(str(latest_surface))),
                     ("goal_evidence_command_next_action", next_action),
                     (
                         "goal_evidence_command_target_surface",
@@ -22390,6 +22399,8 @@ def _goal_evidence_command_bar(
                 [
                     f"goal_evidence_now: {_e(next_action)}",
                     f"goal_evidence_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"goal_evidence_latest: <a href='{_e(latest_href)}'>{_e(latest_button_label)}</a>",
+                    f"goal_evidence_latest_raw: {latest_raw_surface}",
                     f"goal_evidence_reason: {_e(reason)}",
                     "goal_evidence_safety: read-only local evidence inventory",
                 ]
@@ -22666,6 +22677,20 @@ def _goal_artifact_command_bar(
     latest_kind = latest_record["kind"] if latest_record is not None else "none"
     latest_source = latest_record["source"] if latest_record is not None else "none"
     latest_status = latest_record["status"] if latest_record is not None else "none"
+    latest_action_label = (
+        _compact_label(f"Open {latest_label}", 84)
+        if latest_record is not None
+        else "Open explorer"
+    )
+    latest_href = (
+        _artifact_href(root, latest_record["path"])
+        if latest_record is not None
+        else "#goal-artifact-explorer"
+    )
+    latest_action_surface = SafeHtml(
+        f"<a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>"
+    )
+    latest_raw_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>")
     latest_surface = (
         _artifact_link(latest_record["path"])
         if latest_record is not None
@@ -22677,7 +22702,7 @@ def _goal_artifact_command_bar(
         else "none"
     )
     if latest_record is not None and latest_record["status"] == "available":
-        next_action = "Open latest artifact"
+        next_action = latest_action_label
         target_href = _artifact_href(root, latest_record["path"])
         target_label = latest_record["label"]
         reason = "latest available goal artifact is ready for bounded review"
@@ -22695,14 +22720,6 @@ def _goal_artifact_command_bar(
     if available and missing:
         status = "partial"
     target = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
-    latest_href = (
-        _artifact_href(root, latest_record["path"])
-        if latest_record is not None
-        else "#goal-artifact-explorer"
-    )
-    latest_button_label = (
-        "Open latest artifact" if latest_record is not None else "Open explorer"
-    )
     artifact_cards = "".join(
         [
             "<div class='goal-artifact-card goal-artifact-primary' data-goal-artifact-open='true'>",
@@ -22715,7 +22732,7 @@ def _goal_artifact_command_bar(
             "<h3>Latest</h3>",
             f"<strong>{_e(latest_label)}</strong>",
             f"<p>{_e(latest_kind)} from {_e(latest_source)}; {_e(latest_status)}.</p>",
-            f"<a class='goal-artifact-link' href='{_e(latest_href)}'>{_e(latest_button_label)}</a>",
+            f"<a class='goal-artifact-link' href='{_e(latest_href)}'>{_e(latest_action_label)}</a>",
             "</div>",
             "<div class='goal-artifact-card' data-goal-artifact-types='true'>",
             "<h3>Types</h3>",
@@ -22765,7 +22782,10 @@ def _goal_artifact_command_bar(
                     ("goal_artifact_command_latest_kind", latest_kind),
                     ("goal_artifact_command_latest_source", latest_source),
                     ("goal_artifact_command_latest_status", latest_status),
-                    ("goal_artifact_command_latest_surface", SafeHtml(str(latest_surface))),
+                    ("goal_artifact_command_latest_label", latest_action_label),
+                    ("goal_artifact_command_latest_surface", latest_action_surface),
+                    ("goal_artifact_command_latest_raw_surface", latest_raw_surface),
+                    ("goal_artifact_command_latest_artifact_surface", SafeHtml(str(latest_surface))),
                     ("goal_artifact_command_next_action", next_action),
                     ("goal_artifact_command_target_surface", target),
                     ("goal_artifact_command_reason", reason),
@@ -22781,6 +22801,8 @@ def _goal_artifact_command_bar(
                 [
                     f"goal_artifact_now: {_e(next_action)}",
                     f"goal_artifact_click: {target}",
+                    f"goal_artifact_latest_link: <a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>",
+                    f"goal_artifact_latest_raw: {latest_raw_surface}",
                     (
                         "goal_artifact_latest: "
                         f"{_e(latest_label)} kind={_e(latest_kind)} "

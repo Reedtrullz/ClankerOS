@@ -897,13 +897,14 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   incident rows.
   Goal `Evidence` starts with a read-only `Goal Evidence Command Bar` that
   summarizes run evidence, worktree evidence, incident evidence,
-  recommendation evidence, typed artifact counts, latest artifact, one local
-  review target, and zero-effect boundaries through visible Now, Latest,
-  Inventory, Attention, and Safety cards before collapsed command evidence, the
-  read-only `Goal Evidence Digest`, the collapsed detailed evidence list, and
-  the typed artifact explorer. The digest adds Proof, Latest, Run Proof,
-  Artifact Mix, CI Proof, and Safety cards sourced from existing local
-  evidence/artifact records and operator-supplied CI proof.
+  recommendation evidence, typed artifact counts, latest artifact label, raw
+  latest-artifact href, one local review target, and zero-effect boundaries
+  through visible Now, Latest, Inventory, Attention, and Safety cards before
+  collapsed command evidence, the read-only `Goal Evidence Digest`, the
+  collapsed detailed evidence list, and the typed artifact explorer. The digest
+  adds Proof, Latest, Run Proof, Artifact Mix, CI Proof, and Safety cards
+  sourced from existing local evidence/artifact records and operator-supplied
+  CI proof.
   Goal `Verification Evidence` starts with a read-only
   `Goal Verification Command Bar` that exposes visible Now, Current, Latest,
   Record, and Safety cards for project-scoped proof status, checkout freshness,
@@ -924,10 +925,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   inert `/artifacts` viewer without raw filesystem browsing. Goal `Artifacts`
   starts with a read-only `Goal Artifact Command Bar` that summarizes artifact
   record counts, available/missing posture, render-family counts,
-  source-family counts, the latest artifact, one bounded review click, and
-  zero-effect counters through visible Open, Latest, Types, Inventory, and
-  Safety cards before collapsed command evidence and the collapsed detailed
-  artifact list. The typed explorer now starts with a browser-local
+  source-family counts, the latest artifact label, raw latest-artifact href,
+  one bounded review click, and zero-effect counters through visible Open,
+  Latest, Types, Inventory, and Safety cards before collapsed command evidence
+  and the collapsed detailed artifact list. The typed explorer now starts with
+  a browser-local
   `Goal Artifact Filter` that narrows already-rendered artifact rows by
   Markdown/JSON/Patch/Text type, source, or text query, restores that view per
   Goal from `localStorage:clankeros-goal-artifact-filter:<goal_id>`, and

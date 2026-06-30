@@ -4,6 +4,21 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal Evidence Command Bar and Goal Artifact Command Bar latest links now name
+  the concrete artifact they open instead of generic `Open latest Goal
+  artifact` / `Open latest artifact` copy. The demo Goal shows labels such as
+  `Open coder run <run_id> verification stderr` and `Open coder run <run_id>
+  review`, while preserving exact href evidence through
+  `goal_evidence_command_latest_raw_surface`,
+  `goal_evidence_command_latest_artifact_surface`,
+  `goal_artifact_command_latest_raw_surface`, and
+  `goal_artifact_command_latest_artifact_surface`. Local proof includes a
+  `73Gi` free-space check, py-compile, diff check, focused route/demo pytest
+  (`2 passed, 515 deselected`), and temp-root `app-demo-smoke-test` with all
+  demo route markers matched and zero provider, network, or external mutation
+  counters. The previous commit's GitHub Actions fast smoke is green; its full
+  suite remains in progress, and remote proof for this slice should be read
+  back after push.
 - Goal Return Brief and Goal Session Digest latest links now use concrete
   event labels instead of generic `Open latest activity` copy or raw href text.
   The ready-to-commit demo Goal shows `Execution completed: <run_id>.` while
