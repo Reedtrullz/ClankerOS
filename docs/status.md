@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/runs/<coder_run_id>` now places a visible `Run Readiness Strip` between
+  the `Run Command Bar` and `Run Operator Workbench`. It summarizes run status,
+  review gate, bounded evidence, next local action, current gate progress, and
+  no-effect safety posture before the denser workbench and evidence sections.
+  Local proof includes focused demo pytest (`1 passed`), compileall, and
+  `git diff --check`.
 - `/approvals` now opens from the operator workbench into a visible
   `Approval Readiness Strip` before the older command/filter inventory. The
   strip summarizes queue counts, the focused approval decision, scoped

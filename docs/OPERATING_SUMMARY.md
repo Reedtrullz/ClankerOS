@@ -1083,11 +1083,15 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   run detail pages include a read-only `Run Command Bar` that summarizes run
   status, review gate, commit/publication state, changed-file count, diff
   summary, next local action, target surface, and no-write/no-network/
-  no-external-effect boundaries. A `Run Operator Workbench` follows it with
-  do/check/unblock/finish cards, same-page action anchors, review/evidence
-  links, approvals, parent Goal, and a confirmed `save-workspace` form that
-  stores the run plus review/evidence artifact as a future resume point
-  without writing on GET. Delegation execution run detail pages now render the
+  no-external-effect boundaries. A read-only `Run Readiness Strip` follows with
+  five scan-first cards for run status, review gate, bounded evidence, next
+  local action, and safety posture, plus evidence fields for current gate,
+  gate progress, action-form availability, target surface, and zero-effect
+  counters. A `Run Operator Workbench` follows it with do/check/unblock/finish
+  cards, same-page action anchors, review/evidence links, approvals, parent
+  Goal, and a confirmed `save-workspace` form that stores the run plus
+  review/evidence artifact as a future resume point without writing on GET.
+  Delegation execution run detail pages now render the
   current form-backed continuation action inline at
   `#delegation-run-continuation-action-form`; `prepare_coder_from_handoff`
   keeps the implementation handoff, run, project, Goal, return, and resume

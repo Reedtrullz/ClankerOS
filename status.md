@@ -1,5 +1,27 @@
 # Status
 
+## 2026-07-01 Run Readiness Strip UX
+
+- Added a scan-first `Run Readiness Strip` to `/runs/<coder_run_id>` between
+  the `Run Command Bar` and the `Run Operator Workbench`.
+- The strip shows five visible cards for run status, review gate, bounded
+  evidence, next local action, and safety posture. Its collapsed evidence
+  readback includes the current run gate, gate progress, review status,
+  changed-file count, diff summary, action-form availability, target surface,
+  and explicit no-effect counters.
+- Covered both ready and blocked review states: a reviewed demo run shows
+  `action_form_ready` for `Create commit request`, while a missing review file
+  shows `same_page_review` and keeps the commit-request form unavailable.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `python3 -m compileall agent_os/local_app.py`: passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+- Non-claim: this only improves run-page orientation in the browser; it does
+  not approve, reject, execute work, commit, push, create PRs, deploy, call
+  providers, use the network, or mutate external systems from page load.
+
 ## 2026-07-01 Approval Readiness Strip UX
 
 - Added a scan-first `Approval Readiness Strip` to `/approvals` between the

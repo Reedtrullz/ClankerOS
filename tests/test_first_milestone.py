@@ -18004,6 +18004,36 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "run_command_deploy_created</dt><dd>false" in run_page.body
     assert "run_command_now: Create commit request" in run_page.body
     assert "run_command_click: <a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
+    assert "Run Readiness Strip" in run_page.body
+    assert "data-run-readiness-strip='true'" in run_page.body
+    assert "data-run-readiness-actions='true'" in run_page.body
+    assert "data-run-readiness-card='run' data-run-readiness-card-status='completed'" in run_page.body
+    assert "data-run-readiness-card='review' data-run-readiness-card-status='reviewed'" in run_page.body
+    assert "data-run-readiness-card='evidence' data-run-readiness-card-status='available'" in run_page.body
+    assert "data-run-readiness-card='next' data-run-readiness-card-status='action_form_ready'" in run_page.body
+    assert "data-run-readiness-card='safety' data-run-readiness-card-status='read_only'" in run_page.body
+    assert "run_readiness_status</dt><dd>action_form_ready" in run_page.body
+    assert f"run_readiness_run_id</dt><dd>{result.coder_worktree_run_id}" in run_page.body
+    assert "run_readiness_worktree_status</dt><dd>completed" in run_page.body
+    assert "run_readiness_review_status</dt><dd>reviewed" in run_page.body
+    assert "run_readiness_current_gate</dt><dd>commit_request" in run_page.body
+    assert "run_readiness_gate_progress</dt><dd>1/8 gates done" in run_page.body
+    assert "run_readiness_changed_files_count</dt><dd>1" in run_page.body
+    assert "run_readiness_diff_summary</dt><dd>files:1," in run_page.body
+    assert "run_readiness_next_action</dt><dd>Create commit request" in run_page.body
+    assert "run_readiness_target_surface</dt><dd><a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
+    assert "run_readiness_action_form_available</dt><dd>true" in run_page.body
+    assert "run_readiness_confirmation_required</dt><dd>true" in run_page.body
+    assert "run_readiness_evidence_surface</dt><dd><a href='#coder-worktree-evidence'>Coder Worktree Evidence</a>" in run_page.body
+    assert "run_readiness_review_surface</dt><dd><a href='#run-review-gate'>Run Review Gate</a>" in run_page.body
+    assert "run_readiness_write_on_get</dt><dd>false" in run_page.body
+    assert "run_readiness_approves_on_get</dt><dd>false" in run_page.body
+    assert "run_readiness_executes_work_on_get</dt><dd>false" in run_page.body
+    assert "run_readiness_network_actions_taken</dt><dd>0" in run_page.body
+    assert "run_readiness_external_effects_created</dt><dd>false" in run_page.body
+    assert "run_readiness_now: Create commit request" in run_page.body
+    assert "run_readiness_click: <a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
+    assert "run_readiness_safety: read-only run readiness; confirmed forms own writes" in run_page.body
     assert "Run Operator Workbench" in run_page.body
     assert "data-run-operator-workbench='true'" in run_page.body
     assert "data-run-workbench-actions='true'" in run_page.body
@@ -18072,6 +18102,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Request local commit after run review" in run_page.body
     assert "Run Gate Map" in run_page.body
     assert "data-run-gate-map='true'" in run_page.body
+    assert run_page.body.index("data-run-command-bar='true'") < run_page.body.index(
+        "data-run-readiness-strip='true'"
+    )
+    assert run_page.body.index("data-run-readiness-strip='true'") < run_page.body.index(
+        "data-run-operator-workbench='true'"
+    )
     assert run_page.body.index("data-run-operator-workbench='true'") < run_page.body.index(
         "data-run-workbench-action-form='true'"
     )
@@ -18257,6 +18293,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "run_command_next_action</dt><dd>Review run" in run_page_without_review.body
     assert "run_command_target_surface</dt><dd><a href='#run-review-gate'>Run Review Gate</a>" in run_page_without_review.body
     assert "run_command_reason</dt><dd>review_artifact_missing" in run_page_without_review.body
+    assert "Run Readiness Strip" in run_page_without_review.body
+    assert "run_readiness_status</dt><dd>same_page_review" in run_page_without_review.body
+    assert "run_readiness_review_status</dt><dd>missing" in run_page_without_review.body
+    assert "run_readiness_current_gate</dt><dd>review" in run_page_without_review.body
+    assert "run_readiness_next_action</dt><dd>Review run" in run_page_without_review.body
+    assert "run_readiness_target_surface</dt><dd><a href='#run-review-gate'>Run Review Gate</a>" in run_page_without_review.body
+    assert "run_readiness_action_form_available</dt><dd>false" in run_page_without_review.body
+    assert "data-run-readiness-card='review' data-run-readiness-card-status='missing'" in run_page_without_review.body
+    assert "data-run-readiness-card='next' data-run-readiness-card-status='same_page_review'" in run_page_without_review.body
+    assert "run_readiness_safety: read-only run readiness; confirmed forms own writes" in run_page_without_review.body
     assert "Run Operator Workbench" in run_page_without_review.body
     assert "run_workbench_status</dt><dd>same_page_review" in run_page_without_review.body
     assert "run_workbench_review_status</dt><dd>missing" in run_page_without_review.body
