@@ -13843,7 +13843,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_coder_handoff_digest(root, state, next_action),
             _goal_ci_handoff(root, state),
             _goal_live_state(root, state, phase, next_action),
-            _goal_section_index(goal.id),
+            _goal_section_index(goal.id, state, next_action),
             _goal_resume_snapshot(root, state),
             _goal_overview(state, phase, next_action),
             _goal_risk_section(state),
@@ -15462,7 +15462,19 @@ def _goal_live_state(
     )
 
 
-def _goal_section_index(goal_id: str) -> str:
+def _goal_section_index(
+    goal_id: str,
+    state: dict[str, Any],
+    next_action: GoalNextAction,
+) -> str:
+    form_available = bool(_goal_next_action_form(state, next_action))
+    operate_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=form_available,
+    )
+    operate_label = _goal_action_cta_label(next_action, form_available)
+    operate_target = operate_href[1:] if operate_href.startswith("#") else operate_href
     sections = [
         ("Summary", "goal-summary"),
         ("Control strip", "goal-control-strip"),
@@ -15547,10 +15559,10 @@ def _goal_section_index(goal_id: str) -> str:
         (
             "operate",
             "Operate",
-            "Phase, action, workflow",
-            "Open the current operating loop first.",
-            "goal-next-action",
-            "Next action",
+            "Current action, phase, workflow",
+            "Open the recommended Goal action first.",
+            operate_href,
+            operate_label,
             True,
         ),
         (
@@ -15591,7 +15603,7 @@ def _goal_section_index(goal_id: str) -> str:
         ),
     ]
     switchboard_items: list[str] = []
-    for key, title, summary, description, anchor, label, primary in switchboard_cards:
+    for key, title, summary, description, href, label, primary in switchboard_cards:
         card_class = "goal-section-index-card"
         if primary:
             card_class += " goal-section-index-primary"
@@ -15602,7 +15614,7 @@ def _goal_section_index(goal_id: str) -> str:
             f"<strong>{_e(summary)}</strong>"
             f"<p>{_e(description)}</p>"
             f"<a class='goal-section-index-link' {primary_attr}"
-            f"href='#{_e(anchor)}'>{_e(label)}</a>"
+            f"href='{_e(href)}'>{_e(label)}</a>"
             "</article>"
         )
     switchboard = "".join(switchboard_items)
@@ -15750,7 +15762,16 @@ def _goal_section_index(goal_id: str) -> str:
                     ("goal_section_finder_reset", "available"),
                     ("goal_section_switchboard_status", "available"),
                     ("goal_section_switchboard_card_count", str(len(switchboard_cards))),
-                    ("goal_section_switchboard_primary", "goal-next-action"),
+                    ("goal_section_switchboard_primary", operate_target),
+                    ("goal_section_switchboard_primary_action", next_action.action),
+                    (
+                        "goal_section_switchboard_primary_surface",
+                        SafeHtml(f"<a href='{_e(operate_href)}'>{_e(operate_label)}</a>"),
+                    ),
+                    (
+                        "goal_section_switchboard_action_form_available",
+                        str(form_available).lower(),
+                    ),
                     ("goal_section_switchboard_proof_surface", "goal-verification-command-bar"),
                     ("goal_section_switchboard_work_surface", "goal-coder-handoff-digest"),
                     ("goal_section_switchboard_knowledge_surface", "goal-artifact-command-bar"),
@@ -15763,7 +15784,7 @@ def _goal_section_index(goal_id: str) -> str:
             ),
             _ul(
                 [
-                    "goal_section_switchboard_operate: <a href='#goal-next-action'>Next action</a>",
+                    f"goal_section_switchboard_operate: <a href='{_e(operate_href)}'>{_e(operate_label)}</a>",
                     "goal_section_switchboard_proof: <a href='#goal-verification-command-bar'>Verification</a>",
                     "goal_section_switchboard_work: <a href='#goal-coder-handoff-digest'>Coder handoff</a>",
                     "goal_section_switchboard_knowledge: <a href='#goal-artifact-command-bar'>Artifacts</a>",

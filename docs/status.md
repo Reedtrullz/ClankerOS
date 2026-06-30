@@ -4,6 +4,17 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal Section Index now uses the actual current Goal action as its primary
+  `Operate` card. For the ready-to-commit demo Goal it shows
+  `Create commit request` and links to the existing confirmed
+  `#goal-action-dock-form` instead of the generic deep `#goal-next-action`
+  section, while preserving read-only/no-provider/no-network/no-external-
+  effect evidence. Local proof includes py-compile, focused route/demo pytest,
+  temp-root app-smoke-test, and in-app Browser QA on desktop 1280x720 plus
+  mobile 390x844 with clean logs, no page overflow, primary-action evidence,
+  single-column mobile switchboard cards, and click-through to the
+  commit-request form; pushed GitHub Actions and full-suite proof are still
+  pending for this slice.
 - Goal detail pages now include a first-screen `Goal Control Strip` after the
   title and before the Path Rail/Review Strip. It gathers the current action,
   state, waiting attention, proof, notes, and finish-today return point into

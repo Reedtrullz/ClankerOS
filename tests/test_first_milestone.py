@@ -13419,7 +13419,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-section-index-work='true'" in goal.body
     assert "data-goal-section-index-knowledge='true'" in goal.body
     assert "data-goal-section-index-finish='true'" in goal.body
-    assert "data-goal-section-index-primary='true' href='#goal-next-action'>Next action</a>" in goal.body
+    assert (
+        "data-goal-section-index-primary='true' href='#goal-action-dock-form'>Create commit request</a>"
+        in goal.body
+    )
     assert "goal_section_switchboard_status</dt><dd>available" in goal.body
     assert "goal_section_finder_status</dt><dd>available" in goal.body
     assert "goal_section_finder_result_count</dt><dd>64" in goal.body
@@ -13432,11 +13435,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_section_finder_memory_fields</dt><dd>query" in goal.body
     assert "goal_section_finder_reset</dt><dd>available" in goal.body
     assert "goal_section_switchboard_card_count</dt><dd>5" in goal.body
-    assert "goal_section_switchboard_primary</dt><dd>goal-next-action" in goal.body
+    assert "goal_section_switchboard_primary</dt><dd>goal-action-dock-form" in goal.body
+    assert "goal_section_switchboard_primary_action</dt><dd>Create commit request" in goal.body
+    assert (
+        "goal_section_switchboard_primary_surface</dt><dd><a href='#goal-action-dock-form'>Create commit request</a>"
+        in goal.body
+    )
+    assert "goal_section_switchboard_action_form_available</dt><dd>true" in goal.body
     assert "goal_section_switchboard_proof_surface</dt><dd>goal-verification-command-bar" in goal.body
     assert "goal_section_switchboard_work_surface</dt><dd>goal-coder-handoff-digest" in goal.body
     assert "goal_section_switchboard_knowledge_surface</dt><dd>goal-artifact-command-bar" in goal.body
     assert "goal_section_switchboard_finish_surface</dt><dd>goal-completion-readiness" in goal.body
+    assert "goal_section_switchboard_operate: <a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "goal_section_switchboard_proof: <a href='#goal-verification-command-bar'>Verification</a>" in goal.body
     assert "goal_section_switchboard_work: <a href='#goal-coder-handoff-digest'>Coder handoff</a>" in goal.body
     assert "goal_section_switchboard_finish: <a href='#goal-completion-readiness'>Completion</a>" in goal.body

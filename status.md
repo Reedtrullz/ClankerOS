@@ -1,5 +1,42 @@
 # Status
 
+## 2026-06-30 Goal Section Index Primary Action UX
+
+- Promoted the Goal Section Index `Operate` switchboard card from a generic
+  `Next action` jump into the actual current Goal action. When the Goal has a
+  confirmed browser action form, the card now says `Create commit request`
+  and links directly to `#goal-action-dock-form`, matching the Control Strip,
+  Summary Next card, and Action Dock instead of sending the operator to the
+  older deep `#goal-next-action` section.
+- The switchboard now receives the current `GoalNextAction`, reuses
+  `_goal_primary_action_href` and `_goal_action_cta_label`, and records
+  evidence for primary target, action label, primary surface, action-form
+  availability, and the existing read-only/no-provider/no-network/no-external-
+  effect posture. It does not add a new write path or bypass confirmation.
+- Updated focused demo coverage so the Section Index primary card, evidence
+  rows, and operate evidence line assert `#goal-action-dock-form` and
+  `Create commit request` for the fixture-backed ready-to-commit Goal.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), and temp-root
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`.
+- Browser QA used the in-app Browser against a disposable demo app at
+  `127.0.0.1:51136` for `goal_dbdde65e37cb`. Desktop 1280x720 verified page
+  identity, meaningful content, no framework overlay, clean warn/error logs,
+  no horizontal overflow, exactly one Section Index primary link, evidence
+  rows for the primary action, and click-through to the visible
+  `/actions/coder-commit-request` form. Mobile 390x844 verified the
+  switchboard stacks to a single 340px column, no page overflow, visible
+  `Create commit request` primary action, clean logs, and click-through to
+  the same confirmed form.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice. The Section Index remains read-only local anchor navigation over
+  existing confirmed forms; this slice did not deploy, create a PR, call
+  providers, or mutate external systems.
+
 ## 2026-06-30 Goal Control Strip UX
 
 - Added a first-screen `Goal Control Strip` to Goal detail pages, directly
