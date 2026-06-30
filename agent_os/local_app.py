@@ -1761,7 +1761,7 @@ def _guide_page(root: Path) -> str:
         if isinstance(next_action, GoalNextAction):
             primary_action = next_action.action
             if focus.get("form_available") and goal_id:
-                primary_href = f"/goals/{quote(goal_id)}#goal-next-action-form"
+                primary_href = f"/goals/{quote(goal_id)}#goal-action-dock-form"
                 primary_label = "Open Goal action form"
             elif next_action.href.startswith("#") and goal_id:
                 primary_href = f"/goals/{quote(goal_id)}{next_action.href}"
@@ -4986,7 +4986,12 @@ def _home_operator_board(
             primary_href = "#home-resume-action-form"
             primary_label = next_action.action
         elif form_available:
-            primary_href = f"/goals/{quote(goal_id)}#goal-next-action-form"
+            primary_href = _goal_primary_action_href(
+                state,
+                next_action,
+                form_available=form_available,
+                absolute=True,
+            )
             primary_label = next_action.action
         else:
             primary_href = next_action.href
@@ -13533,7 +13538,7 @@ def _goal_board_workbench(
 
 def _goal_board_action_href(goal_id: str, href: str, form_available: bool) -> str:
     if form_available:
-        return f"/goals/{quote(goal_id)}#goal-next-action-form"
+        return f"/goals/{quote(goal_id)}#goal-action-dock-form"
     if href.startswith("#"):
         return f"/goals/{quote(goal_id)}{href}"
     return href
@@ -13686,6 +13691,25 @@ def _goal_action_cta_label(
     return fallback or next_action.action
 
 
+def _goal_primary_action_href(
+    state: dict[str, Any],
+    next_action: GoalNextAction,
+    *,
+    form_available: bool | None = None,
+    absolute: bool = False,
+) -> str:
+    if form_available is None:
+        form_available = bool(_goal_next_action_form(state, next_action))
+    goal = state.get("goal")
+    if form_available:
+        if absolute and goal is not None:
+            return f"/goals/{quote(goal.id)}#goal-action-dock-form"
+        return "#goal-action-dock-form"
+    if absolute and next_action.href.startswith("#") and goal is not None:
+        return f"/goals/{quote(goal.id)}{next_action.href}"
+    return next_action.href
+
+
 def _goal_action_dock(
     root: Path,
     state: dict[str, Any],
@@ -13700,7 +13724,11 @@ def _goal_action_dock(
     waiting_gates = counts.get("waiting", 0)
     form = _goal_next_action_form(state, next_action)
     form_available = bool(form)
-    primary_href = "#goal-action-dock-form" if form_available else next_action.href
+    primary_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=form_available,
+    )
     primary_label = _goal_action_cta_label(next_action, form_available)
     primary_surface_label = next_action.action
     primary_surface = SafeHtml(
@@ -13884,7 +13912,11 @@ def _goal_progress_meter(
     else:
         meter_status = "not_started"
     form_available = bool(_goal_next_action_form(state, next_action))
-    action_href = "#goal-next-action-form" if form_available else next_action.href
+    action_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=form_available,
+    )
     action_label = _goal_action_cta_label(next_action, form_available)
     latest_ci = _latest_ci_evidence_record(root, project_id=goal.project_id)
     ci_status = "missing"
@@ -14023,7 +14055,11 @@ def _goal_attention_digest(
     )
     gates, _, current_gate = _goal_workflow_gate_summary(root, state, next_action)
     form_available = bool(_goal_next_action_form(state, next_action))
-    primary_href = "#goal-next-action-form" if form_available else next_action.href
+    primary_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=form_available,
+    )
     primary_label = _goal_action_cta_label(next_action, form_available)
     if open_recommendations:
         recommendation_target = _goal_recommendation_target(goal, open_recommendation)
@@ -14197,7 +14233,11 @@ def _goal_decision_queue(
 ) -> str:
     goal = state["goal"]
     form_available = bool(_goal_next_action_form(state, next_action))
-    primary_href = "#goal-next-action-form" if form_available else next_action.href
+    primary_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=form_available,
+    )
     primary_label = _goal_action_cta_label(next_action, form_available)
     pending_worktree = [
         item
@@ -14527,7 +14567,11 @@ def _goal_first_run_rail(
     done_count = sum(1 for status in statuses.values() if status == "done")
     current_step = str(progress["current_step"])
     form_available = bool(_goal_next_action_form(state, next_action))
-    primary_href = "#goal-next-action-form" if form_available else next_action.href
+    primary_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=form_available,
+    )
     primary_label = _goal_action_cta_label(
         next_action,
         form_available,
@@ -14615,7 +14659,11 @@ def _goal_live_state(
 ) -> str:
     goal = state["goal"]
     form_available = bool(_goal_next_action_form(state, next_action))
-    primary_href = "#goal-next-action-form" if form_available else next_action.href
+    primary_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=form_available,
+    )
     primary_label = _goal_action_cta_label(
         next_action,
         form_available,
@@ -15091,7 +15139,11 @@ def _goal_operator_workbench(
     )
     waiting_items = open_incidents + open_recommendations + pending_approvals
     form_available = bool(_goal_next_action_form(state, next_action))
-    primary_href = "#goal-next-action-form" if form_available else next_action.href
+    primary_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=form_available,
+    )
     primary_label = _goal_action_cta_label(next_action, form_available)
     primary_surface = SafeHtml(
         f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
@@ -15242,7 +15294,11 @@ def _goal_workflow_map(
         + _count_status(state["publications"], "pending_operator_approval")
     )
     waiting_items = open_incidents + open_recommendations + pending_approvals
-    primary_href = "#goal-next-action-form" if action_form_available else next_action.href
+    primary_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=action_form_available,
+    )
     primary_label = _goal_action_cta_label(
         next_action,
         action_form_available,
@@ -15538,7 +15594,11 @@ def _goal_coder_handoff_digest(
     }
     digest_status = token_statuses.get(handoff_token, handoff_token)
     action_form_available = bool(_goal_next_action_form(state, next_action))
-    primary_href = "#goal-next-action-form" if action_form_available else next_action.href
+    primary_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=action_form_available,
+    )
     primary_label = _goal_action_cta_label(next_action, action_form_available)
     primary_surface = SafeHtml(
         f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
@@ -16004,7 +16064,11 @@ def _goal_command_bar(
     attention = _goal_operator_attention(phase, next_action)
     progress = _goal_progress_label(state)
     form_available = bool(_goal_next_action_form(state, next_action))
-    primary_href = "#goal-next-action-form" if form_available else next_action.href
+    primary_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=form_available,
+    )
     primary_label = _goal_action_cta_label(next_action, form_available)
     command_cards = "".join(
         [
@@ -16053,7 +16117,7 @@ def _goal_command_bar(
                     (
                         "goal_command_bar_primary_surface",
                         SafeHtml(
-                            f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
+                            f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
                         ),
                     ),
                     ("goal_command_bar_reason", next_action.reason),
@@ -16078,7 +16142,7 @@ def _goal_command_bar(
             _ul(
                 [
                     f"goal_command_now: {_e(attention)}",
-                    f"goal_command_click: <a href='{_e(next_action.href)}'>{_e(next_action.action)}</a>",
+                    f"goal_command_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
                     f"goal_command_progress: {_e(progress)}",
                     (
                         "goal_command_waiting: "
@@ -16194,7 +16258,11 @@ def _goal_daily_loop(
     )
     pause_form = _goal_pause_form(state)
     pause_available = "true" if pause_form else "false"
-    continue_href = "#goal-next-action-form" if form_available else next_action.href
+    continue_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=form_available,
+    )
     continue_label = _goal_action_cta_label(
         next_action,
         form_available,
@@ -16249,7 +16317,7 @@ def _goal_daily_loop(
                     ("goal_daily_loop_next_action", next_action.action),
                     (
                         "goal_daily_loop_next_surface",
-                        SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"),
+                        SafeHtml(f"<a href='{_e(continue_href)}'>{_e(continue_label)}</a>"),
                     ),
                     ("goal_daily_loop_next_form_available", str(form_available).lower()),
                     ("goal_daily_loop_waiting_items", str(waiting_items)),
@@ -16301,7 +16369,7 @@ def _goal_daily_loop(
             _ul(
                 [
                     f"goal_daily_loop_step: start status={'ready' if workspace_matches_goal else 'needs_saved_goal'} surface=<a href='/resume'>/resume</a>",
-                    f"goal_daily_loop_step: continue action={_e(next_action.action)} surface=<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
+                    f"goal_daily_loop_step: continue action={_e(next_action.action)} surface=<a href='{_e(continue_href)}'>{_e(continue_label)}</a>",
                     f"goal_daily_loop_step: unblock action={_e(unblock_action)} surface={unblock_surface} waiting={waiting_items}",
                     f"goal_daily_loop_step: pause available={pause_available} surface=<a href='#goal-pause'>Pause Goal</a>",
                     f"goal_daily_loop_step: finish status={_e(finish_status)} surface=<a href='#goal-finish-today'>Finish Today</a>",
@@ -16397,7 +16465,11 @@ def _goal_return_brief(
         blocker_surface = SafeHtml("<a href='#goal-remaining-work'>Goal Remaining Work</a>")
     ci_state = _ci_evidence_command_state(root)
     action_form_available = bool(_goal_next_action_form(state, next_action))
-    primary_href = "#goal-next-action-form" if action_form_available else next_action.href
+    primary_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=action_form_available,
+    )
     primary_label = _goal_action_cta_label(
         next_action,
         action_form_available,
@@ -16456,7 +16528,7 @@ def _goal_return_brief(
                     ("goal_return_next_action", next_action.action),
                     (
                         "goal_return_next_surface",
-                        SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"),
+                        SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
                     ),
                     ("goal_return_action_form_available", str(action_form_available).lower()),
                     ("goal_return_resume_ready", str(readiness["ready"]).lower()),
@@ -16485,7 +16557,7 @@ def _goal_return_brief(
             _ul(
                 [
                     f"goal_return_now: {_e(next_action.action)}",
-                    f"goal_return_continue: <a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
+                    f"goal_return_continue: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
                     f"goal_return_latest: {_e(latest_message)}",
                     f"goal_return_artifact: {_artifact_link(latest_artifact) if latest_artifact else 'none'}",
                     f"goal_return_unblock: {_e(blocker_status)} -> {blocker_surface}",
@@ -16580,7 +16652,11 @@ def _goal_session_digest(
         waiting_label = "Check remaining work"
     gates, gate_counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
     form_available = bool(_goal_next_action_form(state, next_action))
-    primary_href = "#goal-next-action-form" if form_available else next_action.href
+    primary_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=form_available,
+    )
     primary_label = _goal_action_cta_label(
         next_action,
         form_available,
@@ -16717,7 +16793,11 @@ def _goal_activity_pulse(
     latest_artifact_label = latest_artifact.get("message") or "No artifact recorded yet"
     latest_artifact_href = latest_artifact.get("href") or "#goal-artifact-command-bar"
     action_form_available = bool(_goal_next_action_form(state, next_action))
-    primary_href = "#goal-next-action-form" if action_form_available else next_action.href
+    primary_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=action_form_available,
+    )
     primary_label = _goal_action_cta_label(next_action, action_form_available)
 
     if recent:
@@ -16901,7 +16981,11 @@ def _goal_continuation_rail(
     then_gate = upcoming[2][0] if len(upcoming) > 2 else "complete"
     then_action = step_values[2][0] if len(step_values) > 2 else "none"
     then_surface = step_values[2][1] if len(step_values) > 2 else "none"
-    primary_href = "#goal-next-action-form" if action_form_available else next_action.href
+    primary_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=action_form_available,
+    )
     primary_label = _goal_action_cta_label(
         next_action,
         action_form_available,
@@ -19528,7 +19612,11 @@ def _goal_timeline_digest(
     goal = state["goal"]
     next_action = _goal_next_action(root, state)
     form_available = bool(_goal_next_action_form(state, next_action))
-    action_href = "#goal-next-action-form" if form_available else next_action.href
+    action_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=form_available,
+    )
     action_label = _goal_action_cta_label(
         next_action,
         form_available,
@@ -23877,7 +23965,11 @@ def _goal_remaining_work_command_bar(
         status = "ready_for_completion_review"
         reason = "no_pending_or_waiting_gates"
     form_available = bool(_goal_next_action_form(state, next_action))
-    primary_href = "#goal-next-action-form" if form_available else next_action.href
+    primary_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=form_available,
+    )
     primary_label = _goal_action_cta_label(
         next_action,
         form_available,
