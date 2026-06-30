@@ -101,7 +101,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   the browser without knowing raw action ids. Their confirmation and result
   pages continue that language with `Confirm project setup`,
   `Project setup complete`, `Confirm Goal setup`, and `Goal setup complete`
-  while raw action ids remain in evidence fields. After
+  while raw action ids remain in evidence fields. The same first-run copy now
+  carries through the next three browser actions: `delegate` appears as
+  `Create scout delegation`, `context-pack` appears as
+  `Generate context pack`, and `run-delegation` appears as
+  `Run scout delegation`, with matching confirmation/result page titles and
+  raw action ids retained in evidence. After
   `register-project`, the
   local `Action Result Details` page also reads first-run progress and renders
   an inline confirmed `create-goal` continuation, plus Home and Today fallback

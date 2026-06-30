@@ -1107,7 +1107,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   collapsed and preserving no-write/provider/network/external-effect
   counters; after a Goal exists, it can render the same confirmed local
   next-action form inline for scout delegation, context-pack generation, and
-  first delegation execution. Active first-run Goal pages also show a
+  first delegation execution. Those three forms, confirmation pages, and
+  result pages use operator language (`Create scout delegation`,
+  `Generate context pack`, `Run scout delegation`) while preserving raw
+  `delegate`, `context-pack`, and `run-delegation` action ids in evidence.
+  Active first-run Goal pages also show a
   read-only `Goal First Run Rail` between Attention and the Goal Command Bar,
   preserving the Project -> Goal -> Delegation -> Context -> Run path on the
   Goal page and pointing the current gate at the existing confirmed Goal action

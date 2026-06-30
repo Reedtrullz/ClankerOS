@@ -407,7 +407,13 @@ buttons such as `Create project` and `Create Goal`, so first-run setup is
 usable without knowing the internal action ids. The confirmation and result
 pages for those setup actions keep the same human labels (`Confirm project
 setup`, `Project setup complete`, `Confirm Goal setup`, `Goal setup complete`)
-while preserving raw action ids in collapsed evidence. The
+while preserving raw action ids in collapsed evidence. The next first-run
+actions now keep that product language too: `delegate` renders as
+`Create scout delegation` / `Confirm scout delegation` /
+`Scout delegation created`, `context-pack` renders as `Generate context pack`
+/ `Confirm context pack` / `Context pack ready`, and `run-delegation` renders
+as `Run scout delegation` / `Confirm scout run` / `Scout run finished`, while
+raw action ids stay in evidence fields. The
 same browser-local draft behavior is used for goal workflow forms that collect
 worktree approval notes, safe run commands, commit/publication messages,
 publication approval notes, and manual `complete-goal` notes.

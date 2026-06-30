@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- First-run scout workflow actions now use product copy instead of raw action
+  ids after Goal creation: `delegate` renders `Create scout delegation` /
+  `Confirm scout delegation` / `Scout delegation created`, `context-pack`
+  renders `Generate context pack` / `Confirm context pack` /
+  `Context pack ready`, and `run-delegation` renders `Run scout delegation` /
+  `Confirm scout run` / `Scout run finished`, while raw action ids remain in
+  evidence fields.
 - First-run confirmation and result pages now continue the human setup
   language after form submission: `register-project` renders `Confirm project
   setup` / `Project setup complete`, `create-goal` renders `Confirm Goal

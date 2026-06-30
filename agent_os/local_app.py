@@ -38163,9 +38163,10 @@ def _form(action: str, fields: dict[str, str]) -> str:
         f"<input type='hidden' name='{_e(key)}' value='{_e(value)}'>"
         for key, value in fields.items()
     )
+    button = ACTION_FORM_COPY.get(action, {}).get("button", action)
     return (
         f"<form method='post' action='/actions/{_e(action)}'>"
-        f"{inputs}<button type='submit'>{_e(action)}</button></form>"
+        f"{inputs}<button type='submit'>{_e(button)}</button></form>"
     )
 
 
@@ -38264,6 +38265,36 @@ ACTION_FORM_COPY: dict[str, dict[str, str]] = {
         "result_title": "Goal setup complete",
         "result_body": "ClankerOS created the Goal, planning records, starter tasks, and saved Goal return point.",
     },
+    "delegate": {
+        "title": "Create scout delegation",
+        "body": "Create the read-only scout contract for the next planned Goal task. This prepares the first delegation without starting a provider or subagent.",
+        "button": "Create scout delegation",
+        "confirm_title": "Confirm scout delegation",
+        "confirm_body": "Review the Goal task, scout profile, and delegation title before ClankerOS records the local delegation contract.",
+        "confirm_button": "Confirm scout delegation",
+        "result_title": "Scout delegation created",
+        "result_body": "ClankerOS recorded the read-only scout delegation and saved the next return point for context-pack generation.",
+    },
+    "context-pack": {
+        "title": "Generate context pack",
+        "body": "Build the local context pack for the pending scout delegation so the next run has the right project files and instructions.",
+        "button": "Generate context pack",
+        "confirm_title": "Confirm context pack",
+        "confirm_body": "Review the delegation id before ClankerOS writes the local context pack artifacts.",
+        "confirm_button": "Confirm context pack",
+        "result_title": "Context pack ready",
+        "result_body": "ClankerOS generated the delegation context pack and saved the next return point for the scout run.",
+    },
+    "run-delegation": {
+        "title": "Run scout delegation",
+        "body": "Run the confirmed read-only delegation adapter using the prepared context pack and record the local evidence packet.",
+        "button": "Run scout",
+        "confirm_title": "Confirm scout run",
+        "confirm_body": "Review the delegation and operator id before ClankerOS runs the local read-only adapter.",
+        "confirm_button": "Confirm scout run",
+        "result_title": "Scout run finished",
+        "result_body": "ClankerOS ran the delegation adapter and saved the evidence packet or incident details for review.",
+    },
     "save-workspace": {
         "title": "Save return point",
         "body": "Store the current project, Goal, filters, expanded panels, and artifact pointer for tomorrow's resume surface.",
@@ -38300,6 +38331,7 @@ ACTION_FORM_COPY: dict[str, dict[str, str]] = {
 ACTION_FORM_FIELD_LABELS = {
     "allowed_write_roots": "Allowed write roots",
     "created_by_profile": "Profile",
+    "delegation_id": "Delegation",
     "expanded_panels": "Expanded panels",
     "filters": "Saved filters",
     "last_viewed_artifact": "Last viewed artifact",
@@ -38308,17 +38340,23 @@ ACTION_FORM_FIELD_LABELS = {
     "note": "Note",
     "open_goal": "Open Goal",
     "open_project": "Open project",
+    "operator_id": "Operator",
     "path": "Project path",
+    "profile": "Profile",
     "project_id": "Project",
     "prompt": "Goal intent",
+    "requested_by": "Requested by",
     "resume_surface": "Resume surface",
+    "task_id": "Task",
     "test_command": "Verification command",
+    "title": "Title",
 }
 
 
 ACTION_FORM_FIELD_HELP = {
     "allowed_write_roots": "Comma-separated local roots this project is allowed to write inside.",
     "created_by_profile": "Planning profile label for the first Goal. No provider routing is activated.",
+    "delegation_id": "Existing local delegation contract to continue.",
     "expanded_panels": "Panel ids to reopen when the workspace is restored.",
     "filters": "Human-readable filter context to remember for resume.",
     "last_viewed_artifact": "Repo-relative artifact path to reopen from the resume surface.",
@@ -38327,11 +38365,16 @@ ACTION_FORM_FIELD_HELP = {
     "note": "Context to preserve for future operator review.",
     "open_goal": "Goal id to restore as the active work surface.",
     "open_project": "Project id to restore as the active project.",
+    "operator_id": "Local operator label to record in the run evidence.",
     "path": "Absolute path to the local git checkout ClankerOS should manage.",
+    "profile": "Read-only routing profile for this delegation. The first-run scout profile does not call providers.",
     "project_id": "Existing local project that owns this Goal.",
     "prompt": "Plain-language Goal ClankerOS should work toward.",
+    "requested_by": "Operator label stored with the local action evidence.",
     "resume_surface": "Browser route to open when resuming work.",
+    "task_id": "Planned Goal task that this local action advances.",
     "test_command": "Default local verifier for this project.",
+    "title": "Human title shown on the local delegation or action record.",
 }
 
 

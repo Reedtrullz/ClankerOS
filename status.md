@@ -1,5 +1,45 @@
 # Status
 
+## 2026-06-30 First-Run Scout Workflow Copy UX
+
+- Extended human action copy through the next first-run workflow gates after
+  Goal creation. `delegate` now presents `Create scout delegation`, confirms
+  with `Confirm scout delegation`, and finishes with `Scout delegation
+  created`; `context-pack` presents `Generate context pack`, confirms with
+  `Confirm context pack`, and finishes with `Context pack ready`;
+  `run-delegation` presents `Run scout delegation`, confirms with
+  `Confirm scout run`, and finishes with `Scout run finished`.
+- Added human labels/help for the fields that appear in these gates:
+  delegation, task, profile, title, requested-by, and operator id. The compact
+  hidden-field forms now use opt-in action button copy for these productized
+  actions without renaming every generic internal action.
+- Kept the existing safety model: all three actions still require explicit
+  confirmation before local writes or local execution, raw action ids remain in
+  evidence fields, GET rendering is read-only, and no provider calls,
+  non-loopback network actions, pushes, PRs, deploys, or external mutations are
+  introduced.
+- Updated README, local app docs, operating summary, and latest-status docs so
+  the first-run path describes a guided project -> Goal -> scout delegation ->
+  context pack -> scout run sequence instead of falling back to raw action ids.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; `git diff --check`; focused pytest
+  `tests/test_first_milestone.py -q -k
+  first_run_browser_actions_persist_resume_workspace`; focused pytest
+  `tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health`; and
+  `python3 -m agent_os.cli app-smoke-test` all passed locally.
+- Browser QA: launched a disposable local app at `127.0.0.1:62124`, completed
+  project and Goal setup, verified `delegate` reaches `Confirm scout
+  delegation` and `Scout delegation created`, verified the live Goal page shows
+  `Generate context pack` as the next visible action, and checked a `390x844`
+  viewport with no horizontal overflow. The embedded browser click wrapper was
+  noisy on the deep repeated forms, so context-pack/run-delegation
+  confirmation/result coverage is from the focused route tests above.
+- GitHub Actions offload: previous pushed commit
+  `7d61ac3ac6b542d967c70be31cce8b51a121a126` had the `Fast smoke
+  verification` job passing in run `28410608822`; the full pytest suite job was
+  still running when this slice was prepared.
+
 ## 2026-06-30 First-Run Confirmation Copy UX
 
 - Extended the first-run form guidance through the confirmation and result

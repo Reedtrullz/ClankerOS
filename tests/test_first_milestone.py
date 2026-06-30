@@ -8034,7 +8034,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
         },
     )
     assert delegate_confirmation.status == 409
-    assert "Confirm delegate" in delegate_confirmation.body
+    assert "Confirm scout delegation" in delegate_confirmation.body
+    assert "Confirm delegate" not in delegate_confirmation.body
+    assert "Review the Goal task, scout profile, and delegation title" in delegate_confirmation.body
+    assert "data-action-confirm-title='true' data-action-confirm-action='delegate'" in delegate_confirmation.body
+    assert "action_preflight_action</dt><dd>delegate" in delegate_confirmation.body
+    assert "action_preflight_label</dt><dd>Create scout delegation" in delegate_confirmation.body
+    assert "action_confirmation_review_label</dt><dd>Create scout delegation" in delegate_confirmation.body
+    assert "action_confirmation_label</dt><dd>Create scout delegation" in delegate_confirmation.body
+    assert "href='#action-confirm-local-action'>Confirm scout delegation</a>" in delegate_confirmation.body
+    assert ">Confirm scout delegation</button>" in delegate_confirmation.body
     assert "Safety boundary" in delegate_confirmation.body
     delegate_result = render_local_app_route(
         tmp_path,
@@ -8051,6 +8060,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     )
     assert delegate_result.status == 200
     assert "subagent_delegation:" in delegate_result.body
+    assert "Scout delegation created" in delegate_result.body
+    assert delegate_result.body.index("Scout delegation created") < delegate_result.body.index(
+        "Action Result Details"
+    )
+    assert "action_result_command_label</dt><dd>Create scout delegation" in delegate_result.body
+    assert "action_result_command_completed: Create scout delegation" in delegate_result.body
+    assert "action_label</dt><dd>Create scout delegation" in delegate_result.body
+    assert "ClankerOS recorded the read-only scout delegation" in delegate_result.body
     assert "Action Result Details" in delegate_result.body
     assert "Action Continuation" in delegate_result.body
     assert "action_continuation_status</dt><dd>available" in delegate_result.body
@@ -8134,7 +8151,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
         form={"delegation_id": [delegation.id]},
     )
     assert context_pack_confirmation.status == 409
-    assert "Confirm context-pack" in context_pack_confirmation.body
+    assert "Confirm context pack" in context_pack_confirmation.body
+    assert "Confirm context-pack" not in context_pack_confirmation.body
+    assert "Review the delegation id before ClankerOS writes the local context pack artifacts." in context_pack_confirmation.body
+    assert "data-action-confirm-title='true' data-action-confirm-action='context-pack'" in context_pack_confirmation.body
+    assert "action_preflight_action</dt><dd>context-pack" in context_pack_confirmation.body
+    assert "action_preflight_label</dt><dd>Generate context pack" in context_pack_confirmation.body
+    assert "action_confirmation_review_label</dt><dd>Generate context pack" in context_pack_confirmation.body
+    assert "action_confirmation_label</dt><dd>Generate context pack" in context_pack_confirmation.body
+    assert "href='#action-confirm-local-action'>Confirm context pack</a>" in context_pack_confirmation.body
+    assert ">Confirm context pack</button>" in context_pack_confirmation.body
     context_pack_result = render_local_app_route(
         tmp_path,
         "/actions/context-pack",
@@ -8143,6 +8169,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     )
     assert context_pack_result.status == 200
     assert "context_pack:" in context_pack_result.body
+    assert "Context pack ready" in context_pack_result.body
+    assert context_pack_result.body.index("Context pack ready") < context_pack_result.body.index(
+        "Action Result Details"
+    )
+    assert "action_result_command_label</dt><dd>Generate context pack" in context_pack_result.body
+    assert "action_result_command_completed: Generate context pack" in context_pack_result.body
+    assert "action_label</dt><dd>Generate context pack" in context_pack_result.body
+    assert "ClankerOS generated the delegation context pack" in context_pack_result.body
     context_pack_md = (
         tmp_path
         / ".clanker"
@@ -9261,7 +9295,16 @@ def test_local_app_runs_delegation_from_browser_action(
         form={"delegation_id": [delegation_id]},
     )
     assert run_confirmation.status == 409
-    assert "Confirm run-delegation" in run_confirmation.body
+    assert "Confirm scout run" in run_confirmation.body
+    assert "Confirm run-delegation" not in run_confirmation.body
+    assert "Review the delegation and operator id before ClankerOS runs the local read-only adapter." in run_confirmation.body
+    assert "data-action-confirm-title='true' data-action-confirm-action='run-delegation'" in run_confirmation.body
+    assert "action_preflight_action</dt><dd>run-delegation" in run_confirmation.body
+    assert "action_preflight_label</dt><dd>Run scout delegation" in run_confirmation.body
+    assert "action_confirmation_review_label</dt><dd>Run scout delegation" in run_confirmation.body
+    assert "action_confirmation_label</dt><dd>Run scout delegation" in run_confirmation.body
+    assert "href='#action-confirm-local-action'>Confirm scout run</a>" in run_confirmation.body
+    assert ">Confirm scout run</button>" in run_confirmation.body
     assert "Safety boundary" in run_confirmation.body
 
     run_result = render_local_app_route(
@@ -9276,6 +9319,14 @@ def test_local_app_runs_delegation_from_browser_action(
     )
     assert run_result.status == 200
     assert "run_delegation:" in run_result.body
+    assert "Scout run finished" in run_result.body
+    assert run_result.body.index("Scout run finished") < run_result.body.index(
+        "Action Result Details"
+    )
+    assert "action_result_command_label</dt><dd>Run scout delegation" in run_result.body
+    assert "action_result_command_completed: Run scout delegation" in run_result.body
+    assert "action_label</dt><dd>Run scout delegation" in run_result.body
+    assert "ClankerOS ran the delegation adapter" in run_result.body
     assert "status</dt><dd>completed" in run_result.body
     assert "incident_id</dt><dd>none" in run_result.body
     assert "memory_proposal_id</dt><dd>none" in run_result.body
