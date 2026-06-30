@@ -1,5 +1,35 @@
 # Status
 
+## 2026-06-30 First-Run Next Action State UX
+
+- Changed the post-Goal first-run state from the route-oriented
+  `Open goal to create scout delegation` to the actual operator move,
+  `Create scout delegation`. The first-run guide, command bar, next-step
+  card, action ladder, header next-action, and Goal first-run rail now agree
+  on the same action wording while preserving the existing
+  `#first-run-command-action` target and `/actions/delegate` confirmation
+  route.
+- Preserved the existing first-run progress reason, target surface, form
+  availability, evidence rows, and local confirmation boundary. This is a
+  state/copy alignment only; GET remains read-only and the scout delegation
+  write still requires the confirmed POST flow.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health'`, and
+  `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` passed
+  locally.
+- Browser QA used a disposable Git-initialized app root at
+  `127.0.0.1:63816`. Desktop exercised `/goals` first-run setup through
+  project registration and first-Goal creation, then verified
+  `first_run_next_action`, `first_run_command_next_action`,
+  `first_run_next_step_action`, and `first_run_action_ladder_next_action` all
+  report `Create scout delegation`, the inline command summary and next-step
+  link match, `/actions/delegate` remains the form action, old route copy is
+  absent, browser logs are clean, and `scrollWidth=1280`. Mobile 390x844
+  verified the same state/action copy, clean logs, and `scrollWidth=390`.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
 ## 2026-06-30 First-Run Action Label UX
 
 - Replaced the remaining generic `Run First-Run Action` and inline

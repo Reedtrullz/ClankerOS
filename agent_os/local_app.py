@@ -12143,7 +12143,7 @@ def _first_run_progress(root: Path, storage: Storage) -> dict[str, Any]:
     elif not delegation_created:
         current_step = "create_first_delegation"
         next_surface = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>")
-        next_action = "Open goal to create scout delegation"
+        next_action = "Create scout delegation"
         next_reason = "goal_ready_for_delegation"
     elif not context_pack_ready:
         current_step = "generate_context_pack"

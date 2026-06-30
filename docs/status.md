@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Post-Goal first-run state now names the actual operator move,
+  `Create scout delegation`, instead of the route-oriented
+  `Open goal to create scout delegation`. The guide, command bar, next-step
+  card, action ladder, header next-action, and Goal first-run rail now agree
+  while preserving the same `#first-run-command-action` anchor,
+  `/actions/delegate` confirmation route, and zero-effect GET posture.
 - First-run action surfaces now label the current browser move directly instead
   of saying `Run First-Run Action`. After first Goal creation, the guide,
   next-step card, action ladder, header next-action, and inline expander say

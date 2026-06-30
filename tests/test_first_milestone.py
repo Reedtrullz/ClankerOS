@@ -7563,7 +7563,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "data-goal-first-run-status='current'"
     ) in first_goal_page.body
     assert "goal_first_run_current_step</dt><dd>create_first_delegation" in first_goal_page.body
-    assert "goal_first_run_next_action</dt><dd>Open goal to create scout delegation" in first_goal_page.body
+    assert "goal_first_run_next_action</dt><dd>Create scout delegation" in first_goal_page.body
     assert (
         "goal_first_run_primary_surface</dt><dd><a href='#goal-next-action-form'>"
         "Create scout delegation</a>"
@@ -7593,13 +7593,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_current_step</dt><dd>create_first_delegation" in goals_after_first_goal.body
     assert "first_run_goal_created</dt><dd>true" in goals_after_first_goal.body
     assert "first_run_delegation_created</dt><dd>false" in goals_after_first_goal.body
-    assert "first_run_next_action</dt><dd>Open goal to create scout delegation" in goals_after_first_goal.body
+    assert "first_run_next_action</dt><dd>Create scout delegation" in goals_after_first_goal.body
     assert "first_run_next_reason</dt><dd>goal_ready_for_delegation" in goals_after_first_goal.body
     assert "first_run_step: create_first_goal status=done" in goals_after_first_goal.body
     assert "first_run_step: create_first_delegation status=current" in goals_after_first_goal.body
     assert "first_run_step: generate_context_pack status=waiting_for_delegation" in goals_after_first_goal.body
     assert "first_run_command_current_step</dt><dd>create_first_delegation" in goals_after_first_goal.body
-    assert "first_run_command_next_action</dt><dd>Open goal to create scout delegation" in goals_after_first_goal.body
+    assert "first_run_command_next_action</dt><dd>Create scout delegation" in goals_after_first_goal.body
     assert (
         "first_run_command_inline_action_form_available</dt><dd>true"
         in goals_after_first_goal.body
@@ -7612,7 +7612,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
         in goals_after_first_goal.body
     )
     assert (
-        "first_run_next_step_action</dt><dd>Open goal to create scout delegation"
+        "first_run_next_step_action</dt><dd>Create scout delegation"
         in goals_after_first_goal.body
     )
     assert (
