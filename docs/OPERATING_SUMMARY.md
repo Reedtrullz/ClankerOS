@@ -508,8 +508,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   submitting forms while jump evidence stays collapsed by default. An in-flow `Goal Action Dock`
   follows the jump bar and keeps the current action, workflow gate, CI proof
   target, and `/resume` route visible near the top of the workbench while
-  jumping directly to the existing confirmed Goal action form when one is
-  available instead of duplicating action authority. A read-only `Goal Progress
+  rendering a top-of-page `Current Action Form` when the existing confirmed
+  Goal action form is available. This duplicates the rendered form for
+  usability, not the backend action authority; the same confirmation route
+  still owns writes and local execution. A read-only `Goal Progress
   Meter` follows with task and workflow progress bars, waiting operator work,
   latest proof posture, and the next confirmed browser action. The dock and
   meter precede the Goal
@@ -578,8 +580,8 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   diagnostic sections. The in-flow Goal Jump Bar keeps the main daily anchors
   one click or keypress away without covering later controls, the in-flow Goal
   Action Dock keeps the current action, gate, proof, and resume route visible
-  near the top without covering later controls, and jumps directly to the
-  confirmed form without adding a second action form. The Goal Next Action
+  near the top without covering later controls, and renders the current
+  confirmed action form before the deeper detailed copy. The Goal Next Action
   section starts
   with a human-first focus strip for Now, Gate, Target, and Boundary, then
   renders the confirmed form before collapsed action evidence. The Goal

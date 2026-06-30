@@ -301,8 +301,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   and `aria-keyshortcuts` jump to those local anchors without submitting
   forms while jump evidence stays collapsed by default, then an in-flow
   `Goal Action Dock` keeps the current action, gate, CI proof target, and
-  resume route near the top of the workbench while jumping directly to the
-  existing confirmed Goal action form when one is available. A read-only
+  resume route near the top of the workbench while rendering a top-of-page
+  `Current Action Form` when the existing confirmed Goal action form is
+  available. The deeper Next Action section remains as the detailed readback
+  copy, so the operator can act immediately or inspect the full action
+  evidence later. A read-only
   `Goal Progress Meter` follows with task and workflow progress bars, waiting
   operator work, latest proof state, and the next confirmed browser action. A
   read-only `Goal Attention Digest` follows with Now, Approvals, Incidents,
@@ -361,8 +364,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   daily anchors one click or keypress away without covering later controls, and
   the in-flow Goal Action Dock keeps the current action, gate, proof, and
   resume route visible near the top of the Goal without covering later
-  controls while jumping directly to the confirmed form without adding a
-  second action form. The Goal Section Index now opens with visible Operate,
+  controls while rendering the current confirmed action form near the top of
+  the page. The deeper Next Action card still provides the same form as a
+  detailed readback/fallback surface. The Goal Section Index now opens with visible Operate,
   Proof, Work, Knowledge, and Finish switchboard cards plus a browser-local
   section finder with a match count, first-match jump, and compact anchor
   chips before collapsed evidence. The finder restores its per-Goal query from

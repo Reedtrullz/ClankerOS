@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal Action Dock now renders a top-of-page `Current Action Form` whenever
+  the current Goal next action already has a confirmed browser form. The lower
+  Next Action section remains as detailed readback/fallback, but operators can
+  use the current action without scrolling through the long Goal page; writes
+  and local execution still go through the same confirmation route.
 - First-run scout workflow actions now use product copy instead of raw action
   ids after Goal creation: `delegate` renders `Create scout delegation` /
   `Confirm scout delegation` / `Scout delegation created`, `context-pack`
@@ -783,10 +788,10 @@ Latest status focus:
   visible Recent/Workspace/Action/Artifact return dock, while counts, saved
   context, last action, artifact targets, zero-effect counters, and the longer
   shortcut list stay available inside collapsed evidence/details.
-- Goal Action Dock and Goal Operator Workbench primary links now jump directly
-  to `#goal-next-action-form` when the confirmed browser action form exists,
-  so top-of-page action controls land on the actionable form instead of the
-  broader Next Action readback.
+- Goal Action Dock now renders a top-of-page `Current Action Form` when the
+  confirmed browser action form exists, and the shared operator ribbon routes
+  form-backed Goal actions to that dock form instead of the deeper
+  `#goal-next-action-form` fallback.
 - Goal Next Action sections now open with a human-first focus strip for Now,
   Gate, Target, and Boundary, giving the operator one readable primary link to
   the existing confirmed form or source surface, then placing the confirmed

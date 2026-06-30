@@ -431,8 +431,10 @@ workflow, timeline, evidence, artifacts, notes, git, and remaining work. Its vis
 `aria-keyshortcuts` jump to those local anchors without submitting forms,
 while jump-state evidence stays collapsed by default,
 then an in-flow `Goal Action Dock` keeps the current action, gate, CI proof
-target, and resume route near the top of the workbench while jumping directly
-to the existing confirmed Goal action form when one is available. A read-only
+target, and resume route near the top of the workbench while rendering a
+top-of-page `Current Action Form` when the existing confirmed Goal action form
+is available. The deeper Next Action section remains as the detailed readback
+copy, but the operator can use the current action without hunting down-page. A read-only
 `Goal Progress Meter` follows with task and workflow progress bars, waiting
 operator work, latest proof state, and the next confirmed browser action before
 deeper command evidence. A read-only `Goal Attention Digest` follows the meter

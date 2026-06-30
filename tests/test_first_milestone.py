@@ -11155,8 +11155,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
         'data-operator-shell="true"'
     )
     assert (
-        f"<a class='operator-ribbon-action' href='/runs/{result.coder_worktree_run_id}'>"
-        "Create commit request</a>"
+        f"<a class='operator-ribbon-action' href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Use current action</a>"
     ) in dashboard.body
     assert "operator_ribbon_status</dt><dd>available" in dashboard.body
     assert "operator_ribbon_source</dt><dd>lead_goal" in dashboard.body
@@ -11165,8 +11165,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "operator_ribbon_phase</dt><dd>Ready to commit" in dashboard.body
     assert "operator_ribbon_primary_action</dt><dd>Create commit request" in dashboard.body
     assert (
-        f"operator_ribbon_primary_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
-        "Create commit request</a>"
+        f"operator_ribbon_primary_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Use current action</a>"
     ) in dashboard.body
     assert "operator_ribbon_attention_status</dt><dd>needs_approval_review" in dashboard.body
     assert "operator_ribbon_attention_action</dt><dd>Review approvals" in dashboard.body
@@ -11191,8 +11191,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "operator_ribbon_external_effects_created</dt><dd>false" in dashboard.body
     assert "operator_ribbon_now: Create commit request" in dashboard.body
     assert (
-        f"operator_ribbon_click: <a href='/runs/{result.coder_worktree_run_id}'>"
-        "Create commit request</a>"
+        f"operator_ribbon_click: <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Use current action</a>"
     ) in dashboard.body
     assert "operator_ribbon_safety: read-only global operator orientation" in dashboard.body
     assert "Goal-First Home" in dashboard.body
@@ -12690,9 +12690,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_action_dock_current_gate</dt><dd>commit_request" in goal.body
     assert "goal_action_dock_gate_progress</dt><dd>8/15 gates done" in goal.body
     assert "goal_action_dock_next_action</dt><dd>Create commit request" in goal.body
-    assert "goal_action_dock_primary_surface</dt><dd><a href='#goal-next-action-form'>Goal action form</a>" in goal.body
+    assert "goal_action_dock_primary_surface</dt><dd><a href='#goal-action-dock-form'>Current Action Form</a>" in goal.body
     assert f"goal_action_dock_source_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "goal_action_dock_form_available</dt><dd>true" in goal.body
+    assert "goal_action_dock_top_form_available</dt><dd>true" in goal.body
+    assert "goal_action_dock_top_form_surface</dt><dd><a href='#goal-action-dock-form'>Current Action Form</a>" in goal.body
+    assert "goal_action_dock_deep_form_surface</dt><dd><a href='#goal-next-action-form'>Detailed Next Action form</a>" in goal.body
+    assert "goal_action_dock_top_form_source</dt><dd>goal_next_action_form" in goal.body
     assert "goal_action_dock_confirmation_required</dt><dd>true" in goal.body
     assert "goal_action_dock_pending_approvals</dt><dd>1" in goal.body
     assert "goal_action_dock_ci_surface</dt><dd><a href='#goal-ci-handoff'>Goal CI Handoff</a>" in goal.body
@@ -12701,9 +12705,20 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_action_dock_provider_calls_taken</dt><dd>0" in goal.body
     assert "goal_action_dock_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_action_dock_external_effects_created</dt><dd>false" in goal.body
-    assert "data-goal-action-dock-primary='true' href='#goal-next-action-form'>Open action form</a>" in goal.body
+    assert "data-goal-action-dock-primary='true' href='#goal-action-dock-form'>Use current action</a>" in goal.body
+    assert "id='goal-action-dock-form' class='goal-action-dock-form' data-goal-action-dock-form='true'" in goal.body
+    assert "Current Action Form" in goal.body
+    assert "The same confirmation screen still appears before any local write or local execution." in goal.body
+    assert "action='/actions/coder-commit-request'" in goal.body
+    assert goal.body.index("id='goal-action-dock-form'") < goal.body.index(
+        "class='goal-action-dock-details'"
+    )
+    assert goal.body.index("id='goal-action-dock-form'") < goal.body.index(
+        "id='goal-progress-meter'"
+    )
     assert "goal_action_dock_now: Create commit request" in goal.body
-    assert "goal_action_dock_click: <a href='#goal-next-action-form'>Open action form</a>" in goal.body
+    assert "goal_action_dock_click: <a href='#goal-action-dock-form'>Use current action</a>" in goal.body
+    assert "goal_action_dock_top_form: <a href='#goal-action-dock-form'>Current Action Form</a> reuses existing confirmed action form" in goal.body
     assert "goal_action_dock_gate: commit_request" in goal.body
     assert "goal_action_dock_safety: reuses existing confirmed Goal action form" in goal.body
     assert "Goal Progress Meter" in goal.body

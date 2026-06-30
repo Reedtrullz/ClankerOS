@@ -13485,11 +13485,12 @@ def _goal_action_dock(
     done_gates = counts.get("done", 0)
     pending_gates = counts.get("pending", 0)
     waiting_gates = counts.get("waiting", 0)
-    form_available = bool(_goal_next_action_form(state, next_action))
-    primary_href = "#goal-next-action-form" if form_available else next_action.href
-    primary_label = "Open action form" if form_available else next_action.action
+    form = _goal_next_action_form(state, next_action)
+    form_available = bool(form)
+    primary_href = "#goal-action-dock-form" if form_available else next_action.href
+    primary_label = "Use current action" if form_available else next_action.action
     primary_surface_label = (
-        "Goal action form" if form_available else next_action.action
+        "Current Action Form" if form_available else next_action.action
     )
     primary_surface = SafeHtml(
         f"<a href='{_e(primary_href)}'>{_e(primary_surface_label)}</a>"
@@ -13508,6 +13509,19 @@ def _goal_action_dock(
         + _count_status(state["publications"], "pending_operator_approval")
     )
     waiting_items = open_incidents + open_recommendations + pending_approvals
+    form_html = ""
+    if form:
+        form_html = "".join(
+            [
+                "<section id='goal-action-dock-form' class='goal-action-dock-form' "
+                "data-goal-action-dock-form='true'>",
+                "<h3>Current Action Form</h3>",
+                "<p class='muted'>Use this top-of-page copy of the current Goal action. "
+                "The same confirmation screen still appears before any local write or local execution.</p>",
+                form,
+                "</section>",
+            ]
+        )
     return "".join(
         [
             "<section id='goal-action-dock' class='panel goal-action-dock' data-goal-action-dock='true'><h2>Goal Action Dock</h2>",
@@ -13530,6 +13544,7 @@ def _goal_action_dock(
             "<a href='/resume'>Resume</a>",
             "</div>",
             "</div>",
+            form_html,
             "<details class='goal-action-dock-details'>",
             "<summary>Dock details</summary>",
             _kv(
@@ -13554,6 +13569,26 @@ def _goal_action_dock(
                     ("goal_action_dock_reason", next_action.reason),
                     ("goal_action_dock_form_available", str(form_available).lower()),
                     (
+                        "goal_action_dock_top_form_available",
+                        str(form_available).lower(),
+                    ),
+                    (
+                        "goal_action_dock_top_form_surface",
+                        SafeHtml("<a href='#goal-action-dock-form'>Current Action Form</a>")
+                        if form_available
+                        else "not_available",
+                    ),
+                    (
+                        "goal_action_dock_deep_form_surface",
+                        SafeHtml("<a href='#goal-next-action-form'>Detailed Next Action form</a>")
+                        if form_available
+                        else "not_available",
+                    ),
+                    (
+                        "goal_action_dock_top_form_source",
+                        "goal_next_action_form",
+                    ),
+                    (
                         "goal_action_dock_confirmation_required",
                         str(form_available).lower(),
                     ),
@@ -13577,6 +13612,13 @@ def _goal_action_dock(
                 [
                     f"goal_action_dock_now: {_e(next_action.action)}",
                     f"goal_action_dock_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    (
+                        "goal_action_dock_top_form: "
+                        "<a href='#goal-action-dock-form'>Current Action Form</a> "
+                        "reuses existing confirmed action form"
+                        if form_available
+                        else "goal_action_dock_top_form: unavailable"
+                    ),
                     f"goal_action_dock_source_surface: <a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
                     f"goal_action_dock_gate: {_e(current_gate)}",
                     f"goal_action_dock_waiting: approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations}",
@@ -39013,8 +39055,8 @@ def _action_notice_recommendation(
                 current_gate = "unknown"
         if goal is not None and isinstance(next_action, GoalNextAction):
             if form_available:
-                href = f"/goals/{quote(goal.id)}#goal-next-action-form"
-                label = "Use Goal action form"
+                href = f"/goals/{quote(goal.id)}#goal-action-dock-form"
+                label = "Use current action"
             else:
                 href = next_action.href
                 label = next_action.action
@@ -40142,6 +40184,14 @@ def _operator_status_ribbon(
         action_form_available = (
             "true" if bool(focus_context.get("action_form")) else "false"
         )
+        if action_form_available == "true" and goal is not None:
+            goal_path = f"/goals/{quote(goal.id)}"
+            primary_href = (
+                "#goal-action-dock-form"
+                if route_path == goal_path
+                else f"{goal_path}#goal-action-dock-form"
+            )
+            primary_label = "Use current action"
         if int(open_incidents):
             attention_status = "needs_incident_review"
             attention_action = "Review incidents"
@@ -41988,6 +42038,9 @@ def _html_page(
     .goal-action-dock-label {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
     .goal-action-dock-item strong {{ overflow-wrap:anywhere; }}
     .goal-action-dock-primary {{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; max-width:100%; width:max-content; padding:6px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:#fff; text-decoration:none; overflow-wrap:anywhere; }}
+    .goal-action-dock-form {{ border:1px solid var(--line); background:var(--panel); padding:12px; margin:10px 0 12px; }}
+    .goal-action-dock-form h3 {{ margin:0 0 6px; font-size:16px; }}
+    .goal-action-dock-form form {{ margin:10px 0 0; }}
     .goal-action-dock-details summary {{ cursor:pointer; font-weight:700; }}
     .goal-action-dock ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .goal-action-dock li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

@@ -1,5 +1,42 @@
 # Status
 
+## 2026-06-30 Goal Action Dock Current Form UX
+
+- Made the Goal Action Dock directly usable for form-backed next actions. When
+  `_goal_next_action_form` returns a confirmed browser form, the dock now
+  renders a top-of-page `Current Action Form` before its collapsed evidence
+  instead of only linking down to the deeper Next Action copy.
+- Kept the existing action authority intact: the dock reuses the same
+  confirmed form HTML, still routes through `/actions/<action>` confirmation,
+  still requires confirmation before local writes or local execution, and does
+  not add provider calls, non-loopback network actions, pushes, PRs, deploys,
+  or external mutations.
+- The deeper `Goal Next Action` section remains available as the detailed
+  action readback/fallback surface, so existing anchors and tests still have a
+  stable lower page target while daily operators can act from the top surface.
+- Updated README, local app docs, operating summary, and latest-status docs to
+  describe the dock as a top current-action form rather than a jump-only
+  action link.
+- Verification: `df -h /System/Volumes/Data` showed 80Gi free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `git diff --check`, focused pytest
+  `tests/test_first_milestone.py -q -k
+  'local_app_demo_scenario_populates_fixture_state or
+  local_app_routes_render_modern_workflow_and_health or
+  first_run_browser_actions_persist_resume_workspace'`, and
+  `python3 -m agent_os.cli app-smoke-test` passed locally.
+- Final rerun after the quoted-route comparison cleanup:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `git diff --check`, and focused pytest
+  `tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state` passed locally.
+- Browser QA: launched a disposable local app at `127.0.0.1:62125`, verified
+  the Goal page operator ribbon and Goal Action Dock both route `Use current
+  action` to `#goal-action-dock-form`, verified the top form posts to
+  `/actions/coder-commit-request`, submitted it to the confirmation page, and
+  checked a 390x844 viewport with no horizontal overflow. Non-claim: the full
+  pytest suite is delegated to GitHub Actions for this slice.
+
 ## 2026-06-30 First-Run Scout Workflow Copy UX
 
 - Extended human action copy through the next first-run workflow gates after
