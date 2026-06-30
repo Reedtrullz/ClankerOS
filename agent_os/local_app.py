@@ -20474,6 +20474,7 @@ def _goal_timeline_digest(
     latest_at = _format_time(latest.get("at") or "") if latest else "none"
     latest_href = latest.get("href") or f"/goals/{quote(goal.id)}"
     latest_message = latest.get("message") or "No goal timeline events yet"
+    latest_action_label = _timeline_item_action_label(latest, fallback="Open timeline")
     latest_kind = _timeline_item_family(latest) if latest else "none"
     artifact_items = [
         item
@@ -20506,7 +20507,7 @@ def _goal_timeline_digest(
             "<article class='goal-timeline-card' data-goal-timeline-digest-latest='true'>"
             "<h3>Latest</h3>"
             f"<p>{_e(latest_kind)} · {_e(latest_message)}</p>"
-            f"<a class='goal-timeline-link' href='{_e(latest_href)}'>Open latest</a>"
+            f"<a class='goal-timeline-link' href='{_e(latest_href)}'>{_e(latest_action_label)}</a>"
             "</article>",
             "<article class='goal-timeline-card' data-goal-timeline-digest-artifact='true'>"
             "<h3>Artifact</h3>"
@@ -20535,8 +20536,13 @@ def _goal_timeline_digest(
                     ("timeline_digest_latest_at", latest_at),
                     ("timeline_digest_latest_kind", latest_kind),
                     ("timeline_digest_latest_message", latest_message),
+                    ("timeline_digest_latest_label", latest_action_label),
                     (
                         "timeline_digest_latest_surface",
+                        SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>"),
+                    ),
+                    (
+                        "timeline_digest_latest_raw_surface",
                         SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>"),
                     ),
                     ("timeline_digest_artifact_events", str(len(artifact_items))),
@@ -20561,6 +20567,7 @@ def _goal_timeline_digest(
                 [
                     f"timeline_digest_span: {len(items)} events {first_at}->{latest_at}",
                     f"timeline_digest_latest: {_e(latest_kind)} {_e(latest_message)}",
+                    f"timeline_digest_latest_click: <a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>",
                     f"timeline_digest_artifact: {artifact_surface}",
                     f"timeline_digest_next: {_e(next_action.action)} <a href='{_e(action_href)}'>{_e(action_label)}</a>",
                     "timeline_digest_safety: read-only local chronology digest",
@@ -20580,6 +20587,7 @@ def _goal_timeline_command_bar(
     latest = items[-1] if items else {}
     latest_href = latest.get("href") or f"/goals/{quote(goal.id)}"
     latest_message = latest.get("message") or "No goal timeline events yet"
+    latest_action_label = _timeline_item_action_label(latest, fallback="Open timeline")
     latest_kind = _timeline_item_family(latest) if latest else "none"
     latest_at = _format_time(latest.get("at") or "") if latest else "none"
     family_counts = {
@@ -20596,7 +20604,8 @@ def _goal_timeline_command_bar(
             family_counts[family] += 1
     lines = [
         f"timeline_command_now: {_e(latest_message)}",
-        f"timeline_command_click: <a href='{_e(latest_href)}'>{_e(latest_href)}</a>",
+        f"timeline_command_click: <a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>",
+        f"timeline_command_raw_surface: <a href='{_e(latest_href)}'>{_e(latest_href)}</a>",
         "timeline_command_review: scan newest event first, then use linked artifacts or approvals",
         "timeline_command_safety: read-only local timeline",
     ]
@@ -20608,7 +20617,7 @@ def _goal_timeline_command_bar(
             "<article class='goal-timeline-card goal-timeline-primary' data-goal-timeline-now='true'>"
             "<h3>Now</h3>"
             f"<p>{_e(latest_kind)} · {_e(latest_at)}</p>"
-            f"<a class='goal-timeline-action' data-goal-timeline-primary='true' href='{_e(latest_href)}'>Open latest</a>"
+            f"<a class='goal-timeline-action' data-goal-timeline-primary='true' href='{_e(latest_href)}'>{_e(latest_action_label)}</a>"
             "</article>",
             "<article class='goal-timeline-card' data-goal-timeline-latest='true'>"
             "<h3>Latest</h3>"
@@ -20640,8 +20649,13 @@ def _goal_timeline_command_bar(
                     ("timeline_command_latest_kind", latest_kind),
                     ("timeline_command_latest_at", latest_at),
                     ("timeline_command_latest_message", latest_message),
+                    ("timeline_command_latest_label", latest_action_label),
                     (
                         "timeline_command_latest_surface",
+                        SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>"),
+                    ),
+                    (
+                        "timeline_command_latest_raw_surface",
                         SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>"),
                     ),
                     ("timeline_command_artifact_events", str(family_counts["artifact"])),
@@ -20683,6 +20697,20 @@ def _timeline_item_family(item: dict[str, str]) -> str:
     return "event"
 
 
+def _timeline_item_action_label(
+    item: dict[str, str],
+    *,
+    fallback: str = "Open event",
+) -> str:
+    message = str(item.get("message") or "").strip()
+    if message:
+        return _compact_label(message, 84)
+    target = _timeline_target_label(item)
+    if target and target != "local":
+        return f"Open {target}"
+    return fallback
+
+
 def _goal_activity_log(root: Path, state: dict[str, Any]) -> str:
     items = _goal_timeline_items(root, state)[-12:]
     return "".join(
@@ -20715,6 +20743,7 @@ def _goal_activity_command_bar(
     latest = items[-1] if items else {}
     latest_href = latest.get("href") or f"/goals/{quote(goal.id)}"
     latest_label = latest.get("message") or "No goal activity yet"
+    latest_action_label = _timeline_item_action_label(latest, fallback="Open activity")
     latest_at = _format_time(latest.get("at") or "") if latest else "none"
     operator_notes = sum(1 for item in items if item.get("kind") == "operator_note")
     artifacts = sum(
@@ -20732,12 +20761,12 @@ def _goal_activity_command_bar(
             "<article class='goal-activity-card goal-activity-primary' data-goal-activity-now='true'>"
             "<h3>Now</h3>"
             f"<p>{_e(latest_label)}</p>"
-            f"<a class='goal-activity-action' data-goal-activity-primary='true' href='{_e(latest_href)}'>Open latest</a>"
+            f"<a class='goal-activity-action' data-goal-activity-primary='true' href='{_e(latest_href)}'>{_e(latest_action_label)}</a>"
             "</article>",
             "<article class='goal-activity-card' data-goal-activity-latest='true'>"
             "<h3>Latest</h3>"
             f"<p>{_e(latest_kind)} · {_e(latest_at)}</p>"
-            f"<a class='goal-activity-link' href='{_e(latest_href)}'>Target</a>"
+            f"<a class='goal-activity-link' href='{_e(latest_href)}'>{_e(latest_action_label)}</a>"
             "</article>",
             "<article class='goal-activity-card' data-goal-activity-signals='true'>"
             "<h3>Signals</h3>"
@@ -20764,8 +20793,13 @@ def _goal_activity_command_bar(
                     ("goal_activity_command_latest_kind", latest_kind),
                     ("goal_activity_command_latest_at", latest_at),
                     ("goal_activity_command_latest_message", latest_label),
+                    ("goal_activity_command_latest_label", latest_action_label),
                     (
                         "goal_activity_command_latest_surface",
+                        SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>"),
+                    ),
+                    (
+                        "goal_activity_command_latest_raw_surface",
                         SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>"),
                     ),
                     ("goal_activity_command_operator_notes", str(operator_notes)),
@@ -20779,7 +20813,8 @@ def _goal_activity_command_bar(
             _ul(
                 [
                     f"goal_activity_now: {_e(latest_label)}",
-                    f"goal_activity_click: <a href='{_e(latest_href)}'>{_e(latest_href)}</a>",
+                    f"goal_activity_click: <a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>",
+                    f"goal_activity_raw_surface: <a href='{_e(latest_href)}'>{_e(latest_href)}</a>",
                     "goal_activity_safety: read-only local timeline",
                 ]
             ),

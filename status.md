@@ -1,5 +1,41 @@
 # Status
 
+## 2026-06-30 Goal Timeline Latest Label UX
+
+- Made the Goal timeline and Activity Log top controls name the actual latest
+  event instead of generic `Open latest` / `Target` copy. For the
+  ready-to-commit demo Goal, the primary timeline, timeline digest, and
+  activity links now say `Execution completed: <run_id>.` and open the same
+  `/runs/<run_id>` surface.
+- Added explicit raw-surface evidence rows and list entries
+  (`timeline_command_latest_raw_surface`,
+  `timeline_digest_latest_raw_surface`, and
+  `goal_activity_command_latest_raw_surface`) so review and automation can
+  still inspect the exact href even though the visible UI uses human event
+  labels.
+- Updated focused demo coverage for the concrete latest-event labels, primary
+  latest-event surfaces, raw-surface evidence, and click evidence across the
+  Timeline Command Bar, Goal Timeline Digest, and Goal Activity Command Bar.
+- Verification passed locally: data volume precheck had `74Gi` free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`;
+  `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py`;
+  focused demo pytest `tests/test_first_milestone.py -k
+  'test_local_app_demo_scenario_populates_fixture_state'` (`1 passed, 516
+  deselected`); focused route/demo pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`); and temp-root `python3 -m agent_os.cli --root "$scratch"
+  app-smoke-test` with all route markers matched and provider/network/external
+  mutation counters at `0`.
+- GitHub readback for the previous commit
+  `f67336f9ead59b455d71c667fa9c5b074a588e1c` showed Actions run
+  `28475299124` with `Fast smoke verification` successful and `Full pytest
+  suite` still in progress before this new slice was committed.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice. The timeline/activity affordance remains read-only navigation
+  into existing local surfaces; it did not deploy, create a PR, call providers,
+  write on GET, push from the app, or add any external mutation path.
+
 ## 2026-06-30 Search Goal Action UX
 
 - Made Global Search action-aware for Goal results. When a matched Goal has a

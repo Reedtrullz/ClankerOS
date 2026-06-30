@@ -4,6 +4,15 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal timeline and Activity Log controls now label latest-event links with the
+  actual event instead of generic `Open latest` / `Target` copy. The demo
+  ready-to-commit Goal now surfaces `Execution completed: <run_id>.` in the
+  Timeline Command Bar, Goal Timeline Digest, and Goal Activity Command Bar
+  while preserving raw `/runs/<run_id>` evidence rows. Local proof includes a
+  `74Gi` free-space precheck, py-compile, diff check, focused demo pytest,
+  focused route/demo pytest, and temp-root app-smoke-test with all route
+  markers matched and zero provider, network, or external mutation counters;
+  pushed GitHub Actions and full-suite proof are still pending.
 - Global Search now acts as a command surface for matched Goals. When a Goal
   result has a browser-confirmed current action form, the Search Operator
   Workbench, Search Result Map, Search Command Bar, and flat result row expose

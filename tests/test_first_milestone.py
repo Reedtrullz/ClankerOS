@@ -14322,7 +14322,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "timeline_command_items</dt><dd>" in goal.body
     assert "timeline_command_latest_kind</dt><dd>" in goal.body
     assert "timeline_command_latest_message</dt><dd>" in goal.body
-    assert "timeline_command_latest_surface</dt><dd><a href='" in goal.body
+    assert (
+        f"timeline_command_latest_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        in goal.body
+    )
+    assert (
+        f"timeline_command_latest_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
+        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+    ) in goal.body
+    assert (
+        f"timeline_command_latest_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+    ) in goal.body
     assert "timeline_command_artifact_events</dt><dd>" in goal.body
     assert "timeline_command_approval_events</dt><dd>" in goal.body
     assert "timeline_command_delegation_events</dt><dd>" in goal.body
@@ -14334,6 +14345,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "timeline_command_network_actions_taken</dt><dd>0" in goal.body
     assert "timeline_command_external_effects_created</dt><dd>false" in goal.body
     assert "timeline_command_now:" in goal.body
+    assert (
+        f"timeline_command_click: <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+    ) in goal.body
+    assert (
+        f"timeline_command_raw_surface: <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+    ) in goal.body
     assert "timeline_command_safety: read-only local timeline" in goal.body
     assert "Goal Timeline Digest" in goal.body
     assert "data-goal-timeline-digest='true'" in goal.body
@@ -14357,7 +14376,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "timeline_digest_items</dt><dd>" in goal.body
     assert "timeline_digest_latest_kind</dt><dd>" in goal.body
     assert "timeline_digest_latest_message</dt><dd>" in goal.body
-    assert "timeline_digest_latest_surface</dt><dd><a href='" in goal.body
+    assert (
+        f"timeline_digest_latest_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        in goal.body
+    )
+    assert (
+        f"timeline_digest_latest_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
+        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+    ) in goal.body
+    assert (
+        f"timeline_digest_latest_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+    ) in goal.body
     assert "timeline_digest_artifact_events</dt><dd>" in goal.body
     assert "timeline_digest_latest_artifact</dt><dd><a href='/artifacts?path=" in goal.body
     assert "timeline_digest_current_gate</dt><dd>commit_request" in goal.body
@@ -14371,6 +14401,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "timeline_digest_network_actions_taken</dt><dd>0" in goal.body
     assert "timeline_digest_external_effects_created</dt><dd>false" in goal.body
     assert "timeline_digest_latest:" in goal.body
+    assert (
+        f"timeline_digest_latest_click: <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+    ) in goal.body
     assert "timeline_digest_next: Create commit request" in goal.body
     assert "timeline_digest_safety: read-only local chronology digest" in goal.body
     assert "Timeline Lane Filter" in goal.body
@@ -14464,11 +14498,30 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_activity_command_status</dt><dd>available" in goal.body
     assert "goal_activity_command_items</dt><dd>" in goal.body
     assert "goal_activity_command_latest_message</dt><dd>" in goal.body
-    assert "goal_activity_command_latest_surface</dt><dd><a href='" in goal.body
+    assert (
+        f"goal_activity_command_latest_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        in goal.body
+    )
+    assert (
+        f"goal_activity_command_latest_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
+        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+    ) in goal.body
+    assert (
+        f"goal_activity_command_latest_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+    ) in goal.body
     assert "goal_activity_command_source</dt><dd>goal_timeline_items" in goal.body
     assert "goal_activity_command_write_on_get</dt><dd>false" in goal.body
     assert "goal_activity_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_activity_command_external_effects_created</dt><dd>false" in goal.body
+    assert (
+        f"goal_activity_click: <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+    ) in goal.body
+    assert (
+        f"goal_activity_raw_surface: <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+    ) in goal.body
     assert "goal_activity_safety: read-only local timeline" in goal.body
     assert "Goal Delegation Command Bar" in goal.body
     assert "data-goal-delegation-command-bar='true'" in goal.body
