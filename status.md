@@ -1,5 +1,35 @@
 # Status
 
+## 2026-06-30 Today Session Rail UX
+
+- Added a first-screen `Today Session Rail` inside the Today Command Center so
+  the daily cockpit now shows the current action, attention count, CI proof
+  state, and Finish Today target in one compact strip before the larger command
+  grid.
+- The rail reuses existing safe surfaces only: current action links to
+  `#today-current-action`, attention links to the current inbox/approval/
+  incident route, proof links to `/verification` or `/ci-evidence`, and Finish
+  links to the existing `#today-finish` form when a lead Goal exists. First-run
+  state routes the finish slot back to the current first-run setup action
+  instead of a disabled save form.
+- Added route and smoke coverage for first-run and goal-ready Today states,
+  including rail ordering before the command grid, mobile grid collapse, exact
+  target evidence, no-write GET posture, and zero provider/network/external
+  effect counters.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, focused
+  `tests/test_first_milestone.py -k 'test_local_app_routes_render_modern_workflow_and_health or test_local_app_demo_scenario_populates_fixture_state'`
+  (`2 passed, 514 deselected`), `python3 -m agent_os.cli --root "$scratch"
+  app-smoke-test`, and `git diff --check`.
+- Browser QA used a disposable demo app at `127.0.0.1:55739`. Desktop 1280px
+  verified `/today` identity, rail rendering, no console warnings/errors, no
+  framework overlay, no horizontal overflow, and clicking the rail's
+  `Create commit request` link landed on `#today-current-action` with the
+  `/actions/coder-commit-request` form visible. Mobile 390x844 verified the
+  rail collapses to one column with no horizontal overflow and clean console.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are still pending
+  for this slice.
+
 ## 2026-06-30 Goal Dock Shortcut UX
 
 - Repointed the shared header `n` / next-action shortcut at the Goal Action

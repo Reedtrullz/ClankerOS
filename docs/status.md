@@ -4,6 +4,15 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/today` now opens the daily cockpit with a first-screen `Today Session Rail`
+  inside the Today Command Center. It shows the current action, attention
+  count, CI proof state, and Finish Today target in one compact strip before
+  the larger command grid. The rail reuses the existing confirmed local action
+  form, approval/inbox routes, verification/CI evidence routes, and
+  `#today-finish` save form, while first-run state routes the finish slot back
+  to the current setup action instead of a disabled save target. GET remains
+  read-only with no provider calls, non-loopback network actions, or external
+  mutations.
 - The shared header `n` / next-action shortcut now opens the Goal Action Dock
   when the current Goal action has a confirmed browser form. On the Goal page
   it uses `#goal-action-dock-form`; from other routes it opens

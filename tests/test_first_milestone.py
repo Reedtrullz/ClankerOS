@@ -4727,6 +4727,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-today-command-primary='true'" in today.body
     assert "data-today-state-details='true'" in today.body
     assert "data-today-command-evidence='true'" in today.body
+    assert "Today Session Rail" in today.body
+    assert "data-today-session-rail='true'" in today.body
+    assert "data-today-session-rail-cards='true'" in today.body
+    assert "data-today-session-rail-card='now'" in today.body
+    assert "data-today-session-rail-card='attention'" in today.body
+    assert "data-today-session-rail-card='proof'" in today.body
+    assert "data-today-session-rail-card='finish'" in today.body
+    assert "data-today-session-rail-primary='true' href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "data-today-session-rail-evidence='true'" in today.body
+    assert today.body.index("data-today-session-rail='true'") < today.body.index(
+        "data-today-command-actions='true'"
+    )
     assert "data-today-note-details='true'" in today.body
     assert "data-today-pause-details='true'" in today.body
     assert "data-today-finish-details='true'" in today.body
@@ -4775,6 +4787,28 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_command_first_run_form_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
     assert "today_command_finish_status</dt><dd>not_ready_until_goal_exists" in today.body
     assert "today_command_finish_form_available</dt><dd>false" in today.body
+    assert "today_session_rail_status</dt><dd>first_run" in today.body
+    assert "today_session_rail_phase</dt><dd>First run" in today.body
+    assert "today_session_rail_primary_action</dt><dd>Register ClankerOS project" in today.body
+    assert "today_session_rail_primary_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_session_rail_attention_status</dt><dd>first_run" in today.body
+    assert "today_session_rail_attention_surface</dt><dd><a href='#first-run-create-project'>#first-run-create-project</a>" in today.body
+    assert "today_session_rail_waiting_items</dt><dd>0" in today.body
+    assert "today_session_rail_ci_status</dt><dd>success" in today.body
+    assert "today_session_rail_ci_source</dt><dd>publication_handoff" in today.body
+    assert "today_session_rail_finish_status</dt><dd>not_ready_until_goal_exists" in today.body
+    assert "today_session_rail_finish_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_session_rail_resume_ready</dt><dd>false" in today.body
+    assert "today_session_rail_write_on_get</dt><dd>false" in today.body
+    assert "today_session_rail_external_effects_created</dt><dd>false" in today.body
+    assert (
+        "today_session_rail_path: now=<a href='#first-run-create-project'>Create Project</a> "
+        "attention=<a href='#first-run-create-project'>#first-run-create-project</a> "
+        "proof=<a href='/verification'>Review CI proof</a> "
+        "finish=<a href='#first-run-create-project'>Create Project</a>"
+        in today.body
+    )
+    assert "today_session_rail_safety: read-only daily rail" in today.body
     assert "today_finish_form_status: unavailable_until_goal_exists" in today.body
     assert "today_command_write_on_get</dt><dd>false" in today.body
     assert "today_command_network_actions_taken</dt><dd>0" in today.body
@@ -11710,6 +11744,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-today-command-primary='true'" in today.body
     assert "data-today-state-details='true'" in today.body
     assert "data-today-command-evidence='true'" in today.body
+    assert "Today Session Rail" in today.body
+    assert "data-today-session-rail='true'" in today.body
+    assert "data-today-session-rail-cards='true'" in today.body
+    assert "data-today-session-rail-card='now'" in today.body
+    assert "data-today-session-rail-card='attention'" in today.body
+    assert "data-today-session-rail-card='proof'" in today.body
+    assert "data-today-session-rail-card='finish'" in today.body
+    assert "data-today-session-rail-primary='true' href='#today-current-action'>Create commit request</a>" in today.body
+    assert "data-today-session-rail-evidence='true'" in today.body
+    assert today.body.index("data-today-session-rail='true'") < today.body.index(
+        "data-today-command-actions='true'"
+    )
     assert "data-today-note-details='true'" in today.body
     assert "data-today-pause-details='true'" in today.body
     assert "data-today-finish-details='true'" in today.body
@@ -11801,6 +11847,29 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_command_ci_source</dt><dd>direct_public_snapshot" in today.body
     assert "today_command_action_form_available</dt><dd>true" in today.body
     assert "today_command_confirmation_required</dt><dd>true" in today.body
+    assert "today_session_rail_status</dt><dd>goal_ready" in today.body
+    assert "today_session_rail_phase</dt><dd>Ready to commit" in today.body
+    assert "today_session_rail_primary_action</dt><dd>Create commit request" in today.body
+    assert "today_session_rail_primary_surface</dt><dd><a href='#today-current-action'>Create commit request</a>" in today.body
+    assert "today_session_rail_attention_status</dt><dd>needs_approval_review" in today.body
+    assert "today_session_rail_attention_surface</dt><dd><a href='/approvals'>/approvals</a>" in today.body
+    assert "today_session_rail_waiting_items</dt><dd>1" in today.body
+    assert "today_session_rail_ci_status</dt><dd>success" in today.body
+    assert "today_session_rail_ci_source</dt><dd>direct_public_snapshot" in today.body
+    assert "today_session_rail_proof_surface</dt><dd><a href='/verification'>Review CI proof</a>" in today.body
+    assert "today_session_rail_finish_status</dt><dd>needs_workspace_save" in today.body
+    assert "today_session_rail_finish_surface</dt><dd><a href='#today-finish'>Finish Today</a>" in today.body
+    assert "today_session_rail_resume_ready</dt><dd>false" in today.body
+    assert "today_session_rail_write_on_get</dt><dd>false" in today.body
+    assert "today_session_rail_network_actions_taken</dt><dd>0" in today.body
+    assert "today_session_rail_external_effects_created</dt><dd>false" in today.body
+    assert (
+        "today_session_rail_path: now=<a href='#today-current-action'>Create commit request</a> "
+        "attention=<a href='/approvals'>/approvals</a> proof=<a href='/verification'>Review CI proof</a> "
+        "finish=<a href='#today-finish'>Finish Today</a>"
+        in today.body
+    )
+    assert "today_session_rail_safety: read-only daily rail" in today.body
     assert "today_command_note_form_available</dt><dd>true" in today.body
     assert "today_command_note_confirmation_required</dt><dd>true" in today.body
     assert "today_command_note_surface</dt><dd><a href='#today-note'>Capture Note</a>" in today.body
