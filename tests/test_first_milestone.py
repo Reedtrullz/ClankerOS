@@ -6144,6 +6144,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
         '.operator-ribbon[data-operator-ribbon-compact-mobile="true"] '
         "[data-operator-ribbon-resume='true']"
     ) in root.body
+    assert ".goal-summary-action { display:inline-flex;" in root.body
     assert (
         ':root[data-focus-mode="true"] .operator-side, '
         ':root[data-focus-mode="true"] .route-context-strip, '
@@ -12521,14 +12522,30 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "operator_ribbon_compact_mobile</dt><dd>true" in goal.body
     assert "operator_ribbon_mobile_priority_cards</dt><dd>now, finish" in goal.body
     assert "data-goal-summary-grid='true'" in goal.body
+    assert "data-goal-summary-next-card='true'" in goal.body
+    assert "data-goal-summary-next-action='true' href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "data-goal-summary-project='true'" in goal.body
     assert "data-goal-summary-status-card='true'" in goal.body
     assert "data-goal-summary-phase-card='true'" in goal.body
     assert "data-goal-summary-refresh-card='true'" in goal.body
     assert "data-goal-summary-evidence='true'" in goal.body
     assert "<summary>Goal summary evidence</summary>" in goal.body
+    assert "goal_summary_next_action</dt><dd>Create commit request" in goal.body
+    assert "goal_summary_next_surface</dt><dd><a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
+    assert f"goal_summary_next_source_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert "goal_summary_action_form_available</dt><dd>true" in goal.body
+    assert "goal_summary_confirmation_required</dt><dd>true" in goal.body
     assert "goal_summary_write_on_get</dt><dd>false" in goal.body
     assert "goal_summary_external_effects_created</dt><dd>false" in goal.body
+    assert goal.body.index("data-goal-summary-next-card='true'") < goal.body.index(
+        "data-goal-summary-project='true'"
+    )
+    assert goal.body.index("data-goal-summary-next-action='true'") < goal.body.index(
+        "id='goal-current-phase'"
+    )
+    assert goal.body.index("data-goal-summary-next-action='true'") < goal.body.index(
+        "id='goal-action-dock'"
+    )
     assert f"goal_id</dt><dd>{result.goal_id}" in goal.body
     assert (
         "goal_intent</dt><dd>Demo the ClankerOS local operator app with fixture-backed state"

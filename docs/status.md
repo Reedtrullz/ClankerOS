@@ -4,6 +4,17 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal summary is now action-first on Goal detail pages. A first `Next` card
+  appears before Project/Status/Phase/Live and links to the existing
+  confirmation-gated Goal Action Dock surface, such as
+  `#goal-action-dock-form` labeled `Create commit request`, while evidence
+  preserves the next action, chosen summary surface, source surface, form
+  availability, confirmation requirement, and no-effect counters. Local proof
+  includes py-compile, diff check, focused route/demo pytest, temp-root
+  app-smoke-test, and in-app Browser QA on desktop 1280x720 plus mobile
+  390x844 with clean logs, no overflow, and click-through to the visible
+  confirmation form; pushed GitHub Actions and full-suite proof are still
+  pending for this slice.
 - Goal detail pages now have a mobile compact chrome mode. At 640px and
   below, Goal detail pages keep the header/nav/action rows to one scrollable
   line and compact the operator ribbon to the first-screen `Now` and `Finish`

@@ -13752,11 +13752,35 @@ def _goal_detail(root: Path, goal_id: str) -> str:
         return "<p class='error'>Goal not found.</p>"
     next_action = _goal_next_action(root, state)
     phase = _goal_current_phase(state)
+    summary_form_available = bool(_goal_next_action_form(state, next_action))
+    summary_action_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=summary_form_available,
+    )
+    summary_action_label = _goal_action_cta_label(
+        next_action,
+        summary_form_available,
+    )
     summary_title, summary_intent, summary_title_source = _goal_summary_parts(goal)
     summary_rows: list[tuple[str, str | SafeHtml]] = [
         ("goal_id", goal.id),
         ("goal_intent", summary_intent),
         ("goal_summary_title_source", summary_title_source),
+        ("goal_summary_next_action", next_action.action),
+        (
+            "goal_summary_next_surface",
+            SafeHtml(
+                f"<a href='{_e(summary_action_href)}'>{_e(summary_action_label)}</a>"
+            ),
+        ),
+        (
+            "goal_summary_next_source_surface",
+            SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"),
+        ),
+        ("goal_summary_next_reason", next_action.reason),
+        ("goal_summary_action_form_available", str(summary_form_available).lower()),
+        ("goal_summary_confirmation_required", str(summary_form_available).lower()),
         (
             "project",
             SafeHtml(
@@ -13780,11 +13804,14 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             f"<h1 data-goal-summary-title='true'>{_e(summary_title)}</h1>",
             f"<p class='muted' data-goal-summary-id='true'>Goal {_e(goal.id)}</p>",
             "<div class='goal-summary-grid' data-goal-summary-grid='true'>",
+            "<article class='goal-summary-card goal-summary-card-primary' data-goal-summary-next-card='true'><h3>Next</h3>",
+            f"<strong>{_e(next_action.action)}</strong>",
+            f"<a class='goal-summary-action' data-goal-summary-next-action='true' href='{_e(summary_action_href)}'>{_e(summary_action_label)}</a></article>",
             "<article class='goal-summary-card' data-goal-summary-project='true'><h3>Project</h3>",
             f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a></article>",
             "<article class='goal-summary-card' data-goal-summary-status-card='true'><h3>Status</h3>",
             f"<strong>{_e(goal.status)}</strong></article>",
-            "<article class='goal-summary-card goal-summary-card-primary' data-goal-summary-phase-card='true'><h3>Phase</h3>",
+            "<article class='goal-summary-card' data-goal-summary-phase-card='true'><h3>Phase</h3>",
             f"<strong>{_e(phase)}</strong></article>",
             "<article class='goal-summary-card' data-goal-summary-refresh-card='true'><h3>Live</h3>",
             "<strong>5s refresh</strong></article>",
@@ -43993,6 +44020,7 @@ def _html_page(
     .goal-summary-card h3, .goal-phase-card h3 {{ margin:0; color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
     .goal-summary-card strong, .goal-phase-card strong, .goal-summary-card p, .goal-phase-card p {{ margin:0; overflow-wrap:anywhere; }}
     .goal-summary-card-primary, .goal-phase-card-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .goal-summary-action {{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; max-width:100%; width:max-content; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:#fff; text-decoration:none; overflow-wrap:anywhere; }}
     .goal-summary-evidence, .goal-phase-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-summary-evidence summary, .goal-phase-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-summary-evidence:not([open]) > :not(summary), .goal-phase-evidence:not([open]) > :not(summary) {{ display:none; }}

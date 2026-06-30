@@ -1,5 +1,42 @@
 # Status
 
+## 2026-06-30 Goal Summary Next Card UX
+
+- Made the Goal summary itself action-first. Goal detail pages now render a
+  first `Next` summary card before Project, Status, Phase, and Live, with the
+  exact current operator move and a direct link to the existing confirmed
+  action surface.
+- The summary action reuses `_goal_primary_action_href` and
+  `_goal_action_cta_label`, so a ready commit Goal links to
+  `#goal-action-dock-form` as `Create commit request` instead of creating any
+  new action authority or bypassing the Action Dock.
+- Added Goal summary evidence rows for the next action, chosen summary
+  surface, original source surface, next-action reason, form availability, and
+  confirmation requirement. Existing no-write and no-external-effect counters
+  remain visible in the collapsed evidence block.
+- Updated route and demo regression coverage for the new summary card,
+  summary action href/label, evidence rows, card ordering before Project, and
+  ordering before the lower phase/action-dock surfaces.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check`, focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), and temp-root
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`.
+- Browser QA used the in-app Browser against a disposable demo app at
+  `127.0.0.1:8813` for `goal_116d933b7319`. Desktop 1280x720 verified the
+  Next card is in the first viewport, before Project/Phase/Action Dock, links
+  to `#goal-action-dock-form`, has clean console logs, no framework overlay,
+  and no horizontal overflow. Mobile 390x844 verified the Next card is still
+  in the first viewport, no horizontal overflow, clean logs, and tapping it
+  lands on the visible confirmation form with `Confirmation` required before
+  local write and `External effects` set to `none`.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice. The summary card is a shortcut into the existing confirmed
+  action form, not execution, staging, committing, pushing, provider use, PR
+  creation, deployment, or any external mutation.
+
 ## 2026-06-30 Goal Mobile Compact Chrome UX
 
 - Made Goal detail pages advertise a dedicated mobile Goal-detail shell state
