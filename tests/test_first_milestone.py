@@ -3050,6 +3050,32 @@ def test_profiles_route_reads_storage_profiles_without_enabling_providers(
     assert "profiles_workbench_write_on_get</dt><dd>false" in profiles.body
     assert "profiles_workbench_network_actions_taken</dt><dd>0" in profiles.body
     assert "profiles_workbench_external_effects_created</dt><dd>false" in profiles.body
+    assert "Profile Routing Readiness" in profiles.body
+    assert "data-profiles-readiness-strip='true'" in profiles.body
+    assert "data-profiles-readiness-cards='true'" in profiles.body
+    assert "data-profiles-readiness-routing='true'" in profiles.body
+    assert "data-profiles-readiness-storage='true'" in profiles.body
+    assert "data-profiles-readiness-lanes='true'" in profiles.body
+    assert "data-profiles-readiness-safety='true'" in profiles.body
+    assert "profiles_readiness_status</dt><dd>storage_ready" in profiles.body
+    assert "profiles_readiness_profiles_file</dt><dd>present" in profiles.body
+    assert "profiles_readiness_configured_profiles</dt><dd>5" in profiles.body
+    assert "profiles_readiness_storage_profiles</dt><dd>5" in profiles.body
+    assert "profiles_readiness_enabled_profiles</dt><dd>5" in profiles.body
+    assert "profiles_readiness_lane_count</dt><dd>6" in profiles.body
+    assert "profiles_readiness_storage_ready_lanes</dt><dd>6" in profiles.body
+    assert "profiles_readiness_placeholder_only_lanes</dt><dd>0" in profiles.body
+    assert "profiles_readiness_primary_surface</dt><dd><a href='#profiles-storage'>Storage Profiles</a>" in profiles.body
+    assert "profiles_readiness_provider_routing_active</dt><dd>false" in profiles.body
+    assert "profiles_readiness_model_routing_enabled</dt><dd>false" in profiles.body
+    assert "profiles_readiness_write_on_get</dt><dd>false" in profiles.body
+    assert "profiles_readiness_provider_calls_taken</dt><dd>0" in profiles.body
+    assert "profiles_readiness_network_actions_taken</dt><dd>0" in profiles.body
+    assert "profiles_readiness_external_effects_created</dt><dd>false" in profiles.body
+    assert "profiles_readiness_safety: providers inactive; read-only routing preparation" in profiles.body
+    assert profiles.body.index("data-profiles-readiness-strip='true'") < profiles.body.index(
+        "data-profiles-command-bar='true'"
+    )
     assert "Profile Routing Matrix" in profiles.body
     assert "data-profiles-routing-matrix='true'" in profiles.body
     assert "data-profiles-matrix-grid='true'" in profiles.body
@@ -16187,6 +16213,21 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "profiles_workbench_write_on_get</dt><dd>false" in profiles.body
     assert "profiles_workbench_network_actions_taken</dt><dd>0" in profiles.body
     assert "profiles_workbench_external_effects_created</dt><dd>false" in profiles.body
+    assert "Profile Routing Readiness" in profiles.body
+    assert "data-profiles-readiness-strip='true'" in profiles.body
+    assert "data-profiles-readiness-cards='true'" in profiles.body
+    assert "profiles_readiness_status</dt><dd>future_ready" in profiles.body
+    assert "profiles_readiness_profiles_file</dt><dd>missing" in profiles.body
+    assert "profiles_readiness_configured_profiles</dt><dd>0" in profiles.body
+    assert "profiles_readiness_storage_profiles</dt><dd>0" in profiles.body
+    assert "profiles_readiness_lane_count</dt><dd>6" in profiles.body
+    assert "profiles_readiness_storage_ready_lanes</dt><dd>0" in profiles.body
+    assert "profiles_readiness_placeholder_only_lanes</dt><dd>6" in profiles.body
+    assert "profiles_readiness_primary_surface</dt><dd><a href='#profiles-future'>Future Profile Lanes</a>" in profiles.body
+    assert "profiles_readiness_provider_routing_active</dt><dd>false" in profiles.body
+    assert "profiles_readiness_write_on_get</dt><dd>false" in profiles.body
+    assert "profiles_readiness_external_effects_created</dt><dd>false" in profiles.body
+    assert "profiles_readiness_safety: providers inactive; read-only routing preparation" in profiles.body
     assert "Profile Routing Matrix" in profiles.body
     assert "data-profiles-routing-matrix='true'" in profiles.body
     assert "data-profiles-matrix-grid='true'" in profiles.body

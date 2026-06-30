@@ -1,5 +1,24 @@
 # Status
 
+## 2026-07-01 Profile Routing Readiness UX
+
+- Added a scan-first `Profile Routing Readiness` strip to `/profiles` between
+  the operator workbench and the detailed command/matrix surfaces.
+- The strip shows inactive routing posture, storage/configured profile counts,
+  lane readiness counts, and the next local inspection surface while keeping
+  provider and model routing explicitly disabled.
+- Preserved safety boundaries: read-only GET, no provider calls, no network
+  actions, no execution, no push, no PR, no deploy, and no external effects.
+- Local verification:
+  - `PYTHONPATH=. python3 -m compileall -q agent_os tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check`: passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py -q -k "profiles_route_reads_storage_profiles_without_enabling_providers or local_app_demo_scenario_populates_fixture_state"`:
+    2 passed, 515 deselected.
+- Non-claim: this only improves profile-routing browser orientation; it does
+  not enable providers, models, routing decisions, execution, cost tracking,
+  scheduling, GitHub mutation, deploys, or trust promotion.
+
 ## 2026-07-01 Search Suggestions UX
 
 - Added a visible read-only `Search Suggestions` panel to `/search` before the
