@@ -4,6 +4,17 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Browser-local Focus mode now keeps the shared `Operator Focus` strip visible
+  while hiding surrounding chrome. The shell records
+  `data-focus-mode-keeps-current-action="true"` so the `n` shortcut and
+  `#operator-focus-current-action` remain reachable in Focus mode, while the
+  same localStorage-only, no-write GET, confirmation-gated action posture is
+  preserved.
+- Goal `Finish Today` saves now preserve an exact next-morning surface:
+  `/goals/<goal_id>#goal-action-dock-form` when the current action form exists,
+  otherwise `/goals/<goal_id>#goal-next-action`. The Goal Daily Loop and Goal
+  Resume Snapshot expose the target in evidence/hidden save fields while
+  keeping action-result `return_to` on the broad Goal page.
 - The in-app Suggested Use Guide now names the current first-run action in its
   primary browser path. The Guide Command Panel, Operator Recipes primary card,
   recipe evidence, and form-surface evidence say `Register ClankerOS project`
@@ -508,9 +519,9 @@ Latest status focus:
 - The shared browser shell now has a local Focus mode: the header `Focus`
   control and `m` shortcut persist `data-focus-mode="true"` in
   `localStorage:clankeros-focus-mode`, collapse Recent Items, Route Context,
-  Operator Focus, and Last Action strips, keep the Operator Ribbon plus page
-  body visible, and expose no-write/no-provider/no-network/no-external-effect
-  evidence in the DOM.
+  and Last Action strips while keeping Operator Focus/current action visible,
+  keep the Operator Ribbon plus page body visible, and expose
+  no-write/no-provider/no-network/no-external-effect evidence in the DOM.
 - Goal Timeline now has a visible read-only `Goal Timeline Digest` after the
   Timeline Command Bar and before metadata/the full event list, with Span,
   Latest, Artifact, Next, and Safety cards plus collapsed item/gate/artifact/

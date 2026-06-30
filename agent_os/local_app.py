@@ -16168,6 +16168,15 @@ def _goal_daily_loop(
     saved_artifact_value: str | SafeHtml = (
         SafeHtml(_artifact_link(saved_artifact)) if saved_artifact else "none"
     )
+    finish_resume_anchor = (
+        "goal-action-dock-form" if form_available else "goal-next-action"
+    )
+    finish_resume_surface = f"/goals/{quote(goal.id)}#{finish_resume_anchor}"
+    finish_resume_reason = (
+        "current_action_form_available"
+        if form_available
+        else "next_action_card"
+    )
     finish_form = _input_form(
         "save-workspace",
         {
@@ -16179,6 +16188,7 @@ def _goal_daily_loop(
             "filters": f"goal:{goal.id}",
             "expanded_panels": "daily-loop,next-action,timeline,evidence,artifacts,notes",
             "last_viewed_artifact": latest_artifact,
+            "resume_surface": finish_resume_surface,
             "updated_by": "goal-daily-loop",
         },
     )
@@ -16270,6 +16280,13 @@ def _goal_daily_loop(
                         "goal_daily_loop_finish_return_to",
                         SafeHtml(f"<a href='/goals/{quote(goal.id)}'>/goals/{_e(goal.id)}</a>"),
                     ),
+                    (
+                        "goal_daily_loop_finish_resume_surface",
+                        SafeHtml(
+                            f"<a href='{_e(finish_resume_surface)}'>{_e(finish_resume_surface)}</a>"
+                        ),
+                    ),
+                    ("goal_daily_loop_finish_resume_reason", finish_resume_reason),
                     ("goal_daily_loop_saved_goal_matches_current", str(workspace_matches_goal).lower()),
                     ("goal_daily_loop_saved_project_matches_current", str(workspace_matches_project).lower()),
                     ("goal_daily_loop_saved_artifact_matches_latest", str(artifact_matches_latest).lower()),
@@ -16288,6 +16305,7 @@ def _goal_daily_loop(
                     f"goal_daily_loop_step: unblock action={_e(unblock_action)} surface={unblock_surface} waiting={waiting_items}",
                     f"goal_daily_loop_step: pause available={pause_available} surface=<a href='#goal-pause'>Pause Goal</a>",
                     f"goal_daily_loop_step: finish status={_e(finish_status)} surface=<a href='#goal-finish-today'>Finish Today</a>",
+                    f"goal_daily_loop_resume_surface: <a href='{_e(finish_resume_surface)}'>{_e(finish_resume_surface)}</a>",
                     "goal_daily_loop_safety: confirmed local pause or workspace save only",
                 ]
             ),
@@ -19240,10 +19258,22 @@ def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
     saved_filters = workspace.get("filters", "").strip()
     saved_panels = workspace.get("expanded_panels", "").strip()
     saved_artifact = workspace.get("last_viewed_artifact", "").strip()
+    saved_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
     latest_artifact = _goal_latest_artifact_path(root, state)
-    workspace_available = any([saved_goal, saved_project, saved_filters, saved_panels, saved_artifact])
+    workspace_available = any([saved_goal, saved_project, saved_filters, saved_panels, saved_artifact, saved_resume_surface])
     goal_matches = saved_goal == goal.id
     project_matches = saved_project == goal.project_id
+    next_action = _goal_next_action(root, state)
+    action_form_available = bool(_goal_next_action_form(state, next_action))
+    save_resume_anchor = (
+        "goal-action-dock-form" if action_form_available else "goal-next-action"
+    )
+    save_resume_surface = f"/goals/{quote(goal.id)}#{save_resume_anchor}"
+    save_resume_reason = (
+        "current_action_form_available"
+        if action_form_available
+        else "next_action_card"
+    )
     current_goal_href, current_goal_label, current_goal_label_source, current_goal_link = _goal_display_link(
         root, goal.id
     )
@@ -19318,6 +19348,17 @@ def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
                     ("saved_workspace_project", saved_project_link),
                     ("workspace_goal_matches_current", "true" if goal_matches else "false"),
                     ("workspace_updated_at", workspace.get("updated_at", "never") or "never"),
+                    (
+                        "saved_workspace_resume_surface",
+                        SafeHtml(f"<a href='{_e(saved_resume_surface)}'>{_e(saved_resume_surface)}</a>")
+                        if saved_resume_surface
+                        else "none",
+                    ),
+                    (
+                        "goal_resume_save_resume_surface",
+                        SafeHtml(f"<a href='{_e(save_resume_surface)}'>{_e(save_resume_surface)}</a>"),
+                    ),
+                    ("goal_resume_save_resume_reason", save_resume_reason),
                     ("suggested_last_artifact", SafeHtml(_artifact_link(latest_artifact)) if latest_artifact else "none"),
                     ("workspace_surface", SafeHtml("<a href='/workspace'>/workspace</a>")),
                     ("save_workspace_form_available", "true"),
@@ -19335,6 +19376,12 @@ def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
                     ("workspace_restore_filters", saved_filters or "none"),
                     ("workspace_restore_expanded_panels", saved_panels or "none"),
                     ("workspace_restore_last_artifact", SafeHtml(_artifact_link(saved_artifact)) if saved_artifact else "none"),
+                    (
+                        "workspace_restore_resume_surface",
+                        SafeHtml(f"<a href='{_e(saved_resume_surface)}'>{_e(saved_resume_surface)}</a>")
+                        if saved_resume_surface
+                        else "none",
+                    ),
                     ("workspace_restore_source", ".clanker/app/workspace.json"),
                     ("workspace_restore_write_on_get", "false"),
                 ]
@@ -19350,6 +19397,7 @@ def _goal_resume_snapshot(root: Path, state: dict[str, Any]) -> str:
                     "filters": f"goal:{goal.id}",
                     "expanded_panels": "overview,next-action,timeline,evidence,artifacts,notes",
                     "last_viewed_artifact": latest_artifact,
+                    "resume_surface": save_resume_surface,
                     "updated_by": "operator-goal",
                 },
             ),
@@ -43262,7 +43310,7 @@ def _html_page(
     .operator-main {{ min-width:0; max-width:100%; }}
     :root[data-focus-mode="true"] main {{ max-width:1180px; }}
     :root[data-focus-mode="true"] .operator-shell {{ grid-template-columns:minmax(0, 1fr); }}
-    :root[data-focus-mode="true"] .operator-side, :root[data-focus-mode="true"] .route-context-strip, :root[data-focus-mode="true"] .operator-focus-strip, :root[data-focus-mode="true"] .last-action-strip {{ display:none; }}
+    :root[data-focus-mode="true"] .operator-side, :root[data-focus-mode="true"] .route-context-strip, :root[data-focus-mode="true"] .last-action-strip {{ display:none; }}
     .operator-ribbon {{ border-left:4px solid var(--accent); margin:0 0 16px; padding:12px; }}
     .operator-ribbon-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(155px, 1fr)); gap:8px; align-items:stretch; }}
     .operator-ribbon-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:9px 10px; display:grid; gap:6px; align-content:start; }}
@@ -45190,7 +45238,7 @@ def _html_page(
   <header>
     <strong>ClankerOS Local Operator</strong>
     <nav class="shell-nav" aria-label="Shell navigation" data-shell-nav="true" data-shell-nav-primary-count="{nav_primary_count}" data-shell-nav-secondary-count="{nav_secondary_count}">{nav}</nav>
-    <div class="header-actions" data-keyboard-shortcuts="true" data-focus-mode-supported="true" data-focus-mode-storage="localStorage:clankeros-focus-mode" data-focus-mode-write-on-get="false" data-focus-mode-provider-calls-taken="0" data-focus-mode-network-actions-taken="0" data-focus-mode-external-effects-created="false" data-next-action-href="{_e(next_shortcut['href'])}" data-next-action-label="{_e(next_shortcut['label'])}" data-next-action-action="{_e(next_shortcut['action'])}" data-next-action-status="{_e(next_shortcut['status'])}" data-next-action-source="{_e(next_shortcut['source'])}" data-next-action-form-available="{_e(next_shortcut['form_available'])}" data-next-action-confirmation-required="{_e(next_shortcut['confirmation_required'])}" data-next-action-write-on-get="{_e(next_shortcut['write_on_get'])}" data-next-action-provider-calls-taken="{_e(next_shortcut['provider_calls_taken'])}" data-next-action-network-actions-taken="{_e(next_shortcut['network_actions_taken'])}" data-next-action-external-effects-created="{_e(next_shortcut['external_effects_created'])}" data-finish-today-href="{_e(finish_shortcut['href'])}" data-finish-today-label="{_e(finish_shortcut['label'])}" data-finish-today-source="{_e(finish_shortcut['source'])}" data-finish-today-target="{_e(finish_shortcut['target'])}" data-finish-today-surface="{_e(finish_shortcut['surface'])}" data-finish-today-confirmation-required="{_e(finish_shortcut['confirmation_required'])}" data-finish-today-write-on-get="{_e(finish_shortcut['write_on_get'])}" data-finish-today-provider-calls-taken="{_e(finish_shortcut['provider_calls_taken'])}" data-finish-today-network-actions-taken="{_e(finish_shortcut['network_actions_taken'])}" data-finish-today-external-effects-created="{_e(finish_shortcut['external_effects_created'])}">
+    <div class="header-actions" data-keyboard-shortcuts="true" data-focus-mode-supported="true" data-focus-mode-storage="localStorage:clankeros-focus-mode" data-focus-mode-keeps-current-action="true" data-focus-mode-write-on-get="false" data-focus-mode-provider-calls-taken="0" data-focus-mode-network-actions-taken="0" data-focus-mode-external-effects-created="false" data-next-action-href="{_e(next_shortcut['href'])}" data-next-action-label="{_e(next_shortcut['label'])}" data-next-action-action="{_e(next_shortcut['action'])}" data-next-action-status="{_e(next_shortcut['status'])}" data-next-action-source="{_e(next_shortcut['source'])}" data-next-action-form-available="{_e(next_shortcut['form_available'])}" data-next-action-confirmation-required="{_e(next_shortcut['confirmation_required'])}" data-next-action-write-on-get="{_e(next_shortcut['write_on_get'])}" data-next-action-provider-calls-taken="{_e(next_shortcut['provider_calls_taken'])}" data-next-action-network-actions-taken="{_e(next_shortcut['network_actions_taken'])}" data-next-action-external-effects-created="{_e(next_shortcut['external_effects_created'])}" data-finish-today-href="{_e(finish_shortcut['href'])}" data-finish-today-label="{_e(finish_shortcut['label'])}" data-finish-today-source="{_e(finish_shortcut['source'])}" data-finish-today-target="{_e(finish_shortcut['target'])}" data-finish-today-surface="{_e(finish_shortcut['surface'])}" data-finish-today-confirmation-required="{_e(finish_shortcut['confirmation_required'])}" data-finish-today-write-on-get="{_e(finish_shortcut['write_on_get'])}" data-finish-today-provider-calls-taken="{_e(finish_shortcut['provider_calls_taken'])}" data-finish-today-network-actions-taken="{_e(finish_shortcut['network_actions_taken'])}" data-finish-today-external-effects-created="{_e(finish_shortcut['external_effects_created'])}">
       <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: question mark opens keyboard help; slash opens command palette; Escape closes dialogs; n opens next action; h opens home; y opens today; g opens goals; r opens resume; s opens search; w opens workspace; f opens Finish Today; m toggles focus mode; t toggles theme.</span>
       <button class="icon-button" id="shortcut-help-open" type="button" data-shortcut-help-open="true" data-shortcut="?" aria-keyshortcuts="?" aria-describedby="keyboard-shortcuts-help" title="Open keyboard help (?)">Keys</button>
       <button class="icon-button" id="palette-open" type="button" data-shortcut="/" aria-keyshortcuts="/" aria-describedby="keyboard-shortcuts-help" title="Open command palette (/)">Palette</button>

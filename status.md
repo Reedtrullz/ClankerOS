@@ -1,5 +1,38 @@
 # Status
 
+## 2026-06-30 Focus Mode Current Action UX
+
+- Updated browser-local Focus mode so it no longer hides the shared
+  `Operator Focus` strip. The `n` shortcut can target
+  `#operator-focus-current-action`, so Focus mode now hides surrounding chrome
+  without hiding the current-action launcher/form the operator may need next.
+- Added `data-focus-mode-keeps-current-action="true"` to the shared header
+  evidence and updated route coverage so the CSS contract excludes
+  `.operator-focus-strip` from the Focus-mode hidden selector.
+- Made Goal `Finish Today` saves preserve an exact next-morning surface:
+  `/goals/<goal_id>#goal-action-dock-form` when a current action form exists,
+  otherwise `/goals/<goal_id>#goal-next-action`. The Goal Daily Loop and Goal
+  Resume Snapshot now expose that `resume_surface` in evidence and hidden
+  `save-workspace` fields while keeping `return_to` on the broad Goal page for
+  action-result navigation.
+- Preserved the same localStorage-only preference, no-write GET posture,
+  confirmation-gated action forms, and no provider/non-loopback network/
+  external-mutation behavior.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 514
+  deselected`), `python3 -m agent_os.cli --root "$scratch" app-smoke-test`,
+  and `git diff --check`.
+- Browser QA used a disposable demo app at `127.0.0.1:55631`. Desktop 1280px
+  and mobile 390x844 verified Focus mode keeps Operator Focus/current action
+  visible, hides side/context chrome, has no console warnings/errors, has no
+  horizontal overflow, and preserves
+  `/goals/<goal_id>#goal-action-dock-form` in the Goal finish form. The header
+  `Finish` shortcut landed on `#goal-finish-today` without submitting a form.
+- Non-claim: pushed GitHub Actions proof is still pending for this slice.
+
 ## 2026-06-30 Guide Action Label UX
 
 - Replaced the remaining `/guide` `Use command form` and `Guide command form`
@@ -2771,9 +2804,9 @@
 - The header `Focus` button and `m` shortcut toggle `data-focus-mode="true"`
   and persist the presentation preference in
   `localStorage:clankeros-focus-mode`.
-- Focus mode hides the Recent Items side rail, Route Context strip, Operator
-  Focus strip, and Last Action strip while keeping the Operator Ribbon and page
-  body visible.
+- Focus mode hides the Recent Items side rail, Route Context strip, and Last
+  Action strip while keeping Operator Focus/current action, the Operator
+  Ribbon, and page body visible.
 - Evidence attributes record no write on GET, provider/network/external effects
   at `0`, and browser-local storage only.
 - Compact local verification completed:

@@ -6082,9 +6082,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert (
         ':root[data-focus-mode="true"] .operator-side, '
         ':root[data-focus-mode="true"] .route-context-strip, '
-        ':root[data-focus-mode="true"] .operator-focus-strip, '
         ':root[data-focus-mode="true"] .last-action-strip { display:none; }'
     ) in root.body
+    assert 'data-focus-mode-keeps-current-action="true"' in root.body
+    assert ':root[data-focus-mode="true"] .operator-focus-strip' not in root.body
     assert 'localStorage.getItem("clankeros-focus-mode")' in root.body
     assert 'root.dataset.focusMode = "true";' in root.body
     assert "function toggleFocusMode()" in root.body
@@ -13286,6 +13287,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_daily_loop_pause_surface</dt><dd><a href='#goal-pause'>Pause Goal</a>" in goal.body
     assert "goal_daily_loop_finish_surface</dt><dd><a href='#goal-finish-today'>Finish Today</a>" in goal.body
     assert f"goal_daily_loop_finish_return_to</dt><dd><a href='/goals/{result.goal_id}'" in goal.body
+    assert (
+        f"goal_daily_loop_finish_resume_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        f"/goals/{result.goal_id}#goal-action-dock-form</a>"
+    ) in goal.body
+    assert "goal_daily_loop_finish_resume_reason</dt><dd>current_action_form_available" in goal.body
     assert "goal_daily_loop_saved_goal_matches_current</dt><dd>false" in goal.body
     assert "goal_daily_loop_saved_project_matches_current</dt><dd>false" in goal.body
     assert "goal_daily_loop_source</dt><dd>goal_state_and_workspace" in goal.body
@@ -13297,6 +13303,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_daily_loop_step: unblock action=Review approval surface=<a href='/approvals'>/approvals</a> waiting=1" in goal.body
     assert "goal_daily_loop_step: pause available=true surface=<a href='#goal-pause'>Pause Goal</a>" in goal.body
     assert "goal_daily_loop_step: finish status=needs_workspace_save surface=<a href='#goal-finish-today'>Finish Today</a>" in goal.body
+    assert (
+        f"goal_daily_loop_resume_surface: <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        f"/goals/{result.goal_id}#goal-action-dock-form</a>"
+    ) in goal.body
     assert "goal_daily_loop_safety: confirmed local pause or workspace save only" in goal.body
     assert "id='goal-pause'" in goal.body
     assert "id='goal-finish-today'" in goal.body
@@ -13671,13 +13681,21 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Workspace Restore State" in goal.body
     assert "goal_resume_current_goal" in goal.body
     assert "goal_resume_current_project" in goal.body
+    assert "saved_workspace_resume_surface</dt><dd>none" in goal.body
+    assert (
+        f"goal_resume_save_resume_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        f"/goals/{result.goal_id}#goal-action-dock-form</a>"
+    ) in goal.body
+    assert "goal_resume_save_resume_reason</dt><dd>current_action_form_available" in goal.body
     assert "suggested_last_artifact" in goal.body
     assert "Goal Workspace Restore State" in goal.body
     assert "workspace_restore_available</dt><dd>false" in goal.body
     assert "workspace_restore_filters</dt><dd>none" in goal.body
     assert "workspace_restore_expanded_panels</dt><dd>none" in goal.body
+    assert "workspace_restore_resume_surface</dt><dd>none" in goal.body
     assert "workspace_restore_write_on_get</dt><dd>false" in goal.body
     assert "Remember This Goal" in goal.body
+    assert f"name='resume_surface' value='/goals/{result.goal_id}#goal-action-dock-form'" in goal.body
     assert "save_workspace_form_available</dt><dd>true" in goal.body
     assert "workspace_auto_write_on_get</dt><dd>false" in goal.body
     assert "Goal Overview Command Bar" in goal.body
@@ -15385,6 +15403,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
             "filters": [f"goal:{result.goal_id}"],
             "expanded_panels": ["daily-loop,next-action,timeline,evidence,artifacts,notes"],
             "last_viewed_artifact": [resume_artifact],
+            "resume_surface": [f"/goals/{result.goal_id}#goal-action-dock-form"],
             "updated_by": ["goal-daily-loop"],
             "return_to": [f"/goals/{result.goal_id}"],
         },
@@ -15402,6 +15421,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
             "filters": [f"goal:{result.goal_id}"],
             "expanded_panels": ["daily-loop,next-action,timeline,evidence,artifacts,notes"],
             "last_viewed_artifact": [resume_artifact],
+            "resume_surface": [f"/goals/{result.goal_id}#goal-action-dock-form"],
             "updated_by": ["goal-daily-loop"],
             "return_to": [f"/goals/{result.goal_id}"],
             "confirm": ["yes"],
@@ -15417,6 +15437,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in daily_loop_workspace.body
     )
     assert "action_resume_receipt_updated_by</dt><dd>goal-daily-loop" in daily_loop_workspace.body
+    assert (
+        f"action_resume_receipt_resume_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        f"/goals/{result.goal_id}#goal-action-dock-form</a>"
+    ) in daily_loop_workspace.body
     assert "action_resume_receipt_come_back_tomorrow_ready</dt><dd>true" in daily_loop_workspace.body
     assert "action_resume_receipt_safety: read-only saved workspace receipt after confirmed local action" in daily_loop_workspace.body
     daily_loop_workspace_json = json.loads(
@@ -15427,7 +15451,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert daily_loop_workspace_json["filters"] == f"goal:{result.goal_id}"
     assert daily_loop_workspace_json["expanded_panels"] == "daily-loop,next-action,timeline,evidence,artifacts,notes"
     assert daily_loop_workspace_json["last_viewed_artifact"] == resume_artifact
-    assert daily_loop_workspace_json["resume_surface"] == f"/goals/{result.goal_id}"
+    assert daily_loop_workspace_json["resume_surface"] == f"/goals/{result.goal_id}#goal-action-dock-form"
     assert daily_loop_workspace_json["updated_by"] == "goal-daily-loop"
 
     workspace = render_local_app_route(

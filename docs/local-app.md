@@ -621,10 +621,14 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Create commit request`, while preserving raw action metadata and only
   navigating to the existing local target. Focus mode uses
   the header `Focus` button or `m` shortcut to collapse Recent Items, Route
-  Context, Operator Focus, and Last Action strips while keeping the Operator
-  Ribbon and current page body visible. It is persisted only in
+  Context, and Last Action strips while keeping Operator Focus, the current
+  action launcher, the Operator Ribbon, and current page body visible. It is
+  persisted only in
   `localStorage:clankeros-focus-mode`, so it does not write ClankerOS server
-  state or call providers. After a confirmed local
+  state or call providers. Goal `Finish Today` and `Remember This Goal` saves
+  store an exact `resume_surface` for the current action form when one exists,
+  otherwise the Goal Next Action card, so `/resume` opens the actionable place
+  rather than only the broad Goal page. After a confirmed local
   action, the shell renders a read-only `Last Action` strip from
   `.clanker/app/workspace.json` with the action kind, result, target notice
   surface, saved project/goal context, timestamp, and no-write/provider/

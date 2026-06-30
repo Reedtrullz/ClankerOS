@@ -699,12 +699,17 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   boundaries outside the Goal page. The header `Focus` control and `m`
   shortcut now provide a browser-local Focus mode that stores
   `data-focus-mode="true"` in `localStorage:clankeros-focus-mode`, hides Recent
-  Items, Route Context, Operator Focus, and Last Action strips, and keeps the
-  Operator Ribbon plus page body visible without writing server state. When
+  Items, Route Context, and Last Action strips while keeping Operator Focus and
+  the current-action launcher visible, and keeps the Operator Ribbon plus page
+  body visible without writing server state. When
   no Goal exists yet, the shared shell now treats that as first-run progress:
   Home, Today, and Goals point `Route Context`, `Operator Focus`, and the
   command palette at their same-page `Create Project` or `Create First Goal`
   anchors, while other pages link back to Home/Today/Goals first-run anchors.
+  Goal `Finish Today` and `Remember This Goal` saves preserve a precise
+  `resume_surface` at the current action form when available, or the Goal Next
+  Action card otherwise, so `/resume` returns to an actionable Goal anchor
+  instead of only the broad Goal page.
   The command palette now opens with a compact `Palette Focus` launcher for
   continuing the current Goal action, searching local state, resuming the saved
   workspace, or staying on the current page. Its search box narrows a visible
