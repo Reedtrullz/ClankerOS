@@ -1,5 +1,21 @@
 # Status
 
+## 2026-06-30 Run Workbench Inline Action UX
+
+- Made `/runs/<coder_run_id>` directly actionable from the top `Run Operator
+  Workbench` by rendering the current confirmed run action inline at
+  `#run-workbench-action-form`.
+- The workbench now promotes that inline form as its primary Do Now target
+  while preserving the original run gate surface, such as
+  `#run-approval-actions`, in `run_workbench_source_primary_surface` evidence.
+- Covered commit request, approved local commit, publication request, and
+  publication handoff gates without adding a new write path; forms still post
+  to the existing `/actions/<action>` routes and require confirmation before
+  local artifacts or local git changes are written.
+- Kept GET read-only and explicit no-provider/no-network/no-push/no-PR/
+  no-deploy boundaries in the DOM, including blocked-reason readbacks when the
+  run is not ready for an inline form.
+
 ## 2026-06-30 Workflow Inline Commit Request UX
 
 - Made scoped `/workflow?delegation_id=...` and `/workflow?run_id=...`

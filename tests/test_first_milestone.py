@@ -16980,9 +16980,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "run_workbench_changed_files_count</dt><dd>1" in run_page.body
     assert "run_workbench_diff_summary</dt><dd>files:1," in run_page.body
     assert "run_workbench_next_action</dt><dd>Create commit request" in run_page.body
-    assert "run_workbench_primary_surface</dt><dd><a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
+    assert "run_workbench_primary_surface</dt><dd><a href='#run-workbench-action-form'>Run Workbench Action Form</a>" in run_page.body
+    assert "run_workbench_source_primary_surface</dt><dd><a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
     assert "run_workbench_reason</dt><dd>reviewed coder run is ready for a local commit request" in run_page.body
     assert "run_workbench_action_form_available</dt><dd>true" in run_page.body
+    assert "run_workbench_action_form_surface</dt><dd><a href='#run-workbench-action-form'>Run Workbench Action Form</a>" in run_page.body
+    assert "run_workbench_action_form_kind</dt><dd>commit_request" in run_page.body
+    assert "run_workbench_action_form_action</dt><dd>coder-commit-request" in run_page.body
+    assert "run_workbench_action_form_blocked_reason</dt><dd>none" in run_page.body
     assert "run_workbench_confirmation_required</dt><dd>true" in run_page.body
     assert "run_workbench_approval_surface</dt><dd><a href='/approvals'>/approvals</a>" in run_page.body
     assert "run_workbench_evidence_surface</dt><dd><a href='#coder-worktree-evidence'>Coder Worktree Evidence</a>" in run_page.body
@@ -16999,7 +17004,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "run_workbench_pr_created</dt><dd>false" in run_page.body
     assert "run_workbench_deploy_created</dt><dd>false" in run_page.body
     assert "run_workbench_now: Create commit request" in run_page.body
-    assert "run_workbench_click: <a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
+    assert "run_workbench_click: <a href='#run-workbench-action-form'>Run Workbench Action Form</a>" in run_page.body
+    assert "run_workbench_source: <a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
+    assert "run_workbench_action_form: available=true action=coder-commit-request source=<a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
     assert "run_workbench_check: <a href='#run-review-gate'>Run Review Gate</a>" in run_page.body
     assert "run_workbench_unblock: <a href='/approvals'>/approvals</a>" in run_page.body
     assert f"run_workbench_goal: <a href='/goals/{result.goal_id}'>/goals/{result.goal_id}</a>" in run_page.body
@@ -17009,8 +17016,31 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "name='filters' value='run:" in run_page.body
     assert "run-workbench,workflow,review,evidence,actions" in run_page.body
     assert "name='updated_by' value='run-operator-workbench'" in run_page.body
+    assert "id='run-workbench-action-form'" in run_page.body
+    assert "data-run-workbench-action-form='true'" in run_page.body
+    assert "data-run-workbench-action-kind='commit_request'" in run_page.body
+    assert "data-run-workbench-action-name='coder-commit-request'" in run_page.body
+    assert f"data-run-workbench-action-run='{result.coder_worktree_run_id}'" in run_page.body
+    assert "action='/actions/coder-commit-request'" in run_page.body
+    assert f"name='run_id' value='{result.coder_worktree_run_id}'" in run_page.body
+    assert "name='return_to' value='/runs/" in run_page.body
+    assert "name='resume_surface' value='/runs/" in run_page.body
+    assert "name='open_project' value='local-app-demo'" in run_page.body
+    assert f"name='open_goal' value='{result.goal_id}'" in run_page.body
+    assert "name='requested_by' value='operator'" in run_page.body
+    assert "name='_action_draft_storage_key' value='clankeros-action-form-draft:coder-commit-request:" in run_page.body
+    assert "Request local commit after run review" in run_page.body
     assert "Run Gate Map" in run_page.body
     assert "data-run-gate-map='true'" in run_page.body
+    assert run_page.body.index("data-run-operator-workbench='true'") < run_page.body.index(
+        "data-run-workbench-action-form='true'"
+    )
+    assert run_page.body.index("data-run-workbench-action-form='true'") < run_page.body.index(
+        "run_workbench_status</dt><dd>action_form_ready"
+    )
+    assert run_page.body.index("data-run-workbench-action-form='true'") < run_page.body.index(
+        "id='run-approval-actions'"
+    )
     assert run_page.body.index("data-run-operator-workbench='true'") < run_page.body.index(
         "data-run-gate-map='true'"
     )
@@ -17192,8 +17222,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "run_workbench_review_status</dt><dd>missing" in run_page_without_review.body
     assert "run_workbench_next_action</dt><dd>Review run" in run_page_without_review.body
     assert "run_workbench_primary_surface</dt><dd><a href='#run-review-gate'>Run Review Gate</a>" in run_page_without_review.body
+    assert "run_workbench_source_primary_surface</dt><dd><a href='#run-review-gate'>Run Review Gate</a>" in run_page_without_review.body
     assert "run_workbench_action_form_available</dt><dd>false" in run_page_without_review.body
+    assert "run_workbench_action_form_surface</dt><dd>none" in run_page_without_review.body
+    assert "run_workbench_action_form_kind</dt><dd>none" in run_page_without_review.body
+    assert "run_workbench_action_form_action</dt><dd>none" in run_page_without_review.body
+    assert "run_workbench_action_form_blocked_reason</dt><dd>no_same_page_form_for_action" in run_page_without_review.body
     assert "run_workbench_confirmation_required</dt><dd>false" in run_page_without_review.body
+    assert "data-run-workbench-action-form='true'" not in run_page_without_review.body
     assert "Run Gate Map" in run_page_without_review.body
     assert "run_gate_current_gate</dt><dd>review" in run_page_without_review.body
     assert "run_gate_current_action</dt><dd>Review run" in run_page_without_review.body

@@ -889,8 +889,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Workbench` follows it with do/check/unblock/finish cards, same-page action
   anchors, review/evidence links, approvals, parent Goal, and a confirmed
   `save-workspace` form that stores the run plus review/evidence artifact as a
-  future resume point without writing on GET. It also includes a read-only
-  `Run Gate Map` with eight scan-first gates: review, commit request, commit
+  future resume point without writing on GET. When the current run gate has a
+  safe confirmed local action, the workbench renders it inline at
+  `#run-workbench-action-form`, points the primary Do Now link there, and keeps
+  the original gate surface in source evidence. Commit request, local commit,
+  publication request, and publication handoff still use the existing
+  `/actions/<action>` confirmation routes. It also includes a read-only `Run
+  Gate Map` with eight scan-first gates: review, commit request, commit
   approval, local commit, publication request, publication approval,
   publication handoff, and manual publish outside ClankerOS. The map marks the
   current gate, counts done/waiting/blocked gates, links only to existing app

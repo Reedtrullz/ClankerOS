@@ -979,7 +979,13 @@ target surface, and no-write/no-network/no-push boundary. A `Run Operator
 Workbench` follows it with do/check/unblock/finish cards for the same run gate,
 including same-page action anchors, review/evidence links, approvals, parent
 Goal, and a confirmed `save-workspace` form that stores the run and review or
-evidence artifact as tomorrow's resume point without writing on GET. A
+evidence artifact as tomorrow's resume point without writing on GET. When the
+current run gate is ready for a confirmed local action, the workbench renders
+that form inline at `#run-workbench-action-form` and promotes it as the
+primary Do Now target while preserving the original gate surface, such as
+`#run-approval-actions`, as source evidence. Commit request, local commit,
+publication request, and publication handoff forms still post through the
+existing `/actions/<action>` confirmation screens. A
 read-only `Run Gate Map` then lays out the run-scoped path from review through
 commit request, commit approval, local commit, publication request,
 publication approval, publication handoff, and the manual publish boundary,

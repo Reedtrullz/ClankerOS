@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/runs/<coder_run_id>` now promotes the current safe local run action into
+  an inline `#run-workbench-action-form` inside the `Run Operator Workbench`.
+  Commit request, local commit, publication request, and publication handoff
+  gates reuse the existing `/actions/<action>` confirmation routes; the
+  workbench primary target points at the inline form while preserving the
+  original gate surface in evidence. GET remains read-only with no provider,
+  non-loopback network, push, PR, deploy, or external mutation.
 - `/inbox` now promotes the first approval-backed coder worktree, commit, or
   publication decision into an inline `#inbox-workbench-action-form` inside the
   `Inbox Operator Workbench`. `/inbox` keeps global queue priority, while
@@ -582,7 +589,9 @@ Latest status focus:
 - `/runs/<coder_run_id>` now adds a read-only `Run Evidence Map` after the
   review gate, with Review, Diff, Changed Files, Validation, Logs, and
   Verification cards backed by bounded artifact links before the dense
-  evidence inventory.
+  evidence inventory. Its top `Run Operator Workbench` also renders the
+  current confirmed run action inline at `#run-workbench-action-form` when the
+  gate is ready, while retaining the original gate surface as source evidence.
 - `/goals` is now content-first and board-first instead of shared-diagnostic or
   command-readback-first: the `Goal Board Workbench` opens the page before
   Route Context, Operator Focus, and the `Goal Board Command Bar`, with visible

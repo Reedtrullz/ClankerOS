@@ -1038,11 +1038,16 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   do/check/unblock/finish cards, same-page action anchors, review/evidence
   links, approvals, parent Goal, and a confirmed `save-workspace` form that
   stores the run plus review/evidence artifact as a future resume point
-  without writing on GET, followed by a read-only `Run Gate Map` that marks
-  the current eight-step run path from review through local commit,
-  publication handoff, and manual publish outside ClankerOS. The map links
-  only to existing local anchors or `/approvals`, counts done/waiting/blocked
-  gates, and adds no action authority. A read-only `Run Continuation Strip`
+  without writing on GET. When the current run gate has a safe confirmed local
+  action, the workbench renders it inline at `#run-workbench-action-form`,
+  promotes that form as the primary Do Now target, and preserves the original
+  gate surface as source evidence. Commit request, local commit, publication
+  request, and publication handoff still use the existing `/actions/<action>`
+  confirmation routes. A read-only `Run Gate Map` then marks the current
+  eight-step run path from review through local commit, publication handoff,
+  and manual publish outside ClankerOS. The map links only to existing local
+  anchors or `/approvals`, counts done/waiting/blocked gates, and adds no
+  action authority. A read-only `Run Continuation Strip`
   follows the map and gives the operator five visible cards for the current
   gate, scoped approvals, evidence, parent Goal, and manual publication
   boundary before the dense workflow state. The page then shows the same
