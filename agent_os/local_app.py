@@ -38814,7 +38814,7 @@ def _action_result_goal_gate_action(
         if action_form_available:
             return next_action.action, _goal_continuation_link(
                 "#action-continuation-current-action",
-                "Action continuation form",
+                next_action.action,
             )
         return next_action.action, _goal_continuation_link(
             next_action.href,
@@ -38921,7 +38921,7 @@ def _action_result_first_run_step_action(
     }:
         return label, _goal_continuation_link(
             "#action-continuation-first-run-form",
-            "Action continuation form",
+            label,
         )
     if step == "create_project":
         return "Register project", _goal_continuation_link(

@@ -1,5 +1,30 @@
 # Status
 
+## 2026-06-30 Action Workflow Map Label UX
+
+- Replaced the action-result workflow map's remaining generic
+  `Action continuation form` links with the concrete operator move. First-run
+  result maps now point at `Create first goal`, and saved-Goal result maps now
+  point at the refreshed next action such as `Approve commit`.
+- Preserved the existing local anchors, confirmation-gated forms, raw action
+  evidence, and read-only/zero-effect GET posture. This is a wording and
+  operator-orientation pass only.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, focused pytest `tests/test_first_milestone.py -k
+  'test_first_run_browser_actions_persist_resume_workspace or
+  test_local_app_demo_scenario_populates_fixture_state'`, and
+  `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` passed
+  locally.
+- Browser QA used a disposable demo app at `127.0.0.1:63813` for
+  `goal_472d8f621b72` and coder run `run_a0a51035c468`. Desktop exercised
+  the visible Goal `Create commit request` form through the local confirmation
+  page to the action result, then verified the workflow map reports
+  `action_result_workflow_next_surface=Approve commit` and no
+  `Action continuation form` copy. Mobile 390x844 verified the same workflow
+  map label, clean browser logs, and `scrollWidth=390`.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
 ## 2026-06-30 Continuation Action Label UX
 
 - Replaced remaining generic continuation labels on Goal and action-result

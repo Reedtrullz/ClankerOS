@@ -9557,13 +9557,13 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "action_result_workflow_next_action</dt><dd>Create first goal" in register_result.body
     assert (
         "action_result_workflow_next_surface</dt><dd>"
-        "<a href='#action-continuation-first-run-form'>Action continuation form</a>"
+        "<a href='#action-continuation-first-run-form'>Create first goal</a>"
     ) in register_result.body
     assert "action_result_workflow_progress</dt><dd>1/5 gates done" in register_result.body
     assert "action_result_workflow_step: create_project status=done marker=done action=Register project" in register_result.body
     assert (
         "action_result_workflow_step: create_first_goal status=current marker=current "
-        "action=Create first goal surface=<a href='#action-continuation-first-run-form'>Action continuation form</a>"
+        "action=Create first goal surface=<a href='#action-continuation-first-run-form'>Create first goal</a>"
     ) in register_result.body
     assert "action_result_workflow_safety: read-only continuation map after confirmed local action" in register_result.body
     workspace_path = tmp_path / ".clanker" / "app" / "workspace.json"
@@ -17387,13 +17387,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "action_result_workflow_next_action</dt><dd>Approve commit" in commit_request.body
     assert (
         "action_result_workflow_next_surface</dt><dd>"
-        "<a href='#action-continuation-current-action'>Action continuation form</a>"
+        "<a href='#action-continuation-current-action'>Approve commit</a>"
     ) in commit_request.body
     assert "action_result_workflow_progress</dt><dd>9/15 gates done" in commit_request.body
     assert "data-action-result-workflow-gate='commit_approval' data-gate-status='pending' data-gate-marker='current' data-gate-action='Approve commit'" in commit_request.body
     assert (
         "action_result_workflow_gate: commit_approval status=pending marker=current "
-        "action=Approve commit surface=<a href='#action-continuation-current-action'>Action continuation form</a>"
+        "action=Approve commit surface=<a href='#action-continuation-current-action'>Approve commit</a>"
     ) in commit_request.body
     assert (
         f"action_result_workflow_gate: local_commit status=waiting marker=waiting "

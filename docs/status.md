@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Action-result workflow maps now label the current continuation surface with
+  the concrete operator move instead of `Action continuation form`. First-run
+  maps say `Create first goal`, saved Goal maps say the refreshed next action
+  such as `Approve commit`, and the same local anchors, confirmation-gated
+  forms, raw evidence, and zero-effect GET posture are preserved.
 - Remaining continuation/action-source labels on Goal and action-result
   surfaces now use concrete operator language. Goal Next Action primary links
   say the actual move, such as `Create commit request`, action result
