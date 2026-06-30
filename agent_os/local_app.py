@@ -15002,7 +15002,7 @@ def _goal_operator_workbench(
             "<div class='goal-workbench-card'>",
             "<h3>Check</h3>",
             f"<p>Gate: {_e(current_gate.replace('_', ' '))}</p>",
-            f"<a class='goal-workbench-link' data-goal-workbench-check='true' href='{_e(next_action.href)}'>Open source surface</a>",
+            f"<a class='goal-workbench-link' data-goal-workbench-check='true' href='{_e(next_action.href)}'>Review action source</a>",
             "</div>",
             "<div class='goal-workbench-card'>",
             "<h3>Unblock</h3>",
@@ -15012,7 +15012,7 @@ def _goal_operator_workbench(
             "<div class='goal-workbench-card'>",
             "<h3>Finish Today</h3>",
             "<p>Save resume state</p>",
-            "<a class='goal-workbench-link' data-goal-workbench-finish='true' data-open-details='true' href='#goal-finish-today'>Open finish form</a>",
+            "<a class='goal-workbench-link' data-goal-workbench-finish='true' data-open-details='true' href='#goal-finish-today'>Save return point</a>",
             "</div>",
         ]
     )
@@ -17435,9 +17435,9 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
     done_gates = counts.get("done", 0)
     form_available = bool(form)
     primary_href = "#goal-next-action-form" if form_available else next_action.href
-    primary_label = "Use confirmed form" if form_available else "Open source surface"
+    primary_label = next_action.action
     primary_surface = SafeHtml(
-        f"<a href='{_e(primary_href)}'>Goal Next Action</a>"
+        f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
     )
     source_surface = SafeHtml(
         f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
@@ -37956,7 +37956,7 @@ def _action_result_next_step_context(
         action_form = _goal_next_action_form(state, next_action)
         form_available = bool(action_form)
         primary_href = "#action-result-next-step-form" if form_available else next_action.href
-        primary_label = "Use next action" if form_available else "Open source surface"
+        primary_label = next_action.action
         goal_label = goal.title or goal.description or goal.id
         base.update(
             {
@@ -38023,7 +38023,7 @@ def _action_result_next_step_context(
         )
     form_available = bool(action_form)
     primary_href = "#action-result-next-step-form" if form_available else home_href
-    primary_label = "Use next action" if form_available else "Open first-run guide"
+    primary_label = str(progress["next_action"]) if form_available else "Open first-run guide"
     base.update(
         {
             "status": "first_run_ready",

@@ -1,5 +1,33 @@
 # Status
 
+## 2026-06-30 Continuation Action Label UX
+
+- Replaced remaining generic continuation labels on Goal and action-result
+  surfaces with concrete operator moves. The Goal Next Action primary button
+  now says `Create commit request` instead of `Use confirmed form`, and action
+  result continuation pages now say `Create first goal` or `Approve commit`
+  instead of `Use next action`.
+- Updated the Goal Operator Workbench secondary copy from
+  `Open source surface` / `Open finish form` to `Review action source` and
+  `Save return point`, keeping the same local links and confirmation-gated
+  action routes.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, `python3 -m agent_os.cli --root "$scratch"
+  app-demo-smoke-test`, and focused pytest `tests/test_first_milestone.py -k
+  'test_first_run_browser_actions_persist_resume_workspace or
+  test_local_app_demo_scenario_populates_fixture_state'` passed locally.
+- Browser QA used a disposable demo app at `127.0.0.1:63812` for
+  `goal_130cca19bebf`. Desktop verified the Goal primary action,
+  workbench check, and finish labels as `Create commit request`,
+  `Review action source`, and `Save return point` with no old generic label
+  copy and no horizontal overflow. The local commit-request confirmation flow
+  was exercised in the disposable root; the result page promoted
+  `Approve commit` in the command bar, next-step card, and inline form.
+  Mobile 390x844 verified the same result labels with `scrollWidth=390` and
+  clean browser logs.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
 ## 2026-06-30 Inline Current Action Form Label UX
 
 - Replaced generic inline current-action form labels on Today, Goal, and

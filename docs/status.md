@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Remaining continuation/action-source labels on Goal and action-result
+  surfaces now use concrete operator language. Goal Next Action primary links
+  say the actual move, such as `Create commit request`, action result
+  continuation pages promote `Create first goal` or `Approve commit`, and the
+  Goal Operator Workbench now says `Review action source` / `Save return
+  point` instead of exposing form/source mechanics. The same local anchors,
+  confirmation-gated action routes, and zero-effect GET posture are preserved.
 - Inline current-action form surfaces on Today, Goal, and Operator Focus now
   use the exact operator move, such as `Create commit request`, instead of
   generic form labels like `Run Current Action`, `Today Current Action`, or

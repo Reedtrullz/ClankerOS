@@ -9463,7 +9463,7 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "action_result_command_completed: First project setup" in register_result.body
     assert (
         "action_result_command_primary_surface</dt><dd>"
-        "<a href='#action-result-next-step-form'>Use next action</a>"
+        "<a href='#action-result-next-step-form'>Create first goal</a>"
     ) in register_result.body
     assert "action_result_command_primary_source</dt><dd>first_run_progress_after_action" in register_result.body
     assert "action_label</dt><dd>First project setup" in register_result.body
@@ -9485,7 +9485,7 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "action_result_next_step_next_action</dt><dd>Create first goal" in register_result.body
     assert (
         "action_result_next_step_primary_surface</dt><dd>"
-        "<a href='#action-result-next-step-form'>Use next action</a>"
+        "<a href='#action-result-next-step-form'>Create first goal</a>"
     ) in register_result.body
     assert (
         "action_result_next_step_target_surface</dt><dd>"
@@ -13619,7 +13619,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "next_action_focus_phase</dt><dd>Ready to commit" in goal.body
     assert "next_action_focus_current_gate</dt><dd>commit_request" in goal.body
     assert "next_action_focus_gate_progress</dt><dd>8/15 gates done" in goal.body
-    assert "next_action_focus_primary_surface</dt><dd><a href='#goal-next-action-form'>Goal Next Action</a>" in goal.body
+    assert "next_action_focus_primary_surface</dt><dd><a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert f"next_action_focus_source_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "next_action_focus_form_available</dt><dd>true" in goal.body
     assert "next_action_focus_confirmation_required</dt><dd>true" in goal.body
@@ -13627,7 +13627,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "next_action_focus_provider_calls_taken</dt><dd>0" in goal.body
     assert "next_action_focus_network_actions_taken</dt><dd>0" in goal.body
     assert "next_action_focus_external_effects_created</dt><dd>false" in goal.body
-    assert "data-goal-next-action-focus-primary='true' href='#goal-next-action-form'>Use confirmed form</a>" in goal.body
+    assert "data-goal-next-action-focus-primary='true' href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "id='goal-next-action-form' data-goal-next-action-form='true'" in goal.body
     assert "data-goal-next-action-details='true'" in goal.body
     assert "Action Evidence" in goal.body
@@ -13638,7 +13638,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "next_action_focus_status</dt><dd>available"
     )
     assert "next_action_focus_now: Create commit request" in goal.body
-    assert "next_action_focus_click: <a href='#goal-next-action-form'>Use confirmed form</a>" in goal.body
+    assert "next_action_focus_click: <a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "next_action_focus_gate: commit_request" in goal.body
     assert "next_action_focus_safety: confirmed local action only" in goal.body
     assert "recommended_action</dt><dd>Create commit request" in goal.body
@@ -17342,15 +17342,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert commit_request.body.index("Action Result Next Step") < commit_request.body.index(
         "Action Resume Receipt"
     )
-    assert "action_result_command_primary_surface</dt><dd><a href='#action-result-next-step-form'>Use next action</a>" in commit_request.body
+    assert "action_result_command_primary_surface</dt><dd><a href='#action-result-next-step-form'>Approve commit</a>" in commit_request.body
     assert "action_result_command_primary_source</dt><dd>saved_workspace_goal_after_action" in commit_request.body
-    assert "data-action-result-command-primary='true' href='#action-result-next-step-form'>Use next action</a>" in commit_request.body
+    assert "data-action-result-command-primary='true' href='#action-result-next-step-form'>Approve commit</a>" in commit_request.body
     assert "action_result_next_step_status</dt><dd>available" in commit_request.body
     assert "action_result_next_step_source</dt><dd>saved_workspace_goal_after_action" in commit_request.body
     assert "action_result_next_step_mode</dt><dd>goal" in commit_request.body
     assert "action_result_next_step_goal</dt><dd>" in commit_request.body
     assert "action_result_next_step_next_action</dt><dd>Approve commit" in commit_request.body
-    assert "action_result_next_step_primary_surface</dt><dd><a href='#action-result-next-step-form'>Use next action</a>" in commit_request.body
+    assert "action_result_next_step_primary_surface</dt><dd><a href='#action-result-next-step-form'>Approve commit</a>" in commit_request.body
     assert "action_result_next_step_target_surface</dt><dd><a href='#action-result-next-step-form'>Approve commit</a>" in commit_request.body
     assert "action_result_next_step_action_form_available</dt><dd>true" in commit_request.body
     assert "action_result_next_step_confirmation_required</dt><dd>true" in commit_request.body
