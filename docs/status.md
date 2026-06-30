@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Inline current-action form surfaces on Today, Goal, and Operator Focus now
+  use the exact operator move, such as `Create commit request`, instead of
+  generic form labels like `Run Current Action`, `Today Current Action`, or
+  `Current Action Form`. The links still point at the same local inline forms
+  and confirmation-gated action routes, but the visible UI now tells the
+  operator what they are about to do. The Today workbench grid also collapses
+  to one column on 390px mobile viewports, removing the horizontal overflow
+  caused by the desktop four-column workbench layout.
 - The shared app header now keeps daily navigation compact by showing
   Dashboard, Today, Guide, Resume, Goals, Search, and Workspace as primary
   links, while advanced routes live under a `More` disclosure and remain

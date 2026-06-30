@@ -4890,6 +4890,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_activity_safety: read-only goal timeline on daily cockpit" in today.body
     assert "Today Operator Workbench" in today.body
     assert "data-today-operator-workbench='true'" in today.body
+    assert ".today-session-grid, .today-workbench-grid, .today-activity-grid" in today.body
     assert "data-today-workbench-evidence='true'" in today.body
     assert "today_workbench_status</dt><dd>first_run" in today.body
     assert "today_workbench_source</dt><dd>goal_state_workspace_attention" in today.body
@@ -11688,7 +11689,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "operator_focus_now: Act: Create commit request" in dashboard.body
     assert "operator_focus_waiting: approvals=1 incidents=0 recommendations=0" in dashboard.body
     assert "data-operator-focus-action='true'" in dashboard.body
-    assert "Run Current Action" in dashboard.body
+    assert "<summary>Create commit request</summary>" in dashboard.body
     assert f"/goals/{result.goal_id}" in dashboard.body
 
     today = render_local_app_route(tmp_path, "/today")
@@ -11742,7 +11743,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-today-goal-queue-row-lead='true'" in today.body
     assert "today_goal_queue_item: <a href='/goals/" in today.body
     assert "bucket=active lead=true phase=Ready to commit" in today.body
-    assert "next_action=Create commit request action_surface=<a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "next_action=Create commit request action_surface=<a href='#today-current-action'>Create commit request</a>" in today.body
     assert "progress=0/1 tasks completed waiting=1 approvals=1 incidents=0 recommendations=0 form_available=true" in today.body
     assert "today_goal_queue_filter_status</dt><dd>available" in today.body
     assert "today_goal_queue_filter_storage</dt><dd>localStorage:clankeros-today-goal-queue-view" in today.body
@@ -11775,7 +11776,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"today_command_primary_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'"
         in today.body
     )
-    assert "today_command_target_surface</dt><dd><a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_command_target_surface</dt><dd><a href='#today-current-action'>Create commit request</a>" in today.body
     assert "today_command_reason</dt><dd>reviewed_run=" in today.body
     assert "today_command_progress</dt><dd>0/1 tasks completed" in today.body
     assert "today_command_open_tasks</dt><dd>1" in today.body
@@ -11806,7 +11807,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_command_network_actions_taken</dt><dd>0" in today.body
     assert "today_command_external_effects_created</dt><dd>false" in today.body
     assert "today_command_now: Create commit request" in today.body
-    assert "today_command_click: <a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_command_click: <a href='#today-current-action'>Create commit request</a>" in today.body
     assert "today_command_attention: needs_approval_review -> <a href='/approvals'>/approvals</a>" in today.body
     assert "Today Live State" in today.body
     assert "data-live-refresh='today'" in today.body
@@ -11817,7 +11818,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"today_live_refresh_lead_goal</dt><dd><a href='/goals/{result.goal_id}'" in today.body
     assert "today_live_refresh_phase</dt><dd>Ready to commit" in today.body
     assert "today_live_refresh_next_action</dt><dd>Create commit request" in today.body
-    assert "today_live_refresh_target_surface</dt><dd><a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_live_refresh_target_surface</dt><dd><a href='#today-current-action'>Create commit request</a>" in today.body
     assert "today_live_refresh_action_form_available</dt><dd>true" in today.body
     assert "today_live_refresh_first_run_form_available</dt><dd>false" in today.body
     assert "today_live_refresh_active_goals</dt><dd>1" in today.body
@@ -11830,7 +11831,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_live_refresh_network_actions_taken</dt><dd>0" in today.body
     assert "today_live_refresh_external_effects_created</dt><dd>false" in today.body
     assert "today_live_refresh_now: Create commit request" in today.body
-    assert "today_live_refresh_target: <a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_live_refresh_target: <a href='#today-current-action'>Create commit request</a>" in today.body
     assert "Today Session Summary" in today.body
     assert "data-today-session-summary='true'" in today.body
     assert "data-today-session-actions='true'" in today.body
@@ -11838,14 +11839,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-today-session-latest='true'" in today.body
     assert "data-today-session-proof='true'" in today.body
     assert "data-today-session-resume='true'" in today.body
-    assert "data-today-session-primary='true' href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "data-today-session-primary='true' href='#today-current-action'>Create commit request</a>" in today.body
     assert "today_session_status</dt><dd>available" in today.body
     assert f"today_session_goal</dt><dd><a href='/goals/{result.goal_id}'" in today.body
     assert f"today_session_project</dt><dd><a href='/projects/{result.project_id}'" in today.body
     assert "today_session_phase</dt><dd>Ready to commit" in today.body
     assert "today_session_current_gate</dt><dd>commit_request" in today.body
     assert "today_session_next_action</dt><dd>Create commit request" in today.body
-    assert "today_session_next_surface</dt><dd><a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_session_next_surface</dt><dd><a href='#today-current-action'>Create commit request</a>" in today.body
     assert "today_session_action_form_available</dt><dd>true" in today.body
     assert "today_session_latest_activity_kind</dt><dd>" in today.body
     assert "today_session_latest_activity_at</dt><dd>" in today.body
@@ -11854,7 +11855,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_session_latest_artifact</dt><dd><a href='/artifacts?path=" in today.body
     assert "today_session_cards_available</dt><dd>true" in today.body
     assert "today_session_card_count</dt><dd>4" in today.body
-    assert "today_session_continue_surface</dt><dd><a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_session_continue_surface</dt><dd><a href='#today-current-action'>Create commit request</a>" in today.body
     assert "today_session_latest_surface</dt><dd><a href=" in today.body
     assert "today_session_proof_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>" in today.body
     assert "today_session_resume_card_surface</dt><dd><a href='/goals'>/goals</a>" in today.body
@@ -11869,7 +11870,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_session_network_actions_taken</dt><dd>0" in today.body
     assert "today_session_external_effects_created</dt><dd>false" in today.body
     assert "today_session_now: Create commit request" in today.body
-    assert "today_session_click: <a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_session_click: <a href='#today-current-action'>Create commit request</a>" in today.body
     assert "today_session_ci: direct_public_snapshot/success" in today.body
     assert "today_session_safety: read-only local summary" in today.body
     assert "Today Activity Digest" in today.body
@@ -11917,7 +11918,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"today_workbench_project</dt><dd><a href='/projects/{result.project_id}'" in today.body
     assert "today_workbench_phase</dt><dd>Ready to commit" in today.body
     assert "today_workbench_do_action</dt><dd>Create commit request" in today.body
-    assert "today_workbench_do_surface</dt><dd><a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_workbench_do_surface</dt><dd><a href='#today-current-action'>Create commit request</a>" in today.body
     assert "today_workbench_do_reason</dt><dd>reviewed_run=" in today.body
     assert "today_workbench_check_action</dt><dd>Review timeline and evidence" in today.body
     assert (
@@ -11994,7 +11995,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_workbench_provider_calls_taken</dt><dd>0" in today.body
     assert "today_workbench_network_actions_taken</dt><dd>0" in today.body
     assert "today_workbench_external_effects_created</dt><dd>false" in today.body
-    assert "today_workbench_do: <a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_workbench_do: <a href='#today-current-action'>Create commit request</a>" in today.body
     assert (
         f"today_workbench_check: <a href='/goals/{result.goal_id}#goal-timeline'>"
         "Goal Timeline</a>"
@@ -12072,7 +12073,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"today_decision_queue_project</dt><dd><a href='/projects/{result.project_id}'" in today.body
     assert "today_decision_queue_phase</dt><dd>Ready to commit" in today.body
     assert "today_decision_queue_next_action</dt><dd>Create commit request" in today.body
-    assert "today_decision_queue_primary_surface</dt><dd><a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_decision_queue_primary_surface</dt><dd><a href='#today-current-action'>Create commit request</a>" in today.body
     assert "today_decision_queue_action_form_available</dt><dd>true" in today.body
     assert "today_decision_queue_first_run_form_available</dt><dd>false" in today.body
     assert "today_decision_queue_rows</dt><dd>2" in today.body
@@ -12093,7 +12094,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_decision_queue_external_effects_created</dt><dd>false" in today.body
     assert "today_decision_queue_now: Create commit request" in today.body
     assert "today_decision_queue_row: kind=current_action status=recommended" in today.body
-    assert "surface=<a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "surface=<a href='#today-current-action'>Create commit request</a>" in today.body
     assert "today_decision_queue_row: kind=worktree_approval status=pending_operator_approval" in today.body
     assert f"surface=<a href='/approvals?goal_id={result.goal_id}'>Scoped approvals</a>" in today.body
     assert "today_decision_queue_safety: read-only daily queue; existing confirmed forms and approval surfaces own writes" in today.body
@@ -12105,7 +12106,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_workflow_map_current_phase</dt><dd>Ready to commit" in today.body
     assert "today_workflow_map_current_gate</dt><dd>commit_request" in today.body
     assert "today_workflow_map_next_action</dt><dd>Create commit request" in today.body
-    assert "today_workflow_map_next_surface</dt><dd><a href='#today-current-action'>Today Current Action</a>" in today.body
+    assert "today_workflow_map_next_surface</dt><dd><a href='#today-current-action'>Create commit request</a>" in today.body
     assert f"today_workflow_map_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>" in today.body
     assert "today_workflow_map_action_form_available</dt><dd>true" in today.body
     assert "today_workflow_map_source</dt><dd>goal_remaining_work_gates" in today.body
@@ -12139,7 +12140,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert today.body.index("data-today-current-action-form='true'") < today.body.index(
         "data-today-command-evidence='true'"
     )
-    assert "Run Current Action" in today.body
+    assert "<h3>Create commit request</h3>" in today.body
     assert "action='/actions/coder-commit-request'" in today.body
     assert f"name='run_id' value='{result.coder_worktree_run_id}'" in today.body
     assert "id='today-note'" in today.body
@@ -12824,11 +12825,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_action_dock_current_gate</dt><dd>commit_request" in goal.body
     assert "goal_action_dock_gate_progress</dt><dd>8/15 gates done" in goal.body
     assert "goal_action_dock_next_action</dt><dd>Create commit request" in goal.body
-    assert "goal_action_dock_primary_surface</dt><dd><a href='#goal-action-dock-form'>Current Action Form</a>" in goal.body
+    assert "goal_action_dock_primary_surface</dt><dd><a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert f"goal_action_dock_source_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "goal_action_dock_form_available</dt><dd>true" in goal.body
     assert "goal_action_dock_top_form_available</dt><dd>true" in goal.body
-    assert "goal_action_dock_top_form_surface</dt><dd><a href='#goal-action-dock-form'>Current Action Form</a>" in goal.body
+    assert "goal_action_dock_top_form_surface</dt><dd><a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "goal_action_dock_deep_form_surface</dt><dd><a href='#goal-next-action-form'>Detailed Next Action form</a>" in goal.body
     assert "goal_action_dock_top_form_source</dt><dd>goal_next_action_form" in goal.body
     assert "goal_action_dock_confirmation_required</dt><dd>true" in goal.body
@@ -12841,7 +12842,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_action_dock_external_effects_created</dt><dd>false" in goal.body
     assert "data-goal-action-dock-primary='true' href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "id='goal-action-dock-form' class='goal-action-dock-form' data-goal-action-dock-form='true'" in goal.body
-    assert "Current Action Form" in goal.body
+    assert "<h3>Create commit request</h3>" in goal.body
     assert "The same confirmation screen still appears before any local write or local execution." in goal.body
     assert "action='/actions/coder-commit-request'" in goal.body
     assert goal.body.index("id='goal-action-dock-form'") < goal.body.index(
@@ -12852,7 +12853,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     )
     assert "goal_action_dock_now: Create commit request" in goal.body
     assert "goal_action_dock_click: <a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
-    assert "goal_action_dock_top_form: <a href='#goal-action-dock-form'>Current Action Form</a> reuses existing confirmed action form" in goal.body
+    assert "goal_action_dock_top_form: <a href='#goal-action-dock-form'>Create commit request</a> reuses existing confirmed action form" in goal.body
     assert "goal_action_dock_gate: commit_request" in goal.body
     assert "goal_action_dock_safety: reuses existing confirmed Goal action form" in goal.body
     assert "Goal Progress Meter" in goal.body

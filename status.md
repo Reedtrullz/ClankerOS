@@ -1,5 +1,30 @@
 # Status
 
+## 2026-06-30 Inline Current Action Form Label UX
+
+- Replaced generic inline current-action form labels on Today, Goal, and
+  Operator Focus surfaces with the concrete operator move, such as
+  `Create commit request`. Links still target the same local inline forms and
+  confirmation-gated action routes, but the visible copy now tells the
+  operator exactly what will happen next.
+- Extended the mobile shell collapse rule to include `.today-workbench-grid`,
+  fixing the 390px Today page horizontal overflow caused by the desktop
+  four-column workbench layout.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, `python3 -m agent_os.cli --root "$scratch"
+  app-demo-smoke-test`, and focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_demo_scenario_populates_fixture_state or
+  test_local_app_routes_render_modern_workflow_and_health'` passed locally.
+- Browser QA used a disposable demo app at `127.0.0.1:63811` for
+  `goal_4cdcadca2004`. Desktop verified Today and Goal primary/form headings
+  show `Create commit request`, no generic `Run Current Action`,
+  `Today Current Action`, or `Current Action Form` copy remained on the checked
+  surfaces, no horizontal overflow appeared, and browser logs were clean.
+  Mobile 390x844 verified the same concrete label copy and
+  `scrollWidth=390`, with `.today-workbench-grid` cards stacked in one column.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
 ## 2026-06-30 Compact Shell Navigation UX
 
 - Reworked the shared header navigation into a daily primary row plus a

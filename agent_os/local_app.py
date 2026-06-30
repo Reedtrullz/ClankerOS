@@ -2510,7 +2510,7 @@ def _today_live_state(
         phase = _goal_current_phase(state)
         next_action = action.action
         target_href = "#today-current-action" if form_available else action.href
-        target_label = "Today Current Action" if form_available else action.href
+        target_label = action.action if form_available else action.href
         action_form_available = str(form_available).lower()
         first_run_form_available = "false"
         open_incidents = len([item for item in state["incidents"] if item["status"] == "open"])
@@ -2631,7 +2631,7 @@ def _today_session_summary(
         next_action_state = _goal_next_action(root, state)
         form_is_available = bool(_goal_next_action_form(state, next_action_state))
         target_href = "#today-current-action" if form_is_available else next_action_state.href
-        target_label = "Today Current Action" if form_is_available else next_action_state.href
+        target_label = next_action_state.action if form_is_available else next_action_state.href
         _, _, current_gate = _goal_workflow_gate_summary(
             root,
             state,
@@ -2981,7 +2981,7 @@ def _today_operator_workbench(
         do_action = next_action.action
         do_reason = next_action.reason
         do_href = "#today-current-action" if action_form else next_action.href
-        do_label = "Today Current Action" if action_form else next_action.href
+        do_label = next_action.action if action_form else next_action.href
         progress = _goal_progress_label(state)
         check_action = "Review timeline and evidence"
         check_href = f"/goals/{quote(goal_id)}#goal-timeline"
@@ -3137,7 +3137,7 @@ def _today_decision_queue(
         next_action_state = _goal_next_action(root, state)
         form_available = bool(_goal_next_action_form(state, next_action_state))
         primary_href = "#today-current-action" if form_available else next_action_state.href
-        primary_label = "Today Current Action" if form_available else next_action_state.action
+        primary_label = next_action_state.action
         phase = _goal_current_phase(state)
         label = str(lead_goal["title"] or lead_goal["description"] or goal_id)
         goal_value = SafeHtml(
@@ -3545,7 +3545,7 @@ def _today_workflow_map(
     next_action = _goal_next_action(root, state)
     action_form_available = bool(_goal_next_action_form(state, next_action))
     target_href = "#today-current-action" if action_form_available else next_action.href
-    target_label = "Today Current Action" if action_form_available else next_action.href
+    target_label = next_action.action if action_form_available else next_action.href
     gates, counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
     done = counts.get("done", 0)
     pending = counts.get("pending", 0)
@@ -4285,7 +4285,7 @@ def _today_goal_queue_line(
     bucket = _goal_bucket(row)
     is_lead = goal_id == lead_goal_id
     action_href = "#today-current-action" if is_lead and form_available else next_action.href
-    action_label = "Today Current Action" if is_lead and form_available else next_action.href
+    action_label = next_action.action if is_lead and form_available else next_action.href
     project_id = str(row["project_id"] or "")
     progress = _goal_progress_label(state)
     search_text = " ".join(
@@ -4463,7 +4463,7 @@ def _today_command_center(
         )
         waiting_items = goal_open_incidents + goal_open_recommendations + goal_pending_approvals
         target_href = "#today-current-action" if action_form else primary_href
-        target_label = "Today Current Action" if action_form else primary_href
+        target_label = primary_action if action_form else primary_href
         saved_goal_matches_lead = open_goal == goal_id
         saved_project_matches_lead = open_project == str(goal.project_id)
         saved_artifact_matches_latest = bool(latest_artifact) and last_artifact == latest_artifact
@@ -4558,7 +4558,7 @@ def _today_command_center(
     action_details = (
         "<section id='today-current-action' class='today-current-action today-current-action-form' "
         "data-today-current-action='true' data-today-current-action-form='true'>"
-        "<h3>Run Current Action</h3>"
+        f"<h3>{_e(primary_action)}</h3>"
         "<p class='muted'>Use the current goal's browser-available next action here. Confirmation is required before any local write.</p>"
         f"{action_form}"
         "</section>"
@@ -13568,9 +13568,7 @@ def _goal_action_dock(
     form_available = bool(form)
     primary_href = "#goal-action-dock-form" if form_available else next_action.href
     primary_label = _goal_action_cta_label(next_action, form_available)
-    primary_surface_label = (
-        "Current Action Form" if form_available else next_action.action
-    )
+    primary_surface_label = next_action.action
     primary_surface = SafeHtml(
         f"<a href='{_e(primary_href)}'>{_e(primary_surface_label)}</a>"
     )
@@ -13594,7 +13592,7 @@ def _goal_action_dock(
             [
                 "<section id='goal-action-dock-form' class='goal-action-dock-form' "
                 "data-goal-action-dock-form='true'>",
-                "<h3>Current Action Form</h3>",
+                f"<h3>{_e(next_action.action)}</h3>",
                 "<p class='muted'>Use this top-of-page copy of the current Goal action. "
                 "The same confirmation screen still appears before any local write or local execution.</p>",
                 form,
@@ -13653,7 +13651,9 @@ def _goal_action_dock(
                     ),
                     (
                         "goal_action_dock_top_form_surface",
-                        SafeHtml("<a href='#goal-action-dock-form'>Current Action Form</a>")
+                        SafeHtml(
+                            f"<a href='#goal-action-dock-form'>{_e(next_action.action)}</a>"
+                        )
                         if form_available
                         else "not_available",
                     ),
@@ -13693,7 +13693,7 @@ def _goal_action_dock(
                     f"goal_action_dock_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
                     (
                         "goal_action_dock_top_form: "
-                        "<a href='#goal-action-dock-form'>Current Action Form</a> "
+                        f"<a href='#goal-action-dock-form'>{_e(next_action.action)}</a> "
                         "reuses existing confirmed action form"
                         if form_available
                         else "goal_action_dock_top_form: unavailable"
@@ -41962,7 +41962,7 @@ def _operator_focus_strip(context: dict[str, Any]) -> str:
             _operator_focus_focus_grid(cards),
             (
                 "<details id='operator-focus-current-action' class='operator-focus-action' data-operator-focus-action='true'>"
-                "<summary>Run Current Action</summary>"
+                f"<summary>{_e(next_action.action)}</summary>"
                 "<p class='muted'>Use the current goal's browser-available local next action from this page. Confirmation is required before any local write.</p>"
                 f"{action_form}"
                 "</details>"
@@ -45009,7 +45009,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 640px) {{ .action-form-brief dl {{ grid-template-columns:1fr; gap:4px; }} .action-form-brief dd {{ word-break:normal; overflow-wrap:anywhere; }} }}
     @media (max-width: 860px) {{ .workflow-scope-grid {{ grid-template-columns:1fr; }} }}
