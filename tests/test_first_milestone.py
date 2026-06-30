@@ -14210,6 +14210,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "next_action_focus_gate_progress</dt><dd>8/15 gates done" in goal.body
     assert "next_action_focus_primary_surface</dt><dd><a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert f"next_action_focus_source_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
+    assert f"next_action_focus_source_label</dt><dd>Review run {result.coder_worktree_run_id}" in goal.body
+    assert (
+        f"next_action_focus_source_label_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
+        f"Review run {result.coder_worktree_run_id}</a>"
+    ) in goal.body
     assert "next_action_focus_form_available</dt><dd>true" in goal.body
     assert "next_action_focus_confirmation_required</dt><dd>true" in goal.body
     assert "next_action_focus_write_on_get</dt><dd>false" in goal.body
@@ -14220,6 +14225,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-next-action-form' data-goal-next-action-form='true'" in goal.body
     assert "data-goal-next-action-details='true'" in goal.body
     assert "Action Evidence" in goal.body
+    assert "goal-next-action-focus-label'>Action source</span>" in goal.body
+    assert f"<a href='/runs/{result.coder_worktree_run_id}'>Review run {result.coder_worktree_run_id}</a>" in goal.body
+    assert "goal-next-action-focus-label'>Target</span>" not in goal.body
     assert goal.body.index("id='goal-next-action-form'") < goal.body.index(
         "data-goal-next-action-details='true'"
     )
@@ -14228,6 +14236,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     )
     assert "next_action_focus_now: Create commit request" in goal.body
     assert "next_action_focus_click: <a href='#goal-next-action-form'>Create commit request</a>" in goal.body
+    assert (
+        f"next_action_focus_source_label: <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"Review run {result.coder_worktree_run_id}</a>"
+    ) in goal.body
     assert "next_action_focus_gate: commit_request" in goal.body
     assert "next_action_focus_safety: confirmed local action only" in goal.body
     assert "recommended_action</dt><dd>Create commit request" in goal.body

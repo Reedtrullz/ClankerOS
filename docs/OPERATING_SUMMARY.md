@@ -597,9 +597,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   Action Dock keeps the current action, gate, proof, and resume route visible
   near the top without covering later controls, and renders the current
   confirmed action form before the deeper detailed copy. The Goal Next Action
-  section starts
-  with a human-first focus strip for Now, Gate, Target, and Boundary, then
-  renders the confirmed form before collapsed action evidence. The Goal
+  section starts with a human-first focus strip for Now, Gate, Action source,
+  and Boundary, labels source links in operator language such as
+  `Review run <run_id>`, then renders the confirmed form before collapsed
+  action evidence with the exact raw source route retained. The Goal
   Section Index now opens with visible Operate, Proof, Work, Knowledge, and
   Finish switchboard cards before the collapsed full anchor map, making the
   page navigable through scan-first operator surfaces without dumping every

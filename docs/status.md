@@ -4,6 +4,15 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal Next Action focus strips now label the source card as `Action source`
+  and show a human link such as `Review run <run_id>` instead of a generic
+  `Target` card with a raw route. Collapsed evidence preserves
+  `next_action_focus_source_surface` for the exact route and adds
+  `next_action_focus_source_label` /
+  `next_action_focus_source_label_surface` for the operator-facing label.
+  Local proof includes py-compile, diff-check, focused route/demo pytest
+  (`2 passed, 515 deselected`), and the disposable-root app demo smoke test.
+  Remote GitHub Actions proof for this slice should be read back after push.
 - Today Activity Digest and Goal Session Digest latest-artifact cards now name
   the concrete artifact/event they open instead of generic latest-artifact
   copy, and the Coder Handoff Execute/Ship cards name the concrete selected

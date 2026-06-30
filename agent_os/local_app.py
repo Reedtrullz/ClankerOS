@@ -18586,6 +18586,34 @@ def _goal_next_action_form(state: dict[str, Any], next_action: GoalNextAction) -
     return ""
 
 
+def _goal_next_action_source_label(href: str) -> str:
+    parsed = urlparse(str(href or ""))
+    path = parsed.path or ""
+    if path.startswith("/runs/"):
+        run_id = unquote(path.rsplit("/", 1)[-1] or "")
+        return _compact_label(f"Review run {run_id}", 84) if run_id else "Review run"
+    if path.startswith("/delegations/"):
+        delegation_id = unquote(path.rsplit("/", 1)[-1] or "")
+        return (
+            _compact_label(f"Open delegation {delegation_id}", 84)
+            if delegation_id
+            else "Open delegation"
+        )
+    if path == "/approvals":
+        return "Review approvals"
+    if path == "/incidents":
+        return "Inspect incidents"
+    if path == "/workflow":
+        return "Open workflow"
+    if path == "/goals":
+        return "Open Goals"
+    if parsed.fragment == "goal-action-dock-form":
+        return "Use Goal action form"
+    if parsed.fragment == "goal-next-action":
+        return "Open Goal next action"
+    return _local_surface_action_label(href, fallback="Open action source")
+
+
 def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -> str:
     form = _goal_next_action_form(state, next_action)
     root = state["root"]
@@ -18603,6 +18631,11 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
     source_surface = SafeHtml(
         f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
     )
+    source_label = _goal_next_action_source_label(next_action.href)
+    source_label_surface = SafeHtml(
+        f"<a href='{_e(next_action.href)}'>{_e(source_label)}</a>"
+    )
+    source_role = "Action source" if form_available else "Action target"
     form_html = (
         f"<div id='goal-next-action-form' data-goal-next-action-form='true'>{form}</div>"
         if form
@@ -18624,6 +18657,8 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
                 ),
                 ("next_action_focus_primary_surface", primary_surface),
                 ("next_action_focus_source_surface", source_surface),
+                ("next_action_focus_source_label", source_label),
+                ("next_action_focus_source_label_surface", source_label_surface),
                 ("next_action_focus_form_available", str(form_available).lower()),
                 (
                     "next_action_focus_confirmation_required",
@@ -18645,6 +18680,7 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
                 f"next_action_focus_now: {_e(next_action.action)}",
                 f"next_action_focus_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
                 f"next_action_focus_source: <a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
+                f"next_action_focus_source_label: <a href='{_e(next_action.href)}'>{_e(source_label)}</a>",
                 f"next_action_focus_gate: {_e(current_gate)}",
                 "next_action_focus_safety: confirmed local action only",
             ]
@@ -18667,8 +18703,8 @@ def _goal_next_action_card(state: dict[str, Any], next_action: GoalNextAction) -
         f"<strong>{_e(str(done_gates))}/{_e(str(total_gates))} done</strong>"
         "</div>"
         "<div class='goal-next-action-focus-card'>"
-        "<span class='goal-next-action-focus-label'>Target</span>"
-        f"<p><a href='{_e(next_action.href)}'>{_e(next_action.href)}</a></p>"
+        f"<span class='goal-next-action-focus-label'>{_e(source_role)}</span>"
+        f"<p><a href='{_e(next_action.href)}'>{_e(source_label)}</a></p>"
         "</div>"
         "<div class='goal-next-action-focus-card'>"
         "<span class='goal-next-action-focus-label'>Boundary</span>"

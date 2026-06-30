@@ -1,5 +1,27 @@
 # Status
 
+## 2026-07-01 Next Action Source Label UX
+
+- Made the Goal Next Action focus strip use operator-facing source labels.
+  The third card now says `Action source` and links as `Review run <run_id>`
+  for run-backed actions instead of showing a generic `Target` label with a
+  raw route.
+- Preserved exact audit evidence: `next_action_focus_source_surface` still
+  contains the raw source href, while new `next_action_focus_source_label` and
+  `next_action_focus_source_label_surface` rows expose the human label.
+- Updated focused demo coverage so the ready-to-commit Goal proves the visible
+  `Action source` card, the `Review run <run_id>` link, the absence of the old
+  `Target` focus label, and unchanged raw source evidence.
+- Local verification: `df -h /System/Volumes/Data` showed 74Gi free before the
+  proof loop; `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check -- agent_os/local_app.py
+  tests/test_first_milestone.py docs/OPERATING_SUMMARY.md docs/status.md
+  status.md`, focused pytest (`2 passed, 515 deselected`), and
+  `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` all passed.
+- Non-claim: this change only adjusts read-only labels/evidence on the Goal
+  page; it does not deploy, create a PR, call providers, write on GET, push
+  from the app, or add any external mutation path.
+
 ## 2026-06-30 Session Artifact Card Label UX
 
 - Made the Today Activity Digest and Goal Session Digest latest-artifact cards
