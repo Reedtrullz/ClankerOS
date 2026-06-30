@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-30 Action Result Next Step UX
+
+- Promoted post-confirmation continuation into a top-of-page `Action Result
+  Next Step` panel. Successful local action result pages now read refreshed
+  first-run or saved-Goal state immediately after the action command bar,
+  name the next operator move, and render the next confirmed browser form
+  inline when one exists.
+- Updated the result command bar's primary visible action to point at the new
+  next-step form when available, while preserving the existing next-page
+  notice surface, `Action Resume Receipt`, `Action Result Details`,
+  `Action Continuation`, and `Action Result Workflow Map` evidence below.
+- Kept the existing action authority intact: the result page only duplicates
+  the rendered confirmed form, still routes through `/actions/<action>`
+  confirmation, and does not add provider calls, non-loopback network actions,
+  pushes, PRs, deploys, or external mutations.
+- Updated README, local app docs, operating summary, and latest-status docs so
+  confirmed action result pages are described as a continuation surface rather
+  than only a receipt/details page.
+- Verification: `df -h /System/Volumes/Data` showed 80Gi free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `git diff --check`, focused pytest
+  `tests/test_first_milestone.py -q -k
+  'first_run_browser_actions_persist_resume_workspace or
+  local_app_demo_scenario_populates_fixture_state'`, and
+  `python3 -m agent_os.cli app-smoke-test` passed locally.
+- Browser QA: launched a disposable demo app at `127.0.0.1:62126`, opened the
+  demo Goal, submitted the top current-action form, confirmed
+  `coder-commit-request`, and verified the result page command primary plus
+  `Action Result Next Step` both target `#action-result-next-step-form`.
+  The top next-step form posts to `/actions/approve-coder-commit`, appears
+  before `Action Result Details`, desktop and 390x844 mobile had no horizontal
+  overflow, and console warnings/errors were empty. Non-claim: the full pytest
+  suite is delegated to GitHub Actions for this slice.
+
 ## 2026-06-30 Goal Action Dock Current Form UX
 
 - Made the Goal Action Dock directly usable for form-backed next actions. When

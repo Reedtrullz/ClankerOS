@@ -1276,8 +1276,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   decision, or bounded local execution; confirmed action result pages
   now open with an action-first `Action Complete` surface containing Continue,
   Completed, Artifact, Workflow, and Boundary cards plus collapsed
-  result-command evidence. An `Action Resume Receipt` follows immediately and
-  reads `.clanker/app/workspace.json` back as Resume, Context, Artifact, Last
+  result-command evidence. An `Action Result Next Step` panel follows the
+  command bar and turns the refreshed first-run or saved-Goal state into the
+  next visible operator move, rendering the same confirmed browser form inline
+  when one exists while preserving the confirmation boundary before local
+  writes or local execution. An `Action Resume Receipt` follows and reads
+  `.clanker/app/workspace.json` back as Resume, Context, Artifact, Last
   Action, and Boundary cards, with collapsed evidence for the saved project,
   Goal, exact resume surface, latest artifact, updater, last action/result,
   readiness, and zero-effect counters, before preserving the submitted payload,

@@ -9417,6 +9417,11 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "action_result_command_action</dt><dd>register-project" in register_result.body
     assert "action_result_command_label</dt><dd>First project setup" in register_result.body
     assert "action_result_command_completed: First project setup" in register_result.body
+    assert (
+        "action_result_command_primary_surface</dt><dd>"
+        "<a href='#action-result-next-step-form'>Use next action</a>"
+    ) in register_result.body
+    assert "action_result_command_primary_source</dt><dd>first_run_progress_after_action" in register_result.body
     assert "action_label</dt><dd>First project setup" in register_result.body
     assert "ClankerOS registered the local project and saved the return point" in register_result.body
     assert (
@@ -9424,6 +9429,34 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
         "<a href='/projects/clankeros?notice=project_registered%3A%20clankeros'>"
         "/projects/clankeros</a>"
     ) in register_result.body
+    assert "Action Result Next Step" in register_result.body
+    assert "data-action-result-next-step='true'" in register_result.body
+    assert register_result.body.index("Action Result Next Step") < register_result.body.index(
+        "Action Resume Receipt"
+    )
+    assert "action_result_next_step_status</dt><dd>first_run_ready" in register_result.body
+    assert "action_result_next_step_source</dt><dd>first_run_progress_after_action" in register_result.body
+    assert "action_result_next_step_mode</dt><dd>first_run" in register_result.body
+    assert "action_result_next_step_current_step</dt><dd>create_first_goal" in register_result.body
+    assert "action_result_next_step_next_action</dt><dd>Create first goal" in register_result.body
+    assert (
+        "action_result_next_step_primary_surface</dt><dd>"
+        "<a href='#action-result-next-step-form'>Use next action</a>"
+    ) in register_result.body
+    assert (
+        "action_result_next_step_target_surface</dt><dd>"
+        "<a href='#action-result-next-step-form'>Create First Goal</a>"
+    ) in register_result.body
+    assert "action_result_next_step_action_form_available</dt><dd>true" in register_result.body
+    assert "action_result_next_step_confirmation_required</dt><dd>true" in register_result.body
+    assert "action_result_next_step_write_on_get</dt><dd>false" in register_result.body
+    assert "action_result_next_step_provider_calls_taken</dt><dd>0" in register_result.body
+    assert "action_result_next_step_network_actions_taken</dt><dd>0" in register_result.body
+    assert "action_result_next_step_external_effects_created</dt><dd>false" in register_result.body
+    assert "id='action-result-next-step-form' class='action-result-next-step-form' data-action-result-next-step-form='true'" in register_result.body
+    assert register_result.body.index("id='action-result-next-step-form'") < register_result.body.index(
+        "id='action-result-details'"
+    )
     assert "action_result_command_confirmation_source</dt><dd>confirmed_local_action" in register_result.body
     assert "Action Continuation" in register_result.body
     assert "action_continuation_status</dt><dd>first_run_ready" in register_result.body
@@ -17052,6 +17085,32 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Result Fields" in commit_request.body
     assert "approval.id" in commit_request.body
     assert f"href='/runs/{result.coder_worktree_run_id}?notice=coder_commit_request" in commit_request.body
+    assert "Action Result Next Step" in commit_request.body
+    assert "data-action-result-next-step='true'" in commit_request.body
+    assert commit_request.body.index("Action Result Next Step") < commit_request.body.index(
+        "Action Resume Receipt"
+    )
+    assert "action_result_command_primary_surface</dt><dd><a href='#action-result-next-step-form'>Use next action</a>" in commit_request.body
+    assert "action_result_command_primary_source</dt><dd>saved_workspace_goal_after_action" in commit_request.body
+    assert "data-action-result-command-primary='true' href='#action-result-next-step-form'>Use next action</a>" in commit_request.body
+    assert "action_result_next_step_status</dt><dd>available" in commit_request.body
+    assert "action_result_next_step_source</dt><dd>saved_workspace_goal_after_action" in commit_request.body
+    assert "action_result_next_step_mode</dt><dd>goal" in commit_request.body
+    assert "action_result_next_step_goal</dt><dd>" in commit_request.body
+    assert "action_result_next_step_next_action</dt><dd>Approve commit" in commit_request.body
+    assert "action_result_next_step_primary_surface</dt><dd><a href='#action-result-next-step-form'>Use next action</a>" in commit_request.body
+    assert "action_result_next_step_target_surface</dt><dd><a href='#action-result-next-step-form'>Approve commit</a>" in commit_request.body
+    assert "action_result_next_step_action_form_available</dt><dd>true" in commit_request.body
+    assert "action_result_next_step_confirmation_required</dt><dd>true" in commit_request.body
+    assert "action_result_next_step_write_on_get</dt><dd>false" in commit_request.body
+    assert "action_result_next_step_provider_calls_taken</dt><dd>0" in commit_request.body
+    assert "action_result_next_step_network_actions_taken</dt><dd>0" in commit_request.body
+    assert "action_result_next_step_external_effects_created</dt><dd>false" in commit_request.body
+    assert "id='action-result-next-step-form' class='action-result-next-step-form' data-action-result-next-step-form='true'" in commit_request.body
+    assert commit_request.body.index("id='action-result-next-step-form'") < commit_request.body.index(
+        "id='action-result-details'"
+    )
+    assert "action='/actions/approve-coder-commit'" in commit_request.body
     assert "Action Continuation" in commit_request.body
     assert "action_continuation_status</dt><dd>available" in commit_request.body
     assert "action_continuation_next_action</dt><dd>Approve commit" in commit_request.body

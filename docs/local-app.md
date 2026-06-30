@@ -1281,11 +1281,15 @@ existing `Action Confirmation Command Bar` remains as collapsed evidence
 summarizing the action category, source surface, required input, output
 artifact, whether confirmation will mutate local state or execute a safe local
 command, and the no-provider/no-network/no-push/no-PR/no-deploy boundary.
-Confirmed actions render
-`Action Result Details` with the
-attempted action, submitted payload, result fields, artifact links when paths
-are returned, a next-page link, and the safety boundary. Before those dense
-details, the result page now includes an `Action Resume Receipt` that reads the
+Confirmed actions render a top `Action Result Next Step` panel before the
+dense details, promoting the refreshed next operator move after the local
+action succeeds. When the next move has a confirmed browser form, that form is
+rendered inline while preserving the same confirmation screen before any local
+write or local execution. Confirmed actions still render `Action Result
+Details` with the attempted action, submitted payload, result fields, artifact
+links when paths are returned, a next-page link, and the safety boundary.
+Before those dense details, the result page also includes an `Action Resume
+Receipt` that reads the
 saved workspace back as visible Resume, Context, Artifact, Last Action, and
 Boundary cards, with collapsed evidence for the exact `resume_surface`, saved
 project/Goal, latest artifact, updater, last action/result, readiness, and

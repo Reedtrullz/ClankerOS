@@ -1184,8 +1184,12 @@ submit. Confirmed actions now return an
 action-first `Action Complete` surface before the raw details, with visible
 Continue, Completed, Artifact, Workflow, and Boundary cards plus collapsed
 result-command evidence preserving the target notice surface, result, primary
-artifact, confirmation source, and zero-effect counters. An `Action Resume
-Receipt` follows immediately, reading `.clanker/app/workspace.json` back as
+artifact, confirmation source, and zero-effect counters. An
+`Action Result Next Step` panel follows the command bar and promotes the
+refreshed next operator move before the dense result details. When that next
+move has a confirmed browser form, the panel renders it inline and keeps the
+same confirmation screen in front of any local write or local execution. An
+`Action Resume Receipt` follows, reading `.clanker/app/workspace.json` back as
 visible Resume, Context, Artifact, Last Action, and Boundary cards with
 collapsed evidence for the saved project, Goal, exact `resume_surface`, latest
 artifact, updater, last action/result, readiness, and zero-effect counters. The existing

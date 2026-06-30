@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Confirmed local action result pages now include a top `Action Result Next
+  Step` panel between the action command bar and the resume/details readback.
+  It uses refreshed first-run or saved-Goal state to promote the next operator
+  move, renders the next confirmed browser form inline when available, and
+  keeps writes/local execution behind the existing confirmation screen.
 - Goal Action Dock now renders a top-of-page `Current Action Form` whenever
   the current Goal next action already has a confirmed browser form. The lower
   Next Action section remains as detailed readback/fallback, but operators can

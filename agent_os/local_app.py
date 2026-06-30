@@ -37016,6 +37016,7 @@ def _action_result_page(
     next_href = f"{safe_location}?notice={quote(message)}"
     result_rows = _action_result_rows(root, result)
     action_label = _action_form_copy(action)["title"]
+    next_step = _action_result_next_step_context(root, safe_location, message)
     return "".join(
         [
             _action_result_command_bar(
@@ -37026,7 +37027,9 @@ def _action_result_page(
                 location=safe_location,
                 next_href=next_href,
                 result_rows=result_rows,
+                next_step=next_step,
             ),
+            _action_result_next_step_section(next_step),
             _action_result_resume_receipt_section(
                 root,
                 action=action,
@@ -37054,6 +37057,243 @@ def _action_result_page(
             _action_result_continuation_section(root, safe_location, message),
             _action_result_workflow_map_section(root),
             "<p class='muted'>This page is a local readback only. Follow the next-page link after checking the payload, artifacts, and safety boundary.</p>",
+            "</section>",
+        ]
+    )
+
+
+def _action_result_next_step_context(
+    root: Path,
+    location: str,
+    message: str,
+) -> dict[str, Any]:
+    next_href = f"{location}?notice={quote(message)}"
+    base: dict[str, Any] = {
+        "status": "state_unavailable",
+        "source": "state_unavailable",
+        "mode": "fallback",
+        "title": "Open next surface",
+        "summary": location,
+        "primary_href": next_href,
+        "primary_label": "Open next surface",
+        "next_page": next_href,
+        "next_page_label": location,
+        "project": "none",
+        "goal": "none",
+        "goal_label_source": "none",
+        "phase": "unknown",
+        "current_step": "none",
+        "next_action": "Open next surface",
+        "target_surface": SafeHtml(f"<a href='{_e(next_href)}'>{_e(location)}</a>"),
+        "action_form": "",
+        "action_form_available": "false",
+        "confirmation_required": "false",
+        "form_heading": "Next local action",
+        "lines": [
+            f"action_result_next_step_open: <a href='{_e(next_href)}'>{_e(location)}</a>",
+            "action_result_next_step_safety: read-only continuation after confirmed local action",
+        ],
+    }
+    try:
+        storage = _storage(root)
+        workspace = _load_workspace_state(root)
+    except Exception:
+        return base
+
+    goal_id = str(workspace.get("open_goal") or "").strip()
+    if goal_id:
+        state = _goal_state(root, storage, goal_id)
+        goal = state.get("goal")
+        if goal is None:
+            base.update(
+                {
+                    "status": "missing_goal",
+                    "source": "saved_workspace_goal_after_action",
+                    "mode": "goal",
+                    "goal": goal_id,
+                    "next_action": "Open saved surface",
+                    "lines": [
+                        f"action_result_next_step_missing_goal: {_e(goal_id)}",
+                        f"action_result_next_step_open: <a href='{_e(next_href)}'>{_e(location)}</a>",
+                        "action_result_next_step_safety: read-only continuation after confirmed local action",
+                    ],
+                }
+            )
+            return base
+        phase = _goal_current_phase(state)
+        next_action = _goal_next_action(root, state)
+        action_form = _goal_next_action_form(state, next_action)
+        form_available = bool(action_form)
+        primary_href = "#action-result-next-step-form" if form_available else next_action.href
+        primary_label = "Use next action" if form_available else "Open source surface"
+        goal_label = goal.title or goal.description or goal.id
+        base.update(
+            {
+                "status": "available",
+                "source": "saved_workspace_goal_after_action",
+                "mode": "goal",
+                "title": next_action.action,
+                "summary": f"{phase} · {next_action.action}",
+                "primary_href": primary_href,
+                "primary_label": primary_label,
+                "project": goal.project_id,
+                "goal": goal.id,
+                "goal_label": goal_label,
+                "goal_label_source": "title" if goal.title else ("description" if goal.description else "id"),
+                "phase": phase,
+                "next_action": next_action.action,
+                "target_surface": SafeHtml(
+                    f"<a href='{_e(primary_href)}'>{_e(next_action.action if form_available else next_action.href)}</a>"
+                ),
+                "source_surface": SafeHtml(
+                    f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>"
+                ),
+                "action_form": action_form,
+                "action_form_available": str(form_available).lower(),
+                "confirmation_required": str(form_available).lower(),
+                "form_heading": next_action.action,
+                "lines": [
+                    f"action_result_next_step_now: {_e(next_action.action)}",
+                    f"action_result_next_step_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    f"action_result_next_step_goal: <a href='/goals/{quote(goal.id)}'>{_e(goal_label)}</a>",
+                    "action_result_next_step_safety: confirmed local action only; no write on GET",
+                ],
+            }
+        )
+        return base
+
+    progress = _first_run_progress(root, storage)
+    first_run_href, first_run_label = _first_run_same_page_target(progress)
+    home_href = f"/{first_run_href}" if first_run_href.startswith("#") else first_run_href
+    today_href = f"/today{first_run_href}" if first_run_href.startswith("#") else "/today"
+    current_step = str(progress["current_step"])
+    action_form = ""
+    form_heading = first_run_label
+    if current_step == "create_project":
+        action_form = _input_form(
+            "register-project",
+            {},
+            {
+                "name": str(progress["default_project"]),
+                "path": str(root),
+                "test_command": "python3 -m pytest -q",
+                "allowed_write_roots": str(root),
+            },
+        )
+    elif current_step == "create_first_goal":
+        action_form = _input_form(
+            "create-goal",
+            {},
+            {
+                "project_id": str(progress["default_project"]),
+                "prompt": "Make ClankerOS easier to operate from the browser.",
+                "created_by_profile": "planner",
+            },
+        )
+    form_available = bool(action_form)
+    primary_href = "#action-result-next-step-form" if form_available else home_href
+    primary_label = "Use next action" if form_available else "Open first-run guide"
+    base.update(
+        {
+            "status": "first_run_ready",
+            "source": "first_run_progress_after_action",
+            "mode": "first_run",
+            "title": str(progress["next_action"]),
+            "summary": f"{current_step} · {progress['next_action']}",
+            "primary_href": primary_href,
+            "primary_label": primary_label,
+            "project": str(progress["default_project"]),
+            "goal": str(progress.get("goal_id") or "none"),
+            "current_step": current_step,
+            "next_action": str(progress["next_action"]),
+            "target_surface": SafeHtml(f"<a href='{_e(primary_href)}'>{_e(first_run_label)}</a>"),
+            "home_surface": SafeHtml(f"<a href='{_e(home_href)}'>{_e(first_run_label)}</a>"),
+            "today_surface": SafeHtml(f"<a href='{_e(today_href)}'>/today</a>"),
+            "action_form": action_form,
+            "action_form_available": str(form_available).lower(),
+            "confirmation_required": str(form_available).lower(),
+            "form_heading": form_heading,
+            "lines": [
+                f"action_result_next_step_now: {_e(str(progress['next_action']))}",
+                f"action_result_next_step_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                f"action_result_next_step_home: <a href='{_e(home_href)}'>{_e(first_run_label)}</a>",
+                "action_result_next_step_safety: confirmed local first-run action only; no write on GET",
+            ],
+        }
+    )
+    return base
+
+
+def _action_result_next_step_section(next_step: dict[str, Any]) -> str:
+    primary_href = str(next_step["primary_href"])
+    primary_label = str(next_step["primary_label"])
+    summary = str(next_step["summary"])
+    action_form = str(next_step.get("action_form") or "")
+    form_html = ""
+    if action_form:
+        form_html = "".join(
+            [
+                "<section id='action-result-next-step-form' class='action-result-next-step-form' "
+                "data-action-result-next-step-form='true'>",
+                f"<h3>{_e(str(next_step['form_heading']))}</h3>",
+                "<p class='muted'>Continue directly from this result page. The same confirmation screen still appears before any local write or local execution.</p>",
+                action_form,
+                "</section>",
+            ]
+        )
+    goal_value = str(next_step.get("goal") or "none")
+    goal_card = (
+        f"<p>{_e(goal_value)}</p>"
+        if goal_value == "none"
+        else f"<p><a href='/goals/{quote(goal_value)}'>{_e(str(next_step.get('goal_label') or goal_value))}</a></p>"
+    )
+    return "".join(
+        [
+            "<section id='action-result-next-step' class='panel action-result-next-step' data-action-result-next-step='true'><h2>Action Result Next Step</h2>",
+            "<p class='muted'>The next operator move after this confirmed local action.</p>",
+            "<div class='action-result-next-grid' data-action-result-next-step-cards='true'>",
+            "<article class='action-result-next-card action-result-next-primary'><h3>Now</h3>",
+            f"<p>{_e(summary)}</p>",
+            f"<a class='action-result-next-action' data-action-result-next-step-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a></article>",
+            "<article class='action-result-next-card'><h3>Goal</h3>",
+            goal_card,
+            "<a class='action-result-next-link' href='#action-result-next-step-evidence'>Context</a></article>",
+            "<article class='action-result-next-card'><h3>Result</h3>",
+            f"<p>{_e(str(next_step['next_page_label']))}</p>",
+            f"<a class='action-result-next-link' href='{_e(str(next_step['next_page']))}'>Open result surface</a></article>",
+            "<article class='action-result-next-card'><h3>Boundary</h3>",
+            "<p>No provider call, network action, push, PR, deploy, or external mutation.</p>",
+            "<a class='action-result-next-link' href='#action-result-next-step-evidence'>Safety evidence</a></article>",
+            "</div>",
+            form_html,
+            "<details id='action-result-next-step-evidence' class='action-result-next-evidence' data-action-result-next-step-evidence='true'><summary>Next step evidence</summary>",
+            _kv(
+                [
+                    ("action_result_next_step_status", str(next_step["status"])),
+                    ("action_result_next_step_source", str(next_step["source"])),
+                    ("action_result_next_step_mode", str(next_step["mode"])),
+                    ("action_result_next_step_project", str(next_step["project"])),
+                    ("action_result_next_step_goal", goal_value),
+                    ("action_result_next_step_goal_label_source", str(next_step.get("goal_label_source") or "none")),
+                    ("action_result_next_step_phase", str(next_step["phase"])),
+                    ("action_result_next_step_current_step", str(next_step["current_step"])),
+                    ("action_result_next_step_next_action", str(next_step["next_action"])),
+                    ("action_result_next_step_primary_surface", SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")),
+                    ("action_result_next_step_target_surface", next_step["target_surface"]),
+                    ("action_result_next_step_next_page", SafeHtml(f"<a href='{_e(str(next_step['next_page']))}'>{_e(str(next_step['next_page_label']))}</a>")),
+                    ("action_result_next_step_action_form_available", str(next_step["action_form_available"])),
+                    ("action_result_next_step_confirmation_required", str(next_step["confirmation_required"])),
+                    ("action_result_next_step_write_on_get", "false"),
+                    ("action_result_next_step_provider_calls_taken", "0"),
+                    ("action_result_next_step_network_actions_taken", "0"),
+                    ("action_result_next_step_external_effects_created", "false"),
+                    ("action_result_next_step_push_created", "false"),
+                    ("action_result_next_step_pr_created", "false"),
+                    ("action_result_next_step_deploy_created", "false"),
+                ]
+            ),
+            _ul([str(line) for line in next_step["lines"]]),
+            "</details>",
             "</section>",
         ]
     )
@@ -37300,12 +37540,16 @@ def _action_result_command_bar(
     location: str,
     next_href: str,
     result_rows: list[tuple[str, str | SafeHtml]],
+    next_step: dict[str, Any],
 ) -> str:
     context = _action_confirmation_context(action, form)
     artifact_surface = _action_result_primary_artifact_surface(root, result_rows)
     action_label = _action_form_copy(action)["title"]
     result_title = _action_result_title(action)
     result_body = _action_result_body(action)
+    primary_href = str(next_step.get("primary_href") or next_href)
+    primary_label = str(next_step.get("primary_label") or "Open next surface")
+    primary_summary = str(next_step.get("summary") or location)
     return "".join(
         [
             (
@@ -37315,9 +37559,9 @@ def _action_result_command_bar(
             ),
             f"<p class='muted'>{_e(result_body)}</p>",
             "<div class='action-result-command-grid' data-action-result-command-actions='true'>",
-            "<article class='action-result-command-card action-result-command-primary'><h3>Continue</h3>",
-            f"<p>{_e(location)}</p>",
-            f"<a class='action-result-command-action' data-action-result-command-primary='true' href='{_e(next_href)}'>Open next surface</a></article>",
+            "<article class='action-result-command-card action-result-command-primary'><h3>Next Step</h3>",
+            f"<p>{_e(primary_summary)}</p>",
+            f"<a class='action-result-command-action' data-action-result-command-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a></article>",
             "<article class='action-result-command-card'><h3>Completed</h3>",
             f"<p>{_e(action_label)}</p>",
             "<a class='action-result-command-link' href='#action-result-details'>Result details</a></article>",
@@ -37339,6 +37583,8 @@ def _action_result_command_bar(
                     ("action_result_command_label", action_label),
                     ("action_result_command_result", message),
                     ("action_result_command_next_surface", SafeHtml(f"<a href='{_e(next_href)}'>{_e(location)}</a>")),
+                    ("action_result_command_primary_surface", SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")),
+                    ("action_result_command_primary_source", str(next_step.get("source") or "unknown")),
                     ("action_result_command_artifact_surface", artifact_surface),
                     ("action_result_command_expected_output", context["output"]),
                     ("action_result_command_submitted_fields", context["submitted_fields"]),
@@ -37357,6 +37603,7 @@ def _action_result_command_bar(
                 [
                     f"action_result_command_completed: {_e(action_label)}",
                     f"action_result_command_continue: <a href='{_e(next_href)}'>{_e(location)}</a>",
+                    f"action_result_command_primary: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
                     f"action_result_command_result: {_e(message)}",
                     f"action_result_command_artifact: {artifact_surface}",
                     "action_result_command_safety: confirmed local action only",
@@ -41958,7 +42205,7 @@ def _html_page(
     .action-error-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .action-error-evidence summary {{ cursor:pointer; font-weight:700; }}
     .action-error-evidence:not([open]) > :not(summary) {{ display:none; }}
-    #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:128px; }}
+    #action-result-command-bar, #action-result-next-step, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map {{ scroll-margin-top:128px; }}
     .action-result-command-bar {{ border-left:4px solid var(--ok); margin-bottom:16px; }}
     .action-result-command-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
     .action-result-command-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
@@ -41971,6 +42218,21 @@ def _html_page(
     .action-result-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .action-result-command-evidence summary {{ cursor:pointer; font-weight:700; }}
     .action-result-command-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .action-result-next-step {{ border-left:4px solid var(--accent); margin-bottom:16px; }}
+    .action-result-next-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(3, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .action-result-next-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .action-result-next-card h3 {{ margin-top:0; }}
+    .action-result-next-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .action-result-next-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .action-result-next-action, .action-result-next-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .action-result-next-action {{ background:var(--accent); color:#fff; }}
+    .action-result-next-link {{ background:var(--surface); color:var(--accent); }}
+    .action-result-next-step-form {{ border:1px solid var(--line); background:var(--panel); padding:12px; margin:10px 0 12px; }}
+    .action-result-next-step-form h3 {{ margin:0 0 6px; font-size:16px; }}
+    .action-result-next-step-form form {{ margin:10px 0 0; }}
+    .action-result-next-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .action-result-next-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .action-result-next-evidence:not([open]) > :not(summary) {{ display:none; }}
     .action-resume-receipt {{ border-left:4px solid var(--accent); margin-bottom:16px; }}
     .action-resume-receipt-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
     .action-resume-receipt-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
@@ -43587,7 +43849,7 @@ def _html_page(
     input {{ border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 9px; border-radius:6px; width:100%; }}
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-evidence-map, #delegation-run-continuation, #action-notice, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-grid, .today-activity-grid, .today-workbench-grid, .search-workbench-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .workflow-scope-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #goal-attention-digest {{ scroll-margin-top:260px; }} .goal-attention-grid {{ grid-template-columns:1fr; }} }}
