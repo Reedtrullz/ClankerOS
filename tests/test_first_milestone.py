@@ -11883,10 +11883,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"today_command_project</dt><dd><a href='/projects/{result.project_id}'" in today.body
     assert "today_command_phase</dt><dd>Ready to commit" in today.body
     assert "today_command_primary_action</dt><dd>Create commit request" in today.body
-    assert (
-        f"today_command_primary_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'"
-        in today.body
-    )
+    assert "today_command_primary_surface</dt><dd><a href='#today-current-action'>Create commit request</a>" in today.body
+    assert f"today_command_primary_source_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in today.body
     assert "today_command_target_surface</dt><dd><a href='#today-current-action'>Create commit request</a>" in today.body
     assert "today_command_reason</dt><dd>reviewed_run=" in today.body
     assert "today_command_progress</dt><dd>0/1 tasks completed" in today.body

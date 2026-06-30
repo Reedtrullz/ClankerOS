@@ -4644,7 +4644,8 @@ def _today_command_center(
         )
 
     target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
-    primary_surface = SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")
+    primary_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    source_surface = SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")
     attention_surface = SafeHtml(f"<a href='{_e(attention_href)}'>{_e(attention_href)}</a>")
     saved_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
     resume_card_href = saved_resume_surface or "/resume"
@@ -4691,6 +4692,7 @@ def _today_command_center(
         ("today_command_phase", phase),
         ("today_command_primary_action", primary_action),
         ("today_command_primary_surface", primary_surface),
+        ("today_command_primary_source_surface", source_surface),
         ("today_command_target_surface", target_surface),
         ("today_command_reason", primary_reason),
         ("today_command_progress", progress),
