@@ -22805,3 +22805,22 @@
   or real cost tracking integration. ClankerOS records
   `provider_calls_taken_by_clankeros=0` and `external_mutations_taken=0`; adapter
   network/provider behavior is unknown unless adapter evidence proves otherwise.
+
+## 2026-07-01 Home Focus Queue Card UX
+
+- Upgraded Home Focus Queue from diagnostic text into a first-class browser
+  queue with cards for active/paused goals, a primary continue action, project
+  links, phase/progress readbacks, and waiting/approval/incident/recommendation
+  counts.
+- Preserved first-run behavior with a visible Create Project card when no
+  active or paused goals exist.
+- Added explicit read-only evidence for queue availability, primary action,
+  waiting totals, no writes on GET, zero app network actions, and no external
+  effects.
+- Verification evidence:
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state"`:
+    2 passed, 515 deselected.
+  - `git diff --check`: passed.
+- Non-claims: no external systems, provider calls, GitHub mutations, CI
+  recording, deploys, automatic scheduling, or trust promotion were performed
+  by this browser-rendering change.

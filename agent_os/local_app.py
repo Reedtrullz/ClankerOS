@@ -5810,40 +5810,101 @@ def _home_focus_queue(
     paused: list[sqlite3.Row],
 ) -> str:
     rows = active + paused
-    lines = [_home_focus_queue_line(root, storage, row) for row in rows[:8]]
-    if not lines:
+    entries = [
+        _home_focus_queue_entry(root, storage, row, index=index)
+        for index, row in enumerate(rows[:8])
+    ]
+    lines = [str(entry["line"]) for entry in entries]
+    cards = "".join(str(entry["card"]) for entry in entries)
+    total_waiting = sum(int(entry["waiting_items"]) for entry in entries)
+    total_pending_approvals = sum(
+        int(entry["pending_approvals"]) for entry in entries
+    )
+    total_open_incidents = sum(int(entry["open_incidents"]) for entry in entries)
+    total_open_recommendations = sum(
+        int(entry["open_recommendations"]) for entry in entries
+    )
+    kv_rows: list[tuple[str, str | SafeHtml]] = [
+        ("focus_queue_source", "goal_state_next_actions"),
+        ("focus_queue_items", str(len(active) + len(paused))),
+        ("focus_queue_active_goals", str(len(active))),
+        ("focus_queue_paused_goals", str(len(paused))),
+        ("focus_queue_cards_available", str(bool(entries)).lower()),
+        ("focus_queue_card_count", str(len(entries))),
+        ("focus_queue_waiting_items", str(total_waiting)),
+        ("focus_queue_pending_approvals", str(total_pending_approvals)),
+        ("focus_queue_open_incidents", str(total_open_incidents)),
+        ("focus_queue_open_recommendations", str(total_open_recommendations)),
+        ("focus_queue_write_on_get", "false"),
+        ("focus_queue_network_actions_taken", "0"),
+        ("focus_queue_external_effects_created", "false"),
+    ]
+    if entries:
+        primary = entries[0]
+        kv_rows.extend(
+            [
+                ("focus_queue_primary_goal", primary["goal_surface"]),
+                ("focus_queue_primary_phase", str(primary["phase"])),
+                ("focus_queue_primary_action", str(primary["next_action"])),
+                ("focus_queue_primary_surface", primary["next_surface"]),
+            ]
+        )
+    else:
         first_run = _first_run_progress(root, storage)
         first_run_href, first_run_label = _first_run_same_page_target(first_run)
+        first_run_surface = SafeHtml(
+            f"<a href='{_e(first_run_href)}'>{_e(first_run_label)}</a>"
+        )
+        cards = "".join(
+            [
+                "<article class='home-focus-card home-focus-empty' data-home-focus-empty='true'>",
+                "<span class='home-focus-kicker'>First Run</span>",
+                "<h3>Create your first operating context</h3>",
+                f"<p>{_e(str(first_run['next_action']))}</p>",
+                f"<a class='home-focus-primary-action' data-home-focus-first-run='true' href='{_e(first_run_href)}'>{_e(first_run_label)}</a>",
+                "</article>",
+            ]
+        )
+        kv_rows.extend(
+            [
+                ("focus_queue_primary_action", str(first_run["next_action"])),
+                ("focus_queue_primary_surface", first_run_surface),
+            ]
+        )
         lines = [
             "focus_queue_status: first_run_ready",
             f"focus_queue_next_surface: <a href='{_e(first_run_href)}'>{_e(first_run_label)}</a>",
             f"focus_queue_next_action: {_e(str(first_run['next_action']))}",
             f"focus_queue_first_run_form_available: {str(first_run_href.startswith('#first-run-')).lower()}",
         ]
+    lines.append("focus_queue_safety: read-only local queue; confirmed actions stay on target surfaces")
     return "".join(
         [
-            "<section><h2>Home Focus Queue</h2>",
-            _kv(
-                [
-                    ("focus_queue_source", "goal_state_next_actions"),
-                    ("focus_queue_items", str(len(active) + len(paused))),
-                    ("focus_queue_active_goals", str(len(active))),
-                    ("focus_queue_paused_goals", str(len(paused))),
-                    ("focus_queue_write_on_get", "false"),
-                    ("focus_queue_external_effects_created", "false"),
-                ]
-            ),
+            "<section class='panel home-focus-queue' data-home-focus-queue='true'><h2>Home Focus Queue</h2>",
+            "<p class='muted'>A short, clickable queue for continuing active and paused goals from the daily Home surface.</p>",
+            "<div class='home-focus-grid' data-home-focus-queue-cards='true'>",
+            cards,
+            "</div>",
+            _kv(kv_rows),
             _ul(lines),
             "</section>",
         ]
     )
 
 
-def _home_focus_queue_line(root: Path, storage: Storage, row: sqlite3.Row) -> str:
+def _home_focus_queue_entry(
+    root: Path,
+    storage: Storage,
+    row: sqlite3.Row,
+    *,
+    index: int,
+) -> dict[str, str | int | SafeHtml]:
     goal_id = str(row["id"])
     state = _goal_state(root, storage, goal_id)
     phase = _goal_current_phase(state)
     next_action = _goal_next_action(root, state)
+    form_available = bool(_goal_next_action_form(state, next_action))
+    next_href = _goal_board_action_href(goal_id, next_action.href, form_available)
     open_incidents = len([item for item in state["incidents"] if item["status"] == "open"])
     open_recommendations = len(
         [item for item in state["recommendations"] if item["status"] == "open"]
@@ -5855,13 +5916,54 @@ def _home_focus_queue_line(root: Path, storage: Storage, row: sqlite3.Row) -> st
     )
     waiting_items = open_incidents + open_recommendations + pending_approvals
     label = str(row["title"] or row["description"] or goal_id)
-    return (
+    project_id = str(row["project_id"])
+    bucket = _goal_bucket(row)
+    progress = _goal_progress_label(state)
+    goal_surface = SafeHtml(
+        f"<a href='/goals/{quote(goal_id)}'>{_e(_compact_label(label, 72))}</a>"
+    )
+    next_surface = SafeHtml(
+        f"<a href='{_e(next_href)}'>{_e(next_action.action)}</a>"
+    )
+    card_classes = "home-focus-card home-focus-primary" if index == 0 else "home-focus-card"
+    card = "".join(
+        [
+            f"<article class='{card_classes}' data-home-focus-card='true' data-home-focus-primary='{str(index == 0).lower()}' data-home-focus-bucket='{_e(bucket)}'>",
+            f"<span class='home-focus-kicker'>{_e(bucket.title())} Goal</span>",
+            f"<h3><a data-home-focus-open='true' href='/goals/{quote(goal_id)}'>{_e(_compact_label(label, 88))}</a></h3>",
+            f"<p>{_e(phase)} / {_e(progress)}</p>",
+            "<dl class='home-focus-metrics'>",
+            f"<dt>Waiting</dt><dd>{waiting_items}</dd>",
+            f"<dt>Approvals</dt><dd>{pending_approvals}</dd>",
+            f"<dt>Incidents</dt><dd>{open_incidents}</dd>",
+            f"<dt>Recommendations</dt><dd>{open_recommendations}</dd>",
+            "</dl>",
+            "<div class='home-focus-actions'>",
+            f"<a class='home-focus-primary-action' data-home-focus-next='true' href='{_e(next_href)}'>{_e(next_action.action)}</a>",
+            f"<a class='home-focus-link' data-home-focus-project='true' href='/projects/{quote(project_id)}'>Project</a>",
+            "</div>",
+            "</article>",
+        ]
+    )
+    line = (
         f"focus_queue_item: <a href='/goals/{quote(goal_id)}'>{_e(_compact_label(label, 56))}</a> "
         f"phase={_e(phase)} next_action={_e(next_action.action)} "
-        f"surface=<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a> "
-        f"progress={_e(_goal_progress_label(state))} waiting={waiting_items} "
+        f"surface=<a href='{_e(next_href)}'>{_e(next_action.action)}</a> "
+        f"progress={_e(progress)} waiting={waiting_items} "
         f"approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations}"
     )
+    return {
+        "card": SafeHtml(card),
+        "line": SafeHtml(line),
+        "goal_surface": goal_surface,
+        "phase": phase,
+        "next_action": next_action.action,
+        "next_surface": next_surface,
+        "waiting_items": waiting_items,
+        "pending_approvals": pending_approvals,
+        "open_incidents": open_incidents,
+        "open_recommendations": open_recommendations,
+    }
 
 
 def _home_verification_handoff(root: Path) -> str:
@@ -46144,6 +46246,20 @@ def _html_page(
     .home-attention-link {{ background:var(--surface); color:var(--accent); }}
     .home-attention-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .home-attention-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .home-focus-queue {{ border-left:4px solid var(--accent); }}
+    .home-focus-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(auto-fit, minmax(190px, 1fr)); gap:10px; margin:12px 0; }}
+    .home-focus-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .home-focus-card h3 {{ margin:4px 0 8px; font-size:16px; line-height:1.3; }}
+    .home-focus-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .home-focus-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .home-focus-kicker {{ display:inline-block; color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .home-focus-metrics {{ grid-template-columns:minmax(105px, 0.6fr) 1fr; margin:10px 0; }}
+    .home-focus-actions {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }}
+    .home-focus-primary-action, .home-focus-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .home-focus-primary-action {{ background:var(--accent); color:#fff; }}
+    .home-focus-link {{ background:var(--surface); color:var(--accent); }}
+    .home-focus-queue ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .home-focus-queue li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .project-index-workbench {{ border-left:4px solid var(--accent); }}
     .project-index-workbench dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .project-index-workbench ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
@@ -46965,6 +47081,7 @@ def _html_page(
     @media (max-width: 860px) {{ #goal-activity-pulse {{ scroll-margin-top:260px; }} .goal-activity-pulse-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-activity-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .home-attention-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ .home-focus-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .skills-usage-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ .approval-decision-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 640px) {{ .approval-filter-button, .approval-filter-reset, .approval-filter-search, .approval-filter-search input {{ width:100%; }} .approval-filter-controls {{ align-items:stretch; }} .approval-filter-memory-status {{ width:100%; }} }}

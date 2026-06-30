@@ -4715,8 +4715,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "home_attention_external_effects_created</dt><dd>false" in root.body
     assert "home_attention_safety: read-only local triage; confirmed actions remain on target surfaces" in root.body
     assert "Home Focus Queue" in root.body
+    assert "data-home-focus-queue='true'" in root.body
+    assert "data-home-focus-queue-cards='true'" in root.body
+    assert "data-home-focus-empty='true'" in root.body
+    assert "data-home-focus-first-run='true' href='#first-run-create-project'>Create Project</a>" in root.body
     assert "focus_queue_source</dt><dd>goal_state_next_actions" in root.body
     assert "focus_queue_items</dt><dd>0" in root.body
+    assert "focus_queue_cards_available</dt><dd>false" in root.body
+    assert "focus_queue_primary_action</dt><dd>Register ClankerOS project" in root.body
+    assert "focus_queue_primary_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in root.body
     assert "focus_queue_status: first_run_ready" in root.body
     assert "focus_queue_next_surface: <a href='#first-run-create-project'>Create Project</a>" in root.body
     assert "focus_queue_next_action: Register ClankerOS project" in root.body
@@ -11535,6 +11542,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "function updateHomeGoalBoardFilter(options)" in dashboard.body
     assert "window.localStorage.setItem(homeGoalBoardFilterStorageKey(board)" in dashboard.body
     assert "window.localStorage.removeItem(homeGoalBoardFilterStorageKey(board))" in dashboard.body
+    assert "Home Focus Queue" in dashboard.body
+    assert "data-home-focus-queue='true'" in dashboard.body
+    assert "data-home-focus-queue-cards='true'" in dashboard.body
+    assert "data-home-focus-card='true' data-home-focus-primary='true'" in dashboard.body
+    assert "data-home-focus-open='true'" in dashboard.body
+    assert "data-home-focus-next='true'" in dashboard.body
+    assert "home-focus-primary-action" in dashboard.body
+    assert "focus_queue_cards_available</dt><dd>true" in dashboard.body
+    assert "focus_queue_card_count</dt><dd>1" in dashboard.body
+    assert "focus_queue_primary_goal</dt><dd><a href='/goals/" in dashboard.body
+    assert "focus_queue_primary_phase</dt><dd>Ready to commit" in dashboard.body
+    assert "focus_queue_primary_action</dt><dd>Create commit request" in dashboard.body
+    assert f"focus_queue_primary_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>Create commit request</a>" in dashboard.body
+    assert "focus_queue_waiting_items</dt><dd>1" in dashboard.body
+    assert "focus_queue_pending_approvals</dt><dd>1" in dashboard.body
+    assert "focus_queue_open_incidents</dt><dd>0" in dashboard.body
+    assert "focus_queue_open_recommendations</dt><dd>0" in dashboard.body
+    assert "focus_queue_network_actions_taken</dt><dd>0" in dashboard.body
+    assert "focus_queue_safety: read-only local queue; confirmed actions stay on target surfaces" in dashboard.body
     assert "Home Operator Board" in dashboard.body
     assert "data-home-operator-board='true'" in dashboard.body
     assert "data-home-operator-board-actions='true'" in dashboard.body
