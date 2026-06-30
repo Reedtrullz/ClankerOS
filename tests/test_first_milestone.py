@@ -14500,6 +14500,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_delegation_command_provider_calls_taken</dt><dd>0" in goal.body
     assert "goal_delegation_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_delegation_command_external_effects_created</dt><dd>false" in goal.body
+    assert "data-goal-delegation-primary='true' href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "goal_delegation_now: Create commit request" in goal.body
     assert "goal_delegation_click: <a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert f"goal_delegation_latest: {result.delegation_id} status=completed context=available handoff=available" in goal.body
@@ -14548,6 +14549,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_run_command_provider_calls_taken</dt><dd>0" in goal.body
     assert "goal_run_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_run_command_external_effects_created</dt><dd>false" in goal.body
+    assert "data-goal-run-primary='true' href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "goal_run_now: Create commit request" in goal.body
     assert "goal_run_click: <a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert f"goal_run_latest: {result.coder_worktree_run_id} status=completed review=reviewed" in goal.body
@@ -14588,6 +14590,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_approval_command_provider_calls_taken</dt><dd>0" in goal.body
     assert "goal_approval_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_approval_command_external_effects_created</dt><dd>false" in goal.body
+    assert "data-goal-approval-primary='true' href='/approvals'>Approve worktree</a>" in goal.body
     assert "goal_approval_now: Approve worktree" in goal.body
     assert "goal_approval_click: <a href='/approvals'>/approvals</a>" in goal.body
     assert "goal_approval_safety: read-only local approval posture" in goal.body
@@ -14611,6 +14614,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_incident_command_target_surface</dt><dd><a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "goal_incident_command_action_form_available</dt><dd>true" in goal.body
     assert "goal_incident_command_reason</dt><dd>no_goal_incidents; current_action=reviewed_run=" in goal.body
+    assert "data-goal-incident-primary='true' href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "Goal created" in goal.body
     assert "Scout delegated" in goal.body
     assert "Context pack built" in goal.body
@@ -14656,6 +14660,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_evidence_command_provider_calls_taken</dt><dd>0" in goal.body
     assert "goal_evidence_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_evidence_command_external_effects_created</dt><dd>false" in goal.body
+    assert "data-goal-evidence-primary='true' href='/artifacts?path=" in goal.body
+    assert "Open latest Goal artifact</a>" in goal.body
     assert "goal_evidence_safety: read-only local evidence inventory" in goal.body
     assert "Goal Evidence Digest" in goal.body
     assert "data-goal-evidence-digest='true'" in goal.body
@@ -14744,6 +14750,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_artifact_command_provider_calls_taken</dt><dd>0" in goal.body
     assert "goal_artifact_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_artifact_command_external_effects_created</dt><dd>false" in goal.body
+    assert "data-goal-artifact-primary='true' href='/artifacts?path=runs/" in goal.body
+    assert "Open latest artifact</a>" in goal.body
     assert "goal_artifact_now: Open latest artifact" in goal.body
     assert f"goal_artifact_latest: coder run {result.coder_worktree_run_id} review kind=markdown source=coder_run status=available" in goal.body
     assert "goal_artifact_safety: read-only bounded artifact inventory" in goal.body
@@ -14931,6 +14939,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_memory_command_next_action</dt><dd>Capture operator note" in goal.body
     assert "goal_memory_command_target_surface</dt><dd><a href='#goal-operator-notes'>Goal Operator Notes</a>" in goal.body
     assert "goal_memory_command_reason</dt><dd>goal_memory_empty_and_operator_note_not_started" in goal.body
+    assert "data-goal-memory-primary='true' href='#goal-operator-notes'>Capture operator note</a>" in goal.body
     assert "goal_memory_command_pin_memory_available</dt><dd>false" in goal.body
     assert "goal_memory_command_pin_surface</dt><dd><a href='/memory'>/memory</a>" in goal.body
     assert "goal_memory_command_source</dt><dd>goal_memory_records_and_operator_notes" in goal.body
@@ -14988,6 +14997,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_skills_command_next_action</dt><dd>Review generated goal skill" in goal.body
     assert "goal_skills_command_target_surface</dt><dd><a href='/skills#skills-generated'>/skills#skills-generated</a>" in goal.body
     assert "goal_skills_command_reason</dt><dd>generated_goal_skill_record_available" in goal.body
+    assert "data-goal-skills-primary='true' href='/skills#skills-generated'>Review generated goal skill</a>" in goal.body
     assert "goal_skills_command_source</dt><dd>goal_task_skill_tags_and_skill_records" in goal.body
     assert "goal_skills_command_execution_available</dt><dd>false" in goal.body
     assert "goal_skills_command_install_available</dt><dd>false" in goal.body
