@@ -9083,6 +9083,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "approval_workbench_primary_surface</dt><dd><a href='/goals'>/goals</a>" in approvals.body
     assert "approval_workbench_action_form_available</dt><dd>false" in approvals.body
     assert "approval_workbench_confirmation_required</dt><dd>false" in approvals.body
+    assert "data-approval-workbench-action-form='true'" not in approvals.body
     assert "approval_workbench_finish_form_available</dt><dd>true" in approvals.body
     assert "approval_workbench_write_on_get</dt><dd>false" in approvals.body
     assert "approval_workbench_approves_on_get</dt><dd>false" in approvals.body
@@ -16508,7 +16509,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-approval-operator-workbench='true'" in approvals.body
     assert "data-approval-workbench-actions='true'" in approvals.body
     assert "data-approval-workbench-primary='true'" in approvals.body
+    assert "data-approval-workbench-action-form='true'" in approvals.body
+    assert "data-approval-workbench-action-kind='worktree'" in approvals.body
+    assert "data-approval-workbench-action-name='approve-coder-worktree'" in approvals.body
     assert "data-approval-workbench-evidence='true'" in approvals.body
+    assert approvals.body.index("id='approval-workbench-action-form'") < approvals.body.index(
+        "data-approval-workbench-evidence='true'"
+    )
+    assert approvals.body.index("id='approval-workbench-action-form'") < approvals.body.index(
+        "id='pending-worktree-approvals'"
+    )
+    assert "action='/actions/approve-coder-worktree'" in approvals.body
+    assert f"name='approval_id' value='{result.approval_id}'" in approvals.body
     assert "data-approval-finish-details='true'" in approvals.body
     assert "approval_workbench_status</dt><dd>decision_form_ready" in approvals.body
     assert "approval_workbench_total_pending</dt><dd>1" in approvals.body
@@ -16535,7 +16547,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"approval_workbench_first_source_run</dt><dd>{result.run_id}" in approvals.body
     assert "approval_workbench_next_action</dt><dd>Approve worktree" in approvals.body
     assert "approval_workbench_action_name</dt><dd>approve-coder-worktree" in approvals.body
-    assert "approval_workbench_primary_surface</dt><dd><a href='#pending-worktree-approvals'>Pending Worktree Approvals</a>" in approvals.body
+    assert "approval_workbench_primary_surface</dt><dd><a href='#approval-workbench-action-form'>Approval Workbench Action Form</a>" in approvals.body
+    assert "approval_workbench_queue_surface</dt><dd><a href='#pending-worktree-approvals'>Pending Worktree Approvals</a>" in approvals.body
     assert f"approval_workbench_inspection_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'>Workflow</a>" in approvals.body
     assert "approval_workbench_request_artifact</dt><dd><a href='/artifacts?path=" in approvals.body
     assert "approval_workbench_evidence_artifact</dt><dd><a href='/artifacts?path=" in approvals.body
@@ -16557,7 +16570,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "approval_workbench_pr_created</dt><dd>false" in approvals.body
     assert "approval_workbench_deploy_created</dt><dd>false" in approvals.body
     assert "approval_workbench_now: Approve worktree" in approvals.body
-    assert "approval_workbench_click: <a href='#pending-worktree-approvals'>Pending Worktree Approvals</a>" in approvals.body
+    assert "approval_workbench_click: <a href='#approval-workbench-action-form'>Approval Workbench Action Form</a>" in approvals.body
+    assert "approval_workbench_queue: <a href='#pending-worktree-approvals'>Pending Worktree Approvals</a>" in approvals.body
     assert f"approval_workbench_inspect: <a href='/workflow?delegation_id={result.delegation_id}'>Workflow</a>" in approvals.body
     assert (
         f"approval_workbench_goal: <a href='/goals/{result.goal_id}'>"
@@ -16582,8 +16596,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-approval-decision-card='after'" in approvals.body
     assert "data-approval-decision-card='safety'" in approvals.body
     assert (
-        "data-approval-decision-primary='true' href='#pending-worktree-approvals'>"
-        "Pending Worktree Approvals</a>"
+        "data-approval-decision-primary='true' href='#approval-workbench-action-form'>"
+        "Approval Workbench Action Form</a>"
         in approvals.body
     )
     assert f"<a class='approval-decision-link' href='/workflow?delegation_id={result.delegation_id}'>Workflow</a>" in approvals.body
@@ -16595,7 +16609,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "approval_decision_project</dt><dd>local-app-demo" in approvals.body
     assert "approval_decision_action</dt><dd>Approve worktree" in approvals.body
     assert "approval_decision_action_name</dt><dd>approve-coder-worktree" in approvals.body
-    assert "approval_decision_surface</dt><dd><a href='#pending-worktree-approvals'>Pending Worktree Approvals</a>" in approvals.body
+    assert "approval_decision_surface</dt><dd><a href='#approval-workbench-action-form'>Approval Workbench Action Form</a>" in approvals.body
     assert "approval_decision_run</dt><dd>not_created_yet" in approvals.body
     assert f"approval_decision_source_run</dt><dd>{result.run_id}" in approvals.body
     assert f"approval_decision_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in approvals.body
@@ -17393,6 +17407,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "approval_workbench_publication_pending</dt><dd>0" in approvals.body
     assert "approval_workbench_first_kind</dt><dd>worktree" in approvals.body
     assert "approval_workbench_next_action</dt><dd>Approve worktree" in approvals.body
+    assert "data-approval-workbench-action-form='true'" in approvals.body
+    assert "data-approval-workbench-action-kind='worktree'" in approvals.body
+    assert "data-approval-workbench-action-name='approve-coder-worktree'" in approvals.body
+    assert "approval_workbench_primary_surface</dt><dd><a href='#approval-workbench-action-form'>Approval Workbench Action Form</a>" in approvals.body
+    assert "action='/actions/approve-coder-worktree'" in approvals.body
     assert "approval_decision_status</dt><dd>needs_worktree_decision" in approvals.body
     assert "approval_decision_action_name</dt><dd>approve-coder-worktree" in approvals.body
     assert commit_approval.id in approvals.body
@@ -17415,6 +17434,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "approval_workbench_scope_status</dt><dd>run_match" in scoped_approvals.body
     assert "approval_workbench_first_kind</dt><dd>commit" in scoped_approvals.body
     assert "approval_workbench_next_action</dt><dd>Approve commit" in scoped_approvals.body
+    assert "data-approval-workbench-action-kind='commit'" in scoped_approvals.body
+    assert "data-approval-workbench-action-name='approve-coder-commit'" in scoped_approvals.body
+    assert "approval_workbench_primary_surface</dt><dd><a href='#approval-workbench-action-form'>Approval Workbench Action Form</a>" in scoped_approvals.body
+    assert "action='/actions/approve-coder-commit'" in scoped_approvals.body
+    assert f"name='approval_id' value='{commit_approval.id}'" in scoped_approvals.body
     assert "approval_workbench_typed_commit_message_required</dt><dd>true" in scoped_approvals.body
     assert "approval_decision_scope_status</dt><dd>run_match" in scoped_approvals.body
     assert "approval_decision_status</dt><dd>needs_commit_decision" in scoped_approvals.body
@@ -17594,6 +17618,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "approval_queue_first_action</dt><dd>Approve publication" in scoped_publication_approvals.body
     assert "approval_workbench_first_kind</dt><dd>publication" in scoped_publication_approvals.body
     assert "approval_workbench_next_action</dt><dd>Approve publication" in scoped_publication_approvals.body
+    assert "data-approval-workbench-action-kind='publication'" in scoped_publication_approvals.body
+    assert "data-approval-workbench-action-name='approve-coder-publication'" in scoped_publication_approvals.body
+    assert "approval_workbench_primary_surface</dt><dd><a href='#approval-workbench-action-form'>Approval Workbench Action Form</a>" in scoped_publication_approvals.body
+    assert "action='/actions/approve-coder-publication'" in scoped_publication_approvals.body
+    assert f"name='publication_id' value='{publication.id}'" in scoped_publication_approvals.body
     assert "approval_decision_status</dt><dd>needs_publication_decision" in scoped_publication_approvals.body
     assert "approval_decision_kind</dt><dd>publication" in scoped_publication_approvals.body
     assert f"approval_decision_id</dt><dd>{publication.id}" in scoped_publication_approvals.body
