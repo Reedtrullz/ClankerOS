@@ -4,6 +4,16 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal Jump Bar shortcut `2` now names and opens the real current Goal action.
+  For the ready-to-commit demo Goal it displays `Create commit request` and
+  links to the existing confirmed `#goal-action-dock-form` instead of the
+  generic `Action -> #goal-next-action` jump. Local proof includes
+  py-compile, focused route/demo pytest, temp-root app-smoke-test, and in-app
+  Browser desktop QA with clean logs, no horizontal overflow, and click plus
+  keyboard shortcut navigation to the commit-request form. Mobile Browser
+  proof is not claimed for this slice because the viewport check timed out
+  twice and the reset attempt timed out; pushed GitHub Actions and full-suite
+  proof are still pending.
 - Goal Section Index now uses the actual current Goal action as its primary
   `Operate` card. For the ready-to-commit demo Goal it shows
   `Create commit request` and links to the existing confirmed

@@ -1,5 +1,43 @@
 # Status
 
+## 2026-06-30 Goal Jump Bar Current Action UX
+
+- Made the Goal Jump Bar `2` shortcut action-aware. Instead of showing the
+  generic `Action` label and linking to the older `#goal-next-action` section,
+  it now uses the actual current Goal action label and the same primary action
+  target as the rest of the Goal cockpit. For the ready-to-commit demo Goal it
+  shows `Create commit request` and links directly to the existing confirmed
+  `#goal-action-dock-form`.
+- The jump bar now receives the current Goal state, reuses
+  `_goal_next_action_form`, `_goal_primary_action_href`, and
+  `_goal_action_cta_label`, and records `goal_jump_action_surface` plus
+  `goal_jump_action_form_available` evidence rows. This preserves the
+  read-only local-anchor posture and does not add a write path, provider call,
+  network action, external mutation, or confirmation bypass.
+- Updated focused demo coverage so the jump bar action link, visible shortcut
+  label, evidence rows, and shortcut evidence line assert
+  `Create commit request -> #goal-action-dock-form` for the fixture-backed
+  ready-to-commit Goal.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), and temp-root
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`.
+- Browser QA used the in-app Browser against a disposable demo app at
+  `127.0.0.1:51779` for `goal_a1fa0df7f4d2`. Desktop 1280x720 verified page
+  identity, meaningful content, no framework overlay, clean warn/error logs,
+  no horizontal overflow, exactly one action shortcut, action text
+  `2 Create commit request`, evidence rows for the chosen action surface, and
+  both click plus keyboard `2` navigation to the visible
+  `/actions/coder-commit-request` form.
+- Non-claim: mobile Browser proof is incomplete for this slice because the
+  mobile viewport check timed out twice and the follow-up viewport reset
+  attempt also timed out after the Browser docs were re-read in chunks.
+  Pushed GitHub Actions proof and full-suite proof are pending. This slice did
+  not deploy, create a PR, call providers, or mutate external systems.
+
 ## 2026-06-30 Goal Section Index Primary Action UX
 
 - Promoted the Goal Section Index `Operate` switchboard card from a generic

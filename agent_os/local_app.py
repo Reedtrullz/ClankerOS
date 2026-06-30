@@ -13825,7 +13825,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             "</section>",
             _goal_phase_banner(root, state, phase, next_action),
             _goal_action_dock(root, state, phase, next_action),
-            _goal_jump_bar(phase, next_action),
+            _goal_jump_bar(state, phase, next_action),
             _goal_progress_meter(root, state, phase, next_action),
             _goal_attention_digest(root, state, phase, next_action),
             _goal_decision_queue(root, state, phase, next_action),
@@ -14292,30 +14292,41 @@ def _goal_path_rail(
     )
 
 
-def _goal_jump_bar(phase: str, next_action: GoalNextAction) -> str:
+def _goal_jump_bar(
+    state: dict[str, Any],
+    phase: str,
+    next_action: GoalNextAction,
+) -> str:
+    form_available = bool(_goal_next_action_form(state, next_action))
+    action_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=form_available,
+    )
+    action_label = _goal_action_cta_label(next_action, form_available)
     links = [
-        ("1", "Phase", "phase", "goal-current-phase"),
-        ("2", "Action", "action", "goal-next-action"),
-        ("3", "Workflow", "workflow", "goal-workflow-map"),
-        ("4", "Timeline", "timeline", "goal-timeline-command-bar"),
-        ("5", "Evidence", "evidence", "goal-evidence-command-bar"),
-        ("6", "Artifacts", "artifacts", "goal-artifact-command-bar"),
-        ("7", "Notes", "notes", "goal-operator-notes-command-bar"),
-        ("8", "Git", "git", "goal-git-command-bar"),
-        ("9", "Remaining", "remaining", "goal-remaining-work-command-bar"),
+        ("1", "Phase", "phase", "#goal-current-phase"),
+        ("2", action_label, "action", action_href),
+        ("3", "Workflow", "workflow", "#goal-workflow-map"),
+        ("4", "Timeline", "timeline", "#goal-timeline-command-bar"),
+        ("5", "Evidence", "evidence", "#goal-evidence-command-bar"),
+        ("6", "Artifacts", "artifacts", "#goal-artifact-command-bar"),
+        ("7", "Notes", "notes", "#goal-operator-notes-command-bar"),
+        ("8", "Git", "git", "#goal-git-command-bar"),
+        ("9", "Remaining", "remaining", "#goal-remaining-work-command-bar"),
     ]
     link_items = [
         (
             f"<a class='goal-jump-link' data-goal-jump-target='{_e(target)}' "
-            f"href='#{_e(anchor)}' data-goal-jump-shortcut='{_e(shortcut)}' "
+            f"href='{_e(href)}' data-goal-jump-shortcut='{_e(shortcut)}' "
             f"aria-keyshortcuts='{_e(shortcut)}' title='{_e(label)} ({_e(shortcut)})'>"
             f"<kbd>{_e(shortcut)}</kbd> <span>{_e(label)}</span></a>"
         )
-        for shortcut, label, target, anchor in links
+        for shortcut, label, target, href in links
     ]
     shortcut_lines = [
-        f"goal_jump_shortcut: {_e(shortcut)} {_e(target)} -> #{_e(anchor)}"
-        for shortcut, _label, target, anchor in links
+        f"goal_jump_shortcut: {_e(shortcut)} {_e(target)} -> {_e(href)}"
+        for shortcut, _label, target, href in links
     ]
     return "".join(
         [
@@ -14333,6 +14344,11 @@ def _goal_jump_bar(phase: str, next_action: GoalNextAction) -> str:
                     ("goal_jump_bar_position", "flow"),
                     ("goal_jump_current_phase", phase),
                     ("goal_jump_primary_action", next_action.action),
+                    (
+                        "goal_jump_action_surface",
+                        SafeHtml(f"<a href='{_e(action_href)}'>{_e(action_label)}</a>"),
+                    ),
+                    ("goal_jump_action_form_available", str(form_available).lower()),
                     ("goal_jump_link_count", str(len(links))),
                     ("goal_jump_shortcuts_enabled", "true"),
                     ("goal_jump_shortcuts", "1-9"),
