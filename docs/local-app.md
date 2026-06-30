@@ -1344,7 +1344,9 @@ run, delegation, or approval surface. For saved Goal continuations with a
 confirmed next action form, the notice also renders an inline `Action Notice
 Next Step` form before notice evidence and points the primary notice action at
 that same-page form while keeping the original Goal/workflow surface in
-collapsed evidence.
+collapsed evidence. Form-backed notice actions use the exact operator verb,
+such as `Approve commit`, instead of generic "current action" copy while raw
+action ids remain in evidence and confirmation form actions.
 Failed actions render `Action Error Details` with the
 attempted action, error, submitted payload, and a clear no-action-completed
 message so operators can fix inputs without guessing what happened.

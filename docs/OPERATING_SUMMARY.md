@@ -1140,6 +1140,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   publication request/approval/handoff, so visible controls use verbs such as
   `Prepare coder packet`, `Approve commit`, and `Prepare publication handoff`
   while raw action ids remain in URLs, DOM metadata, and evidence.
+  Form-backed current-action CTAs on Goal, Home, Action Notice, and delegation
+  run continuation surfaces now use those same verbs directly, so the primary
+  click names the work it will prepare while the underlying confirmation route
+  and raw action evidence remain unchanged.
   Active first-run Goal pages also show a
   read-only `Goal First Run Rail` between Attention and the Goal Command Bar,
   preserving the Project -> Goal -> Delegation -> Context -> Run path on the

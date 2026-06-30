@@ -7550,7 +7550,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "goal_first_run_next_action</dt><dd>Open goal to create scout delegation" in first_goal_page.body
     assert (
         "goal_first_run_primary_surface</dt><dd><a href='#goal-next-action-form'>"
-        "Use Goal action form</a>"
+        "Create scout delegation</a>"
     ) in first_goal_page.body
     assert "goal_first_run_action_form_available</dt><dd>true" in first_goal_page.body
     assert f"goal_first_run_goal</dt><dd>{created_goal_id}" in first_goal_page.body
@@ -7564,7 +7564,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "goal_first_run_external_effects_created</dt><dd>false" in first_goal_page.body
     assert (
         "goal_first_run_step: create_first_delegation status=current "
-        "surface=<a href='#goal-next-action-form'>Use Goal action form</a>"
+        "surface=<a href='#goal-next-action-form'>Create scout delegation</a>"
     ) in first_goal_page.body
     assert "goal_first_run_safety: read-only first-run rail" in first_goal_page.body
     assert first_goal_page.body.index("data-goal-attention-digest='true'") < first_goal_page.body.index(
@@ -7631,7 +7631,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "goal_board_workbench_primary_action</dt><dd>Create scout delegation" in goals_after_first_goal.body
     assert (
         f"goal_board_workbench_primary_surface</dt><dd><a href='/goals/{created_goal_id}#goal-next-action-form'>"
-        "Use Goal action form</a>"
+        "Create scout delegation</a>"
     ) in goals_after_first_goal.body
     assert "goal_board_workbench_action_form_available</dt><dd>true" in goals_after_first_goal.body
     assert "goal_board_workbench_attention_reason</dt><dd>no_waiting_items" in goals_after_first_goal.body
@@ -8134,14 +8134,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "goal_first_run_next_action</dt><dd>Generate context pack" in delegated_goal_page.body
     assert (
         "goal_first_run_primary_surface</dt><dd><a href='#goal-next-action-form'>"
-        "Use Goal action form</a>"
+        "Generate context pack</a>"
     ) in delegated_goal_page.body
     assert "goal_first_run_delegation</dt><dd>" in delegated_goal_page.body
     assert "goal_first_run_context_pack_ready</dt><dd>false" in delegated_goal_page.body
     assert "goal_first_run_done_count</dt><dd>3" in delegated_goal_page.body
     assert (
         "goal_first_run_step: generate_context_pack status=current "
-        "surface=<a href='#goal-next-action-form'>Use Goal action form</a>"
+        "surface=<a href='#goal-next-action-form'>Generate context pack</a>"
     ) in delegated_goal_page.body
     goals_after_delegation = render_local_app_route(tmp_path, "/goals")
     assert "first_run_current_step</dt><dd>generate_context_pack" in goals_after_delegation.body
@@ -8231,13 +8231,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "goal_first_run_next_action</dt><dd>Run delegation" in after_context_pack_goal_page.body
     assert (
         "goal_first_run_primary_surface</dt><dd><a href='#goal-next-action-form'>"
-        "Use Goal action form</a>"
+        "Run delegation</a>"
     ) in after_context_pack_goal_page.body
     assert "goal_first_run_context_pack_ready</dt><dd>true" in after_context_pack_goal_page.body
     assert "goal_first_run_done_count</dt><dd>4" in after_context_pack_goal_page.body
     assert (
         "goal_first_run_step: run_first_delegation status=current "
-        "surface=<a href='#goal-next-action-form'>Use Goal action form</a>"
+        "surface=<a href='#goal-next-action-form'>Run delegation</a>"
     ) in after_context_pack_goal_page.body
     home_after_delegate = render_local_app_route(tmp_path, "/")
     assert "Goal-First Home" in home_after_delegate.body
@@ -11268,7 +11268,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     )
     assert (
         f"<a class='operator-ribbon-action' href='/goals/{result.goal_id}#goal-action-dock-form'>"
-        "Use current action</a>"
+        "Create commit request</a>"
     ) in dashboard.body
     assert "operator_ribbon_status</dt><dd>available" in dashboard.body
     assert "operator_ribbon_source</dt><dd>lead_goal" in dashboard.body
@@ -11278,7 +11278,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "operator_ribbon_primary_action</dt><dd>Create commit request" in dashboard.body
     assert (
         f"operator_ribbon_primary_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
-        "Use current action</a>"
+        "Create commit request</a>"
     ) in dashboard.body
     assert "operator_ribbon_attention_status</dt><dd>needs_approval_review" in dashboard.body
     assert "operator_ribbon_attention_action</dt><dd>Review approvals" in dashboard.body
@@ -11304,7 +11304,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "operator_ribbon_now: Create commit request" in dashboard.body
     assert (
         f"operator_ribbon_click: <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
-        "Use current action</a>"
+        "Create commit request</a>"
     ) in dashboard.body
     assert "operator_ribbon_safety: read-only global operator orientation" in dashboard.body
     assert "Goal-First Home" in dashboard.body
@@ -11366,7 +11366,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_operator_board_primary_action</dt><dd>Create commit request" in dashboard.body
     assert (
         f"home_operator_board_primary_surface</dt><dd><a href='/goals/{result.goal_id}#goal-next-action-form'>"
-        "Use Goal action form</a>"
+        "Create commit request</a>"
     ) in dashboard.body
     assert "home_operator_board_action_form_available</dt><dd>true" in dashboard.body
     assert "home_operator_board_attention_action</dt><dd>Review approvals" in dashboard.body
@@ -12228,7 +12228,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_board_workbench_primary_action</dt><dd>Create commit request" in goals.body
     assert (
         f"goal_board_workbench_primary_surface</dt><dd><a href='/goals/{result.goal_id}#goal-next-action-form'>"
-        "Use Goal action form</a>"
+        "Create commit request</a>"
     ) in goals.body
     assert "goal_board_workbench_action_form_available</dt><dd>true" in goals.body
     assert "goal_board_workbench_waiting_items</dt><dd>1" in goals.body
@@ -12821,7 +12821,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_action_dock_provider_calls_taken</dt><dd>0" in goal.body
     assert "goal_action_dock_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_action_dock_external_effects_created</dt><dd>false" in goal.body
-    assert "data-goal-action-dock-primary='true' href='#goal-action-dock-form'>Use current action</a>" in goal.body
+    assert "data-goal-action-dock-primary='true' href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "id='goal-action-dock-form' class='goal-action-dock-form' data-goal-action-dock-form='true'" in goal.body
     assert "Current Action Form" in goal.body
     assert "The same confirmation screen still appears before any local write or local execution." in goal.body
@@ -12833,7 +12833,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "id='goal-progress-meter'"
     )
     assert "goal_action_dock_now: Create commit request" in goal.body
-    assert "goal_action_dock_click: <a href='#goal-action-dock-form'>Use current action</a>" in goal.body
+    assert "goal_action_dock_click: <a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "goal_action_dock_top_form: <a href='#goal-action-dock-form'>Current Action Form</a> reuses existing confirmed action form" in goal.body
     assert "goal_action_dock_gate: commit_request" in goal.body
     assert "goal_action_dock_safety: reuses existing confirmed Goal action form" in goal.body
@@ -12869,7 +12869,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_progress_meter_open_recommendations</dt><dd>0" in goal.body
     assert "goal_progress_meter_next_action</dt><dd>Create commit request" in goal.body
     assert "goal_progress_meter_action_form_available</dt><dd>true" in goal.body
-    assert "goal_progress_meter_action_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_progress_meter_action_surface</dt><dd><a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "goal_progress_meter_ci_status</dt><dd>success" in goal.body
     assert "goal_progress_meter_ci_source</dt><dd>direct_public_snapshot" in goal.body
     assert "goal_progress_meter_card_count</dt><dd>5" in goal.body
@@ -12884,7 +12884,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_progress_meter_gates: 8/15 current=commit_request percent=53" in goal.body
     assert "goal_progress_meter_waiting: approvals=1 incidents=0 recommendations=0" in goal.body
     assert "goal_progress_meter_proof: status=success source=direct_public_snapshot" in goal.body
-    assert "goal_progress_meter_next: <a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_progress_meter_next: <a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "goal_progress_meter_safety: read-only visual progress; confirmed forms own writes" in goal.body
     assert "Goal Attention Digest" in goal.body
     assert "id='goal-attention-digest'" in goal.body
@@ -12897,14 +12897,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-attention-open-work='true'" in goal.body
     assert "data-goal-attention-safety='true'" in goal.body
     assert "data-goal-attention-evidence='true'" in goal.body
-    assert "data-goal-attention-primary='true' href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "data-goal-attention-primary='true' href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "goal_attention_digest_status</dt><dd>waiting_on_operator" in goal.body
     assert f"goal_attention_digest_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_attention_digest_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_attention_digest_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_attention_digest_current_gate</dt><dd>commit_request" in goal.body
     assert "goal_attention_digest_next_action</dt><dd>Create commit request" in goal.body
-    assert "goal_attention_digest_primary_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_attention_digest_primary_surface</dt><dd><a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "goal_attention_digest_action_form_available</dt><dd>true" in goal.body
     assert "goal_attention_digest_first_queue_kind</dt><dd>worktree_approval" in goal.body
     assert f"goal_attention_digest_first_queue_surface</dt><dd><a href='/approvals?goal_id={result.goal_id}'>Review worktree approval</a>" in goal.body
@@ -12992,7 +12992,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"goal_decision_queue_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_decision_queue_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_decision_queue_next_action</dt><dd>Create commit request" in goal.body
-    assert "goal_decision_queue_primary_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_decision_queue_primary_surface</dt><dd><a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "goal_decision_queue_action_form_available</dt><dd>true" in goal.body
     assert "goal_decision_queue_rows</dt><dd>2" in goal.body
     assert "goal_decision_queue_visible_rows</dt><dd>2" in goal.body
@@ -13011,7 +13011,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_decision_queue_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_decision_queue_external_effects_created</dt><dd>false" in goal.body
     assert "goal_decision_queue_now: Create commit request" in goal.body
-    assert "goal_decision_queue_row: kind=current_action status=recommended id=Create commit request surface=<a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_decision_queue_row: kind=current_action status=recommended id=Create commit request surface=<a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "goal_decision_queue_row: kind=worktree_approval status=pending_operator_approval id=" in goal.body
     assert f"surface=<a href='/approvals?goal_id={result.goal_id}'>Scoped approvals</a>" in goal.body
     assert "goal_decision_queue_safety: read-only local queue; existing confirmed forms and approval surfaces own writes" in goal.body
@@ -13207,7 +13207,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_workbench_pending_gates</dt><dd>1" in goal.body
     assert "goal_workbench_waiting_gates</dt><dd>6" in goal.body
     assert "goal_workbench_next_action</dt><dd>Create commit request" in goal.body
-    assert "goal_workbench_primary_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_workbench_primary_surface</dt><dd><a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert f"goal_workbench_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "goal_workbench_action_form_available</dt><dd>true" in goal.body
     assert "goal_workbench_confirmation_required</dt><dd>true" in goal.body
@@ -13222,7 +13222,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_workbench_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_workbench_external_effects_created</dt><dd>false" in goal.body
     assert "goal_workbench_now: Act: Create commit request" in goal.body
-    assert "goal_workbench_click: <a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_workbench_click: <a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert f"goal_workbench_source_surface: <a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "goal_workbench_unblock: <a href='/approvals'>Review approval</a>" in goal.body
     assert "goal_workbench_finish: <a href='#goal-finish-today'>Finish Today</a>" in goal.body
@@ -13238,7 +13238,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-daily-loop-evidence='true'" in goal.body
     assert "data-goal-pause-details='true'" in goal.body
     assert "data-goal-finish-details='true'" in goal.body
-    assert "href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert f"goal_daily_loop_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_daily_loop_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_daily_loop_phase</dt><dd>Ready to commit" in goal.body
@@ -13294,7 +13294,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert goal.body.index("id='goal-daily-loop'") < goal.body.index("id='goal-return-brief'")
     assert goal.body.index("id='goal-return-brief'") < goal.body.index("id='goal-session-digest'")
     assert goal.body.index("id='goal-session-digest'") < goal.body.index("id='goal-next-action'")
-    assert "href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "data-goal-return-finish='true' data-open-details='true' href='#goal-finish-today'" in goal.body
     assert "data-goal-return-resume='true' href='/resume'" in goal.body
     assert f"goal_return_goal</dt><dd>{result.goal_id}" in goal.body
@@ -13361,7 +13361,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_session_digest_provider_calls_taken</dt><dd>0" in goal.body
     assert "goal_session_digest_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_session_digest_external_effects_created</dt><dd>false" in goal.body
-    assert "goal_session_digest_continue: <a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_session_digest_continue: <a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "goal_session_digest_since_save: not_saved latest_after_save=false" in goal.body
     assert "goal_session_digest_artifact: <a href='/artifacts?path=" in goal.body
     assert "goal_session_digest_waiting: approvals=1 incidents=0 recommendations=0 -> <a href='/approvals'>Review approvals</a>" in goal.body
@@ -13394,7 +13394,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_activity_pulse_run_events</dt><dd>" in goal.body
     assert "goal_activity_pulse_latest_artifact</dt><dd><a href='/artifacts?path=" in goal.body
     assert "goal_activity_pulse_next_action</dt><dd>Create commit request" in goal.body
-    assert "goal_activity_pulse_next_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_activity_pulse_next_surface</dt><dd><a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "goal_activity_pulse_action_form_available</dt><dd>true" in goal.body
     assert "goal_activity_pulse_source</dt><dd>goal_timeline_items_and_goal_next_action" in goal.body
     assert "goal_activity_pulse_write_on_get</dt><dd>false" in goal.body
@@ -13402,7 +13402,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_activity_pulse_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_activity_pulse_external_effects_created</dt><dd>false" in goal.body
     assert "goal_activity_pulse_recent:" in goal.body
-    assert "goal_activity_pulse_next: Create commit request <a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_activity_pulse_next: Create commit request <a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "goal_activity_pulse_safety: read-only local timeline pulse; confirmed forms own writes" in goal.body
     assert "Goal Continuation Rail" in goal.body
     assert "data-goal-continuation-rail='true'" in goal.body
@@ -13416,7 +13416,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert goal.body.index("id='goal-return-brief'") < goal.body.index("id='goal-session-digest'")
     assert goal.body.index("id='goal-session-digest'") < goal.body.index("id='goal-continuation-rail'")
     assert goal.body.index("id='goal-continuation-rail'") < goal.body.index("id='goal-next-action'")
-    assert "data-goal-continuation-primary='true' href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "data-goal-continuation-primary='true' href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "data-goal-continuation-next='true' href='/approvals'>/approvals</a>" in goal.body
     assert "data-goal-continuation-then='true' href='#goal-next-action'>Goal action form</a>" in goal.body
     assert "data-goal-continuation-publish='true' href='#goal-workflow-map'>Review boundary</a>" in goal.body
@@ -13452,7 +13452,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-workflow-map-publish='true'" in goal.body
     assert "data-goal-workflow-map-finish='true'" in goal.body
     assert "data-goal-workflow-map-evidence='true'" in goal.body
-    assert "data-goal-workflow-map-primary='true' href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "data-goal-workflow-map-primary='true' href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert f"data-goal-workflow-map-approval='true' href='/approvals?goal_id={result.goal_id}'" in goal.body
     assert "data-goal-workflow-map-publish='true' href='#goal-ci-handoff'>Review CI handoff</a>" in goal.body
     assert "data-goal-workflow-map-finish='true' data-open-details='true' href='#goal-finish-today'" in goal.body
@@ -13467,7 +13467,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_map_done_count</dt><dd>8" in goal.body
     assert "workflow_map_pending_count</dt><dd>1" in goal.body
     assert "workflow_map_waiting_count</dt><dd>6" in goal.body
-    assert "workflow_map_primary_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "workflow_map_primary_surface</dt><dd><a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert f"workflow_map_approval_surface</dt><dd><a href='/approvals?goal_id={result.goal_id}'>Review goal approvals</a>" in goal.body
     assert "workflow_map_publish_surface</dt><dd><a href='#goal-ci-handoff'>Review CI handoff</a>" in goal.body
     assert "workflow_map_finish_surface</dt><dd><a href='#goal-finish-today'>Finish Today</a>" in goal.body
@@ -13501,7 +13501,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-coder-handoff-ship='true'" in goal.body
     assert "data-goal-coder-handoff-safety='true'" in goal.body
     assert "data-goal-coder-handoff-evidence='true'" in goal.body
-    assert "data-goal-coder-handoff-primary='true' href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "data-goal-coder-handoff-primary='true' href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert f"href='/delegations/{result.delegation_id}'>Open delegation</a>" in goal.body
     assert f"href='/workflow?delegation_id={result.delegation_id}'>Workflow</a>" in goal.body
     assert f"goal_coder_handoff_digest_goal</dt><dd>{result.goal_id}" in goal.body
@@ -13526,7 +13526,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_coder_handoff_publication_approved</dt><dd>0" in goal.body
     assert "goal_coder_handoff_publication_handoffs_ready</dt><dd>0" in goal.body
     assert "goal_coder_handoff_next_action</dt><dd>Create commit request" in goal.body
-    assert "goal_coder_handoff_primary_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_coder_handoff_primary_surface</dt><dd><a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "goal_coder_handoff_action_form_available</dt><dd>true" in goal.body
     assert f"goal_coder_handoff_delegation_surface</dt><dd><a href='/delegations/{result.delegation_id}'" in goal.body
     assert f"goal_coder_handoff_workflow_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'" in goal.body
@@ -13914,7 +13914,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "timeline_digest_current_gate</dt><dd>commit_request" in goal.body
     assert "timeline_digest_gate_progress</dt><dd>8/15 gates done" in goal.body
     assert "timeline_digest_next_action</dt><dd>Create commit request" in goal.body
-    assert "timeline_digest_next_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "timeline_digest_next_surface</dt><dd><a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "timeline_digest_action_form_available</dt><dd>true" in goal.body
     assert "timeline_digest_source</dt><dd>goal_timeline_items_and_goal_workflow_gates" in goal.body
     assert "timeline_digest_write_on_get</dt><dd>false" in goal.body
@@ -14861,7 +14861,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_remaining_work_command_open_recommendations</dt><dd>0" in goal.body
     assert "goal_remaining_work_command_pending_approvals</dt><dd>1" in goal.body
     assert "goal_remaining_work_command_next_action</dt><dd>Create commit request" in goal.body
-    assert "goal_remaining_work_command_primary_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_remaining_work_command_primary_surface</dt><dd><a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "goal_remaining_work_command_action_form_available</dt><dd>true" in goal.body
     assert f"goal_remaining_work_command_target_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "goal_remaining_work_command_reason</dt><dd>current_gate=commit_request" in goal.body
@@ -14874,7 +14874,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_remaining_work_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_remaining_work_command_external_effects_created</dt><dd>false" in goal.body
     assert "goal_remaining_work_now: Create commit request" in goal.body
-    assert "goal_remaining_work_primary: <a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_remaining_work_primary: <a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert f"goal_remaining_work_click: <a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "goal_remaining_work_gate: commit_request status=pending_gate" in goal.body
     assert "goal_remaining_work_waiting: approvals=1 incidents=0 recommendations=0" in goal.body
@@ -14918,7 +14918,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_live_refresh_interval_seconds</dt><dd>5" in goal.body
     assert "goal_live_refresh_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_live_refresh_next_action</dt><dd>Create commit request" in goal.body
-    assert "goal_live_refresh_target_surface</dt><dd><a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_live_refresh_target_surface</dt><dd><a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "goal_live_refresh_action_form_available</dt><dd>true" in goal.body
     assert "goal_live_refresh_current_gate</dt><dd>commit_request" in goal.body
     assert "goal_live_refresh_waiting_items</dt><dd>1" in goal.body
@@ -14929,7 +14929,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_live_refresh_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_live_refresh_external_effects_created</dt><dd>false" in goal.body
     assert "goal_live_refresh_now: Create commit request" in goal.body
-    assert "goal_live_refresh_target: <a href='#goal-next-action-form'>Use Goal action form</a>" in goal.body
+    assert "goal_live_refresh_target: <a href='#goal-next-action-form'>Create commit request</a>" in goal.body
     assert "goal_live_refresh_safety: local browser loopback reload only" in goal.body
     assert "document.hidden" in goal.body
     assert result.delegation_id in goal.body
@@ -15603,7 +15603,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_operator_board_primary_action</dt><dd>Create commit request" in restored_home.body
     assert (
         "home_operator_board_primary_surface</dt><dd><a href='#home-resume-action-form'>"
-        "Use Home action form</a>"
+        "Create commit request</a>"
         in restored_home.body
     )
     assert "home_operator_board_action_form_available</dt><dd>true" in restored_home.body
@@ -15612,7 +15612,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_operator_board_resume_surface</dt><dd><a href='/resume'>/resume</a>" in restored_home.body
     assert "home_operator_board_ci_status</dt><dd>success" in restored_home.body
     assert "home_operator_board_waiting_items</dt><dd>1" in restored_home.body
-    assert "home_operator_board_click: <a href='#home-resume-action-form'>Use Home action form</a>" in restored_home.body
+    assert "home_operator_board_click: <a href='#home-resume-action-form'>Create commit request</a>" in restored_home.body
     assert "Home Resume Workspace" in restored_home.body
     assert (
         f"resume_goal: <a href='/goals/{result.goal_id}'>"
@@ -15851,7 +15851,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"delegation_run_workbench_first_project</dt><dd>{result.project_id}" in delegation_runs.body
     assert "delegation_run_workbench_first_status</dt><dd>completed" in delegation_runs.body
     assert "delegation_run_workbench_next_action</dt><dd>prepare_coder_from_handoff" in delegation_runs.body
-    assert "delegation_run_workbench_action_label</dt><dd>Prepare coder from handoff" in delegation_runs.body
+    assert "delegation_run_workbench_action_label</dt><dd>Prepare coder packet" in delegation_runs.body
     assert f"delegation_run_workbench_primary_surface</dt><dd><a href='/runs/{result.run_id}'" in delegation_runs.body
     assert f"delegation_run_workbench_workflow_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'" in delegation_runs.body
     assert "delegation_run_workbench_reason</dt><dd>implementation_handoff_available" in delegation_runs.body
@@ -15915,8 +15915,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"delegation_run_continuation_goal</dt><dd>{result.goal_id}" in delegation_run_page.body
     assert "delegation_run_continuation_project</dt><dd>local-app-demo" in delegation_run_page.body
     assert "delegation_run_continuation_next_action</dt><dd>prepare_coder_from_handoff" in delegation_run_page.body
-    assert "delegation_run_continuation_action_label</dt><dd>Prepare coder from handoff" in delegation_run_page.body
-    assert "delegation_run_continuation_primary_surface</dt><dd><a href='#delegation-run-continuation-action-form'>Continue Here</a>" in delegation_run_page.body
+    assert "delegation_run_continuation_action_label</dt><dd>Prepare coder packet" in delegation_run_page.body
+    assert "delegation_run_continuation_primary_surface</dt><dd><a href='#delegation-run-continuation-action-form'>Prepare coder packet</a>" in delegation_run_page.body
     assert (
         f"delegation_run_continuation_source_primary_surface</dt><dd><a href='/delegations/{result.delegation_id}#safe-local-actions'>"
         "Safe Local Actions</a>"
@@ -15963,8 +15963,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "delegation_run_continuation_provider_calls_taken</dt><dd>0" in delegation_run_page.body
     assert "delegation_run_continuation_network_actions_taken</dt><dd>0" in delegation_run_page.body
     assert "delegation_run_continuation_external_effects_created</dt><dd>false" in delegation_run_page.body
-    assert "delegation_run_continuation_now: Prepare coder from handoff" in delegation_run_page.body
-    assert "delegation_run_continuation_click: <a href='#delegation-run-continuation-action-form'>Continue Here</a>" in delegation_run_page.body
+    assert "delegation_run_continuation_now: Prepare coder packet" in delegation_run_page.body
+    assert "delegation_run_continuation_click: <a href='#delegation-run-continuation-action-form'>Prepare coder packet</a>" in delegation_run_page.body
     assert f"delegation_run_continuation_source: <a href='/delegations/{result.delegation_id}#safe-local-actions'>Safe Local Actions</a>" in delegation_run_page.body
     assert (
         "delegation_run_continuation_action_form: available=true action=coder-prep-from-handoff "
@@ -17419,7 +17419,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-action-notice-next-step-evidence='true'" in run_notice.body
     assert (
         "data-action-notice-primary='true' data-action-notice-next-step='true' "
-        "href='#action-notice-next-step-form'>Use current action</a>"
+        "href='#action-notice-next-step-form'>Approve commit</a>"
     ) in run_notice.body
     assert f"coder_commit_request: {commit_approval.id}" in run_notice.body
     assert "action_notice_last_action</dt><dd>coder-commit-request" in run_notice.body
@@ -17435,11 +17435,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"action_notice_saved_goal</dt><dd>{result.goal_id}" in run_notice.body
     assert (
         "action_notice_recommended_surface</dt><dd>"
-        "<a href='#action-notice-next-step-form'>Use current action</a>"
+        "<a href='#action-notice-next-step-form'>Approve commit</a>"
     ) in run_notice.body
     assert (
         "action_notice_recommended_source_surface</dt><dd>"
-        f"<a href='/goals/{result.goal_id}#goal-action-dock-form'>Use current action</a>"
+        f"<a href='/goals/{result.goal_id}#goal-action-dock-form'>Approve commit</a>"
     ) in run_notice.body
     assert "action_notice_next_step_form_available</dt><dd>true" in run_notice.body
     assert (
@@ -17451,7 +17451,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "action_notice_next_step_next_action</dt><dd>Approve commit" in run_notice.body
     assert (
         "action_notice_next_step_primary_surface</dt><dd>"
-        "<a href='#action-notice-next-step-form'>Use current action</a>"
+        "<a href='#action-notice-next-step-form'>Approve commit</a>"
     ) in run_notice.body
     assert "action_notice_next_step_action_form_available</dt><dd>true" in run_notice.body
     assert "action_notice_next_step_confirmation_required</dt><dd>true" in run_notice.body

@@ -441,7 +441,11 @@ then an in-flow `Goal Action Dock` keeps the current action, gate, CI proof
 target, and resume route near the top of the workbench while rendering a
 top-of-page `Current Action Form` when the existing confirmed Goal action form
 is available. The deeper Next Action section remains as the detailed readback
-copy, but the operator can use the current action without hunting down-page. A read-only
+copy, but the operator can use the current action without hunting down-page.
+Those form-backed primary controls now use the actual operator verb, such as
+`Create commit request` or `Approve commit`, instead of generic labels like
+`Use current action`, while raw action ids stay in evidence and form actions.
+A read-only
 `Goal Progress Meter` follows with task and workflow progress bars, waiting
 operator work, latest proof state, and the next confirmed browser action before
 deeper command evidence. A read-only `Goal Attention Digest` follows the meter

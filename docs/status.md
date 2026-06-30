@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Current-action CTAs now use the exact operator verb on Goal, Home, Action
+  Notice, and delegation-run continuation surfaces instead of generic labels
+  such as "Use current action" or "Continue Here." Primary links now say
+  `Create commit request`, `Approve commit`, or `Prepare coder packet` while
+  retaining the same raw action ids, evidence rows, DOM metadata, and
+  confirmation-gated form routes underneath.
 - Daily workflow browser forms now use operator-language copy instead of raw
   action ids for coder prep, worktree planning/approval, commit
   request/approval/local commit, and publication request/approval/handoff.

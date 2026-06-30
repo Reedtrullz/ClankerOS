@@ -1,5 +1,41 @@
 # Status
 
+## 2026-06-30 Verb-First Current Action CTAs
+
+- Made current-action CTAs name the actual operator move instead of generic
+  form plumbing across Goal, Home, Action Notice, and delegation-run
+  continuation surfaces. Primary links now say things like `Create commit
+  request`, `Approve commit`, or `Prepare coder packet` while still pointing
+  at the same confirmation-gated browser forms.
+- Added a shared Goal CTA label helper so form-backed Goal surfaces keep the
+  same action copy in the dock, board, progress meter, attention digest,
+  decision queue, live state, workflow map, command bar, daily loop, return
+  brief, session digest, activity pulse, continuation rail, timeline digest,
+  coder handoff digest, remaining-work command bar, and operator ribbon.
+- Updated Action Notice inline continuation copy so a completed commit-request
+  notice promotes `Approve commit` directly instead of `Use current action`,
+  while preserving the original Goal dock source surface and
+  `/actions/approve-coder-commit` confirmation path in evidence.
+- Updated delegation execution continuation copy from `Continue Here` /
+  `Prepare coder from handoff` to `Prepare coder packet`, preserving raw
+  `prepare_coder_from_handoff` and `coder-prep-from-handoff` identifiers in
+  next-action evidence, form actions, and DOM metadata.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, and focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_demo_scenario_populates_fixture_state or
+  test_local_app_routes_render_modern_workflow_and_health'` passed locally.
+- Browser QA used a disposable demo app at `127.0.0.1:62214`. Desktop verified
+  the Goal primary `Create commit request` link jumps to
+  `#goal-action-dock-form` and keeps `/actions/coder-commit-request`, a
+  completed local commit-request notice promotes `Approve commit` and keeps
+  `/actions/approve-coder-commit`, and the delegation execution continuation
+  promotes `Prepare coder packet` while keeping
+  `/actions/coder-prep-from-handoff`. 390x844 mobile checks for Goal and
+  delegation-run pages showed no horizontal overflow, no framework overlay,
+  and no console warnings/errors.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
 ## 2026-06-30 Daily Workflow Action Copy UX
 
 - Replaced raw visible action ids across the daily scout-to-publication browser

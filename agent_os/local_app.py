@@ -634,7 +634,7 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-delegation-run-command-evidence='true'",
                 "delegation_run_workbench_status</dt><dd>handoff_ready",
                 "delegation_run_workbench_next_action</dt><dd>prepare_coder_from_handoff",
-                "delegation_run_workbench_action_label</dt><dd>Prepare coder from handoff",
+                "delegation_run_workbench_action_label</dt><dd>Prepare coder packet",
                 demo.delegation_id,
                 demo.run_id,
             ],
@@ -648,7 +648,7 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
                 "data-delegation-run-continuation-evidence='true'",
                 "delegation_run_continuation_status</dt><dd>action_form_ready",
                 "delegation_run_continuation_next_action</dt><dd>prepare_coder_from_handoff",
-                "delegation_run_continuation_action_label</dt><dd>Prepare coder from handoff",
+                "delegation_run_continuation_action_label</dt><dd>Prepare coder packet",
                 "Delegation Run Evidence",
                 "Delegation Execution Artifacts",
                 "Delegation Run Workflow State",
@@ -4957,10 +4957,10 @@ def _home_operator_board(
         saved_goal_matches_lead = open_goal == goal_id
         if form_available and saved_goal_matches_lead:
             primary_href = "#home-resume-action-form"
-            primary_label = "Use Home action form"
+            primary_label = next_action.action
         elif form_available:
             primary_href = f"/goals/{quote(goal_id)}#goal-next-action-form"
-            primary_label = "Use Goal action form"
+            primary_label = next_action.action
         else:
             primary_href = next_action.href
             primary_label = next_action.href
@@ -13248,7 +13248,7 @@ def _goal_board_workbench(
     next_action = _goal_next_action(root, state)
     form_available = bool(_goal_next_action_form(state, next_action))
     primary_href = _goal_board_action_href(goal.id, next_action.href, form_available)
-    primary_label = "Use Goal action form" if form_available else next_action.action
+    primary_label = _goal_action_cta_label(next_action, form_available)
     primary_surface = SafeHtml(
         f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
     )
@@ -13530,6 +13530,17 @@ def _goal_jump_bar(phase: str, next_action: GoalNextAction) -> str:
     )
 
 
+def _goal_action_cta_label(
+    next_action: GoalNextAction,
+    form_available: bool,
+    *,
+    fallback: str | None = None,
+) -> str:
+    if form_available:
+        return next_action.action
+    return fallback or next_action.action
+
+
 def _goal_action_dock(
     root: Path,
     state: dict[str, Any],
@@ -13545,7 +13556,7 @@ def _goal_action_dock(
     form = _goal_next_action_form(state, next_action)
     form_available = bool(form)
     primary_href = "#goal-action-dock-form" if form_available else next_action.href
-    primary_label = "Use current action" if form_available else next_action.action
+    primary_label = _goal_action_cta_label(next_action, form_available)
     primary_surface_label = (
         "Current Action Form" if form_available else next_action.action
     )
@@ -13729,7 +13740,7 @@ def _goal_progress_meter(
         meter_status = "not_started"
     form_available = bool(_goal_next_action_form(state, next_action))
     action_href = "#goal-next-action-form" if form_available else next_action.href
-    action_label = "Use Goal action form" if form_available else next_action.action
+    action_label = _goal_action_cta_label(next_action, form_available)
     latest_ci = _latest_ci_evidence_record(root, project_id=goal.project_id)
     ci_status = "missing"
     ci_source = "none"
@@ -13868,7 +13879,7 @@ def _goal_attention_digest(
     gates, _, current_gate = _goal_workflow_gate_summary(root, state, next_action)
     form_available = bool(_goal_next_action_form(state, next_action))
     primary_href = "#goal-next-action-form" if form_available else next_action.href
-    primary_label = "Use Goal action form" if form_available else next_action.action
+    primary_label = _goal_action_cta_label(next_action, form_available)
     if open_recommendations:
         recommendation_target = _goal_recommendation_target(goal, open_recommendation)
         recommendation_href = recommendation_target.href
@@ -14042,7 +14053,7 @@ def _goal_decision_queue(
     goal = state["goal"]
     form_available = bool(_goal_next_action_form(state, next_action))
     primary_href = "#goal-next-action-form" if form_available else next_action.href
-    primary_label = "Use Goal action form" if form_available else next_action.action
+    primary_label = _goal_action_cta_label(next_action, form_available)
     pending_worktree = [
         item
         for item in state["worktree_approvals"]
@@ -14372,7 +14383,11 @@ def _goal_first_run_rail(
     current_step = str(progress["current_step"])
     form_available = bool(_goal_next_action_form(state, next_action))
     primary_href = "#goal-next-action-form" if form_available else next_action.href
-    primary_label = "Use Goal action form" if form_available else "Open next surface"
+    primary_label = _goal_action_cta_label(
+        next_action,
+        form_available,
+        fallback="Open next surface",
+    )
     delegation_id = str(progress.get("delegation_id") or "")
     cards: list[str] = []
     lines: list[str] = []
@@ -14456,7 +14471,11 @@ def _goal_live_state(
     goal = state["goal"]
     form_available = bool(_goal_next_action_form(state, next_action))
     primary_href = "#goal-next-action-form" if form_available else next_action.href
-    primary_label = "Use Goal action form" if form_available else "Open next surface"
+    primary_label = _goal_action_cta_label(
+        next_action,
+        form_available,
+        fallback="Open next surface",
+    )
     gates, gate_counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
     progress = _goal_progress_label(state)
     open_incidents = sum(1 for row in state["incidents"] if row["status"] == "open")
@@ -14928,9 +14947,7 @@ def _goal_operator_workbench(
     waiting_items = open_incidents + open_recommendations + pending_approvals
     form_available = bool(_goal_next_action_form(state, next_action))
     primary_href = "#goal-next-action-form" if form_available else next_action.href
-    primary_label = (
-        "Use Goal action form" if form_available else next_action.action
-    )
+    primary_label = _goal_action_cta_label(next_action, form_available)
     primary_surface = SafeHtml(
         f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
     )
@@ -15081,7 +15098,11 @@ def _goal_workflow_map(
     )
     waiting_items = open_incidents + open_recommendations + pending_approvals
     primary_href = "#goal-next-action-form" if action_form_available else next_action.href
-    primary_label = "Use Goal action form" if action_form_available else "Open current surface"
+    primary_label = _goal_action_cta_label(
+        next_action,
+        action_form_available,
+        fallback="Open current surface",
+    )
     approval_href = f"/approvals?goal_id={quote(goal.id)}"
     approval_label = "Review goal approvals" if pending_approvals else "Open approvals"
     manual_boundary = (
@@ -15373,9 +15394,7 @@ def _goal_coder_handoff_digest(
     digest_status = token_statuses.get(handoff_token, handoff_token)
     action_form_available = bool(_goal_next_action_form(state, next_action))
     primary_href = "#goal-next-action-form" if action_form_available else next_action.href
-    primary_label = (
-        "Use Goal action form" if action_form_available else next_action.action
-    )
+    primary_label = _goal_action_cta_label(next_action, action_form_available)
     primary_surface = SafeHtml(
         f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
     )
@@ -15841,7 +15860,7 @@ def _goal_command_bar(
     progress = _goal_progress_label(state)
     form_available = bool(_goal_next_action_form(state, next_action))
     primary_href = "#goal-next-action-form" if form_available else next_action.href
-    primary_label = "Open action form" if form_available else next_action.action
+    primary_label = _goal_action_cta_label(next_action, form_available)
     command_cards = "".join(
         [
             "<div class='goal-command-card goal-command-card-primary'>",
@@ -16021,7 +16040,11 @@ def _goal_daily_loop(
     pause_form = _goal_pause_form(state)
     pause_available = "true" if pause_form else "false"
     continue_href = "#goal-next-action-form" if form_available else next_action.href
-    continue_label = "Use Goal action form" if form_available else "Open next surface"
+    continue_label = _goal_action_cta_label(
+        next_action,
+        form_available,
+        fallback="Open next surface",
+    )
     start_status = "ready" if workspace_matches_goal else "needs_saved_goal"
     pause_label = "Pause Goal" if pause_form else "Pause unavailable"
     daily_loop_cards = "".join(
@@ -16212,7 +16235,11 @@ def _goal_return_brief(
     ci_state = _ci_evidence_command_state(root)
     action_form_available = bool(_goal_next_action_form(state, next_action))
     primary_href = "#goal-next-action-form" if action_form_available else next_action.href
-    primary_label = "Use Goal action form" if action_form_available else "Open next surface"
+    primary_label = _goal_action_cta_label(
+        next_action,
+        action_form_available,
+        fallback="Open next surface",
+    )
     workspace_matches_goal = saved_goal == goal.id
     workspace_matches_project = saved_project == goal.project_id
     done = counts.get("done", 0)
@@ -16391,7 +16418,11 @@ def _goal_session_digest(
     gates, gate_counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
     form_available = bool(_goal_next_action_form(state, next_action))
     primary_href = "#goal-next-action-form" if form_available else next_action.href
-    primary_label = "Use Goal action form" if form_available else "Open next surface"
+    primary_label = _goal_action_cta_label(
+        next_action,
+        form_available,
+        fallback="Open next surface",
+    )
     progress = _goal_progress_label(state)
     last_action_status = "none"
     if last_action:
@@ -16524,7 +16555,7 @@ def _goal_activity_pulse(
     latest_artifact_href = latest_artifact.get("href") or "#goal-artifact-command-bar"
     action_form_available = bool(_goal_next_action_form(state, next_action))
     primary_href = "#goal-next-action-form" if action_form_available else next_action.href
-    primary_label = "Use Goal action form" if action_form_available else next_action.action
+    primary_label = _goal_action_cta_label(next_action, action_form_available)
 
     if recent:
         recent_rows = "".join(
@@ -16708,7 +16739,11 @@ def _goal_continuation_rail(
     then_action = step_values[2][0] if len(step_values) > 2 else "none"
     then_surface = step_values[2][1] if len(step_values) > 2 else "none"
     primary_href = "#goal-next-action-form" if action_form_available else next_action.href
-    primary_label = "Use Goal action form" if action_form_available else "Open current surface"
+    primary_label = _goal_action_cta_label(
+        next_action,
+        action_form_available,
+        fallback="Open current surface",
+    )
     next_href, next_label = _goal_continuation_surface_href_label(next_surface)
     then_href, then_label = _goal_continuation_surface_href_label(then_surface)
     publish_href = "#goal-workflow-map"
@@ -19299,7 +19334,11 @@ def _goal_timeline_digest(
     next_action = _goal_next_action(root, state)
     form_available = bool(_goal_next_action_form(state, next_action))
     action_href = "#goal-next-action-form" if form_available else next_action.href
-    action_label = "Use Goal action form" if form_available else next_action.href
+    action_label = _goal_action_cta_label(
+        next_action,
+        form_available,
+        fallback=next_action.href,
+    )
     gates, gate_counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
     first = items[0] if items else {}
     latest = items[-1] if items else {}
@@ -23644,7 +23683,11 @@ def _goal_remaining_work_command_bar(
         reason = "no_pending_or_waiting_gates"
     form_available = bool(_goal_next_action_form(state, next_action))
     primary_href = "#goal-next-action-form" if form_available else next_action.href
-    primary_label = "Use Goal action form" if form_available else "Open next surface"
+    primary_label = _goal_action_cta_label(
+        next_action,
+        form_available,
+        fallback="Open next surface",
+    )
     waiting_total = len(open_incidents) + len(open_recommendations) + pending_approvals
     if pending_approvals:
         waiting_href = f"/approvals?goal_id={quote(goal.id)}"
@@ -25372,7 +25415,7 @@ def _workflow_action_label(next_action: str) -> str:
     labels = {
         "generate_context_pack": "Generate context pack",
         "run_delegation_or_review_implementation_handoff": "Review implementation handoff",
-        "prepare_coder_from_handoff": "Prepare coder from handoff",
+        "prepare_coder_from_handoff": "Prepare coder packet",
         "prepare_coder_worktree_plan": "Prepare worktree plan",
         "decide_pending_worktree_approval": "Decide worktree approval",
         "run_approved_worktree_from_cli": "Run approved worktree",
@@ -32728,7 +32771,7 @@ def _delegation_run_continuation_strip(
         reason = f"incident={incident_id}"
     elif inline_action["available"]:
         primary_href = "#delegation-run-continuation-action-form"
-        primary_label = "Continue Here"
+        primary_label = action_label
         continuation_status = "action_form_ready"
         reason = next_action
     elif next_action in {
@@ -40074,7 +40117,11 @@ def _notice_banner(root: Path, notice: str | None, current_path: str) -> str:
     )
     next_step_form_available = bool(next_step_form)
     primary_href = "#action-notice-next-step-form" if next_step_form_available else recommendation["href"]
-    primary_label = "Use current action" if next_step_form_available else recommendation["label"]
+    primary_label = (
+        recommendation["action"]
+        if next_step_form_available
+        else recommendation["label"]
+    )
     form_surface: str | SafeHtml = (
         SafeHtml("<a href='#action-notice-next-step-form'>Action Notice Next Step</a>")
         if next_step_form_available
@@ -40240,7 +40287,10 @@ def _action_notice_next_step_form_section(
                     ("action_notice_next_step_next_action", next_action.action),
                     (
                         "action_notice_next_step_primary_surface",
-                        SafeHtml("<a href='#action-notice-next-step-form'>Use current action</a>"),
+                        SafeHtml(
+                            "<a href='#action-notice-next-step-form'>"
+                            f"{_e(next_action.action)}</a>"
+                        ),
                     ),
                     (
                         "action_notice_next_step_recommended_surface",
@@ -40265,7 +40315,10 @@ def _action_notice_next_step_form_section(
             _ul(
                 [
                     f"action_notice_next_step_now: {_e(next_action.action)}",
-                    "action_notice_next_step_click: <a href='#action-notice-next-step-form'>Use current action</a>",
+                    (
+                        "action_notice_next_step_click: "
+                        f"<a href='#action-notice-next-step-form'>{_e(next_action.action)}</a>"
+                    ),
                     f"action_notice_next_step_source: <a href='{_e(source_surface)}'>{_e(source_surface)}</a>",
                     f"action_notice_next_step_gate: {_e(current_gate)}",
                     "action_notice_next_step_safety: reuses existing confirmed Goal action form",
@@ -40336,7 +40389,7 @@ def _action_notice_recommendation(
         if goal is not None and isinstance(next_action, GoalNextAction):
             if form_available:
                 href = f"/goals/{quote(goal.id)}#goal-action-dock-form"
-                label = "Use current action"
+                label = next_action.action
             else:
                 href = next_action.href
                 label = next_action.action
@@ -41471,7 +41524,7 @@ def _operator_status_ribbon(
                 if route_path == goal_path
                 else f"{goal_path}#goal-action-dock-form"
             )
-            primary_label = "Use current action"
+            primary_label = next_action.action
         if int(open_incidents):
             attention_status = "needs_incident_review"
             attention_action = "Review incidents"
@@ -47819,7 +47872,7 @@ def _delegation_run_action_label(next_action: str) -> str:
     labels = {
         "inspect_delegation_run_incident": "Inspect delegation incident",
         "run_delegation": "Run delegation",
-        "prepare_coder_from_handoff": "Prepare coder from handoff",
+        "prepare_coder_from_handoff": "Prepare coder packet",
         "create_implementation_handoff": "Create implementation handoff",
         "review_delegation_result": "Review delegation result",
     }
