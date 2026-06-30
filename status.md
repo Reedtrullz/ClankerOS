@@ -1,5 +1,37 @@
 # Status
 
+## 2026-06-30 Search Goal Action UX
+
+- Made Global Search action-aware for Goal results. When a matched Goal has a
+  browser-confirmed current action form, the Search Operator Workbench, Search
+  Result Map, and Search Command Bar now point their primary surfaces directly
+  to `/goals/<goal_id>#goal-action-dock-form` with the concrete action label,
+  such as `Create commit request`, instead of only opening the raw Goal page.
+- The flat Search Results row still keeps the Goal title link to
+  `/goals/<goal_id>` and now adds a separate current-action link plus
+  `action_surface` and `goal_action_dock_form` source evidence. This keeps the
+  exact object link inspectable while making Search usable as a command
+  surface.
+- Updated focused route/demo coverage for empty-search source evidence,
+  populated Goal-search primary surfaces, command-bar first action/href/source,
+  raw Goal result fallback evidence, and the inline current-action result
+  link.
+- Verification passed locally: data volume precheck had `74Gi` free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`;
+  `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py`;
+  focused `tests/test_first_milestone.py -k
+  'test_local_app_demo_scenario_populates_fixture_state'` (`1 passed, 516
+  deselected`); focused route/demo pair `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`); and temp-root `python3 -m agent_os.cli --root "$scratch"
+  app-smoke-test` with all route markers matched and provider/network/external
+  mutation counters at `0`.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice. The Search affordance is read-only navigation into existing
+  confirmation-gated Goal forms; it did not deploy, create a PR, call
+  providers, push from the app, or add any external mutation path.
+
 ## 2026-06-30 Goal Continuation Current Action UX
 
 - Made the Goal Continuation Rail and full Goal Workflow Map agree with the

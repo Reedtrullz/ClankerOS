@@ -4,6 +4,16 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Global Search now acts as a command surface for matched Goals. When a Goal
+  result has a browser-confirmed current action form, the Search Operator
+  Workbench, Search Result Map, Search Command Bar, and flat result row expose
+  `/goals/<goal_id>#goal-action-dock-form` with the concrete action label such
+  as `Create commit request`, while preserving the raw `/goals/<goal_id>` title
+  link and source evidence. Local proof includes a `74Gi` free-space precheck,
+  py-compile, diff check, focused demo pytest, focused route/demo pytest, and a
+  temp-root app-smoke-test with all route markers matched and zero provider,
+  network, or external mutation counters; pushed GitHub Actions and full-suite
+  proof are still pending.
 - Goal Continuation Rail and the full Goal Workflow Map now route the current
   actionable gate to the visible confirmed Goal Action Dock form when one
   exists. For the ready-to-commit demo Goal, the current `commit_request` gate

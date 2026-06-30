@@ -6826,6 +6826,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "search_result_map_artifacts_results</dt><dd>0" in search.body
     assert "search_result_map_primary_lane</dt><dd>query" in search.body
     assert "search_result_map_primary_surface</dt><dd><a href='#search-form'>Search form</a>" in search.body
+    assert "search_result_map_primary_surface_source</dt><dd>search_form" in search.body
     assert "search_result_map_write_on_get</dt><dd>false" in search.body
     assert "search_result_map_network_actions_taken</dt><dd>0" in search.body
     assert "search_result_map_external_effects_created</dt><dd>false" in search.body
@@ -6862,6 +6863,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "search_command_query</dt><dd>none" in search.body
     assert "search_command_total_results</dt><dd>0" in search.body
     assert "search_command_first_action</dt><dd>Type a search query" in search.body
+    assert "search_command_first_surface_source</dt><dd>search_form" in search.body
     assert "search_command_first_surface</dt><dd><a href='#search-form'>Search form</a>" in search.body
     assert "search_command_empty: enter a query to search local indexed state" in search.body
     assert "search_command_write_on_get</dt><dd>false" in search.body
@@ -15440,12 +15442,19 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "search_result_map_goals_results</dt><dd>" in search.body
     assert "search_result_map_artifacts_results</dt><dd>" in search.body
     assert "search_result_map_primary_lane</dt><dd>goals" in search.body
-    assert f"search_result_map_primary_surface</dt><dd><a href='/goals/{result.goal_id}'" in search.body
+    assert (
+        f"search_result_map_primary_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in search.body
+    assert "search_result_map_primary_surface_source</dt><dd>goal_action_dock_form" in search.body
     assert "search_result_map_write_on_get</dt><dd>false" in search.body
     assert "search_result_map_network_actions_taken</dt><dd>0" in search.body
     assert "search_result_map_external_effects_created</dt><dd>false" in search.body
     assert "search_result_map_raw_filesystem_browsing</dt><dd>false" in search.body
-    assert "search_result_map_click: <a href='/goals/" in search.body
+    assert (
+        f"search_result_map_click: <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in search.body
     assert "search_result_filter_status</dt><dd>results_ready" in search.body
     assert "search_result_filter_query</dt><dd>fixture-backed" in search.body
     assert "search_result_filter_total_results</dt><dd>" in search.body
@@ -15472,20 +15481,47 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "search_workbench_query</dt><dd>fixture-backed" in search.body
     assert "search_workbench_total_results</dt><dd>" in search.body
     assert "search_workbench_first_kind</dt><dd>goal" in search.body
-    assert f"search_workbench_first_surface</dt><dd><a href='/goals/{result.goal_id}'" in search.body
-    assert "search_workbench_open: <a href='/goals/" in search.body
+    assert (
+        f"search_workbench_first_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in search.body
+    assert "search_workbench_first_surface_source</dt><dd>goal_action_dock_form" in search.body
+    assert (
+        f"search_workbench_first_result_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        "Demo the ClankerOS local operator app with fixture-backed state</a>"
+    ) in search.body
+    assert (
+        f"search_workbench_open: <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in search.body
     assert "search_command_query</dt><dd>fixture-backed" in search.body
     assert "search_command_goal_results</dt><dd>" in search.body
     assert "search_command_artifact_results</dt><dd>" in search.body
-    assert "search_command_first_action</dt><dd>Open first result" in search.body
+    assert "search_command_first_action</dt><dd>Create commit request" in search.body
     assert "search_command_first_kind</dt><dd>goal" in search.body
-    assert f"search_command_first_href</dt><dd>/goals/{result.goal_id}" in search.body
-    assert "search_command_first_surface</dt><dd><a href='/goals/" in search.body
+    assert (
+        f"search_command_first_href</dt><dd>/goals/{result.goal_id}#goal-action-dock-form"
+        in search.body
+    )
+    assert f"search_command_first_result_href</dt><dd>/goals/{result.goal_id}" in search.body
+    assert "search_command_first_surface_source</dt><dd>goal_action_dock_form" in search.body
+    assert (
+        f"search_command_first_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in search.body
     assert "search_command_write_on_get</dt><dd>false" in search.body
     assert "search_command_network_actions_taken</dt><dd>0" in search.body
     assert "search_command_external_effects_created</dt><dd>false" in search.body
     assert "search_command_raw_filesystem_browsing</dt><dd>false" in search.body
-    assert "search_command_click: <a href='/goals/" in search.body
+    assert (
+        f"search_command_click: <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in search.body
+    assert (
+        "data-search-result-action='true' data-search-result-action-source='goal_action_dock_form' "
+        f"href='/goals/{result.goal_id}#goal-action-dock-form'>Create commit request</a>"
+    ) in search.body
+    assert f"action_surface=/goals/{result.goal_id}#goal-action-dock-form" in search.body
     assert "goal" in search.body
     assert result.goal_id in search.body
     assert "artifact" in search.body
@@ -15494,8 +15530,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert search_next_action.status == 200
     assert "Global Search" in search_next_action.body
     assert "Search Command Bar" in search_next_action.body
-    assert "search_command_first_action</dt><dd>Open first result" in search_next_action.body
+    assert "search_command_first_action</dt><dd>Create commit request" in search_next_action.body
     assert "search_command_first_kind</dt><dd>goal" in search_next_action.body
+    assert (
+        f"search_command_first_href</dt><dd>/goals/{result.goal_id}#goal-action-dock-form"
+        in search_next_action.body
+    )
+    assert "search_command_first_surface_source</dt><dd>goal_action_dock_form" in search_next_action.body
     assert result.goal_id in search_next_action.body
     assert "phase=Ready to commit" in search_next_action.body
     assert "next_action=Create commit request" in search_next_action.body

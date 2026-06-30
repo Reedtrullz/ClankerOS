@@ -6569,14 +6569,27 @@ def _search_page(root: Path, *, query: str) -> str:
     )
 
 
+def _search_item_primary_href(item: dict[str, str]) -> str:
+    return item.get("action_href") or item["href"]
+
+
+def _search_item_primary_label(item: dict[str, str]) -> str:
+    return item.get("action_label") or item["title"]
+
+
+def _search_item_primary_source(item: dict[str, str]) -> str:
+    return item.get("action_surface_source") or "result_href"
+
+
 def _search_operator_workbench(term: str, results: list[dict[str, str]]) -> str:
     counts: dict[str, int] = {}
     for item in results:
         category = item.get("category", "unknown")
         counts[category] = counts.get(category, 0) + 1
     first = results[0] if results else None
-    first_href = first["href"] if first else "#search-form"
-    first_title = first["title"] if first else "Search form"
+    first_href = _search_item_primary_href(first) if first else "#search-form"
+    first_title = _search_item_primary_label(first) if first else "Search form"
+    first_source = _search_item_primary_source(first) if first else "search_form"
     first_kind = first["category"] if first else "none"
     query_action = "Refine query" if term else "Type a search query"
     query_summary = term or "No query entered yet"
@@ -6585,11 +6598,16 @@ def _search_operator_workbench(term: str, results: list[dict[str, str]]) -> str:
         f"{category}:{count}" for category, count in sorted(counts.items())
     ) or "none"
     results_href = "#search-results" if results else "#search-form"
-    open_action = "Open first result" if results else "Start search"
+    open_action = first_title if results else "Start search"
     open_summary = (
-        f"{first_kind}: {first_title}"
+        f"{first_kind}: {first['title']}"
         if first
         else "Enter a query to search indexed local state"
+    )
+    first_result_surface = (
+        SafeHtml(f"<a href='{_e(first['href'])}'>{_e(first['title'])}</a>")
+        if first
+        else SafeHtml("<a href='#search-form'>Search form</a>")
     )
     rows: list[tuple[str, str | SafeHtml]] = [
         ("search_workbench_status", "results_ready" if results else ("ready_for_query" if not term else "empty")),
@@ -6598,6 +6616,8 @@ def _search_operator_workbench(term: str, results: list[dict[str, str]]) -> str:
         ("search_workbench_category_summary", category_summary),
         ("search_workbench_first_kind", first_kind),
         ("search_workbench_first_surface", SafeHtml(f"<a href='{_e(first_href)}'>{_e(first_title)}</a>")),
+        ("search_workbench_first_surface_source", first_source),
+        ("search_workbench_first_result_surface", first_result_surface),
         ("search_workbench_results_surface", SafeHtml(f"<a href='{_e(results_href)}'>Search Results</a>")),
         ("search_workbench_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
         ("search_workbench_write_on_get", "false"),
@@ -6674,19 +6694,22 @@ def _search_result_map(term: str, results: list[dict[str, str]]) -> str:
     primary_label = "Search form"
     primary_href = "#search-form"
     primary_reason = "enter a query to search indexed local state" if not term else "no matching local indexed records"
+    primary_surface_source = "search_form"
     for key, label, categories, action in lane_specs:
         lane_results = [item for item in results if item.get("category", "unknown") in categories]
         first = lane_results[0] if lane_results else None
         if first:
-            href = first["href"]
+            href = _search_item_primary_href(first)
             target = first["title"]
             summary = f"{first['category']}: {first['summary']}"
-            card_action = action
+            card_action = _search_item_primary_label(first)
+            source = _search_item_primary_source(first)
         else:
             href = "#search-form" if not results else "#search-results"
             target = "Search form" if not results else "Review results"
             summary = "No matches in this lane."
             card_action = "Refine search" if term else "Start search"
+            source = "search_form" if not results else "search_results"
         lanes.append(
             {
                 "key": key,
@@ -6696,14 +6719,16 @@ def _search_result_map(term: str, results: list[dict[str, str]]) -> str:
                 "target": target,
                 "summary": summary,
                 "action": card_action,
+                "source": source,
                 "ready": bool(lane_results),
             }
         )
         if first and primary_href == "#search-form":
             primary_lane = key
-            primary_label = str(target)
+            primary_label = str(card_action)
             primary_href = str(href)
             primary_reason = str(summary)
+            primary_surface_source = str(source)
     card_markup: list[str] = []
     for lane in lanes:
         is_primary = lane["key"] == primary_lane
@@ -6736,6 +6761,7 @@ def _search_result_map(term: str, results: list[dict[str, str]]) -> str:
             "search_result_map_primary_surface",
             SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
         ),
+        ("search_result_map_primary_surface_source", primary_surface_source),
         ("search_result_map_primary_reason", primary_reason),
         ("search_result_map_results_surface", SafeHtml("<a href='#search-results'>Search Results</a>")),
         ("search_result_map_write_on_get", "false"),
@@ -6853,18 +6879,22 @@ def _search_command_bar(term: str, results: list[dict[str, str]]) -> str:
     first_kind = "none"
     first_title = "none"
     first_href = "none"
+    first_result_href = "none"
     first_summary = "none"
     first_action = "Type a search query" if not term else "No local results"
+    first_source = "search_form" if not term else "no_results"
     first_surface = SafeHtml("<a href='#search-form'>Search form</a>")
     if results:
         first = results[0]
         first_kind = first["category"]
         first_title = first["title"]
-        first_href = first["href"]
+        first_href = _search_item_primary_href(first)
+        first_result_href = first["href"]
         first_summary = first["summary"]
-        first_action = "Open first result"
+        first_action = _search_item_primary_label(first)
+        first_source = _search_item_primary_source(first)
         first_surface = SafeHtml(
-            f"<a href='{_e(first_href)}'>{_e(first_title)}</a>"
+            f"<a href='{_e(first_href)}'>{_e(first_action)}</a>"
         )
     lines = [
         f"search_command_now: {_e(first_action)}",
@@ -6906,7 +6936,9 @@ def _search_command_bar(term: str, results: list[dict[str, str]]) -> str:
                     ("search_command_first_kind", first_kind),
                     ("search_command_first_title", first_title),
                     ("search_command_first_href", first_href),
+                    ("search_command_first_result_href", first_result_href),
                     ("search_command_first_action", first_action),
+                    ("search_command_first_surface_source", first_source),
                     ("search_command_first_surface", first_surface),
                     ("search_command_first_summary", first_summary),
                     ("search_command_write_on_get", "false"),
@@ -6926,17 +6958,31 @@ def _search_results(root: Path, storage: Storage, term: str) -> list[dict[str, s
     needle = term.lower()
     results: list[dict[str, str]] = []
 
-    def add(category: str, title: str, href: str, summary: str) -> None:
+    def add(
+        category: str,
+        title: str,
+        href: str,
+        summary: str,
+        *,
+        action_href: str = "",
+        action_label: str = "",
+        action_surface_source: str = "",
+    ) -> None:
         text = " ".join([category, title, href, summary]).lower()
         if needle in text:
-            results.append(
-                {
-                    "category": category,
-                    "title": title,
-                    "href": href,
-                    "summary": summary,
-                }
-            )
+            item = {
+                "category": category,
+                "title": title,
+                "href": href,
+                "summary": summary,
+            }
+            if action_href:
+                item["action_href"] = action_href
+            if action_label:
+                item["action_label"] = action_label
+            if action_surface_source:
+                item["action_surface_source"] = action_surface_source
+            results.append(item)
 
     def delegation_goal_id(delegation_id: str) -> str:
         delegation = storage.get_subagent_delegation(delegation_id)
@@ -7005,6 +7051,18 @@ def _search_results(root: Path, storage: Storage, term: str) -> list[dict[str, s
         goal_id = str(row["id"])
         goal_state = _goal_state(root, storage, goal_id)
         next_action = _goal_next_action(root, goal_state)
+        action_form_available = bool(_goal_next_action_form(goal_state, next_action))
+        action_href = _goal_primary_action_href(
+            goal_state,
+            next_action,
+            form_available=action_form_available,
+            absolute=True,
+        )
+        action_surface_source = (
+            "goal_action_dock_form"
+            if action_form_available
+            else "next_action_href"
+        )
         add(
             "goal",
             str(row["title"] or row["description"] or row["id"]),
@@ -7013,8 +7071,12 @@ def _search_results(root: Path, storage: Storage, term: str) -> list[dict[str, s
                 f"id={goal_id} project={row['project_id']} status={row['status']} "
                 f"phase={_goal_current_phase(goal_state)} "
                 f"next_action={next_action.action} "
+                f"action_surface={action_href} "
                 f"remaining_work={_goal_remaining_work_summary(goal_state)}"
             ),
+            action_href=action_href,
+            action_label=_goal_action_cta_label(next_action, action_form_available),
+            action_surface_source=action_surface_source,
         )
     for project in storage.list_registered_projects():
         add(
@@ -7097,6 +7159,17 @@ def _search_result_line(item: dict[str, str]) -> str:
     category = item["category"]
     lane = _search_result_lane_key(category)
     search_text = " ".join([category, item["title"], item["href"], item["summary"]]).lower()
+    action_href = item.get("action_href", "")
+    action_label = item.get("action_label", "")
+    action_source = item.get("action_surface_source", "")
+    action_markup = ""
+    if action_href and action_label:
+        action_markup = (
+            " "
+            "<a class='search-result-action' data-search-result-action='true' "
+            f"data-search-result-action-source='{_e(action_source or 'result_href')}' "
+            f"href='{_e(action_href)}'>{_e(action_label)}</a>"
+        )
     return (
         "<span data-search-result-item='true' "
         f"data-search-result-lane='{_e(lane)}' "
@@ -7104,7 +7177,7 @@ def _search_result_line(item: dict[str, str]) -> str:
         f"data-search-result-text='{_e(search_text)}'>"
         f"<strong>{_e(category)}</strong> "
         f"<a href='{_e(item['href'])}'>{_e(item['title'])}</a>: "
-        f"{_e(item['summary'])}</span>"
+        f"{_e(item['summary'])}{action_markup}</span>"
     )
 
 
