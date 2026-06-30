@@ -15062,6 +15062,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-artifact-reader-open='true'" in goal.body
     assert "data-goal-artifact-reader-view-status='true'>View: default</span>" in goal.body
     assert "data-goal-artifact-reader-reset='true'>Reset reader</button>" in goal.body
+    assert "data-goal-artifact-reader-focus='true'" in goal.body
+    assert (
+        f"data-goal-artifact-reader-selected-label='true'>"
+        f"coder run {result.coder_worktree_run_id} review</strong>"
+    ) in goal.body
+    assert "data-goal-artifact-reader-selected-kind='true'>markdown</strong>" in goal.body
+    assert "data-goal-artifact-reader-selected-source='true'>coder_run</strong>" in goal.body
+    assert f">Open coder run {result.coder_worktree_run_id} review</a>" in goal.body
     assert "data-goal-artifact-reader-evidence='true'" in goal.body
     assert "data-goal-artifact-reader-previews='true'" in goal.body
     assert (
@@ -15080,6 +15088,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_artifact_reader_selected_source</dt><dd>coder_run" in goal.body
     assert "goal_artifact_reader_selected_renderer</dt><dd>markdown_safe_html" in goal.body
     assert "goal_artifact_reader_byte_cap</dt><dd>8000" in goal.body
+    assert f"goal_artifact_reader_open_label</dt><dd>Open coder run {result.coder_worktree_run_id} review" in goal.body
+    assert (
+        "goal_artifact_reader_open_surface</dt><dd><a href='/artifacts?path=runs/"
+        in goal.body
+    )
+    assert "goal_artifact_reader_focus_available</dt><dd>true" in goal.body
     assert f"goal_artifact_reader_memory_storage</dt><dd>localStorage:clankeros-goal-artifact-reader:{result.goal_id}" in goal.body
     assert "goal_artifact_reader_memory_fields</dt><dd>path goal" in goal.body
     assert "goal_artifact_reader_reset</dt><dd>available" in goal.body
@@ -15089,12 +15103,21 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_artifact_reader_provider_calls_taken</dt><dd>0" in goal.body
     assert "goal_artifact_reader_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_artifact_reader_external_effects_created</dt><dd>false" in goal.body
+    assert f"goal_artifact_reader_open: <a href='/artifacts?path=runs/" in goal.body
+    assert f"Open coder run {result.coder_worktree_run_id} review</a>" in goal.body
+    assert (
+        f"goal_artifact_reader_focus: selected=coder run {result.coder_worktree_run_id} "
+        "review source=coder_run"
+    ) in goal.body
     assert "goal_artifact_reader_memory: restores selected known artifact from browser storage per Goal" in goal.body
     assert "goal_artifact_reader_safety: bounded inert in-page preview of registered Goal artifacts only" in goal.body
     assert "reader_artifact_renderer</dt><dd>markdown_safe_html" in goal.body
     assert "data-artifact-renderer='markdown_safe_html'" in goal.body
     assert "function updateGoalArtifactReader(path, options)" in goal.body
     assert "var selectedShown = false;" in goal.body
+    assert "var selectedPreview = null;" in goal.body
+    assert "openLink.textContent = openLabel;" in goal.body
+    assert "data-goal-artifact-reader-selected-label='true'" in goal.body
     assert "window.localStorage.setItem(goalArtifactReaderStorageKey(reader)" in goal.body
     assert "window.localStorage.removeItem(goalArtifactReaderStorageKey(reader))" in goal.body
     assert "data-goal-artifact-groups='true'" in goal.body

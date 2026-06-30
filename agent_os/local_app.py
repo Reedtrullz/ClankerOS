@@ -23095,6 +23095,14 @@ def _goal_artifact_reader(
     selected_lines = str(selected_preview["line_count"]) if selected_preview else "0"
     selected_truncated = str(selected_preview["truncated"]).lower() if selected_preview else "false"
     selected_href = _artifact_href(root, selected_path) if selected_path else "#goal-artifact-reader"
+    selected_open_label = (
+        _compact_label(f"Open {selected_label}", 96)
+        if selected_preview
+        else "Open full artifact"
+    )
+    selected_open_surface = SafeHtml(
+        f"<a href='{_e(selected_href)}'>{_e(selected_open_label)}</a>"
+    )
     storage_key = f"clankeros-goal-artifact-reader:{goal.id}"
     status = "available" if previews else "empty"
     return "".join(
@@ -23107,9 +23115,20 @@ def _goal_artifact_reader(
             "<label>Read <select data-goal-artifact-reader-select='true'>",
             "".join(options) if options else "<option value=''>No available artifacts</option>",
             "</select></label>",
-            f"<a class='goal-artifact-reader-open' data-goal-artifact-reader-open='true' href='{_e(selected_href)}'>Open full artifact</a>",
+            f"<a class='goal-artifact-reader-open' data-goal-artifact-reader-open='true' href='{_e(selected_href)}'>{_e(selected_open_label)}</a>",
             "<span class='goal-artifact-reader-view-status' data-goal-artifact-reader-view-status='true'>View: default</span>",
             "<button type='button' class='goal-artifact-reader-reset' data-goal-artifact-reader-reset='true'>Reset reader</button>",
+            "</div>",
+            "<div class='goal-artifact-reader-focus-grid' data-goal-artifact-reader-focus='true'>",
+            "<article><span>Selected</span>"
+            f"<strong data-goal-artifact-reader-selected-label='true'>{_e(selected_label)}</strong></article>",
+            "<article><span>Type</span>"
+            f"<strong data-goal-artifact-reader-selected-kind='true'>{_e(selected_kind)}</strong></article>",
+            "<article><span>Source</span>"
+            f"<strong data-goal-artifact-reader-selected-source='true'>{_e(selected_source)}</strong></article>",
+            "<article><span>Open</span>"
+            f"<strong><a data-goal-artifact-reader-open='true' href='{_e(selected_href)}'>{_e(selected_open_label)}</a></strong></article>",
+            "<article><span>Safety</span><strong>Read-only preview</strong></article>",
             "</div>",
             "<details class='goal-artifact-reader-evidence' data-goal-artifact-reader-evidence='true'><summary>Goal artifact reader evidence</summary>",
             _kv(
@@ -23128,6 +23147,9 @@ def _goal_artifact_reader(
                     ("goal_artifact_reader_selected_line_count", selected_lines),
                     ("goal_artifact_reader_selected_truncated", selected_truncated),
                     ("goal_artifact_reader_full_surface", SafeHtml(f"<a href='{_e(selected_href)}'>{_e(selected_href)}</a>")),
+                    ("goal_artifact_reader_open_label", selected_open_label),
+                    ("goal_artifact_reader_open_surface", selected_open_surface),
+                    ("goal_artifact_reader_focus_available", str(bool(selected_preview)).lower()),
                     ("goal_artifact_reader_byte_cap", str(GOAL_ARTIFACT_READER_BYTES)),
                     ("goal_artifact_reader_persistence", "browser_local_view_memory"),
                     ("goal_artifact_reader_memory_storage", f"localStorage:{storage_key}"),
@@ -23144,7 +23166,8 @@ def _goal_artifact_reader(
             _ul(
                 [
                     f"goal_artifact_reader_now: {_e(selected_label)} kind={_e(selected_kind)}",
-                    f"goal_artifact_reader_open: <a href='{_e(selected_href)}'>{_e(selected_href)}</a>",
+                    f"goal_artifact_reader_open: <a href='{_e(selected_href)}'>{_e(selected_open_label)}</a>",
+                    f"goal_artifact_reader_focus: selected={_e(selected_label)} source={_e(selected_source)}",
                     "goal_artifact_reader_memory: restores selected known artifact from browser storage per Goal",
                     "goal_artifact_reader_safety: bounded inert in-page preview of registered Goal artifacts only",
                 ]
@@ -23218,6 +23241,7 @@ def _goal_artifact_preview(
             "truncated": truncated,
         }
     )
+    inline_open_label = _compact_label(f"Open {record['label']}", 96)
     fallback["html"] = SafeHtml(
         "<article class='goal-artifact-preview' data-goal-artifact-preview='true' "
         f"data-goal-artifact-reader-path='{_e(relative_path)}' "
@@ -23231,7 +23255,7 @@ def _goal_artifact_preview(
         f"{hidden_attr}>"
         "<div class='goal-artifact-preview-header'>"
         f"<h4>{_e(record['label'])}</h4>"
-        f"<a class='goal-artifact-reader-open-inline' href='{_e(full_href)}'>Open full artifact</a>"
+        f"<a class='goal-artifact-reader-open-inline' href='{_e(full_href)}'>{_e(inline_open_label)}</a>"
         "</div>"
         + _kv(
             [
@@ -45347,6 +45371,10 @@ def _html_page(
     .goal-artifact-reader-toolbar {{ display:grid; grid-template-columns:minmax(240px, 1fr) auto auto auto; gap:10px; align-items:end; margin:10px 0; }}
     .goal-artifact-reader-toolbar label {{ display:grid; gap:4px; color:var(--muted); min-width:0; }}
     .goal-artifact-reader-toolbar select {{ width:100%; min-height:34px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 8px; }}
+    .goal-artifact-reader-focus-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin:10px 0; }}
+    .goal-artifact-reader-focus-grid article {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:10px; overflow-wrap:anywhere; }}
+    .goal-artifact-reader-focus-grid span {{ display:block; color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:0; }}
+    .goal-artifact-reader-focus-grid strong {{ display:block; margin-top:4px; }}
     .goal-artifact-reader-open, .goal-artifact-reader-open-inline {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .goal-artifact-reader-view-status {{ min-height:34px; display:inline-flex; align-items:center; color:var(--muted); }}
     .goal-artifact-reader-reset {{ min-height:34px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:7px 10px; }}
@@ -47469,18 +47497,34 @@ def _html_page(
       var selectedPath = paths.indexOf(path || "") !== -1 ? path : (paths[0] || "");
       var previews = Array.prototype.slice.call(reader.querySelectorAll("[data-goal-artifact-preview='true']"));
       var selectedShown = false;
+      var selectedPreview = null;
       previews.forEach(function(preview) {{
         var isSelected = (preview.getAttribute("data-goal-artifact-reader-path") || "") === selectedPath;
         if (isSelected && selectedShown) {{ isSelected = false; }}
-        if (isSelected) {{ selectedShown = true; }}
+        if (isSelected) {{
+          selectedShown = true;
+          selectedPreview = preview;
+        }}
         preview.hidden = !isSelected;
       }});
       var select = reader.querySelector("[data-goal-artifact-reader-select='true']");
       if (select && selectedPath && select.value !== selectedPath) {{ select.value = selectedPath; }}
-      var openLink = reader.querySelector("[data-goal-artifact-reader-open='true']");
-      if (openLink && selectedPath) {{
+      var selectedLabel = selectedPreview ? (selectedPreview.getAttribute("data-goal-artifact-reader-label") || "") : "";
+      var selectedKind = selectedPreview ? (selectedPreview.getAttribute("data-goal-artifact-reader-kind") || "") : "";
+      var selectedSource = selectedPreview ? (selectedPreview.getAttribute("data-goal-artifact-reader-source") || "") : "";
+      var openLabel = selectedLabel ? "Open " + selectedLabel : "Open full artifact";
+      var selectedLabelNodes = Array.prototype.slice.call(reader.querySelectorAll("[data-goal-artifact-reader-selected-label='true']"));
+      selectedLabelNodes.forEach(function(node) {{ node.textContent = selectedLabel || "none"; }});
+      var selectedKindNodes = Array.prototype.slice.call(reader.querySelectorAll("[data-goal-artifact-reader-selected-kind='true']"));
+      selectedKindNodes.forEach(function(node) {{ node.textContent = selectedKind || "none"; }});
+      var selectedSourceNodes = Array.prototype.slice.call(reader.querySelectorAll("[data-goal-artifact-reader-selected-source='true']"));
+      selectedSourceNodes.forEach(function(node) {{ node.textContent = selectedSource || "none"; }});
+      var openLinks = Array.prototype.slice.call(reader.querySelectorAll("[data-goal-artifact-reader-open='true']"));
+      openLinks.forEach(function(openLink) {{
+        if (!selectedPath) {{ return; }}
         openLink.setAttribute("href", "/artifacts?path=" + encodeURIComponent(selectedPath));
-      }}
+        openLink.textContent = openLabel;
+      }});
       if (options.save !== false && selectedPath) {{
         saveGoalArtifactReaderState(reader, selectedPath);
       }}

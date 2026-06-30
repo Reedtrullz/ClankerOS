@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal Artifact Reader now opens with a visible selected-artifact focus strip
+  for Selected, Type, Source, Open, and Safety. Its toolbar/focus/full-preview
+  links now say concrete actions such as `Open coder run <run_id> review`
+  instead of generic `Open full artifact`, while exact `/artifacts?path=...`
+  surfaces remain in reader evidence. Local proof includes py-compile,
+  diff-check, focused route/demo pytest (`2 passed, 515 deselected`), and the
+  disposable-root app demo smoke test.
 - Goal Next Action focus strips now label the source card as `Action source`
   and show a human link such as `Review run <run_id>` instead of a generic
   `Target` card with a raw route. Collapsed evidence preserves

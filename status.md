@@ -1,5 +1,30 @@
 # Status
 
+## 2026-07-01 Goal Artifact Reader Focus UX
+
+- Made the Goal Artifact Reader show a visible selected-artifact focus strip
+  for Selected, Type, Source, Open, and Safety before the collapsed evidence
+  and previews.
+- Replaced generic `Open full artifact` reader links with concrete labels such
+  as `Open coder run <run_id> review`; the browser-local reader update script
+  keeps those labels and the focus strip in sync when a different registered
+  artifact is selected.
+- Preserved exact audit evidence: `goal_artifact_reader_full_surface` still
+  contains the raw `/artifacts?path=...` route, while new
+  `goal_artifact_reader_open_label`, `goal_artifact_reader_open_surface`, and
+  `goal_artifact_reader_focus_available` rows expose the operator-facing
+  label and focus state.
+- Local verification: `df -h /System/Volumes/Data` showed 73Gi free before the
+  proof loop; `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check -- agent_os/local_app.py
+  tests/test_first_milestone.py docs/OPERATING_SUMMARY.md docs/status.md
+  status.md`, focused pytest (`2 passed, 515 deselected`), and
+  `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` all passed.
+- Non-claim: this change only adjusts read-only artifact-reader labels,
+  browser-local selection display, and evidence rows; it does not execute
+  artifacts, browse raw filesystem paths, write on GET, call providers, use
+  the network, push, create PRs, deploy, or mutate external systems.
+
 ## 2026-07-01 Next Action Source Label UX
 
 - Made the Goal Next Action focus strip use operator-facing source labels.

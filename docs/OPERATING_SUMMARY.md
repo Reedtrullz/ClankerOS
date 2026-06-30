@@ -947,7 +947,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   no-network, no-raw-filesystem, and no-external-effect boundaries.
   A browser-local `Goal Artifact Reader` follows the filter, renders one
   already-registered artifact inline through the same bounded inert Markdown,
-  JSON, patch/diff, text, and log renderers used by `/artifacts`, remembers the
+  JSON, patch/diff, text, and log renderers used by `/artifacts`, opens with a
+  visible Selected/Type/Source/Open/Safety focus strip, labels the full-artifact
+  link in operator language such as `Open coder run <run_id> review`, remembers the
   selected preview per Goal in
   `localStorage:clankeros-goal-artifact-reader:<goal_id>`, and exposes Reset
   reader while preserving the same zero-effect boundaries.
