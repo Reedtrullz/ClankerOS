@@ -2649,7 +2649,7 @@ def _today_session_summary(
         timeline = _goal_timeline_items(root, state)
         latest = timeline[-1] if timeline else {}
         latest_href = latest.get("href") or f"/goals/{quote(goal_id)}"
-        latest_label = latest_href
+        latest_label = _timeline_item_action_label(latest, fallback="Open goal")
         latest_message = latest.get("message") or "No goal activity yet"
         latest_kind = latest.get("kind") or "event"
         latest_at = _format_time(latest.get("at") or "") if latest else "none"
@@ -2667,6 +2667,7 @@ def _today_session_summary(
 
     target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
     latest_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_label)}</a>")
+    latest_raw_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>")
     proof_href = str(ci_state["target_surface"])
     if proof_href.startswith("#"):
         proof_href = f"/ci-evidence{proof_href}"
@@ -2702,7 +2703,7 @@ def _today_session_summary(
             "<article class='today-session-card today-session-primary' data-today-session-continue='true'><h3>Continue</h3>",
             f"<p>{_e(next_action)}</p><a class='today-session-action' data-today-session-primary='true' href='{_e(target_href)}'>{_e(target_label)}</a></article>",
             "<article class='today-session-card' data-today-session-latest='true'><h3>Latest</h3>",
-            f"<p>{_e(latest_kind)} / {_e(latest_at)}</p><a class='today-session-link' href='{_e(latest_href)}'>Open latest</a></article>",
+            f"<p>{_e(latest_kind)} / {_e(latest_at)}</p><a class='today-session-link' href='{_e(latest_href)}'>{_e(latest_label)}</a></article>",
             "<article class='today-session-card' data-today-session-proof='true'><h3>Proof</h3>",
             f"<p>{_e(ci_state['current_proof'])}</p><a class='today-session-link' href='{_e(proof_href)}'>{_e(proof_label)}</a></article>",
             "<article class='today-session-card' data-today-session-resume='true'><h3>Resume</h3>",
@@ -2721,12 +2722,16 @@ def _today_session_summary(
                     ("today_session_latest_activity_kind", latest_kind),
                     ("today_session_latest_activity_at", latest_at),
                     ("today_session_latest_activity_message", latest_message),
+                    ("today_session_latest_activity_label", latest_label),
                     ("today_session_latest_activity_surface", latest_surface),
+                    ("today_session_latest_activity_raw_surface", latest_raw_surface),
                     ("today_session_latest_artifact", latest_artifact_value),
                     ("today_session_cards_available", "true"),
                     ("today_session_card_count", "4"),
                     ("today_session_continue_surface", target_surface),
+                    ("today_session_latest_label", latest_label),
                     ("today_session_latest_surface", latest_surface),
+                    ("today_session_latest_raw_surface", latest_raw_surface),
                     ("today_session_proof_surface", proof_surface),
                     ("today_session_resume_card_surface", resume_card_surface),
                     ("today_session_resume_card_label", resume_label),
@@ -2754,7 +2759,8 @@ def _today_session_summary(
                 [
                     f"today_session_now: {_e(next_action)}",
                     f"today_session_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
-                    f"today_session_latest: {_e(latest_message)}",
+                    f"today_session_latest: <a href='{_e(latest_href)}'>{_e(latest_label)}</a>",
+                    f"today_session_latest_raw: <a href='{_e(latest_href)}'>{_e(latest_href)}</a>",
                     f"today_session_resume: {_e(str(resume['status']))} -> <a href='{_e(resume_next_surface)}'>{_e(resume_label)}</a>",
                     f"today_session_ci: {_e(ci_state['latest_source'])}/{_e(ci_state['latest_status'])} proof={_e(ci_state['current_proof'])}",
                     "today_session_safety: read-only local summary; confirmed actions remain on target surfaces",
@@ -2797,6 +2803,7 @@ def _today_activity_digest(
         total_item_count = len(items)
         artifact_items: list[dict[str, str]] = []
         operator_notes = 0
+        latest_action_label_override = target_label
     else:
         goal_id = str(lead_goal["id"])
         state = _goal_state(root, storage, goal_id)
@@ -2834,17 +2841,23 @@ def _today_activity_digest(
             else f"/goals/{quote(goal_id)}#goal-artifacts"
         )
         artifact_label = "Open latest artifact" if artifact_items else "Goal artifacts"
+        latest_action_label_override = ""
 
     latest = items[-1] if items else {}
     latest_href = latest.get("href") or (
         f"/goals/{quote(str(lead_goal['id']))}" if lead_goal is not None else "#first-run-guide"
     )
     latest_message = latest.get("message") or "No activity recorded yet"
+    latest_action_label = latest_action_label_override or _timeline_item_action_label(
+        latest,
+        fallback="Open activity",
+    )
     latest_kind = _timeline_item_family(latest) if latest else "none"
     latest_at = _format_time(latest.get("at") or "") if latest else "none"
     if status == "first_run":
         latest_at = "none"
-    latest_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>")
+    latest_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>")
+    latest_raw_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>")
     artifact_surface: str | SafeHtml = "none"
     if artifact_items:
         artifact_surface = SafeHtml(
@@ -2863,7 +2876,7 @@ def _today_activity_digest(
             "<p class='muted'>Recent movement for the lead Goal before the full reused activity inventory.</p>",
             "<div class='today-activity-grid' data-today-activity-actions='true'>",
             "<article class='today-activity-card today-activity-primary' data-today-activity-now='true'><h3>Now</h3>",
-            f"<p>{_e(latest_message)}</p><a class='today-activity-action' data-today-activity-primary='true' href='{_e(latest_href)}'>Open latest</a></article>",
+            f"<p>{_e(latest_message)}</p><a class='today-activity-action' data-today-activity-primary='true' href='{_e(latest_href)}'>{_e(latest_action_label)}</a></article>",
             "<article class='today-activity-card' data-today-activity-window='true'><h3>Window</h3>",
             f"<p>{len(items)} recent event{'s' if len(items) != 1 else ''} · {total_item_count} total</p><a class='today-activity-link' href='{_e(window_href)}'>{_e(window_label)}</a></article>",
             "<article class='today-activity-card' data-today-activity-artifacts='true'><h3>Artifacts</h3>",
@@ -2889,7 +2902,9 @@ def _today_activity_digest(
                     ("today_activity_digest_latest_kind", latest_kind),
                     ("today_activity_digest_latest_at", latest_at),
                     ("today_activity_digest_latest_message", latest_message),
+                    ("today_activity_digest_latest_label", latest_action_label),
                     ("today_activity_digest_latest_surface", latest_surface),
+                    ("today_activity_digest_latest_raw_surface", latest_raw_surface),
                     ("today_activity_digest_window_surface", window_surface),
                     ("today_activity_digest_artifacts", str(len(artifact_items))),
                     ("today_activity_digest_latest_artifact", artifact_surface),
@@ -2904,7 +2919,8 @@ def _today_activity_digest(
             _ul(
                 [
                     f"today_activity_now: {_e(latest_message)}",
-                    f"today_activity_click: <a href='{_e(latest_href)}'>{_e(latest_href)}</a>",
+                    f"today_activity_click: <a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>",
+                    f"today_activity_raw_surface: <a href='{_e(latest_href)}'>{_e(latest_href)}</a>",
                     f"today_activity_window: <a href='{_e(window_href)}'>{_e(window_label)}</a>",
                     "today_activity_safety: read-only goal timeline on daily cockpit",
                 ]
@@ -6251,6 +6267,9 @@ def _home_activity_command_bar(items: list[dict[str, str]]) -> str:
     latest = items[0] if items else {}
     latest_href = latest.get("href") or "/goals"
     latest_label = latest.get("message") or "No recent activity"
+    latest_action_label = (
+        _timeline_item_action_label(latest, fallback="Open goals") if latest else "Open goals"
+    )
     latest_at = _format_time(latest.get("at") or "") if latest else "none"
     latest_artifact = next(
         (
@@ -6276,7 +6295,8 @@ def _home_activity_command_bar(items: list[dict[str, str]]) -> str:
     artifact_label = "Open artifact" if latest_artifact else "Search artifacts"
     note_href = latest_note.get("href") or "/memory"
     note_label = "Open note" if latest_note else "Open memory"
-    latest_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>")
+    latest_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>")
+    latest_raw_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>")
     artifact_surface = SafeHtml(f"<a href='{_e(artifact_href)}'>{_e(artifact_label)}</a>")
     note_surface = SafeHtml(f"<a href='{_e(note_href)}'>{_e(note_label)}</a>")
     return "".join(
@@ -6285,7 +6305,7 @@ def _home_activity_command_bar(items: list[dict[str, str]]) -> str:
             "<p class='muted'>One read-only summary of the latest local activity across current goals.</p>",
             "<div class='home-activity-grid' data-home-activity-actions='true'>",
             "<article class='home-activity-card home-activity-primary' data-home-activity-latest='true'><h3>Latest</h3>",
-            f"<p>{_e(latest_label)}</p><a class='home-activity-action' data-home-activity-primary='true' href='{_e(latest_href)}'>Open latest</a></article>",
+            f"<p>{_e(latest_label)}</p><a class='home-activity-action' data-home-activity-primary='true' href='{_e(latest_href)}'>{_e(latest_action_label)}</a></article>",
             "<article class='home-activity-card' data-home-activity-goals='true'><h3>Goals</h3>",
             f"<p>{len(items)} timeline events</p><a class='home-activity-link' href='/goals'>Open goals</a></article>",
             "<article class='home-activity-card' data-home-activity-artifacts='true'><h3>Artifacts</h3>",
@@ -6299,12 +6319,16 @@ def _home_activity_command_bar(items: list[dict[str, str]]) -> str:
                     ("home_activity_command_items", str(len(items))),
                     ("home_activity_command_latest_at", latest_at),
                     ("home_activity_command_latest_message", latest_label),
+                    ("home_activity_command_latest_label", latest_action_label),
                     ("home_activity_command_latest_surface", latest_surface),
+                    ("home_activity_command_latest_raw_surface", latest_raw_surface),
                     ("home_activity_command_operator_notes", str(operator_notes)),
                     ("home_activity_command_artifacts", str(artifacts)),
                     ("home_activity_cards_available", "true"),
                     ("home_activity_card_count", "4"),
+                    ("home_activity_latest_label", latest_action_label),
                     ("home_activity_latest_surface", latest_surface),
+                    ("home_activity_latest_raw_surface", latest_raw_surface),
                     ("home_activity_goals_surface", SafeHtml("<a href='/goals'>Open goals</a>")),
                     ("home_activity_artifact_surface", artifact_surface),
                     ("home_activity_note_surface", note_surface),
@@ -6317,7 +6341,8 @@ def _home_activity_command_bar(items: list[dict[str, str]]) -> str:
             _ul(
                 [
                     f"home_activity_now: {_e(latest_label)}",
-                    f"home_activity_click: <a href='{_e(latest_href)}'>{_e(latest_href)}</a>",
+                    f"home_activity_click: <a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>",
+                    f"home_activity_raw_surface: <a href='{_e(latest_href)}'>{_e(latest_href)}</a>",
                     "home_activity_safety: read-only local timeline",
                 ]
             ),
@@ -14124,6 +14149,7 @@ def _goal_review_strip(
     latest_at = _format_time(latest.get("at") or "") if latest else "none"
     latest_message = latest.get("message") or "No Goal events yet"
     latest_href = latest.get("href") or f"/goals/{quote(goal.id)}#goal-timeline"
+    latest_action_label = _timeline_item_action_label(latest, fallback="Open timeline")
 
     evidence_lines = _goal_evidence_lines(root, state)
     artifact_records = _goal_artifact_records(root, state)
@@ -14185,7 +14211,7 @@ def _goal_review_strip(
             "<h3>Latest</h3>",
             f"<strong>{_e(latest_kind)} · {_e(latest_at)}</strong>",
             f"<p>{_e(latest_message)}</p>",
-            f"<a class='goal-review-strip-action' data-goal-review-latest-link='true' href='{_e(latest_href)}'>Open latest</a>",
+            f"<a class='goal-review-strip-action' data-goal-review-latest-link='true' href='{_e(latest_href)}'>{_e(latest_action_label)}</a>",
             "</article>",
             "<article class='goal-review-strip-card' data-goal-review-proof='true'>",
             "<h3>Proof</h3>",
@@ -14222,8 +14248,13 @@ def _goal_review_strip(
                     ("goal_review_latest_kind", latest_kind),
                     ("goal_review_latest_at", latest_at),
                     ("goal_review_latest_message", latest_message),
+                    ("goal_review_latest_label", latest_action_label),
                     (
                         "goal_review_latest_surface",
+                        SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>"),
+                    ),
+                    (
+                        "goal_review_latest_raw_surface",
                         SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>"),
                     ),
                     ("goal_review_evidence_items", str(len(evidence_lines))),
@@ -14267,7 +14298,8 @@ def _goal_review_strip(
             ),
             _ul(
                 [
-                    f"goal_review_latest: {_e(latest_kind)} {_e(latest_message)}",
+                    f"goal_review_latest: {_e(latest_kind)} {_e(latest_message)} -> <a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>",
+                    f"goal_review_latest_raw: <a href='{_e(latest_href)}'>{_e(latest_href)}</a>",
                     f"goal_review_proof: {proof_total} local item(s), artifacts={len(artifact_records)} available={available_artifacts}",
                     f"goal_review_artifact: {_e(latest_artifact_label)} kind={_e(latest_artifact_kind)} status={_e(latest_artifact_status)}",
                     f"goal_review_remaining: gate={_e(current_gate)} waiting={waiting_items} open_tasks={open_tasks}",
@@ -17583,6 +17615,7 @@ def _goal_activity_pulse(
     latest_at = _format_time(latest.get("at") or "") if latest else "none"
     latest_message = latest.get("message") or "No goal activity yet"
     latest_href = latest.get("href") or "#goal-timeline-command-bar"
+    latest_action_label = _timeline_item_action_label(latest, fallback="Open timeline")
     artifact_items = [
         item
         for item in items
@@ -17632,7 +17665,8 @@ def _goal_activity_pulse(
     if not recent_lines:
         recent_lines = ["goal_activity_pulse_recent: none"]
 
-    latest_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_message)}</a>")
+    latest_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>")
+    latest_raw_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>")
     artifact_surface = SafeHtml(
         f"<a href='{_e(latest_artifact_href)}'>{_e(latest_artifact_label)}</a>"
     )
@@ -17646,7 +17680,7 @@ def _goal_activity_pulse(
             "<article class='goal-activity-pulse-card goal-activity-pulse-primary' data-goal-activity-pulse-latest='true'>",
             "<h3>Latest</h3>",
             f"<p>{_e(latest_kind)} · {_e(latest_at)}</p>",
-            f"<a class='goal-activity-pulse-action' data-goal-activity-pulse-primary='true' href='{_e(latest_href)}'>Open latest</a>",
+            f"<a class='goal-activity-pulse-action' data-goal-activity-pulse-primary='true' href='{_e(latest_href)}'>{_e(latest_action_label)}</a>",
             "</article>",
             "<article class='goal-activity-pulse-card goal-activity-pulse-recent' data-goal-activity-pulse-recent='true'>",
             "<h3>Recent Three</h3>",
@@ -17688,7 +17722,9 @@ def _goal_activity_pulse(
                     ("goal_activity_pulse_latest_kind", latest_kind),
                     ("goal_activity_pulse_latest_at", latest_at),
                     ("goal_activity_pulse_latest_message", latest_message),
+                    ("goal_activity_pulse_latest_label", latest_action_label),
                     ("goal_activity_pulse_latest_surface", latest_surface),
+                    ("goal_activity_pulse_latest_raw_surface", latest_raw_surface),
                     ("goal_activity_pulse_artifact_events", str(family_counts["artifact"])),
                     ("goal_activity_pulse_approval_events", str(family_counts["approval"])),
                     ("goal_activity_pulse_delegation_events", str(family_counts["delegation"])),
@@ -17710,7 +17746,8 @@ def _goal_activity_pulse(
             ),
             _ul(
                 [
-                    f"goal_activity_pulse_latest: {_e(latest_kind)} {_e(latest_message)}",
+                    f"goal_activity_pulse_latest: {_e(latest_kind)} {_e(latest_message)} -> <a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>",
+                    f"goal_activity_pulse_latest_raw: <a href='{_e(latest_href)}'>{_e(latest_href)}</a>",
                     *recent_lines,
                     f"goal_activity_pulse_mix: {_e(mix_label)}",
                     f"goal_activity_pulse_artifact: {artifact_surface}",
@@ -22389,6 +22426,15 @@ def _goal_evidence_digest(
         if latest_record is not None
         else "none"
     )
+    latest_action_label = (
+        _compact_label(f"Open {latest_label}", 84)
+        if latest_record is not None
+        else "Open artifact explorer"
+    )
+    latest_action_surface = SafeHtml(
+        f"<a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>"
+    )
+    latest_raw_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>")
 
     project = _storage(root).get_registered_project(goal.project_id)
     project_root = Path(project.root_path) if project else root
@@ -22457,7 +22503,7 @@ def _goal_evidence_digest(
             "<h3>Latest</h3>",
             f"<strong>{_e(latest_label)}</strong>",
             f"<p>{_e(latest_kind)}; status={_e(latest_status)}.</p>",
-            f"<a class='goal-evidence-link' href='{_e(latest_href)}'>Open latest</a>",
+            f"<a class='goal-evidence-link' href='{_e(latest_href)}'>{_e(latest_action_label)}</a>",
             "</article>",
             "<article class='goal-evidence-card' data-goal-evidence-digest-run='true'>",
             "<h3>Run Proof</h3>",
@@ -22503,9 +22549,12 @@ def _goal_evidence_digest(
                     ("goal_evidence_digest_patch_artifacts", str(artifact_counts["patch"])),
                     ("goal_evidence_digest_text_artifacts", str(artifact_counts["text"])),
                     ("goal_evidence_digest_latest_artifact", latest_label),
+                    ("goal_evidence_digest_latest_label", latest_action_label),
                     ("goal_evidence_digest_latest_kind", latest_kind),
                     ("goal_evidence_digest_latest_status", latest_status),
-                    ("goal_evidence_digest_latest_surface", SafeHtml(str(latest_surface))),
+                    ("goal_evidence_digest_latest_surface", latest_action_surface),
+                    ("goal_evidence_digest_latest_raw_surface", latest_raw_surface),
+                    ("goal_evidence_digest_latest_artifact_surface", SafeHtml(str(latest_surface))),
                     ("goal_evidence_digest_ci_status_label", ci_status_label),
                     ("goal_evidence_digest_ci_status", ci_status),
                     ("goal_evidence_digest_ci_source", ci_source),
@@ -22525,7 +22574,8 @@ def _goal_evidence_digest(
             _ul(
                 [
                     f"goal_evidence_digest_proof: {proof_total} local proof item(s)",
-                    f"goal_evidence_digest_latest: {_e(latest_label)} kind={_e(latest_kind)} status={_e(latest_status)}",
+                    f"goal_evidence_digest_latest: <a href='{_e(latest_href)}'>{_e(latest_action_label)}</a> kind={_e(latest_kind)} status={_e(latest_status)}",
+                    f"goal_evidence_digest_latest_raw: <a href='{_e(latest_href)}'>{_e(latest_href)}</a>",
                     f"goal_evidence_digest_artifacts: {_e(artifact_mix)}",
                     f"goal_evidence_digest_ci: {_e(ci_status_label)} status={_e(ci_status)} scope={_e(ci_scope)}",
                     "goal_evidence_digest_safety: read-only local proof digest",

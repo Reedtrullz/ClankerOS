@@ -4,6 +4,17 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Home, Today, and Goal detail latest-action cards now use concrete labels
+  instead of generic `Open latest` copy. Today Session Summary, Today Activity
+  Digest, Home Activity Command Bar, Goal Review Strip, Goal Activity Pulse,
+  and Goal Evidence Digest label links with the event or artifact they open
+  while preserving exact raw href evidence rows. Local proof includes a `73Gi`
+  free-space precheck, py-compile, diff check, focused route/demo pytest (`2
+  passed, 515 deselected`), and temp-root `app-demo-smoke-test` with all demo
+  route markers matched and zero provider, network, or external mutation
+  counters. The previous commit's GitHub Actions fast smoke is green; its full
+  suite remains in progress, and pushed Actions proof for this new slice is
+  pending until commit/push.
 - Goal timeline and Activity Log controls now label latest-event links with the
   actual event instead of generic `Open latest` / `Target` copy. The demo
   ready-to-commit Goal now surfaces `Execution completed: <run_id>.` in the

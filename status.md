@@ -1,5 +1,43 @@
 # Status
 
+## 2026-06-30 Home Today Goal Latest Label UX
+
+- Replaced generic `Open latest` labels on the Home, Today, and Goal detail
+  operator surfaces with concrete action labels. Today Session Summary, Today
+  Activity Digest, Home Activity Command Bar, Goal Review Strip, Goal Activity
+  Pulse, and Goal Evidence Digest now name the event or artifact they open,
+  such as `Execution completed: <run_id>.`, `Create Project`, `Open goals`, or
+  `Open coder run <run_id> review`.
+- Preserved exact href evidence with new raw-surface rows and list entries:
+  `today_session_latest_raw_surface`,
+  `today_activity_digest_latest_raw_surface`,
+  `home_activity_command_latest_raw_surface`,
+  `goal_review_latest_raw_surface`,
+  `goal_activity_pulse_latest_raw_surface`, and
+  `goal_evidence_digest_latest_raw_surface`. The visible browser UI is more
+  human-readable while review/replay can still inspect the local route target.
+- Updated focused coverage for first-run and fixture-backed ready-to-commit
+  states so the app proves both the human label and the raw surface across
+  Home, Today, Goal Review, Activity Pulse, Timeline-adjacent evidence, and
+  Evidence Digest panels.
+- Verification passed locally: data volume precheck had `73Gi` free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`;
+  `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py`;
+  focused route/demo pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`); and temp-root `python3 -m agent_os.cli --root "$scratch"
+  app-demo-smoke-test` with all demo routes matched and provider/network/
+  external mutation counters at `0`.
+- GitHub readback for the previous commit
+  `134d289f8dfceab7f3ebefa0da9ad8e7527351fc` showed Actions run
+  `28475844915` with `Fast smoke verification` successful and `Full pytest
+  suite` still in progress.
+- Non-claim: pushed GitHub Actions proof is pending for this new slice until it
+  is committed and pushed. This change only adjusts read-only labels and
+  evidence rows; it did not deploy, create a PR, call providers, write on GET,
+  push from the app, or add any external mutation path.
+
 ## 2026-06-30 Goal Timeline Latest Label UX
 
 - Made the Goal timeline and Activity Log top controls name the actual latest

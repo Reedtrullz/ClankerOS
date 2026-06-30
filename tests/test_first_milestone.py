@@ -4864,7 +4864,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-today-session-proof='true'" in today.body
     assert "data-today-session-resume='true'" in today.body
     assert "data-today-session-primary='true' href='#first-run-create-project'>Create Project</a>" in today.body
-    assert "today-session-link' href='#first-run-create-project'>Open latest</a>" in today.body
+    assert "today-session-link' href='#first-run-create-project'>Create Project</a>" in today.body
     assert "today_session_status</dt><dd>first_run" in today.body
     assert "today_session_goal</dt><dd>none" in today.body
     assert "today_session_project</dt><dd>clankeros" in today.body
@@ -4876,12 +4876,22 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_session_latest_activity_kind</dt><dd>first_run" in today.body
     assert "today_session_latest_activity_at</dt><dd>none" in today.body
     assert "today_session_latest_activity_message</dt><dd>Register ClankerOS project" in today.body
+    assert "today_session_latest_activity_label</dt><dd>Create Project" in today.body
     assert "today_session_latest_activity_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert (
+        "today_session_latest_activity_raw_surface</dt><dd>"
+        "<a href='#first-run-create-project'>#first-run-create-project</a>"
+    ) in today.body
     assert "today_session_latest_artifact</dt><dd>none" in today.body
     assert "today_session_cards_available</dt><dd>true" in today.body
     assert "today_session_card_count</dt><dd>4" in today.body
     assert "today_session_continue_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_session_latest_label</dt><dd>Create Project" in today.body
     assert "today_session_latest_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert (
+        "today_session_latest_raw_surface</dt><dd>"
+        "<a href='#first-run-create-project'>#first-run-create-project</a>"
+    ) in today.body
     assert "today_session_proof_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>" in today.body
     assert "today_session_resume_card_surface</dt><dd><a href='/goals'>Open Goals</a>" in today.body
     assert "today_session_resume_card_label</dt><dd>Open Goals" in today.body
@@ -4925,8 +4935,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_activity_digest_latest_kind</dt><dd>first_run" in today.body
     assert "today_activity_digest_latest_at</dt><dd>none" in today.body
     assert "today_activity_digest_latest_message</dt><dd>Register ClankerOS project" in today.body
+    assert "today_activity_digest_latest_label</dt><dd>Create Project" in today.body
     assert (
         "today_activity_digest_latest_surface</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in today.body
+    assert (
+        "today_activity_digest_latest_raw_surface</dt><dd><a href='#first-run-create-project'>"
         "#first-run-create-project</a>"
     ) in today.body
     assert "today_activity_digest_artifacts</dt><dd>0" in today.body
@@ -4937,7 +4952,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_activity_digest_network_actions_taken</dt><dd>0" in today.body
     assert "today_activity_digest_external_effects_created</dt><dd>false" in today.body
     assert "today_activity_now: Register ClankerOS project" in today.body
-    assert "today_activity_click: <a href='#first-run-create-project'>#first-run-create-project</a>" in today.body
+    assert "today_activity_click: <a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_activity_raw_surface: <a href='#first-run-create-project'>#first-run-create-project</a>" in today.body
     assert "today_activity_window: <a href='#today-activity-list'>Today digest</a>" in today.body
     assert "today_activity_safety: read-only goal timeline on daily cockpit" in today.body
     assert "Today Operator Workbench" in today.body
@@ -5126,14 +5142,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-home-activity-goals='true'" in root.body
     assert "data-home-activity-artifacts='true'" in root.body
     assert "data-home-activity-notes='true'" in root.body
-    assert "data-home-activity-primary='true' href='/goals'>Open latest</a>" in root.body
+    assert "data-home-activity-primary='true' href='/goals'>Open goals</a>" in root.body
     assert "home_activity_command_items</dt><dd>0" in root.body
     assert "home_activity_command_latest_message</dt><dd>No recent activity" in root.body
-    assert "home_activity_command_latest_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "home_activity_command_latest_label</dt><dd>Open goals" in root.body
+    assert "home_activity_command_latest_surface</dt><dd><a href='/goals'>Open goals</a>" in root.body
+    assert "home_activity_command_latest_raw_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
     assert "home_activity_command_source</dt><dd>goal_timeline_items" in root.body
     assert "home_activity_cards_available</dt><dd>true" in root.body
     assert "home_activity_card_count</dt><dd>4" in root.body
-    assert "home_activity_latest_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
+    assert "home_activity_latest_label</dt><dd>Open goals" in root.body
+    assert "home_activity_latest_surface</dt><dd><a href='/goals'>Open goals</a>" in root.body
+    assert "home_activity_latest_raw_surface</dt><dd><a href='/goals'>/goals</a>" in root.body
     assert "home_activity_goals_surface</dt><dd><a href='/goals'>Open goals</a>" in root.body
     assert "home_activity_artifact_surface</dt><dd><a href='/search?q=artifact'>Search artifacts</a>" in root.body
     assert "home_activity_note_surface</dt><dd><a href='/memory'>Open memory</a>" in root.body
@@ -11996,12 +12016,30 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_session_latest_activity_kind</dt><dd>" in today.body
     assert "today_session_latest_activity_at</dt><dd>" in today.body
     assert "today_session_latest_activity_message</dt><dd>" in today.body
+    assert (
+        f"today_session_latest_activity_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        in today.body
+    )
     assert "today_session_latest_activity_surface</dt><dd><a href=" in today.body
+    assert (
+        f"today_session_latest_activity_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+        in today.body
+    )
     assert "today_session_latest_artifact</dt><dd><a href='/artifacts?path=" in today.body
     assert "today_session_cards_available</dt><dd>true" in today.body
     assert "today_session_card_count</dt><dd>4" in today.body
     assert "today_session_continue_surface</dt><dd><a href='#today-current-action'>Create commit request</a>" in today.body
+    assert (
+        f"today_session_latest_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        in today.body
+    )
     assert "today_session_latest_surface</dt><dd><a href=" in today.body
+    assert (
+        f"today_session_latest_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+        in today.body
+    )
     assert "today_session_proof_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>" in today.body
     assert "today_session_resume_card_surface</dt><dd><a href='/goals'>Open Goals</a>" in today.body
     assert "today_session_resume_card_label</dt><dd>Open Goals" in today.body
@@ -12019,6 +12057,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_session_external_effects_created</dt><dd>false" in today.body
     assert "today_session_now: Create commit request" in today.body
     assert "today_session_click: <a href='#today-current-action'>Create commit request</a>" in today.body
+    assert (
+        f"today_session_latest: <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+        in today.body
+    )
+    assert (
+        f"today_session_latest_raw: <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+        in today.body
+    )
     assert "today_session_ci: direct_public_snapshot/success" in today.body
     assert "today_session_safety: read-only local summary" in today.body
     assert "Today Activity Digest" in today.body
@@ -12047,7 +12095,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_activity_digest_latest_kind</dt><dd>" in today.body
     assert "today_activity_digest_latest_at</dt><dd>" in today.body
     assert "today_activity_digest_latest_message</dt><dd>" in today.body
+    assert (
+        f"today_activity_digest_latest_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        in today.body
+    )
     assert "today_activity_digest_latest_surface</dt><dd><a href=" in today.body
+    assert (
+        f"today_activity_digest_latest_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+        in today.body
+    )
     assert "today_activity_digest_window_surface</dt><dd><a href='/goals/" in today.body
     assert "today_activity_digest_artifacts</dt><dd>" in today.body
     assert "today_activity_digest_operator_notes</dt><dd>" in today.body
@@ -12055,6 +12112,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_activity_digest_provider_calls_taken</dt><dd>0" in today.body
     assert "today_activity_digest_network_actions_taken</dt><dd>0" in today.body
     assert "today_activity_digest_external_effects_created</dt><dd>false" in today.body
+    assert (
+        f"today_activity_click: <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+        in today.body
+    )
+    assert (
+        f"today_activity_raw_surface: <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+        in today.body
+    )
     assert "today_activity_window: <a href='/goals/" in today.body
     assert "Goal activity log</a>" in today.body
     assert "today_activity_safety: read-only goal timeline on daily cockpit" in today.body
@@ -13161,7 +13228,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_review_timeline_items</dt><dd>" in goal.body
     assert "goal_review_latest_kind</dt><dd>" in goal.body
     assert "goal_review_latest_message</dt><dd>" in goal.body
+    assert (
+        f"goal_review_latest_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        in goal.body
+    )
     assert "goal_review_latest_surface</dt><dd><a href='" in goal.body
+    assert (
+        f"goal_review_latest_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+        in goal.body
+    )
     assert "goal_review_evidence_items</dt><dd>" in goal.body
     assert "goal_review_artifact_records</dt><dd>21" in goal.body
     assert "goal_review_proof_items</dt><dd>" in goal.body
@@ -13186,7 +13262,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_review_provider_calls_taken</dt><dd>0" in goal.body
     assert "goal_review_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_review_external_effects_created</dt><dd>false" in goal.body
-    assert "goal_review_latest:" in goal.body
+    assert (
+        f"goal_review_latest: run Execution completed: {result.coder_worktree_run_id}. "
+        f"-> <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+        in goal.body
+    )
+    assert (
+        f"goal_review_latest_raw: <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+        in goal.body
+    )
     assert "goal_review_proof:" in goal.body
     assert "goal_review_artifact:" in goal.body
     assert "goal_review_remaining: gate=commit_request waiting=1 open_tasks=1" in goal.body
@@ -13818,7 +13904,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_activity_pulse_recent_count</dt><dd>3" in goal.body
     assert "goal_activity_pulse_latest_kind</dt><dd>" in goal.body
     assert "goal_activity_pulse_latest_message</dt><dd>" in goal.body
+    assert (
+        f"goal_activity_pulse_latest_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        in goal.body
+    )
     assert "goal_activity_pulse_latest_surface</dt><dd><a href='" in goal.body
+    assert (
+        f"goal_activity_pulse_latest_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+        in goal.body
+    )
     assert "goal_activity_pulse_artifact_events</dt><dd>" in goal.body
     assert "goal_activity_pulse_delegation_events</dt><dd>" in goal.body
     assert "goal_activity_pulse_run_events</dt><dd>" in goal.body
@@ -13831,6 +13926,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_activity_pulse_provider_calls_taken</dt><dd>0" in goal.body
     assert "goal_activity_pulse_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_activity_pulse_external_effects_created</dt><dd>false" in goal.body
+    assert (
+        f"goal_activity_pulse_latest: run Execution completed: {result.coder_worktree_run_id}. "
+        f"-> <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+        in goal.body
+    )
+    assert (
+        f"goal_activity_pulse_latest_raw: <a href='/runs/{result.coder_worktree_run_id}'>"
+        f"/runs/{result.coder_worktree_run_id}</a>"
+        in goal.body
+    )
     assert "goal_activity_pulse_recent:" in goal.body
     assert "goal_activity_pulse_next: Create commit request <a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "goal_activity_pulse_safety: read-only local timeline pulse; confirmed forms own writes" in goal.body
@@ -14759,7 +14865,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_evidence_digest_json_artifacts</dt><dd>" in goal.body
     assert "goal_evidence_digest_patch_artifacts</dt><dd>" in goal.body
     assert "goal_evidence_digest_text_artifacts</dt><dd>" in goal.body
+    assert f"goal_evidence_digest_latest_label</dt><dd>Open coder run {result.coder_worktree_run_id} review" in goal.body
     assert "goal_evidence_digest_latest_surface</dt><dd><a href='/artifacts?path=" in goal.body
+    assert "goal_evidence_digest_latest_raw_surface</dt><dd><a href='/artifacts?path=" in goal.body
+    assert "goal_evidence_digest_latest_artifact_surface</dt><dd><a href='/artifacts?path=" in goal.body
     assert "goal_evidence_digest_ci_status_label</dt><dd>" in goal.body
     assert "goal_evidence_digest_ci_status</dt><dd>" in goal.body
     assert "goal_evidence_digest_ci_source</dt><dd>" in goal.body
