@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared app header now keeps daily navigation compact by showing
+  Dashboard, Today, Guide, Resume, Goals, Search, and Workspace as primary
+  links, while advanced routes live under a `More` disclosure and remain
+  available through the command palette. `More` opens automatically for
+  secondary routes so advanced pages keep active nav context, while Goal and
+  Today pages keep the first viewport focused on the cockpit. The closed
+  `More` menu takes zero layout height on mobile, avoiding a blank spacer
+  before the operator ribbon.
 - The shared header `n` / next-action control now displays the concrete
   operator move, such as `Create Project` or `Create commit request`, rather
   than the generic `Next` label. Command palette Focus and Quick Switch action

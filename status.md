@@ -1,5 +1,36 @@
 # Status
 
+## 2026-06-30 Compact Shell Navigation UX
+
+- Reworked the shared header navigation into a daily primary row plus a
+  compact `More` disclosure. The always-visible routes are now Dashboard,
+  Today, Guide, Resume, Goals, Search, and Workspace; advanced routes such as
+  Memory, Skills, Workflow, Actions, Verification, Dogfooding, Projects,
+  Inbox, Approvals, Incidents, Health, and Demo remain reachable under `More`
+  and in the command palette.
+- `More` opens automatically when the current route belongs to the secondary
+  group, so advanced pages still show their active nav context while Goal and
+  Today pages keep the first viewport focused on the operator cockpit.
+- Added shell-nav metadata and tests for primary/secondary counts, closed
+  primary-route `More`, open/current secondary-route `More`, zero-height
+  closed `More` content, and the mobile flex-basis override that keeps the
+  header from reserving a blank first-viewport block.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py` passed;
+  focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` passed locally.
+- Browser QA used a disposable demo app at `127.0.0.1:63770` for
+  `goal_a26bbaa49381`. Desktop verified seven primary links, fifteen
+  secondary routes, closed `More` on the Goal page, `More` auto-open/current
+  on `/actions`, no horizontal overflow, a visible `Create commit request`
+  next-action button, no framework overlay, and clean browser logs. Mobile
+  390x844 verified no horizontal overflow, closed `More` with zero-height
+  secondary menu content, a content-sized shell nav, visible next-action
+  controls, and an opened `More` menu exposing all secondary routes without
+  overflow.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
 ## 2026-06-30 Global Next Action Label UX
 
 - Made the shared header `n` / `Next` control show the concrete operator move,

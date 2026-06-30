@@ -6002,6 +6002,19 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "aria-keyshortcuts='r'" in root.body
     assert "aria-keyshortcuts='s'" in root.body
     assert "aria-keyshortcuts='w'" in root.body
+    assert 'data-shell-nav="true"' in root.body
+    assert 'data-shell-nav-primary-count="7"' in root.body
+    assert 'data-shell-nav-secondary-count="15"' in root.body
+    assert "data-shell-nav-primary='true'" in root.body
+    assert (
+        "<a href='/' aria-current='page' data-shortcut='h' "
+        "aria-keyshortcuts='h' title='Dashboard (h)'>Dashboard</a>"
+    ) in root.body
+    assert "data-shell-nav-more='true' data-shell-nav-more-current='false'><summary>More</summary>" in root.body
+    assert "data-shell-nav-more-menu='true'" in root.body
+    assert ".shell-nav-more:not([open]) > .shell-nav-more-menu { display:none; }" in root.body
+    assert ".shell-nav { flex:0 1 auto; width:100%; }" in root.body
+    assert "<a href='/actions'>Actions</a>" in root.body
     assert 'id="next-action-open"' in root.body
     assert 'aria-keyshortcuts="n"' in root.body
     assert 'data-next-action-button="true"' in root.body
@@ -8294,6 +8307,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     actions = render_local_app_route(tmp_path, "/actions")
     assert actions.status == 200
     assert "Safe Action Catalog" in actions.body
+    assert 'data-shell-nav="true"' in actions.body
+    assert "data-shell-nav-more='true' data-shell-nav-more-current='true' open" in actions.body
+    assert "<a href='/actions' aria-current='page'>Actions</a>" in actions.body
     assert "data-action-safety-details='true'" in actions.body
     assert "Action Operator Workbench" in actions.body
     assert "data-action-operator-workbench='true'" in actions.body

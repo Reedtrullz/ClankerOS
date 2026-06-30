@@ -827,7 +827,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   artifact with zero provider, network, or external mutation effects.
   The shared browser shell now exposes accessible shortcut metadata for Home,
   Today, Resume, Goals, Search, Workspace, Finish Today, palette, and theme
-  controls, plus a global next-action shortcut. `n` opens the current
+  controls, plus a compact primary/More route split. Dashboard, Today, Guide,
+  Resume, Goals, Search, and Workspace stay visible for daily operation, while
+  advanced routes stay available under `More` and in the command palette.
+  `More` opens automatically when the current route is secondary. The shell
+  also exposes a global next-action shortcut. `n` opens the current
   recommended next-action target and displays the resolved action label in the
   shared header instead of a generic `Next` label, `w` opens `/workspace`, and
   `f` opens the
