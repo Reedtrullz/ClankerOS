@@ -1,5 +1,47 @@
 # Status
 
+## 2026-06-30 Goal Path Rail UX
+
+- Added a first-screen `Goal Path Rail` to Goal detail pages, directly in the
+  Goal header path after the title and before the review strip, summary cards,
+  phase banner, and Action Dock. It shows the full local lifecycle as a
+  compact horizontal rail so the operator can see where the Goal is without
+  scrolling to the lower Workflow Map.
+- The rail reuses `_goal_workflow_gate_summary`, highlights the current gate,
+  shows done/pending/waiting counts, and links the current gate plus the
+  visible current-action button to the existing confirmed Goal action surface
+  such as `#goal-action-dock-form`. Non-current gates link to the existing
+  `#goal-workflow-map` readback.
+- Added collapsed `Goal path rail evidence` rows for gate counts, current
+  position, next action, current surface, action-form availability, source, and
+  explicit no-write/no-provider/no-network/no-external-effect counters. The
+  Goal section finder now includes `Path rail`, bringing the Goal section
+  count to 63.
+- Updated route/demo regression coverage for the rail CSS contract, 15 demo
+  gates, current `commit_request` marker, current-action href, evidence rows,
+  read-only counters, section finder count, and ordering
+  (`summary -> path rail -> review strip -> phase -> action`).
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check`, focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), and temp-root
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`.
+- Browser QA used the in-app Browser against a disposable demo app at
+  `127.0.0.1:8815` for `goal_9bbf2d790d66`. Desktop 1280x720 verified the
+  rail starts at 470px and is visible in the first viewport, has 15 gates,
+  highlights `commit_request`, links to `#goal-action-dock-form`, scrolls
+  inside the rail without page overflow, has clean warn/error logs, and
+  clicking the rail action lands on the visible
+  `/actions/coder-commit-request` form. Mobile 390x844 verified first-viewport
+  rail visibility, contained horizontal rail scrolling, no page overflow,
+  clean logs, and the same action-form click-through.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice. The rail is read-only orientation; existing confirmed forms own
+  local writes/execution, and this slice did not deploy, create a PR, call
+  providers, or mutate external systems.
+
 ## 2026-06-30 Goal Review Strip Header UX
 
 - Made Goal detail pages show a first-class `Goal Review Strip` in the Goal

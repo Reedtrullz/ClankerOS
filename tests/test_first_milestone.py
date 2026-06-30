@@ -6147,6 +6147,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert ".goal-summary-action { display:inline-flex;" in root.body
     assert ".goal-review-strip-grid { display:grid;" in root.body
     assert ".goal-review-strip-evidence:not([open]) > :not(summary)" in root.body
+    assert ".goal-path-gates { list-style:none; display:flex;" in root.body
+    assert ".goal-path-evidence:not([open]) > :not(summary)" in root.body
     assert (
         ':root[data-focus-mode="true"] .operator-side, '
         ':root[data-focus-mode="true"] .route-context-strip, '
@@ -12949,14 +12951,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     route_context_position = goal.body.index("data-route-context='true'")
     operator_focus_position = goal.body.index("data-operator-focus-strip='true'")
     assert goal.body.index("id='goal-summary'") < goal_phase_position
-    assert goal.body.index("id='goal-summary'") < goal.body.index("id='goal-review-strip'")
+    assert goal.body.index("id='goal-summary'") < goal.body.index("id='goal-path-rail'")
+    assert goal.body.index("id='goal-path-rail'") < goal.body.index("id='goal-review-strip'")
     assert goal.body.index("id='goal-summary'") < route_context_position
     assert goal_phase_position < route_context_position
     assert goal.body.index("id='goal-review-strip'") < route_context_position
+    assert goal.body.index("id='goal-path-rail'") < route_context_position
     assert goal.body.index("id='goal-action-dock'") < route_context_position
     assert goal.body.index("id='goal-progress-meter'") < route_context_position
     assert route_context_position < operator_focus_position
-    assert goal.body.index("id='goal-review-strip'") < goal_phase_position
+    assert goal.body.index("id='goal-path-rail'") < goal_phase_position
     assert goal_phase_position < goal.body.index("id='goal-action-dock'")
     assert goal.body.index("id='goal-action-dock'") < goal.body.index("id='goal-jump-bar'")
     assert goal.body.index("id='goal-action-dock'") < goal.body.index("id='goal-progress-meter'")
@@ -13094,6 +13098,39 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_review_artifact:" in goal.body
     assert "goal_review_remaining: gate=commit_request waiting=1 open_tasks=1" in goal.body
     assert "goal_review_safety: read-only local review strip; existing confirmed forms own writes" in goal.body
+    assert "Goal Path Rail" in goal.body
+    assert "data-goal-path-rail='true'" in goal.body
+    assert "data-goal-path-gates='true'" in goal.body
+    assert "data-goal-path-current-action='true' href='#goal-action-dock-form'>Create commit request</a>" in goal.body
+    assert goal.body.count("data-goal-path-gate='true'") == 15
+    assert "data-goal-path-gate-name='commit_request'" in goal.body
+    assert "data-goal-path-gate-status='pending'" in goal.body
+    assert "data-goal-path-gate-marker='current'" in goal.body
+    assert "data-goal-path-evidence='true'" in goal.body
+    assert "<summary>Goal path rail evidence</summary>" in goal.body
+    assert f"goal_path_rail_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_path_rail_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_path_rail_gate_count</dt><dd>15" in goal.body
+    assert "goal_path_rail_done_gates</dt><dd>8" in goal.body
+    assert "goal_path_rail_pending_gates</dt><dd>1" in goal.body
+    assert "goal_path_rail_waiting_gates</dt><dd>6" in goal.body
+    assert "goal_path_rail_current_gate</dt><dd>commit_request" in goal.body
+    assert "goal_path_rail_current_position</dt><dd>9/15" in goal.body
+    assert "goal_path_rail_next_action</dt><dd>Create commit request" in goal.body
+    assert "goal_path_rail_current_surface</dt><dd><a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
+    assert "goal_path_rail_action_form_available</dt><dd>true" in goal.body
+    assert "goal_path_rail_source</dt><dd>goal_workflow_gates_and_next_action" in goal.body
+    assert "goal_path_rail_write_on_get</dt><dd>false" in goal.body
+    assert "goal_path_rail_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_path_rail_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_path_rail_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_path_now: commit_request -> Create commit request" in goal.body
+    assert "goal_path_progress: 8/15 gates done; pending=1 waiting=6" in goal.body
+    assert "goal_path_gate: commit_request status=pending marker=current href=#goal-action-dock-form" in goal.body
+    assert "goal_path_safety: read-only local lifecycle rail; existing confirmed forms own writes" in goal.body
+    assert goal.body.index("id='goal-path-rail'") < goal.body.index(
+        "id='goal-review-strip'"
+    )
     assert goal.body.index("id='goal-review-strip'") < goal.body.index(
         "id='goal-current-phase'"
     )
@@ -13303,7 +13340,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in goal.body
     )
     assert "data-goal-section-finder-input='true'" in goal.body
-    assert "data-goal-section-finder-count='true'>62 sections" in goal.body
+    assert "data-goal-section-finder-count='true'>63 sections" in goal.body
     assert "data-goal-section-finder-first='true' href='#goal-summary'>Summary</a>" in goal.body
     assert "data-goal-section-finder-memory='true'" in goal.body
     assert "data-goal-section-finder-view-status='true'>View: default</span>" in goal.body
@@ -13312,6 +13349,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-section-result='true' data-goal-section-label='approval command'" in goal.body
     assert "data-goal-section-result='true' data-goal-section-label='artifact reader'" in goal.body
     assert "data-goal-section-result='true' data-goal-section-label='review strip'" in goal.body
+    assert "data-goal-section-result='true' data-goal-section-label='path rail'" in goal.body
     assert "data-goal-section-anchor='goal-git-status'" in goal.body
     assert "data-goal-section-finder-empty='true' hidden" in goal.body
     assert "data-goal-section-index-operate='true'" in goal.body
@@ -13322,7 +13360,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-section-index-primary='true' href='#goal-next-action'>Next action</a>" in goal.body
     assert "goal_section_switchboard_status</dt><dd>available" in goal.body
     assert "goal_section_finder_status</dt><dd>available" in goal.body
-    assert "goal_section_finder_result_count</dt><dd>62" in goal.body
+    assert "goal_section_finder_result_count</dt><dd>63" in goal.body
     assert "goal_section_finder_default_first</dt><dd>goal-summary" in goal.body
     assert "goal_section_finder_persistence</dt><dd>browser_local_view_memory" in goal.body
     assert (
@@ -13343,8 +13381,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_section_finder_default: <a href='#goal-summary'>Summary</a>" in goal.body
     assert "goal_section_finder_target: Summary -> #goal-summary" in goal.body
     assert "goal_section_finder_target: Review strip -> #goal-review-strip" in goal.body
+    assert "goal_section_finder_target: Path rail -> #goal-path-rail" in goal.body
     assert "goal_section_finder_target: Decision queue -> #goal-decision-queue" in goal.body
-    assert "goal_section_finder_target: Decision filter -> #goal-decision-filter" in goal.body
     assert "goal_section_finder_memory: restores section query for this Goal" in goal.body
     assert "goal_section_switchboard_safety: read-only local anchor navigation" in goal.body
     assert goal.body.index("data-goal-section-index-actions='true'") < goal.body.index(
@@ -13361,6 +13399,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_section_index_write_on_get</dt><dd>false" in goal.body
     assert "goal_section_index_external_effects_created</dt><dd>false" in goal.body
     assert "href='#goal-summary'" in goal.body
+    assert "href='#goal-path-rail'" in goal.body
     assert "href='#goal-current-phase'" in goal.body
     assert "href='#goal-action-dock'" in goal.body
     assert "href='#goal-review-strip'" in goal.body
@@ -13400,6 +13439,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-remaining-work-command-bar'" in goal.body
     assert "href='#goal-remaining-work'" in goal.body
     assert "id='goal-summary'" in goal.body
+    assert "id='goal-path-rail'" in goal.body
     assert "id='goal-attention-digest'" in goal.body
     assert "id='goal-decision-queue'" in goal.body
     assert "id='goal-first-run-rail'" not in goal.body
@@ -13435,7 +13475,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>62" in goal.body
+    assert "goal_section_count</dt><dd>63" in goal.body
     assert "data-goal-section-index-evidence='true'" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "data-goal-command-strip='true'" in goal.body
