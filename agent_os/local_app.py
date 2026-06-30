@@ -2672,8 +2672,23 @@ def _today_session_summary(
         proof_href = f"/ci-evidence{proof_href}"
     proof_label = str(ci_state["next_action"])
     proof_surface = SafeHtml(f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>")
+    explicit_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
+    resume_next_surface = explicit_resume_surface or str(resume["next_surface"])
+    resume_surface_source = (
+        "saved_resume_surface" if explicit_resume_surface else "workspace_readiness"
+    )
+    resume_label = _saved_workspace_surface_action_label(
+        root,
+        resume_next_surface,
+        open_goal=open_goal,
+        open_project=open_project,
+        fallback="Open resume point",
+    )
     resume_surface = SafeHtml(
-        f"<a href='{_e(str(resume['next_surface']))}'>{_e(str(resume['next_surface']))}</a>"
+        f"<a href='{_e(resume_next_surface)}'>{_e(resume_next_surface)}</a>"
+    )
+    resume_card_surface = SafeHtml(
+        f"<a href='{_e(resume_next_surface)}'>{_e(resume_label)}</a>"
     )
     latest_artifact_value = _artifact_link(latest_artifact)
     latest_artifact_matches_workspace = (
@@ -2691,7 +2706,7 @@ def _today_session_summary(
             "<article class='today-session-card' data-today-session-proof='true'><h3>Proof</h3>",
             f"<p>{_e(ci_state['current_proof'])}</p><a class='today-session-link' href='{_e(proof_href)}'>{_e(proof_label)}</a></article>",
             "<article class='today-session-card' data-today-session-resume='true'><h3>Resume</h3>",
-            f"<p>{_e(str(resume['status']))} / ready={_e(str(resume['ready']).lower())}</p><a class='today-session-link' href='{_e(str(resume['next_surface']))}'>Open resume point</a></article>",
+            f"<p>{_e(str(resume['status']))} / ready={_e(str(resume['ready']).lower())}</p><a class='today-session-link' href='{_e(resume_next_surface)}'>{_e(resume_label)}</a></article>",
             "</div>",
             _kv(
                 [
@@ -2713,7 +2728,9 @@ def _today_session_summary(
                     ("today_session_continue_surface", target_surface),
                     ("today_session_latest_surface", latest_surface),
                     ("today_session_proof_surface", proof_surface),
-                    ("today_session_resume_card_surface", resume_surface),
+                    ("today_session_resume_card_surface", resume_card_surface),
+                    ("today_session_resume_card_label", resume_label),
+                    ("today_session_resume_surface_source", resume_surface_source),
                     ("today_session_workspace_status", str(resume["status"])),
                     ("today_session_resume_ready", str(resume["ready"]).lower()),
                     ("today_session_resume_surface", resume_surface),
@@ -2738,7 +2755,7 @@ def _today_session_summary(
                     f"today_session_now: {_e(next_action)}",
                     f"today_session_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
                     f"today_session_latest: {_e(latest_message)}",
-                    f"today_session_resume: {_e(str(resume['status']))} -> <a href='{_e(str(resume['next_surface']))}'>{_e(str(resume['next_surface']))}</a>",
+                    f"today_session_resume: {_e(str(resume['status']))} -> <a href='{_e(resume_next_surface)}'>{_e(resume_label)}</a>",
                     f"today_session_ci: {_e(ci_state['latest_source'])}/{_e(ci_state['latest_status'])} proof={_e(ci_state['current_proof'])}",
                     "today_session_safety: read-only local summary; confirmed actions remain on target surfaces",
                 ]

@@ -4869,7 +4869,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_session_continue_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
     assert "today_session_latest_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
     assert "today_session_proof_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>" in today.body
-    assert "today_session_resume_card_surface</dt><dd><a href='/goals'>/goals</a>" in today.body
+    assert "today_session_resume_card_surface</dt><dd><a href='/goals'>Open Goals</a>" in today.body
+    assert "today_session_resume_card_label</dt><dd>Open Goals" in today.body
+    assert "today_session_resume_surface_source</dt><dd>workspace_readiness" in today.body
+    assert "today_session_resume_surface</dt><dd><a href='/goals'>/goals</a>" in today.body
     assert "today_session_workspace_status</dt><dd>not_started" in today.body
     assert "today_session_resume_ready</dt><dd>false" in today.body
     assert "today_session_ci_status</dt><dd>success" in today.body
@@ -11937,7 +11940,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_session_continue_surface</dt><dd><a href='#today-current-action'>Create commit request</a>" in today.body
     assert "today_session_latest_surface</dt><dd><a href=" in today.body
     assert "today_session_proof_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>" in today.body
-    assert "today_session_resume_card_surface</dt><dd><a href='/goals'>/goals</a>" in today.body
+    assert "today_session_resume_card_surface</dt><dd><a href='/goals'>Open Goals</a>" in today.body
+    assert "today_session_resume_card_label</dt><dd>Open Goals" in today.body
+    assert "today_session_resume_surface_source</dt><dd>workspace_readiness" in today.body
+    assert "today_session_resume_surface</dt><dd><a href='/goals'>/goals</a>" in today.body
     assert "today_session_workspace_status</dt><dd>not_started" in today.body
     assert "today_session_resume_ready</dt><dd>false" in today.body
     assert "today_session_ci_status</dt><dd>success" in today.body
@@ -19072,6 +19078,32 @@ def test_today_finish_today_saves_exact_resume_surface(tmp_path: Path) -> None:
     assert workspace["last_viewed_artifact"] == resume_artifact
     assert workspace["resume_surface"] == "/today#today-current-action"
     assert workspace["updated_by"] == "today-command-center"
+
+    today_after_save = render_local_app_route(tmp_path, "/today")
+    assert today_after_save.status == 200
+    assert (
+        "today-session-link' href='/today#today-current-action'>"
+        "Open Today current action</a>"
+    ) in today_after_save.body
+    assert (
+        "today_session_resume_card_surface</dt><dd>"
+        "<a href='/today#today-current-action'>Open Today current action</a>"
+    ) in today_after_save.body
+    assert (
+        "today_session_resume_card_label</dt><dd>Open Today current action"
+    ) in today_after_save.body
+    assert (
+        "today_session_resume_surface_source</dt><dd>saved_resume_surface"
+    ) in today_after_save.body
+    assert (
+        "today_session_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_save.body
+    assert (
+        "today_session_resume: ready -> "
+        "<a href='/today#today-current-action'>Open Today current action</a>"
+    ) in today_after_save.body
+    assert "Open resume point" not in today_after_save.body
 
     resume = render_local_app_route(tmp_path, "/resume")
     assert resume.status == 200

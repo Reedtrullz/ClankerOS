@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The `/today` Session Summary Resume card now honors an explicit saved
+  `resume_surface` before falling back to the workspace readiness target. A
+  saved `/today#today-current-action` route displays as
+  `Open Today current action` inside the daily return-to-work summary, with
+  `today_session_resume_surface_source` naming whether the card came from
+  `saved_resume_surface` or the readiness fallback and
+  `today_session_resume_surface` preserving the exact raw href.
 - Saved Today section anchors now get human return labels across the resume
   surfaces. A saved `/today#today-current-action` route displays as
   `Open Today current action` in `/resume`, `/workspace`, Recent Items, Quick

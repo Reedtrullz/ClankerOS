@@ -1,5 +1,34 @@
 # Status
 
+## 2026-06-30 Today Session Resume Label UX
+
+- Made the `/today` Session Summary Resume card honor an explicitly saved
+  `resume_surface` before falling back to the generic workspace readiness
+  target. A saved `/today#today-current-action` surface now renders as
+  `Open Today current action` directly inside the daily return-to-work summary.
+- Kept the exact raw route evidence visible via `today_session_resume_surface`
+  and added `today_session_resume_surface_source` so operators can see whether
+  the card used `saved_resume_surface` or `workspace_readiness`.
+- Updated first-run, demo, and saved Today regression coverage so the Session
+  Summary card uses human action labels (`Open Goals` or
+  `Open Today current action`) while preserving exact href evidence.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check`, and focused
+  `tests/test_first_milestone.py -k
+  'test_today_finish_today_saves_exact_resume_surface or
+  test_local_app_demo_scenario_populates_fixture_state or
+  test_local_app_routes_render_modern_workflow_and_health'` (`3 passed, 514
+  deselected`).
+- Browser QA used a disposable saved-Today demo app at `127.0.0.1:8802`.
+  Desktop verified `/today` identity, nonblank content, clean console, no
+  framework overlay, no horizontal overflow, Resume card href
+  `/today#today-current-action`, visible label `Open Today current action`,
+  source `saved_resume_surface`, and click-through to the visible
+  `/actions/coder-commit-request` form. Mobile 390x844 verified the same label
+  and href, clean console, no overlay, and no horizontal overflow.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice.
+
 ## 2026-06-30 Today Resume Label UX
 
 - Made saved Today section anchors first-class return labels. A saved
