@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The first-screen `/today` Resume affordance now uses the exact saved
+  `resume_surface` when one exists. A saved `/today#today-current-action`
+  route appears in both the shared operator ribbon and Today Command Center as
+  `Open Today current action`, while `/resume` remains available as the
+  broader hub through explicit `*_resume_hub_surface` evidence rows and
+  `*_resume_surface_source` records whether the visible card came from
+  `saved_resume_surface` or the `resume_page` fallback.
 - The `/today` Session Summary Resume card now honors an explicit saved
   `resume_surface` before falling back to the workspace readiness target. A
   saved `/today#today-current-action` route displays as

@@ -4435,6 +4435,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "operator_ribbon_action_form_available</dt><dd>true" in root.body
     assert "operator_ribbon_confirmation_required</dt><dd>true" in root.body
     assert "operator_ribbon_resume_status</dt><dd>not_started" in root.body
+    assert "operator_ribbon_resume_surface</dt><dd><a href='/resume'>Open resume</a>" in root.body
+    assert "operator_ribbon_resume_exact_surface</dt><dd>/resume" in root.body
+    assert "operator_ribbon_resume_surface_source</dt><dd>resume_page" in root.body
+    assert "operator_ribbon_resume_hub_surface</dt><dd><a href='/resume'>/resume</a>" in root.body
     assert (
         "operator_ribbon_finish_surface</dt><dd><a href='/workspace#save-workspace'>"
         "Finish Today</a>"
@@ -4778,6 +4782,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_command_progress</dt><dd>first_run_step=create_project" in today.body
     assert "today_command_resume_ready</dt><dd>false" in today.body
     assert "today_command_resume_status</dt><dd>not_started" in today.body
+    assert "data-today-command-resume='true'" in today.body
+    assert (
+        "data-today-command-resume-link='true' href='/resume'>Open resume</a>"
+    ) in today.body
+    assert "today_command_resume_surface</dt><dd><a href='/resume'>Open resume</a>" in today.body
+    assert "today_command_resume_exact_surface</dt><dd>/resume" in today.body
+    assert "today_command_resume_surface_source</dt><dd>resume_page" in today.body
+    assert "today_command_resume_hub_surface</dt><dd><a href='/resume'>/resume</a>" in today.body
     assert "today_command_attention_status</dt><dd>first_run" in today.body
     assert "today_command_attention_action</dt><dd>Register ClankerOS project" in today.body
     assert "today_command_ci_status</dt><dd>success" in today.body
@@ -11357,6 +11369,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "operator_ribbon_action_form_available</dt><dd>true" in dashboard.body
     assert "operator_ribbon_confirmation_required</dt><dd>true" in dashboard.body
     assert "operator_ribbon_resume_status</dt><dd>not_started" in dashboard.body
+    assert "operator_ribbon_resume_surface</dt><dd><a href='/resume'>Open resume</a>" in dashboard.body
+    assert "operator_ribbon_resume_exact_surface</dt><dd>/resume" in dashboard.body
+    assert "operator_ribbon_resume_surface_source</dt><dd>resume_page" in dashboard.body
     assert (
         "operator_ribbon_finish_surface</dt><dd><a href='/workspace#save-workspace'>"
         "Finish Today</a>"
@@ -11846,6 +11861,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_command_attention_surface</dt><dd><a href='/approvals'>/approvals</a>" in today.body
     assert "today_command_resume_ready</dt><dd>false" in today.body
     assert "today_command_resume_status</dt><dd>not_started" in today.body
+    assert "data-today-command-resume='true'" in today.body
+    assert (
+        "data-today-command-resume-link='true' href='/resume'>Open resume</a>"
+    ) in today.body
+    assert "today_command_resume_surface</dt><dd><a href='/resume'>Open resume</a>" in today.body
+    assert "today_command_resume_exact_surface</dt><dd>/resume" in today.body
+    assert "today_command_resume_surface_source</dt><dd>resume_page" in today.body
     assert "today_command_ci_status</dt><dd>success" in today.body
     assert "today_command_ci_source</dt><dd>direct_public_snapshot" in today.body
     assert "today_command_action_form_available</dt><dd>true" in today.body
@@ -19081,6 +19103,44 @@ def test_today_finish_today_saves_exact_resume_surface(tmp_path: Path) -> None:
 
     today_after_save = render_local_app_route(tmp_path, "/today")
     assert today_after_save.status == 200
+    assert (
+        "data-operator-ribbon-resume='true'><span class='operator-ribbon-label'>"
+        "Resume</span><strong>saved_goal</strong>"
+    ) in today_after_save.body
+    assert (
+        "<a class='operator-ribbon-link' href='/today#today-current-action'>"
+        "Open Today current action</a>"
+    ) in today_after_save.body
+    assert (
+        "operator_ribbon_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>Open Today current action</a>"
+    ) in today_after_save.body
+    assert (
+        "operator_ribbon_resume_exact_surface</dt><dd>/today#today-current-action"
+    ) in today_after_save.body
+    assert (
+        "operator_ribbon_resume_surface_source</dt><dd>saved_resume_surface"
+    ) in today_after_save.body
+    assert (
+        "operator_ribbon_resume: status=saved_goal surface="
+        "<a href='/today#today-current-action'>Open Today current action</a>"
+    ) in today_after_save.body
+    assert (
+        "data-today-command-resume-link='true' href='/today#today-current-action'>"
+        "Open Today current action</a>"
+    ) in today_after_save.body
+    assert (
+        "today_command_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>Open Today current action</a>"
+    ) in today_after_save.body
+    assert "today_command_resume_exact_surface</dt><dd>/today#today-current-action" in today_after_save.body
+    assert (
+        "today_command_resume_surface_source</dt><dd>saved_resume_surface"
+    ) in today_after_save.body
+    assert (
+        "today_command_resume: readiness=ready surface="
+        "<a href='/today#today-current-action'>Open Today current action</a>"
+    ) in today_after_save.body
     assert (
         "today-session-link' href='/today#today-current-action'>"
         "Open Today current action</a>"

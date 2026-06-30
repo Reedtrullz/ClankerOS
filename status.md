@@ -1,5 +1,39 @@
 # Status
 
+## 2026-06-30 Today First-Screen Resume UX
+
+- Made the first-screen `/today` Resume affordance use the exact saved
+  `resume_surface` when one exists. A saved `/today#today-current-action`
+  target now appears in both the shared operator ribbon and Today Command
+  Center as `Open Today current action`, so tomorrow's top Resume card returns
+  to the working action area instead of the generic `/resume` hub.
+- Kept `/resume` available and explicit as the broader resume hub via separate
+  evidence rows. The visible card surface now exposes
+  `operator_ribbon_resume_surface` / `today_command_resume_surface`, while
+  `operator_ribbon_resume_hub_surface` / `today_command_resume_hub_surface`
+  preserve the hub link and `*_resume_surface_source` names whether the card
+  came from `saved_resume_surface` or the fallback `resume_page`.
+- Updated first-run, demo, and saved Today regression coverage so the fallback
+  still says `Open resume`, saved Today state says `Open Today current action`,
+  and the exact href remains inspectable in evidence rows.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check`, and focused
+  `tests/test_first_milestone.py -k
+  'test_today_finish_today_saves_exact_resume_surface or
+  test_local_app_demo_scenario_populates_fixture_state or
+  test_local_app_routes_render_modern_workflow_and_health'` (`3 passed, 514
+  deselected`).
+- Browser QA used a disposable saved-Today demo app at `127.0.0.1:8805` with
+  system Chrome through Playwright because the dedicated browser MCP surface
+  was not exposed and Playwright's bundled Chromium was missing. Desktop
+  verified `/today` identity, nonblank content, clean console, no horizontal
+  overflow, top ribbon href `/today#today-current-action`, visible label
+  `Open Today current action`, source `saved_resume_surface`, and click-through
+  to the visible `/actions/coder-commit-request` form. Mobile 390x844 verified
+  the same label/href/source with clean console and no horizontal overflow.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice.
+
 ## 2026-06-30 Today Session Resume Label UX
 
 - Made the `/today` Session Summary Resume card honor an explicitly saved

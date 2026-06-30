@@ -4646,6 +4646,23 @@ def _today_command_center(
     target_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
     primary_surface = SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")
     attention_surface = SafeHtml(f"<a href='{_e(attention_href)}'>{_e(attention_href)}</a>")
+    saved_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
+    resume_card_href = saved_resume_surface or "/resume"
+    resume_card_label = (
+        _saved_workspace_surface_action_label(
+            root,
+            saved_resume_surface,
+            open_goal=open_goal,
+            open_project=open_project,
+            fallback="Open resume",
+        )
+        if saved_resume_surface
+        else "Open resume"
+    )
+    resume_card_source = "saved_resume_surface" if saved_resume_surface else "resume_page"
+    resume_card_surface = SafeHtml(
+        f"<a href='{_e(resume_card_href)}'>{_e(resume_card_label)}</a>"
+    )
     rail_finish_href = "#today-finish" if finish_form else target_href
     rail_finish_label = "Finish Today" if finish_form else target_label
     session_rail = _today_session_rail(
@@ -4688,7 +4705,10 @@ def _today_command_center(
         ("today_command_attention_surface", attention_surface),
         ("today_command_resume_ready", str(readiness["ready"]).lower()),
         ("today_command_resume_status", str(readiness["status"])),
-        ("today_command_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+        ("today_command_resume_surface", resume_card_surface),
+        ("today_command_resume_exact_surface", resume_card_href),
+        ("today_command_resume_surface_source", resume_card_source),
+        ("today_command_resume_hub_surface", SafeHtml("<a href='/resume'>/resume</a>")),
         ("today_command_workspace_surface", SafeHtml("<a href='/workspace'>/workspace</a>")),
         ("today_command_ci_status", ci_status),
         ("today_command_ci_source", ci_source),
@@ -4724,7 +4744,7 @@ def _today_command_center(
         f"today_command_now: {_e(primary_action)}",
         f"today_command_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
         f"today_command_attention: {attention_status} -> <a href='{_e(attention_href)}'>{_e(attention_href)}</a>",
-        f"today_command_resume: readiness={_e(str(readiness['status']))} surface=<a href='/resume'>/resume</a>",
+        f"today_command_resume: readiness={_e(str(readiness['status']))} surface=<a href='{_e(resume_card_href)}'>{_e(resume_card_label)}</a>",
         f"today_command_note: available={_e(note_available)} surface=<a href='#today-note'>Capture Note</a>",
         f"today_command_pause: available={_e(pause_available)} surface=<a href='#today-pause'>Pause Goal</a>",
         f"today_command_finish: status={_e(finish_status)} surface=<a href='#today-finish'>Finish Today</a>",
@@ -4748,8 +4768,8 @@ def _today_command_center(
             f"<p>{_e(primary_action)}</p><a class='today-command-action' data-today-command-primary='true' href='{_e(target_href)}'>{_e(target_label)}</a></article>",
             "<article class='today-command-card'><h3>Attention</h3>",
             f"<p>{_e(attention_action)}</p><a class='today-command-link' href='{_e(attention_href)}'>{_e(attention_href)}</a></article>",
-            "<article class='today-command-card'><h3>Resume</h3>",
-            "<p>Restore saved workspace context.</p><a class='today-command-link' href='/resume'>/resume</a></article>",
+            "<article class='today-command-card' data-today-command-resume='true'><h3>Resume</h3>",
+            f"<p>{_e(str(readiness['status']))}</p><a class='today-command-link' data-today-command-resume-link='true' href='{_e(resume_card_href)}'>{_e(resume_card_label)}</a></article>",
             "<article class='today-command-card'><h3>Note</h3>",
             f"<p>{'Available' if note_form else 'Not available'}</p><a class='today-command-link' href='#today-note' data-open-details='true'>Capture Note</a></article>",
             "<article class='today-command-card'><h3>Pause</h3>",
@@ -41972,6 +41992,7 @@ def _operator_status_ribbon(
     saved_project = str(workspace.get("open_project") or "").strip()
     saved_goal = str(workspace.get("open_goal") or "").strip()
     saved_artifact = str(workspace.get("last_viewed_artifact") or "").strip()
+    saved_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
     resume_status = (
         "saved_goal" if saved_goal else ("saved_project" if saved_project else "not_started")
     )
@@ -42085,8 +42106,19 @@ def _operator_status_ribbon(
         attention_action = "Open goals"
         attention_href = "/goals"
 
-    resume_label = "Open resume"
-    resume_href = "/resume"
+    resume_href = saved_resume_surface or "/resume"
+    resume_label = (
+        _saved_workspace_surface_action_label(
+            root,
+            saved_resume_surface,
+            open_goal=saved_goal,
+            open_project=saved_project,
+            fallback="Open resume",
+        )
+        if saved_resume_surface
+        else "Open resume"
+    )
+    resume_source = "saved_resume_surface" if saved_resume_surface else "resume_page"
     finish_target = _finish_today_shortcut_context(current_path)
     finish_href = finish_target["href"]
     finish_label = finish_target["label"]
@@ -42130,7 +42162,13 @@ def _operator_status_ribbon(
         ("operator_ribbon_saved_project", saved_project or "none"),
         ("operator_ribbon_saved_goal", saved_goal or "none"),
         ("operator_ribbon_saved_artifact", saved_artifact or "none"),
-        ("operator_ribbon_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+        (
+            "operator_ribbon_resume_surface",
+            SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"),
+        ),
+        ("operator_ribbon_resume_exact_surface", resume_href),
+        ("operator_ribbon_resume_surface_source", resume_source),
+        ("operator_ribbon_resume_hub_surface", SafeHtml("<a href='/resume'>/resume</a>")),
         (
             "operator_ribbon_finish_surface",
             SafeHtml(f"<a href='{_e(finish_href)}'>{_e(finish_label)}</a>"),
@@ -42150,7 +42188,7 @@ def _operator_status_ribbon(
         f"operator_ribbon_now: {_e(primary_action)}",
         f"operator_ribbon_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
         f"operator_ribbon_attention: {_e(attention_status)} -> <a href='{_e(attention_href)}'>{_e(attention_href)}</a>",
-        f"operator_ribbon_resume: status={_e(resume_status)} surface=<a href='/resume'>/resume</a>",
+        f"operator_ribbon_resume: status={_e(resume_status)} surface=<a href='{_e(resume_href)}'>{_e(resume_label)}</a>",
         f"operator_ribbon_finish: <a href='{_e(finish_href)}'>{_e(finish_label)}</a>",
         "operator_ribbon_palette: <a href='#command-palette'>Command Palette</a>",
         "operator_ribbon_safety: read-only global operator orientation",
