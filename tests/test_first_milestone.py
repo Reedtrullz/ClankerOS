@@ -1167,7 +1167,7 @@ def test_task_recommendations_surfaces_blocked_planned_task(
     assert "recommended_action</dt><dd>Review recovery commands" in goal_page.body
     assert (
         "next_action_focus_primary_surface</dt><dd>"
-        f"<a href='{recovery_href}'>Goal Next Action</a>"
+        f"<a href='{recovery_href}'>Review recovery commands</a>"
     ) in goal_page.body
     assert (
         "operator_ribbon_attention_action</dt><dd>Review recovery commands"
