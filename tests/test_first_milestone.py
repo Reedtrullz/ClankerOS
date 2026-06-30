@@ -14143,16 +14143,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"goal_risk_command_first_task</dt><dd>{result.task_id} risk=low" in goal.body
     assert "goal_risk_command_risk_notes_status</dt><dd>none" in goal.body
     assert "goal_risk_command_approval_boundary</dt><dd>high_or_unknown_risk_requires_operator_approval_before_dispatch" in goal.body
-    assert "goal_risk_command_next_action</dt><dd>Continue workflow" in goal.body
-    assert "goal_risk_command_target_surface</dt><dd><a href='#goal-next-action'>Goal Next Action</a>" in goal.body
-    assert "goal_risk_command_reason</dt><dd>low_risk_tasks" in goal.body
+    assert "goal_risk_command_next_action</dt><dd>Create commit request" in goal.body
+    assert "goal_risk_command_target_surface</dt><dd><a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
+    assert "goal_risk_command_action_form_available</dt><dd>true" in goal.body
+    assert "goal_risk_command_reason</dt><dd>low_risk_tasks; current_action=reviewed_run=" in goal.body
     assert "goal_risk_command_source</dt><dd>task_risk_metadata_and_sprint_contract" in goal.body
     assert "goal_risk_command_write_on_get</dt><dd>false" in goal.body
     assert "goal_risk_command_provider_calls_taken</dt><dd>0" in goal.body
     assert "goal_risk_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_risk_command_external_effects_created</dt><dd>false" in goal.body
     assert "goal_risk_now: low_risk level=low" in goal.body
-    assert "goal_risk_click: <a href='#goal-next-action'>Goal Next Action</a>" in goal.body
+    assert "goal_risk_click: <a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "goal_risk_counts: low=1" in goal.body
     assert "goal_risk_safety: review-only local risk posture" in goal.body
     assert "goal_risk_level: low" in goal.body
@@ -14584,8 +14585,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_incident_command_status</dt><dd>clear" in goal.body
     assert "goal_incident_command_open_count</dt><dd>0" in goal.body
     assert "goal_incident_command_total_count</dt><dd>0" in goal.body
-    assert "goal_incident_command_next_action</dt><dd>Continue workflow" in goal.body
-    assert "goal_incident_command_target_surface</dt><dd><a href='#goal-next-action'>Goal Next Action</a>" in goal.body
+    assert "goal_incident_command_next_action</dt><dd>Create commit request" in goal.body
+    assert "goal_incident_command_target_surface</dt><dd><a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
+    assert "goal_incident_command_action_form_available</dt><dd>true" in goal.body
+    assert "goal_incident_command_reason</dt><dd>no_goal_incidents; current_action=reviewed_run=" in goal.body
     assert "Goal created" in goal.body
     assert "Scout delegated" in goal.body
     assert "Context pack built" in goal.body

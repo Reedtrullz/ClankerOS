@@ -19419,12 +19419,22 @@ def _goal_risk_command_bar(
     medium_count = counts.get("medium", 0)
     risk_notes = getattr(contract, "risk_notes", "") if contract is not None else ""
     first_task = tasks[0] if tasks else None
+    current_action = _goal_next_action(state["root"], state)
+    current_form_available = bool(_goal_next_action_form(state, current_action))
+    current_href = _goal_primary_action_href(
+        state,
+        current_action,
+        form_available=current_form_available,
+    )
+    current_label = _goal_action_cta_label(current_action, current_form_available)
+    target_form_available = False
     if not tasks:
         posture = "no_tasks"
-        next_action = "Create scoped tasks"
-        target_href = "#goal-next-action"
-        target_label = "Goal Next Action"
-        reason = "no_goal_tasks"
+        next_action = current_label
+        target_href = current_href
+        target_label = current_label
+        target_form_available = current_form_available
+        reason = f"no_goal_tasks; current_action={current_action.reason}"
     elif high_count or unknown_count:
         posture = "approval_required_before_dispatch"
         next_action = "Review approval boundary"
@@ -19439,10 +19449,11 @@ def _goal_risk_command_bar(
         reason = "medium_risk_tasks"
     else:
         posture = "low_risk"
-        next_action = "Continue workflow"
-        target_href = "#goal-next-action"
-        target_label = "Goal Next Action"
-        reason = "low_risk_tasks"
+        next_action = current_label
+        target_href = current_href
+        target_label = current_label
+        target_form_available = current_form_available
+        reason = f"low_risk_tasks; current_action={current_action.reason}"
     target_surface = SafeHtml(
         f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"
     )
@@ -19505,6 +19516,10 @@ def _goal_risk_command_bar(
                     ),
                     ("goal_risk_command_next_action", next_action),
                     ("goal_risk_command_target_surface", target_surface),
+                    (
+                        "goal_risk_command_action_form_available",
+                        str(target_form_available).lower(),
+                    ),
                     ("goal_risk_command_reason", reason),
                     ("goal_risk_command_source", "task_risk_metadata_and_sprint_contract"),
                     ("goal_risk_command_write_on_get", "false"),
@@ -21724,6 +21739,15 @@ def _goal_incident_command_bar(
     open_recommendations = [
         row for row in state["recommendations"] if row["status"] == "open"
     ]
+    current_action = _goal_next_action(root, state)
+    current_form_available = bool(_goal_next_action_form(state, current_action))
+    current_href = _goal_primary_action_href(
+        state,
+        current_action,
+        form_available=current_form_available,
+    )
+    current_label = _goal_action_cta_label(current_action, current_form_available)
+    target_form_available = False
     first_incident = (
         open_incidents[0]
         if open_incidents
@@ -21775,11 +21799,14 @@ def _goal_incident_command_bar(
         reason = "resolved_goal_incidents"
     else:
         status = "clear"
-        next_action = "Continue workflow"
-        target_href = "#goal-next-action"
-        target_label = "Goal Next Action"
-        target_surface = SafeHtml("<a href='#goal-next-action'>Goal Next Action</a>")
-        reason = "no_goal_incidents"
+        next_action = current_label
+        target_href = current_href
+        target_label = current_label
+        target_surface = SafeHtml(
+            f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"
+        )
+        target_form_available = current_form_available
+        reason = f"no_goal_incidents; current_action={current_action.reason}"
     incident_cards = "".join(
         [
             "<div class='goal-incident-card goal-incident-primary' data-goal-incident-now='true'>",
@@ -21843,6 +21870,10 @@ def _goal_incident_command_bar(
                     ("goal_incident_command_first_evidence", first_evidence),
                     ("goal_incident_command_next_action", next_action),
                     ("goal_incident_command_target_surface", target_surface),
+                    (
+                        "goal_incident_command_action_form_available",
+                        str(target_form_available).lower(),
+                    ),
                     ("goal_incident_command_reason", reason),
                     ("goal_incident_command_source", "goal_incidents_and_recommendations"),
                     ("goal_incident_command_write_on_get", "false"),
