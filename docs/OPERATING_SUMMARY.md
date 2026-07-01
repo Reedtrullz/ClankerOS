@@ -316,7 +316,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   pause-while-hidden rules, and zero provider/network/external-effect
   counters. A visible `Workflow Finish Today` handoff follows with a confirmed
   `save-workspace` form that stores the exact scoped workflow route as
-  `resume_surface`. These summarize the selected delegation or coder run,
+  `resume_surface`; the shared shell's `Finish` button, `f` shortcut,
+  Operator Ribbon Finish card, and command palette Finish card now target that
+  same `#workflow-finish-today` form on `/workflow` instead of the generic
+  Workspace fallback. These summarize the selected delegation or coder run,
   parent Goal, project, current workflow stage, journey position, exact resume
   surface, next local action, target surface, reason, and zero-effect counters
   before the detailed selected-state map and continuation links;
@@ -1114,6 +1117,8 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   zero-effect evidence. A visible
   `Workflow Finish Today` handoff follows with a confirmed local workspace
   save form that persists the exact scoped workflow route for `/resume`.
+  The shared shell's route-aware Finish shortcut now opens that same
+  `#workflow-finish-today` form from `/workflow`.
   Journey, live-state, finish, and command evidence stay collapsed by default
   while preserving selected delegation/run, parent Goal, project, current
   stage, journey position, exact resume surface, next local action, target

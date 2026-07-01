@@ -712,7 +712,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Operator Ribbon Finish card, and command palette Finish card now open the
   same-page `#home-finish-today` form instead of detouring to Workspace. Empty
   first-run Home still falls back to `/workspace#save-workspace` until a Goal
-  exists to save.
+  exists to save. `/workflow` now follows the same route-local pattern by
+  opening `#workflow-finish-today`, which is the existing confirmed workflow
+  workspace-save form.
 - `/profiles` reads both `.clanker/profiles.yml` and SQLite profile rows. It
   shows configured profile names, storage-backed profile labels, modes, cost
   tiers, model placeholders, write posture, adapter status, and `use_for`

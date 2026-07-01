@@ -45530,6 +45530,19 @@ def _finish_today_shortcut_context(
             "network_actions_taken": "0",
             "external_effects_created": "false",
         }
+    if route_path == "/workflow":
+        return {
+            "href": "#workflow-finish-today",
+            "label": "Finish Today",
+            "source": "workflow_finish_form",
+            "target": "Workflow local finish form",
+            "surface": "route_local_form",
+            "confirmation_required": "true",
+            "write_on_get": "false",
+            "provider_calls_taken": "0",
+            "network_actions_taken": "0",
+            "external_effects_created": "false",
+        }
     return {
         "href": "/workspace#save-workspace",
         "label": "Finish Today",

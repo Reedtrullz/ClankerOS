@@ -6732,6 +6732,20 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workflow-finish-actions='true'" in workflow.body
     assert "data-workflow-finish-evidence='true'" in workflow.body
     assert "data-workflow-save-details='true'" in workflow.body
+    assert 'data-finish-today-href="#workflow-finish-today"' in workflow.body
+    assert 'data-finish-today-source="workflow_finish_form"' in workflow.body
+    assert 'data-finish-today-surface="route_local_form"' in workflow.body
+    assert (
+        "operator_ribbon_finish_surface</dt><dd><a href='#workflow-finish-today'>"
+        "Finish Today</a>"
+    ) in workflow.body
+    assert "operator_ribbon_finish_source</dt><dd>workflow_finish_form" in workflow.body
+    assert (
+        "palette_quick_switch_finish_surface</dt><dd><a href='#workflow-finish-today'>"
+        "#workflow-finish-today</a>"
+    ) in workflow.body
+    assert "palette_quick_switch_finish_source</dt><dd>workflow_finish_form" in workflow.body
+    assert "palette_quick_switch_finish_route_surface</dt><dd>route_local_form" in workflow.body
     assert "data-workflow-command-evidence='true'" in workflow.body
     assert workflow.body.index("data-workflow-operator-workbench") < workflow.body.index("data-workflow-scope-picker")
     assert workflow.body.index("data-workflow-scope-picker") < workflow.body.index("data-workflow-journey")
