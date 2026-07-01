@@ -1194,6 +1194,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   `Home Resume Workspace` whose `Remember Current Goal` form now also stores
   the lead Goal's exact current action `resume_surface` and exposes
   `home_resume_remember_resume_surface` with the same action label,
+  the shared shell's `Finish` button, `f` shortcut, Operator Ribbon Finish
+  card, and command palette Finish card now route populated Home sessions to
+  that same-page `#home-finish-today` form instead of detouring to Workspace,
+  while empty first-run Home keeps the `/workspace#save-workspace` fallback,
   a read-only
   `Home Attention Brief` with visible Now,
   Inbox, Approvals, Incidents, Recommendations, and Proof cards for existing

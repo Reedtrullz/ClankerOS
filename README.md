@@ -863,8 +863,8 @@ shortcut to hide Recent Items, Route Context, Operator Focus, and Last Action
 strips while keeping the Operator Ribbon and page body visible. It is stored in
 `localStorage:clankeros-focus-mode` only and does not write server state. The
 shared shortcut layer now includes `w` for `/workspace` and a route-aware `f`
-for Finish Today: Today opens `#today-finish`, Goal pages open
-`#goal-finish-today`, and other routes fall back to
+for Finish Today: populated Home opens `#home-finish-today`, Today opens
+`#today-finish`, Goal pages open `#goal-finish-today`, and other routes fall back to
 `/workspace#save-workspace`. `n` still opens the current recommended next
 action, and the header button is labeled with the concrete operator move, such
 as `Create Project` or `Create commit request`, so return-to-work, Finish

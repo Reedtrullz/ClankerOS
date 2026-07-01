@@ -45485,8 +45485,25 @@ def _next_action_shortcut_context(
     }
 
 
-def _finish_today_shortcut_context(current_path: str) -> dict[str, str]:
+def _finish_today_shortcut_context(
+    current_path: str,
+    focus_context: dict[str, Any] | None = None,
+) -> dict[str, str]:
     route_path = urlparse(current_path or "/").path or "/"
+    focus_context = focus_context or {}
+    if route_path == "/" and str(focus_context.get("status") or "") == "available":
+        return {
+            "href": "#home-finish-today",
+            "label": "Finish Today",
+            "source": "home_finish_form",
+            "target": "Home local finish form",
+            "surface": "route_local_form",
+            "confirmation_required": "true",
+            "write_on_get": "false",
+            "provider_calls_taken": "0",
+            "network_actions_taken": "0",
+            "external_effects_created": "false",
+        }
     if route_path == "/today":
         return {
             "href": "#today-finish",
@@ -45691,7 +45708,7 @@ def _operator_status_ribbon(
         else "Open resume"
     )
     resume_source = "saved_resume_surface" if saved_resume_surface else "resume_page"
-    finish_target = _finish_today_shortcut_context(current_path)
+    finish_target = _finish_today_shortcut_context(current_path, focus_context)
     finish_href = finish_target["href"]
     finish_label = finish_target["label"]
     search_href = "/search"
@@ -46575,7 +46592,7 @@ def _command_palette_quick_switch(
     finish_source = finish_defaults["source"]
     finish_target = finish_defaults["open_goal"] or finish_defaults["open_project"] or "No saved workspace"
     finish_action = "Finish Today"
-    finish_shortcut = _finish_today_shortcut_context(current_path)
+    finish_shortcut = _finish_today_shortcut_context(current_path, focus_context)
     finish_href = finish_shortcut["href"]
     if finish_shortcut["surface"] == "route_local_form":
         finish_source = finish_shortcut["source"]
@@ -47345,7 +47362,7 @@ def _html_page(
     recent_panel = _recent_items_panel(root)
     focus_context = _operator_focus_context(root, current_path)
     next_shortcut = _next_action_shortcut_context(focus_context, current_path)
-    finish_shortcut = _finish_today_shortcut_context(current_path)
+    finish_shortcut = _finish_today_shortcut_context(current_path, focus_context)
     operator_ribbon = _operator_status_ribbon(root, focus_context, current_path, title)
     breadcrumbs = _breadcrumbs(root, current_path, title, focus_context)
     focus_strip = _operator_focus_strip(focus_context, current_path)

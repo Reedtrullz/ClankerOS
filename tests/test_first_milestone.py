@@ -11915,10 +11915,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "operator_ribbon_resume_surface</dt><dd><a href='/resume'>Open resume</a>" in dashboard.body
     assert "operator_ribbon_resume_exact_surface</dt><dd>/resume" in dashboard.body
     assert "operator_ribbon_resume_surface_source</dt><dd>resume_page" in dashboard.body
+    assert 'data-finish-today-href="#home-finish-today"' in dashboard.body
+    assert 'data-finish-today-source="home_finish_form"' in dashboard.body
+    assert 'data-finish-today-surface="route_local_form"' in dashboard.body
     assert (
-        "operator_ribbon_finish_surface</dt><dd><a href='/workspace#save-workspace'>"
+        "operator_ribbon_finish_surface</dt><dd><a href='#home-finish-today'>"
         "Finish Today</a>"
     ) in dashboard.body
+    assert "operator_ribbon_finish_source</dt><dd>home_finish_form" in dashboard.body
     assert "operator_ribbon_finish_confirmation_required</dt><dd>true" in dashboard.body
     assert "operator_ribbon_command_palette_available</dt><dd>true" in dashboard.body
     assert "operator_ribbon_write_on_get</dt><dd>false" in dashboard.body
@@ -12239,7 +12243,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in dashboard.body
     assert "data-command-palette-quick-artifact='true' href='/artifacts?path=" in dashboard.body
     assert (
-        "data-command-palette-quick-finish='true' href='/workspace#save-workspace'>"
+        "data-command-palette-quick-finish='true' href='#home-finish-today'>"
         "Finish Today</a>"
     ) in dashboard.body
     assert "data-command-palette-quick-evidence='true'" in dashboard.body
@@ -12257,12 +12261,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in dashboard.body
     assert "palette_quick_switch_action_label</dt><dd>Create commit request" in dashboard.body
     assert "palette_quick_switch_artifact_source</dt><dd>current_goal_latest" in dashboard.body
-    assert "palette_quick_switch_finish_source</dt><dd>lead_goal" in dashboard.body
+    assert "palette_quick_switch_finish_source</dt><dd>home_finish_form" in dashboard.body
     assert (
-        "palette_quick_switch_finish_surface</dt><dd><a href='/workspace#save-workspace'>"
-        "/workspace#save-workspace</a>"
+        "palette_quick_switch_finish_surface</dt><dd><a href='#home-finish-today'>"
+        "#home-finish-today</a>"
     ) in dashboard.body
-    assert f"palette_quick_switch_finish_target</dt><dd>{result.goal_id}" in dashboard.body
+    assert "palette_quick_switch_finish_target</dt><dd>Home local finish form" in dashboard.body
+    assert "palette_quick_switch_finish_route_surface</dt><dd>route_local_form" in dashboard.body
     assert "palette_quick_switch_finish_confirmation_required</dt><dd>true" in dashboard.body
     assert "palette_quick_switch_card_count</dt><dd>5" in dashboard.body
     assert "palette_quick_switch_write_on_get</dt><dd>false" in dashboard.body

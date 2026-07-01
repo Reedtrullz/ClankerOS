@@ -708,6 +708,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   goal-aware `Continue Current Goal` block, compact Goal continuation readback,
   and confirmed local action form remain directly below search. These controls
   only navigate local routes or submit existing local forms after confirmation.
+  On populated Home sessions, the shared `Finish` button, `f` shortcut,
+  Operator Ribbon Finish card, and command palette Finish card now open the
+  same-page `#home-finish-today` form instead of detouring to Workspace. Empty
+  first-run Home still falls back to `/workspace#save-workspace` until a Goal
+  exists to save.
 - `/profiles` reads both `.clanker/profiles.yml` and SQLite profile rows. It
   shows configured profile names, storage-backed profile labels, modes, cost
   tiers, model placeholders, write posture, adapter status, and `use_for`

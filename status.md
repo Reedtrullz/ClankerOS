@@ -1,5 +1,29 @@
 # Status
 
+## 2026-07-01 Home Finish Shortcut UX
+
+- Populated Home sessions now route the shared `Finish` header button, `f`
+  shortcut, Operator Ribbon Finish card, and command palette Finish card to the
+  same-page `#home-finish-today` form instead of detouring to
+  `/workspace#save-workspace`.
+- Empty first-run Home still falls back to `/workspace#save-workspace`, so the
+  shortcut only uses the Home-local finish form after a current Goal exists.
+- TDD evidence: the fixture-backed Home route test failed first because the
+  header still emitted `data-finish-today-href="/workspace#save-workspace"`,
+  then passed after the Finish shortcut context became focus-aware.
+- Local verification:
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface --tb=short`:
+    1 passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form --tb=short`:
+    1 passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health --tb=short`:
+    1 passed.
+- Non-claim: this is route-local browser shortcut/ribbon/palette routing only.
+  It does not write on GET, call providers, use the network, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Goal First-Run Action Dock Return UX
 
 - Goal-origin `delegate`, `context-pack`, and `run-delegation` browser forms
