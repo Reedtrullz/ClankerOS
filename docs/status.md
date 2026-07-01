@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal workflow/continuation guidance now routes waiting local action gates to
+  the `Goal Action Dock` instead of the older generic `#goal-next-action`
+  anchor, and approval gates render as `Review approvals` while preserving the
+  raw `/approvals` href. This applies to the Goal Continuation Rail, Goal
+  Workflow Map, command palette continuation readback, action-result workflow
+  map, first-run handoff fallback, and failed-action recovery. Local proof
+  includes the fixture-backed demo Goal route pytest (`1 passed`) plus compile
+  and whitespace checks.
 - Goal Return Brief now names the working Goal, next action, and blocker in
   the visible context line, and its evidence is title/action-first while
   preserving raw route fields. In the fixture demo it reads back

@@ -12559,7 +12559,7 @@ def _first_run_action_ladder(progress: dict[str, Any]) -> str:
             if delegation_id:
                 return f"/delegations/{quote(delegation_id)}", "Delegation"
             if goal_id:
-                return f"/goals/{quote(goal_id)}#goal-next-action", "Goal action"
+                return f"/goals/{quote(goal_id)}#goal-action-dock", "Goal action dock"
         return "#first-run-guide", "First Run Guide" if status != "waiting_for_goal" else "Waiting"
 
     cards: list[str] = []
@@ -18718,6 +18718,7 @@ def _goal_continuation_gate_action(
     if href == "outside_clankeros":
         return action, "outside_clankeros"
     if href == "#goal-next-action" and label == "Goal action form":
+        href = "#goal-action-dock"
         label = action
     return action, _goal_continuation_link(href, label)
 
@@ -18747,10 +18748,10 @@ _GOAL_CONTINUATION_GATE_ACTIONS: dict[str, tuple[str, str, str]] = {
     "worktree_run": ("Run approved worktree", "#goal-next-action", "Goal action form"),
     "review": ("Open review", "#goal-next-action", "Goal action form"),
     "commit_request": ("Create commit request", "#goal-next-action", "Goal action form"),
-    "commit_approval": ("Approve commit request", "/approvals", "/approvals"),
+    "commit_approval": ("Approve commit request", "/approvals", "Review approvals"),
     "local_commit": ("Commit approved worktree", "#goal-next-action", "Goal action form"),
     "publication_request": ("Create publication request", "#goal-next-action", "Goal action form"),
-    "publication_approval": ("Approve publication request", "/approvals", "/approvals"),
+    "publication_approval": ("Approve publication request", "/approvals", "Review approvals"),
     "publication_handoff": ("Create publication handoff", "#goal-next-action", "Goal action form"),
     "manual_publish": ("Manual publish outside ClankerOS", "outside_clankeros", "outside_clankeros"),
 }
@@ -40898,7 +40899,7 @@ def _action_error_retry_target(
         return return_to, "Submitted return target", "submitted_return_to"
     goal_id = _one(form, "goal_id")
     if goal_id:
-        return f"/goals/{quote(goal_id)}#goal-next-action", "Goal action form", "goal_id"
+        return f"/goals/{quote(goal_id)}#goal-action-dock", "Goal action dock", "goal_id"
     delegation_id = _one(form, "delegation_id")
     if delegation_id:
         return f"/delegations/{quote(delegation_id)}#safe-local-actions", "Delegation actions", "delegation_id"
@@ -41933,7 +41934,7 @@ def _action_result_goal_gate_action(
     if href == "outside_clankeros":
         return action, "outside_clankeros"
     if href == "#goal-next-action":
-        href = f"/goals/{quote(goal_id)}#goal-next-action"
+        href = f"/goals/{quote(goal_id)}#goal-action-dock"
         if label == "Goal action form":
             label = action
     return action, _goal_continuation_link(href, label)
@@ -42042,8 +42043,8 @@ def _action_result_first_run_step_action(
         )
     if goal_id:
         return label, _goal_continuation_link(
-            f"/goals/{quote(goal_id)}#goal-next-action",
-            "Goal action form",
+            f"/goals/{quote(goal_id)}#goal-action-dock",
+            label,
         )
     return label, _goal_continuation_link("/goals", "/goals")
 

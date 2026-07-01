@@ -1,5 +1,29 @@
 # Status
 
+## 2026-07-01 Goal Workflow Action Dock Routing UX
+
+- Updated Goal workflow/continuation guidance so waiting local action gates
+  route to the `Goal Action Dock` section instead of the older generic
+  `#goal-next-action` anchor.
+- Approval gates in the Goal Continuation Rail, Goal Workflow Map, command
+  palette continuation readback, and action-result workflow map now render
+  `Review approvals` as operator-facing copy while preserving the raw
+  `/approvals` route in the link href.
+- First-run and failed-action recovery fallbacks that have a Goal context now
+  return operators to `/goals/<goal_id>#goal-action-dock`, keeping recovery
+  and handoff flows pointed at the actionable browser surface.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py status.md docs/status.md`:
+    passed.
+- Non-claim: this is browser navigation/copy polish only. It does not write on
+  GET, approve work, execute tasks, run broad local verification, deploy, call
+  providers, use the network from the app, or mutate external systems from
+  ClankerOS.
+
 ## 2026-07-01 Goal Return Brief Label UX
 
 - Updated the Goal Return Brief so its visible context line names the working
