@@ -262,12 +262,14 @@ the day with the route-local Finish Today form or
 `/workspace#save-workspace`, and return through `/resume`. A visible
 `Guide Command Panel` now embeds the existing confirmed first-run or current
 Goal action form when available, so an empty checkout can register a project
-and then create the first Goal from the guide without hunting through docs. A
+and then create the first Goal from the guide without hunting through docs.
+Its Proof card also follows the current Goal's CI handoff when a Goal is in
+focus, falling back to `/verification` during first run. A
 read-only `Operator Recipes` panel follows it with seven intent cards for
 Start The Day, Set Up Or Select Goal, Do The Next Thing, Unblock Work, Check
-Proof, Finish Today, and Resume Tomorrow, routing each intent to existing
-browser surfaces and confirmed forms while naming the current proof and
-workspace posture. It
+Proof, Finish Today, and Resume Tomorrow, routing Proof to the current Goal CI
+handoff or first-run fallback while naming the current proof and workspace
+posture. It
 is read-only on GET and only reuses existing local surfaces and confirmed
 forms; it does not call providers, perform network actions, push, create PRs,
 deploy, or mutate external systems.

@@ -1738,6 +1738,22 @@ def _dashboard(root: Path, *, host: str, port: int) -> str:
     )
 
 
+def _guide_proof_target(
+    goal_id: str,
+    *,
+    fallback_href: str,
+    fallback_label: str,
+) -> tuple[str, str, str]:
+    goal_id = goal_id.strip()
+    if not goal_id:
+        return fallback_href, fallback_label, "verification_fallback"
+    return (
+        f"/goals/{quote(goal_id)}#goal-ci-handoff",
+        "Goal CI handoff",
+        "guide_goal_ci_handoff",
+    )
+
+
 def _guide_page(root: Path) -> str:
     storage = _storage(root)
     rows = _goal_rows(storage, limit=100)
@@ -1755,6 +1771,7 @@ def _guide_page(root: Path) -> str:
     primary_label = str(focus.get("target_label") or focus.get("next_action") or "Open Today")
     primary_action = str(focus.get("next_action") or "Open Today")
     goal_surface: str | SafeHtml = "none"
+    goal_id = ""
     project_value = str(first_run["default_project"])
     action_form_available = str(bool(focus.get("form_available"))).lower()
 
@@ -1797,6 +1814,11 @@ def _guide_page(root: Path) -> str:
         primary_label = "Open Health"
         primary_action = "Inspect local app state"
 
+    proof_href, proof_label, proof_source = _guide_proof_target(
+        goal_id,
+        fallback_href="/verification",
+        fallback_label="Open Proof",
+    )
     daily_cards = [
         (
             "today",
@@ -1826,8 +1848,8 @@ def _guide_page(root: Path) -> str:
             "proof",
             "Proof",
             "Check local verification and recorded GitHub evidence before believing progress.",
-            "/verification",
-            "Open Proof",
+            proof_href,
+            proof_label,
             False,
         ),
         (
@@ -1961,6 +1983,11 @@ def _guide_page(root: Path) -> str:
         ("guide_first_run_complete", str(first_run["complete"]).lower()),
         ("guide_workspace_goal", workspace_goal),
         ("guide_workspace_surface", workspace_surface),
+        (
+            "guide_proof_surface",
+            SafeHtml(f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>"),
+        ),
+        ("guide_proof_source", proof_source),
         ("guide_latest_ci_status", latest_ci_label),
         ("guide_loop_steps", str(len(daily_cards))),
         ("guide_first_run_steps", str(len(_FIRST_RUN_STEPS))),
@@ -1973,6 +2000,7 @@ def _guide_page(root: Path) -> str:
     evidence_lines = [
         "guide_loop: Today -> Goal -> Action -> Proof -> Finish -> Resume",
         f"guide_primary: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+        f"guide_loop_proof: <a href='{_e(proof_href)}'>{_e(proof_label)}</a>",
         f"guide_workspace_resume: {_e(workspace_surface)}",
         "guide_safety: read-only browser guide; existing confirmed forms own writes",
     ]
@@ -1990,6 +2018,7 @@ def _guide_page(root: Path) -> str:
                 primary_label=primary_label,
                 primary_action=primary_action,
                 phase=phase,
+                goal_id=goal_id,
             ),
             _guide_operator_recipes(
                 root,
@@ -2003,6 +2032,9 @@ def _guide_page(root: Path) -> str:
                 action_form_available=action_form_available == "true",
                 latest_ci_label=latest_ci_label,
                 workspace_surface=workspace_surface,
+                proof_href=proof_href,
+                proof_label=proof_label,
+                proof_source=proof_source,
             ),
             "<section id='guide-daily-loop' class='panel guide-daily-loop' data-guide-daily-loop='true'><h2>Daily Loop</h2>",
             "<p class='muted'>Use these in order when you want ClankerOS to feel like the main operator surface.</p>",
@@ -2044,6 +2076,9 @@ def _guide_operator_recipes(
     action_form_available: bool,
     latest_ci_label: str,
     workspace_surface: str,
+    proof_href: str,
+    proof_label: str,
+    proof_source: str,
 ) -> str:
     inbox = collect_inbox_items(root)
     pending_approvals = (
@@ -2132,8 +2167,8 @@ def _guide_operator_recipes(
             "proof",
             "Check Proof",
             f"Current recorded CI proof: {latest_ci_label}.",
-            "/verification",
-            "Open Proof",
+            proof_href,
+            proof_label,
             False,
         ),
         (
@@ -2175,6 +2210,11 @@ def _guide_operator_recipes(
             SafeHtml(f"<a href='{_e(unblock_href)}'>{_e(unblock_label)}</a>"),
         ),
         ("guide_recipes_unblock_reason", unblock_reason),
+        (
+            "guide_recipes_proof_surface",
+            SafeHtml(f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>"),
+        ),
+        ("guide_recipes_proof_source", proof_source),
         ("guide_recipes_latest_ci_status", latest_ci_label),
         ("guide_recipes_workspace_surface", workspace_surface),
         ("guide_recipes_write_on_get", "false"),
@@ -2186,6 +2226,7 @@ def _guide_operator_recipes(
         "guide_recipe_path: start_today -> setup -> next_action -> unblock -> proof -> finish -> resume",
         f"guide_recipe_next_action: <a href='{_e(next_href)}'>{_e(next_label)}</a>",
         f"guide_recipe_unblock: <a href='{_e(unblock_href)}'>{_e(unblock_label)}</a>",
+        f"guide_recipe_proof: <a href='{_e(proof_href)}'>{_e(proof_label)}</a>",
         "guide_recipe_safety: read-only intent recipes; existing confirmed forms own writes",
     ]
     return "".join(
@@ -2251,6 +2292,7 @@ def _guide_command_panel(
     primary_label: str,
     primary_action: str,
     phase: str,
+    goal_id: str,
 ) -> str:
     status = str(focus.get("status") or "unknown")
     command_mode = status
@@ -2266,6 +2308,11 @@ def _guide_command_panel(
         f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
     )
     form_surface: str | SafeHtml = "none"
+    proof_href, proof_label, proof_source = _guide_proof_target(
+        goal_id,
+        fallback_href="/verification",
+        fallback_label="Verification",
+    )
 
     if status == "first_run":
         payload = _first_run_action_form_payload(root, first_run)
@@ -2321,6 +2368,11 @@ def _guide_command_panel(
         ("guide_command_form_surface", form_surface),
         ("guide_command_form_available", str(form_available).lower()),
         ("guide_command_confirmation_required", str(form_available).lower()),
+        (
+            "guide_command_proof_surface",
+            SafeHtml(f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>"),
+        ),
+        ("guide_command_proof_source", proof_source),
         ("guide_command_write_on_get", "false"),
         ("guide_command_provider_calls_taken", "0"),
         ("guide_command_network_actions_taken", "0"),
@@ -2354,8 +2406,8 @@ def _guide_command_panel(
                 "proof",
                 "Proof",
                 "Check evidence before trusting progress.",
-                "/verification",
-                "Verification",
+                proof_href,
+                proof_label,
                 data_attr="data-guide-command-card",
                 key_attr="data-guide-command-card-key",
                 card_class="guide-card guide-command-card",
@@ -2391,6 +2443,7 @@ def _guide_command_panel(
                     f"guide_command_now: {_e(primary_action)}",
                     f"guide_command_form: action={_e(action_name)} available={str(form_available).lower()}",
                     f"guide_command_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    f"guide_command_proof: <a href='{_e(proof_href)}'>{_e(proof_label)}</a>",
                     "guide_command_safety: existing confirmed local forms own writes",
                 ]
             ),

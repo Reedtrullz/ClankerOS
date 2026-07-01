@@ -180,11 +180,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `/workspace#save-workspace`, and `/resume`. A visible `Guide Command Panel`
   embeds the existing confirmed first-run or current Goal action form when one
   is available, so project registration, first Goal creation, and the current
-  Goal action can be started from the guide. A read-only `Operator Recipes`
+  Goal action can be started from the guide. Its Proof card uses the current
+  Goal's CI handoff when a Goal exists and `/verification` during first run.
+  A read-only `Operator Recipes`
   panel follows with intent cards for Start The Day, Set Up Or Select Goal,
   Do The Next Thing, Unblock Work, Check Proof, Finish Today, and Resume
-  Tomorrow, linking each intent to existing browser surfaces while preserving
-  the current action form and safety boundary. The route is read-only on GET and
+  Tomorrow, linking Proof to the current Goal CI handoff or first-run fallback
+  while preserving the current action form and safety boundary. The route is read-only on GET and
   only reuses existing local surfaces and confirmed forms; it does not call
   providers, perform network actions, push, create PRs, deploy, or mutate
   external systems.

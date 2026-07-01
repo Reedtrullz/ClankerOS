@@ -180,11 +180,14 @@ Core layers for the bootstrap:
   `/workspace#save-workspace`, and `/resume`. A visible `Guide Command Panel`
   embeds the existing confirmed first-run or current Goal action form when
   available, letting operators register the project, create the first Goal, or
-  continue the current Goal from the guide. A read-only `Operator Recipes`
+  continue the current Goal from the guide. Its Proof card uses the current
+  Goal's CI handoff when a Goal exists and `/verification` during first run.
+  A read-only `Operator Recipes`
   panel follows the command panel with Start The Day, Set Up Or Select Goal,
   Do The Next Thing, Unblock Work, Check Proof, Finish Today, and Resume
-  Tomorrow intent cards. These cards route to existing local browser surfaces,
-  reflect the current action/proof/resume posture, and add no new write
+  Tomorrow intent cards. These cards route Proof to the current Goal CI
+  handoff or first-run fallback, reflect the current action/proof/resume
+  posture, and add no new write
   authority. It remains read-only on GET with no
   provider calls, network actions, push, PR, deploy, or external mutation.
   The local app also exposes `/resume` as a

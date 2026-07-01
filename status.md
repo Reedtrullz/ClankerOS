@@ -1,5 +1,37 @@
 # Status
 
+## 2026-07-02 Goal-Aware Guide Proof UX
+
+- The `/guide` daily loop Proof card, `Guide Command Panel` Proof card, and
+  `Operator Recipes` Check Proof card now route populated sessions to the
+  current Goal's `#goal-ci-handoff` surface.
+- First-run/no-goal sessions keep the `/verification` fallback, with explicit
+  `verification_fallback` evidence rows so setup still works before a Goal
+  exists.
+- The guide now emits proof-surface/source readbacks for the command panel,
+  recipe panel, and daily loop, aligning the in-app suggested-use path with
+  the Goal-aware global `Proof` button and day-level Proof cards.
+- TDD evidence: the modern local-app route test failed first because
+  `guide_command_proof_surface` was missing; after implementation, first-run
+  Guide proof fallback passed. The populated demo scenario then proved
+  `/goals/<goal_id>#goal-ci-handoff` across Guide command, recipes, and daily
+  loop evidence.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed after docs/status updates.
+- Non-claim: this is read-only browser Guide routing only. It does not write on
+  GET, poll GitHub from the app, approve work, execute tasks, call providers,
+  use the network, push, create PRs, deploy, or mutate external systems from
+  ClankerOS.
+
 ## 2026-07-02 Goal-Aware Day Proof Cards UX
 
 - Home Attention, Today Session Rail, and Today Session Summary Proof cards now

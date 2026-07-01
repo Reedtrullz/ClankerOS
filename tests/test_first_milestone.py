@@ -4532,6 +4532,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "guide_command_form_surface</dt><dd><a href='#guide-command-panel'>Register ClankerOS project</a>" in guide.body
     assert "guide_command_form_available</dt><dd>true" in guide.body
     assert "guide_command_confirmation_required</dt><dd>true" in guide.body
+    assert "guide_command_proof_surface</dt><dd><a href='/verification'>Verification</a>" in guide.body
+    assert "guide_command_proof_source</dt><dd>verification_fallback" in guide.body
     assert "guide_command_write_on_get</dt><dd>false" in guide.body
     assert "guide_command_provider_calls_taken</dt><dd>0" in guide.body
     assert "guide_command_network_actions_taken</dt><dd>0" in guide.body
@@ -4565,6 +4567,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "guide_recipes_action_form_available</dt><dd>true" in guide.body
     assert "guide_recipes_waiting_items</dt><dd>0" in guide.body
     assert "guide_recipes_unblock_reason</dt><dd>no_blockers" in guide.body
+    assert "guide_recipes_proof_surface</dt><dd><a href='/verification'>Open Proof</a>" in guide.body
+    assert "guide_recipes_proof_source</dt><dd>verification_fallback" in guide.body
     assert "guide_recipes_latest_ci_status</dt><dd>success" in guide.body
     assert "guide_recipes_workspace_surface</dt><dd>none" in guide.body
     assert "guide_recipes_write_on_get</dt><dd>false" in guide.body
@@ -4573,6 +4577,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "guide_recipes_external_effects_created</dt><dd>false" in guide.body
     assert "guide_recipe_path: start_today -> setup -> next_action -> unblock -> proof -> finish -> resume" in guide.body
     assert "guide_recipe_next_action: <a href='#guide-command-panel'>Register ClankerOS project</a>" in guide.body
+    assert "guide_recipe_proof: <a href='/verification'>Open Proof</a>" in guide.body
     assert "guide_recipe_safety: read-only intent recipes; existing confirmed forms own writes" in guide.body
     assert "data-guide-daily-loop='true'" in guide.body
     assert "data-guide-daily-loop-cards='true'" in guide.body
@@ -4599,6 +4604,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "guide_project_count</dt><dd>0" in guide.body
     assert "guide_goal_count</dt><dd>0" in guide.body
     assert "guide_first_run_current_step</dt><dd>create_project" in guide.body
+    assert "guide_proof_surface</dt><dd><a href='/verification'>Open Proof</a>" in guide.body
+    assert "guide_proof_source</dt><dd>verification_fallback" in guide.body
     assert "guide_loop_steps</dt><dd>6" in guide.body
     assert "guide_first_run_steps</dt><dd>5" in guide.body
     assert "guide_safety_cards</dt><dd>4" in guide.body
@@ -4607,6 +4614,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "guide_network_actions_taken</dt><dd>0" in guide.body
     assert "guide_external_effects_created</dt><dd>false" in guide.body
     assert "guide_loop: Today -> Goal -> Action -> Proof -> Finish -> Resume" in guide.body
+    assert "guide_loop_proof: <a href='/verification'>Open Proof</a>" in guide.body
     assert "guide_safety: read-only browser guide; existing confirmed forms own writes" in guide.body
     assert ".guide-grid" in guide.body
     assert ".guide-recipes-grid" in guide.body
@@ -12772,6 +12780,39 @@ def test_local_app_demo_scenario_populates_fixture_state(
     )
     assert "today_session_ci: direct_public_snapshot/success" in today.body
     assert "today_session_safety: read-only local summary" in today.body
+    guide = render_local_app_route(tmp_path, "/guide")
+    assert guide.status == 200
+    assert "guide_command_mode</dt><dd>goal" in guide.body
+    assert "guide_recipes_mode</dt><dd>goal" in guide.body
+    assert f"guide_goal</dt><dd><a href='/goals/{result.goal_id}'" in guide.body
+    assert (
+        f"guide_command_proof_surface</dt><dd><a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in guide.body
+    )
+    assert "guide_command_proof_source</dt><dd>guide_goal_ci_handoff" in guide.body
+    assert (
+        f"guide_recipes_proof_surface</dt><dd><a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in guide.body
+    )
+    assert "guide_recipes_proof_source</dt><dd>guide_goal_ci_handoff" in guide.body
+    assert (
+        f"guide_proof_surface</dt><dd><a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in guide.body
+    )
+    assert "guide_proof_source</dt><dd>guide_goal_ci_handoff" in guide.body
+    assert (
+        f"guide_recipe_proof: <a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in guide.body
+    )
+    assert (
+        f"guide_loop_proof: <a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in guide.body
+    )
     assert "Today Activity Digest" in today.body
     assert "data-today-activity-digest='true'" in today.body
     assert "data-today-activity-actions='true'" in today.body
