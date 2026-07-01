@@ -35,7 +35,9 @@ hidden autonomy.
   state.
 - Starts a local-only browser operator app with `python3 -m agent_os.cli app`
   at `http://127.0.0.1:8787`, wrapping existing local state, artifacts, health,
-  workflow, project, delegation/run, artifact, and demo pages.
+  workflow, project, delegation/run, artifact, approval, inbox, and demo pages,
+  with action results returning to the Goal or operator queue that launched the
+  confirmed local action.
 - Runs worktree-isolated coding goals, captures diffs and verification output,
   and gates local commits behind explicit approval.
 - Produces GitHub handoff packets after committed local effects, including

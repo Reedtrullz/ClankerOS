@@ -19692,13 +19692,15 @@ def _goal_approve_worktree_form(state: dict[str, Any]) -> str:
     approval = _goal_pending_worktree_approval(state)
     if approval is None:
         return "<p class='muted'>approve_worktree_form_status: unavailable_until_pending_worktree_approval_exists</p>"
+    goal = state.get("goal")
+    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
     return "".join(
         [
             "<h3>Approve Worktree</h3>",
             "<p class='muted'>Records a local approval decision for the bounded worktree request. It does not run the worktree, edit source files, call a provider, use the network, commit, push, create a PR, or deploy.</p>",
             _input_form(
                 "approve-coder-worktree",
-                {"approval_id": approval.id},
+                {"approval_id": approval.id, "return_to": return_to},
                 {
                     "decided_by": "operator",
                     "note": "Approved bounded execution from goal page",
@@ -32210,7 +32212,7 @@ def _inbox_workbench_action_form(kind: str, item: Any | None) -> str:
         action_name = "approve-coder-worktree"
         form = _input_form(
             action_name,
-            {"approval_id": item.id, "decided_by": "operator"},
+            {"approval_id": item.id, "decided_by": "operator", "return_to": "/inbox"},
             {"note": "Approved bounded execution"},
         )
     elif kind == "commit_approval":
@@ -32222,7 +32224,7 @@ def _inbox_workbench_action_form(kind: str, item: Any | None) -> str:
         action_name = "approve-coder-commit"
         form = _input_form(
             action_name,
-            {"approval_id": item.id, "decided_by": "operator"},
+            {"approval_id": item.id, "decided_by": "operator", "return_to": "/inbox"},
             {"note": "Approved local commit"},
         )
     elif kind == "publication_request":
@@ -32234,7 +32236,11 @@ def _inbox_workbench_action_form(kind: str, item: Any | None) -> str:
         action_name = "approve-coder-publication"
         form = _input_form(
             action_name,
-            {"publication_id": item.id, "decided_by": "operator"},
+            {
+                "publication_id": item.id,
+                "decided_by": "operator",
+                "return_to": "/inbox",
+            },
             {"note": "Approved publication handoff preparation"},
         )
     else:
@@ -32876,7 +32882,11 @@ def _approval_workbench_action_form(focus: dict[str, Any]) -> str:
         action_name = "approve-coder-worktree"
         form = _input_form(
             action_name,
-            {"approval_id": item.id, "decided_by": "operator"},
+            {
+                "approval_id": item.id,
+                "decided_by": "operator",
+                "return_to": "/approvals",
+            },
             {"note": "Approved bounded execution"},
         )
     elif focus_kind == "commit":
@@ -32889,7 +32899,11 @@ def _approval_workbench_action_form(focus: dict[str, Any]) -> str:
         action_name = "approve-coder-commit"
         form = _input_form(
             action_name,
-            {"approval_id": item.id, "decided_by": "operator"},
+            {
+                "approval_id": item.id,
+                "decided_by": "operator",
+                "return_to": "/approvals",
+            },
             {"note": "Approved local commit"},
         )
     elif focus_kind == "publication":
@@ -32902,7 +32916,11 @@ def _approval_workbench_action_form(focus: dict[str, Any]) -> str:
         action_name = "approve-coder-publication"
         form = _input_form(
             action_name,
-            {"publication_id": item.id, "decided_by": "operator"},
+            {
+                "publication_id": item.id,
+                "decided_by": "operator",
+                "return_to": "/approvals",
+            },
             {"note": "Approved publication handoff preparation"},
         )
     else:
@@ -40854,7 +40872,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 note=_one(form, "note") or "Approved from local app.",
             )
             message = f"approved_coder_worktree: {result.approval.id}"
-            location = "/"
+            location = _safe_local_return_path(_one(form, "return_to")) or "/"
             _remember_delegation_workspace(
                 root,
                 storage,
@@ -40982,7 +41000,8 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 note=_one(form, "note") or "Approved from local app.",
             )
             message = f"approved_coder_commit: {result.approval.id}"
-            location = f"/runs/{quote(result.approval.run_id)}"
+            run_location = f"/runs/{quote(result.approval.run_id)}"
+            location = _safe_local_return_path(_one(form, "return_to")) or run_location
             _remember_delegation_workspace(
                 root,
                 storage,
@@ -40993,7 +41012,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                     / "coder_commit_decision.md"
                 ),
                 updated_by="approve-coder-commit",
-                resume_surface=location,
+                resume_surface=run_location,
             )
         elif action == "commit-coder-worktree":
             run_id = _required(form, "run_id")
@@ -41049,7 +41068,8 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 note=_one(form, "note") or "Approved from local app.",
             )
             message = f"approved_coder_publication: {result.publication.id}"
-            location = f"/runs/{quote(result.publication.run_id)}"
+            run_location = f"/runs/{quote(result.publication.run_id)}"
+            location = _safe_local_return_path(_one(form, "return_to")) or run_location
             _remember_delegation_workspace(
                 root,
                 storage,
@@ -41060,7 +41080,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                     else None
                 ),
                 updated_by="approve-coder-publication",
-                resume_surface=location,
+                resume_surface=run_location,
             )
         elif action == "coder-publication-handoff":
             run_id = _required(form, "run_id")

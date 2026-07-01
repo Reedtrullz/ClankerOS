@@ -995,7 +995,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   resets without deciding, approving, executing, or calling providers.
   Pending commit and publication rows include run links, approval-queue links,
   and next-action cues; any inline Inbox decision form still posts through the
-  existing `/actions/<action>` confirmation screen before local writes.
+  existing `/actions/<action>` confirmation screen before local writes. Inline
+  Inbox approval forms submit `return_to=/inbox`, so the confirmed result keeps
+  the operator in the queue they were using while the saved workspace can still
+  resume the owning Goal or run context.
 - `/approvals` - pending worktree, commit, and publication approvals. The page
   is now action-first: `Approval Operator Workbench` renders before shared
   route/focus diagnostics or command readback, with do/inspect/Goal/finish
@@ -1015,7 +1018,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   current route scope, or text, remembers lane/query in
   `localStorage:clankeros-approval-queue-filter`, and resets without approving
   or executing anything. Commit and publication rows link back to the relevant
-  run and show the next local-only follow-up action after approval.
+  run and show the next local-only follow-up action after approval. Approval
+  workbench decision forms submit `return_to=/approvals`, so approving from the
+  queue returns to the queue result surface instead of dropping the operator on
+  Home; Goal-origin approval forms submit the owning Goal route.
 - `/incidents` - recent local incidents and evidence links.
 - `/artifacts?path=<relative_path>` - safe read-only artifact viewer.
 - `/health` - Python, git, storage, command, import, route, and counter health.
@@ -1355,6 +1361,9 @@ next action, confirmation posture, and zero-effect evidence so the result page
 feels like a usable handoff instead of only a receipt. Confirmed actions still render `Action Result
 Details` with the attempted action, submitted payload, result fields, artifact
 links when paths are returned, a next-page link, and the safety boundary.
+Approval decisions from Goal, Inbox, and Approvals surfaces preserve their
+submitted safe return route on the result page while commit/publication
+workspace resume state continues to point at the run that owns the next gate.
 Before those dense details, the result page also includes a `Resume Tomorrow`
 receipt that reads the saved workspace back as the operator's return path with
 visible Resume Tomorrow, Context, Artifact, Last Action, and Boundary cards.

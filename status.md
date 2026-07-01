@@ -1,5 +1,26 @@
 # Status
 
+## 2026-07-01 Approval Decision Return UX
+
+- Goal-origin worktree approval forms now include a safe Goal `return_to`
+  target, so the confirmed result page opens the owning Goal as the next result
+  surface instead of falling back to Home.
+- Inbox and Approvals operator workbench decision forms now submit
+  `return_to=/inbox` or `return_to=/approvals` for worktree, commit, and
+  publication approvals. Commit/publication approval handlers still save run
+  resume state to the owning run, while the action result respects the queue
+  surface that launched the decision.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_goal_runs_approved_worktree_from_browser_action tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health`:
+    2 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md status.md`:
+    passed.
+- Non-claim: this is browser return-routing UX only. It does not write on GET,
+  execute work, stage, commit, push, create PRs, deploy, call providers, fetch
+  GitHub status, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Dogfooding Action Result Return UX
 
 - `demo-app-scenario` now honors safe submitted `return_to` and

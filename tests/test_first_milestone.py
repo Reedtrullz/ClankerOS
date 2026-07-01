@@ -18339,6 +18339,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     )
     assert "action='/actions/approve-coder-worktree'" in approvals.body
     assert f"name='approval_id' value='{result.approval_id}'" in approvals.body
+    assert (
+        f"name='approval_id' value='{result.approval_id}'>"
+        "<input type='hidden' name='decided_by' value='operator'>"
+        "<input type='hidden' name='return_to' value='/approvals'>"
+        in approvals.body
+    )
     assert "data-approval-finish-details='true'" in approvals.body
     assert "approval_workbench_status</dt><dd>decision_form_ready" in approvals.body
     assert "approval_workbench_total_pending</dt><dd>1" in approvals.body
@@ -18633,6 +18639,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     )
     assert "action='/actions/approve-coder-worktree'" in inbox.body
     assert f"name='approval_id' value='{result.approval_id}'" in inbox.body
+    assert (
+        f"name='approval_id' value='{result.approval_id}'>"
+        "<input type='hidden' name='decided_by' value='operator'>"
+        "<input type='hidden' name='return_to' value='/inbox'>"
+        in inbox.body
+    )
     assert "inbox_workbench_primary_surface</dt><dd><a href='#inbox-workbench-action-form'>Approve worktree</a>" in inbox.body
     assert "inbox_workbench_queue_surface</dt><dd><a href='#inbox-pending-worktree-approvals'>Pending Worktree Approvals</a>" in inbox.body
     assert f"inbox_workbench_inspection_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'>Workflow</a>" in inbox.body
@@ -19992,6 +20004,11 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert "goal_approval_click: <a href='#goal-action-dock-form'>Approve worktree</a>" in pending_approval.body
     assert "Approve Worktree" in pending_approval.body
     assert "action='/actions/approve-coder-worktree'" in pending_approval.body
+    assert (
+        f"name='approval_id' value='{approval_id}'>"
+        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        in pending_approval.body
+    )
     assert "data-action-draft-action='approve-coder-worktree'" in pending_approval.body
     assert (
         "data-action-draft-storage-key="
@@ -20010,6 +20027,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
             "approval_id": [approval_id],
             "decided_by": ["operator"],
             "note": ["Approved bounded execution"],
+            "return_to": [f"/goals/{goal_id}"],
         },
     )
     assert approval_decision_confirmation.status == 409
@@ -20024,6 +20042,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
             "approval_id": [approval_id],
             "decided_by": ["operator"],
             "note": ["Approved bounded execution"],
+            "return_to": [f"/goals/{goal_id}"],
             "confirm": ["yes"],
         },
     )
@@ -20031,6 +20050,10 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert "approved_coder_worktree:" in approval_decision.body
     assert "data-action-result-form-draft-cleanup='true'" in approval_decision.body
     assert "data-action-result-form-draft-action='approve-coder-worktree'" in approval_decision.body
+    assert (
+        f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
+        in approval_decision.body
+    )
     assert (
         "data-action-result-form-draft-key="
         f"'clankeros-action-form-draft:approve-coder-worktree:{approval_id}'"
