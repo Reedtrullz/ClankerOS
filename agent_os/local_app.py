@@ -35337,7 +35337,10 @@ def _delegation_run_continuation_strip(
     safe_actions_href = f"{delegation_href}#safe-local-actions"
     workflow_href = f"/workflow?delegation_id={quote(delegation.id)}"
     goal_href = f"/goals/{quote(goal_id)}" if goal_id else "/goals"
-    goal_label = f"/goals/{goal_id}" if goal_id else "/goals"
+    goal_display_label, goal_label_source = (
+        _goal_display_label(root, goal_id) if goal_id else ("", "none")
+    )
+    goal_label = _compact_label(goal_display_label or goal_id, 72) if goal_id else "/goals"
     result_artifact = _repo_relative_artifact_path(root, delegation.result_artifact_path)
     evidence_dir = str(metadata.get("execution_evidence_dir") or metadata.get("evidence_dir") or "none")
     incident_id = str(metadata.get("incident_id") or "none")
@@ -35421,8 +35424,11 @@ def _delegation_run_continuation_strip(
             f"<p>{_e(result_artifact)}</p>",
             "<a class='delegation-run-continuation-link' href='#delegation-execution-artifacts'>Open artifacts</a></article>",
             "<article class='delegation-run-continuation-card'><h3>Goal</h3>",
-            f"<p>{_e(goal_id or 'No parent Goal found')}</p>",
-            f"<a class='delegation-run-continuation-link' href='{_e(goal_href)}'>Return to Goal</a></article>",
+            f"<p>{_e(goal_label if goal_id else 'No parent Goal found')}</p>",
+            (
+                f"<a class='delegation-run-continuation-link' href='{_e(goal_href)}'>"
+                f"{_e('Return to ' + goal_label if goal_id else 'Return to Goals')}</a></article>"
+            ),
             "</div>",
             str(inline_action["html"]),
             "<details class='delegation-run-continuation-evidence' data-delegation-run-continuation-evidence='true'><summary>Delegation run continuation evidence</summary>",
@@ -35432,6 +35438,8 @@ def _delegation_run_continuation_strip(
                     ("delegation_run_continuation_run_id", run_id),
                     ("delegation_run_continuation_delegation", SafeHtml(f"<a href='{_e(delegation_href)}'>{_e(delegation.id)}</a>")),
                     ("delegation_run_continuation_goal", goal_id or "none"),
+                    ("delegation_run_continuation_goal_label", goal_label if goal_id else "none"),
+                    ("delegation_run_continuation_goal_label_source", goal_label_source),
                     ("delegation_run_continuation_project", project_id),
                     ("delegation_run_continuation_profile", delegation.assigned_profile),
                     ("delegation_run_continuation_category", delegation.category),

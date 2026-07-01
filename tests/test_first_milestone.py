@@ -17122,6 +17122,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "provider_calls_taken_by_clankeros=0" in delegation_runs.body
     assert "network_actions_taken=0" in delegation_runs.body
 
+    goal_title = "Demo the ClankerOS local operator app with fixture-backed state"
     delegation_run_page = render_local_app_route(tmp_path, f"/runs/{result.run_id}")
     assert delegation_run_page.status == 200
     assert "Delegation Run Continuation" in delegation_run_page.body
@@ -17141,6 +17142,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"delegation_run_continuation_run_id</dt><dd>{result.run_id}" in delegation_run_page.body
     assert f"delegation_run_continuation_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in delegation_run_page.body
     assert f"delegation_run_continuation_goal</dt><dd>{result.goal_id}" in delegation_run_page.body
+    assert f"delegation_run_continuation_goal_label</dt><dd>{goal_title}" in delegation_run_page.body
+    assert "delegation_run_continuation_goal_label_source</dt><dd>title" in delegation_run_page.body
     assert "delegation_run_continuation_project</dt><dd>local-app-demo" in delegation_run_page.body
     assert "delegation_run_continuation_next_action</dt><dd>prepare_coder_from_handoff" in delegation_run_page.body
     assert "delegation_run_continuation_action_label</dt><dd>Prepare coder packet" in delegation_run_page.body
@@ -17184,7 +17187,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "delegation_run_continuation_context_pack_status</dt><dd>available" in delegation_run_page.body
     assert "delegation_run_continuation_implementation_handoff_status</dt><dd>available" in delegation_run_page.body
     assert "delegation_run_continuation_artifacts_surface</dt><dd><a href='#delegation-execution-artifacts'>Delegation Execution Artifacts</a>" in delegation_run_page.body
-    assert f"delegation_run_continuation_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>/goals/{result.goal_id}</a>" in delegation_run_page.body
+    assert (
+        f"delegation_run_continuation_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+    ) in delegation_run_page.body
     assert "delegation_run_continuation_incident</dt><dd>none" in delegation_run_page.body
     assert "delegation_run_continuation_retry_candidate</dt><dd>false" in delegation_run_page.body
     assert "delegation_run_continuation_write_on_get</dt><dd>false" in delegation_run_page.body
@@ -17199,6 +17205,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"source=<a href='/delegations/{result.delegation_id}#safe-local-actions'>Safe Local Actions</a>"
     ) in delegation_run_page.body
     assert "delegation_run_continuation_artifacts: <a href='#delegation-execution-artifacts'>Delegation Execution Artifacts</a>" in delegation_run_page.body
+    assert (
+        f"delegation_run_continuation_goal: <a href='/goals/{result.goal_id}'>{goal_title}</a>"
+    ) in delegation_run_page.body
+    assert (
+        f"delegation_run_continuation_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"/goals/{result.goal_id}</a>"
+    ) not in delegation_run_page.body
     assert "delegation_run_continuation_safety: read-only delegation run continuation; confirmed forms own writes" in delegation_run_page.body
     assert "Delegation Run Evidence" in delegation_run_page.body
     assert "Delegation Execution Artifacts" in delegation_run_page.body

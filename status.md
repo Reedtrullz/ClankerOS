@@ -1,5 +1,29 @@
 # Status
 
+## 2026-07-01 Delegation Run Parent Goal Label UX
+
+- Updated delegation-run continuation links so the parent Goal card and
+  collapsed evidence show the Goal title instead of raw `/goals/<goal_id>`
+  route text.
+- Delegation-run continuation evidence now preserves the raw
+  `delegation_run_continuation_goal` id while adding
+  `delegation_run_continuation_goal_label` and
+  `delegation_run_continuation_goal_label_source` for the operator-facing
+  label source.
+- In the populated demo, the Delegation Run Continuation Goal card now points
+  back to
+  `Demo the ClankerOS local operator app with fixture-backed state` instead of
+  asking the operator to decode the Goal id.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this is browser delegation-run-to-Goal navigation polish only. It
+  does not write on GET, approve work, execute tasks, run broad local
+  verification, commit, push, create PRs, deploy, call providers, use the
+  network from the app, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Run Parent Goal Label UX
 
 - Updated run-level parent Goal links so the Run Operator Workbench and Run

@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Delegation-run continuation parent Goal links now show the Goal title
+  instead of raw `/goals/<goal_id>` route text. In the fixture demo, the
+  Delegation Run Continuation Goal card links back to
+  `Demo the ClankerOS local operator app with fixture-backed state` while
+  preserving the raw Goal id/source in evidence. Local proof includes the
+  fixture-backed demo delegation/run route pytest (`1 passed`) plus compile.
 - Run-level parent Goal links now show the Goal title instead of raw
   `/goals/<goal_id>` route text. In the fixture demo, the Run Operator
   Workbench and Run Continuation Strip use
