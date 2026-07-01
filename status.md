@@ -1,5 +1,32 @@
 # Status
 
+## 2026-07-01 Global Last Artifact Shortcut UX
+
+- Extended the shared Recent Items Artifact card so every local-app route can
+  read browser-local `localStorage:clankeros-last-artifact` after load and turn
+  the card into an `Open last artifact` shortcut when a recent artifact exists.
+- Kept the existing saved-workspace fallback intact: before browser-local
+  hydration, the Artifact card still uses `.clanker/app/workspace.json`
+  `last_viewed_artifact` when present, or `/workspace` when none exists.
+- Preserved the promotion boundary: Recent Items reads browser-local artifact
+  memory on GET; canonical workspace state still changes only through the
+  confirmed `/workspace#save-workspace` flow.
+- TDD evidence: the focused route smoke test failed first on the missing
+  `data-recent-items-last-artifact='true'` marker, then passed after the
+  Recent Items card, evidence rows, and JS hydrator were added.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after the implementation.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/OPERATING_SUMMARY.md docs/local-app.md docs/status.md status.md`:
+    passed.
+- Non-claim: this is browser-local navigation/resume UX only. It does not
+  write workspace JSON on GET, broaden artifact access, execute artifact
+  content, approve work, execute tasks, deploy, call providers, use the
+  network from the app, create PRs, push from the app, or mutate external
+  systems from ClankerOS.
+
 ## 2026-07-01 Resume Last Artifact UX
 
 - Added a `Last Artifact` card to `/resume` inside the existing

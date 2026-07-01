@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Shared Recent Items now makes the browser-local Last Artifact breadcrumb
+  global: its Artifact card reads `localStorage:clankeros-last-artifact` after
+  page load and switches to `Open last artifact` when available, while the
+  durable workspace artifact anchor still changes only through confirmed
+  `save-workspace`. Local proof includes a red/green focused route smoke test
+  (`1 passed`), compile, and diff check.
 - `/resume` now surfaces the same browser-local last-artifact breadcrumb that
   `/artifacts?path=...` writes to `localStorage:clankeros-last-artifact`. The
   `Browser Resume` panel has a `Last Artifact` card that links back to the most

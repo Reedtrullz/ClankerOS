@@ -5919,6 +5919,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-recent-items-card-primary='true' href='/goals'>Open Goal cockpit</a>" in root.body
     assert "data-recent-items-workspace-card='true' href='/resume'>Open resume</a>" in root.body
     assert "data-recent-items-action-card='true' href='/actions'>Open actions</a>" in root.body
+    assert "data-recent-items-last-artifact='true'" in root.body
+    assert "data-recent-items-last-artifact-storage-key='clankeros-last-artifact'" in root.body
+    assert "data-recent-items-last-artifact-write-on-get='false'" in root.body
+    assert "data-recent-items-last-artifact-provider-calls-taken='0'" in root.body
+    assert "data-recent-items-last-artifact-network-actions-taken='0'" in root.body
+    assert "data-recent-items-last-artifact-external-effects-created='false'" in root.body
+    assert "data-recent-items-last-artifact-label='true'>No browser-local artifact yet." in root.body
+    assert "data-recent-items-last-artifact-path='true'>Workspace: No saved artifact" in root.body
+    assert "data-recent-items-last-artifact-link='true'" in root.body
     assert "data-recent-items-artifact-card='true' href='/workspace'>Open workspace</a>" in root.body
     assert "data-recent-items-details='true'" in root.body
     assert "<summary>Recent item evidence</summary>" in root.body
@@ -5960,6 +5969,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "browser_route_history_safety: no server state writes, provider calls, network actions, or external mutation" in root.body
     assert "function browserRouteHistoryStorageKey()" in root.body
     assert "function rememberCurrentRoute()" in root.body
+    assert "function recentItemsLastArtifactRecord(root)" in root.body
+    assert "function renderRecentItemsLastArtifactState()" in root.body
     assert "window.localStorage.setItem(browserRouteHistoryStorageKey(), JSON.stringify(entries.slice(0, 12)))" in root.body
     assert "window.localStorage.removeItem(browserRouteHistoryStorageKey())" in root.body
     assert "data-open-panel-memory='true'" in root.body
@@ -6045,6 +6056,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "recent_items_saved_goal</dt><dd>none" in root.body
     assert "recent_items_last_artifact</dt><dd>none" in root.body
     assert "recent_items_last_artifact_surface</dt><dd>none" in root.body
+    assert "recent_items_browser_last_artifact_storage</dt><dd>localStorage:clankeros-last-artifact" in root.body
+    assert "recent_items_browser_last_artifact_status</dt><dd>browser_local_pending" in root.body
+    assert "recent_items_browser_last_artifact_workspace_json_write</dt><dd>false" in root.body
     assert "recent_items_workspace_surface</dt><dd><a href='/resume'>/resume</a>" in root.body
     assert "recent_items_cards_available</dt><dd>true" in root.body
     assert "recent_items_card_count</dt><dd>4" in root.body
@@ -6057,6 +6071,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "recent_items_workspace_click: <a href='/resume'>Open resume</a>" in root.body
     assert "recent_items_last_action_click: <a href='/actions'>Open actions</a>" in root.body
     assert "recent_items_last_artifact_click: <a href='/workspace'>Open workspace</a>" in root.body
+    assert "recent_items_browser_last_artifact: read browser-local last artifact after load" in root.body
     assert "recent_items_safety: read-only local navigation" in root.body
     assert "data-breadcrumbs='true'" in root.body
     assert "data-route-context='true'" in root.body

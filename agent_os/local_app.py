@@ -44845,6 +44845,7 @@ def _recent_items_command_bar(
     artifact_label = Path(last_artifact).name if last_artifact else "No saved artifact"
     artifact_href = f"/artifacts?path={quote(last_artifact)}" if last_artifact else "/workspace"
     artifact_action = _artifact_action_label(last_artifact) if last_artifact else "Open workspace"
+    artifact_fallback_path = f"Workspace: {last_artifact}" if last_artifact else "Workspace: No saved artifact"
     workspace_count = sum(1 for _, _, kind in items if kind.startswith("workspace"))
     goal_count = sum(1 for _, _, kind in items if "goal" in kind)
     delegation_count = sum(1 for _, _, kind in items if kind == "delegation")
@@ -44855,6 +44856,7 @@ def _recent_items_command_bar(
         f"recent_items_workspace_click: <a href='{_e(workspace_href)}'>{_e(workspace_action)}</a>",
         f"recent_items_last_action_click: <a href='{_e(action_href)}'>{_e(action_action)}</a>",
         f"recent_items_last_artifact_click: <a href='{_e(artifact_href)}'>{_e(artifact_action)}</a>",
+        "recent_items_browser_last_artifact: read browser-local last artifact after load",
         "recent_items_resume: <a href='/resume'>/resume</a>",
         "recent_items_safety: read-only local navigation",
     ]
@@ -44877,9 +44879,21 @@ def _recent_items_command_bar(
             "<article class='recent-items-card'><h4>Action</h4>",
             f"<p>{_e(action_label)}</p>",
             f"<a class='recent-items-card-link' data-recent-items-action-card='true' href='{_e(action_href)}'>{_e(action_action)}</a></article>",
-            "<article class='recent-items-card'><h4>Artifact</h4>",
-            f"<p>{_e(artifact_label)}</p>",
-            f"<a class='recent-items-card-link' data-recent-items-artifact-card='true' href='{_e(artifact_href)}'>{_e(artifact_action)}</a></article>",
+            "<article class='recent-items-card' data-recent-items-last-artifact='true' "
+            "data-recent-items-last-artifact-storage-key='clankeros-last-artifact' "
+            "data-recent-items-last-artifact-write-on-get='false' "
+            "data-recent-items-last-artifact-provider-calls-taken='0' "
+            "data-recent-items-last-artifact-network-actions-taken='0' "
+            "data-recent-items-last-artifact-external-effects-created='false' "
+            f"data-recent-items-last-artifact-fallback-path='{_e(artifact_fallback_path)}' "
+            f"data-recent-items-last-artifact-fallback-href='{_e(artifact_href)}' "
+            f"data-recent-items-last-artifact-fallback-action='{_e(artifact_action)}'>"
+            "<h4>Artifact</h4>",
+            "<p data-recent-items-last-artifact-label='true'>No browser-local artifact yet.</p>",
+            f"<p class='muted' data-recent-items-last-artifact-path='true'>{_e(artifact_fallback_path)}</p>",
+            "<p class='muted' data-recent-items-last-artifact-at='true'>Open an artifact to make it appear here.</p>",
+            f"<a class='recent-items-card-link' data-recent-items-last-artifact-link='true' "
+            f"data-recent-items-artifact-card='true' href='{_e(artifact_href)}'>{_e(artifact_action)}</a></article>",
             "</div>",
             "<details class='recent-items-details' data-recent-items-details='true'>",
             "<summary>Recent item evidence</summary>",
@@ -44914,6 +44928,13 @@ def _recent_items_command_bar(
                             else "none"
                         ),
                     ),
+                    ("recent_items_browser_last_artifact_storage", "localStorage:clankeros-last-artifact"),
+                    ("recent_items_browser_last_artifact_status", "browser_local_pending"),
+                    ("recent_items_browser_last_artifact_workspace_json_write", "false"),
+                    ("recent_items_browser_last_artifact_write_on_get", "false"),
+                    ("recent_items_browser_last_artifact_provider_calls_taken", "0"),
+                    ("recent_items_browser_last_artifact_network_actions_taken", "0"),
+                    ("recent_items_browser_last_artifact_external_effects_created", "false"),
                     ("recent_items_last_action", last_action or "none"),
                     ("recent_items_last_action_result", last_action_result or "none"),
                     (
@@ -49383,6 +49404,82 @@ def _html_page(
         status.textContent = message;
       }});
     }}
+    function browserLastArtifactRecord(storageKey) {{
+      if (!window.localStorage) {{ return null; }}
+      var raw = null;
+      try {{ raw = window.localStorage.getItem(storageKey || "clankeros-last-artifact"); }} catch (error) {{ raw = null; }}
+      if (!raw) {{ return null; }}
+      var record = null;
+      try {{ record = JSON.parse(raw); }} catch (error) {{ record = {{ path: raw }}; }}
+      if (!record || typeof record !== "object") {{ return null; }}
+      var path = String(record.path || "").trim();
+      var href = String(record.href || "").trim();
+      if (!href && path) {{ href = "/artifacts?path=" + encodeURIComponent(path); }}
+      if (!path && href) {{
+        var marker = "path=";
+        var markerIndex = href.indexOf(marker);
+        if (markerIndex !== -1) {{
+          path = decodeURIComponent(href.slice(markerIndex + marker.length).split("&")[0] || "");
+        }}
+      }}
+      if (!path && !href) {{ return null; }}
+      return {{
+        path: path || href,
+        href: href || "/artifacts",
+        at: String(record.recorded_at || record.at || "").trim()
+      }};
+    }}
+    function recentItemsLastArtifactRecord(root) {{
+      if (!root) {{ return null; }}
+      var storageKey = root.getAttribute("data-recent-items-last-artifact-storage-key") || "clankeros-last-artifact";
+      return browserLastArtifactRecord(storageKey);
+    }}
+    function setRecentItemsLastArtifactText(root, selector, text) {{
+      var node = root.querySelector(selector);
+      if (node) {{ node.textContent = text; }}
+    }}
+    function renderRecentItemsLastArtifactState() {{
+      Array.prototype.slice.call(document.querySelectorAll("[data-recent-items-last-artifact='true']")).forEach(function(root) {{
+        var link = root.querySelector("[data-recent-items-last-artifact-link='true']");
+        var fallbackHref = root.getAttribute("data-recent-items-last-artifact-fallback-href") || "/workspace";
+        var fallbackAction = root.getAttribute("data-recent-items-last-artifact-fallback-action") || "Open workspace";
+        var fallbackPath = root.getAttribute("data-recent-items-last-artifact-fallback-path") || "Workspace: No saved artifact";
+        if (!window.localStorage) {{
+          root.setAttribute("data-recent-items-last-artifact-status-value", "unavailable");
+          setRecentItemsLastArtifactText(root, "[data-recent-items-last-artifact-label='true']", "Last artifact unavailable.");
+          setRecentItemsLastArtifactText(root, "[data-recent-items-last-artifact-path='true']", "localStorage unavailable");
+          setRecentItemsLastArtifactText(root, "[data-recent-items-last-artifact-at='true']", "No browser-local artifact memory can be read.");
+          if (link) {{
+            link.href = fallbackHref;
+            link.textContent = fallbackAction;
+          }}
+          return;
+        }}
+        var record = recentItemsLastArtifactRecord(root);
+        if (!record) {{
+          root.setAttribute("data-recent-items-last-artifact-status-value", "empty");
+          root.setAttribute("data-recent-items-last-artifact-href", "");
+          setRecentItemsLastArtifactText(root, "[data-recent-items-last-artifact-label='true']", "No browser-local artifact yet.");
+          setRecentItemsLastArtifactText(root, "[data-recent-items-last-artifact-path='true']", fallbackPath);
+          setRecentItemsLastArtifactText(root, "[data-recent-items-last-artifact-at='true']", "Open an artifact to make it appear here.");
+          if (link) {{
+            link.href = fallbackHref;
+            link.textContent = fallbackAction;
+          }}
+          return;
+        }}
+        root.setAttribute("data-recent-items-last-artifact-status-value", "available");
+        root.setAttribute("data-recent-items-last-artifact-href", record.href);
+        root.setAttribute("data-recent-items-last-artifact-path-value", record.path);
+        setRecentItemsLastArtifactText(root, "[data-recent-items-last-artifact-label='true']", "Last artifact in this browser");
+        setRecentItemsLastArtifactText(root, "[data-recent-items-last-artifact-path='true']", record.path);
+        setRecentItemsLastArtifactText(root, "[data-recent-items-last-artifact-at='true']", record.at ? ("Recorded " + record.at) : "Artifact timestamp unavailable.");
+        if (link) {{
+          link.href = record.href;
+          link.textContent = "Open last artifact";
+        }}
+      }});
+    }}
     function makeBrowserRouteHistoryItem(entry) {{
       var li = document.createElement("li");
       li.setAttribute("data-browser-route-history-item", "true");
@@ -49440,6 +49537,7 @@ def _html_page(
       syncPaletteFilter();
       renderBrowserResumeState(entries);
       renderBrowserResumeArtifactState();
+      renderRecentItemsLastArtifactState();
     }}
     function browserResumePanels() {{
       return Array.prototype.slice.call(document.querySelectorAll("[data-browser-resume='true']"));

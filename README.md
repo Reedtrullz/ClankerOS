@@ -892,7 +892,11 @@ The recent-items sidebar now starts with a read-only `Recent Items
 Command Bar` plus a visible return dock for Recent, Workspace, Action, and
 Artifact, so the operator can reopen the latest surface, saved project/Goal,
 last action notice, or saved artifact without expanding the longer shortcut
-list. It also includes a browser-local `Viewed Pages` panel backed by
+list. The Artifact card also hydrates after load from browser-local
+`localStorage:clankeros-last-artifact`, so the most recently opened artifact
+is available from every shell route before the operator explicitly promotes it
+with `/workspace#save-workspace`. It also includes a browser-local
+`Viewed Pages` panel backed by
 `localStorage:clankeros-route-history`, which records the local app pages
 visited in this browser, dedupes them by route, caps the list at 12 entries,
 and can be cleared with an explicit click without touching server state. The

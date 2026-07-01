@@ -1039,7 +1039,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   and a visible return dock for Recent, Workspace, Action, and Artifact. It
   links the primary recent surface, saved project/Goal when present, last
   action notice when present, saved artifact when present, and safe fallback
-  surfaces otherwise, while workspace/goal/delegation/run counts, saved
+  surfaces otherwise. The Artifact card also hydrates after load from
+  browser-local `localStorage:clankeros-last-artifact`, so the last opened
+  artifact can be reopened globally before the operator explicitly saves it to
+  workspace state. Workspace/goal/delegation/run counts, saved
   workspace project/goal/artifact context, last-action context, and zero-effect
   boundaries stay inside collapsed evidence with the longer recent-link list
   in a second collapsed disclosure. A browser-local `Viewed Pages` panel
