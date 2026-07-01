@@ -11381,14 +11381,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert workspace_with_demo.body.count("class='workspace-restore-card") == 5
     assert "workspace_restore_map_status</dt><dd>suggested_from_lead_goal" in workspace_with_demo.body
     assert "workspace_restore_map_source</dt><dd>lead_goal" in workspace_with_demo.body
+    workspace_action_surface = f"/goals/{result.goal_id}#goal-action-dock-form"
     assert (
-        f"workspace_restore_map_primary_surface</dt><dd><a href='/goals/{result.goal_id}'>"
-        "Open suggested Goal</a>"
+        f"workspace_restore_map_primary_surface</dt><dd><a href='{workspace_action_surface}'>"
+        "Create commit request</a>"
     ) in workspace_with_demo.body
     assert "workspace_restore_map_saved_resume_surface</dt><dd>none" in workspace_with_demo.body
     assert (
-        f"workspace_restore_map_suggested_resume_surface</dt><dd><a href='/goals/{result.goal_id}'>"
-        f"/goals/{result.goal_id}</a>"
+        f"workspace_restore_map_suggested_resume_surface</dt><dd><a href='{workspace_action_surface}'>"
+        f"{workspace_action_surface}</a>"
     ) in workspace_with_demo.body
     assert "workspace_restore_map_project</dt><dd>local-app-demo" in workspace_with_demo.body
     assert f"workspace_restore_map_goal</dt><dd>{result.goal_id}" in workspace_with_demo.body
@@ -11425,8 +11426,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in workspace_with_demo.body
     )
     assert (
-        f"workspace_save_defaults_resume_surface</dt><dd><a href='/goals/{result.goal_id}'>"
-        f"/goals/{result.goal_id}</a>"
+        f"workspace_save_defaults_resume_surface</dt><dd><a href='{workspace_action_surface}'>"
+        f"{workspace_action_surface}</a>"
     ) in workspace_with_demo.body
     assert result.review_path.relative_to(tmp_path).as_posix() in workspace_with_demo.body
     assert "workspace_save_defaults_applied_to_form</dt><dd>true" in workspace_with_demo.body
@@ -11434,7 +11435,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workspace_save_defaults_write_on_get</dt><dd>false" in workspace_with_demo.body
     assert f"name='open_project' value='{result.project_id}'" in workspace_with_demo.body
     assert f"name='open_goal' value='{result.goal_id}'" in workspace_with_demo.body
-    assert f"name='resume_surface' value='/goals/{result.goal_id}'" in workspace_with_demo.body
+    assert f"name='resume_surface' value='{workspace_action_surface}'" in workspace_with_demo.body
     assert f"name='filters' value='goal:{result.goal_id}'" in workspace_with_demo.body
     assert (
         "name='expanded_panels' value='overview,next-action,timeline,evidence,artifacts,notes'"
@@ -16575,12 +16576,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in restored_workspace.body
     )
     assert (
-        f"workspace_save_defaults_resume_surface</dt><dd><a href='/goals/{result.goal_id}'>"
-        f"/goals/{result.goal_id}</a>"
+        f"workspace_save_defaults_resume_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        f"/goals/{result.goal_id}#goal-action-dock-form</a>"
     ) in restored_workspace.body
     assert f"name='open_project' value='{result.project_id}'" in restored_workspace.body
     assert f"name='open_goal' value='{result.goal_id}'" in restored_workspace.body
-    assert f"name='resume_surface' value='/goals/{result.goal_id}'" in restored_workspace.body
+    assert f"name='resume_surface' value='/goals/{result.goal_id}#goal-action-dock-form'" in restored_workspace.body
     assert "name='filters' value='active'" in restored_workspace.body
     assert "name='expanded_panels' value='timeline,evidence'" in restored_workspace.body
     assert "name='updated_by' value='operator'" in restored_workspace.body

@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/workspace` save defaults and restore guidance now use the Goal's exact
+  current action route as `resume_surface`, for example
+  `/goals/<goal_id>#goal-action-dock-form`, when suggesting a lead Goal or
+  repairing an old broad `/goals/<goal_id>` saved route. The Restore Map labels
+  that route with the current action, such as `Create commit request`. Local
+  proof includes the fixture-backed demo Workspace route pytest (`1 passed`).
 - Root `/` Home Resume Workspace `Remember Current Goal` now saves the lead
   Goal's exact current action route as `resume_surface`, for example
   `/goals/<goal_id>#goal-action-dock-form`, instead of the broad Goal page.

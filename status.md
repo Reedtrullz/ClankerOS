@@ -1,5 +1,25 @@
 # Status
 
+## 2026-07-01 Workspace Exact Resume Defaults UX
+
+- Updated `/workspace` save defaults and restore guidance so suggested or
+  repairable saved Goal resume targets use the Goal's concrete current action
+  route as `resume_surface`, for example
+  `/goals/<goal_id>#goal-action-dock-form`, instead of the broad Goal page.
+- The Workspace Restore Map now uses the same operator-facing next-action
+  label as the Goal action dock, such as `Create commit request`, when it
+  links the suggested return route.
+- Local verification:
+  - Added failing-first fixture assertions for the suggested Workspace restore
+    map, save-defaults readback, hidden `resume_surface`, and repair of an
+    old broad `/goals/<goal_id>` saved route, then updated the renderer.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this only improves local browser workspace guidance and confirmed
+  save form defaults. It does not write on GET, approve work, execute tasks,
+  commit, push, create PRs, deploy, call providers, use the network, or mutate
+  external systems from ClankerOS.
+
 ## 2026-07-01 Home Remember Current Goal Resume Surface UX
 
 - Updated the root `/` Home Resume Workspace `Remember Current Goal` form so

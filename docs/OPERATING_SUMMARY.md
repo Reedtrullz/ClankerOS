@@ -337,8 +337,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   the collapsed confirmed save form. The save form keeps saved workspace state
   authoritative, but when no workspace Goal is saved and a lead Goal exists it
   pre-fills suggested project, Goal, goal-scoped filters, panels, latest
-  artifact values, and exact `resume_surface` while reporting
+  artifact values, and exact current-action `resume_surface` while reporting
   `workspace_save_defaults_write_on_get=false`.
+  When a saved workspace only has the broad `/goals/<goal_id>` route, the save
+  defaults now repair the next saved `resume_surface` to the exact Goal action
+  route while labeling it with the current action.
   The same Goal-page action form appears immediately below the workbench when
   browser-available, followed by a read-only `Workspace Restore Map` with
   Restore, Goal, Artifact, Filters + Panels, and Tomorrow cards that make saved

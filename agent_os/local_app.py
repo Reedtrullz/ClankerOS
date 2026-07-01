@@ -8847,11 +8847,16 @@ def _workspace_save_defaults(root: Path, state: dict[str, str]) -> dict[str, str
     lead_goal_id = str(lead_goal["id"]) if lead_goal is not None else ""
     lead_project = str(lead_goal["project_id"] or "") if lead_goal is not None else ""
     latest_artifact = ""
+    goal_resume_surface = ""
+    goal_resume_label = ""
     if lead_goal_id:
         storage = _storage(root)
         goal_state = _goal_state(root, storage, lead_goal_id)
         if goal_state.get("goal") is not None:
             latest_artifact = _goal_latest_artifact_path(root, goal_state)
+            goal_resume_surface, goal_resume_label, _goal_form_available = (
+                _workspace_goal_action_resume_target(root, lead_goal_id, goal_state)
+            )
 
     has_saved_context = any(
         [saved_project, saved_goal, saved_filters, saved_panels, saved_artifact, saved_surface]
@@ -8873,15 +8878,27 @@ def _workspace_save_defaults(root: Path, state: dict[str, str]) -> dict[str, str
         status = "empty"
         source = "no_workspace_or_goal"
 
-    resume_surface = saved_surface
+    broad_saved_goal_surface = ""
+    if saved_goal:
+        broad_saved_goal_surface = f"/goals/{quote(saved_goal)}"
+    elif lead_goal_id:
+        broad_saved_goal_surface = f"/goals/{quote(lead_goal_id)}"
+    resume_surface = "" if saved_surface == broad_saved_goal_surface else saved_surface
     if not resume_surface and saved_goal:
-        resume_surface = f"/goals/{quote(saved_goal)}"
+        resume_surface = goal_resume_surface if saved_goal == lead_goal_id else ""
+        if not resume_surface:
+            resume_surface, goal_resume_label, _goal_form_available = _workspace_goal_action_resume_target(
+                root,
+                saved_goal,
+            )
     elif not resume_surface and lead_goal_id:
-        resume_surface = f"/goals/{quote(lead_goal_id)}"
+        resume_surface = goal_resume_surface or f"/goals/{quote(lead_goal_id)}"
     elif not resume_surface and source == "first_run_progress":
         resume_surface = str(_workspace_first_run_context(root)["target_href"])
     elif not resume_surface:
         resume_surface = "/workspace"
+    if not goal_resume_label:
+        goal_resume_label = resume_surface
 
     return {
         "status": status,
@@ -8893,6 +8910,7 @@ def _workspace_save_defaults(root: Path, state: dict[str, str]) -> dict[str, str
         or ("overview,next-action,timeline,evidence,artifacts,notes" if lead_goal_id else ""),
         "last_viewed_artifact": saved_artifact or latest_artifact,
         "resume_surface": resume_surface,
+        "resume_label": goal_resume_label,
         "updated_by": updated_by,
         "lead_goal": lead_goal_id,
         "lead_project": lead_project,
@@ -9274,6 +9292,7 @@ def _workspace_restore_map(
 ) -> str:
     saved_resume_surface = _safe_local_return_path(state.get("resume_surface")) or ""
     suggested_resume_surface = save_defaults["resume_surface"]
+    suggested_resume_label = save_defaults.get("resume_label") or suggested_resume_surface
     filters = state.get("filters", "")
     expanded = state.get("expanded_panels", "")
     readiness = _workspace_resume_readiness(
@@ -9311,7 +9330,7 @@ def _workspace_restore_map(
         status = "suggested_from_lead_goal"
         source = save_defaults["source"]
         primary_href = suggested_resume_surface
-        primary_label = "Open suggested Goal"
+        primary_label = suggested_resume_label
     elif open_project or save_defaults["open_project"]:
         project = open_project or save_defaults["open_project"]
         status = "project_only"
@@ -9490,6 +9509,33 @@ def _workspace_lead_goal_row(
     paused = [row for row in candidates if _goal_bucket(row) == "paused"]
     completed = [row for row in candidates if _goal_bucket(row) == "completed"]
     return active[0] if active else paused[0] if paused else completed[0] if completed else candidates[0]
+
+
+def _workspace_goal_action_resume_target(
+    root: Path,
+    goal_id: str,
+    goal_state: dict[str, Any] | None = None,
+) -> tuple[str, str, bool]:
+    if not goal_id:
+        return "", "", False
+    state = goal_state if goal_state is not None else _goal_state(root, _storage(root), goal_id)
+    if state.get("goal") is None:
+        href = f"/goals/{quote(goal_id)}"
+        return href, href, False
+    next_action = _goal_next_action(root, state)
+    form_available = bool(_goal_next_action_form(state, next_action))
+    href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=form_available,
+        absolute=True,
+    )
+    label = _goal_action_cta_label(
+        next_action,
+        form_available,
+        fallback=next_action.action,
+    )
+    return href, label, form_available
 
 
 def _workspace_daily_brief(
