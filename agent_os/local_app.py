@@ -45536,6 +45536,16 @@ def _finish_today_shortcut_context(
             "workflow_finish_form",
             "Workflow local finish form",
         ),
+        "/actions": (
+            "#action-finish-today",
+            "action_finish_form",
+            "Action local finish form",
+        ),
+        "/verification": (
+            "#verification-finish-today",
+            "verification_finish_form",
+            "Verification local finish form",
+        ),
         "/inbox": (
             "#inbox-finish-today",
             "inbox_finish_form",

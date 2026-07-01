@@ -8789,6 +8789,20 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "action_workbench_unblock: <a href='/inbox'>/inbox</a>" in actions.body
     assert "action_workbench_finish: <a href='#action-finish-today'>Finish Today</a>" in actions.body
     assert "action_workbench_safety: read-only action routing; confirmed forms stay on owning surfaces" in actions.body
+    assert 'data-finish-today-href="#action-finish-today"' in actions.body
+    assert 'data-finish-today-source="action_finish_form"' in actions.body
+    assert 'data-finish-today-surface="route_local_form"' in actions.body
+    assert (
+        "operator_ribbon_finish_surface</dt><dd><a href='#action-finish-today'>"
+        "Finish Today</a>"
+    ) in actions.body
+    assert "operator_ribbon_finish_source</dt><dd>action_finish_form" in actions.body
+    assert (
+        "palette_quick_switch_finish_surface</dt><dd><a href='#action-finish-today'>"
+        "#action-finish-today</a>"
+    ) in actions.body
+    assert "palette_quick_switch_finish_source</dt><dd>action_finish_form" in actions.body
+    assert "palette_quick_switch_finish_route_surface</dt><dd>route_local_form" in actions.body
     assert "action_finish_status</dt><dd>available" in actions.body
     assert "action_finish_action</dt><dd>save-workspace" in actions.body
     assert "action_finish_project</dt><dd>first-target" in actions.body
@@ -8866,6 +8880,20 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "verification_workbench_record: <a href='/ci-evidence#record-ci-snapshot-json'>Record CI proof</a>" in verification.body
     assert "verification_workbench_finish: <a href='#verification-finish-today'>Finish Today</a>" in verification.body
     assert "verification_workbench_safety: read-only proof routing" in verification.body
+    assert 'data-finish-today-href="#verification-finish-today"' in verification.body
+    assert 'data-finish-today-source="verification_finish_form"' in verification.body
+    assert 'data-finish-today-surface="route_local_form"' in verification.body
+    assert (
+        "operator_ribbon_finish_surface</dt><dd><a href='#verification-finish-today'>"
+        "Finish Today</a>"
+    ) in verification.body
+    assert "operator_ribbon_finish_source</dt><dd>verification_finish_form" in verification.body
+    assert (
+        "palette_quick_switch_finish_surface</dt><dd><a href='#verification-finish-today'>"
+        "#verification-finish-today</a>"
+    ) in verification.body
+    assert "palette_quick_switch_finish_source</dt><dd>verification_finish_form" in verification.body
+    assert "palette_quick_switch_finish_route_surface</dt><dd>route_local_form" in verification.body
     assert "Verification Proof Map" in verification.body
     assert "verification_proof_map_status</dt><dd>stale_or_unknown_proof" in verification.body
     assert "verification_proof_map_workflow_status</dt><dd>configured" in verification.body
