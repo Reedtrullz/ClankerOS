@@ -1,5 +1,27 @@
 # Status
 
+## 2026-07-01 Codex Branch CI Trigger UX
+
+- Updated `.github/workflows/tests.yml` so pushes to `codex/**` branches run
+  the same `Tests` workflow automatically as main pushes, instead of requiring
+  a manual `workflow_dispatch` after each ClankerOS UX slice.
+- `/verification` now reads back `push_to_codex_branches: configured` beside
+  push-to-main, pull-request, and manual workflow trigger posture, so the
+  browser proof map tells the operator whether codex branch pushes are covered.
+- TDD evidence: the focused workflow/route test selection failed first on the
+  missing `codex/**` trigger and missing `/verification` readback, then passed
+  after the workflow/helper implementation.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py -q -k "github_actions_workflow_runs_automatic_verification or local_app_routes_render_modern_workflow_and_health" --tb=short`:
+    2 passed after the implementation.
+  - `git diff --check -- .github/workflows/tests.yml agent_os/local_app.py tests/test_first_milestone.py docs/github-testing.md docs/local-app.md status.md docs/status.md`:
+    passed.
+- Non-claim: this only changes GitHub workflow triggering and local readback.
+  It does not make the browser app push branches, open PRs, deploy, call
+  providers, fetch GitHub status, or mutate external systems.
+
 ## 2026-07-01 Proof Shortcut UX
 
 - Added a global `p` keyboard shortcut and header `Proof` button so the

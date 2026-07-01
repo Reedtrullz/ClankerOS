@@ -2,7 +2,8 @@
 
 Use GitHub Actions for the slow, authoritative verification loop. The local
 machine should stay focused on quick checks while the repository workflow runs
-the full suite after a push, pull request, or manual dispatch.
+the full suite after a codex branch push, main push, pull request, or manual
+dispatch.
 
 ## Default Operator Loop
 
@@ -27,8 +28,9 @@ chat transcript, the place where slow proof accumulates.
 The workflow lives at `.github/workflows/tests.yml` and runs on:
 
 - pushes to `main`;
+- pushes to `codex/**` branches;
 - pull requests targeting `main`;
-- manual `workflow_dispatch` runs from GitHub.
+- manual `workflow_dispatch` runs from GitHub as a fallback.
 
 The `Tests` workflow has two jobs:
 

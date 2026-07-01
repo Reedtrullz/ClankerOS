@@ -28511,6 +28511,10 @@ def _verification_page(root: Path) -> str:
             "configured" if _workflow_has_push_main(workflow_text) else "missing",
         ),
         (
+            "push_to_codex_branches",
+            "configured" if _workflow_has_push_codex_branches(workflow_text) else "missing",
+        ),
+        (
             "pull_request_to_main",
             "configured" if _workflow_has_pull_request_main(workflow_text) else "missing",
         ),
@@ -28621,6 +28625,7 @@ def _verification_workflow_status(workflow_lines: list[tuple[str, str]]) -> str:
     expected = {
         "workflow_file_status": "available",
         "push_to_main": "configured",
+        "push_to_codex_branches": "configured",
         "pull_request_to_main": "configured",
         "workflow_dispatch": "configured",
         "full_suite_command": "python -m pytest -q",
@@ -30244,12 +30249,62 @@ def _dogfooding_next_action_panel(root: Path) -> str:
     return _list_section("Dogfooding Next Action", lines, anchor_id="dogfooding-next-action")
 
 
+def _yaml_indent(line: str) -> int:
+    return len(line) - len(line.lstrip(" "))
+
+
+def _workflow_trigger_branches(workflow_text: str, trigger: str) -> set[str]:
+    lines = workflow_text.splitlines()
+    in_trigger = False
+    trigger_indent = 0
+    in_branches = False
+    branches_indent = 0
+    branches: set[str] = set()
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        indent = _yaml_indent(line)
+        if stripped == f"{trigger}:":
+            in_trigger = True
+            trigger_indent = indent
+            in_branches = False
+            continue
+        if not in_trigger:
+            continue
+        if indent <= trigger_indent and stripped.endswith(":"):
+            break
+        if in_branches:
+            if indent <= branches_indent:
+                in_branches = False
+            elif stripped.startswith("- "):
+                branches.add(stripped[2:].strip().strip("'\""))
+                continue
+        if stripped.startswith("branches:"):
+            raw = stripped.removeprefix("branches:").strip()
+            if raw.startswith("[") and raw.endswith("]"):
+                for item in raw[1:-1].split(","):
+                    branch = item.strip().strip("'\"")
+                    if branch:
+                        branches.add(branch)
+            elif not raw:
+                in_branches = True
+                branches_indent = indent
+            else:
+                branches.add(raw.strip("'\""))
+    return branches
+
+
 def _workflow_has_push_main(workflow_text: str) -> bool:
-    return "push:" in workflow_text and "branches: [main]" in workflow_text
+    return "main" in _workflow_trigger_branches(workflow_text, "push")
+
+
+def _workflow_has_push_codex_branches(workflow_text: str) -> bool:
+    return "codex/**" in _workflow_trigger_branches(workflow_text, "push")
 
 
 def _workflow_has_pull_request_main(workflow_text: str) -> bool:
-    return "pull_request:" in workflow_text and "branches: [main]" in workflow_text
+    return "main" in _workflow_trigger_branches(workflow_text, "pull_request")
 
 
 def _workflow_timeout_minutes(workflow_text: str, job_name: str = "full-suite") -> str:

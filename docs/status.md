@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- GitHub Actions now runs the `Tests` workflow automatically for pushes to
+  `codex/**` branches as well as `main`, so normal ClankerOS branch slices no
+  longer need manual `workflow_dispatch` just to start remote verification.
+  `/verification` reads this back as `push_to_codex_branches: configured`
+  beside the existing push-to-main, pull-request, and manual trigger posture.
+  Local proof includes a red/green workflow/route test, compile, and diff
+  check.
 - The shared browser shell now exposes a global `p` shortcut and header
   `Proof` button that jumps directly to
   `/ci-evidence#record-ci-snapshot-json`. It makes the evidence-recording step

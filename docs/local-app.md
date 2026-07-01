@@ -1102,9 +1102,10 @@ the local Goal complete.
 ## Verification Handoff
 
 `/verification` is a local read-only testing map. It reads
-`.github/workflows/tests.yml`, shows whether push-to-main, pull-request, and
-manual workflow triggers are configured, lists the separate fast smoke and
-full-suite GitHub Actions jobs, and keeps the compact local checks visible. It
+`.github/workflows/tests.yml`, shows whether push-to-main, push-to-codex,
+pull-request, and manual workflow triggers are configured, lists the separate
+fast smoke and full-suite GitHub Actions jobs, and keeps the compact local
+checks visible. It
 also shows the workflow job timeout, summarizes the latest operator-supplied
 CI evidence record when one exists, and labels an in-progress GitHub run as
 pending proof rather than CI proof:

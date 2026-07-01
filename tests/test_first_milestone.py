@@ -4232,6 +4232,7 @@ def test_github_actions_workflow_runs_automatic_verification() -> None:
 
     for expected in [
         "push:",
+        '      - "codex/**"',
         "pull_request:",
         "workflow_dispatch:",
         "permissions:",
@@ -4338,7 +4339,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
                 "name: Tests",
                 "on:",
                 "  push:",
-                "    branches: [main]",
+                "    branches:",
+                "      - main",
+                "      - \"codex/**\"",
                 "  pull_request:",
                 "    branches: [main]",
                 "  workflow_dispatch:",
@@ -8778,6 +8781,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "GitHub Actions Workflow" in verification.body
     assert ".github/workflows/tests.yml" in verification.body
     assert "push_to_main: configured" in verification.body
+    assert "push_to_codex_branches: configured" in verification.body
     assert "pull_request_to_main: configured" in verification.body
     assert "workflow_dispatch: configured" in verification.body
     assert "fast_smoke_job: configured" in verification.body
