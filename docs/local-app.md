@@ -743,7 +743,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   detail surface. It is content-first and
   opens with a visible `Search Operator Workbench` before shared route/focus
   diagnostics, with cards for the current query, first useful hit, result
-  list, and `/resume`. A visible read-only `Search Result Map` follows with
+  list, and `/resume`. When a Goal exists, the suggestions panel starts with
+  the live Current Action and links straight to the Goal action dock before the
+  current-Goal and next-action search query cards. A visible read-only `Search Result Map` follows with
   Goals, Projects, Work, Decisions, Knowledge, and Artifacts lane cards before
   the flat result list. A browser-local `Search Result Filter` follows the map,
   narrowing already-rendered results to all, goals, projects, work, decisions,

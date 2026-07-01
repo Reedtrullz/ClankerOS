@@ -6842,6 +6842,23 @@ def _search_suggestion_items(root: Path, storage: Storage) -> list[dict[str, str
         title = str(lead_goal["title"] or lead_goal["description"] or goal_id)
         state = _goal_state(root, storage, goal_id)
         next_action = _goal_next_action(root, state)
+        form_available = bool(_goal_next_action_form(state, next_action))
+        action_href = _goal_primary_action_href(
+            state,
+            next_action,
+            form_available=form_available,
+            absolute=True,
+        )
+        action_label = _goal_action_cta_label(next_action, form_available)
+        add(
+            "current-action",
+            "Current Action",
+            f"{_goal_current_phase(state)}: {next_action.action}",
+            action_href,
+            action_label,
+            query=next_action.action,
+            source="goal_next_action_surface",
+        )
         add(
             "current-goal",
             "Current Goal",

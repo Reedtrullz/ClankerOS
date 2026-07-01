@@ -789,6 +789,9 @@ instead of only the older generic approval rows. `/search` is now
 content-first and opens with a visible
 `Search Operator Workbench` before shared route/focus diagnostics, turning the
 query, first useful hit, result list, and `/resume` into four browser cards.
+When a Goal exists, the suggestions panel starts with the live Current Action
+and links straight to the Goal action dock, while keeping the current-Goal and
+next-action search query cards as secondary discovery paths.
 It now follows with a visible read-only `Search Result Map` for Goals,
 Projects, Work, Decisions, Knowledge, and Artifacts, so category counts and
 first targets are visible before the flat result list. A browser-local

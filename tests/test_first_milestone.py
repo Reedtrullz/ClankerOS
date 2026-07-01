@@ -16491,9 +16491,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Search Suggestions" in search.body
     assert "data-search-suggestions='true'" in search.body
     assert "data-search-suggestions-grid='true'" in search.body
+    assert "data-search-suggestion-key='current-action' data-search-suggestion-source='goal_next_action_surface'" in search.body
     assert "data-search-suggestion-key='current-goal' data-search-suggestion-source='goal_title'" in search.body
     assert "data-search-suggestion-key='next-action' data-search-suggestion-source='goal_next_action'" in search.body
     assert "data-search-suggestion-key='artifacts' data-search-suggestion-source='known_artifact_paths'" in search.body
+    assert (
+        f"href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in search.body
     assert (
         "href='/search?q=Demo%20the%20ClankerOS%20local%20operator%20app%20with%20fixture-backed%20state'>"
         "Search current Goal</a>"
@@ -16577,22 +16582,23 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "search_suggestions_status</dt><dd>local_state_ready" in search.body
     assert "search_suggestions_query</dt><dd>fixture-backed" in search.body
     assert "search_suggestions_result_count</dt><dd>" in search.body
-    assert "search_suggestions_primary_key</dt><dd>current-goal" in search.body
+    assert "search_suggestions_primary_key</dt><dd>current-action" in search.body
+    assert "search_suggestions_primary_query</dt><dd>Create commit request" in search.body
+    assert "search_suggestions_primary_source</dt><dd>goal_next_action_surface" in search.body
     assert (
-        "search_suggestions_primary_query</dt><dd>Demo the ClankerOS local operator app with fixture-backed state"
-        in search.body
-    )
-    assert "search_suggestions_primary_source</dt><dd>goal_title" in search.body
-    assert (
-        "search_suggestions_primary_surface</dt><dd><a href='/search?q=Demo%20the%20ClankerOS%20local%20operator%20app%20with%20fixture-backed%20state'>"
-        "Search current Goal</a>"
+        f"search_suggestions_primary_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
     ) in search.body
-    assert "search_suggestions_sources</dt><dd>goal_title goal_next_action" in search.body
+    assert "search_suggestions_sources</dt><dd>goal_next_action_surface goal_title goal_next_action" in search.body
     assert "search_suggestions_write_on_get</dt><dd>false" in search.body
     assert "search_suggestions_provider_calls_taken</dt><dd>0" in search.body
     assert "search_suggestions_network_actions_taken</dt><dd>0" in search.body
     assert "search_suggestions_external_effects_created</dt><dd>false" in search.body
     assert "search_suggestions_raw_filesystem_browsing</dt><dd>false" in search.body
+    assert (
+        f"search_suggestion: key=current-action source=goal_next_action_surface query=Create commit request "
+        f"surface=<a href='/goals/{result.goal_id}#goal-action-dock-form'>Create commit request</a>"
+    ) in search.body
     assert (
         "search_suggestion: key=next-action source=goal_next_action query=Create commit request "
         "surface=<a href='/search?q=Create%20commit%20request'>Search next action</a>"

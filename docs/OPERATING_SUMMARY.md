@@ -268,10 +268,12 @@ and
 opens with a visible `Search Operator Workbench` before shared route/focus
   diagnostics, with cards for query, first useful hit, result list, and
   `/resume`. A visible read-only `Search Suggestions` panel now appears
-  before the workbench, deriving quick links from the current Goal, next
-  action, registered projects, approvals, decisions, memory, skills, and known
-  artifacts when local state exists, or routing first-run users to `/goals`
-  and `/demo` when search has nothing indexed yet. A visible read-only
+  before the workbench, deriving quick links from the live Current Action,
+  current Goal, next action, registered projects, approvals, decisions, memory,
+  skills, and known artifacts when local state exists, or routing first-run users to `/goals`
+  and `/demo` when search has nothing indexed yet. When a Goal action is
+  available, the first suggestion links directly to the Goal action dock
+  instead of asking the operator to search for the active Goal again. A visible read-only
   `Search Result Map` follows with Goals,
   Projects, Work, Decisions, Knowledge, and Artifacts lane cards before the
   flat result list. A browser-local `Search Result Filter` follows the map,
