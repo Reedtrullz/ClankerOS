@@ -37783,6 +37783,15 @@ def _health(root: Path, *, host: str, port: int) -> str:
                 host=host,
                 port=port,
             ),
+            _health_readiness_strip(
+                status_relative=status_relative,
+                counts=counts,
+                state=state,
+                warnings=warnings,
+                imports=imports,
+                host=host,
+                port=port,
+            ),
             _health_command_bar(
                 root,
                 status_relative=status_relative,
@@ -37932,6 +37941,128 @@ def _health_operator_workbench(
                     f"health_workbench_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
                     f"health_workbench_status_artifact: {_artifact_link(status_relative)}",
                     "health_workbench_safety: local status artifact write only; no provider, network, push, PR, deploy, or external mutation",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _health_readiness_strip(
+    *,
+    status_relative: str,
+    counts: dict[str, int],
+    state: dict[str, Any],
+    warnings: list[str],
+    imports: dict[str, str],
+    host: str,
+    port: int,
+) -> str:
+    warning_count = len(warnings)
+    readiness_status = "warnings" if warning_count else "ready"
+    next_action = "Review warnings" if warning_count else "Open resume"
+    target_href = "#health-warnings" if warning_count else "/resume"
+    target_label = "Warnings" if warning_count else "/resume"
+    reason = "health_warnings_present" if warning_count else "local_health_ready"
+    bind_scope = "local" if host in LOCAL_HOSTS else "nonlocal_warning"
+    workflow_status = "configured" if all(value == "ok" for value in imports.values()) else "attention"
+    total_records = sum(counts.values())
+    status_summary = (
+        f"{warning_count} warning{'s' if warning_count != 1 else ''}"
+        if warning_count
+        else "Ready for local use"
+    )
+    return "".join(
+        [
+            (
+                "<section id='health-readiness-strip' "
+                "class='panel health-readiness-strip' "
+                "data-health-readiness-strip='true' "
+                f"data-health-readiness-status='{_e(readiness_status)}'>"
+                "<h2>Health Readiness Strip</h2>"
+            ),
+            "<p class='muted'>A scan-first answer for whether this local ClankerOS session is ready to use right now.</p>",
+            "<div class='health-readiness-grid' data-health-readiness-actions='true'>",
+            (
+                "<article class='health-readiness-card health-readiness-primary' "
+                f"data-health-readiness-card='bind' data-health-readiness-card-status='{_e(bind_scope)}'>"
+                "<h3>Local Bind</h3>"
+                f"<p>{_e(host)}:{port}</p>"
+                f"<span>{_e(bind_scope.replace('_', ' '))}</span>"
+                "</article>"
+            ),
+            (
+                "<article class='health-readiness-card' "
+                "data-health-readiness-card='storage' data-health-readiness-card-status='initialized'>"
+                "<h3>Storage</h3>"
+                f"<p>{total_records} local record{'s' if total_records != 1 else ''} indexed.</p>"
+                "<span>initialized</span>"
+                "</article>"
+            ),
+            (
+                "<article class='health-readiness-card' "
+                f"data-health-readiness-card='workflow' data-health-readiness-card-status='{_e(workflow_status)}'>"
+                "<h3>Workflow</h3>"
+                f"<p>{len(imports)} workflow imports checked.</p>"
+                f"<span>{_e(workflow_status)}</span>"
+                "</article>"
+            ),
+            (
+                "<article class='health-readiness-card' "
+                f"data-health-readiness-card='next' data-health-readiness-card-status='{_e(readiness_status)}'>"
+                "<h3>Next Action</h3>"
+                f"<p>{_e(status_summary)}</p>"
+                f"<a class='health-readiness-link' href='{_e(target_href)}'>{_e(next_action)}</a>"
+                "</article>"
+            ),
+            (
+                "<article class='health-readiness-card' "
+                "data-health-readiness-card='safety' data-health-readiness-card-status='local_status_artifact_only'>"
+                "<h3>Safety</h3>"
+                "<p>Only the bounded local status artifact is refreshed on open.</p>"
+                f"<a class='health-readiness-link' href='/artifacts?path={quote(status_relative)}'>Status artifact</a>"
+                "</article>"
+            ),
+            "</div>",
+            "<details class='health-readiness-evidence' data-health-readiness-evidence='true'><summary>Health readiness evidence</summary>",
+            _kv(
+                [
+                    ("health_readiness_status", readiness_status),
+                    ("health_readiness_warning_count", str(warning_count)),
+                    ("health_readiness_bind", f"{host}:{port}"),
+                    ("health_readiness_bind_scope", bind_scope),
+                    ("health_readiness_branch", state["branch"]),
+                    ("health_readiness_commit", state["commit"]),
+                    ("health_readiness_worktree_dirty", str(bool(state["dirty_tracked_files"])).lower()),
+                    ("health_readiness_untracked_file_count", str(len(state["untracked_files"]))),
+                    ("health_readiness_storage_status", "initialized"),
+                    ("health_readiness_total_records", str(total_records)),
+                    ("health_readiness_registered_commands", str(len(_key_commands()))),
+                    ("health_readiness_workflow_status", workflow_status),
+                    ("health_readiness_status_artifact", _artifact_link(status_relative)),
+                    ("health_readiness_status_artifact_write_on_get", "true"),
+                    ("health_readiness_next_action", next_action),
+                    (
+                        "health_readiness_target_surface",
+                        SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"),
+                    ),
+                    ("health_readiness_reason", reason),
+                    ("health_readiness_github_status_fetch", "none"),
+                    ("health_readiness_provider_calls_taken", "0"),
+                    ("health_readiness_network_actions_taken", "0"),
+                    ("health_readiness_external_effects_created", "false"),
+                    ("health_readiness_push_created", "false"),
+                    ("health_readiness_pr_created", "false"),
+                    ("health_readiness_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"health_readiness_now: {_e(next_action)}",
+                    f"health_readiness_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"health_readiness_status_artifact: {_artifact_link(status_relative)}",
+                    "health_readiness_safety: local health readiness; writes only the bounded status artifact",
                 ]
             ),
             "</details>",
@@ -47284,9 +47415,20 @@ def _html_page(
     .health-workbench-action {{ background:var(--ok); color:#fff; }}
     .health-operator-workbench[data-health-status="warnings"] .health-workbench-action {{ background:var(--warn); color:#211400; }}
     .health-workbench-link {{ background:var(--surface); color:var(--ink); }}
-    .health-workbench-evidence, .health-command-evidence, .health-diagnostics-evidence, .health-counts-evidence, .health-key-commands-evidence, .health-workflow-imports-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .health-workbench-evidence summary, .health-command-evidence summary, .health-diagnostics-evidence summary, .health-counts-evidence summary, .health-key-commands-evidence summary, .health-workflow-imports-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .health-workbench-evidence:not([open]) > :not(summary), .health-command-evidence:not([open]) > :not(summary), .health-diagnostics-evidence:not([open]) > :not(summary), .health-counts-evidence:not([open]) > :not(summary), .health-key-commands-evidence:not([open]) > :not(summary), .health-workflow-imports-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .health-readiness-strip {{ border-left:4px solid var(--ok); }}
+    .health-readiness-strip[data-health-readiness-status="warnings"] {{ border-left-color:var(--warn); }}
+    .health-readiness-grid {{ display:grid; grid-template-columns:repeat(5, minmax(150px, 1fr)); gap:10px; margin:12px 0; }}
+    .health-readiness-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .health-readiness-card h3 {{ margin:0 0 8px; }}
+    .health-readiness-card p {{ min-height:44px; margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .health-readiness-card span {{ display:inline-flex; min-height:28px; align-items:center; padding:4px 8px; border:1px solid var(--line); border-radius:999px; color:var(--muted); overflow-wrap:anywhere; }}
+    .health-readiness-primary {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
+    .health-readiness-card[data-health-readiness-card-status="warnings"], .health-readiness-card[data-health-readiness-card-status="nonlocal_warning"], .health-readiness-strip[data-health-readiness-status="warnings"] .health-readiness-primary {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
+    .health-readiness-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--ok); color:var(--ink); background:var(--surface); overflow-wrap:anywhere; text-decoration:none; }}
+    .health-readiness-strip[data-health-readiness-status="warnings"] .health-readiness-link {{ border-color:var(--warn); }}
+    .health-workbench-evidence, .health-readiness-evidence, .health-command-evidence, .health-diagnostics-evidence, .health-counts-evidence, .health-key-commands-evidence, .health-workflow-imports-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .health-workbench-evidence summary, .health-readiness-evidence summary, .health-command-evidence summary, .health-diagnostics-evidence summary, .health-counts-evidence summary, .health-key-commands-evidence summary, .health-workflow-imports-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .health-workbench-evidence:not([open]) > :not(summary), .health-readiness-evidence:not([open]) > :not(summary), .health-command-evidence:not([open]) > :not(summary), .health-diagnostics-evidence:not([open]) > :not(summary), .health-counts-evidence:not([open]) > :not(summary), .health-key-commands-evidence:not([open]) > :not(summary), .health-workflow-imports-evidence:not([open]) > :not(summary) {{ display:none; }}
     .health-command-bar {{ border-left:4px solid var(--ok); }}
     .health-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .health-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -47708,6 +47850,7 @@ def _html_page(
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
     @media (max-width: 860px) {{ #run-readiness-strip {{ scroll-margin-top:260px; }} .run-readiness-grid, .run-readiness-strip dl {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ #health-readiness-strip {{ scroll-margin-top:260px; }} .health-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 640px) {{ .action-form-brief dl {{ grid-template-columns:1fr; gap:4px; }} .action-form-brief dd {{ word-break:normal; overflow-wrap:anywhere; }} }}
     @media (max-width: 860px) {{ .workflow-scope-grid {{ grid-template-columns:1fr; }} }}

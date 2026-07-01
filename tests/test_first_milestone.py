@@ -8944,6 +8944,28 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "health_workbench_next_action</dt><dd>Open resume" in health.body
     assert "health_workbench_target_surface</dt><dd><a href='/resume'>/resume</a>" in health.body
     assert "health_workbench_safety: local status artifact write only" in health.body
+    assert "Health Readiness Strip" in health.body
+    assert "data-health-readiness-strip='true'" in health.body
+    assert "data-health-readiness-actions='true'" in health.body
+    assert "data-health-readiness-card='bind' data-health-readiness-card-status='local'" in health.body
+    assert "data-health-readiness-card='storage' data-health-readiness-card-status='initialized'" in health.body
+    assert "data-health-readiness-card='workflow' data-health-readiness-card-status='configured'" in health.body
+    assert "data-health-readiness-card='next' data-health-readiness-card-status='ready'" in health.body
+    assert "data-health-readiness-card='safety' data-health-readiness-card-status='local_status_artifact_only'" in health.body
+    assert "data-health-readiness-evidence='true'" in health.body
+    assert "health_readiness_status</dt><dd>ready" in health.body
+    assert "health_readiness_warning_count</dt><dd>0" in health.body
+    assert "health_readiness_bind</dt><dd>127.0.0.1:8787" in health.body
+    assert "health_readiness_bind_scope</dt><dd>local" in health.body
+    assert "health_readiness_storage_status</dt><dd>initialized" in health.body
+    assert "health_readiness_workflow_status</dt><dd>configured" in health.body
+    assert "health_readiness_next_action</dt><dd>Open resume" in health.body
+    assert "health_readiness_target_surface</dt><dd><a href='/resume'>/resume</a>" in health.body
+    assert "health_readiness_status_artifact_write_on_get</dt><dd>true" in health.body
+    assert "health_readiness_provider_calls_taken</dt><dd>0" in health.body
+    assert "health_readiness_network_actions_taken</dt><dd>0" in health.body
+    assert "health_readiness_external_effects_created</dt><dd>false" in health.body
+    assert "health_readiness_safety: local health readiness; writes only the bounded status artifact" in health.body
     assert "Health Command Bar" in health.body
     assert "data-health-command-bar='true'" in health.body
     assert "data-health-command-evidence='true'" in health.body
@@ -8952,12 +8974,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-health-key-commands-evidence='true'" in health.body
     assert "data-health-workflow-imports-evidence='true'" in health.body
     assert health.body.index("data-health-operator-workbench='true'") < health.body.index(
+        "data-health-readiness-strip='true'"
+    )
+    assert health.body.index("data-health-readiness-strip='true'") < health.body.index(
         "data-health-command-bar='true'"
     )
     assert health.body.index("data-health-operator-workbench='true'") < health.body.index(
         "data-route-context='true'"
     )
     assert "<details class='health-workbench-evidence' data-health-workbench-evidence='true'><summary>Health workbench evidence</summary>" in health.body
+    assert "<details class='health-readiness-evidence' data-health-readiness-evidence='true'><summary>Health readiness evidence</summary>" in health.body
     assert "<details class='health-command-evidence' data-health-command-evidence='true'><summary>Health command evidence</summary>" in health.body
     assert "<details id='health-diagnostics' class='health-diagnostics-evidence' data-health-diagnostics-evidence='true'><summary>Health diagnostics evidence</summary>" in health.body
     assert "<details id='health-counts' class='health-counts-evidence' data-health-counts-evidence='true'><summary>Health counts evidence</summary>" in health.body
@@ -9005,7 +9031,20 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "health_workbench_next_action</dt><dd>Review warnings" in nonlocal_health.body
     assert "health_workbench_target_surface</dt><dd><a href='#health-warnings'>Warnings</a>" in nonlocal_health.body
     assert "data-health-operator-workbench='true'" in nonlocal_health.body
+    assert "Health Readiness Strip" in nonlocal_health.body
+    assert "data-health-readiness-strip='true'" in nonlocal_health.body
+    assert "data-health-readiness-card='bind' data-health-readiness-card-status='nonlocal_warning'" in nonlocal_health.body
+    assert "data-health-readiness-card='next' data-health-readiness-card-status='warnings'" in nonlocal_health.body
+    assert "health_readiness_status</dt><dd>warnings" in nonlocal_health.body
+    assert "health_readiness_warning_count</dt><dd>1" in nonlocal_health.body
+    assert "health_readiness_bind</dt><dd>0.0.0.0:8787" in nonlocal_health.body
+    assert "health_readiness_bind_scope</dt><dd>nonlocal_warning" in nonlocal_health.body
+    assert "health_readiness_next_action</dt><dd>Review warnings" in nonlocal_health.body
+    assert "health_readiness_target_surface</dt><dd><a href='#health-warnings'>Warnings</a>" in nonlocal_health.body
     assert nonlocal_health.body.index("data-health-operator-workbench='true'") < nonlocal_health.body.index(
+        "data-health-readiness-strip='true'"
+    )
+    assert nonlocal_health.body.index("data-health-readiness-strip='true'") < nonlocal_health.body.index(
         "id='health-warnings'"
     )
     assert "health_command_status</dt><dd>warnings" in nonlocal_health.body

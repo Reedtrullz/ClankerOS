@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/health` now has a visible `Health Readiness Strip` between the
+  `Health Operator Workbench` and `Health Command Bar`. It summarizes local
+  bind scope, initialized storage, workflow import readiness, next local
+  action, and the status-artifact-only safety boundary, with ready and
+  nonlocal-warning states covered in focused route pytest. Local proof includes
+  focused health route pytest (`1 passed`) and `compileall`.
 - `/runs/<coder_run_id>` now places a visible `Run Readiness Strip` between
   the `Run Command Bar` and `Run Operator Workbench`. It summarizes run status,
   review gate, bounded evidence, next local action, current gate progress, and
@@ -998,11 +1004,12 @@ Latest status focus:
   command templates, and zero-effect counters in the DOM.
 - `/health` is now content-first and action-first: it opens with the
   `Health Operator Workbench` cards for Status, Artifact, Diagnostics, and
-  Safety before shared route/focus diagnostics, command evidence, or dense
-  health readbacks. Health workbench, command, diagnostics, counts, key-command,
-  and workflow-import evidence stay collapsed by default while preserving the
-  refreshed local status artifact, explicit status-artifact write-on-GET
-  boundary, warning routing, and zero-effect counters in the DOM.
+  Safety, then a visible `Health Readiness Strip` for Local Bind, Storage,
+  Workflow, Next Action, and Safety before command evidence or dense health
+  readbacks. Health workbench, readiness, command, diagnostics, counts,
+  key-command, and workflow-import evidence stay collapsed by default while
+  preserving the refreshed local status artifact, explicit status-artifact
+  write-on-GET boundary, warning routing, and zero-effect counters in the DOM.
 - `/artifacts?path=...` is now content-first and artifact-action-first: it
   opens with `Artifact Operator Workbench` cards for Read, Context, Resume,
   and Safety before shared diagnostics, command evidence, review evidence, or

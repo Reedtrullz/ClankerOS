@@ -1,5 +1,31 @@
 # Status
 
+## 2026-07-01 Health Readiness Strip UX
+
+- Added a scan-first `Health Readiness Strip` to `/health` between the
+  existing `Health Operator Workbench` and `Health Command Bar`.
+- The strip shows five visible cards for local bind scope, initialized local
+  storage, workflow import readiness, the next local action, and the safety
+  boundary for the refreshed local status artifact.
+- Collapsed evidence preserves the same operator contract as the surrounding
+  health surfaces: ready/warnings status, warning count, bind, branch/commit,
+  storage totals, workflow status, status-artifact link,
+  `status_artifact_write_on_get=true`, target surface, and explicit zero
+  provider/network/external-effect counters.
+- Covered both ready and nonlocal-warning states: local `127.0.0.1:8787`
+  renders ready cards and `/resume` as the next action, while `0.0.0.0:8787`
+  renders warning cards and routes the operator to `#health-warnings`.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed.
+  - `python3 -m compileall agent_os/local_app.py`: passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py status.md docs/status.md docs/OPERATING_SUMMARY.md`:
+    passed.
+- Non-claim: this only improves health-page orientation in the browser; it
+  does not approve, reject, execute work, commit, push, create PRs, deploy,
+  call providers, use the network, or mutate external systems beyond the
+  existing bounded local status-artifact write on `/health` GET.
+
 ## 2026-07-01 Run Readiness Strip UX
 
 - Added a scan-first `Run Readiness Strip` to `/runs/<coder_run_id>` between
