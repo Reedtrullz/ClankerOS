@@ -1,5 +1,25 @@
 # Status
 
+## 2026-07-01 Save Workspace POST Exact Resume Fallback UX
+
+- Updated confirmed `save-workspace` POST handling so a saved Goal workspace
+  with an omitted or broad Goal `resume_surface` stores the Goal's concrete
+  current action route, for example `/goals/<goal_id>#goal-action-dock-form`,
+  instead of falling back to the broad Goal page from `return_to`.
+- Home, `/workspace`, and `/resume` now read back the same exact saved route
+  after that operator save, so "come back tomorrow" opens the actionable Goal
+  surface instead of only the Goal overview.
+- Local verification:
+  - Added failing-first fixture assertions for the operator save JSON,
+    Home Resume Workspace readback, and `/resume` saved-surface evidence,
+    then updated the POST handler.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this only changes confirmed local workspace save behavior. It
+  does not write on GET, approve work, execute tasks, commit, push, create
+  PRs, deploy, call providers, use the network, or mutate external systems
+  from ClankerOS.
+
 ## 2026-07-01 Workspace Exact Resume Defaults UX
 
 - Updated `/workspace` save defaults and restore guidance so suggested or

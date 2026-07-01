@@ -39818,16 +39818,23 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 },
             )
         elif action == "save-workspace":
-            resume_surface = (
-                _safe_local_return_path(_one(form, "resume_surface"))
-                or _safe_local_return_path(_one(form, "return_to"))
-                or "/workspace"
-            )
+            open_goal = _one(form, "open_goal") or ""
+            explicit_resume_surface = _safe_local_return_path(_one(form, "resume_surface"))
+            return_surface = _safe_local_return_path(_one(form, "return_to"))
+            resume_surface = explicit_resume_surface or return_surface or "/workspace"
+            if open_goal:
+                broad_goal_surface = f"/goals/{quote(open_goal)}"
+                if not explicit_resume_surface or resume_surface == broad_goal_surface:
+                    exact_goal_surface, _goal_resume_label, _form_available = (
+                        _workspace_goal_action_resume_target(root, open_goal)
+                    )
+                    if exact_goal_surface:
+                        resume_surface = exact_goal_surface
             result = _write_workspace_state(
                 root,
                 {
                     "open_project": _one(form, "open_project") or "",
-                    "open_goal": _one(form, "open_goal") or "",
+                    "open_goal": open_goal,
                     "filters": _one(form, "filters") or "",
                     "expanded_panels": _one(form, "expanded_panels") or "",
                     "last_viewed_artifact": _one(form, "last_viewed_artifact") or "",

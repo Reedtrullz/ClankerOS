@@ -342,6 +342,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   When a saved workspace only has the broad `/goals/<goal_id>` route, the save
   defaults now repair the next saved `resume_surface` to the exact Goal action
   route while labeling it with the current action.
+  Confirmed `save-workspace` POST applies the same repair before writing
+  `.clanker/app/workspace.json` when a saved Goal workspace omits
+  `resume_surface` or only supplies the broad Goal route.
   The same Goal-page action form appears immediately below the workbench when
   browser-available, followed by a read-only `Workspace Restore Map` with
   Restore, Goal, Artifact, Filters + Panels, and Tomorrow cards that make saved

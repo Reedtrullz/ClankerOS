@@ -16556,6 +16556,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert workspace.status == 200
     assert "workspace_saved" in workspace.body
     assert f"href='/goals/{result.goal_id}?notice=workspace_saved" in workspace.body
+    operator_workspace_json = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert (
+        operator_workspace_json["resume_surface"]
+        == f"/goals/{result.goal_id}#goal-action-dock-form"
+    )
     restored_workspace = render_local_app_route(tmp_path, "/workspace")
     assert result.project_id in restored_workspace.body
     assert result.goal_id in restored_workspace.body
@@ -16754,7 +16761,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "resume_goal_label_source: title" in restored_home.body
     assert f"resume_project: <a href='/projects/{result.project_id}'>{result.project_id}</a>" in restored_home.body
     assert (
-        f"resume_surface: <a href='/goals/{result.goal_id}'>/goals/{result.goal_id}</a>"
+        f"resume_surface: <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        f"/goals/{result.goal_id}#goal-action-dock-form</a>"
         in restored_home.body
     )
     assert "resume_artifact" in restored_home.body
@@ -16888,8 +16896,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in resume.body
     )
     assert (
-        f"resume_saved_surface</dt><dd><a href='/goals/{result.goal_id}'>"
-        f"/goals/{result.goal_id}</a>"
+        f"resume_saved_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        f"/goals/{result.goal_id}#goal-action-dock-form</a>"
     ) in resume.body
     assert "Open saved Goal: Demo the ClankerOS local operator app with fixture-backed state" in resume.body
     assert "Open saved surface" not in resume.body

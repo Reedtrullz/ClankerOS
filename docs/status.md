@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Confirmed `save-workspace` POST now promotes an omitted or broad saved Goal
+  `resume_surface` to the exact current action route, for example
+  `/goals/<goal_id>#goal-action-dock-form`, before writing
+  `.clanker/app/workspace.json`. Home, `/workspace`, and `/resume` read back
+  the same actionable route after operator save. Local proof includes the
+  fixture-backed demo route pytest (`1 passed`).
 - `/workspace` save defaults and restore guidance now use the Goal's exact
   current action route as `resume_surface`, for example
   `/goals/<goal_id>#goal-action-dock-form`, when suggesting a lead Goal or
