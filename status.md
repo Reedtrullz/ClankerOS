@@ -1,5 +1,30 @@
 # Status
 
+## 2026-07-01 Recent Items Shortcut UX
+
+- Added a global `v` keyboard shortcut and header `Recent` button for the
+  existing Recent Items / Viewed Pages rail, making browser-local return paths
+  reachable from every route without scrolling or using the CLI.
+- The Recent Items rail now has a stable `#recent-items` anchor; activating
+  `v` or the header button updates the local hash, scrolls to the rail, and
+  focuses the primary recent link while preserving the existing
+  `localStorage:clankeros-route-history` and `localStorage:clankeros-recent-items-filter`
+  state boundaries.
+- TDD evidence: the focused route test failed first on the missing
+  `#recent-items` anchor/shortcut wiring, then passed after the implementation.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed after the implementation.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py docs/OPERATING_SUMMARY.md status.md docs/status.md`:
+    passed.
+- Non-claim: this is browser-local navigation polish only. It does not change
+  `.clanker/app/workspace.json` on GET, broaden artifact access, execute
+  artifact content, approve work, execute tasks, deploy, call providers, use
+  the network from the app, create PRs, push from the app, or mutate external
+  systems from ClankerOS.
+
 ## 2026-07-01 Artifact Shortcut UX
 
 - Added a global `a` keyboard shortcut for `/artifacts`, making the Artifact

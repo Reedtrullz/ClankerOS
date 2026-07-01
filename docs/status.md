@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared browser shell now exposes a global `v` shortcut and header
+  `Recent` button for the existing Recent Items / Viewed Pages rail. The rail
+  has a stable `#recent-items` anchor; activating the shortcut/button scrolls
+  to it and focuses the primary recent link using browser-local state only,
+  preserving the no-write/no-provider/no-network/no-external-effect boundary.
 - The shared browser shell now treats the global Artifact Index as a first-class
   daily destination. `/artifacts` exposes `Artifacts (a)` shortcut metadata,
   `Keyboard Shortcuts` lists `a` as `Open artifacts`, and the shared keydown

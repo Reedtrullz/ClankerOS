@@ -153,6 +153,7 @@ GLOBAL_KEYBOARD_SHORTCUTS = {
     "s": "Open search",
     "w": "Open workspace",
     "a": "Open artifacts",
+    "v": "Open recent items",
     "f": "Finish today",
     "m": "Toggle focus mode",
     "t": "Toggle theme",
@@ -44476,7 +44477,7 @@ def _recent_items_panel(root: Path) -> str:
     ]
     body = "".join(
         [
-            "<aside class='operator-side' data-recent-items='true'>",
+            "<aside id='recent-items' data-recent-items='true' class='operator-side' tabindex='-1'>",
             "<h2>Recent Items</h2>",
             _recent_items_command_bar(root, items, used_defaults=used_defaults),
             _browser_route_history_panel(),
@@ -48943,9 +48944,10 @@ def _html_page(
     <strong>ClankerOS Local Operator</strong>
     <nav class="shell-nav" aria-label="Shell navigation" data-shell-nav="true" data-shell-nav-primary-count="{nav_primary_count}" data-shell-nav-secondary-count="{nav_secondary_count}">{nav}</nav>
     <div class="header-actions" data-keyboard-shortcuts="true" data-focus-mode-supported="true" data-focus-mode-storage="localStorage:clankeros-focus-mode" data-focus-mode-keeps-current-action="true" data-focus-mode-write-on-get="false" data-focus-mode-provider-calls-taken="0" data-focus-mode-network-actions-taken="0" data-focus-mode-external-effects-created="false" data-next-action-href="{_e(next_shortcut['href'])}" data-next-action-label="{_e(next_shortcut['label'])}" data-next-action-action="{_e(next_shortcut['action'])}" data-next-action-status="{_e(next_shortcut['status'])}" data-next-action-source="{_e(next_shortcut['source'])}" data-next-action-form-available="{_e(next_shortcut['form_available'])}" data-next-action-confirmation-required="{_e(next_shortcut['confirmation_required'])}" data-next-action-write-on-get="{_e(next_shortcut['write_on_get'])}" data-next-action-provider-calls-taken="{_e(next_shortcut['provider_calls_taken'])}" data-next-action-network-actions-taken="{_e(next_shortcut['network_actions_taken'])}" data-next-action-external-effects-created="{_e(next_shortcut['external_effects_created'])}" data-finish-today-href="{_e(finish_shortcut['href'])}" data-finish-today-label="{_e(finish_shortcut['label'])}" data-finish-today-source="{_e(finish_shortcut['source'])}" data-finish-today-target="{_e(finish_shortcut['target'])}" data-finish-today-surface="{_e(finish_shortcut['surface'])}" data-finish-today-confirmation-required="{_e(finish_shortcut['confirmation_required'])}" data-finish-today-write-on-get="{_e(finish_shortcut['write_on_get'])}" data-finish-today-provider-calls-taken="{_e(finish_shortcut['provider_calls_taken'])}" data-finish-today-network-actions-taken="{_e(finish_shortcut['network_actions_taken'])}" data-finish-today-external-effects-created="{_e(finish_shortcut['external_effects_created'])}">
-      <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: question mark opens keyboard help; slash opens command palette; Escape closes dialogs; n opens next action; h opens home; y opens today; g opens goals; r opens resume; s opens search; w opens workspace; a opens artifacts; f opens Finish Today; m toggles focus mode; t toggles theme.</span>
+      <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: question mark opens keyboard help; slash opens command palette; Escape closes dialogs; n opens next action; h opens home; y opens today; g opens goals; r opens resume; s opens search; w opens workspace; a opens artifacts; v opens recent items; f opens Finish Today; m toggles focus mode; t toggles theme.</span>
       <button class="icon-button" id="shortcut-help-open" type="button" data-shortcut-help-open="true" data-shortcut="?" aria-keyshortcuts="?" aria-describedby="keyboard-shortcuts-help" title="Open keyboard help (?)">Keys</button>
       <button class="icon-button" id="palette-open" type="button" data-shortcut="/" aria-keyshortcuts="/" aria-describedby="keyboard-shortcuts-help" title="Open command palette (/)">Palette</button>
+      <button class="icon-button" id="recent-items-open" type="button" data-recent-items-open="true" data-recent-items-href="#recent-items" data-shortcut="v" aria-keyshortcuts="v" aria-describedby="keyboard-shortcuts-help" title="Open recent items (v)">Recent</button>
       <button class="icon-button" id="next-action-open" type="button" data-shortcut="n" aria-keyshortcuts="n" aria-describedby="keyboard-shortcuts-help" aria-label="Open {_e(next_shortcut['label'])} (n)" data-next-action-button="true" data-next-action-href="{_e(next_shortcut['href'])}" data-next-action-button-label="{_e(next_shortcut['label'])}" title="Open {_e(next_shortcut['label'])} (n)">{_e(next_shortcut['label'])}</button>
       <button class="icon-button" id="finish-today-open" type="button" data-shortcut="f" aria-keyshortcuts="f" aria-describedby="keyboard-shortcuts-help" data-finish-today-button="true" data-finish-today-href="{_e(finish_shortcut['href'])}" title="Open Finish Today (f)">Finish</button>
       <button class="icon-button" id="focus-toggle" type="button" data-shortcut="m" aria-keyshortcuts="m" aria-pressed="false" aria-describedby="keyboard-shortcuts-help" data-focus-mode-toggle="true" title="Toggle focus mode (m)">Focus</button>
@@ -48969,6 +48971,7 @@ def _html_page(
     var shortcutHelp = document.getElementById("shortcut-help-dialog");
     var shortcutHelpOpen = document.getElementById("shortcut-help-open");
     var paletteOpen = document.getElementById("palette-open");
+    var recentItemsOpen = document.getElementById("recent-items-open");
     var paletteSearch = document.getElementById("command-palette-search");
     var paletteResults = palette ? Array.prototype.slice.call(palette.querySelectorAll("[data-palette-result='true']")) : [];
     var paletteFilterPanel = palette ? palette.querySelector("[data-command-palette-filter='true']") : null;
@@ -49123,6 +49126,23 @@ def _html_page(
       var href = finishTodayOpen ? finishTodayOpen.getAttribute("data-finish-today-href") : "";
       if (!href) {{ href = "/workspace#save-workspace"; }}
       window.location.href = href;
+    }}
+    function openRecentItems() {{
+      var href = recentItemsOpen ? recentItemsOpen.getAttribute("data-recent-items-href") : "";
+      if (!href) {{ href = "#recent-items"; }}
+      var panel = document.querySelector(href);
+      if (window.location.hash !== href) {{
+        window.history.pushState(null, "", href);
+      }}
+      if (!panel) {{ return; }}
+      panel.scrollIntoView({{ block: "start", inline: "nearest" }});
+      var primary = panel.querySelector("[data-recent-items-primary='true'], [data-browser-route-history-list='true'] a, a");
+      if (primary && primary.focus) {{
+        try {{ primary.focus({{ preventScroll: true }}); }} catch (error) {{ primary.focus(); }}
+      }} else if (panel.focus) {{
+        panel.focus();
+      }}
+      rememberCurrentRoute();
     }}
     function browserRouteHistoryStorageKey() {{
       var panel = document.querySelector("[data-browser-route-history='true']");
@@ -51248,6 +51268,7 @@ def _html_page(
     if (paletteSearch) {{ paletteSearch.addEventListener("input", syncPaletteFilter); }}
     if (paletteSearch) {{ paletteSearch.addEventListener("keydown", handlePaletteSearchKeydown); }}
     if (nextActionOpen) {{ nextActionOpen.addEventListener("click", openNextAction); }}
+    if (recentItemsOpen) {{ recentItemsOpen.addEventListener("click", openRecentItems); }}
     if (finishTodayOpen) {{ finishTodayOpen.addEventListener("click", openFinishToday); }}
     if (themeToggle) {{ themeToggle.addEventListener("click", toggleTheme); }}
     if (focusToggle) {{ focusToggle.addEventListener("click", toggleFocusMode); }}
@@ -51576,6 +51597,7 @@ def _html_page(
       if (event.key === "s") {{ event.preventDefault(); window.location.href = "/search"; }}
       if (event.key === "w") {{ event.preventDefault(); window.location.href = "/workspace"; }}
       if (event.key === "a") {{ event.preventDefault(); window.location.href = "/artifacts"; }}
+      if (event.key === "v") {{ event.preventDefault(); openRecentItems(); }}
       if (event.key === "f") {{ event.preventDefault(); openFinishToday(); }}
       if (event.key === "y") {{ event.preventDefault(); window.location.href = "/today"; }}
       if (event.key === "m") {{ event.preventDefault(); toggleFocusMode(); }}
