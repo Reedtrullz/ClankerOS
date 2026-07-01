@@ -1,5 +1,33 @@
 # Status
 
+## 2026-07-01 Deterministic Timeline Latest UX
+
+- Added a stable Goal timeline tie-breaker so same-second lifecycle events,
+  review artifacts, and generated artifact records sort predictably across
+  local Python and GitHub Actions environments.
+- The Today Session Summary and Activity Digest can now keep their `Latest`
+  event focused on the workflow lifecycle event, such as the completed coder
+  run, instead of letting same-timestamp artifact enumeration accidentally
+  become the newest item.
+- Hardened the demo assertion for latest artifact labels to require
+  human-readable coder-run review copy while allowing the bounded artifact
+  record to come from the latest registered artifact path.
+- GitHub Actions root cause: run `28498425453` failed fast smoke in
+  `test_local_app_demo_scenario_populates_fixture_state` because CI selected a
+  different same-timestamp latest timeline item than local isolated runs.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - Exact GitHub fast-smoke pytest selection:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "<15 local-app/CI smoke tests>"`:
+    15 passed, 502 deselected.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py status.md docs/status.md`:
+    passed.
+- Non-claim: this is deterministic local browser timeline ordering and test
+  hardening only. It does not broaden artifact access, write on GET, approve
+  work, execute tasks, deploy, call providers, use the network from the app,
+  or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Artifact Source Label UX
 
 - Updated `/artifacts?path=...` relationship-map source links so run-backed

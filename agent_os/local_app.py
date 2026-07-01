@@ -21884,7 +21884,39 @@ def _goal_timeline_items(root: Path, state: dict[str, Any]) -> list[dict[str, st
                 "kind": "artifact",
             }
         )
-    return sorted(items, key=lambda item: item.get("at") or "")
+    return sorted(items, key=_goal_timeline_sort_key)
+
+
+def _goal_timeline_sort_key(item: dict[str, str]) -> tuple[str, int, str, str]:
+    message = str(item.get("message") or "")
+    lower_message = message.lower()
+    href = str(item.get("href") or "")
+    rank = 50
+    if lower_message.startswith("goal created"):
+        rank = 0
+    elif lower_message.startswith("execution "):
+        rank = 90
+    elif lower_message.startswith("task created"):
+        rank = 10
+    elif "scout delegated" in lower_message or "delegation" in lower_message:
+        rank = 20
+    elif "context pack" in lower_message or "implementation handoff" in lower_message:
+        rank = 30
+    elif "coder prep" in lower_message or "worktree planned" in lower_message:
+        rank = 40
+    elif "approval requested" in lower_message or "approval granted" in lower_message:
+        rank = 60
+    elif "approved worktree execution started" in lower_message:
+        rank = 70
+    elif lower_message.startswith("artifact recorded") or href.startswith("/artifacts?path="):
+        rank = 75
+    elif lower_message.startswith("review"):
+        rank = 80
+    elif "commit" in lower_message:
+        rank = 100
+    elif "publication" in lower_message:
+        rank = 110
+    return (str(item.get("at") or ""), rank, message, href)
 
 
 def _approval_decision_timeline_message(kind: str, status: str, item_id: str) -> str:
