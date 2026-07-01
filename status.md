@@ -1,5 +1,29 @@
 # Status
 
+## 2026-07-01 Recent Items Current Action UX
+
+- The shared Recent Items rail now prefers the live Goal action for its Action
+  card whenever a Goal is available, using the same operator focus context and
+  Goal action dock target as the command palette.
+- Last-action receipt routing remains available when there is no active Goal
+  action, so first-run/no-goal return paths still point at the saved action
+  result instead of losing the receipt.
+- TDD evidence: the fixture-backed demo scenario test failed first because the
+  populated Goal page still rendered
+  `data-recent-items-action-card='true' href='/actions'`, then passed after
+  Recent Items received the shared focus context and resolved the current Goal
+  action surface.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed after implementation.
+- Non-claim: this is read-only Recent Items routing only. It does not write on
+  GET, approve work, execute tasks, call providers, use the network, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Search Current Action Suggestion UX
 
 - `/search` now makes the Search Suggestions panel Goal-action-first when a

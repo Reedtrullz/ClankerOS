@@ -13697,7 +13697,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in goal.body
     )
     assert "data-recent-items-workspace-card='true' href='/resume'>Open resume</a>" in goal.body
-    assert "data-recent-items-action-card='true' href='/actions'>Open actions</a>" in goal.body
+    assert (
+        f"data-recent-items-action-card='true' href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in goal.body
     assert "data-recent-items-artifact-card='true' href='/workspace'>Open workspace</a>" in goal.body
     assert "data-recent-items-details='true'" in goal.body
     assert "<summary>Recent item evidence</summary>" in goal.body
@@ -13771,8 +13774,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"recent_items_now: <a href='/goals/{result.goal_id}'>Open Goal</a>"
         not in goal.body
     )
+    assert "recent_items_current_action</dt><dd>Create commit request" in goal.body
+    assert (
+        f"recent_items_current_action_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        f"/goals/{result.goal_id}#goal-action-dock-form</a>"
+    ) in goal.body
+    assert "recent_items_current_action_source</dt><dd>operator_focus" in goal.body
     assert "recent_items_workspace_click: <a href='/resume'>Open resume</a>" in goal.body
-    assert "recent_items_last_action_click: <a href='/actions'>Open actions</a>" in goal.body
+    assert (
+        f"recent_items_last_action_click: <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in goal.body
     assert "recent_items_last_artifact_click: <a href='/workspace'>Open workspace</a>" in goal.body
     assert "recent_items_resume: <a href='/resume'>/resume</a>" in goal.body
     assert "data-breadcrumbs='true'" in goal.body

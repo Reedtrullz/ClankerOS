@@ -1047,9 +1047,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   before the page body. The
   recent-items sidebar now starts with a read-only `Recent Items Command Bar`
   and a visible return dock for Recent, Workspace, Action, and Artifact. It
-  links the primary recent surface, saved project/Goal when present, last
-  action notice when present, saved artifact when present, and safe fallback
-  surfaces otherwise. The Artifact card also hydrates after load from
+  links the primary recent surface, saved project/Goal when present, the live
+  Goal action when a Goal exists, last action notice when no Goal action is
+  available, saved artifact when present, and safe fallback surfaces otherwise.
+  The Action card uses the same Goal action dock target as the command palette
+  instead of detouring through the generic `/actions` catalog. The Artifact card also hydrates after load from
   browser-local `localStorage:clankeros-last-artifact`, so the last opened
   artifact can be reopened globally before the operator explicitly saves it to
   workspace state. Workspace/goal/delegation/run counts, saved

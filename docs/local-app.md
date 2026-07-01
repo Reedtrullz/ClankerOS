@@ -660,8 +660,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   starts with a read-only `Recent Items Command Bar` that shows one compact
   reopen action plus `/resume`, then keeps workspace/goal/delegation/run
   counts, saved project/goal/artifact context, browser-local last-artifact
-  storage, the last confirmed action, and write/provider/network/external-effect
-  counters inside collapsed evidence. Its Artifact card hydrates after load
+  storage, the live Goal action when available, the last confirmed action, and
+  write/provider/network/external-effect counters inside collapsed evidence.
+  Its Action card prefers the Goal action dock over the generic `/actions`
+  catalog whenever a Goal exists. Its Artifact card hydrates after load
   from `localStorage:clankeros-last-artifact`, while durable resume promotion
   still requires the confirmed Workspace save flow.
   A browser-local `Viewed Pages` panel records local app routes in

@@ -44958,7 +44958,7 @@ def _breadcrumb_local_context(
     return current_goal, current_project, "none"
 
 
-def _recent_items_panel(root: Path) -> str:
+def _recent_items_panel(root: Path, focus_context: dict[str, Any]) -> str:
     items = _recent_operator_links(root, limit=8)
     used_defaults = not items
     if not items:
@@ -44981,7 +44981,12 @@ def _recent_items_panel(root: Path) -> str:
         [
             "<aside id='recent-items' data-recent-items='true' class='operator-side' tabindex='-1'>",
             "<h2>Recent Items</h2>",
-            _recent_items_command_bar(root, items, used_defaults=used_defaults),
+            _recent_items_command_bar(
+                root,
+                items,
+                used_defaults=used_defaults,
+                focus_context=focus_context,
+            ),
             _browser_route_history_panel(),
             _recent_items_filter_panel(items=items, used_defaults=used_defaults),
             f"<details class='recent-items-list-details' data-recent-items-list-details='true'><summary>Recent shortcuts ({len(items)})</summary>",
@@ -45147,6 +45152,7 @@ def _recent_items_command_bar(
     items: list[tuple[str, str, str]],
     *,
     used_defaults: bool,
+    focus_context: dict[str, Any],
 ) -> str:
     state = _load_workspace_state(root)
     open_project = str(state.get("open_project") or "").strip()
@@ -45174,9 +45180,36 @@ def _recent_items_command_bar(
         workspace_label = "No saved goal yet"
         workspace_href = "/resume"
         workspace_action = "Open resume"
-    action_label = last_action or "No saved action"
-    action_href = last_action_href or "/actions"
-    action_action = _action_form_copy(last_action)["title"] if last_action_href else "Open actions"
+    current_action = "none"
+    current_action_href = ""
+    current_action_source = "none"
+    if (
+        str(focus_context.get("status") or "") == "available"
+        and isinstance(focus_context.get("next_action"), GoalNextAction)
+        and isinstance(focus_context.get("goal_state"), dict)
+    ):
+        next_action = focus_context["next_action"]
+        goal_state = focus_context["goal_state"]
+        form_available = bool(focus_context.get("action_form"))
+        current_action = next_action.action
+        current_action_href = _goal_primary_action_href(
+            goal_state,
+            next_action,
+            form_available=form_available,
+            absolute=True,
+        )
+        current_action_source = "operator_focus"
+
+    if current_action_href:
+        action_label = current_action
+        action_href = current_action_href
+        action_action = current_action
+    else:
+        action_label = last_action or "No saved action"
+        action_href = last_action_href or "/actions"
+        action_action = (
+            _action_form_copy(last_action)["title"] if last_action_href else "Open actions"
+        )
     artifact_label = Path(last_artifact).name if last_artifact else "No saved artifact"
     artifact_href = f"/artifacts?path={quote(last_artifact)}" if last_artifact else "/workspace"
     artifact_action = _artifact_action_label(last_artifact) if last_artifact else "Open workspace"
@@ -45272,6 +45305,16 @@ def _recent_items_command_bar(
                     ("recent_items_browser_last_artifact_external_effects_created", "false"),
                     ("recent_items_last_action", last_action or "none"),
                     ("recent_items_last_action_result", last_action_result or "none"),
+                    ("recent_items_current_action", current_action),
+                    (
+                        "recent_items_current_action_surface",
+                        SafeHtml(
+                            f"<a href='{_e(current_action_href)}'>{_e(current_action_href)}</a>"
+                        )
+                        if current_action_href
+                        else "none",
+                    ),
+                    ("recent_items_current_action_source", current_action_source),
                     (
                         "recent_items_last_action_surface",
                         (
@@ -47450,8 +47493,8 @@ def _html_page(
     nav = _nav_links(current_path)
     nav_primary_count = len(PRIMARY_NAV_HREFS)
     nav_secondary_count = len(NAV_ITEMS) - nav_primary_count
-    recent_panel = _recent_items_panel(root)
     focus_context = _operator_focus_context(root, current_path)
+    recent_panel = _recent_items_panel(root, focus_context)
     next_shortcut = _next_action_shortcut_context(focus_context, current_path)
     finish_shortcut = _finish_today_shortcut_context(current_path, focus_context)
     operator_ribbon = _operator_status_ribbon(root, focus_context, current_path, title)
