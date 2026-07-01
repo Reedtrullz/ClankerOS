@@ -17931,6 +17931,10 @@ def _goal_return_brief(
     next_action: GoalNextAction,
 ) -> str:
     goal = state["goal"]
+    goal_href, goal_label, goal_label_source, goal_surface = _goal_display_link(
+        root,
+        goal.id,
+    )
     workspace = _load_workspace_state(root)
     saved_project = str(workspace.get("open_project") or "").strip()
     saved_goal = str(workspace.get("open_goal") or "").strip()
@@ -18010,6 +18014,14 @@ def _goal_return_brief(
         action_form_available,
         fallback="Open next surface",
     )
+    blocker_action_surface = SafeHtml(
+        f"<a href='{_e(blocker_href)}'>{_e(blocker_action)}</a>"
+    )
+    blocker_raw_surface = SafeHtml(
+        f"<a href='{_e(blocker_href)}'>{_e(blocker_href)}</a>"
+    )
+    resume_action_surface = SafeHtml("<a href='/resume'>Open resume</a>")
+    resume_raw_surface = SafeHtml("<a href='/resume'>/resume</a>")
     workspace_matches_goal = saved_goal == goal.id
     workspace_matches_project = saved_project == goal.project_id
     done = counts.get("done", 0)
@@ -18047,6 +18059,12 @@ def _goal_return_brief(
         [
             "<section id='goal-return-brief' class='panel goal-return-brief' data-goal-return-brief='true'><h2>Goal Return Brief</h2>",
             "<p class='muted'>A top-of-page resume brief for the current Goal: where to continue, what changed last, what proof exists, and what blocks the next move.</p>",
+            (
+                "<p class='muted goal-return-context'>"
+                f"Working goal: {goal_surface}. Next: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>. "
+                f"Blocker: {blocker_action_surface}."
+                "</p>"
+            ),
             "<div class='goal-return-grid' data-goal-return-actions='true'>",
             return_cards,
             "</div>",
@@ -18055,6 +18073,9 @@ def _goal_return_brief(
                 [
                     ("goal_return_status", "ready" if readiness["ready"] else "needs_workspace_save"),
                     ("goal_return_goal", goal.id),
+                    ("goal_return_goal_label", goal_label),
+                    ("goal_return_goal_label_source", goal_label_source),
+                    ("goal_return_goal_surface", goal_surface),
                     ("goal_return_project", goal.project_id),
                     ("goal_return_phase", phase),
                     ("goal_return_current_gate", current_gate),
@@ -18080,9 +18101,11 @@ def _goal_return_brief(
                     ("goal_return_ci_current_proof", ci_state["current_proof"]),
                     ("goal_return_ci_surface", SafeHtml("<a href='/verification'>/verification</a>")),
                     ("goal_return_blocker_status", blocker_status),
-                    ("goal_return_blocker_surface", blocker_surface),
+                    ("goal_return_blocker_surface", blocker_action_surface),
+                    ("goal_return_blocker_href", blocker_raw_surface),
                     ("goal_return_finish_surface", SafeHtml("<a href='#goal-finish-today'>Finish Today</a>")),
-                    ("goal_return_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+                    ("goal_return_resume_surface", resume_action_surface),
+                    ("goal_return_resume_href", resume_raw_surface),
                     ("goal_return_source", "goal_workspace_timeline_ci_and_gate_state"),
                     ("goal_return_write_on_get", "false"),
                     ("goal_return_provider_calls_taken", "0"),
@@ -18097,8 +18120,12 @@ def _goal_return_brief(
                     f"goal_return_latest: <a href='{_e(latest_surface)}'>{_e(latest_action_label)}</a>",
                     f"goal_return_latest_raw: {latest_raw_surface_value}",
                     f"goal_return_artifact: {_artifact_link(latest_artifact) if latest_artifact else 'none'}",
-                    f"goal_return_unblock: {_e(blocker_status)} -> {blocker_surface}",
+                    f"goal_return_goal: <a href='{_e(goal_href)}'>{_e(goal_label)}</a>",
+                    f"goal_return_unblock: {_e(blocker_status)} -> {blocker_action_surface}",
+                    f"goal_return_unblock_href: {blocker_raw_surface}",
                     "goal_return_finish: <a href='#goal-finish-today'>Finish Today</a>",
+                    "goal_return_resume: <a href='/resume'>Open resume</a>",
+                    "goal_return_resume_href: <a href='/resume'>/resume</a>",
                     "goal_return_safety: read-only return-to-work brief",
                 ]
             ),

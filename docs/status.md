@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal Return Brief now names the working Goal, next action, and blocker in
+  the visible context line, and its evidence is title/action-first while
+  preserving raw route fields. In the fixture demo it reads back
+  `Demo the ClankerOS local operator app with fixture-backed state`,
+  `Create commit request`, and `Review approvals`, while
+  `goal_return_blocker_href` / `goal_return_resume_href` retain `/approvals`
+  and `/resume`. Local proof includes the fixture-backed demo Goal route
+  pytest (`1 passed`) plus compile and whitespace checks.
 - Goal Daily Loop now names the working Goal and saved return action in the
   visible context line, and its Finish Today evidence is title/action-first
   while preserving the raw Goal id and exact resume href fields. In the fixture
