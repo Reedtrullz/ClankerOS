@@ -968,7 +968,10 @@ the existing Search button available for full indexed search. It also includes a
 visible `Quick Switch` dock for Continue, Workspace, Action, Artifact, and
 Finish so the palette can recover the current Goal, exact saved workspace
 surface, last action target, latest artifact, or `/workspace#save-workspace`
-handoff without opening the sidebar. The
+handoff without opening the sidebar. When no saved workspace surface is
+stronger, the Workspace card also resolves the current Goal action dock
+surface and labels it with the action, keeping the return path action-first.
+The
 route-aware `Current Page` readback, keyboard shortcuts, and long open list
 live in collapsed `Palette evidence and shortcuts`, while the
 goal-aware `Continue Current Goal` block and its confirmed local action form

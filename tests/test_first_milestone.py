@@ -12345,8 +12345,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "Create commit request</a>"
     ) in dashboard.body
     assert (
-        f"data-command-palette-quick-workspace='true' href='/goals/{result.goal_id}'>"
-        "Open current goal</a>"
+        f"data-command-palette-quick-workspace='true' href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
     ) in dashboard.body
     assert (
         "data-command-palette-quick-action='true' href='#command-palette-continue-form'>"
@@ -12365,10 +12365,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "palette_quick_switch_primary_surface</dt><dd><a href='#command-palette-continue-form'>"
         "Create commit request</a>"
     ) in dashboard.body
-    assert "palette_quick_switch_workspace_source</dt><dd>current_goal" in dashboard.body
+    assert "palette_quick_switch_workspace_source</dt><dd>current_goal_action" in dashboard.body
     assert (
-        f"palette_quick_switch_workspace_surface</dt><dd><a href='/goals/{result.goal_id}'>"
-        f"/goals/{result.goal_id}</a>"
+        f"palette_quick_switch_workspace_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        f"/goals/{result.goal_id}#goal-action-dock-form</a>"
     ) in dashboard.body
     assert "palette_quick_switch_action_label</dt><dd>Create commit request" in dashboard.body
     assert "palette_quick_switch_artifact_source</dt><dd>current_goal_latest" in dashboard.body
@@ -13540,8 +13540,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "Create commit request</a>"
     ) in goal.body
     assert (
-        f"data-command-palette-quick-workspace='true' href='/goals/{result.goal_id}'>"
-        "Open current goal</a>"
+        f"data-command-palette-quick-workspace='true' href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
     ) in goal.body
     assert (
         "data-command-palette-quick-action='true' href='#command-palette-continue-form'>"
@@ -13564,10 +13564,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "palette_quick_switch_status</dt><dd>available" in goal.body
     assert "palette_quick_switch_source</dt><dd>lead_goal" in goal.body
     assert "palette_quick_switch_primary_action</dt><dd>Create commit request" in goal.body
-    assert "palette_quick_switch_workspace_source</dt><dd>current_goal" in goal.body
+    assert "palette_quick_switch_workspace_source</dt><dd>current_goal_action" in goal.body
     assert (
-        f"palette_quick_switch_workspace_surface</dt><dd><a href='/goals/{result.goal_id}'>"
-        f"/goals/{result.goal_id}</a>"
+        f"palette_quick_switch_workspace_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        f"/goals/{result.goal_id}#goal-action-dock-form</a>"
     ) in goal.body
     assert "palette_quick_switch_action_label</dt><dd>Create commit request" in goal.body
     assert "palette_quick_switch_artifact_source</dt><dd>current_goal_latest" in goal.body

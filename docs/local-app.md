@@ -713,6 +713,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   launcher reopen the last viewed artifact before it is saved into durable
   workspace state. The existing
   Search button still opens full indexed `/search` results. The
+  compact Quick Switch dock also makes its Workspace card action-aware when no
+  saved workspace surface is stronger, so the keyboard return path can open the
+  current Goal action dock with the concrete action label.
   route-aware `Current Page` readback, keyboard shortcuts, long open list, and
   route-aware Finish Today target stay available inside collapsed
   `Palette evidence and shortcuts`; the

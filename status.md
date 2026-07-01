@@ -1,5 +1,28 @@
 # Status
 
+## 2026-07-01 Command Palette Workspace Action UX
+
+- The command palette Quick Switch `Workspace` card now routes the current
+  Goal fallback to the live Goal action dock when no saved workspace surface is
+  stronger, using the concrete action label such as `Create commit request`.
+- Saved exact workspace surfaces still win first, and project-only saved
+  routes keep their project label.
+- TDD evidence: the fixture-backed demo scenario failed first because the
+  populated Home palette still rendered
+  `data-command-palette-quick-workspace='true' href='/goals/<goal_id>'` with
+  `Open current goal`, then passed after `_command_palette_quick_switch`
+  resolved the current Goal action surface from the shared focus context.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed after implementation.
+- Non-claim: this is read-only command palette routing only. It does not write
+  on GET, approve work, execute tasks, call providers, use the network, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Command Palette Current Action Result UX
 
 - The command palette's filterable `Palette Results` list now prepends the

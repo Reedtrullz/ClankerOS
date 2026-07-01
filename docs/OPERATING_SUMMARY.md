@@ -1083,7 +1083,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   the sidebar. Saved exact Goal action routes in that dock use the same
   operator-facing current-action label as `/resume`, such as
   `Create commit request`, while project-only saved routes keep their project
-  label. The visible `Palette Results` list filters local routes and
+  label. When no saved workspace surface is stronger, the current Goal fallback
+  also resolves to the action dock and uses the concrete action label. The
+  visible `Palette Results` list filters local routes and
   recent work on input, prepends the live Goal action as `current-action` when
   available, supports ArrowDown/ArrowUp plus Enter for active local result
   navigation, and keeps full `/search` as the explicit fallback. It also

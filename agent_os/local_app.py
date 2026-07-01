@@ -46768,6 +46768,19 @@ def _command_palette_quick_switch(
         workspace_href = f"/goals/{quote(focus_goal_id)}"
         workspace_action = "Open current goal"
         workspace_source = "current_goal"
+        next_action = focus_context.get("next_action")
+        goal_state = focus_context.get("goal_state")
+        if isinstance(next_action, GoalNextAction) and isinstance(goal_state, dict):
+            action_href = _goal_primary_action_href(
+                goal_state,
+                next_action,
+                form_available=bool(focus_context.get("action_form")),
+                absolute=True,
+            )
+            if action_href:
+                workspace_href = action_href
+                workspace_action = next_action.action
+                workspace_source = "current_goal_action"
     elif saved_project:
         workspace_label = saved_project
         workspace_href = f"/projects/{quote(saved_project)}"
