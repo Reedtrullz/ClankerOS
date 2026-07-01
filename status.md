@@ -1,5 +1,23 @@
 # Status
 
+## 2026-07-01 Goal Task Closeout Current Action UX
+
+- Updated blocked `Goal Task Closeout` states so they point back to the
+  current concrete Goal action instead of generic `Continue workflow` copy.
+- When publication handoff evidence is not ready but the Goal's next safe
+  browser action is available, the closeout panel now links to
+  `#goal-action-dock-form` with labels such as `Create publication request`.
+- Local verification:
+  - Added a failing-first assertion against the publication-request gate in
+    `test_goal_next_action_card_exposes_commit_publication_gate_forms`, then
+    updated the candidate routing.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q`:
+    1 passed.
+- Non-claim: this only improves Goal-page browser routing for blocked
+  closeout guidance. It does not run verification, approve work, execute
+  tasks, commit, push, create PRs, deploy, call providers, use the network, or
+  mutate external systems from ClankerOS.
+
 ## 2026-07-01 Goal Board Card Action Labels UX
 
 - Replaced generic `Use action form` Goal-board card copy with the concrete

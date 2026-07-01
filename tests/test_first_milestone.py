@@ -19715,6 +19715,15 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     publication_request_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert publication_request_goal.status == 200
     assert "recommended_action</dt><dd>Create publication request" in publication_request_goal.body
+    assert "goal_task_closeout_status</dt><dd>waiting_for_publication_handoff" in publication_request_goal.body
+    assert (
+        "goal_task_closeout_target_surface</dt><dd>"
+        "<a href='#goal-action-dock-form'>Create publication request</a>"
+    ) in publication_request_goal.body
+    assert (
+        "goal_task_closeout_click: <a href='#goal-action-dock-form'>"
+        "Create publication request</a>"
+    ) in publication_request_goal.body
     assert "Create Publication Request" in publication_request_goal.body
     assert "action='/actions/coder-publication-request'" in publication_request_goal.body
     assert f"name='run_id' value='{run_id}'" in publication_request_goal.body

@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals/<goal_id>` Goal Task Closeout now routes blocked closeout states
+  back to the concrete current Goal action. At the publication-request gate it
+  links to `#goal-action-dock-form` as `Create publication request` instead of
+  generic `Continue workflow` copy. Local proof includes the focused
+  publication-gate pytest (`1 passed`).
 - `/goals` lane cards now label their primary action with the concrete current
   Goal action, such as `Create commit request`, instead of generic
   `Use action form` copy. The href and confirmation-gated action form remain

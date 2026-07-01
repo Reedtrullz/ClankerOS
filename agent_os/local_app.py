@@ -25463,21 +25463,29 @@ def _goal_task_closeout_candidate(root: Path, state: dict[str, Any]) -> dict[str
         "plan_step_id": linked_step.id if linked_step is not None else "none",
         "plan_step_status": linked_step.status if linked_step is not None else "none",
     }
+    next_action = _goal_next_action(root, state)
+    next_form_available = bool(_goal_next_action_form(state, next_action))
+    next_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=next_form_available,
+    )
+    next_label = _goal_action_cta_label(next_action, next_form_available)
     if delegation is None:
         return _goal_task_closeout_candidate_record(
             **base,
             status="waiting_for_task_delegation",
             reason="the first open task has no linked workflow delegation yet",
-            target_href="#goal-next-action",
-            target_label="Continue workflow",
+            target_href=next_href,
+            target_label=next_label,
         )
     if publication is None and goal.status != "completed":
         return _goal_task_closeout_candidate_record(
             **base,
             status="waiting_for_publication_handoff",
             reason="publication handoff evidence is not ready yet",
-            target_href="#goal-next-action",
-            target_label="Continue workflow",
+            target_href=next_href,
+            target_label=next_label,
         )
     if not artifacts:
         return _goal_task_closeout_candidate_record(

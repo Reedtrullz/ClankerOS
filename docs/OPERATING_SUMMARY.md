@@ -839,6 +839,8 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   without taking action. A `Goal Task Closeout` panel follows the command cards
   and exposes a confirmed `complete-goal-task` action only when ready local
   publication-handoff evidence or a completed Goal can back the bookkeeping.
+  While closeout is blocked, it routes back to the concrete current Goal action
+  and visible action dock when available instead of generic continuation copy.
   The action marks one selected open task completed, updates the linked plan
   step when present, refreshes `TASKS.md` and plan artifacts, saves the
   workspace resume point, and records a timeline event. It does not run fresh
