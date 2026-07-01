@@ -1,5 +1,34 @@
 # Status
 
+## 2026-07-02 Goal-Aware Home Proof Start UX
+
+- The Home Operator Board Proof card and Home `Start Here` CI readback now
+  route populated sessions to the current Goal's `#goal-ci-handoff` surface.
+- First-run/no-goal sessions keep the existing `/verification` fallback so the
+  empty-checkout setup path still has a proof target before a Goal exists.
+- The Home Operator Board and Start Here evidence rows now expose proof-source
+  readbacks, keeping the top Home surfaces aligned with `/guide`, day-level
+  Proof cards, and the global `Proof` button.
+- TDD evidence: the populated fixture-backed scenario failed first because
+  `home_operator_board_ci_surface` still rendered `/verification`; after
+  implementation it proved `/goals/<goal_id>#goal-ci-handoff` for both Home
+  Operator Board and Start Here.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed after docs/status updates.
+- Non-claim: this is read-only browser Home routing only. It does not write on
+  GET, poll GitHub from the app, approve work, execute tasks, call providers,
+  use the network, push, create PRs, deploy, or mutate external systems from
+  ClankerOS.
+
 ## 2026-07-02 Goal-Aware Guide Proof UX
 
 - The `/guide` daily loop Proof card, `Guide Command Panel` Proof card, and

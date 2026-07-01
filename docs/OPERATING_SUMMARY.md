@@ -1223,7 +1223,8 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   incidents, saved workspace resume links, saved-goal phase and next-action
   readbacks, a read-only `Start Here` cockpit that condenses the
   lead goal or first-run step, one primary action, target surface, resume
-  readiness, waiting counts, and CI handoff posture into a single scan-friendly panel, a
+  readiness, waiting counts, and the current Goal CI handoff or first-run
+  proof fallback into a single scan-friendly panel, a
   form-backed `Home Day Plan` that names the current goal, current phase, one
   next action, waiting counts, end-of-day resume readiness from saved
   workspace state, and a confirmed local `save-workspace` Finish Today form

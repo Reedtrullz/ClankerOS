@@ -5357,9 +5357,11 @@ def _home_operator_board(
             resume_href = "#home-finish-today"
             resume_label = "Save resume point"
 
-    proof_action = "Record CI proof" if ci_status != "success" else "Review CI proof"
-    proof_href = "/ci-evidence" if ci_status != "success" else "/verification"
-    proof_label = "/ci-evidence" if ci_status != "success" else "/verification"
+    proof_href, proof_label, proof_source = _goal_ci_handoff_target(
+        lead_goal,
+        fallback_href="/ci-evidence" if ci_status != "success" else "/verification",
+        fallback_label="/ci-evidence" if ci_status != "success" else "/verification",
+    )
     primary_surface = SafeHtml(
         f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"
     )
@@ -5430,6 +5432,7 @@ def _home_operator_board(
                     ("home_operator_board_ci_status", ci_status),
                     ("home_operator_board_ci_source", ci_source),
                     ("home_operator_board_ci_surface", proof_surface),
+                    ("home_operator_board_proof_source", proof_source),
                     ("home_operator_board_write_on_get", "false"),
                     ("home_operator_board_provider_calls_taken", "0"),
                     ("home_operator_board_network_actions_taken", "0"),
@@ -5480,6 +5483,11 @@ def _home_start_here(
     else:
         ci_source, record = ci_record
         ci_status = str(record.status)
+    proof_href, proof_label, proof_source = _goal_ci_handoff_target(
+        lead_goal,
+        fallback_href="/verification",
+        fallback_label="/verification",
+    )
 
     rows: list[tuple[str, str | SafeHtml]] = [
         ("start_here_resume_status", str(readiness["status"])),
@@ -5487,7 +5495,8 @@ def _home_start_here(
         ("start_here_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
         ("start_here_ci_status", ci_status),
         ("start_here_ci_source", ci_source),
-        ("start_here_ci_surface", SafeHtml("<a href='/verification'>/verification</a>")),
+        ("start_here_ci_surface", SafeHtml(f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>")),
+        ("start_here_proof_source", proof_source),
         ("start_here_write_on_get", "false"),
         ("start_here_external_effects_created", "false"),
         ("start_here_network_actions_taken", "0"),
@@ -5519,7 +5528,7 @@ def _home_start_here(
                 f"start_here_click: {primary_surface}",
                 "start_here_attention: create the first local project and goal from the browser",
                 f"start_here_resume: readiness={_e(str(readiness['status']))} surface=<a href='/resume'>/resume</a>",
-                f"start_here_ci: status={_e(ci_status)} source={_e(ci_source)} surface=<a href='/verification'>/verification</a>",
+                f"start_here_ci: status={_e(ci_status)} source={_e(ci_source)} surface=<a href='{_e(proof_href)}'>{_e(proof_label)}</a>",
             ]
         )
     else:
@@ -5560,7 +5569,7 @@ def _home_start_here(
                 f"start_here_attention: {_e(_goal_operator_attention(phase, next_action))}",
                 f"start_here_resume: readiness={_e(str(readiness['status']))} surface=<a href='/resume'>/resume</a>",
                 f"start_here_waiting: approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations}",
-                f"start_here_ci: status={_e(ci_status)} source={_e(ci_source)} surface=<a href='/verification'>/verification</a>",
+                f"start_here_ci: status={_e(ci_status)} source={_e(ci_source)} surface=<a href='{_e(proof_href)}'>{_e(proof_label)}</a>",
             ]
         )
     return "".join(

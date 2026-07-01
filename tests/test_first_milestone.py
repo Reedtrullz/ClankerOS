@@ -4695,6 +4695,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "home_operator_board_resume_status</dt><dd>not_started" in root.body
     assert "home_operator_board_ci_status</dt><dd>success" in root.body
     assert "home_operator_board_ci_source</dt><dd>publication_handoff" in root.body
+    assert "home_operator_board_ci_surface</dt><dd><a href='/verification'>/verification</a>" in root.body
     assert "home_operator_board_write_on_get</dt><dd>false" in root.body
     assert "home_operator_board_network_actions_taken</dt><dd>0" in root.body
     assert "home_operator_board_external_effects_created</dt><dd>false" in root.body
@@ -4710,6 +4711,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "start_here_resume_ready</dt><dd>false" in root.body
     assert "start_here_ci_status</dt><dd>success" in root.body
     assert "start_here_ci_source</dt><dd>publication_handoff" in root.body
+    assert "start_here_ci_surface</dt><dd><a href='/verification'>/verification</a>" in root.body
     assert "start_here_write_on_get</dt><dd>false" in root.body
     assert "start_here_external_effects_created</dt><dd>false" in root.body
     assert "start_here_network_actions_taken</dt><dd>0" in root.body
@@ -12152,6 +12154,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_operator_board_resume_surface</dt><dd><a href='#home-finish-today'>Save resume point</a>" in dashboard.body
     assert "home_operator_board_ci_status</dt><dd>success" in dashboard.body
     assert "home_operator_board_ci_source</dt><dd>direct_public_snapshot" in dashboard.body
+    assert (
+        f"home_operator_board_ci_surface</dt><dd><a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in dashboard.body
+    )
+    assert "home_operator_board_proof_source</dt><dd>lead_goal_ci_handoff" in dashboard.body
     assert "home_operator_board_waiting_items</dt><dd>1" in dashboard.body
     assert "home_operator_board_write_on_get</dt><dd>false" in dashboard.body
     assert "home_operator_board_network_actions_taken</dt><dd>0" in dashboard.body
@@ -12257,8 +12265,19 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "start_here_progress</dt><dd>" in dashboard.body
     assert "start_here_ci_status</dt><dd>success" in dashboard.body
     assert "start_here_ci_source</dt><dd>direct_public_snapshot" in dashboard.body
+    assert (
+        f"start_here_ci_surface</dt><dd><a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in dashboard.body
+    )
+    assert "start_here_proof_source</dt><dd>lead_goal_ci_handoff" in dashboard.body
     assert "start_here_click: <a href='/runs/" in dashboard.body
     assert "start_here_resume: readiness=not_started surface=<a href='/resume'>/resume</a>" in dashboard.body
+    assert (
+        f"start_here_ci: status=success source=direct_public_snapshot surface=<a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in dashboard.body
+    )
     assert "Home Verification Handoff" in dashboard.body
     assert "home_verification_surface</dt><dd><a href='/verification'>/verification</a>" in dashboard.body
     assert "home_ci_evidence_surface</dt><dd><a href='/ci-evidence'>/ci-evidence</a>" in dashboard.body

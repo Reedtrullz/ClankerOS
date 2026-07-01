@@ -254,8 +254,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 - `/` also includes a read-only `Start Here` cockpit near the top of Home that
   condenses the lead goal or first-run step, one primary action, target
   surface, resume readiness, waiting counts, and CI handoff posture into a
-  single scan-friendly panel without writing on GET; in first-run states the
-  target is the same-page `Create Project` or `Create First Goal` form.
+  single scan-friendly panel without writing on GET. Populated sessions route
+  proof to the current Goal CI handoff; first-run states keep the
+  `/verification` proof fallback and target the same-page `Create Project` or
+  `Create First Goal` form.
 - `/` also includes a read-only `Home Live State` panel that keeps the root
   goal board current with five-second local page reload polling, pauses while
   editing or hidden, points at the same-page first-run form before a Goal
