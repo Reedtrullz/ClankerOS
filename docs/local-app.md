@@ -193,8 +193,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   readback. `Browser Resume` reads
   `localStorage:clankeros-route-history`, ignores `/resume` itself, and offers
   the most recent non-resume route plus route-scoped scroll/open-panel memory
-  when this browser has it. It falls back to the Goal cockpit and keeps
-  canonical tomorrow state behind the explicit
+  when this browser has it. It also reads
+  `localStorage:clankeros-last-artifact` and shows a `Last Artifact` card for
+  the most recently opened artifact in this browser, while still treating that
+  artifact as browser-local view memory until the operator confirms a workspace
+  save. It falls back to the Goal cockpit and keeps canonical tomorrow state
+  behind the explicit
   `/workspace#save-workspace` Finish Today form. `/resume` also links the
   saved goal, project, and last artifact, preserves filters and expanded panel
   readbacks, and keeps saved-state, browser-local resume, command, and

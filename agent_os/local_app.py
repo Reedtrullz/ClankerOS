@@ -7849,6 +7849,7 @@ def _browser_resume_section() -> str:
                 "<section id='browser-resume' class='panel browser-resume' "
                 "data-browser-resume='true' "
                 "data-browser-resume-storage-key='clankeros-route-history' "
+                "data-browser-resume-artifact-key='clankeros-last-artifact' "
                 "data-browser-resume-scroll-prefix='clankeros-scroll-position:' "
                 "data-browser-resume-panels-prefix='clankeros-open-panels:' "
                 "data-browser-resume-write-on-get='false' "
@@ -7870,6 +7871,13 @@ def _browser_resume_section() -> str:
             "<p class='muted' data-browser-resume-at='true'>No timestamp yet.</p>",
             "</article>",
             "<article class='browser-resume-card'>",
+            "<h3>Last Artifact</h3>",
+            "<p data-browser-resume-artifact-label='true'>Waiting for last artifact.</p>",
+            "<p class='muted' data-browser-resume-artifact-path='true'>none</p>",
+            "<p class='muted' data-browser-resume-artifact-at='true'>No artifact timestamp yet.</p>",
+            "<a class='browser-resume-link' data-browser-resume-artifact-link='true' href='/artifacts'>Open artifacts</a>",
+            "</article>",
+            "<article class='browser-resume-card'>",
             "<h3>View Memory</h3>",
             "<p data-browser-resume-memory='true'>Route history will be inspected after load.</p>",
             "<a class='browser-resume-link' href='/workspace#workspace-view-memory'>Open view memory</a>",
@@ -7885,10 +7893,15 @@ def _browser_resume_section() -> str:
                 [
                     ("browser_resume_status", "browser_local_pending"),
                     ("browser_resume_storage", "localStorage:clankeros-route-history"),
+                    ("browser_resume_artifact_storage", "localStorage:clankeros-last-artifact"),
                     ("browser_resume_selection", "most_recent_non_resume_route"),
+                    ("browser_resume_artifact_selection", "most_recent_artifact_view"),
                     ("browser_resume_scroll_storage_prefix", "localStorage:clankeros-scroll-position:"),
                     ("browser_resume_panel_storage_prefix", "localStorage:clankeros-open-panels:"),
                     ("browser_resume_canonical_workspace", ".clanker/app/workspace.json"),
+                    ("browser_resume_artifact_canonical_workspace", ".clanker/app/workspace.json"),
+                    ("browser_resume_artifact_workspace_json_write", "false"),
+                    ("browser_resume_artifact_requires_save_workspace_for_canonical", "true"),
                     ("browser_resume_write_on_get", "false"),
                     ("browser_resume_provider_calls_taken", "0"),
                     ("browser_resume_network_actions_taken", "0"),
@@ -7899,6 +7912,7 @@ def _browser_resume_section() -> str:
                 [
                     "browser_resume_fallback: opens Goal cockpit when this browser has no prior route",
                     "browser_resume_scope: browser-local route history, scroll position, and open-panel memory only",
+                    "browser_resume_artifact_source: browser-local last artifact breadcrumb",
                     "browser_resume_finish: use the save form for canonical tomorrow workspace state",
                 ]
             ),
@@ -47109,7 +47123,7 @@ def _html_page(
     .browser-route-history dl {{ grid-template-columns:1fr; gap:4px; }}
     .browser-route-history ul {{ margin-top:8px; }}
     .browser-resume {{ border-left:4px solid var(--accent); }}
-    .browser-resume-grid {{ display:grid; grid-template-columns:minmax(230px, 1.2fr) repeat(3, minmax(150px, 1fr)); gap:10px; margin:12px 0; }}
+    .browser-resume-grid {{ display:grid; grid-template-columns:minmax(230px, 1.2fr) repeat(4, minmax(150px, 1fr)); gap:10px; margin:12px 0; }}
     .browser-resume-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
     .browser-resume-card h3 {{ margin-top:0; }}
     .browser-resume-card p {{ margin:0 0 10px; }}
@@ -49425,6 +49439,7 @@ def _html_page(
       refreshPaletteResults();
       syncPaletteFilter();
       renderBrowserResumeState(entries);
+      renderBrowserResumeArtifactState();
     }}
     function browserResumePanels() {{
       return Array.prototype.slice.call(document.querySelectorAll("[data-browser-resume='true']"));
@@ -49456,6 +49471,73 @@ def _html_page(
     function setBrowserResumeText(root, selector, text) {{
       var node = root.querySelector(selector);
       if (node) {{ node.textContent = text; }}
+    }}
+    function browserResumeArtifactRecord(root) {{
+      if (!window.localStorage || !root) {{ return null; }}
+      var storageKey = root.getAttribute("data-browser-resume-artifact-key") || "clankeros-last-artifact";
+      var raw = null;
+      try {{ raw = window.localStorage.getItem(storageKey); }} catch (error) {{ raw = null; }}
+      if (!raw) {{ return null; }}
+      var record = null;
+      try {{ record = JSON.parse(raw); }} catch (error) {{ record = {{ path: raw }}; }}
+      if (!record || typeof record !== "object") {{ return null; }}
+      var path = String(record.path || "").trim();
+      var href = String(record.href || "").trim();
+      if (!href && path) {{ href = "/artifacts?path=" + encodeURIComponent(path); }}
+      if (!path && href) {{
+        var marker = "path=";
+        var markerIndex = href.indexOf(marker);
+        if (markerIndex !== -1) {{
+          path = decodeURIComponent(href.slice(markerIndex + marker.length).split("&")[0] || "");
+        }}
+      }}
+      if (!path && !href) {{ return null; }}
+      return {{
+        path: path || href,
+        href: href || "/artifacts",
+        at: String(record.recorded_at || record.at || "").trim()
+      }};
+    }}
+    function renderBrowserResumeArtifactState() {{
+      var panels = browserResumePanels();
+      if (!panels.length) {{ return; }}
+      panels.forEach(function(root) {{
+        var link = root.querySelector("[data-browser-resume-artifact-link='true']");
+        if (!window.localStorage) {{
+          root.setAttribute("data-browser-resume-artifact-status-value", "unavailable");
+          setBrowserResumeText(root, "[data-browser-resume-artifact-label='true']", "Last artifact unavailable.");
+          setBrowserResumeText(root, "[data-browser-resume-artifact-path='true']", "localStorage unavailable");
+          setBrowserResumeText(root, "[data-browser-resume-artifact-at='true']", "No browser-local artifact memory can be read.");
+          if (link) {{
+            link.href = "/artifacts";
+            link.textContent = "Open artifacts";
+          }}
+          return;
+        }}
+        var record = browserResumeArtifactRecord(root);
+        if (!record) {{
+          root.setAttribute("data-browser-resume-artifact-status-value", "empty");
+          root.setAttribute("data-browser-resume-artifact-href", "");
+          setBrowserResumeText(root, "[data-browser-resume-artifact-label='true']", "No browser-local artifact yet.");
+          setBrowserResumeText(root, "[data-browser-resume-artifact-path='true']", "none");
+          setBrowserResumeText(root, "[data-browser-resume-artifact-at='true']", "Open an artifact, then return here.");
+          if (link) {{
+            link.href = "/artifacts";
+            link.textContent = "Open artifacts";
+          }}
+          return;
+        }}
+        root.setAttribute("data-browser-resume-artifact-status-value", "available");
+        root.setAttribute("data-browser-resume-artifact-href", record.href);
+        root.setAttribute("data-browser-resume-artifact-path-value", record.path);
+        setBrowserResumeText(root, "[data-browser-resume-artifact-label='true']", "Last artifact in this browser");
+        setBrowserResumeText(root, "[data-browser-resume-artifact-path='true']", record.path);
+        setBrowserResumeText(root, "[data-browser-resume-artifact-at='true']", record.at ? ("Recorded " + record.at) : "Artifact timestamp unavailable.");
+        if (link) {{
+          link.href = record.href;
+          link.textContent = "Open last artifact";
+        }}
+      }});
     }}
     function renderBrowserResumeState(entries) {{
       var panels = browserResumePanels();

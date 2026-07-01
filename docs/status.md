@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/resume` now surfaces the same browser-local last-artifact breadcrumb that
+  `/artifacts?path=...` writes to `localStorage:clankeros-last-artifact`. The
+  `Browser Resume` panel has a `Last Artifact` card that links back to the most
+  recently opened artifact after page load, while canonical resume state still
+  changes only through confirmed `save-workspace`. Local proof includes a
+  red/green focused route smoke test (`1 passed`), compile, and diff check.
 - `/artifacts?path=...` now includes an `Artifact Continuity` panel that writes
   the opened artifact to browser-local `localStorage:clankeros-last-artifact`.
   `/workspace#workspace-view-memory` includes a matching `Last Artifact` card,

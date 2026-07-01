@@ -1,5 +1,31 @@
 # Status
 
+## 2026-07-01 Resume Last Artifact UX
+
+- Added a `Last Artifact` card to `/resume` inside the existing
+  `Browser Resume` panel. It reads browser-local
+  `localStorage:clankeros-last-artifact` after load and links back to the most
+  recently opened artifact without requiring a saved workspace anchor.
+- Kept the boundary explicit: `/resume` only reads browser-local artifact
+  memory on GET; promoting that artifact to the canonical
+  `.clanker/app/workspace.json` resume anchor still requires the confirmed
+  `/workspace#save-workspace` flow.
+- TDD evidence: the focused route smoke test failed first on the missing
+  `data-browser-resume-artifact-key='clankeros-last-artifact'` marker, then
+  passed after the Browser Resume card and JS updater were added.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after the implementation.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/OPERATING_SUMMARY.md docs/local-app.md docs/status.md status.md`:
+    passed.
+- Non-claim: this is browser-local resume UX only. It does not write
+  workspace JSON on GET, broaden artifact access, execute artifact content,
+  approve work, execute tasks, deploy, call providers, use the network from the
+  app, create PRs, push from the app, or mutate external systems from
+  ClankerOS.
+
 ## 2026-07-01 Artifact Continuity Memory UX
 
 - Added an `Artifact Continuity` panel to `/artifacts?path=...` that records

@@ -5710,16 +5710,27 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Browser Resume" in resume_empty.body
     assert "data-browser-resume='true'" in resume_empty.body
     assert "data-browser-resume-storage-key='clankeros-route-history'" in resume_empty.body
+    assert "data-browser-resume-artifact-key='clankeros-last-artifact'" in resume_empty.body
     assert "data-browser-resume-scroll-prefix='clankeros-scroll-position:'" in resume_empty.body
     assert "data-browser-resume-panels-prefix='clankeros-open-panels:'" in resume_empty.body
+    assert resume_empty.body.count("class='browser-resume-card") == 5
     assert "data-browser-resume-label='true'>Waiting for browser history." in resume_empty.body
     assert "data-browser-resume-link='true' href='/goals'>Open Goal cockpit</a>" in resume_empty.body
+    assert "data-browser-resume-artifact-label='true'>Waiting for last artifact." in resume_empty.body
+    assert "data-browser-resume-artifact-link='true' href='/artifacts'>Open artifacts</a>" in resume_empty.body
+    assert "data-browser-resume-artifact-path='true'>none" in resume_empty.body
+    assert "data-browser-resume-artifact-at='true'>No artifact timestamp yet." in resume_empty.body
     assert "browser_resume_status</dt><dd>browser_local_pending" in resume_empty.body
     assert "browser_resume_storage</dt><dd>localStorage:clankeros-route-history" in resume_empty.body
+    assert "browser_resume_artifact_storage</dt><dd>localStorage:clankeros-last-artifact" in resume_empty.body
+    assert "browser_resume_artifact_selection</dt><dd>most_recent_artifact_view" in resume_empty.body
+    assert "browser_resume_artifact_workspace_json_write</dt><dd>false" in resume_empty.body
+    assert "browser_resume_artifact_requires_save_workspace_for_canonical</dt><dd>true" in resume_empty.body
     assert "browser_resume_selection</dt><dd>most_recent_non_resume_route" in resume_empty.body
     assert "browser_resume_write_on_get</dt><dd>false" in resume_empty.body
     assert "browser_resume_external_effects_created</dt><dd>false" in resume_empty.body
     assert "function renderBrowserResumeState(entries)" in resume_empty.body
+    assert "function renderBrowserResumeArtifactState()" in resume_empty.body
     assert resume_empty.body.index("Browser Resume") < resume_empty.body.index(
         "Resume Operator Workbench"
     )
@@ -7405,7 +7416,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     resume_saved = render_local_app_route(tmp_path, "/resume")
     assert "Browser Resume" in resume_saved.body
     assert "data-browser-resume='true'" in resume_saved.body
+    assert "data-browser-resume-artifact-key='clankeros-last-artifact'" in resume_saved.body
     assert "browser_resume_canonical_workspace</dt><dd>.clanker/app/workspace.json" in resume_saved.body
+    assert "browser_resume_artifact_canonical_workspace</dt><dd>.clanker/app/workspace.json" in resume_saved.body
     assert "Open saved Goal: goal_demo" in resume_saved.body
     assert "Open saved surface" not in resume_saved.body
     assert (

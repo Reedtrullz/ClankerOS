@@ -274,8 +274,10 @@ command readback, so the first screen is the current return path instead of a
 report. `Browser Resume` reads this browser's
 `localStorage:clankeros-route-history`, ignores `/resume` itself, and offers
 the most recent non-resume route with route-scoped scroll/open-panel memory
-when available. It does not write server state; the canonical saved workspace
-still comes from the explicit `/workspace#save-workspace` Finish Today form.
+when available. It also reads `localStorage:clankeros-last-artifact` and shows
+the most recently opened artifact from this browser as a return card. It does
+not write server state; the canonical saved workspace still comes from the
+explicit `/workspace#save-workspace` Finish Today form.
 The rest of `/resume` reads the saved workspace state, prefers the exact saved
 `resume_surface` local route when one exists, shows the saved
 goal/project/artifact links, preserves filters and expanded panel readbacks,
