@@ -59,6 +59,12 @@ Latest status focus:
   `Latest artifact`. Collapsed evidence records the new artifact action label
   fields while preserving exact bounded artifact routes. Local proof includes
   the fixture-backed demo Goal route pytest (`1 passed`).
+- `/goals/<goal_id>` command-palette Quick Switch and Goal Review Strip now
+  name the exact artifact action, such as `Open coder run <run_id> review` and
+  `Read coder run <run_id> review`, instead of generic artifact copy. A shared
+  helper also falls back to a concrete filename for saved workspace artifact
+  paths. Local proof includes the fixture-backed demo Goal route pytest
+  (`1 passed`) plus compile and whitespace checks.
 - `/skills` Skills Usage Map now names the selected skill in the `Now` card's
   primary action, such as `Open local-files skill`, instead of the generic
   `Open artifact` copy. Collapsed evidence records

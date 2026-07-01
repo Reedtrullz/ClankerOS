@@ -156,6 +156,32 @@
   approve work, execute tasks, commit, push, create PRs, deploy, call providers,
   use the network, or mutate external systems from ClankerOS.
 
+## 2026-07-01 Goal Quick Artifact Action UX
+
+- Updated `/goals/<goal_id>` command-palette Quick Switch and the Goal Review
+  Strip artifact card so artifact links name the exact artifact action, for
+  example `Open coder run <run_id> review` and
+  `Read coder run <run_id> review`, instead of generic `Open artifact` or
+  `Read artifact` copy.
+- Added a shared artifact action-label helper that can use a Goal artifact
+  record when available and falls back to a concrete filename for saved
+  workspace artifact paths.
+- Local verification:
+  - Rendered the fixture-backed demo Goal page and confirmed the concrete
+    open/read labels appear while the old generic quick-switch label does not.
+  - `python3 -m compileall agent_os/local_app.py`: passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+- GitHub Actions note: previous pushed commit `ef0768fa...` has the fast smoke
+  job passing; the remote full pytest job was still running when this local UX
+  slice was prepared for push.
+- Non-claim: this is browser copy/routing polish only. It does not read raw
+  filesystem paths, run broad local verification, approve work, execute tasks,
+  commit, push, create PRs, deploy, call providers, use the network from the
+  app, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Goal Timeline Artifact Action Label UX
 
 - Updated `/goals/<goal_id>` scan-first Goal history surfaces so latest

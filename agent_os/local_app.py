@@ -14808,7 +14808,16 @@ def _goal_review_strip(
         SafeHtml(_artifact_link(latest_record["path"])) if latest_record else "none"
     )
     artifact_reader_href = "#goal-artifact-reader" if latest_record else "#goal-artifact-command-bar"
-    artifact_reader_label = "Read artifact" if latest_record else "Artifact command"
+    artifact_reader_label = (
+        _artifact_action_label(
+            latest_record["path"],
+            record=latest_record,
+            verb="Read",
+            fallback="Read artifact",
+        )
+        if latest_record
+        else "Artifact command"
+    )
 
     tasks = state.get("tasks", [])
     risk_counts = _risk_counts(tasks)
@@ -21512,6 +21521,27 @@ def _timeline_artifact_action_label(
         if target:
             return _compact_label(f"Open {target}", 84)
     return _timeline_item_action_label(item, fallback=fallback)
+
+
+def _artifact_action_label(
+    path: str | Path | None,
+    *,
+    record: dict[str, str] | None = None,
+    verb: str = "Open",
+    fallback: str = "Open artifact",
+) -> str:
+    target = ""
+    if record is not None:
+        target = str(record.get("label") or "").strip()
+        if path is None:
+            path = record.get("path")
+    if not target and path is not None:
+        raw_path = str(path).strip()
+        if raw_path and raw_path != "none":
+            target = Path(raw_path).name or raw_path
+    if not target:
+        return fallback
+    return _compact_label(f"{verb} {target}", 84)
 
 
 def _goal_activity_log(root: Path, state: dict[str, Any]) -> str:
@@ -44061,7 +44091,7 @@ def _recent_items_command_bar(
     action_action = _action_form_copy(last_action)["title"] if last_action_href else "Open actions"
     artifact_label = Path(last_artifact).name if last_artifact else "No saved artifact"
     artifact_href = f"/artifacts?path={quote(last_artifact)}" if last_artifact else "/workspace"
-    artifact_action = "Open artifact" if last_artifact else "Open workspace"
+    artifact_action = _artifact_action_label(last_artifact) if last_artifact else "Open workspace"
     workspace_count = sum(1 for _, _, kind in items if kind.startswith("workspace"))
     goal_count = sum(1 for _, _, kind in items if "goal" in kind)
     delegation_count = sum(1 for _, _, kind in items if kind == "delegation")
@@ -45219,6 +45249,7 @@ def _command_palette_quick_switch(
     focus_goal_id = ""
     focus_goal_label = ""
     latest_artifact = ""
+    latest_artifact_record: dict[str, str] | None = None
 
     if status == "available" and isinstance(focus_context.get("next_action"), GoalNextAction):
         next_action = focus_context["next_action"]
@@ -45232,7 +45263,12 @@ def _command_palette_quick_switch(
             focus_goal_label = str(focus_context.get("goal_label") or goal.id)
         goal_state = focus_context.get("goal_state")
         if isinstance(goal_state, dict):
-            latest_artifact = _goal_latest_artifact_path(root, goal_state)
+            latest_artifact_record = _goal_latest_artifact_record(root, goal_state)
+            latest_artifact = (
+                latest_artifact_record["path"]
+                if latest_artifact_record is not None
+                else _goal_latest_artifact_path(root, goal_state)
+            )
     elif status == "first_run":
         primary_action = str(focus_context.get("next_action") or "Continue first run")
         primary_href = str(focus_context.get("target_href") or "/goals")
@@ -45287,7 +45323,16 @@ def _command_palette_quick_switch(
     artifact_source = "saved_workspace" if saved_artifact else ("current_goal_latest" if latest_artifact else "none")
     artifact_label = Path(artifact_path).name if artifact_path else "No saved artifact"
     artifact_href = f"/artifacts?path={quote(artifact_path)}" if artifact_path else "/workspace"
-    artifact_action = "Open artifact" if artifact_path else "Open workspace"
+    artifact_record = (
+        latest_artifact_record
+        if latest_artifact_record is not None and artifact_path == latest_artifact_record["path"]
+        else None
+    )
+    artifact_action = (
+        _artifact_action_label(artifact_path, record=artifact_record)
+        if artifact_path
+        else "Open workspace"
+    )
     finish_defaults = _workspace_save_defaults(root, state)
     finish_source = finish_defaults["source"]
     finish_target = finish_defaults["open_goal"] or finish_defaults["open_project"] or "No saved workspace"

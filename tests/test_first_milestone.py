@@ -13116,6 +13116,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in goal.body
     assert "data-command-palette-quick-artifact='true' href='/artifacts?path=" in goal.body
     assert (
+        "data-command-palette-quick-artifact='true' "
+        f"href='/artifacts?path=runs/{result.run_id}/review.md'>"
+        f"Open coder run {result.coder_worktree_run_id} review</a>"
+    ) in goal.body
+    assert (
+        "data-command-palette-quick-artifact='true' "
+        f"href='/artifacts?path=runs/{result.run_id}/review.md'>Open artifact</a>"
+    ) not in goal.body
+    assert (
         "data-command-palette-quick-finish='true' href='#goal-finish-today'>"
         "Finish Today</a>"
     ) in goal.body
@@ -13129,6 +13138,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in goal.body
     assert "palette_quick_switch_action_label</dt><dd>Create commit request" in goal.body
     assert "palette_quick_switch_artifact_source</dt><dd>current_goal_latest" in goal.body
+    assert (
+        "palette_quick_switch_artifact: "
+        f"<a href='/artifacts?path=runs/{result.run_id}/review.md'>"
+        f"Open coder run {result.coder_worktree_run_id} review</a>"
+    ) in goal.body
     assert "palette_quick_switch_finish_source</dt><dd>goal_finish_form" in goal.body
     assert (
         "palette_quick_switch_finish_surface</dt><dd><a href='#goal-finish-today'>"
@@ -13531,7 +13545,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_review_latest_artifact_kind</dt><dd>markdown" in goal.body
     assert "goal_review_latest_artifact_status</dt><dd>available" in goal.body
     assert "goal_review_latest_artifact_surface</dt><dd><a href='/artifacts?path=runs/" in goal.body
-    assert "goal_review_artifact_reader_surface</dt><dd><a href='#goal-artifact-reader'>Read artifact</a>" in goal.body
+    assert (
+        "goal_review_artifact_reader_surface</dt><dd><a href='#goal-artifact-reader'>"
+        f"Read coder run {result.coder_worktree_run_id} review</a>"
+    ) in goal.body
     assert "goal_review_current_gate</dt><dd>commit_request" in goal.body
     assert "goal_review_gate_progress</dt><dd>8/15 gates done" in goal.body
     assert "goal_review_open_tasks</dt><dd>1" in goal.body
