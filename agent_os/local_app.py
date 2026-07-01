@@ -35766,6 +35766,10 @@ def _run_readiness_strip(root: Path, coder_run: Any) -> str:
     delegation = storage.get_subagent_delegation(coder_run.delegation_id)
     goal_id = delegation.parent_goal_id if delegation is not None else ""
     goal_href = f"/goals/{quote(goal_id)}" if goal_id else "/goals"
+    goal_display_label, goal_label_source = (
+        _goal_display_label(root, goal_id) if goal_id else ("", "none")
+    )
+    goal_label = _compact_label(goal_display_label or goal_id, 72) if goal_id else "/goals"
     commit_approvals = [
         item
         for item in list_coder_worktree_commit_approvals(root, limit=50)
@@ -35878,6 +35882,14 @@ def _run_readiness_strip(root: Path, coder_run: Any) -> str:
             "Stay here",
         ),
         card(
+            "goal",
+            "Goal",
+            "linked" if goal_id else "missing",
+            goal_label if goal_id else "No parent Goal found.",
+            goal_href,
+            f"Return to {goal_label}" if goal_id else "Open Goals",
+        ),
+        card(
             "review",
             "Review",
             str(review_gate["status"]),
@@ -35932,9 +35944,11 @@ def _run_readiness_strip(root: Path, coder_run: Any) -> str:
                     ("run_readiness_status", readiness_status),
                     ("run_readiness_run_id", coder_run.id),
                     ("run_readiness_goal", goal_id or "none"),
+                    ("run_readiness_goal_label", goal_label if goal_id else "none"),
+                    ("run_readiness_goal_label_source", goal_label_source),
                     (
                         "run_readiness_goal_surface",
-                        SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_href)}</a>"),
+                        SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_label)}</a>"),
                     ),
                     ("run_readiness_project", coder_run.project_id),
                     (
@@ -35979,6 +35993,7 @@ def _run_readiness_strip(root: Path, coder_run: Any) -> str:
                 [
                     f"run_readiness_now: {_e(next_action)}",
                     f"run_readiness_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"run_readiness_goal: <a href='{_e(goal_href)}'>{_e(goal_label)}</a>",
                     f"run_readiness_gate: {_e(current_gate)} progress={done_gates}/{total_gates}",
                     f"run_readiness_review: {_e(str(review_gate['status']))}",
                     f"run_readiness_evidence: {_e(evidence_status)} {_e(change_summary['diff_summary'])}",

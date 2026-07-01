@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Coder-run `Run Readiness Strip` now includes a visible parent Goal card and
+  title-first Goal evidence. In the fixture demo, the strip links back to
+  `Demo the ClankerOS local operator app with fixture-backed state` instead of
+  labeling the parent Goal link as raw `/goals/<goal_id>` route text. Local
+  proof includes the fixture-backed demo run route pytest (`1 passed`) plus
+  compile.
 - Delegation-run continuation parent Goal links now show the Goal title
   instead of raw `/goals/<goal_id>` route text. In the fixture demo, the
   Delegation Run Continuation Goal card links back to

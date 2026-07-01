@@ -1,5 +1,26 @@
 # Status
 
+## 2026-07-01 Run Readiness Parent Goal UX
+
+- Updated the coder-run `Run Readiness Strip` so it includes a visible parent
+  Goal card between the Run and Review cards.
+- The readiness strip now resolves the parent Goal title for the card and for
+  `run_readiness_goal_surface`, while preserving the raw
+  `run_readiness_goal` id plus `run_readiness_goal_label` and
+  `run_readiness_goal_label_source` evidence fields.
+- In the populated demo, the run readiness strip now links back to
+  `Demo the ClankerOS local operator app with fixture-backed state` instead of
+  labeling the parent Goal link as raw `/goals/<goal_id>` route text.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this is browser coder-run-to-Goal navigation polish only. It does
+  not write on GET, approve work, execute tasks, run broad local verification,
+  commit, push, create PRs, deploy, call providers, use the network from the
+  app, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Delegation Run Parent Goal Label UX
 
 - Updated delegation-run continuation links so the parent Goal card and

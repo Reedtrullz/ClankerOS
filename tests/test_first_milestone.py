@@ -18262,6 +18262,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-inbox-filter-scope-run='none'" in scoped_inbox.body
     assert "data-inbox-filter-status='true'>Showing 4 of 4 inbox rows." in scoped_inbox.body
 
+    goal_title = "Demo the ClankerOS local operator app with fixture-backed state"
     run_page = render_local_app_route(tmp_path, f"/runs/{result.coder_worktree_run_id}")
     assert run_page.status == 200
     assert "data-route-context='true'" in run_page.body
@@ -18310,12 +18311,20 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-run-readiness-strip='true'" in run_page.body
     assert "data-run-readiness-actions='true'" in run_page.body
     assert "data-run-readiness-card='run' data-run-readiness-card-status='completed'" in run_page.body
+    assert "data-run-readiness-card='goal' data-run-readiness-card-status='linked'" in run_page.body
     assert "data-run-readiness-card='review' data-run-readiness-card-status='reviewed'" in run_page.body
     assert "data-run-readiness-card='evidence' data-run-readiness-card-status='available'" in run_page.body
     assert "data-run-readiness-card='next' data-run-readiness-card-status='action_form_ready'" in run_page.body
     assert "data-run-readiness-card='safety' data-run-readiness-card-status='read_only'" in run_page.body
     assert "run_readiness_status</dt><dd>action_form_ready" in run_page.body
     assert f"run_readiness_run_id</dt><dd>{result.coder_worktree_run_id}" in run_page.body
+    assert f"run_readiness_goal</dt><dd>{result.goal_id}" in run_page.body
+    assert f"run_readiness_goal_label</dt><dd>{goal_title}" in run_page.body
+    assert "run_readiness_goal_label_source</dt><dd>title" in run_page.body
+    assert (
+        f"run_readiness_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+    ) in run_page.body
     assert "run_readiness_worktree_status</dt><dd>completed" in run_page.body
     assert "run_readiness_review_status</dt><dd>reviewed" in run_page.body
     assert "run_readiness_current_gate</dt><dd>commit_request" in run_page.body
@@ -18335,13 +18344,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "run_readiness_external_effects_created</dt><dd>false" in run_page.body
     assert "run_readiness_now: Create commit request" in run_page.body
     assert "run_readiness_click: <a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
+    assert f"run_readiness_goal: <a href='/goals/{result.goal_id}'>{goal_title}</a>" in run_page.body
+    assert (
+        f"run_readiness_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"/goals/{result.goal_id}</a>"
+    ) not in run_page.body
     assert "run_readiness_safety: read-only run readiness; confirmed forms own writes" in run_page.body
     assert "Run Operator Workbench" in run_page.body
     assert "data-run-operator-workbench='true'" in run_page.body
     assert "data-run-workbench-actions='true'" in run_page.body
     assert "run_workbench_status</dt><dd>action_form_ready" in run_page.body
     assert f"run_workbench_run_id</dt><dd>{result.coder_worktree_run_id}" in run_page.body
-    goal_title = "Demo the ClankerOS local operator app with fixture-backed state"
     assert (
         f"run_workbench_goal</dt><dd><a href='/goals/{result.goal_id}'>"
         f"{goal_title}</a>"
