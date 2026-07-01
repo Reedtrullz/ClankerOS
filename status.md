@@ -1,5 +1,35 @@
 # Status
 
+## 2026-07-01 Goal First-Run Action Dock Return UX
+
+- Goal-origin `delegate`, `context-pack`, and `run-delegation` browser forms
+  now submit safe `return_to=/goals/<goal_id>#goal-action-dock` targets, so the
+  first-run path stays in the Goal action loop after the first delegation
+  contract, context pack, and scout run.
+- Confirmed `delegate`, `context-pack`, and `run-delegation` actions now honor
+  safe submitted local return targets and save the same action-dock route as
+  the workspace `resume_surface`. Launches without `return_to` still fall back
+  to `/delegations/<delegation_id>`.
+- TDD evidence: the focused browser run-delegation test failed first because
+  the Goal `run-delegation` form lacked the hidden
+  `return_to=/goals/<goal_id>#goal-action-dock` field, then passed after the
+  early Goal action forms and handlers were wired together.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_runs_delegation_from_browser_action`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace tests/test_first_milestone.py::test_local_app_runs_delegation_from_browser_action tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms`:
+    6 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py docs/local-app.md status.md`:
+    passed.
+- Non-claim: this is Goal-origin browser return/resume routing for the early
+  local first-run chain. It does not write on GET, call providers, use the
+  network, push, create PRs, deploy, or mutate external systems from
+  ClankerOS.
+
 ## 2026-07-01 Goal Action Dock Return Anchor UX
 
 - Goal-origin coder prep, worktree plan, worktree approval, review, commit,

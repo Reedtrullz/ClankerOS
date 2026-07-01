@@ -20140,6 +20140,7 @@ def _goal_scout_delegation_form(state: dict[str, Any]) -> str:
     task = _goal_delegation_target_task(state)
     if task is None:
         return "<p class='muted'>delegate_form_status: unavailable_until_planned_task_exists</p>"
+    return_to = _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Create Scout Delegation</h3>",
@@ -20150,6 +20151,7 @@ def _goal_scout_delegation_form(state: dict[str, Any]) -> str:
                     "goal_id": goal.id,
                     "task_id": task.id,
                     "profile": "scout",
+                    "return_to": return_to,
                 },
                 {
                     "title": f"Scout {goal.title or goal.description}",
@@ -20172,11 +20174,12 @@ def _goal_context_pack_form(state: dict[str, Any]) -> str:
     delegation = _goal_context_pack_target_delegation(state)
     if delegation is None:
         return "<p class='muted'>context_pack_form_status: unavailable_until_delegation_exists</p>"
+    return_to = _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Generate Context Pack</h3>",
             "<p class='muted'>Creates or refreshes the local scout context pack for this delegation. It does not run the delegation, call a provider, or use the network.</p>",
-            _form("context-pack", {"delegation_id": delegation.id}),
+            _form("context-pack", {"delegation_id": delegation.id, "return_to": return_to}),
         ]
     )
 
@@ -20185,6 +20188,7 @@ def _goal_run_delegation_handoff(state: dict[str, Any]) -> str:
     delegation = _goal_context_pack_target_delegation(state, require_missing=False)
     if delegation is None:
         return ""
+    return_to = _goal_action_dock_return_path(state)
     command = f"python3 -m agent_os.cli run-delegation {delegation.id}"
     return "".join(
         [
@@ -20201,7 +20205,14 @@ def _goal_run_delegation_handoff(state: dict[str, Any]) -> str:
                     ("external_mutations_taken", "0"),
                 ]
             ),
-            _form("run-delegation", {"delegation_id": delegation.id, "operator_id": "operator"}),
+            _form(
+                "run-delegation",
+                {
+                    "delegation_id": delegation.id,
+                    "operator_id": "operator",
+                    "return_to": return_to,
+                },
+            ),
         ]
     )
 
@@ -40620,13 +40631,15 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
         elif action == "delegate":
             result = _create_scout_delegation_from_form(root, storage, form)
             message = f"subagent_delegation: {result.id}"
-            location = f"/delegations/{quote(result.id)}"
+            delegation_location = f"/delegations/{quote(result.id)}"
+            location = _safe_local_return_path(_one(form, "return_to")) or delegation_location
             _remember_delegation_workspace(
                 root,
                 storage,
                 result.id,
                 artifact_path=result.result_artifact_path,
                 updated_by="delegate",
+                resume_surface=location,
             )
         elif action == "pause-goal":
             result = _pause_goal_from_form(storage, form)
@@ -40783,13 +40796,15 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             delegation_id = _required(form, "delegation_id")
             result = generate_context_pack(root, storage, delegation_id)
             message = f"context_pack: {result.context_pack_id}"
-            location = f"/delegations/{quote(delegation_id)}"
+            delegation_location = f"/delegations/{quote(delegation_id)}"
+            location = _safe_local_return_path(_one(form, "return_to")) or delegation_location
             _remember_delegation_workspace(
                 root,
                 storage,
                 delegation_id,
                 artifact_path=result.markdown_path or result.json_path,
                 updated_by="context-pack",
+                resume_surface=location,
             )
         elif action == "run-delegation":
             delegation_id = _required(form, "delegation_id")
@@ -40806,7 +40821,8 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 if run_result.status == "completed"
                 else f"run_delegation_failed: {run_result.message}"
             )
-            location = f"/delegations/{quote(delegation_id)}"
+            delegation_location = f"/delegations/{quote(delegation_id)}"
+            location = _safe_local_return_path(_one(form, "return_to")) or delegation_location
             _remember_delegation_workspace(
                 root,
                 storage,
@@ -40815,6 +40831,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                     run_result.result_artifact_path or (run_result.evidence_dir / "summary.md")
                 ),
                 updated_by="run-delegation",
+                resume_surface=location,
             )
             result = {
                 "delegation_id": run_result.delegation_id,

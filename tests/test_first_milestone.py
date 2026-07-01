@@ -7796,6 +7796,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
             """,
             ("first-target",),
         ).fetchone()[0]
+    goal_action_dock = f"/goals/{created_goal_id}#goal-action-dock"
     first_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
     assert first_goal_page.status == 200
     assert "recommended_action</dt><dd>Create scout delegation" in first_goal_page.body
@@ -7804,6 +7805,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "action='/actions/delegate'" in first_goal_page.body
     assert "profile" in first_goal_page.body
     assert "scout" in first_goal_page.body
+    assert f"name='return_to' value='{goal_action_dock}'" in first_goal_page.body
     assert "Goal Resume Snapshot" in first_goal_page.body
     assert "goal_resume_current_goal" in first_goal_page.body
     assert "Remember This Goal" in first_goal_page.body
@@ -8382,6 +8384,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
             "profile": ["scout"],
             "title": ["Scout first browser goal"],
             "requested_by": ["operator"],
+            "return_to": [goal_action_dock],
         },
     )
     assert delegate_confirmation.status == 409
@@ -8406,6 +8409,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
             "profile": ["scout"],
             "title": ["Scout first browser goal"],
             "requested_by": ["operator"],
+            "return_to": [goal_action_dock],
             "confirm": ["yes"],
         },
     )
@@ -8418,6 +8422,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "action_result_command_label</dt><dd>Create scout delegation" in delegate_result.body
     assert "action_result_command_completed: Create scout delegation" in delegate_result.body
     assert "action_label</dt><dd>Create scout delegation" in delegate_result.body
+    assert (
+        f"action_result_next_step_next_page</dt><dd><a href='/goals/{created_goal_id}?notice="
+        in delegate_result.body
+    )
+    assert f"#goal-action-dock'>{goal_action_dock}</a>" in delegate_result.body
     assert "ClankerOS recorded the read-only scout delegation" in delegate_result.body
     assert "Action Result Details" in delegate_result.body
     assert "Action Continuation" in delegate_result.body
@@ -8445,6 +8454,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert delegated_workspace["last_viewed_artifact"] == str(
         Path(delegation.result_artifact_path).relative_to(tmp_path)
     )
+    assert delegated_workspace["resume_surface"] == goal_action_dock
     assert delegated_workspace["updated_by"] == "delegate"
     delegated_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
     assert "recommended_action</dt><dd>Generate context pack" in delegated_goal_page.body
@@ -8453,6 +8463,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "next_action_form_available</dt><dd>true" in delegated_goal_page.body
     assert "Generate Context Pack" in delegated_goal_page.body
     assert "action='/actions/context-pack'" in delegated_goal_page.body
+    assert f"name='return_to' value='{goal_action_dock}'" in delegated_goal_page.body
     assert "Goal First Run Rail" in delegated_goal_page.body
     assert "data-goal-first-run-rail='true'" in delegated_goal_page.body
     assert (
@@ -8503,7 +8514,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
         tmp_path,
         "/actions/context-pack",
         method="POST",
-        form={"delegation_id": [delegation.id]},
+        form={"delegation_id": [delegation.id], "return_to": [goal_action_dock]},
     )
     assert context_pack_confirmation.status == 409
     assert "Confirm context pack" in context_pack_confirmation.body
@@ -8520,7 +8531,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
         tmp_path,
         "/actions/context-pack",
         method="POST",
-        form={"delegation_id": [delegation.id], "confirm": ["yes"]},
+        form={
+            "delegation_id": [delegation.id],
+            "return_to": [goal_action_dock],
+            "confirm": ["yes"],
+        },
     )
     assert context_pack_result.status == 200
     assert "context_pack:" in context_pack_result.body
@@ -8531,6 +8546,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "action_result_command_label</dt><dd>Generate context pack" in context_pack_result.body
     assert "action_result_command_completed: Generate context pack" in context_pack_result.body
     assert "action_label</dt><dd>Generate context pack" in context_pack_result.body
+    assert (
+        f"action_result_next_step_next_page</dt><dd><a href='/goals/{created_goal_id}?notice="
+        in context_pack_result.body
+    )
+    assert f"#goal-action-dock'>{goal_action_dock}</a>" in context_pack_result.body
     assert "ClankerOS generated the delegation context pack" in context_pack_result.body
     context_pack_md = (
         tmp_path
@@ -8547,12 +8567,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert context_workspace["last_viewed_artifact"] == str(
         context_pack_md.relative_to(tmp_path)
     )
+    assert context_workspace["resume_surface"] == goal_action_dock
     assert context_workspace["updated_by"] == "context-pack"
     after_context_pack_goal_page = render_local_app_route(tmp_path, f"/goals/{created_goal_id}")
     assert "recommended_action</dt><dd>Run delegation" in after_context_pack_goal_page.body
     assert "run_delegation_command</dt><dd>python3 -m agent_os.cli run-delegation" in after_context_pack_goal_page.body
     assert delegation.id in after_context_pack_goal_page.body
     assert "run_delegation_form_available</dt><dd>true" in after_context_pack_goal_page.body
+    assert f"name='return_to' value='{goal_action_dock}'" in after_context_pack_goal_page.body
     assert "browser_execution_exposed</dt><dd>confirmed_local_only" in after_context_pack_goal_page.body
     assert "Goal First Run Rail" in after_context_pack_goal_page.body
     assert "data-goal-first-run-rail='true'" in after_context_pack_goal_page.body
@@ -9768,6 +9790,7 @@ def test_local_app_runs_delegation_from_browser_action(
     storage, goal_id, _task_id, delegation_id, _repo_path = (
         _create_registered_context_pack_delegation(tmp_path, capsys)
     )
+    goal_action_dock = f"/goals/{goal_id}#goal-action-dock"
     adapter_path = _write_fake_scout_adapter(tmp_path)
     _configure_scout_adapter(tmp_path, capsys, adapter_path)
 
@@ -9783,6 +9806,7 @@ def test_local_app_runs_delegation_from_browser_action(
     assert "recommended_action</dt><dd>Run delegation" in goal_before_run.body
     assert "Run Delegation" in goal_before_run.body
     assert "action='/actions/run-delegation'" in goal_before_run.body
+    assert f"name='return_to' value='{goal_action_dock}'" in goal_before_run.body
     assert "run_delegation_form_available</dt><dd>true" in goal_before_run.body
     assert "browser_execution_exposed</dt><dd>confirmed_local_only" in goal_before_run.body
     assert "provider_calls_taken_by_clankeros</dt><dd>0" in goal_before_run.body
@@ -9793,7 +9817,7 @@ def test_local_app_runs_delegation_from_browser_action(
         tmp_path,
         "/actions/run-delegation",
         method="POST",
-        form={"delegation_id": [delegation_id]},
+        form={"delegation_id": [delegation_id], "return_to": [goal_action_dock]},
     )
     assert run_confirmation.status == 409
     assert "Confirm scout run" in run_confirmation.body
@@ -9815,6 +9839,7 @@ def test_local_app_runs_delegation_from_browser_action(
         form={
             "delegation_id": [delegation_id],
             "operator_id": ["operator"],
+            "return_to": [goal_action_dock],
             "confirm": ["yes"],
         },
     )
@@ -9827,6 +9852,11 @@ def test_local_app_runs_delegation_from_browser_action(
     assert "action_result_command_label</dt><dd>Run scout delegation" in run_result.body
     assert "action_result_command_completed: Run scout delegation" in run_result.body
     assert "action_label</dt><dd>Run scout delegation" in run_result.body
+    assert (
+        f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
+        in run_result.body
+    )
+    assert f"#goal-action-dock'>{goal_action_dock}</a>" in run_result.body
     assert "ClankerOS ran the delegation adapter" in run_result.body
     assert "status</dt><dd>completed" in run_result.body
     assert "incident_id</dt><dd>none" in run_result.body
@@ -9847,6 +9877,7 @@ def test_local_app_runs_delegation_from_browser_action(
     assert run_workspace["last_viewed_artifact"] == str(
         Path(completed_delegation.result_artifact_path).relative_to(tmp_path)
     )
+    assert run_workspace["resume_surface"] == goal_action_dock
     assert run_workspace["updated_by"] == "run-delegation"
 
     goal_after_run = render_local_app_route(tmp_path, f"/goals/{goal_id}")
