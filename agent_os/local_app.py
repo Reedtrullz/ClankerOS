@@ -37519,7 +37519,7 @@ def _artifact_relationship_map(
         project_href = f"/projects/{quote(project_id)}"
         project_label = f"/projects/{project_id}"
         source_href = f"/runs/{quote(run_id)}" if run_id != "unknown" else workflow_href
-        source_label = f"/runs/{run_id}" if run_id != "unknown" else workflow_label
+        source_label = _artifact_source_label(source, fallback=workflow_label)
         relationship_reason = "artifact_path_identifies_goal_context"
     elif delegation_id != "unknown":
         workflow_status = "delegation_artifact"
@@ -37531,7 +37531,7 @@ def _artifact_relationship_map(
         project_href = "/projects"
         project_label = "/projects"
         source_href = f"/runs/{quote(run_id)}" if run_id != "unknown" else f"/delegations/{quote(delegation_id)}"
-        source_label = f"/runs/{run_id}" if run_id != "unknown" else f"/delegations/{delegation_id}"
+        source_label = _artifact_source_label(source, fallback=f"Open delegation {delegation_id}")
         relationship_reason = "artifact_path_identifies_delegation_context"
     elif remembered:
         workflow_status = "saved_workspace_artifact"
@@ -37626,6 +37626,8 @@ def _artifact_relationship_map(
                         "artifact_relationship_source_surface",
                         SafeHtml(f"<a href='{_e(source_href)}'>{_e(source_label)}</a>"),
                     ),
+                    ("artifact_relationship_source_href", source_href),
+                    ("artifact_relationship_source_label", source_label),
                     (
                         "artifact_relationship_resume_surface",
                         SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"),
@@ -38099,6 +38101,16 @@ def _artifact_source_details(relative_path: str) -> dict[str, str]:
         "run_id": run_id,
         "source_family": source_family,
     }
+
+
+def _artifact_source_label(source: dict[str, str], *, fallback: str) -> str:
+    run_id = source.get("run_id") or "unknown"
+    delegation_id = source.get("delegation_id") or "unknown"
+    if run_id != "unknown":
+        return _compact_label(f"Open run {run_id}", 84)
+    if delegation_id != "unknown":
+        return _compact_label(f"Open delegation {delegation_id}", 84)
+    return fallback
 
 
 def _remember_artifact_section(root: Path, relative_path: str, current_path: str) -> str:

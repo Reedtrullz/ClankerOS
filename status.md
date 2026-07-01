@@ -1,5 +1,28 @@
 # Status
 
+## 2026-07-01 Artifact Source Label UX
+
+- Updated `/artifacts?path=...` relationship-map source links so run-backed
+  artifacts render operator-facing labels such as `Open run run_demo` instead
+  of raw `/runs/run_demo` route text.
+- Added explicit `artifact_relationship_source_href` and
+  `artifact_relationship_source_label` evidence rows so the exact local route
+  remains auditable while the visible card copy is easier to scan.
+- Preserved bounded artifact-reader safety: no raw filesystem browsing, no
+  content execution, no writes on GET, no provider calls, no network actions,
+  and no external effects.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_artifact_viewer_is_read_only_and_bounded -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py status.md docs/status.md`:
+    passed.
+- Non-claim: this is browser artifact relationship-map copy/evidence polish
+  only. It does not broaden artifact access, write on GET, execute artifact
+  content, approve work, execute tasks, deploy, call providers, use the
+  network from the app, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Goal Workflow Action Dock Routing UX
 
 - Updated Goal workflow/continuation guidance so waiting local action gates

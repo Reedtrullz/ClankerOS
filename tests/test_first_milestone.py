@@ -10602,6 +10602,8 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "artifact_relationship_resume_status</dt><dd>not_saved" in markdown.body
     assert "artifact_relationship_workflow_surface</dt><dd><a href='#remember-artifact'>Remember Artifact</a>" in markdown.body
     assert "artifact_relationship_source_surface</dt><dd><a href='#artifact-content'>Artifact content</a>" in markdown.body
+    assert "artifact_relationship_source_href</dt><dd>#artifact-content" in markdown.body
+    assert "artifact_relationship_source_label</dt><dd>Artifact content" in markdown.body
     assert "artifact_relationship_resume_surface</dt><dd><a href='#remember-artifact'>Remember Artifact</a>" in markdown.body
     assert "artifact_relationship_write_on_get</dt><dd>false" in markdown.body
     assert "artifact_relationship_content_executed</dt><dd>false" in markdown.body
@@ -10844,6 +10846,8 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "artifact_relationship_workflow_surface</dt><dd><a href='/goals/goal_demo#goal-artifact-command-bar'>/goals/goal_demo#goal-artifact-command-bar</a>" in goal_artifact_response.body
     assert "artifact_relationship_goal_surface</dt><dd><a href='/goals/goal_demo'>/goals/goal_demo</a>" in goal_artifact_response.body
     assert "artifact_relationship_project_surface</dt><dd><a href='/projects/subject'>/projects/subject</a>" in goal_artifact_response.body
+    assert "artifact_relationship_source_href</dt><dd>/goals/goal_demo#goal-artifact-command-bar" in goal_artifact_response.body
+    assert "artifact_relationship_source_label</dt><dd>Goal artifacts" in goal_artifact_response.body
     assert "artifact_relationship_reason</dt><dd>artifact_path_identifies_goal_context" in goal_artifact_response.body
     assert "artifact_review_status</dt><dd>goal_scoped" in goal_artifact_response.body
     assert "artifact_review_project</dt><dd><a href='/projects/subject'>subject</a>" in goal_artifact_response.body
@@ -10935,7 +10939,9 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "artifact_relationship_delegation</dt><dd>subagent_demo" in delegation_artifact_response.body
     assert "artifact_relationship_run</dt><dd>run_demo" in delegation_artifact_response.body
     assert "artifact_relationship_workflow_surface</dt><dd><a href='/delegations/subagent_demo#delegation-execution-artifacts'>/delegations/subagent_demo#delegation-execution-artifacts</a>" in delegation_artifact_response.body
-    assert "artifact_relationship_source_surface</dt><dd><a href='/runs/run_demo'>/runs/run_demo</a>" in delegation_artifact_response.body
+    assert "artifact_relationship_source_surface</dt><dd><a href='/runs/run_demo'>Open run run_demo</a>" in delegation_artifact_response.body
+    assert "artifact_relationship_source_href</dt><dd>/runs/run_demo" in delegation_artifact_response.body
+    assert "artifact_relationship_source_label</dt><dd>Open run run_demo" in delegation_artifact_response.body
     assert "artifact_relationship_reason</dt><dd>artifact_path_identifies_delegation_context" in delegation_artifact_response.body
 
     absolute = render_local_app_route(

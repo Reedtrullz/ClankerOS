@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/artifacts?path=...` relationship-map source links now show operator-facing
+  labels for run-backed artifacts, for example `Open run run_demo`, instead
+  of raw `/runs/run_demo` route text. Exact local routes remain preserved in
+  `artifact_relationship_source_href`, while
+  `artifact_relationship_source_label` records the visible label. Local proof
+  includes the focused artifact viewer pytest (`1 passed`) plus compile and
+  whitespace checks.
 - Goal workflow/continuation guidance now routes waiting local action gates to
   the `Goal Action Dock` instead of the older generic `#goal-next-action`
   anchor, and approval gates render as `Review approvals` while preserving the
