@@ -6470,6 +6470,20 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-inbox-command-evidence='true'" in empty_inbox.body
     assert "data-inbox-finish-details='true'" in empty_inbox.body
     assert "data-open-details='true' href='#inbox-finish-today'" in empty_inbox.body
+    assert 'data-finish-today-href="#inbox-finish-today"' in empty_inbox.body
+    assert 'data-finish-today-source="inbox_finish_form"' in empty_inbox.body
+    assert 'data-finish-today-surface="route_local_form"' in empty_inbox.body
+    assert (
+        "operator_ribbon_finish_surface</dt><dd><a href='#inbox-finish-today'>"
+        "Finish Today</a>"
+    ) in empty_inbox.body
+    assert "operator_ribbon_finish_source</dt><dd>inbox_finish_form" in empty_inbox.body
+    assert (
+        "palette_quick_switch_finish_surface</dt><dd><a href='#inbox-finish-today'>"
+        "#inbox-finish-today</a>"
+    ) in empty_inbox.body
+    assert "palette_quick_switch_finish_source</dt><dd>inbox_finish_form" in empty_inbox.body
+    assert "palette_quick_switch_finish_route_surface</dt><dd>route_local_form" in empty_inbox.body
     assert empty_inbox.body.index("data-inbox-operator-workbench='true'") < empty_inbox.body.index(
         "data-inbox-triage-board='true'"
     )
@@ -9416,6 +9430,20 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-inbox-command-evidence='true'" in inbox.body
     assert "data-inbox-finish-details='true'" in inbox.body
     assert "data-open-details='true' href='#inbox-finish-today'" in inbox.body
+    assert 'data-finish-today-href="#inbox-finish-today"' in inbox.body
+    assert 'data-finish-today-source="inbox_finish_form"' in inbox.body
+    assert 'data-finish-today-surface="route_local_form"' in inbox.body
+    assert (
+        "operator_ribbon_finish_surface</dt><dd><a href='#inbox-finish-today'>"
+        "Finish Today</a>"
+    ) in inbox.body
+    assert "operator_ribbon_finish_source</dt><dd>inbox_finish_form" in inbox.body
+    assert (
+        "palette_quick_switch_finish_surface</dt><dd><a href='#inbox-finish-today'>"
+        "#inbox-finish-today</a>"
+    ) in inbox.body
+    assert "palette_quick_switch_finish_source</dt><dd>inbox_finish_form" in inbox.body
+    assert "palette_quick_switch_finish_route_surface</dt><dd>route_local_form" in inbox.body
     assert inbox.body.index("data-inbox-operator-workbench='true'") < inbox.body.index(
         "data-inbox-triage-board='true'"
     )
@@ -9562,6 +9590,20 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-approval-workbench-primary='true'" in approvals.body
     assert "data-approval-workbench-evidence='true'" in approvals.body
     assert "data-approval-finish-details='true'" in approvals.body
+    assert 'data-finish-today-href="#approval-finish-today"' in approvals.body
+    assert 'data-finish-today-source="approval_finish_form"' in approvals.body
+    assert 'data-finish-today-surface="route_local_form"' in approvals.body
+    assert (
+        "operator_ribbon_finish_surface</dt><dd><a href='#approval-finish-today'>"
+        "Finish Today</a>"
+    ) in approvals.body
+    assert "operator_ribbon_finish_source</dt><dd>approval_finish_form" in approvals.body
+    assert (
+        "palette_quick_switch_finish_surface</dt><dd><a href='#approval-finish-today'>"
+        "#approval-finish-today</a>"
+    ) in approvals.body
+    assert "palette_quick_switch_finish_source</dt><dd>approval_finish_form" in approvals.body
+    assert "palette_quick_switch_finish_route_surface</dt><dd>route_local_form" in approvals.body
     assert "approval_workbench_status</dt><dd>empty_queue" in approvals.body
     assert "approval_workbench_total_pending</dt><dd>0" in approvals.body
     assert "approval_workbench_first_kind</dt><dd>none" in approvals.body
@@ -9649,6 +9691,20 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-incident-workbench-evidence='true'" in incidents.body
     assert "data-incident-command-evidence='true'" in incidents.body
     assert "data-incident-finish-details='true'" in incidents.body
+    assert 'data-finish-today-href="#incident-finish-today"' in incidents.body
+    assert 'data-finish-today-source="incident_finish_form"' in incidents.body
+    assert 'data-finish-today-surface="route_local_form"' in incidents.body
+    assert (
+        "operator_ribbon_finish_surface</dt><dd><a href='#incident-finish-today'>"
+        "Finish Today</a>"
+    ) in incidents.body
+    assert "operator_ribbon_finish_source</dt><dd>incident_finish_form" in incidents.body
+    assert (
+        "palette_quick_switch_finish_surface</dt><dd><a href='#incident-finish-today'>"
+        "#incident-finish-today</a>"
+    ) in incidents.body
+    assert "palette_quick_switch_finish_source</dt><dd>incident_finish_form" in incidents.body
+    assert "palette_quick_switch_finish_route_surface</dt><dd>route_local_form" in incidents.body
     assert "incident_workbench_status</dt><dd>empty" in incidents.body
     assert "incident_workbench_total_incidents</dt><dd>0" in incidents.body
     assert "incident_workbench_total_recommendations</dt><dd>0" in incidents.body

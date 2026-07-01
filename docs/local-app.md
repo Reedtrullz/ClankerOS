@@ -632,8 +632,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   available without expanding palette evidence. It also includes a visible
   `Finish` control and the `f` shortcut resolves to the
   route-local Finish Today form on `/today` (`#today-finish`) and
-  `/goals/<goal_id>` (`#goal-finish-today`), falling back to
-  `/workspace#save-workspace` on other routes. The `n` next-action control is
+  `/goals/<goal_id>` (`#goal-finish-today`), plus queue-local forms on
+  `/workflow`, `/inbox`, `/approvals`, and `/incidents`, falling back to
+  `/workspace#save-workspace` on routes without a local Finish form. The `n` next-action control is
   labeled with the resolved operator move, such as `Create Project` or
   `Create commit request`, while preserving raw action metadata and only
   navigating to the existing local target. Focus mode uses
@@ -714,7 +715,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   first-run Home still falls back to `/workspace#save-workspace` until a Goal
   exists to save. `/workflow` now follows the same route-local pattern by
   opening `#workflow-finish-today`, which is the existing confirmed workflow
-  workspace-save form.
+  workspace-save form. `/inbox`, `/approvals`, and `/incidents` also use their
+  same-page Finish Today forms from the shared header button, `f` shortcut,
+  Operator Ribbon Finish card, and command palette Finish card.
 - `/profiles` reads both `.clanker/profiles.yml` and SQLite profile rows. It
   shows configured profile names, storage-backed profile labels, modes, cost
   tiers, model placeholders, write posture, adapter status, and `use_for`

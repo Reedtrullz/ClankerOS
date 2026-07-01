@@ -865,7 +865,9 @@ strips while keeping the Operator Ribbon and page body visible. It is stored in
 shared shortcut layer now includes `w` for `/workspace` and a route-aware `f`
 for Finish Today: populated Home opens `#home-finish-today`, Today opens
 `#today-finish`, Goal pages open `#goal-finish-today`, `/workflow` opens
-`#workflow-finish-today`, and other routes fall back to `/workspace#save-workspace`.
+`#workflow-finish-today`, `/inbox` opens `#inbox-finish-today`, `/approvals`
+opens `#approval-finish-today`, `/incidents` opens `#incident-finish-today`,
+and other routes fall back to `/workspace#save-workspace`.
 `n` still opens the current recommended next
 action, and the header button is labeled with the concrete operator move, such
 as `Create Project` or `Create commit request`, so return-to-work, Finish

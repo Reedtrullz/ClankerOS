@@ -45530,12 +45530,35 @@ def _finish_today_shortcut_context(
             "network_actions_taken": "0",
             "external_effects_created": "false",
         }
-    if route_path == "/workflow":
+    route_finish_targets = {
+        "/workflow": (
+            "#workflow-finish-today",
+            "workflow_finish_form",
+            "Workflow local finish form",
+        ),
+        "/inbox": (
+            "#inbox-finish-today",
+            "inbox_finish_form",
+            "Inbox local finish form",
+        ),
+        "/approvals": (
+            "#approval-finish-today",
+            "approval_finish_form",
+            "Approval local finish form",
+        ),
+        "/incidents": (
+            "#incident-finish-today",
+            "incident_finish_form",
+            "Incident local finish form",
+        ),
+    }
+    if route_path in route_finish_targets:
+        href, source, target = route_finish_targets[route_path]
         return {
-            "href": "#workflow-finish-today",
+            "href": href,
             "label": "Finish Today",
-            "source": "workflow_finish_form",
-            "target": "Workflow local finish form",
+            "source": source,
+            "target": target,
             "surface": "route_local_form",
             "confirmation_required": "true",
             "write_on_get": "false",

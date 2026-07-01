@@ -1,5 +1,29 @@
 # Status
 
+## 2026-07-01 Queue Finish Shortcut UX
+
+- `/inbox`, `/approvals`, and `/incidents` now route the shared `Finish`
+  header button, `f` shortcut, Operator Ribbon Finish card, and command
+  palette Finish card to their same-page Finish Today forms instead of
+  detouring to `/workspace#save-workspace`.
+- The queue forms remain the existing confirmed local `save-workspace`
+  handoffs; GET stays read-only and the shared shortcut only navigates.
+- TDD evidence: the modern local-app route test failed first because `/inbox`
+  still emitted the generic Workspace finish shortcut, then passed after
+  `_finish_today_shortcut_context` learned the queue-local finish routes.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form`:
+    4 passed.
+- Non-claim: this is route-local browser shortcut/ribbon/palette routing only.
+  It does not write on GET, call providers, use the network, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Workflow Finish Shortcut UX
 
 - `/workflow` now routes the shared `Finish` header button, `f` shortcut,
