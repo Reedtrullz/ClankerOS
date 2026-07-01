@@ -17,11 +17,14 @@ from agent_os.eval import run_first_milestone_eval
 from agent_os.local_app import (
     _goal_approve_commit_form,
     _goal_approve_publication_form,
+    _goal_coder_prep_form,
     _goal_commit_request_form,
     _goal_commit_worktree_form,
     _goal_publication_handoff_form,
     _goal_publication_request_form,
     _goal_review_run_form,
+    _goal_worktree_approval_form,
+    _goal_worktree_plan_form,
     render_local_app_route,
     resolve_artifact_path,
     run_demo_app_scenario,
@@ -19861,6 +19864,10 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
         _create_registered_context_pack_delegation(tmp_path, capsys)
     )
     _run_fake_context_pack_scout(tmp_path, capsys, delegation_id)
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    goal_record = storage.get_goal(goal_id)
+    delegation_record = storage.get_subagent_delegation(delegation_id)
+    assert delegation_record is not None
 
     after_delegation = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert after_delegation.status == 200
@@ -19870,6 +19877,14 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert "action='/actions/coder-prep'" in after_delegation.body
     assert f"name='delegation_id' value='{delegation_id}'" in after_delegation.body
     assert "does not edit source files" in after_delegation.body
+    coder_prep_goal_form = _goal_coder_prep_form(
+        {"goal": goal_record, "delegations": [delegation_record]}
+    )
+    assert (
+        f"name='delegation_id' value='{delegation_id}'>"
+        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        in coder_prep_goal_form
+    )
 
     workspace_path = tmp_path / ".clanker" / "app" / "workspace.json"
     prep_confirmation = render_local_app_route(
@@ -19886,10 +19901,18 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
         tmp_path,
         "/actions/coder-prep",
         method="POST",
-        form={"delegation_id": [delegation_id], "confirm": ["yes"]},
+        form={
+            "delegation_id": [delegation_id],
+            "return_to": [f"/goals/{goal_id}"],
+            "confirm": ["yes"],
+        },
     )
     assert prep_result.status == 200
     assert "coder_prep:" in prep_result.body
+    assert (
+        f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
+        in prep_result.body
+    )
     coder_prep_md = sorted(
         (tmp_path / ".clanker" / "delegations" / delegation_id / "runs").glob(
             "*/coder_prep/coder_prep.md"
@@ -19901,6 +19924,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert prep_workspace["last_viewed_artifact"] == str(
         coder_prep_md.relative_to(tmp_path)
     )
+    assert prep_workspace["resume_surface"] == f"/goals/{goal_id}"
     assert prep_workspace["updated_by"] == "coder-prep"
     after_prep = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert after_prep.status == 200
@@ -19910,6 +19934,14 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert "action='/actions/coder-worktree-plan'" in after_prep.body
     assert f"name='delegation_id' value='{delegation_id}'" in after_prep.body
     assert "does not create a worktree" in after_prep.body
+    worktree_plan_goal_form = _goal_worktree_plan_form(
+        {"goal": goal_record, "prep_packets": [{"source": {"delegation_id": delegation_id}}]}
+    )
+    assert (
+        f"name='delegation_id' value='{delegation_id}'>"
+        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        in worktree_plan_goal_form
+    )
 
     plan_confirmation = render_local_app_route(
         tmp_path,
@@ -19925,10 +19957,18 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
         tmp_path,
         "/actions/coder-worktree-plan",
         method="POST",
-        form={"delegation_id": [delegation_id], "confirm": ["yes"]},
+        form={
+            "delegation_id": [delegation_id],
+            "return_to": [f"/goals/{goal_id}"],
+            "confirm": ["yes"],
+        },
     )
     assert plan_result.status == 200
     assert "coder_worktree_plan:" in plan_result.body
+    assert (
+        f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
+        in plan_result.body
+    )
     coder_worktree_plan_md = coder_prep_md.with_name("coder_worktree_plan.md")
     assert coder_worktree_plan_md.exists()
     plan_workspace = json.loads(workspace_path.read_text(encoding="utf-8"))
@@ -19937,6 +19977,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert plan_workspace["last_viewed_artifact"] == str(
         coder_worktree_plan_md.relative_to(tmp_path)
     )
+    assert plan_workspace["resume_surface"] == f"/goals/{goal_id}"
     assert plan_workspace["updated_by"] == "coder-worktree-plan"
     after_plan = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert after_plan.status == 200
@@ -19954,6 +19995,14 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert "<textarea name='note' rows='4' spellcheck='true' data-action-draft-input='true'" in after_plan.body
     assert "does not approve execution" in after_plan.body
     assert "external_effects_created</dt><dd>false" in after_plan.body
+    worktree_approval_goal_form = _goal_worktree_approval_form(
+        {"goal": goal_record, "worktree_plans": [{"source": {"delegation_id": delegation_id}}]}
+    )
+    assert (
+        f"name='delegation_id' value='{delegation_id}'>"
+        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        in worktree_approval_goal_form
+    )
 
     approval_confirmation = render_local_app_route(
         tmp_path,
@@ -19977,6 +20026,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
             "delegation_id": [delegation_id],
             "requested_by": ["operator"],
             "note": ["Approve bounded worktree execution"],
+            "return_to": [f"/goals/{goal_id}"],
             "confirm": ["yes"],
         },
     )
@@ -19984,6 +20034,10 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert "coder_worktree_approval:" in approval_result.body
     assert "data-action-result-form-draft-cleanup='true'" in approval_result.body
     assert "data-action-result-form-draft-action='coder-worktree-approval'" in approval_result.body
+    assert (
+        f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
+        in approval_result.body
+    )
     assert (
         "data-action-result-form-draft-key="
         f"'clankeros-action-form-draft:coder-worktree-approval:{delegation_id}'"
@@ -20001,6 +20055,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert approval_workspace["last_viewed_artifact"] == str(
         approval_request_md.relative_to(tmp_path)
     )
+    assert approval_workspace["resume_surface"] == f"/goals/{goal_id}"
     assert approval_workspace["updated_by"] == "coder-worktree-approval"
     pending_approval = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert pending_approval.status == 200

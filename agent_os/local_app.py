@@ -20062,11 +20062,13 @@ def _goal_coder_prep_form(state: dict[str, Any]) -> str:
     delegation = _goal_completed_delegation(state)
     if delegation is None:
         return "<p class='muted'>coder_prep_form_status: unavailable_until_delegation_completes</p>"
+    goal = state.get("goal")
+    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
     return "".join(
         [
             "<h3>Run Coder Prep</h3>",
             "<p class='muted'>Creates the local coder prep packet from the implementation handoff. It does not edit source files, create a worktree, run commands, call a provider, or use the network.</p>",
-            _form("coder-prep", {"delegation_id": delegation.id}),
+            _form("coder-prep", {"delegation_id": delegation.id, "return_to": return_to}),
         ]
     )
 
@@ -20075,11 +20077,16 @@ def _goal_worktree_plan_form(state: dict[str, Any]) -> str:
     delegation_id = _goal_packet_delegation_id(state.get("prep_packets", []))
     if not delegation_id:
         return "<p class='muted'>coder_worktree_plan_form_status: unavailable_until_coder_prep_exists</p>"
+    goal = state.get("goal")
+    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
     return "".join(
         [
             "<h3>Create Worktree Plan</h3>",
             "<p class='muted'>Creates the approval-gated local worktree plan from coder prep. It does not create a worktree, edit files, run commands, approve work, call a provider, or use the network.</p>",
-            _form("coder-worktree-plan", {"delegation_id": delegation_id}),
+            _form(
+                "coder-worktree-plan",
+                {"delegation_id": delegation_id, "return_to": return_to},
+            ),
         ]
     )
 
@@ -20088,13 +20095,15 @@ def _goal_worktree_approval_form(state: dict[str, Any]) -> str:
     delegation_id = _goal_packet_delegation_id(state.get("worktree_plans", []))
     if not delegation_id:
         return "<p class='muted'>coder_worktree_approval_form_status: unavailable_until_worktree_plan_exists</p>"
+    goal = state.get("goal")
+    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
     return "".join(
         [
             "<h3>Request Worktree Approval</h3>",
             "<p class='muted'>Creates a pending local approval request for bounded worktree execution. It does not approve execution, create a worktree, run commands, call a provider, or mutate external systems.</p>",
             _input_form(
                 "coder-worktree-approval",
-                {"delegation_id": delegation_id},
+                {"delegation_id": delegation_id, "return_to": return_to},
                 {
                     "requested_by": "operator",
                     "note": "Approve bounded worktree execution from goal page",
@@ -40834,13 +40843,15 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             delegation_id = _required(form, "delegation_id")
             result = prepare_coder_from_handoff(root, storage, delegation_id)
             message = f"coder_prep: {result.prep_id}"
-            location = f"/delegations/{quote(delegation_id)}"
+            delegation_location = f"/delegations/{quote(delegation_id)}"
+            location = _safe_local_return_path(_one(form, "return_to")) or delegation_location
             _remember_delegation_workspace(
                 root,
                 storage,
                 delegation_id,
                 artifact_path=result.markdown_path or result.artifact_path,
                 updated_by="coder-prep",
+                resume_surface=location,
             )
         elif action == "coder-prep-from-handoff":
             handoff_md = _required(form, "handoff_md")
@@ -40858,13 +40869,15 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             delegation_id = _required(form, "delegation_id")
             result = prepare_worktree_plan_from_coder_prep(root, storage, delegation_id)
             message = f"coder_worktree_plan: {result.plan_id}"
-            location = f"/delegations/{quote(delegation_id)}"
+            delegation_location = f"/delegations/{quote(delegation_id)}"
+            location = _safe_local_return_path(_one(form, "return_to")) or delegation_location
             _remember_delegation_workspace(
                 root,
                 storage,
                 delegation_id,
                 artifact_path=result.markdown_path or result.artifact_path,
                 updated_by="coder-worktree-plan",
+                resume_surface=location,
             )
         elif action == "coder-worktree-approval":
             delegation_id = _required(form, "delegation_id")
@@ -40876,13 +40889,15 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 note=_one(form, "note") or "Requested from local app.",
             )
             message = f"coder_worktree_approval: {result.approval.id}"
-            location = f"/delegations/{quote(delegation_id)}"
+            delegation_location = f"/delegations/{quote(delegation_id)}"
+            location = _safe_local_return_path(_one(form, "return_to")) or delegation_location
             _remember_delegation_workspace(
                 root,
                 storage,
                 delegation_id,
                 artifact_path=Path(result.approval.request_artifact_path).with_suffix(".md"),
                 updated_by="coder-worktree-approval",
+                resume_surface=location,
             )
         elif action == "approve-coder-worktree":
             approval_id = _required(form, "approval_id")
