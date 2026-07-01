@@ -1158,8 +1158,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   form-backed `Home Day Plan` that names the current goal, current phase, one
   next action, waiting counts, end-of-day resume readiness from saved
   workspace state, and a confirmed local `save-workspace` Finish Today form
-  that records the lead goal and latest artifact as tomorrow's resume point
-  after confirmation, a read-only `Home Attention Brief` with visible Now,
+  that records the lead goal, latest artifact, and exact current action
+  `resume_surface` as tomorrow's resume point after confirmation, a read-only
+  `Home Attention Brief` with visible Now,
   Inbox, Approvals, Incidents, Recommendations, and Proof cards for existing
   approvals, incidents, recommendations, inbox load, and local CI proof posture
   before deeper goal work without fetching GitHub status, a

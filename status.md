@@ -1,5 +1,26 @@
 # Status
 
+## 2026-07-01 Home Day Plan Resume Surface UX
+
+- Updated the root `/` Home Day Plan Finish Today form so it saves the current
+  concrete Goal action surface as `resume_surface`, for example
+  `/goals/<goal_id>#goal-action-dock-form`, instead of only saving the lead
+  Goal, filters, panels, and latest artifact.
+- The Day Plan evidence and readback now expose
+  `home_day_plan_finish_resume_surface` plus `day_plan_finish_resume`, using
+  the same operator-facing action label as the Goal action dock, such as
+  `Create commit request`.
+- Local verification:
+  - Added failing-first fixture assertions for the Home Day Plan hidden
+    `resume_surface`, preflight submitted field count, and concrete resume
+    readback, then updated the renderer.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this only improves the confirmed local workspace resume payload.
+  It does not write on GET, approve work, execute tasks, commit, push, create
+  PRs, deploy, call providers, use the network, or mutate external systems
+  from ClankerOS.
+
 ## 2026-07-01 Home Recent Activity Artifact UX
 
 - Updated the root `/` Home Recent Activity command card so the Artifacts card

@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Root `/` Home Day Plan Finish Today now saves the current concrete Goal
+  action route as `resume_surface`, for example
+  `/goals/<goal_id>#goal-action-dock-form`, alongside the lead Goal, filters,
+  panels, and latest artifact. Day Plan evidence exposes
+  `home_day_plan_finish_resume_surface` and `day_plan_finish_resume` with
+  labels such as `Create commit request`. Local proof includes the
+  fixture-backed demo Home route pytest (`1 passed`).
 - Root `/` Home Recent Activity now carries the latest Goal artifact into the
   Artifacts card even when newer run/approval events fill the recent timeline
   window. The card and `home_activity_artifact_surface` evidence route to the

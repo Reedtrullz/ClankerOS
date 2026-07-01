@@ -11736,7 +11736,24 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_day_plan_saved_goal_matches_lead</dt><dd>false" in dashboard.body
     assert "home_day_plan_saved_project_matches_lead</dt><dd>false" in dashboard.body
     assert "home_day_plan_finish_return_to</dt><dd><a href='/'>/</a>" in dashboard.body
+    home_day_plan_action_surface = f"/goals/{result.goal_id}#goal-action-dock-form"
+    assert (
+        f"home_day_plan_finish_resume_surface</dt><dd><a href='{home_day_plan_action_surface}'>"
+        "Create commit request</a>"
+    ) in dashboard.body
     assert "day_plan_finish: status=needs_workspace_save action=save-workspace return_to=/" in dashboard.body
+    assert (
+        f"day_plan_finish_resume: <a href='{home_day_plan_action_surface}'>"
+        "Create commit request</a>"
+    ) in dashboard.body
+    home_day_plan_section = dashboard.body[
+        dashboard.body.index("data-home-day-plan='true'") :
+        dashboard.body.index("data-home-attention-brief='true'")
+    ]
+    assert (
+        f"name='resume_surface' value='{home_day_plan_action_surface}'"
+        in home_day_plan_section
+    )
     assert "name='updated_by' value='home-day-plan'" in dashboard.body
     assert "name='expanded_panels' value='day-plan,daily-loop,next-action,timeline,evidence,artifacts,notes'" in dashboard.body
     assert "Home Attention Brief" in dashboard.body
@@ -11804,6 +11821,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
             "filters": [f"goal:{result.goal_id}"],
             "expanded_panels": ["day-plan,daily-loop,next-action,timeline,evidence,artifacts,notes"],
             "last_viewed_artifact": [home_day_plan_resume_artifact],
+            "resume_surface": [home_day_plan_action_surface],
             "updated_by": ["home-day-plan"],
             "return_to": ["/"],
         },
@@ -11814,7 +11832,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "action_preflight_return_surface</dt><dd><a href='/'>/</a>" in home_day_plan_workspace_confirmation.body
     assert f"action_preflight_project</dt><dd>{result.project_id}" in home_day_plan_workspace_confirmation.body
     assert f"action_preflight_goal</dt><dd>{result.goal_id}" in home_day_plan_workspace_confirmation.body
-    assert "action_preflight_submitted_fields</dt><dd>7" in home_day_plan_workspace_confirmation.body
+    assert f"resume_surface</dt><dd>{home_day_plan_action_surface}" in home_day_plan_workspace_confirmation.body
+    assert "action_preflight_submitted_fields</dt><dd>8" in home_day_plan_workspace_confirmation.body
     assert "action_preflight_write_before_confirm</dt><dd>false" in home_day_plan_workspace_confirmation.body
     assert "home-day-plan" in home_day_plan_workspace_confirmation.body
     assert "home_ci_snapshot_fast_smoke_validated_record_command_template: gh run view" in dashboard.body

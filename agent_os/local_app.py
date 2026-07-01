@@ -5555,6 +5555,18 @@ def _home_day_plan(
         goal = state["goal"]
         phase = _goal_current_phase(state)
         next_action = _goal_next_action(root, state)
+        next_action_form_available = bool(_goal_next_action_form(state, next_action))
+        next_action_surface_href = _goal_primary_action_href(
+            state,
+            next_action,
+            form_available=next_action_form_available,
+            absolute=True,
+        )
+        next_action_surface_label = _goal_action_cta_label(
+            next_action,
+            next_action_form_available,
+            fallback=next_action_surface_href,
+        )
         latest_artifact = _goal_latest_artifact_path(root, state)
         saved_goal_matches_lead = open_goal == goal_id
         saved_project_matches_lead = open_project == str(goal.project_id)
@@ -5580,7 +5592,12 @@ def _home_day_plan(
                 ("home_day_plan_primary_goal", SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(lead_goal['title'] or lead_goal['description'] or goal_id)}</a>")),
                 ("home_day_plan_current_phase", phase),
                 ("home_day_plan_next_action", next_action.action),
-                ("home_day_plan_next_surface", SafeHtml(f"<a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>")),
+                (
+                    "home_day_plan_next_surface",
+                    SafeHtml(
+                        f"<a href='{_e(next_action_surface_href)}'>{_e(next_action_surface_label)}</a>"
+                    ),
+                ),
                 ("home_day_plan_operator_attention", _goal_operator_attention(phase, next_action)),
                 ("home_day_plan_progress", _goal_progress_label(state)),
                 ("home_day_plan_open_tasks", str(open_tasks)),
@@ -5603,6 +5620,12 @@ def _home_day_plan(
                     "home_day_plan_finish_return_to",
                     SafeHtml("<a href='/'>/</a>"),
                 ),
+                (
+                    "home_day_plan_finish_resume_surface",
+                    SafeHtml(
+                        f"<a href='{_e(next_action_surface_href)}'>{_e(next_action_surface_label)}</a>"
+                    ),
+                ),
             ]
         )
         lines.extend(
@@ -5610,10 +5633,11 @@ def _home_day_plan(
                 f"day_plan_now: {_e(next_action.action)}",
                 f"day_plan_current_phase: {_e(phase)}",
                 f"day_plan_goal_surface: <a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>",
-                f"day_plan_next_surface: <a href='{_e(next_action.href)}'>{_e(next_action.href)}</a>",
+                f"day_plan_next_surface: <a href='{_e(next_action_surface_href)}'>{_e(next_action_surface_label)}</a>",
                 f"day_plan_waiting: approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations}",
                 f"day_plan_end_of_day_resume: {'ready' if readiness['ready'] else 'needs_saved_workspace'}",
                 f"day_plan_finish: status={_e(finish_status)} action=save-workspace return_to=/",
+                f"day_plan_finish_resume: <a href='{_e(next_action_surface_href)}'>{_e(next_action_surface_label)}</a>",
             ]
         )
         finish_form = "".join(
@@ -5631,6 +5655,7 @@ def _home_day_plan(
                         "filters": f"goal:{goal_id}",
                         "expanded_panels": "day-plan,daily-loop,next-action,timeline,evidence,artifacts,notes",
                         "last_viewed_artifact": latest_artifact,
+                        "resume_surface": next_action_surface_href,
                         "updated_by": "home-day-plan",
                     },
                 ),
