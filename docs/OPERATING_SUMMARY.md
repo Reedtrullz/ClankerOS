@@ -353,9 +353,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   `localStorage` view state for theme, focus mode, Goal board, Home Goal
   Board, Recent Items filters, open panels, scroll position, search lanes,
   timeline lanes, Goal section searches, Today Goal Queue view, artifact
-  filters, Today and Goal decision filters, notes filters, note drafts, setup
-  and workflow form drafts, Memory Bank filters, Skills Inventory filters,
-  First Run Checklist checks/notes,
+  filters, the global Artifact Index filter, Today and Goal decision filters,
+  notes filters, note drafts, setup and workflow form drafts, Memory Bank
+  filters, Skills Inventory filters, First Run Checklist checks/notes,
   Approval Queue filters, Inbox Queue filters, and Profile Routing filters, and
   can clear those browser-local
   values after explicit operator clicks without writing

@@ -7013,7 +7013,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 25
+    assert workspace.body.count("class='workspace-view-memory-card") == 26
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
     assert "data-workspace-view-memory-card='first-run'" in workspace.body
@@ -7028,6 +7028,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-card='timeline'" in workspace.body
     assert "data-workspace-view-memory-card='goal-sections'" in workspace.body
     assert "data-workspace-view-memory-card='artifacts'" in workspace.body
+    assert "data-workspace-view-memory-card='artifact-index'" in workspace.body
     assert "data-workspace-view-memory-card='artifact-reader'" in workspace.body
     assert "data-workspace-view-memory-card='notes'" in workspace.body
     assert "data-workspace-view-memory-card='note-drafts'" in workspace.body
@@ -7048,6 +7049,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-route-history'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-today-goal-queue-view'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-today-decision-filter'" in workspace.body
+    assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-artifact-index-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-open-panels:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-scroll-position:'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-memory-inventory-filter'" in workspace.body
@@ -7068,8 +7070,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>25" in workspace.body
-    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-first-run-checklist, clankeros-goal-board-view, clankeros-home-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-today-goal-queue-view, clankeros-today-decision-filter, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>26" in workspace.body
+    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-first-run-checklist, clankeros-goal-board-view, clankeros-home-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-today-goal-queue-view, clankeros-today-decision-filter, clankeros-artifact-index-filter, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
     assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-section-finder:, clankeros-goal-decision-filter:, clankeros-goal-artifact-filter:, clankeros-goal-artifact-reader:, clankeros-goal-notes-filter:, clankeros-goal-note-draft:, clankeros-action-form-draft:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
@@ -7091,6 +7093,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: search mode=prefix key=clankeros-search-result-lane:" in workspace.body
     assert "workspace_view_memory_card: goal-sections mode=prefix key=clankeros-goal-section-finder:" in workspace.body
     assert "workspace_view_memory_card: decisions mode=prefix key=clankeros-goal-decision-filter:" in workspace.body
+    assert "workspace_view_memory_card: artifact-index mode=exact key=clankeros-artifact-index-filter" in workspace.body
     assert "workspace_view_memory_card: note-drafts mode=prefix key=clankeros-goal-note-draft:" in workspace.body
     assert "workspace_view_memory_card: form-drafts mode=prefix key=clankeros-action-form-draft:" in workspace.body
     assert "workspace_view_memory_card: memory mode=exact key=clankeros-memory-inventory-filter" in workspace.body
@@ -7098,7 +7101,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: approvals mode=exact key=clankeros-approval-queue-filter" in workspace.body
     assert "workspace_view_memory_card: inbox mode=exact key=clankeros-inbox-queue-filter" in workspace.body
     assert "workspace_view_memory_card: profiles mode=exact key=clankeros-profile-routing-filter" in workspace.body
-    assert "workspace_view_memory_reset_scope: theme focus first-run board home-goal-board recent route-history today-goals today-decisions open-panels scroll-position search timeline goal-sections decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
+    assert "workspace_view_memory_reset_scope: theme focus first-run board home-goal-board recent route-history today-goals today-decisions open-panels scroll-position search timeline goal-sections decisions goal-artifacts artifact-index notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
     assert "window.localStorage.removeItem(key)" in workspace.body
     assert "candidate.indexOf(key) === 0" in workspace.body
     assert "delete document.documentElement.dataset.theme" in workspace.body

@@ -9079,10 +9079,17 @@ def _workspace_view_memory_panel() -> str:
         ),
         (
             "artifacts",
-            "Artifact Filters",
+            "Goal Artifact Filters",
             "prefix",
             "clankeros-goal-artifact-filter:",
             "Per-Goal artifact type, source, and text filters",
+        ),
+        (
+            "artifact-index",
+            "Artifact Index Filter",
+            "exact",
+            "clankeros-artifact-index-filter",
+            "Global Artifact Index type, source, and text filter",
         ),
         (
             "artifact-reader",
@@ -9212,7 +9219,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus first-run board home-goal-board recent route-history today-goals today-decisions open-panels scroll-position search timeline goal-sections decisions artifacts notes note-drafts form-drafts memory skills approvals inbox profiles",
+                    "workspace_view_memory_reset_scope: theme focus first-run board home-goal-board recent route-history today-goals today-decisions open-panels scroll-position search timeline goal-sections decisions goal-artifacts artifact-index notes note-drafts form-drafts memory skills approvals inbox profiles",
                 ]
             ),
             "</details>",

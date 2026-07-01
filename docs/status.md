@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Workspace View Memory now includes the global Artifact Index filter key
+  `localStorage:clankeros-artifact-index-filter`, with a separate
+  `Artifact Index Filter` card alongside per-Goal `Goal Artifact Filters`.
+  `/workspace` can inspect and reset that browser-local `/artifacts` view
+  state without touching `.clanker/app/workspace.json`, calling providers,
+  using the network, or creating external effects. Local proof includes
+  compile, diff check, and the broad local-app route smoke pytest (`1 passed`).
 - Bare `/artifacts` now opens a read-only global Artifact Index instead of a
   missing-path error, while `/artifacts?path=...` remains the bounded inert
   single-artifact viewer. The index exposes Open, Latest, Inventory, Types,

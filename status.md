@@ -1,5 +1,34 @@
 # Status
 
+## 2026-07-01 Workspace Artifact Index View Memory UX
+
+- Added the global Artifact Index filter key,
+  `localStorage:clankeros-artifact-index-filter`, to Workspace View Memory so
+  `/workspace` can inspect and reset the browser-local `/artifacts` filter
+  alongside Goal artifact filters, search lanes, timeline lanes, and other
+  return-path view state.
+- Renamed the existing per-Goal artifact view-memory card to `Goal Artifact
+  Filters` and added a separate `Artifact Index Filter` card, making saved
+  Goal artifact views and the global Artifact Index view easy to distinguish.
+- Updated Workspace View Memory evidence and reset-scope readback to include
+  `artifact-index`, preserving the explicit no-write/no-provider/no-network/
+  no-external-effect boundaries.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py docs/OPERATING_SUMMARY.md status.md docs/status.md`:
+    passed.
+- GitHub Actions note: previous pushed run `28531032189` for commit
+  `dde948c2228756404a5bffb7658ce7aeb0e5c14b` has fast smoke passing while its
+  full pytest job is still running remotely.
+- Non-claim: this is browser-local Workspace view-memory inventory/reset UX
+  only. It does not change `.clanker/app/workspace.json` on GET, broaden
+  artifact access, execute artifact content, approve work, execute tasks,
+  deploy, call providers, use the network from the app, create PRs, push from
+  the app, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Artifact Index UX
 
 - Turned bare `/artifacts` from a missing-path error into a read-only global
