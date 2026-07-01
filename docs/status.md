@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The command palette now exposes a browser-local Last Artifact result backed
+  by `localStorage:clankeros-last-artifact`. Typing in the palette can find the
+  fallback `/artifacts` result immediately, then hydrate to `Open last artifact`
+  after page load when a recent artifact exists. Canonical workspace state
+  still changes only through confirmed `save-workspace`; local proof includes
+  a red/green focused route smoke test (`1 passed`), compile, and diff check.
 - Shared Recent Items now makes the browser-local Last Artifact breadcrumb
   global: its Artifact card reads `localStorage:clankeros-last-artifact` after
   page load and switches to `Open last artifact` when available, while the

@@ -937,7 +937,11 @@ can jump straight into the Goal page without scanning. ArrowDown/ArrowUp move
 through visible local commands and Enter opens the active local result, while
 the Search button remains the full indexed `/search` fallback. Browser-local viewed
 pages are appended to the same palette results after localStorage readback, so
-recent route hops are searchable from `/` without a server write. A no-match state leaves
+recent route hops are searchable from `/` without a server write. The palette
+also has a browser-local `Last Artifact` result backed by
+`localStorage:clankeros-last-artifact`, so typing `artifact` or `last artifact`
+can reopen the last viewed artifact before the operator saves it into durable
+workspace state. A no-match state leaves
 the existing Search button available for full indexed search. It also includes a
 visible `Quick Switch` dock for Continue, Workspace, Action, Artifact, and
 Finish so the palette can recover the current Goal, exact saved workspace

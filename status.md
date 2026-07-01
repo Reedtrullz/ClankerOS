@@ -1,5 +1,33 @@
 # Status
 
+## 2026-07-01 Palette Last Artifact Shortcut UX
+
+- Added a browser-local Last Artifact result to the shared command palette, so
+  typing in the palette can find the latest artifact breadcrumb written by
+  `/artifacts?path=...`.
+- The result starts as a safe `/artifacts` fallback and hydrates after load
+  from `localStorage:clankeros-last-artifact`; when a record exists, it changes
+  to `Open last artifact` and points at the bounded `/artifacts?path=...`
+  viewer.
+- Preserved the promotion boundary: the command palette reads browser-local
+  artifact memory on GET; canonical workspace state still changes only through
+  the confirmed `/workspace#save-workspace` flow.
+- TDD evidence: the focused route smoke test failed first on the missing
+  `data-command-palette-last-artifact='true'` marker, then passed after the
+  palette section, evidence rows, and JS hydrator were added.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after the implementation.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/OPERATING_SUMMARY.md docs/local-app.md docs/status.md status.md`:
+    passed.
+- Non-claim: this is browser-local palette/navigation UX only. It does not
+  write workspace JSON on GET, broaden artifact access, execute artifact
+  content, approve work, execute tasks, deploy, call providers, use the
+  network from the app, create PRs, push from the app, or mutate external
+  systems from ClankerOS.
+
 ## 2026-07-01 Global Last Artifact Shortcut UX
 
 - Extended the shared Recent Items Artifact card so every local-app route can

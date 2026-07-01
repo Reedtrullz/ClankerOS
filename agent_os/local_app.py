@@ -45876,6 +45876,7 @@ def _command_palette(
             "</details>",
             "</section>",
             _command_palette_route_history_panel(),
+            _command_palette_last_artifact_panel(),
             _command_palette_quick_switch(root, focus_context, current_path),
             _command_palette_continue(focus_context),
             "<details class='palette-evidence' data-command-palette-evidence='true'>",
@@ -45924,6 +45925,51 @@ def _command_palette_route_history_panel() -> str:
                 [
                     "palette_route_history_action: use the palette search box to filter viewed pages",
                     "palette_route_history_safety: browser-local navigation only",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _command_palette_last_artifact_panel() -> str:
+    return "".join(
+        [
+            "<section class='palette-last-artifact' data-command-palette-last-artifact='true' "
+            "data-command-palette-last-artifact-storage-key='clankeros-last-artifact' "
+            "data-command-palette-last-artifact-write-on-get='false' "
+            "data-command-palette-last-artifact-provider-calls-taken='0' "
+            "data-command-palette-last-artifact-network-actions-taken='0' "
+            "data-command-palette-last-artifact-external-effects-created='false'>",
+            "<h3>Last Artifact</h3>",
+            "<p class='muted'>Browser-local artifact memory appears here after the page loads.</p>",
+            "<ul class='palette-last-artifact-list' data-command-palette-last-artifact-list='true'>",
+            "<li class='palette-result-item' data-palette-result='true' "
+            "data-command-palette-last-artifact-item='true' "
+            "data-palette-search-text='last artifact recent artifact browser local clankeros-last-artifact artifacts /artifacts' "
+            "role='option' aria-selected='false'>"
+            "<a data-palette-result-link='true' data-command-palette-last-artifact-link='true' href='/artifacts'>Open artifacts</a>"
+            "<span class='muted' data-command-palette-last-artifact-meta='true'>No browser-local artifact yet.</span></li>",
+            "</ul>",
+            "<details class='palette-last-artifact-evidence' data-command-palette-last-artifact-evidence='true'>",
+            "<summary>Palette last artifact evidence</summary>",
+            _kv(
+                [
+                    ("palette_last_artifact_status", "browser_local_pending"),
+                    ("palette_last_artifact_storage", "localStorage:clankeros-last-artifact"),
+                    ("palette_last_artifact_result_integration", "data-palette-result"),
+                    ("palette_last_artifact_workspace_json_write", "false"),
+                    ("palette_last_artifact_write_on_get", "false"),
+                    ("palette_last_artifact_provider_calls_taken", "0"),
+                    ("palette_last_artifact_network_actions_taken", "0"),
+                    ("palette_last_artifact_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "palette_last_artifact_action: use the palette search box to find the last artifact",
+                    "palette_last_artifact_safety: browser-local navigation only",
                 ]
             ),
             "</details>",
@@ -47172,8 +47218,8 @@ def _html_page(
     .recent-items-command-bar ul {{ margin-top:8px; }}
     .recent-items-command-bar li {{ border:1px solid var(--line); background:var(--panel); padding:6px 7px; overflow-wrap:anywhere; }}
     .recent-items-list {{ margin-top:10px; }}
-    .palette-focus, .palette-results, .palette-route-history, .palette-route-context, .palette-continue {{ border:1px solid var(--line); background:var(--panel); padding:10px; margin:10px 0; }}
-    .palette-focus h3, .palette-results h3, .palette-route-history h3, .palette-route-context h3, .palette-continue h3 {{ margin-top:0; }}
+    .palette-focus, .palette-results, .palette-route-history, .palette-last-artifact, .palette-route-context, .palette-continue {{ border:1px solid var(--line); background:var(--panel); padding:10px; margin:10px 0; }}
+    .palette-focus h3, .palette-results h3, .palette-route-history h3, .palette-last-artifact h3, .palette-route-context h3, .palette-continue h3 {{ margin-top:0; }}
     .palette-focus-grid {{ display:grid; grid-template-columns:minmax(220px, 1.35fr) repeat(3, minmax(140px, 1fr)); gap:8px; align-items:stretch; margin:10px 0; }}
     .palette-focus-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; display:grid; gap:6px; align-content:start; }}
     .palette-focus-card-primary {{ background:var(--panel); border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
@@ -47190,8 +47236,8 @@ def _html_page(
     .palette-result-item a {{ font-weight:700; }}
     .palette-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
     .palette-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
-    .palette-route-history-list {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:8px; margin:10px 0; }}
-    .palette-route-history-list li {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; display:grid; gap:4px; align-content:start; overflow-wrap:anywhere; }}
+    .palette-route-history-list, .palette-last-artifact-list {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:8px; margin:10px 0; }}
+    .palette-route-history-list li, .palette-last-artifact-list li {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:8px 9px; display:grid; gap:4px; align-content:start; overflow-wrap:anywhere; }}
     .palette-route-history-list a {{ font-weight:700; }}
     .palette-route-history-evidence summary {{ cursor:pointer; font-weight:700; }}
     .palette-route-history-evidence:not([open]) > :not(summary) {{ display:none; }}
@@ -49480,6 +49526,57 @@ def _html_page(
         }}
       }});
     }}
+    function commandPaletteLastArtifactRecord(root) {{
+      if (!root) {{ return null; }}
+      var storageKey = root.getAttribute("data-command-palette-last-artifact-storage-key") || "clankeros-last-artifact";
+      return browserLastArtifactRecord(storageKey);
+    }}
+    function renderCommandPaletteLastArtifactState() {{
+      Array.prototype.slice.call(document.querySelectorAll("[data-command-palette-last-artifact='true']")).forEach(function(root) {{
+        var item = root.querySelector("[data-command-palette-last-artifact-item='true']");
+        var link = root.querySelector("[data-command-palette-last-artifact-link='true']");
+        var meta = root.querySelector("[data-command-palette-last-artifact-meta='true']");
+        if (!window.localStorage) {{
+          root.setAttribute("data-command-palette-last-artifact-status-value", "unavailable");
+          if (item) {{
+            item.setAttribute("data-palette-search-text", "last artifact localstorage unavailable artifacts /artifacts");
+          }}
+          if (link) {{
+            link.href = "/artifacts";
+            link.textContent = "Open artifacts";
+          }}
+          if (meta) {{ meta.textContent = "localStorage unavailable"; }}
+          return;
+        }}
+        var record = commandPaletteLastArtifactRecord(root);
+        if (!record) {{
+          root.setAttribute("data-command-palette-last-artifact-status-value", "empty");
+          root.setAttribute("data-command-palette-last-artifact-href", "");
+          if (item) {{
+            item.setAttribute("data-palette-search-text", "last artifact recent artifact browser local clankeros-last-artifact artifacts /artifacts");
+          }}
+          if (link) {{
+            link.href = "/artifacts";
+            link.textContent = "Open artifacts";
+          }}
+          if (meta) {{ meta.textContent = "No browser-local artifact yet."; }}
+          return;
+        }}
+        root.setAttribute("data-command-palette-last-artifact-status-value", "available");
+        root.setAttribute("data-command-palette-last-artifact-href", record.href);
+        root.setAttribute("data-command-palette-last-artifact-path-value", record.path);
+        if (item) {{
+          item.setAttribute("data-palette-search-text", ("last artifact recent artifact browser local " + record.path + " " + record.href).toLowerCase());
+        }}
+        if (link) {{
+          link.href = record.href;
+          link.textContent = "Open last artifact";
+        }}
+        if (meta) {{
+          meta.textContent = record.path + (record.at ? (" · recorded " + record.at) : "");
+        }}
+      }});
+    }}
     function makeBrowserRouteHistoryItem(entry) {{
       var li = document.createElement("li");
       li.setAttribute("data-browser-route-history-item", "true");
@@ -49538,6 +49635,9 @@ def _html_page(
       renderBrowserResumeState(entries);
       renderBrowserResumeArtifactState();
       renderRecentItemsLastArtifactState();
+      renderCommandPaletteLastArtifactState();
+      refreshPaletteResults();
+      syncPaletteFilter();
     }}
     function browserResumePanels() {{
       return Array.prototype.slice.call(document.querySelectorAll("[data-browser-resume='true']"));

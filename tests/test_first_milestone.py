@@ -6013,6 +6013,27 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "palette_route_history_network_actions_taken</dt><dd>0" in root.body
     assert "palette_route_history_external_effects_created</dt><dd>false" in root.body
     assert "palette_filter_route_history: browser-local viewed pages are added after localStorage readback" in root.body
+    assert "data-command-palette-last-artifact='true'" in root.body
+    assert "data-command-palette-last-artifact-storage-key='clankeros-last-artifact'" in root.body
+    assert "data-command-palette-last-artifact-write-on-get='false'" in root.body
+    assert "data-command-palette-last-artifact-provider-calls-taken='0'" in root.body
+    assert "data-command-palette-last-artifact-network-actions-taken='0'" in root.body
+    assert "data-command-palette-last-artifact-external-effects-created='false'" in root.body
+    assert "data-command-palette-last-artifact-item='true'" in root.body
+    assert "data-command-palette-last-artifact-link='true' href='/artifacts'>Open artifacts</a>" in root.body
+    assert "data-command-palette-last-artifact-meta='true'>No browser-local artifact yet." in root.body
+    assert "palette_last_artifact_storage</dt><dd>localStorage:clankeros-last-artifact" in root.body
+    assert "palette_last_artifact_status</dt><dd>browser_local_pending" in root.body
+    assert "palette_last_artifact_result_integration</dt><dd>data-palette-result" in root.body
+    assert "palette_last_artifact_workspace_json_write</dt><dd>false" in root.body
+    assert "palette_last_artifact_write_on_get</dt><dd>false" in root.body
+    assert "palette_last_artifact_provider_calls_taken</dt><dd>0" in root.body
+    assert "palette_last_artifact_network_actions_taken</dt><dd>0" in root.body
+    assert "palette_last_artifact_external_effects_created</dt><dd>false" in root.body
+    assert "palette_last_artifact_action: use the palette search box to find the last artifact" in root.body
+    assert "palette_last_artifact_safety: browser-local navigation only" in root.body
+    assert "function commandPaletteLastArtifactRecord(root)" in root.body
+    assert "function renderCommandPaletteLastArtifactState()" in root.body
     assert "recent_items_filter_total_rows</dt><dd>3" in root.body
     assert "recent_items_filter_kind_counts</dt><dd>first-run:1, fixture:1, proof:1" in root.body
     assert "recent_items_filter_uses_defaults</dt><dd>true" in root.body
