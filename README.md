@@ -1041,8 +1041,10 @@ walk the local commit and publication gates, then hand verification to GitHub
 Actions after a push. The page starts with `Dogfooding Operator Workbench`
 before shared diagnostics, with Do Now, ClankerOS, Workflow, and
 Proof cards, plus a confirmation-gated `demo-app-scenario` form that creates or
-refreshes the local fixture and returns to `/dogfooding`. It keeps dogfooding
-workbench evidence, fixture action evidence, fixture evidence, and the lower
+refreshes the local fixture and returns to `/dogfooding`. The confirmed action
+result and saved workspace resume surface honor that dogfooding return target
+instead of switching the operator back to `/demo`. It keeps dogfooding workbench
+evidence, fixture action evidence, fixture evidence, and the lower
 `Dogfooding Command Bar` evidence collapsed by default. The existing
 `Dogfooding Next Action` panel still expands the fixture-backed next action and
 links the project, delegation, workflow, run, approval queue, inbox, action

@@ -1237,9 +1237,11 @@ a scan surface with Do Now, ClankerOS, Workflow, and Proof cards for
 continuing the fixture-backed local pass. It now includes a confirmation-gated
 `demo-app-scenario` form that creates or refreshes deterministic local fixture
 state and returns to `/dogfooding`, so the route walk can start from the
-checklist without hopping through `/demo`. Dogfooding workbench evidence,
-fixture action evidence, fixture evidence, and the lower `Dogfooding Command
-Bar` evidence stay
+checklist without hopping through `/demo`. The confirmed action result also
+honors that submitted return target, and the saved workspace resume surface
+stays `/dogfooding` for dogfooding-origin refreshes instead of silently
+switching back to `/demo`. Dogfooding workbench evidence, fixture action
+evidence, fixture evidence, and the lower `Dogfooding Command Bar` evidence stay
 collapsed by default while preserving fixture status, selected
 project/Goal/delegation/run, one recommended target surface, demo command,
 route-walk/CI/action/health links, and zero-effect counters in the DOM. It also

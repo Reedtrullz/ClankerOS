@@ -1,5 +1,30 @@
 # Status
 
+## 2026-07-01 Dogfooding Action Result Return UX
+
+- `demo-app-scenario` now honors safe submitted `return_to` and
+  `resume_surface` values. When the fixture action is launched from
+  `/dogfooding`, the confirmed action result points back to `/dogfooding` and
+  the saved workspace resume surface stays `/dogfooding`.
+- The existing `/demo` fixture form still falls back to `/demo`, so demo-origin
+  setup keeps its previous launchpad behavior.
+- TDD evidence: the focused modern route test failed first because a
+  dogfooding-origin `demo-app-scenario` result still exposed `/demo` as the
+  next result surface, then passed after the handler used the submitted safe
+  local return/resume surfaces.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state`:
+    2 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md status.md`:
+    passed.
+- Non-claim: this is action-result routing UX only. It does not write on GET,
+  approve work, execute tasks, deploy, call providers, fetch GitHub status,
+  push from the app, create PRs, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Dogfooding Fixture Action UX
 
 - `/dogfooding` now includes a confirmation-gated `demo-app-scenario` form

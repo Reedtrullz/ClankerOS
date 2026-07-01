@@ -40492,7 +40492,11 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
         elif action == "demo-app-scenario":
             result = run_demo_app_scenario(root)
             message = f"demo_app_scenario_ready: {result.goal_id}"
-            location = "/demo"
+            location = _safe_local_return_path(_one(form, "return_to")) or "/demo"
+            resume_surface = (
+                _safe_local_return_path(_one(form, "resume_surface"))
+                or location
+            )
             _write_workspace_state(
                 root,
                 {
@@ -40503,7 +40507,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                         root,
                         result.review_path,
                     ),
-                    "resume_surface": "/demo",
+                    "resume_surface": resume_surface,
                     "updated_by": "demo-app-scenario",
                 },
             )

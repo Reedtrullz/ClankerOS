@@ -9717,6 +9717,33 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "action_result_command_network_actions_taken</dt><dd>0" in demo_action.body
     assert "action_result_command_external_effects_created</dt><dd>false" in demo_action.body
 
+    dogfooding_demo_action = render_local_app_route(
+        tmp_path,
+        "/actions/demo-app-scenario",
+        method="POST",
+        form={
+            "requested_by": ["operator"],
+            "return_to": ["/dogfooding"],
+            "resume_surface": ["/dogfooding"],
+            "confirm": ["yes"],
+        },
+    )
+    assert dogfooding_demo_action.status == 200
+    assert "demo_app_scenario_ready:" in dogfooding_demo_action.body
+    assert (
+        "action_result_next_step_next_page</dt><dd><a href='/dogfooding?notice="
+        in dogfooding_demo_action.body
+    )
+    assert (
+        "action_resume_receipt_resume_surface</dt><dd><a href='/dogfooding'>/dogfooding</a>"
+        in dogfooding_demo_action.body
+    )
+    workspace_after_dogfooding = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert workspace_after_dogfooding["resume_surface"] == "/dogfooding"
+    assert workspace_after_dogfooding["updated_by"] == "demo-app-scenario"
+
     demo_seeded = render_local_app_route(tmp_path, "/demo")
     assert "demo_workbench_fixture_status</dt><dd>available" in demo_seeded.body
     assert "Refresh demo fixture" in demo_seeded.body
