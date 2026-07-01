@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Recent Items Command Bar Goal shortcuts now name the concrete Goal in the
+  visible primary/card actions and collapsed evidence instead of generic
+  `Open Goal` copy. The fixture demo now renders copy such as
+  `Open Demo the ClankerOS local operator app with fixture-backed state` for
+  the recent Goal return path. Local proof includes the fixture-backed demo
+  Goal route pytest (`1 passed`) plus compile and whitespace checks.
 - Command-palette Goal section shortcuts now include live Goal context instead
   of only repeating the Goal title. Key entries label the current action,
   waiting decision count, pending approvals, available artifacts, latest

@@ -13344,11 +13344,20 @@ def _local_surface_action_label(value: str, *, fallback: str = "Open saved page"
     return fallback
 
 
-def _recent_item_action_label(label: str, href: str, kind: str) -> str:
+def _recent_item_action_label(root: Path, label: str, href: str, kind: str) -> str:
     normalized_kind = str(kind or "").lower()
     if normalized_kind == "first-run":
         return f"Open {_compact_label(label, 40)}"
     if "goal" in normalized_kind:
+        path = urlparse(href or "").path
+        if path.startswith("/goals/"):
+            goal_id = unquote(path[len("/goals/") :].split("/", 1)[0]).strip()
+            if goal_id:
+                display_label, _source = _goal_display_label(root, goal_id)
+                if display_label:
+                    return f"Open {_compact_label(display_label, 72)}"
+        if label:
+            return f"Open {_compact_label(label, 72)}"
         return "Open Goal"
     if normalized_kind == "delegation":
         return "Open delegation"
@@ -44069,7 +44078,7 @@ def _recent_items_command_bar(
     last_action_result = str(state.get("last_action_result") or "").strip()
     last_action_href = _safe_local_return_path(state.get("last_action_next_href"))
     primary_label, primary_href, primary_kind = items[0]
-    primary_action = _recent_item_action_label(primary_label, primary_href, primary_kind)
+    primary_action = _recent_item_action_label(root, primary_label, primary_href, primary_kind)
     if resume_surface:
         workspace_label = resume_surface
         workspace_href = resume_surface

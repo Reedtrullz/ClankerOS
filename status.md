@@ -1,5 +1,26 @@
 # Status
 
+## 2026-07-01 Recent Goal Item Action Label UX
+
+- Updated the Recent Items Command Bar so a populated Goal shortcut names the
+  concrete Goal in its visible primary/card actions instead of showing generic
+  `Open Goal` copy.
+- Goal recent-item actions now resolve `/goals/<goal_id>` through the existing
+  Goal display-label helper, so the fixture demo renders copy such as
+  `Open Demo the ClankerOS local operator app with fixture-backed state` in
+  the focus button, card button, and collapsed recent-items evidence.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+- Non-claim: this is browser Recent Items copy/navigation polish only. It does
+  not write on GET, approve work, execute tasks, run broad local verification,
+  commit, push, create PRs, deploy, call providers, use the network from the
+  app, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Goal Command Palette Section Label UX
 
 - Updated command-palette Goal section shortcuts so stateful Goal anchors name

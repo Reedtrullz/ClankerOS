@@ -13284,13 +13284,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Recent Items Command Bar" in goal.body
     assert "data-recent-items-command-bar='true'" in goal.body
     assert "data-recent-items-focus='true'" in goal.body
+    recent_goal_action = "Open Demo the ClankerOS local operator app with fixture-backed state"
     assert (
-        f"data-recent-items-primary='true' href='/goals/{result.goal_id}'>Open Goal</a>"
+        f"data-recent-items-primary='true' href='/goals/{result.goal_id}'>"
+        f"{recent_goal_action}</a>"
     ) in goal.body
     assert "data-recent-items-resume='true' href='/resume'>Resume workspace</a>" in goal.body
     assert "data-recent-items-cards='true'" in goal.body
     assert (
-        f"data-recent-items-card-primary='true' href='/goals/{result.goal_id}'>Open Goal</a>"
+        f"data-recent-items-card-primary='true' href='/goals/{result.goal_id}'>"
+        f"{recent_goal_action}</a>"
         in goal.body
     )
     assert "data-recent-items-workspace-card='true' href='/resume'>Open resume</a>" in goal.body
@@ -13352,7 +13355,22 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "recent_items_write_on_get</dt><dd>false" in goal.body
     assert "recent_items_network_actions_taken</dt><dd>0" in goal.body
     assert "recent_items_external_effects_created</dt><dd>false" in goal.body
-    assert f"recent_items_now: <a href='/goals/{result.goal_id}'>Open Goal</a>" in goal.body
+    assert (
+        f"recent_items_now: <a href='/goals/{result.goal_id}'>{recent_goal_action}</a>"
+        in goal.body
+    )
+    assert (
+        f"data-recent-items-primary='true' href='/goals/{result.goal_id}'>Open Goal</a>"
+        not in goal.body
+    )
+    assert (
+        f"data-recent-items-card-primary='true' href='/goals/{result.goal_id}'>Open Goal</a>"
+        not in goal.body
+    )
+    assert (
+        f"recent_items_now: <a href='/goals/{result.goal_id}'>Open Goal</a>"
+        not in goal.body
+    )
     assert "recent_items_workspace_click: <a href='/resume'>Open resume</a>" in goal.body
     assert "recent_items_last_action_click: <a href='/actions'>Open actions</a>" in goal.body
     assert "recent_items_last_artifact_click: <a href='/workspace'>Open workspace</a>" in goal.body
