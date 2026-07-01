@@ -8788,6 +8788,32 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-ci-proof-workbench='true'" in ci_evidence.body
     assert "data-ci-proof-workbench-evidence='true'" in ci_evidence.body
     assert ci_evidence.body.count("data-ci-proof-command='Command'") == 4
+    assert "CI Evidence Readiness Strip" in ci_evidence.body
+    assert "data-ci-evidence-readiness-strip='true'" in ci_evidence.body
+    assert "data-ci-evidence-readiness-actions='true'" in ci_evidence.body
+    assert "data-ci-evidence-readiness-card='proof' data-ci-evidence-readiness-card-status='current_commit_unknown'" in ci_evidence.body
+    assert "data-ci-evidence-readiness-card='latest' data-ci-evidence-readiness-card-status='success'" in ci_evidence.body
+    assert "data-ci-evidence-readiness-card='github' data-ci-evidence-readiness-card-status='operator_supplied_only'" in ci_evidence.body
+    assert "data-ci-evidence-readiness-card='recorder' data-ci-evidence-readiness-card-status='confirmation_required'" in ci_evidence.body
+    assert "data-ci-evidence-readiness-card='safety' data-ci-evidence-readiness-card-status='read_only_no_fetch'" in ci_evidence.body
+    assert "data-ci-evidence-readiness-evidence='true'" in ci_evidence.body
+    assert "ci_evidence_readiness_status</dt><dd>records_available_current_commit_unknown" in ci_evidence.body
+    assert "ci_evidence_readiness_handoff_record_count</dt><dd>1" in ci_evidence.body
+    assert "ci_evidence_readiness_snapshot_record_count</dt><dd>0" in ci_evidence.body
+    assert "ci_evidence_readiness_current_proof</dt><dd>current_commit_unknown" in ci_evidence.body
+    assert "ci_evidence_readiness_latest_source</dt><dd>publication_handoff" in ci_evidence.body
+    assert "ci_evidence_readiness_latest_status</dt><dd>success" in ci_evidence.body
+    assert "ci_evidence_readiness_latest_scope</dt><dd>unknown" in ci_evidence.body
+    assert "ci_evidence_readiness_latest_commit</dt><dd>abc123" in ci_evidence.body
+    assert "ci_evidence_readiness_latest_run_id</dt><dd>123" in ci_evidence.body
+    assert "ci_evidence_readiness_next_action</dt><dd>Confirm checkout then record CI proof" in ci_evidence.body
+    assert "ci_evidence_readiness_target_surface</dt><dd><a href='#record-ci-snapshot-json'>record ci snapshot json</a>" in ci_evidence.body
+    assert "ci_evidence_readiness_write_on_get</dt><dd>false" in ci_evidence.body
+    assert "ci_evidence_readiness_github_status_fetch</dt><dd>none" in ci_evidence.body
+    assert "ci_evidence_readiness_provider_calls_taken</dt><dd>0" in ci_evidence.body
+    assert "ci_evidence_readiness_network_actions_taken</dt><dd>0" in ci_evidence.body
+    assert "ci_evidence_readiness_external_effects_created</dt><dd>false" in ci_evidence.body
+    assert "ci_evidence_readiness_safety: read-only CI proof guidance; GitHub status JSON is operator-supplied" in ci_evidence.body
     assert "data-ci-evidence-summary-evidence='true'" in ci_evidence.body
     assert "CI Evidence Command Bar" in ci_evidence.body
     assert "data-ci-evidence-command-bar='true'" in ci_evidence.body
@@ -8807,6 +8833,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "ci_evidence_command_write_on_get</dt><dd>false" in ci_evidence.body
     assert "ci_evidence_command_safety: local proof records only" in ci_evidence.body
     assert ci_evidence.body.index("CI Proof Workbench") < ci_evidence.body.index(
+        "CI Evidence Readiness Strip"
+    )
+    assert ci_evidence.body.index("CI Evidence Readiness Strip") < ci_evidence.body.index(
+        "CI JSON Assistant"
+    )
+    assert ci_evidence.body.index("CI Evidence Readiness Strip") < ci_evidence.body.index(
         "CI evidence summary"
     )
     assert ci_evidence.body.index("CI Proof Workbench") < ci_evidence.body.index(

@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/ci-evidence` now has a visible `CI Evidence Readiness Strip` between the
+  `CI Proof Workbench` and `CI JSON Assistant`. It summarizes current proof
+  posture, latest local CI record, operator-supplied GitHub JSON, the
+  confirmed local recorder, and the no-fetch/no-effect safety boundary before
+  the denser proof and command evidence. Local proof includes focused route
+  pytest (`1 passed`).
 - `/health` now has a visible `Health Readiness Strip` between the
   `Health Operator Workbench` and `Health Command Bar`. It summarizes local
   bind scope, initialized storage, workflow import readiness, next local
@@ -1022,8 +1028,10 @@ Latest status focus:
   no-content-execution, and zero-effect readbacks in the DOM.
 - `/ci-evidence` is now content-first and proof-action-first: it opens with
   the `CI Proof Workbench` cards for Check, Record Smoke, Record Full Suite,
-  and Manual Record before shared diagnostics, summary rows, or command
-  evidence. CI evidence summary, proof workbench evidence, and command evidence
+  and Manual Record, followed by a visible `CI Evidence Readiness Strip` for
+  current proof posture, latest record, GitHub JSON, recorder, and safety
+  before shared diagnostics, summary rows, or command evidence. CI evidence
+  summary, proof workbench evidence, readiness evidence, and command evidence
   stay collapsed by default while preserving GitHub Actions copy-only command
   templates in per-card disclosures, validated recorder targets, proof posture,
   and zero-effect readbacks in the DOM.

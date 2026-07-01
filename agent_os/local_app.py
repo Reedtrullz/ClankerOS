@@ -28820,6 +28820,7 @@ def _ci_evidence_page(root: Path) -> str:
             _non_claim_banner(),
             "</section>",
             _ci_proof_workbench(root),
+            _ci_evidence_readiness_strip(root, records, snapshot_records),
             _ci_json_clipboard_assistant(root),
             _ci_evidence_summary_evidence(summary_rows),
             _ci_evidence_command_bar(root, records, snapshot_records),
@@ -28841,6 +28842,119 @@ def _ci_evidence_page(root: Path) -> str:
                     "No push, PR, deploy, provider call, or external mutation is executed by this page.",
                 ],
             ),
+        ]
+    )
+
+
+def _ci_evidence_target_label(target_href: str) -> str:
+    if not target_href.startswith("/"):
+        return target_href.removeprefix("#").replace("-", " ")
+    return target_href
+
+
+def _ci_evidence_readiness_strip(
+    root: Path,
+    records: list[Any],
+    snapshot_records: list[Any],
+) -> str:
+    state = _ci_evidence_command_state(root)
+    target_href = state["target_surface"]
+    target_label = _ci_evidence_target_label(target_href)
+    status = state["command_status"]
+    latest_status = state["latest_status"]
+    latest_label = (
+        f"{latest_status} / {state['latest_scope']}"
+        if latest_status != "missing"
+        else "No local CI proof yet"
+    )
+    latest_action_label = "Open recorder" if latest_status == "missing" else "Inspect record"
+    return "".join(
+        [
+            "<section id='ci-evidence-readiness-strip' class='panel ci-evidence-readiness-strip' data-ci-evidence-readiness-strip='true'>",
+            "<h2>CI Evidence Readiness Strip</h2>",
+            "<p class='muted'>A scan-first proof posture for the current checkout, latest recorded CI evidence, JSON handoff, local recorder, and safety boundary.</p>",
+            "<div class='ci-evidence-readiness-grid' data-ci-evidence-readiness-actions='true'>",
+            (
+                "<article class='ci-evidence-readiness-card ci-evidence-readiness-primary' "
+                f"data-ci-evidence-readiness-card='proof' data-ci-evidence-readiness-card-status='{_e(state['current_proof'])}'>"
+                "<h3>Current Proof</h3>"
+                f"<p>{_e(state['current_proof'])}</p>"
+                f"<a class='ci-evidence-readiness-link' href='{_e(target_href)}'>{_e(state['next_action'])}</a>"
+                "</article>"
+            ),
+            (
+                "<article class='ci-evidence-readiness-card' "
+                f"data-ci-evidence-readiness-card='latest' data-ci-evidence-readiness-card-status='{_e(latest_status)}'>"
+                "<h3>Latest Record</h3>"
+                f"<p>{_e(latest_label)}</p>"
+                f"<a class='ci-evidence-readiness-link' href='{_e(state['latest_target'])}'>{_e(latest_action_label)}</a>"
+                "</article>"
+            ),
+            (
+                "<article class='ci-evidence-readiness-card' "
+                "data-ci-evidence-readiness-card='github' data-ci-evidence-readiness-card-status='operator_supplied_only'>"
+                "<h3>GitHub JSON</h3>"
+                "<p>Copy with gh outside ClankerOS; paste the JSON here.</p>"
+                "<a class='ci-evidence-readiness-link' href='#ci-json-assistant'>JSON assistant</a>"
+                "</article>"
+            ),
+            (
+                "<article class='ci-evidence-readiness-card' "
+                "data-ci-evidence-readiness-card='recorder' data-ci-evidence-readiness-card-status='confirmation_required'>"
+                "<h3>Recorder</h3>"
+                "<p>Writes local proof only after the confirmation flow.</p>"
+                "<a class='ci-evidence-readiness-link' href='#record-ci-snapshot-json'>Open recorder</a>"
+                "</article>"
+            ),
+            (
+                "<article class='ci-evidence-readiness-card' "
+                "data-ci-evidence-readiness-card='safety' data-ci-evidence-readiness-card-status='read_only_no_fetch'>"
+                "<h3>Safety</h3>"
+                "<p>No GitHub polling, provider calls, network actions, PRs, pushes, or deploys on GET.</p>"
+                "<a class='ci-evidence-readiness-link' href='#ci-evidence-command-bar'>Review evidence</a>"
+                "</article>"
+            ),
+            "</div>",
+            "<details class='ci-evidence-readiness-evidence' data-ci-evidence-readiness-evidence='true'><summary>CI evidence readiness evidence</summary>",
+            _kv(
+                [
+                    ("ci_evidence_readiness_status", status),
+                    ("ci_evidence_readiness_handoff_record_count", str(len(records))),
+                    ("ci_evidence_readiness_snapshot_record_count", str(len(snapshot_records))),
+                    ("ci_evidence_readiness_branch", state["branch"]),
+                    ("ci_evidence_readiness_current_commit", state["current_commit"]),
+                    ("ci_evidence_readiness_current_proof", state["current_proof"]),
+                    ("ci_evidence_readiness_latest_source", state["latest_source"]),
+                    ("ci_evidence_readiness_latest_status", latest_status),
+                    ("ci_evidence_readiness_latest_scope", state["latest_scope"]),
+                    ("ci_evidence_readiness_latest_commit", state["latest_commit"]),
+                    ("ci_evidence_readiness_latest_run_id", state["latest_external_run_id"]),
+                    ("ci_evidence_readiness_next_action", state["next_action"]),
+                    (
+                        "ci_evidence_readiness_target_surface",
+                        SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>"),
+                    ),
+                    ("ci_evidence_readiness_reason", state["reason"]),
+                    ("ci_evidence_readiness_write_on_get", "false"),
+                    ("ci_evidence_readiness_github_status_fetch", "none"),
+                    ("ci_evidence_readiness_provider_calls_taken", "0"),
+                    ("ci_evidence_readiness_network_actions_taken", "0"),
+                    ("ci_evidence_readiness_external_effects_created", "false"),
+                    ("ci_evidence_readiness_push_created", "false"),
+                    ("ci_evidence_readiness_pr_created", "false"),
+                    ("ci_evidence_readiness_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"ci_evidence_readiness_now: {_e(state['next_action'])}",
+                    f"ci_evidence_readiness_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
+                    f"ci_evidence_readiness_latest: <a href='{_e(state['latest_target'])}'>{_e(latest_action_label)}</a>",
+                    "ci_evidence_readiness_safety: read-only CI proof guidance; GitHub status JSON is operator-supplied",
+                ]
+            ),
+            "</details>",
+            "</section>",
         ]
     )
 
@@ -29041,9 +29155,7 @@ def _ci_evidence_command_bar(
 ) -> str:
     state = _ci_evidence_command_state(root)
     target_href = state["target_surface"]
-    target_label = target_href
-    if not target_href.startswith("/"):
-        target_label = target_href.removeprefix("#").replace("-", " ")
+    target_label = _ci_evidence_target_label(target_href)
     return "".join(
         [
             "<section id='ci-evidence-command-bar' class='panel ci-evidence-command-bar' data-ci-evidence-command-bar='true'><h2>CI Evidence Command Bar</h2>",
@@ -46892,6 +47004,14 @@ def _html_page(
     .ci-proof-command:not([open]) > :not(summary) {{ display:none; }}
     .ci-proof-workbench-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .ci-proof-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .ci-evidence-readiness-strip {{ border-left:4px solid var(--ok); }}
+    .ci-evidence-readiness-grid {{ display:grid; grid-template-columns:minmax(220px, 1.2fr) repeat(4, minmax(150px, 1fr)); gap:10px; margin:12px 0; }}
+    .ci-evidence-readiness-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .ci-evidence-readiness-card h3 {{ margin-top:0; }}
+    .ci-evidence-readiness-card p {{ min-height:44px; margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .ci-evidence-readiness-primary {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
+    .ci-evidence-readiness-card[data-ci-evidence-readiness-card-status="current_commit_unknown"], .ci-evidence-readiness-card[data-ci-evidence-readiness-card-status="stale_or_different_commit"], .ci-evidence-readiness-card[data-ci-evidence-readiness-card-status="missing_current_commit_proof"] {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
+    .ci-evidence-readiness-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .ci-json-assistant {{ border-left:4px solid var(--ok); }}
     .ci-json-assistant-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(170px, 1fr)); gap:10px; margin:12px 0; }}
     .ci-json-assistant-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
@@ -46900,9 +47020,9 @@ def _html_page(
     .ci-json-assistant-card code {{ display:block; margin:0 0 10px; white-space:normal; overflow-wrap:anywhere; }}
     .ci-json-assistant-primary {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
     .ci-json-assistant-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
-    .ci-evidence-summary-evidence, .ci-proof-workbench-evidence, .ci-json-assistant-evidence, .ci-evidence-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .ci-evidence-summary-evidence summary, .ci-proof-workbench-evidence summary, .ci-json-assistant-evidence summary, .ci-evidence-command-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .ci-evidence-summary-evidence:not([open]) > :not(summary), .ci-proof-workbench-evidence:not([open]) > :not(summary), .ci-json-assistant-evidence:not([open]) > :not(summary), .ci-evidence-command-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .ci-evidence-summary-evidence, .ci-proof-workbench-evidence, .ci-evidence-readiness-evidence, .ci-json-assistant-evidence, .ci-evidence-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .ci-evidence-summary-evidence summary, .ci-proof-workbench-evidence summary, .ci-evidence-readiness-evidence summary, .ci-json-assistant-evidence summary, .ci-evidence-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .ci-evidence-summary-evidence:not([open]) > :not(summary), .ci-proof-workbench-evidence:not([open]) > :not(summary), .ci-evidence-readiness-evidence:not([open]) > :not(summary), .ci-json-assistant-evidence:not([open]) > :not(summary), .ci-evidence-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .today-current-action, .today-finish, .today-note, .today-pause {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .today-current-action-form {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .today-current-action-form h3 {{ margin:0 0 6px; font-size:16px; }}
@@ -47850,6 +47970,7 @@ def _html_page(
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
     @media (max-width: 860px) {{ #run-readiness-strip {{ scroll-margin-top:260px; }} .run-readiness-grid, .run-readiness-strip dl {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ #ci-evidence-readiness-strip {{ scroll-margin-top:260px; }} .ci-evidence-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #health-readiness-strip {{ scroll-margin-top:260px; }} .health-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 640px) {{ .action-form-brief dl {{ grid-template-columns:1fr; gap:4px; }} .action-form-brief dd {{ word-break:normal; overflow-wrap:anywhere; }} }}

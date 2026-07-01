@@ -1,5 +1,30 @@
 # Status
 
+## 2026-07-01 CI Evidence Readiness Strip UX
+
+- Added a scan-first `CI Evidence Readiness Strip` to `/ci-evidence` between
+  the existing `CI Proof Workbench` and `CI JSON Assistant`.
+- The strip shows five visible cards for current proof posture, latest local
+  CI record, operator-supplied GitHub JSON, the confirmed local recorder, and
+  the no-fetch safety boundary.
+- Collapsed evidence preserves the same proof contract as the command bar:
+  command status, handoff/snapshot record counts, branch/current commit,
+  current proof, latest source/status/scope/commit/run id, next action, target
+  surface, reason, and explicit no-write/no-fetch/no-effect counters.
+- Covered the current fixture state where one successful handoff record exists
+  for `abc123` but the temporary checkout commit is unknown, so the visible
+  next action remains `Confirm checkout then record CI proof`.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed.
+  - `python3 -m compileall agent_os/local_app.py`: passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py status.md docs/status.md docs/OPERATING_SUMMARY.md`:
+    passed.
+- Non-claim: this only improves CI evidence orientation in the browser; it
+  does not fetch GitHub status, run tests, record proof on GET, approve,
+  execute work, commit, push, create PRs, deploy, call providers, use the
+  network, or mutate external systems.
+
 ## 2026-07-01 Health Readiness Strip UX
 
 - Added a scan-first `Health Readiness Strip` to `/health` between the
