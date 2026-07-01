@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/artifacts?path=...` now includes an `Artifact Continuity` panel that writes
+  the opened artifact to browser-local `localStorage:clankeros-last-artifact`.
+  `/workspace#workspace-view-memory` includes a matching `Last Artifact` card,
+  so operators can inspect or reset the latest artifact breadcrumb while the
+  durable `.clanker/app/workspace.json` resume anchor still changes only after
+  confirmed `save-workspace`. Local proof includes a red/green focused route
+  and artifact viewer pytest selection (`2 passed`), compile, and diff check.
 - GitHub Actions now runs the `Tests` workflow automatically for pushes to
   `codex/**` branches as well as `main`, so normal ClankerOS branch slices no
   longer need manual `workflow_dispatch` just to start remote verification.

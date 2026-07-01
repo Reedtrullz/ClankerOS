@@ -1,5 +1,34 @@
 # Status
 
+## 2026-07-01 Artifact Continuity Memory UX
+
+- Added an `Artifact Continuity` panel to `/artifacts?path=...` that records
+  the opened artifact in browser-local
+  `localStorage:clankeros-last-artifact`, so Workspace can inspect or reset the
+  latest artifact breadcrumb without requiring a durable workspace save.
+- Added a `Last Artifact` card to `/workspace#workspace-view-memory`, bringing
+  that breadcrumb into the same resettable browser-memory console as route
+  history, scroll state, artifact filters, notes, approvals, inbox, and profile
+  filters.
+- Preserved the explicit promotion boundary: the artifact viewer may update
+  browser-local view memory on load, but `.clanker/app/workspace.json` still
+  changes only after the confirmed `save-workspace` form.
+- TDD evidence: the focused route/artifact test selection failed first on the
+  missing Workspace memory card and missing `Artifact Continuity` surface, then
+  passed after the implementation.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_artifact_viewer_is_read_only_and_bounded" --tb=short`:
+    2 passed after the implementation.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/OPERATING_SUMMARY.md docs/local-app.md docs/status.md status.md`:
+    passed.
+- Non-claim: this is browser-local artifact continuity only. It does not write
+  workspace JSON on GET, broaden artifact access, execute artifact content,
+  approve work, execute tasks, deploy, call providers, use the network from the
+  app, create PRs, push from the app, or mutate external systems from
+  ClankerOS.
+
 ## 2026-07-01 Codex Branch CI Trigger UX
 
 - Updated `.github/workflows/tests.yml` so pushes to `codex/**` branches run

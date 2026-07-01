@@ -9026,6 +9026,13 @@ def _workspace_view_memory_panel() -> str:
             "Browser-local route history",
         ),
         (
+            "last-artifact",
+            "Last Artifact",
+            "exact",
+            "clankeros-last-artifact",
+            "Most recent artifact opened in this browser",
+        ),
+        (
             "today-goals",
             "Today Goal Queue",
             "exact",
@@ -9223,7 +9230,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus first-run board home-goal-board recent route-history today-goals today-decisions open-panels scroll-position search timeline goal-sections decisions goal-artifacts artifact-index notes note-drafts form-drafts memory skills approvals inbox profiles",
+                    "workspace_view_memory_reset_scope: theme focus first-run board home-goal-board recent route-history last-artifact today-goals today-decisions open-panels scroll-position search timeline goal-sections decisions goal-artifacts artifact-index notes note-drafts form-drafts memory skills approvals inbox profiles",
                 ]
             ),
             "</details>",
@@ -37947,6 +37954,7 @@ def _artifact_viewer(
             _render_artifact_content(text, render_family, renderer),
             "<p class='muted'>Artifact content is rendered as inert text and is never executed.</p>",
             "</section>",
+            _artifact_view_memory_section(repo_relative),
             _remember_artifact_section(root, relative_path, current_path),
         ]
     )
@@ -38580,7 +38588,7 @@ def _remember_artifact_section(root: Path, relative_path: str, current_path: str
     return "".join(
         [
             "<section id='remember-artifact'><h2>Remember Artifact</h2>",
-            "<p class='muted'>Store this artifact as the local resume anchor for the next ClankerOS session. The viewer does not write on page load.</p>",
+            "<p class='muted'>Store this artifact as the durable local resume anchor for the next ClankerOS session. Browser view memory may remember the last opened artifact, but workspace JSON still changes only after confirmation.</p>",
             _kv(
                 [
                     ("remember_artifact_form_available", "true"),
@@ -38601,6 +38609,95 @@ def _remember_artifact_section(root: Path, relative_path: str, current_path: str
                     "updated_by": "operator-artifact",
                 },
             ),
+            "</section>",
+        ]
+    )
+
+
+def _artifact_view_memory_section(relative_path: str) -> str:
+    href = f"/artifacts?path={quote(relative_path)}"
+    return "".join(
+        [
+            (
+                "<section id='artifact-view-memory' class='panel artifact-view-memory' "
+                "data-artifact-view-memory='true' "
+                "data-artifact-view-memory-storage-key='clankeros-last-artifact' "
+                f"data-artifact-view-memory-path='{_e(relative_path)}' "
+                f"data-artifact-view-memory-href='{_e(href)}'>"
+            ),
+            "<h2>Artifact Continuity</h2>",
+            "<p class='muted'>This browser records the last opened artifact so Workspace can show and clear the breadcrumb without changing saved workspace state.</p>",
+            "<div class='artifact-view-memory-grid' data-artifact-view-memory-cards='true'>",
+            "<article class='artifact-view-memory-card artifact-view-memory-primary'><h3>Browser Memory</h3>",
+            "<p data-artifact-view-memory-status='true'>Recording browser-local artifact view.</p>",
+            f"<a class='artifact-view-memory-action' href='{_e(href)}'>Current artifact</a></article>",
+            "<article class='artifact-view-memory-card'><h3>Workspace Anchor</h3>",
+            "<p>Promote this artifact to the durable resume anchor only when you submit the save form.</p>",
+            "<a class='artifact-view-memory-link' href='#remember-artifact'>Remember artifact</a></article>",
+            "<article class='artifact-view-memory-card'><h3>Inspect</h3>",
+            "<p>Workspace View Memory can inspect or reset this browser-local last-artifact value.</p>",
+            "<a class='artifact-view-memory-link' href='/workspace#workspace-view-memory'>Workspace memory</a></article>",
+            "<article class='artifact-view-memory-card'><h3>Boundary</h3>",
+            "<p>localStorage only; no provider, network, external effect, or workspace JSON write.</p>",
+            "<a class='artifact-view-memory-link' href='#artifact-view-memory-evidence'>Evidence</a></article>",
+            "</div>",
+            "<details id='artifact-view-memory-evidence' class='artifact-view-memory-evidence' data-artifact-view-memory-evidence='true'><summary>Artifact continuity evidence</summary>",
+            _kv(
+                [
+                    ("artifact_view_memory_status", "available"),
+                    ("artifact_view_memory_storage", "localStorage:clankeros-last-artifact"),
+                    ("artifact_view_memory_path", relative_path),
+                    (
+                        "artifact_view_memory_href",
+                        SafeHtml(f"<a href='{_e(href)}'>{_e(href)}</a>"),
+                    ),
+                    ("artifact_view_memory_browser_write_on_load", "true"),
+                    ("artifact_view_memory_workspace_json_write", "false"),
+                    ("artifact_view_memory_save_workspace_required_for_resume_anchor", "true"),
+                    ("artifact_view_memory_provider_calls_taken_by_clankeros", "0"),
+                    ("artifact_view_memory_network_actions_taken", "0"),
+                    ("artifact_view_memory_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "artifact_view_memory_scope: browser-local last artifact breadcrumb",
+                    "artifact_view_memory_reset: <a href='/workspace#workspace-view-memory'>Workspace View Memory</a>",
+                    "artifact_view_memory_safety: durable resume anchor still requires confirmed save-workspace",
+                ]
+            ),
+            "</details>",
+            """<script>
+(function () {
+  var root = document.querySelector("[data-artifact-view-memory='true']");
+  if (!root) return;
+  var status = root.querySelector("[data-artifact-view-memory-status='true']");
+  var storageKey = root.getAttribute("data-artifact-view-memory-storage-key") || "clankeros-last-artifact";
+  var path = root.getAttribute("data-artifact-view-memory-path") || "";
+  var href = root.getAttribute("data-artifact-view-memory-href") || "";
+  function setStatus(message) {
+    if (status) status.textContent = message;
+  }
+  if (!window.localStorage) {
+    root.setAttribute("data-artifact-view-memory-state", "unavailable");
+    setStatus("Browser-local artifact memory is unavailable.");
+    return;
+  }
+  var record = {
+    path: path,
+    href: href,
+    recorded_at: new Date().toISOString()
+  };
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(record));
+    root.setAttribute("data-artifact-view-memory-state", "stored");
+    setStatus("Stored in this browser for Workspace View Memory.");
+  } catch (error) {
+    root.setAttribute("data-artifact-view-memory-state", "failed");
+    setStatus("Could not store browser-local artifact memory.");
+  }
+})();
+</script>""",
             "</section>",
         ]
     )
@@ -48595,6 +48692,18 @@ def _html_page(
     .artifact-command-bar {{ border-left:4px solid var(--accent); }}
     .artifact-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .artifact-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .artifact-view-memory {{ border-left:4px solid var(--ok); }}
+    .artifact-view-memory-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
+    .artifact-view-memory-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .artifact-view-memory-card h3 {{ margin-top:0; }}
+    .artifact-view-memory-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .artifact-view-memory-primary {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
+    .artifact-view-memory-action, .artifact-view-memory-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .artifact-view-memory-action {{ background:var(--accent); color:#fff; }}
+    .artifact-view-memory-link {{ background:var(--surface); color:var(--accent); }}
+    .artifact-view-memory-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .artifact-view-memory-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .artifact-view-memory-evidence:not([open]) > :not(summary) {{ display:none; }}
     .artifact-review-brief {{ border-left:4px solid var(--ok); }}
     .artifact-review-brief ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .artifact-review-brief li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -48974,7 +49083,7 @@ def _html_page(
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
     @media (max-width: 860px) {{ #run-readiness-strip {{ scroll-margin-top:260px; }} .run-readiness-grid, .run-readiness-strip dl {{ grid-template-columns:1fr; }} }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map, #artifact-view-memory {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .artifact-view-memory-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #ci-evidence-readiness-strip {{ scroll-margin-top:260px; }} .ci-evidence-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #health-readiness-strip {{ scroll-margin-top:260px; }} .health-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}

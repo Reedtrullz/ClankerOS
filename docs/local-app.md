@@ -737,11 +737,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   the visible Goal card when available, while retaining the exact saved Goal
   id, label source, and route evidence. A read-only `Workspace View Memory`
   panel follows, showing browser-local `localStorage` view state for theme,
-  focus mode, Goal board view, open panels, scroll position, search lanes,
-  timeline lanes, Goal section searches, Today Goal Queue view, Today and Goal
-  decision filters, artifact filters, notes filters, note drafts, setup form
-  drafts, Memory Bank filters, Skills Inventory filters, and First Run
-  Checklist checks/notes with
+  focus mode, Goal board view, route history, the last opened artifact
+  breadcrumb, open panels, scroll position, search lanes, timeline lanes, Goal
+  section searches, Today Goal Queue view, Today and Goal decision filters,
+  artifact filters, notes filters, note drafts, setup form drafts, Memory Bank
+  filters, Skills Inventory filters, and First Run Checklist checks/notes with
   Refresh plus reset controls. It only clears
   browser-local view memory after explicit clicks and does not write
   `.clanker/app/workspace.json`. The read-only `Workspace Daily Brief` and `Workspace Workflow Map`

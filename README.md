@@ -324,12 +324,12 @@ from suggested defaults before the longer checklist. The Goal card is
 title-first when possible, while still retaining exact saved Goal id and route
 evidence for restoration. A read-only `Workspace View Memory` panel follows to
 inspect and clear browser-local view state such as theme, focus mode, Goal
-board filters, open panels, scroll position, search lanes, timeline lanes,
-Goal section searches, Today Goal Queue view, Today and Goal decision filters,
-artifact filters, notes filters, note drafts, setup and workflow form drafts,
-Memory Bank filters, Skills Inventory filters, and the First Run Checklist
-from `localStorage` without
-changing `.clanker/app/workspace.json`.
+board filters, route history, the last opened artifact breadcrumb, open panels,
+scroll position, search lanes, timeline lanes, Goal section searches, Today
+Goal Queue view, Today and Goal decision filters, artifact filters, notes
+filters, note drafts, setup and workflow form drafts, Memory Bank filters,
+Skills Inventory filters, and the First Run Checklist from `localStorage`
+without changing `.clanker/app/workspace.json`.
 The read-only
 `Workspace Daily Brief` and `Workspace Workflow Map` then follow with the
 saved goal's current gate, gate counts, and finish posture, while saved-state
