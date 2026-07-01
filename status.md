@@ -1,5 +1,22 @@
 # Status
 
+## 2026-07-01 Goal Board Card Action Labels UX
+
+- Replaced generic `Use action form` Goal-board card copy with the concrete
+  current Goal action label, such as `Create commit request`, while preserving
+  the existing action-form href and confirmation boundary.
+- This makes `/goals` more useful as a daily Goal picker: each lane card now
+  names the actual next action instead of asking the operator to infer it from
+  the metrics below the title.
+- Local verification:
+  - Added a failing-first fixture assertion for the ready-to-commit demo Goal
+    card link, then updated the renderer.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this is browser copy/routing polish only. It does not change GET
+  behavior, approve work, execute tasks, commit, push, create PRs, deploy, call
+  providers, use the network, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 CI Evidence Readiness Strip UX
 
 - Added a scan-first `CI Evidence Readiness Strip` to `/ci-evidence` between

@@ -12777,7 +12777,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "class='goal-index-list'" in goals.body
     assert "class='goal-index-row goal-index-card' data-goal-card='true' data-goal-board-row='true'" in goals.body
     assert f"data-goal-card-open='true' href='/goals/{result.goal_id}'" in goals.body
-    assert f"data-goal-card-next='true' href='/goals/{result.goal_id}#goal-action-dock-form'" in goals.body
+    assert (
+        f"data-goal-card-next='true' href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in goals.body
     assert "data-goal-card-project='true' href='/projects/local-app-demo'" in goals.body
     assert "<dt>Next</dt><dd>Create commit request</dd>" in goals.body
     assert "<dt>Waiting</dt><dd>1 item(s)</dd>" in goals.body

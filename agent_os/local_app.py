@@ -18601,7 +18601,7 @@ def _goal_index_line(
         bool(_goal_next_action_form(state, next_action)) if state.get("goal") else False
     )
     next_href = _goal_board_action_href(goal_id, next_action.href, form_available)
-    next_label = "Use action form" if form_available else "Open next"
+    next_label = _goal_action_cta_label(next_action, form_available)
     searchable = " ".join(
         [
             goal_id,

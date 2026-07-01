@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals` lane cards now label their primary action with the concrete current
+  Goal action, such as `Create commit request`, instead of generic
+  `Use action form` copy. The href and confirmation-gated action form remain
+  unchanged. Local proof includes the fixture-backed demo Goal route pytest
+  (`1 passed`).
 - `/ci-evidence` now has a visible `CI Evidence Readiness Strip` between the
   `CI Proof Workbench` and `CI JSON Assistant`. It summarizes current proof
   posture, latest local CI record, operator-supplied GitHub JSON, the

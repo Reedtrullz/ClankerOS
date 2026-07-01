@@ -502,8 +502,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   `localStorage:clankeros-goal-board-view` across reloads until Reset view
   clears the browser-local board state.
   Goal rows in those lanes render as
-  scan-first cards with direct Goal, project, and next-action links plus phase,
-  progress, waiting, and open-work readbacks while preserving the legacy
+  scan-first cards with direct Goal, project, and concrete next-action links
+  such as `Create commit request` plus phase, progress, waiting, and open-work
+  readbacks while preserving the legacy
   project/status/phase/next-action/progress/remaining-work text for automation
   and tests. The
   checklist reports the current step,
