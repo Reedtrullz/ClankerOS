@@ -45185,19 +45185,119 @@ def _command_palette_goal_section_links(
 
     goal_label, label_source = _goal_display_label(root, goal_id)
     display = goal_label or goal_id
+    goal_state: dict[str, Any] | None = None
+    next_action: GoalNextAction | None = None
+    latest_artifact_record: dict[str, str] | None = None
+    artifact_records = 0
+    available_artifacts = 0
+    pending_approvals = 0
+    open_tasks = 0
+    open_incidents = 0
+    open_recommendations = 0
+    current_gate = "unknown"
+    try:
+        candidate_state = _goal_state(root, _storage(root), goal_id)
+        if candidate_state.get("goal") is not None:
+            goal_state = candidate_state
+            next_action = _goal_next_action(root, goal_state)
+            artifact_rows = _goal_artifact_records(root, goal_state)
+            artifact_records = len(artifact_rows)
+            available_artifacts = sum(
+                1 for row in artifact_rows if row["status"] == "available"
+            )
+            latest_artifact_record = _goal_latest_artifact_record(root, goal_state)
+            pending_approvals = (
+                _count_status(goal_state["worktree_approvals"], "pending_operator_approval")
+                + _count_status(goal_state["commit_approvals"], "pending_operator_approval")
+                + _count_status(goal_state["publications"], "pending_operator_approval")
+            )
+            open_tasks = sum(
+                1
+                for task in goal_state["tasks"]
+                if task.status not in {"completed", "cancelled"}
+            )
+            open_incidents = sum(
+                1 for row in goal_state["incidents"] if row["status"] == "open"
+            )
+            open_recommendations = sum(
+                1 for row in goal_state["recommendations"] if row["status"] == "open"
+            )
+            _gates, _gate_counts, current_gate = _goal_workflow_gate_summary(
+                root,
+                goal_state,
+                next_action,
+            )
+    except Exception:
+        goal_state = None
     links: list[tuple[str, str, str]] = []
     lines: list[str] = [
         f"palette_goal_section_commands: goal={_e(goal_id)} source={_e(source)} label_source={_e(label_source)}",
     ]
     for label, anchor, search_terms in COMMAND_PALETTE_GOAL_SECTIONS:
         href = f"/goals/{quote(goal_id)}#{anchor}"
-        command_label = f"Goal {label}: {display}"
+        command_label = _command_palette_goal_section_label(
+            label,
+            anchor,
+            display,
+            next_action=next_action,
+            latest_artifact_record=latest_artifact_record,
+            artifact_records=artifact_records,
+            available_artifacts=available_artifacts,
+            pending_approvals=pending_approvals,
+            open_tasks=open_tasks,
+            open_incidents=open_incidents,
+            open_recommendations=open_recommendations,
+            current_gate=current_gate,
+        )
         links.append((_compact_label(command_label, 96), href, f"goal section {search_terms}"))
         lines.append(
             f"palette_goal_section_command: {_e(label)} "
+            f"label={_e(command_label)} "
             f"surface=<a href='{_e(href)}'>{_e(anchor)}</a>"
         )
     return links, {"source": source, "goal": goal_id, "lines": lines}
+
+
+def _command_palette_goal_section_label(
+    label: str,
+    anchor: str,
+    display: str,
+    *,
+    next_action: GoalNextAction | None,
+    latest_artifact_record: dict[str, str] | None,
+    artifact_records: int,
+    available_artifacts: int,
+    pending_approvals: int,
+    open_tasks: int,
+    open_incidents: int,
+    open_recommendations: int,
+    current_gate: str,
+) -> str:
+    if anchor == "goal-next-action" and next_action is not None:
+        return f"Goal Next action: {next_action.action} - {display}"
+    if anchor == "goal-decision-queue" and next_action is not None:
+        waiting_items = pending_approvals + open_incidents + open_recommendations
+        waiting_label = f"{waiting_items} waiting" if waiting_items else "current action"
+        return f"Goal Decision queue: {next_action.action}; {waiting_label} - {display}"
+    if anchor == "goal-approvals":
+        return f"Goal Approvals: {pending_approvals} pending - {display}"
+    if anchor == "goal-artifacts" and artifact_records:
+        return f"Goal Artifacts: {available_artifacts}/{artifact_records} available - {display}"
+    if anchor == "goal-artifact-reader" and latest_artifact_record is not None:
+        reader_label = _artifact_action_label(
+            latest_artifact_record["path"],
+            record=latest_artifact_record,
+            verb="Read",
+            fallback="Read latest artifact",
+        )
+        return f"Goal Artifact reader: {reader_label} - {display}"
+    if anchor == "goal-remaining-work":
+        waiting_items = pending_approvals + open_incidents + open_recommendations
+        return (
+            f"Goal Remaining work: {open_tasks} open task(s), "
+            f"{waiting_items} waiting, gate {current_gate} - {display}"
+        )
+    return f"Goal {label}: {display}"
 
 
 def _command_palette_today_section_links(

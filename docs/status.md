@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Command-palette Goal section shortcuts now include live Goal context instead
+  of only repeating the Goal title. Key entries label the current action,
+  waiting decision count, pending approvals, available artifacts, latest
+  readable artifact, and remaining-work gate, for example
+  `Goal Next action: Create commit request` and
+  `Goal Artifact reader: Read coder run <run_id> review`. Local proof includes
+  the fixture-backed demo Goal route pytest (`1 passed`) plus compile and
+  whitespace checks.
 - Saved exact Goal action routes now carry their concrete action label into
   the command palette Quick Switch workspace card, for example
   `Create commit request`, while project-only saved routes still say

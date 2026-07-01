@@ -1,5 +1,35 @@
 # Status
 
+## 2026-07-01 Goal Command Palette Section Label UX
+
+- Updated command-palette Goal section shortcuts so stateful Goal anchors name
+  the current operator context instead of only repeating the Goal title.
+- The palette now labels key entries with concrete state, such as
+  `Goal Next action: Create commit request`,
+  `Goal Decision queue: Create commit request; 1 waiting`,
+  `Goal Approvals: 1 pending`, `Goal Artifacts: 21/21 available`,
+  `Goal Artifact reader: Read coder run <run_id> review`, and
+  `Goal Remaining work: 1 open task(s), 1 waiting, gate commit_request`.
+- Collapsed palette evidence now records each generated Goal section command's
+  operator-facing label next to the exact local anchor surface.
+- Local verification:
+  - Rendered the fixture-backed demo Goal page and confirmed the command
+    palette now exposes the action-aware labels while the old title-only
+    `Goal Next action: Demo...` label is absent.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+- GitHub Actions note: previous pushed commit `3e2df43d...` has the fast smoke
+  job passing; the remote full pytest job was still running when this local UX
+  slice was prepared.
+- Non-claim: this is browser command-palette copy/search polish only. It does
+  not write on GET, approve work, execute tasks, run broad local verification,
+  commit, push, create PRs, deploy, call providers, use the network from the
+  app, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Saved Goal Action Quick Switch CI Fix
 
 - Fixed the GitHub fast-smoke failure from run `28493458234` by extending the

@@ -13032,21 +13032,35 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "palette_filter_goal_section_source</dt><dd>current_route" in goal.body
     assert f"palette_filter_goal_section_goal</dt><dd>{result.goal_id}" in goal.body
     assert (
-        f"href='/goals/{result.goal_id}#goal-artifacts'>Goal Artifacts: "
+        f"href='/goals/{result.goal_id}#goal-next-action'>"
+        "Goal Next action: Create commit request - Demo the ClankerOS local operator app"
+    ) in goal.body
+    assert (
+        f"href='/goals/{result.goal_id}#goal-artifacts'>Goal Artifacts: 21/21 available - "
+        "Demo the ClankerOS local operator app"
+    ) in goal.body
+    assert (
+        f"href='/goals/{result.goal_id}#goal-artifact-reader'>"
+        f"Goal Artifact reader: Read coder run {result.coder_worktree_run_id} review - "
+        "Demo the ClankerOS local opera"
+    ) in goal.body
+    assert (
+        f"href='/goals/{result.goal_id}#goal-approvals'>Goal Approvals: 1 pending - "
         "Demo the ClankerOS local operator app with fixture-backed state</a>"
     ) in goal.body
     assert (
-        f"href='/goals/{result.goal_id}#goal-approvals'>Goal Approvals: "
-        "Demo the ClankerOS local operator app with fixture-backed state</a>"
-    ) in goal.body
-    assert (
-        f"href='/goals/{result.goal_id}#goal-decision-queue'>Goal Decision queue: "
-        "Demo the ClankerOS local operator app with fixture-backed state</a>"
+        f"href='/goals/{result.goal_id}#goal-decision-queue'>"
+        "Goal Decision queue: Create commit request; 1 waiting - "
+        "Demo the ClankerOS local operator app"
     ) in goal.body
     assert (
         f"href='/goals/{result.goal_id}#goal-memory'>Goal Memory: "
         "Demo the ClankerOS local operator app with fixture-backed state</a>"
     ) in goal.body
+    assert (
+        "Goal Next action: Demo the ClankerOS local operator app with fixture-backed state"
+        not in goal.body
+    )
     assert (
         "data-palette-search-text='goal git status: demo the clankeros local operator app "
         f"with fixture-backed state /goals/{result.goal_id}#goal-git-status "
@@ -13057,11 +13071,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "source=current_route label_source=title"
     ) in goal.body
     assert (
-        f"palette_goal_section_command: Artifacts surface=<a href='/goals/{result.goal_id}#goal-artifacts'>"
+        "palette_goal_section_command: Artifacts "
+        "label=Goal Artifacts: 21/21 available - "
+        "Demo the ClankerOS local operator app with fixture-backed state "
+        f"surface=<a href='/goals/{result.goal_id}#goal-artifacts'>"
         "goal-artifacts</a>"
     ) in goal.body
     assert (
-        f"palette_goal_section_command: Remaining work surface=<a href='/goals/{result.goal_id}#goal-remaining-work'>"
+        "palette_goal_section_command: Remaining work "
+        "label=Goal Remaining work: 1 open task(s), 1 waiting, gate commit_request - "
+        "Demo the ClankerOS local operator app with fixture-backed state "
+        f"surface=<a href='/goals/{result.goal_id}#goal-remaining-work'>"
         "goal-remaining-work</a>"
     ) in goal.body
     assert "data-command-palette-empty='true' hidden" in goal.body
