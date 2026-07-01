@@ -1,5 +1,28 @@
 # Status
 
+## 2026-07-01 Proof Shortcut UX
+
+- Added a global `p` keyboard shortcut and header `Proof` button so the
+  operator can jump from any browser route directly to
+  `/ci-evidence#record-ci-snapshot-json` without hunting through Today,
+  Verification, or CLI commands.
+- The shared browser shell now renders proof shortcut metadata, keyboard help,
+  and no-write/no-provider/no-network/no-external-effect counters beside the
+  existing Next Action, Recent Items, and Finish Today controls.
+- TDD evidence: the focused route test failed first on the missing
+  `proof-open` header control, then passed after the implementation.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed after the implementation.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py docs/OPERATING_SUMMARY.md status.md docs/status.md`:
+    passed.
+- Non-claim: this is browser-local navigation polish only. It does not record
+  CI evidence on GET, approve work, execute tasks, deploy, call providers, use
+  the network from the app, create PRs, push from the app, or mutate external
+  systems from ClankerOS.
+
 ## 2026-07-01 Recent Items Shortcut UX
 
 - Added a global `v` keyboard shortcut and header `Recent` button for the

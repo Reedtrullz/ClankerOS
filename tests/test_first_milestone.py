@@ -6103,6 +6103,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert 'data-recent-items-open="true"' in root.body
     assert 'data-recent-items-href="#recent-items"' in root.body
     assert 'aria-keyshortcuts="v"' in root.body
+    assert 'id="proof-open"' in root.body
+    assert 'data-proof-open="true"' in root.body
+    assert 'data-proof-href="/ci-evidence#record-ci-snapshot-json"' in root.body
+    assert 'data-proof-label="Record CI proof"' in root.body
+    assert 'data-proof-source="ci_evidence_record_form"' in root.body
+    assert 'data-proof-write-on-get="false"' in root.body
+    assert 'data-proof-provider-calls-taken="0"' in root.body
+    assert 'data-proof-network-actions-taken="0"' in root.body
+    assert 'data-proof-external-effects-created="false"' in root.body
+    assert 'aria-keyshortcuts="p"' in root.body
     assert "aria-keyshortcuts=\"/\"" in root.body
     assert 'aria-keyshortcuts="m"' in root.body
     assert "aria-keyshortcuts=\"t\"" in root.body
@@ -6156,7 +6166,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Keyboard shortcuts: question mark opens keyboard help" in root.body
     assert "slash opens command palette" in root.body
     assert "n opens next action" in root.body
-    assert "w opens workspace; a opens artifacts; v opens recent items; f opens Finish Today" in root.body
+    assert "w opens workspace; a opens artifacts; v opens recent items; p opens proof; f opens Finish Today" in root.body
     assert "m toggles focus mode" in root.body
     assert "id='shortcut-help-dialog'" in root.body
     assert "data-shortcut-help-dialog='true'" in root.body
@@ -6175,13 +6185,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "<kbd>w</kbd> <span>Open workspace</span>" in root.body
     assert "<kbd>a</kbd> <span>Open artifacts</span>" in root.body
     assert "<kbd>v</kbd> <span>Open recent items</span>" in root.body
+    assert "<kbd>p</kbd> <span>Open proof</span>" in root.body
     assert "<kbd>f</kbd> <span>Finish today</span>" in root.body
     assert "<kbd>m</kbd> <span>Toggle focus mode</span>" in root.body
     assert "<kbd>t</kbd> <span>Toggle theme</span>" in root.body
     assert "Shortcut help evidence" in root.body
     assert "data-shortcut-help-dialog-evidence='true'" in root.body
     assert "shortcut_help_open_keyboard</dt><dd>?" in root.body
-    assert "shortcut_help_shortcut_count</dt><dd>15" in root.body
+    assert "shortcut_help_shortcut_count</dt><dd>16" in root.body
     assert "shortcut_help_write_on_get</dt><dd>false" in root.body
     assert "shortcut_help_provider_calls_taken</dt><dd>0" in root.body
     assert "shortcut_help_network_actions_taken</dt><dd>0" in root.body
@@ -6244,12 +6255,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "var recentItemsOpen = document.getElementById(\"recent-items-open\");" in root.body
     assert "function openRecentItems()" in root.body
     assert 'if (recentItemsOpen) { recentItemsOpen.addEventListener("click", openRecentItems); }' in root.body
+    assert "var proofOpen = document.getElementById(\"proof-open\");" in root.body
+    assert "function openProof()" in root.body
+    assert 'if (proofOpen) { proofOpen.addEventListener("click", openProof); }' in root.body
     assert 'if (event.key === "n") { event.preventDefault(); openNextAction(); }' in root.body
     assert 'if (event.key === "r") { event.preventDefault(); window.location.href = "/resume"; }' in root.body
     assert 'if (event.key === "s") { event.preventDefault(); window.location.href = "/search"; }' in root.body
     assert 'if (event.key === "w") { event.preventDefault(); window.location.href = "/workspace"; }' in root.body
     assert 'if (event.key === "a") { event.preventDefault(); window.location.href = "/artifacts"; }' in root.body
     assert 'if (event.key === "v") { event.preventDefault(); openRecentItems(); }' in root.body
+    assert 'if (event.key === "p") { event.preventDefault(); openProof(); }' in root.body
     assert 'if (event.key === "f") { event.preventDefault(); openFinishToday(); }' in root.body
     assert 'if (event.key === "y") { event.preventDefault(); window.location.href = "/today"; }' in root.body
     assert 'if (event.key === "m") { event.preventDefault(); toggleFocusMode(); }' in root.body

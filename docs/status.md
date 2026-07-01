@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared browser shell now exposes a global `p` shortcut and header
+  `Proof` button that jumps directly to
+  `/ci-evidence#record-ci-snapshot-json`. It makes the evidence-recording step
+  reachable from every route alongside Next Action, Recent Items, and Finish
+  Today, while preserving no-write/no-provider/no-network/no-external-effect
+  boundaries until the operator explicitly submits an existing form. Local
+  proof includes a red/green focused route test, compile, and diff check.
 - The shared browser shell now exposes a global `v` shortcut and header
   `Recent` button for the existing Recent Items / Viewed Pages rail. The rail
   has a stable `#recent-items` anchor; activating the shortcut/button scrolls

@@ -248,6 +248,10 @@ Core layers for the bootstrap:
   fast-smoke or full-suite job names. Summary rows, proof workbench evidence,
   assistant evidence, and command evidence stay collapsed by default before
   the JSON paste form and evidence lists;
+  the shared browser shell exposes `Proof (p)` globally beside Next Action,
+  Recent Items, and Finish Today, routing explicit clicks/keypresses to
+  `/ci-evidence#record-ci-snapshot-json` with no app-side writes, provider
+  calls, network actions, or external effects on page render;
   `/search` for bounded global search across indexed goals, projects,
   delegations, known artifacts, incidents, recommendations, memory, runs,
   approvals, and skills, with goal results including live local phase, one
