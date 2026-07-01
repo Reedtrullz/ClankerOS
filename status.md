@@ -1,5 +1,27 @@
 # Status
 
+## 2026-07-01 Project Goal Action Entry UX
+
+- Updated project-level Goal entry cards so the Project Operator Workbench and
+  Project Goal Map route the lead Goal card to the concrete current Goal
+  action when one exists, for example
+  `/goals/<goal_id>#goal-action-dock-form` with `Create commit request`,
+  instead of broad `Open lead goal` / `Open Goal` links.
+- The Project Goal Map now reuses the same exact Goal action target for its
+  lead-card surface and no-waiting fallback, while preserving the broad lead
+  Goal identity link in evidence.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+- Non-claim: this is browser project-to-Goal navigation polish only. It does
+  not write on GET, approve work, execute tasks, run broad local verification,
+  commit, push, create PRs, deploy, call providers, use the network from the
+  app, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Recent Goal Item Action Label UX
 
 - Updated the Recent Items Command Bar so a populated Goal shortcut names the

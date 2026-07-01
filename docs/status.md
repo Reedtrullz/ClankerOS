@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Project-level Goal entry cards now route to the concrete current Goal action
+  when available. In the fixture demo, the Project Operator Workbench and
+  Project Goal Map lead cards open
+  `/goals/<goal_id>#goal-action-dock-form` as `Create commit request` instead
+  of broad `Open lead goal` / `Open Goal` copy. Local proof includes the
+  fixture-backed demo project/Goal route pytest (`1 passed`) plus compile and
+  whitespace checks.
 - Recent Items Command Bar Goal shortcuts now name the concrete Goal in the
   visible primary/card actions and collapsed evidence instead of generic
   `Open Goal` copy. The fixture demo now renders copy such as

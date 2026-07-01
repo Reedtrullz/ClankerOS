@@ -17296,7 +17296,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "project_workbench_reason</dt><dd>reviewed coder run can request commit approval" in project.body
     assert "project_workbench_unblock_surface</dt><dd><a href='/approvals'>Review approvals</a>" in project.body
     assert "project_workbench_unblock_reason</dt><dd>pending_project_approvals" in project.body
-    assert f"project_workbench_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>Open lead goal</a>" in project.body
+    assert (
+        "project_workbench_goal_surface</dt><dd>"
+        f"<a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in project.body
     assert "project_workbench_finish_surface</dt><dd><a href='#project-finish-today'>Finish Today</a>" in project.body
     assert "project_workbench_finish_form_available</dt><dd>true" in project.body
     assert "project_workbench_finish_confirmation_required</dt><dd>true" in project.body
@@ -17317,7 +17321,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"project_workbench_click: <a href='/runs/{result.coder_worktree_run_id}'>"
         f"/runs/{result.coder_worktree_run_id}</a>"
     ) in project.body
-    assert f"project_workbench_goal: <a href='/goals/{result.goal_id}'>Open lead goal</a>" in project.body
+    assert (
+        f"project_workbench_goal: <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in project.body
     assert "project_workbench_unblock: <a href='/approvals'>Review approvals</a>" in project.body
     assert "project_workbench_finish: <a href='#project-finish-today'>Finish Today</a>" in project.body
     assert "project_workbench_safety: confirmed local actions only; no write on GET" in project.body
@@ -17342,7 +17349,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"project_goal_map_latest_run</dt><dd>{result.coder_worktree_run_id}" in project.body
     assert "project_goal_map_pending_approvals</dt><dd>1" in project.body
     assert "project_goal_map_waiting_items</dt><dd>1" in project.body
-    assert f"project_goal_map_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>Open Goal</a>" in project.body
+    assert (
+        "project_goal_map_goal_surface</dt><dd>"
+        f"<a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in project.body
     assert (
         f"project_goal_map_workflow_surface</dt><dd><a href='/workflow?run_id={result.coder_worktree_run_id}'>"
         f"Open run {result.coder_worktree_run_id} workflow</a>"
@@ -17363,7 +17374,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "project_goal_map_provider_calls_taken</dt><dd>0" in project.body
     assert "project_goal_map_network_actions_taken</dt><dd>0" in project.body
     assert "project_goal_map_external_effects_created</dt><dd>false" in project.body
-    assert f"project_goal_map_card: lead surface=<a href='/goals/{result.goal_id}'>Open Goal</a>" in project.body
+    assert (
+        f"project_goal_map_card: lead surface=<a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in project.body
+    assert (
+        f"project_workbench_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        "Open lead goal</a>"
+        not in project.body
+    )
+    assert (
+        f"project_goal_map_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        "Open Goal</a>"
+        not in project.body
+    )
+    assert (
+        f"project_goal_map_card: lead surface=<a href='/goals/{result.goal_id}'>"
+        "Open Goal</a>"
+        not in project.body
+    )
     assert "project_goal_map_card: waiting surface=<a href='/approvals'>Review approvals</a>" in project.body
     assert "project_goal_map_safety: read-only project-to-goal guidance" in project.body
     assert "project_finish_status</dt><dd>available" in project.body

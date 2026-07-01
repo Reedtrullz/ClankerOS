@@ -34050,7 +34050,15 @@ def _project_operator_workbench(
         if lead_goal_id
         else "none"
     )
-    lead_goal_action_label = "Open lead goal" if lead_goal_id else "Start Goal"
+    if lead_goal_id:
+        lead_goal_action_href, lead_goal_action_label, _lead_goal_form_available = (
+            _workspace_goal_action_resume_target(root, lead_goal_id)
+        )
+        lead_goal_action_href = lead_goal_action_href or lead_goal_href
+        lead_goal_action_label = lead_goal_action_label or "Open lead goal"
+    else:
+        lead_goal_action_href = lead_goal_href
+        lead_goal_action_label = "Start Goal"
 
     if open_incidents or open_recommendations:
         unblock_href = "/incidents"
@@ -34105,7 +34113,7 @@ def _project_operator_workbench(
             "<div class='project-workbench-card'>",
             "<h3>Goal</h3>",
             f"<p>{_e(_compact_label(lead_goal_label, 80))}</p>",
-            f"<a class='project-workbench-link' href='{_e(lead_goal_href)}'>{_e(lead_goal_action_label)}</a>",
+            f"<a class='project-workbench-link' href='{_e(lead_goal_action_href)}'>{_e(lead_goal_action_label)}</a>",
             "</div>",
             "<div class='project-workbench-card'>",
             "<h3>Unblock</h3>",
@@ -34150,7 +34158,7 @@ def _project_operator_workbench(
                     ("project_workbench_unblock_reason", unblock_reason),
                     (
                         "project_workbench_goal_surface",
-                        SafeHtml(f"<a href='{_e(lead_goal_href)}'>{_e(lead_goal_action_label)}</a>"),
+                        SafeHtml(f"<a href='{_e(lead_goal_action_href)}'>{_e(lead_goal_action_label)}</a>"),
                     ),
                     (
                         "project_workbench_finish_surface",
@@ -34178,7 +34186,7 @@ def _project_operator_workbench(
                 [
                     f"project_workbench_now: {_e(next_action)}",
                     f"project_workbench_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
-                    f"project_workbench_goal: <a href='{_e(lead_goal_href)}'>{_e(lead_goal_action_label)}</a>",
+                    f"project_workbench_goal: <a href='{_e(lead_goal_action_href)}'>{_e(lead_goal_action_label)}</a>",
                     f"project_workbench_unblock: <a href='{_e(unblock_href)}'>{_e(unblock_label)}</a>",
                     "project_workbench_finish: <a href='#project-finish-today'>Finish Today</a>",
                     "project_workbench_safety: confirmed local actions only; no write on GET",
@@ -34476,7 +34484,6 @@ def _project_goal_map(
         if lead_goal_id
         else start_href
     )
-    lead_goal_action = "Open Goal" if lead_goal_id else "Start Goal"
     lead_state = _goal_state(root, storage, lead_goal_id) if lead_goal_id else None
     lead_phase = _goal_current_phase(lead_state) if lead_state is not None else "No Goal"
     lead_next = (
@@ -34484,6 +34491,15 @@ def _project_goal_map(
         if lead_state is not None
         else GoalNextAction("Create first project Goal", lead_goal_href, "project_has_no_goals")
     )
+    if lead_goal_id and lead_state is not None:
+        lead_goal_action_href, lead_goal_action, _lead_goal_form_available = (
+            _workspace_goal_action_resume_target(root, lead_goal_id, lead_state)
+        )
+        lead_goal_action_href = lead_goal_action_href or lead_goal_href
+        lead_goal_action = lead_goal_action or lead_next.action
+    else:
+        lead_goal_action_href = lead_goal_href
+        lead_goal_action = "Start Goal"
 
     pending_approvals = (
         _count_status(operator_state["worktree_approvals"], "pending_operator_approval")
@@ -34525,7 +34541,7 @@ def _project_goal_map(
         waiting_label = "Review recommendations"
         waiting_summary = f"{open_recommendations} recommendation(s)"
     else:
-        waiting_href = lead_goal_href
+        waiting_href = lead_goal_action_href
         waiting_label = lead_goal_action
         waiting_summary = "no waiting items"
 
@@ -34543,7 +34559,7 @@ def _project_goal_map(
             "lead",
             "Lead Goal",
             _compact_label(lead_goal_label, 92),
-            lead_goal_href,
+            lead_goal_action_href,
             lead_goal_action,
             "primary",
         ),
@@ -34633,7 +34649,7 @@ def _project_goal_map(
                     ("project_goal_map_waiting_items", str(waiting_items)),
                     (
                         "project_goal_map_goal_surface",
-                        SafeHtml(f"<a href='{_e(lead_goal_href)}'>{_e(lead_goal_action)}</a>"),
+                        SafeHtml(f"<a href='{_e(lead_goal_action_href)}'>{_e(lead_goal_action)}</a>"),
                     ),
                     (
                         "project_goal_map_workflow_surface",
