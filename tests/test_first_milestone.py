@@ -11728,6 +11728,19 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Remember Current Goal" in dashboard.body
     assert "save-workspace" in dashboard.body
     assert "operator-home" in dashboard.body
+    home_operator_resume_surface = f"/goals/{result.goal_id}#goal-action-dock-form"
+    home_resume_workspace_section = dashboard.body[
+        dashboard.body.index("Home Resume Workspace") :
+        dashboard.body.index("Home Recent Activity")
+    ]
+    assert (
+        f"home_resume_remember_resume_surface: <a href='{home_operator_resume_surface}'>"
+        "Create commit request</a>"
+    ) in home_resume_workspace_section
+    assert (
+        f"name='resume_surface' value='{home_operator_resume_surface}'"
+        in home_resume_workspace_section
+    )
     assert "data-home-day-plan='true'" in dashboard.body
     assert "home_day_plan_finish_status</dt><dd>needs_workspace_save" in dashboard.body
     assert "home_day_plan_finish_action</dt><dd>save-workspace" in dashboard.body

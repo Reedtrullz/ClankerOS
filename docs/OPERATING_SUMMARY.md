@@ -1159,7 +1159,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   next action, waiting counts, end-of-day resume readiness from saved
   workspace state, and a confirmed local `save-workspace` Finish Today form
   that records the lead goal, latest artifact, and exact current action
-  `resume_surface` as tomorrow's resume point after confirmation, a read-only
+  `resume_surface` as tomorrow's resume point after confirmation, a
+  `Home Resume Workspace` whose `Remember Current Goal` form now also stores
+  the lead Goal's exact current action `resume_surface` and exposes
+  `home_resume_remember_resume_surface` with the same action label,
+  a read-only
   `Home Attention Brief` with visible Now,
   Inbox, Approvals, Incidents, Recommendations, and Proof cards for existing
   approvals, incidents, recommendations, inbox load, and local CI proof posture

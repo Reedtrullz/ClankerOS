@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Root `/` Home Resume Workspace `Remember Current Goal` now saves the lead
+  Goal's exact current action route as `resume_surface`, for example
+  `/goals/<goal_id>#goal-action-dock-form`, instead of the broad Goal page.
+  Readback exposes `home_resume_remember_resume_surface` with labels such as
+  `Create commit request`. Local proof includes the fixture-backed demo Home
+  route pytest (`1 passed`).
 - Root `/` Home Day Plan Finish Today now saves the current concrete Goal
   action route as `resume_surface`, for example
   `/goals/<goal_id>#goal-action-dock-form`, alongside the lead Goal, filters,

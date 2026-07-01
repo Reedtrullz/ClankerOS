@@ -1,5 +1,24 @@
 # Status
 
+## 2026-07-01 Home Remember Current Goal Resume Surface UX
+
+- Updated the root `/` Home Resume Workspace `Remember Current Goal` form so
+  it saves the lead Goal's concrete current action route as `resume_surface`,
+  for example `/goals/<goal_id>#goal-action-dock-form`, instead of the broad
+  Goal page.
+- The Home Resume Workspace readback now exposes
+  `home_resume_remember_resume_surface` with the same operator-facing action
+  label as the Goal action dock, such as `Create commit request`.
+- Local verification:
+  - Added a failing-first fixture assertion for the Home Resume Workspace
+    hidden `resume_surface` and concrete readback, then updated the renderer.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this only improves the confirmed local workspace resume payload.
+  It does not write on GET, approve work, execute tasks, commit, push, create
+  PRs, deploy, call providers, use the network, or mutate external systems
+  from ClankerOS.
+
 ## 2026-07-01 Home Day Plan Resume Surface UX
 
 - Updated the root `/` Home Day Plan Finish Today form so it saves the current

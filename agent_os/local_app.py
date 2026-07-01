@@ -6308,6 +6308,24 @@ def _home_resume_workspace(root: Path, lead_goal: sqlite3.Row | None) -> str:
     if lead_goal is not None:
         lead_goal_id = str(lead_goal["id"])
         lead_project = str(lead_goal["project_id"] or "")
+        lead_goal_state = _goal_state(root, _storage(root), lead_goal_id)
+        lead_next_action = _goal_next_action(root, lead_goal_state)
+        lead_form_available = bool(_goal_next_action_form(lead_goal_state, lead_next_action))
+        remember_resume_surface = _goal_primary_action_href(
+            lead_goal_state,
+            lead_next_action,
+            form_available=lead_form_available,
+            absolute=True,
+        )
+        remember_resume_label = _goal_action_cta_label(
+            lead_next_action,
+            lead_form_available,
+            fallback=remember_resume_surface,
+        )
+        lines.append(
+            "home_resume_remember_resume_surface: "
+            f"<a href='{_e(remember_resume_surface)}'>{_e(remember_resume_label)}</a>"
+        )
         form = "".join(
             [
                 "<h3>Remember Current Goal</h3>",
@@ -6320,7 +6338,7 @@ def _home_resume_workspace(root: Path, lead_goal: sqlite3.Row | None) -> str:
                         "filters": filters or "active",
                         "expanded_panels": expanded or "timeline,evidence,approvals",
                         "last_viewed_artifact": last_artifact,
-                        "resume_surface": resume_surface or f"/goals/{quote(lead_goal_id)}",
+                        "resume_surface": remember_resume_surface,
                         "updated_by": "operator-home",
                     },
                 ),
