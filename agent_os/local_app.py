@@ -45246,6 +45246,18 @@ def _command_palette_quick_switch(
         workspace_label = resume_surface
         workspace_href = resume_surface
         workspace_action = _local_surface_action_label(resume_surface)
+        parsed_resume_surface = urlparse(resume_surface)
+        if (
+            parsed_resume_surface.path.startswith("/goals/")
+            and parsed_resume_surface.fragment == "goal-action-dock-form"
+        ):
+            workspace_action = _saved_workspace_surface_action_label(
+                root,
+                resume_surface,
+                open_goal=saved_goal,
+                open_project=saved_project,
+                fallback=workspace_action,
+            )
         workspace_source = "saved_surface"
     elif saved_goal:
         workspace_label = saved_goal

@@ -1,5 +1,24 @@
 # Status
 
+## 2026-07-01 Saved Goal Action Quick Switch CI Fix
+
+- Fixed the GitHub fast-smoke failure from run `28493458234` by extending the
+  saved exact Goal action route behavior to the command palette Quick Switch
+  workspace card when `resume_surface` is
+  `/goals/<goal_id>#goal-action-dock-form`.
+- The Quick Switch workspace card now labels that saved action route with the
+  concrete current action, such as `Create commit request`, while preserving
+  project-only saved routes as `Open saved project`.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q`:
+    1 passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this only changes local browser labeling and test coverage for
+  saved resume surfaces. It does not write on GET, approve work, execute tasks,
+  commit, push, create PRs, deploy, call providers, use the network, or mutate
+  external systems from ClankerOS.
+
 ## 2026-07-01 First Goal Creation Exact Action Resume UX
 
 - Updated confirmed `create-goal` handling so the first saved Goal workspace

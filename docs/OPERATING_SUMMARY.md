@@ -1051,7 +1051,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   Continue, Workspace, Action, Artifact, and Finish, so the keyboard launcher
   can reopen the current Goal, saved workspace, latest local action target,
   latest artifact, or the route-aware Finish Today handoff without expanding
-  the sidebar. The visible `Palette Results` list filters local routes and
+  the sidebar. Saved exact Goal action routes in that dock use the same
+  operator-facing current-action label as `/resume`, such as
+  `Create commit request`, while project-only saved routes keep their project
+  label. The visible `Palette Results` list filters local routes and
   recent work on input, supports ArrowDown/ArrowUp plus Enter for active local
   result navigation, and keeps full `/search` as the explicit fallback. It also starts with the same
   current-page route context, parent link, resolved Goal/Project/run context,

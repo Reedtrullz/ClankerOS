@@ -16870,7 +16870,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "resume_command_current_phase</dt><dd>Ready to commit" in resume.body
     assert "resume_command_current_gate</dt><dd>commit_request" in resume.body
     assert "resume_command_next_action</dt><dd>Create commit request" in resume.body
-    assert f"resume_command_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in resume.body
+    assert (
+        f"resume_command_next_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in resume.body
     assert "resume_command_action_form_available</dt><dd>true" in resume.body
     assert "resume_command_last_artifact</dt><dd><a href='/artifacts?path=" in resume.body
     assert "resume_command_progress</dt><dd>8/15 gates done" in resume.body
@@ -16918,7 +16921,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"resume_saved_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
         f"/goals/{result.goal_id}#goal-action-dock-form</a>"
     ) in resume.body
-    assert "Open saved Goal: Demo the ClankerOS local operator app with fixture-backed state" in resume.body
+    assert (
+        f"data-resume-hero-primary='true' href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in resume.body
+    assert (
+        f"data-command-palette-quick-workspace='true' href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in resume.body
+    assert (
+        f"resume_workbench_target_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in resume.body
     assert "Open saved surface" not in resume.body
     assert "Resume Next Action" in resume.body
     assert "resume_current_phase</dt><dd>Ready to commit" in resume.body

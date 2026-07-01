@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Saved exact Goal action routes now carry their concrete action label into
+  the command palette Quick Switch workspace card, for example
+  `Create commit request`, while project-only saved routes still say
+  `Open saved project`. This fixes the GitHub fast-smoke demo regression from
+  run `28493458234`; local proof includes the first-run/browser and
+  fixture-backed demo route pytests (`1 passed` each).
 - Confirmed `create-goal` now saves the first Goal's exact action-dock route
   as `resume_surface`, for example `/goals/<goal_id>#goal-action-dock-form`,
   instead of the broad Goal page. `/resume` uses that route as the primary
