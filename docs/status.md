@@ -4,6 +4,11 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Confirmed `save-goal-note` now saves the exact Goal operator-notes section
+  as `resume_surface`, for example `/goals/<goal_id>#goal-operator-notes`,
+  while keeping `operator-notes.md` as the last viewed artifact. `/resume`
+  reads back that notes-section route after the local note append. Local proof
+  includes the first-run/browser route pytest (`1 passed`).
 - Confirmed `save-workspace` POST now promotes an omitted or broad saved Goal
   `resume_surface` to the exact current action route, for example
   `/goals/<goal_id>#goal-action-dock-form`, before writing

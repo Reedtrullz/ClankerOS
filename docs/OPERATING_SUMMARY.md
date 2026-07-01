@@ -781,9 +781,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   appends local operator resume context to the artifact; saved operator notes
   also become linked `Operator note saved` entries in the Goal timeline and
   recent Activity Log with zero external effects, and the confirmed note action
-  now refreshes saved workspace state to the operator-notes artifact so
-  `/resume`, Home, and `/workspace` return to the note context without a
-  separate manual save. They also include a confirmed `delegate`
+  now refreshes saved workspace state to the exact
+  `/goals/<goal_id>#goal-operator-notes` surface plus the operator-notes
+  artifact so `/resume`, Home, and `/workspace` return to the note context
+  without a separate manual save. They also include a confirmed `delegate`
   next-action form when a goal has planned tasks but no delegation yet. If a
   goal needs to be shelved, the Goal Daily Loop and `/today` expose confirmed
   `pause-goal`; if a goal is explicitly paused, the Goal page shows a `Paused`

@@ -39798,7 +39798,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                     "open_project": result["project_id"],
                     "open_goal": result["goal_id"],
                     "last_viewed_artifact": result["note_path"],
-                    "resume_surface": f"/goals/{quote(result['goal_id'])}",
+                    "resume_surface": f"/goals/{quote(result['goal_id'])}#goal-operator-notes",
                     "updated_by": "save-goal-note",
                 },
             )

@@ -1,5 +1,23 @@
 # Status
 
+## 2026-07-01 Goal Note Exact Resume Surface UX
+
+- Updated confirmed `save-goal-note` handling so saving a Goal operator note
+  stores the Goal's operator-notes section as `resume_surface`, for example
+  `/goals/<goal_id>#goal-operator-notes`, instead of the broad Goal page.
+- The saved workspace still remembers `operator-notes.md` as the last viewed
+  artifact, while `/resume` now exposes the exact notes-section route as the
+  saved surface.
+- Local verification:
+  - Added failing-first fixture assertions for the saved note workspace JSON
+    and `/resume` saved-surface readback, then updated the POST handler.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed.
+- Non-claim: this only changes confirmed local Goal note workspace state. It
+  does not write on GET, approve work, execute tasks, commit, push, create
+  PRs, deploy, call providers, use the network, or mutate external systems
+  from ClankerOS.
+
 ## 2026-07-01 Save Workspace POST Exact Resume Fallback UX
 
 - Updated confirmed `save-workspace` POST handling so a saved Goal workspace

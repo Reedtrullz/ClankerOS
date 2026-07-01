@@ -7987,9 +7987,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert note_workspace["open_project"] == "first-target"
     assert note_workspace["open_goal"] == created_goal_id
     assert note_workspace["last_viewed_artifact"] == str(note_path.relative_to(tmp_path))
+    assert note_workspace["resume_surface"] == f"/goals/{created_goal_id}#goal-operator-notes"
     assert note_workspace["updated_by"] == "save-goal-note"
     note_resume_page = render_local_app_route(tmp_path, "/resume")
     assert "resume_current_phase</dt><dd>Ready for delegation" in note_resume_page.body
+    assert (
+        f"resume_saved_surface</dt><dd><a href='/goals/{created_goal_id}#goal-operator-notes'>"
+        f"/goals/{created_goal_id}#goal-operator-notes</a>"
+    ) in note_resume_page.body
     assert f".clanker/projects/first-target/goals/{created_goal_id}/operator-notes.md" in (
         note_resume_page.body
     )
