@@ -11826,6 +11826,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_activity_latest_surface</dt><dd><a href='" in dashboard.body
     assert "home_activity_goals_surface</dt><dd><a href='/goals'>Open goals</a>" in dashboard.body
     assert "home_activity_artifact_surface</dt><dd><a href='" in dashboard.body
+    assert "home_activity_artifact_surface</dt><dd><a href='/artifacts?path=" in dashboard.body
+    assert f"Open coder run {result.coder_worktree_run_id}" in dashboard.body
+    home_activity_artifact_card = dashboard.body[
+        dashboard.body.index("data-home-activity-artifacts='true'") :
+        dashboard.body.index("data-home-activity-notes='true'")
+    ]
+    assert f"Open coder run {result.coder_worktree_run_id}" in home_activity_artifact_card
+    assert "Open artifact</a>" not in home_activity_artifact_card
     assert "home_activity_note_surface</dt><dd><a href='" in dashboard.body
     assert "Execution completed" in dashboard.body
     assert "Home Inbox" in dashboard.body

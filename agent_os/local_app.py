@@ -6412,7 +6412,11 @@ def _home_activity_command_bar(items: list[dict[str, str]]) -> str:
         or str(item.get("href") or "").startswith("/artifacts?path=")
     )
     artifact_href = latest_artifact.get("href") or "/search?q=artifact"
-    artifact_label = "Open artifact" if latest_artifact else "Search artifacts"
+    artifact_label = (
+        _timeline_artifact_action_label(latest_artifact, fallback="Open artifact")
+        if latest_artifact
+        else "Search artifacts"
+    )
     note_href = latest_note.get("href") or "/memory"
     note_label = "Open note" if latest_note else "Open memory"
     latest_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>")
@@ -6476,7 +6480,28 @@ def _home_recent_activity_items(root: Path, storage: Storage) -> list[dict[str, 
     for row in _goal_rows(storage, limit=12):
         state = _goal_state(root, storage, str(row["id"]))
         label = str(row["title"] or row["description"] or row["id"])
-        for item in _goal_timeline_items(root, state)[-5:]:
+        goal_items = [dict(item) for item in _goal_timeline_items(root, state)[-5:]]
+        latest_artifact = _goal_latest_artifact_record(root, state)
+        if latest_artifact is not None:
+            artifact_href = _artifact_href(root, latest_artifact["path"])
+            artifact_item = next(
+                (item for item in goal_items if item.get("href") == artifact_href),
+                None,
+            )
+            if artifact_item is None:
+                goal_items.append(
+                    {
+                        "at": _artifact_time(root, latest_artifact["path"])
+                        or str(row["updated_at"] or ""),
+                        "message": f"Artifact recorded: {latest_artifact['label']}.",
+                        "href": artifact_href,
+                        "kind": "artifact",
+                    }
+                )
+            else:
+                artifact_item["kind"] = "artifact"
+                artifact_item["message"] = f"Artifact recorded: {latest_artifact['label']}."
+        for item in goal_items:
             copy = dict(item)
             copy["message"] = f"{_compact_label(label, 42)}: {copy.get('message', '')}"
             items.append(copy)
@@ -21359,6 +21384,21 @@ def _timeline_item_action_label(
     if target and target != "local":
         return f"Open {target}"
     return fallback
+
+
+def _timeline_artifact_action_label(
+    item: dict[str, str],
+    *,
+    fallback: str = "Open artifact",
+) -> str:
+    message = str(item.get("message") or "").strip()
+    prefix = "Artifact recorded:"
+    prefix_index = message.lower().find(prefix.lower())
+    if prefix_index >= 0:
+        target = message[prefix_index + len(prefix) :].strip().rstrip(".")
+        if target:
+            return _compact_label(f"Open {target}", 84)
+    return _timeline_item_action_label(item, fallback=fallback)
 
 
 def _goal_activity_log(root: Path, state: dict[str, Any]) -> str:

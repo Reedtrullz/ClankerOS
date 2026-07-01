@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Root `/` Home Recent Activity now carries the latest Goal artifact into the
+  Artifacts card even when newer run/approval events fill the recent timeline
+  window. The card and `home_activity_artifact_surface` evidence route to the
+  exact bounded `/artifacts?path=...` target with labels such as
+  `Open coder run <run_id> review`, instead of falling back to `Search artifacts`
+  or generic `Open artifact` copy. Local proof includes the fixture-backed demo
+  Home route pytest (`1 passed`).
 - `/goals/<goal_id>` scan-first history surfaces now name latest artifact
   actions in `Goal Activity Pulse` and `Goal Timeline Digest`, such as
   `Open coder run <run_id> review`, instead of `Open artifact` or

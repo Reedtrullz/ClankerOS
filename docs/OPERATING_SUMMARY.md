@@ -1146,8 +1146,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   browser-local Find box, lane mode buttons, live match count, first-match
   jump, no-match empty state, visible View status, reload persistence in
   `localStorage:clankeros-home-goal-board-view`, and reset coverage in
-  `/workspace#workspace-view-memory`. It continues with recent activity,
-  inbox counts, recommendations,
+  `/workspace#workspace-view-memory`. It continues with recent activity whose
+  Artifacts card carries the latest Goal artifact from the bounded artifact
+  registry into a concrete `/artifacts?path=...` action such as
+  `Open coder run <run_id> review`, even when newer run/approval events fill
+  the recent timeline window, inbox counts, recommendations,
   incidents, saved workspace resume links, saved-goal phase and next-action
   readbacks, a read-only `Start Here` cockpit that condenses the
   lead goal or first-run step, one primary action, target surface, resume

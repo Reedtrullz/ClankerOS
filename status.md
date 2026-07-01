@@ -1,5 +1,24 @@
 # Status
 
+## 2026-07-01 Home Recent Activity Artifact UX
+
+- Updated the root `/` Home Recent Activity command card so the Artifacts card
+  carries the latest Goal artifact even when the bounded recent timeline window
+  is full of newer run/approval events.
+- The card and collapsed `home_activity_artifact_surface` evidence now route to
+  the exact bounded `/artifacts?path=...` target and use concrete copy such as
+  `Open coder run <run_id> review` instead of falling back to `Search artifacts`
+  or generic `Open artifact` labels.
+- Local verification:
+  - Added failing-first assertions against the fixture-backed demo Home page,
+    then updated the Home activity builder and artifact action label helper.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this is browser copy/routing polish only. It does not read raw
+  filesystem paths outside the bounded artifact viewer, run verification,
+  approve work, execute tasks, commit, push, create PRs, deploy, call providers,
+  use the network, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Goal Timeline Artifact Action Label UX
 
 - Updated `/goals/<goal_id>` scan-first Goal history surfaces so latest
