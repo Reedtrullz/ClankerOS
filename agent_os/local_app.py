@@ -46265,7 +46265,10 @@ def _command_palette(
     current_path: str,
     title: str,
 ) -> str:
-    commands = [(label, href, "route") for label, href in NAV_ITEMS]
+    current_action_links, current_action_context = _command_palette_current_action_links(
+        focus_context
+    )
+    commands = [*current_action_links, *[(label, href, "route") for label, href in NAV_ITEMS]]
     commands.extend(_recent_operator_links(root, limit=6))
     goal_section_links, goal_section_context = _command_palette_goal_section_links(
         root,
@@ -46294,6 +46297,8 @@ def _command_palette(
         result_rows.append(
             f"<li id='command-palette-result-{result_index}' "
             f"class='palette-result-item{active_class}' data-palette-result='true' "
+            f"data-palette-result-kind='{_e(kind)}' "
+            f"data-palette-result-href='{_e(href)}' "
             f"data-palette-result-index='{result_index}' "
             f"data-palette-search-text='{_e(search_text)}' role='option' "
             f"aria-selected='{selected}'>"
@@ -46345,6 +46350,8 @@ def _command_palette(
                     ("palette_filter_result_count", str(result_count)),
                     ("palette_filter_source", "nav_recent_goal_and_today_sections"),
                     ("palette_filter_scope", "browser_local_commands"),
+                    ("palette_filter_current_action", current_action_context["status"]),
+                    ("palette_filter_current_action_surface", current_action_context["surface"]),
                     ("palette_filter_goal_section_count", str(len(goal_section_links))),
                     ("palette_filter_goal_section_source", goal_section_context["source"]),
                     ("palette_filter_goal_section_goal", goal_section_context["goal"]),
@@ -46362,6 +46369,7 @@ def _command_palette(
                 [
                     "palette_filter_action: type in command-palette-search",
                     "palette_filter_keyboard: ArrowDown/ArrowUp move active result; Enter opens active local command",
+                    *current_action_context["lines"],
                     *goal_section_context["lines"],
                     *today_section_context["lines"],
                     "palette_filter_route_history: browser-local viewed pages are added after localStorage readback",
@@ -46388,6 +46396,45 @@ def _command_palette(
             "</dialog>",
         ]
     )
+
+
+def _command_palette_current_action_links(
+    focus_context: dict[str, Any],
+) -> tuple[list[tuple[str, str, str]], dict[str, Any]]:
+    if (
+        str(focus_context.get("status") or "") != "available"
+        or not isinstance(focus_context.get("next_action"), GoalNextAction)
+        or not isinstance(focus_context.get("goal_state"), dict)
+    ):
+        return [], {
+            "status": "unavailable",
+            "surface": "none",
+            "lines": ["palette_current_action_command: none"],
+        }
+
+    next_action = focus_context["next_action"]
+    goal_state = focus_context["goal_state"]
+    href = _goal_primary_action_href(
+        goal_state,
+        next_action,
+        form_available=bool(focus_context.get("action_form")),
+        absolute=True,
+    )
+    if not href:
+        return [], {
+            "status": "unavailable",
+            "surface": "none",
+            "lines": ["palette_current_action_command: none"],
+        }
+
+    surface = SafeHtml(f"<a href='{_e(href)}'>{_e(next_action.action)}</a>")
+    return [(next_action.action, href, "current-action")], {
+        "status": "available",
+        "surface": surface,
+        "lines": [
+            f"palette_current_action_command: surface=<a href='{_e(href)}'>{_e(next_action.action)}</a>"
+        ],
+    }
 
 
 def _command_palette_route_history_panel() -> str:

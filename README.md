@@ -950,9 +950,13 @@ current page. Its Continue and Action cards use the exact current action copy,
 such as `Create commit request`, instead of generic "run current action"
 labels. The search box also narrows a visible `Palette Results` list of
 local routes, recent work, and the focused Goal's core section anchors as you
-type, so `timeline`, `approval`, `artifact`, `memory`, `git`, or `remaining`
-can jump straight into the Goal page without scanning. ArrowDown/ArrowUp move
-through visible local commands and Enter opens the active local result, while
+type. When a Goal action exists, the list prepends that exact Current Action
+as `current-action` with the Goal action dock href, so typing action text such
+as `commit` can open the live Goal action before broader route matches.
+Queries like `timeline`, `approval`, `artifact`, `memory`, `git`, or
+`remaining` can still jump straight into the Goal page without scanning.
+ArrowDown/ArrowUp move through visible local commands and Enter opens the
+active local result, while
 the Search button remains the full indexed `/search` fallback. Browser-local viewed
 pages are appended to the same palette results after localStorage readback, so
 recent route hops are searchable from `/` without a server write. The palette

@@ -1,5 +1,28 @@
 # Status
 
+## 2026-07-01 Command Palette Current Action Result UX
+
+- The command palette's filterable `Palette Results` list now prepends the
+  live Goal action when a Goal action exists, using `kind=current-action` and
+  the absolute Goal action dock href.
+- This makes the keyboard launcher behave like an action surface: filtering
+  for action text such as `commit` finds `Create commit request` before static
+  route matches.
+- TDD evidence: the fixture-backed demo scenario failed first because the
+  populated Home command palette had no `current-action` result row for the
+  Goal action dock, then passed after `_command_palette_current_action_links`
+  inserted the current action command from the shared focus context.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed after implementation.
+- Non-claim: this is read-only command palette routing only. It does not write
+  on GET, approve work, execute tasks, call providers, use the network, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Recent Items Current Action List UX
 
 - The shared Recent Items rail now inserts the live Goal action into the

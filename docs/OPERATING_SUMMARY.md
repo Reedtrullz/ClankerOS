@@ -773,8 +773,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   continuing the current Goal action, searching local state, resuming the saved
   workspace, or staying on the current page. Its search box narrows a visible
   `Palette Results` list of local routes, recent work, the focused Goal's
-  core section anchors, and route-local `/today` section anchors in place,
-  with a no-match state and zero-effect evidence. ArrowDown/ArrowUp move the
+  exact Current Action when available, core section anchors, and route-local
+  `/today` section anchors in place, with a no-match state and zero-effect
+  evidence. The Current Action result uses `kind=current-action` and the Goal
+  action dock href, so action text such as `commit` opens the live Goal action
+  before static route matches. ArrowDown/ArrowUp move the
   active visible command and Enter opens that local route or anchor, while the
   Search button still opens full indexed `/search`. This makes palette queries such as
   `timeline`, `approval`, `artifact`, `memory`, `git`, `remaining`,
@@ -1081,8 +1084,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   operator-facing current-action label as `/resume`, such as
   `Create commit request`, while project-only saved routes keep their project
   label. The visible `Palette Results` list filters local routes and
-  recent work on input, supports ArrowDown/ArrowUp plus Enter for active local
-  result navigation, and keeps full `/search` as the explicit fallback. It also
+  recent work on input, prepends the live Goal action as `current-action` when
+  available, supports ArrowDown/ArrowUp plus Enter for active local result
+  navigation, and keeps full `/search` as the explicit fallback. It also
   includes a browser-local Last Artifact result backed by
   `localStorage:clankeros-last-artifact`, so keyboard-first resume can reopen
   the last viewed artifact before canonical workspace save. It starts with the same

@@ -698,8 +698,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Continue and Action entries name the exact current action, such as
   `Create commit request`, instead of generic current-action plumbing copy.
   Its search box now narrows a visible `Palette Results` list of local routes
-  and recent work as the operator types, and it now adds the focused Goal's core
-  section anchors so queries like `timeline`, `approval`, `artifact`, `memory`,
+  and recent work as the operator types. When a Goal action exists, the list
+  prepends the exact Current Action as `current-action` with the Goal action
+  dock href, so filtering for action text can open the live Goal action before
+  broader route matches. It also adds the focused Goal's core section anchors
+  so queries like `timeline`, `approval`, `artifact`, `memory`,
   `git`, or `remaining` can jump straight to the Goal page. ArrowDown/ArrowUp
   move through visible local commands, and Enter opens the active local result.
   Browser-local

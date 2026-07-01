@@ -12325,6 +12325,19 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "palette_focus_write_on_get</dt><dd>false" in dashboard.body
     assert "palette_focus_network_actions_taken</dt><dd>0" in dashboard.body
     assert "palette_focus_external_effects_created</dt><dd>false" in dashboard.body
+    assert (
+        "data-palette-result='true' data-palette-result-kind='current-action' "
+        f"data-palette-result-href='/goals/{result.goal_id}#goal-action-dock-form'"
+    ) in dashboard.body
+    assert (
+        f"data-palette-search-text='create commit request /goals/{result.goal_id}#goal-action-dock-form current-action'"
+        in dashboard.body
+    )
+    assert "palette_filter_current_action</dt><dd>available" in dashboard.body
+    assert (
+        f"palette_filter_current_action_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in dashboard.body
     assert "data-command-palette-quick-switch='true'" in dashboard.body
     assert "data-command-palette-quick-switch-cards='true'" in dashboard.body
     assert (
