@@ -1,5 +1,26 @@
 # Status
 
+## 2026-07-01 Resume Tomorrow Result Receipt UX
+
+- Confirmed local action result pages now lead the saved workspace receipt with
+  `Resume Tomorrow`, making the return path after a successful local action
+  feel like the next human move instead of an implementation readback.
+- Preserved the existing `Action Resume Receipt` contract and added
+  `action_resume_tomorrow_*` evidence rows for readiness, saved surface,
+  primary label, latest artifact, and zero-effect counters.
+- TDD evidence: the focused route smoke test failed first on the missing
+  `Resume Tomorrow` label and `data-action-resume-tomorrow='true'` marker,
+  then passed after the result receipt was promoted.
+- Local verification:
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after the implementation.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface -q --tb=short`:
+    2 passed after preserving the older receipt-primary link shape.
+- Non-claim: this is action-result resume UX only. It does not write workspace
+  JSON on GET, approve work, execute tasks, deploy, call providers, use the
+  network from the app, create PRs, push from the app, or mutate external
+  systems from ClankerOS.
+
 ## 2026-07-01 Workspace Last Artifact Save Promotion UX
 
 - Shared `save-workspace` / Finish Today forms now advertise and hydrate a

@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Confirmed local action result pages now lead the saved workspace receipt with
+  a visible `Resume Tomorrow` section and primary return link. The older
+  `Action Resume Receipt` evidence remains in place, now with
+  `action_resume_tomorrow_*` rows for readiness, surface, artifact, and
+  zero-effect counters. Local proof includes a red/green focused route smoke
+  test plus the Today Finish path (`2 passed` together).
 - Shared `save-workspace` / Finish Today forms now bridge browser-local Last
   Artifact memory into the durable workspace save path. If this browser has
   `localStorage:clankeros-last-artifact`, the `last_viewed_artifact` field is
@@ -1032,11 +1038,12 @@ Latest status focus:
   after the `Workflow Operator Workbench`, with direct cards for the primary
   pickup, recent delegations, recent coder runs, parent Goal, and safety
   evidence before the journey rail.
-- Confirmed local action result pages now include an `Action Resume Receipt`
+- Confirmed local action result pages now include a `Resume Tomorrow` receipt
   immediately after `Action Complete`, so operators can see the saved
   `.clanker/app/workspace.json` resume route, project/Goal, artifact, last
   action/result, updater, readiness, and zero-effect boundary before dense
-  payload details.
+  payload details. The older `Action Resume Receipt` label remains as the
+  evidence contract for review and automation.
 - Confirmation pages now open with a read-only `Action Preflight` before the
   existing confirmation review. It turns the final browser safety checkpoint
   into visible Confirm, Returns, Local Write, Context, and Boundary cards,

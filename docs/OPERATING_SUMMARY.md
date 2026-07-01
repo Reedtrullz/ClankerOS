@@ -1426,10 +1426,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   command bar and turns the refreshed first-run or saved-Goal state into the
   next visible operator move, rendering the same confirmed browser form inline
   when one exists while preserving the confirmation boundary before local
-  writes or local execution. An `Action Resume Receipt` follows and reads
-  `.clanker/app/workspace.json` back as Resume, Context, Artifact, Last
-  Action, and Boundary cards, with collapsed evidence for the saved project,
-  Goal, exact resume surface, latest artifact, updater, last action/result,
+  writes or local execution. A `Resume Tomorrow` receipt follows and reads
+  `.clanker/app/workspace.json` back as the operator's return path, with
+  visible Resume Tomorrow, Context, Artifact, Last Action, and Boundary cards.
+  Its `Action Resume Receipt` evidence preserves the saved project, Goal,
+  exact resume surface, latest artifact, updater, last action/result,
   readiness, and zero-effect counters, before preserving the submitted payload,
   local result fields, artifact links, next-page link, safety boundary, and an
   `Action Continuation` block from the refreshed saved goal state with phase,

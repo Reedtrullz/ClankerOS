@@ -1346,12 +1346,12 @@ rendered inline while preserving the same confirmation screen before any local
 write or local execution. Confirmed actions still render `Action Result
 Details` with the attempted action, submitted payload, result fields, artifact
 links when paths are returned, a next-page link, and the safety boundary.
-Before those dense details, the result page also includes an `Action Resume
-Receipt` that reads the
-saved workspace back as visible Resume, Context, Artifact, Last Action, and
-Boundary cards, with collapsed evidence for the exact `resume_surface`, saved
-project/Goal, latest artifact, updater, last action/result, readiness, and
-zero-effect counters. They also render an
+Before those dense details, the result page also includes a `Resume Tomorrow`
+receipt that reads the saved workspace back as the operator's return path with
+visible Resume Tomorrow, Context, Artifact, Last Action, and Boundary cards.
+Its `Action Resume Receipt` evidence preserves the exact `resume_surface`,
+saved project/Goal, latest artifact, updater, last action/result, readiness,
+and zero-effect counters. They also render an
 `Action Continuation` block from the refreshed saved goal state, including the
 current phase, one next action, target surface, and the same confirmed local
 action form when available, so the operator can keep moving without guessing

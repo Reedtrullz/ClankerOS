@@ -41974,12 +41974,23 @@ def _action_result_resume_receipt_section(
     context_label = goal_label if open_goal else (open_project or "no saved context")
     return "".join(
         [
-            "<section id='action-resume-receipt' class='panel action-resume-receipt' data-action-resume-receipt='true'><h2>Action Resume Receipt</h2>",
-            "<p class='muted'>This is the saved return point after the confirmed local action.</p>",
+            (
+                "<section id='action-resume-receipt' class='panel action-resume-receipt' "
+                "data-action-resume-receipt='true' data-action-resume-tomorrow='true'>"
+                "<h2>Resume Tomorrow</h2>"
+            ),
+            "<p class='muted'><strong>Action Resume Receipt</strong>: this is the saved return point after the confirmed local action.</p>",
             "<div class='action-resume-receipt-grid' data-action-resume-receipt-cards='true'>",
-            "<article class='action-resume-receipt-card action-resume-receipt-primary'><h3>Resume</h3>",
+            (
+                "<article class='action-resume-receipt-card action-resume-receipt-primary' "
+                "data-action-resume-tomorrow-primary='true'><h3>Resume Tomorrow</h3>"
+            ),
             f"<p>{_e(resume_action_label)}</p>",
-            f"<a class='action-resume-receipt-action' data-action-resume-receipt-primary='true' href='{_e(resume_href)}'>{_e(resume_action_label)}</a></article>",
+            (
+                f"<a class='action-resume-receipt-action' data-action-resume-receipt-primary='true' "
+                f"href='{_e(resume_href)}'>"
+                f"{_e(resume_action_label)}</a></article>"
+            ),
             "<article class='action-resume-receipt-card'><h3>Context</h3>",
             f"<p>{_e(context_label)}</p>",
             "<a class='action-resume-receipt-link' href='#action-resume-receipt-evidence'>Saved context</a></article>",
@@ -42002,6 +42013,19 @@ def _action_result_resume_receipt_section(
                     ("action_resume_receipt_action", action),
                     ("action_resume_receipt_result", message),
                     ("action_resume_receipt_primary_label", resume_action_label),
+                    ("action_resume_tomorrow_status", str(readiness["status"])),
+                    ("action_resume_tomorrow_source", ".clanker/app/workspace.json"),
+                    ("action_resume_tomorrow_ready", str(readiness["ready"]).lower()),
+                    ("action_resume_tomorrow_primary_label", resume_action_label),
+                    (
+                        "action_resume_tomorrow_surface",
+                        SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"),
+                    ),
+                    ("action_resume_tomorrow_artifact", artifact_surface),
+                    ("action_resume_tomorrow_write_on_get", "false"),
+                    ("action_resume_tomorrow_provider_calls_taken", "0"),
+                    ("action_resume_tomorrow_network_actions_taken", "0"),
+                    ("action_resume_tomorrow_external_effects_created", "false"),
                     ("action_resume_receipt_open_project", project_surface),
                     ("action_resume_receipt_open_goal", goal_surface if open_goal else "none"),
                     ("action_resume_receipt_goal_id", open_goal or "none"),
@@ -42035,6 +42059,7 @@ def _action_result_resume_receipt_section(
             ),
             _ul(
                 [
+                    f"action_resume_tomorrow_open: <a href='{_e(resume_href)}'>{_e(resume_action_label)}</a>",
                     f"action_resume_receipt_saved_point: <a href='{_e(resume_href)}'>{_e(resume_action_label)}</a>",
                     f"action_resume_receipt_context: project={_e(open_project or 'none')} goal={_e(open_goal or 'none')}",
                     f"action_resume_receipt_artifact: {artifact_surface}",

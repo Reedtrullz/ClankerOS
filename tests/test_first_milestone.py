@@ -7409,14 +7409,32 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert workspace_result.status == 200
     assert "workspace_saved" in workspace_result.body
     assert "Return point saved" in workspace_result.body
+    assert "Resume Tomorrow" in workspace_result.body
+    assert "data-action-resume-tomorrow='true'" in workspace_result.body
+    assert "data-action-resume-tomorrow-primary='true'" in workspace_result.body
     assert "Action Resume Receipt" in workspace_result.body
     assert "data-action-resume-receipt='true'" in workspace_result.body
     assert workspace_result.body.index("Return point saved") < workspace_result.body.index(
+        "Resume Tomorrow"
+    )
+    assert workspace_result.body.index("Resume Tomorrow") < workspace_result.body.index(
         "Action Resume Receipt"
     )
     assert workspace_result.body.index("Action Resume Receipt") < workspace_result.body.index(
         "Action Result Details"
     )
+    assert "action_resume_tomorrow_status</dt><dd>ready" in workspace_result.body
+    assert "action_resume_tomorrow_source</dt><dd>.clanker/app/workspace.json" in workspace_result.body
+    assert "action_resume_tomorrow_ready</dt><dd>true" in workspace_result.body
+    assert (
+        "action_resume_tomorrow_surface</dt><dd>"
+        "<a href='/goals/goal_demo#goal-timeline-command-bar'>"
+        "/goals/goal_demo#goal-timeline-command-bar</a>"
+    ) in workspace_result.body
+    assert "action_resume_tomorrow_write_on_get</dt><dd>false" in workspace_result.body
+    assert "action_resume_tomorrow_provider_calls_taken</dt><dd>0" in workspace_result.body
+    assert "action_resume_tomorrow_network_actions_taken</dt><dd>0" in workspace_result.body
+    assert "action_resume_tomorrow_external_effects_created</dt><dd>false" in workspace_result.body
     assert "action_resume_receipt_status</dt><dd>saved_workspace" in workspace_result.body
     assert "action_resume_receipt_source</dt><dd>.clanker/app/workspace.json" in workspace_result.body
     assert "action_resume_receipt_workspace_available</dt><dd>true" in workspace_result.body
@@ -20641,6 +20659,12 @@ def test_today_finish_today_saves_exact_resume_surface(tmp_path: Path) -> None:
     )
     assert saved.status == 200
     assert "workspace_saved" in saved.body
+    assert "Resume Tomorrow" in saved.body
+    assert "data-action-resume-tomorrow='true'" in saved.body
+    assert "data-action-resume-tomorrow-primary='true'" in saved.body
+    assert "action_resume_tomorrow_status</dt><dd>ready" in saved.body
+    assert "action_resume_tomorrow_ready</dt><dd>true" in saved.body
+    assert "action_resume_tomorrow_primary_label</dt><dd>Open Today current action" in saved.body
     assert "Action Resume Receipt" in saved.body
     assert "action_resume_receipt_updated_by</dt><dd>today-command-center" in saved.body
     assert (

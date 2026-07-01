@@ -1243,10 +1243,11 @@ artifact, confirmation source, and zero-effect counters. An
 refreshed next operator move before the dense result details. When that next
 move has a confirmed browser form, the panel renders it inline and keeps the
 same confirmation screen in front of any local write or local execution. An
-`Action Resume Receipt` follows, reading `.clanker/app/workspace.json` back as
-visible Resume, Context, Artifact, Last Action, and Boundary cards with
-collapsed evidence for the saved project, Goal, exact `resume_surface`, latest
-artifact, updater, last action/result, readiness, and zero-effect counters. The existing
+`Resume Tomorrow` follows, reading `.clanker/app/workspace.json` back as the
+operator's return path with visible Resume Tomorrow, Context, Artifact, Last
+Action, and Boundary cards. Its `Action Resume Receipt` evidence keeps the
+saved project, Goal, exact `resume_surface`, latest artifact, updater, last
+action/result, readiness, and zero-effect counters. The existing
 `Action Result Details` section remains below it with the payload, result
 fields, artifact links, next-page link, and safety boundary. Successful
 results also show an
