@@ -1,5 +1,38 @@
 # Status
 
+## 2026-07-01 Artifact Index UX
+
+- Turned bare `/artifacts` from a missing-path error into a read-only global
+  Artifact Index over ClankerOS-known artifact paths, while preserving
+  `/artifacts?path=...` as the bounded inert single-artifact viewer.
+- Added artifact command cards for Open, Latest, Inventory, Types, and Safety,
+  plus a browser-local type/source/text filter that reuses the existing
+  artifact filter behavior with `localStorage:clankeros-artifact-index-filter`.
+- Expanded known artifacts to include coder worktree review/evidence files,
+  app status/workspace artifacts, and existing memory/status artifacts when
+  present, so the index surfaces the run-review files operators actually need
+  during daily browser work.
+- Search suggestions and shell navigation now expose `/artifacts` directly as
+  `Browse artifacts`; when local artifact evidence exists, Search no longer
+  falls back to empty first-run suggestions.
+- GitHub Actions note: previous run `28499347667` for commit
+  `c22fe3a53f537edde7368f9a5c38cb44c8023934` is now fully successful, with
+  both fast smoke and full pytest jobs green.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py status.md docs/status.md`:
+    passed.
+- Non-claim: this is browser artifact index/navigation/filter UX only. It does
+  not broaden artifact access beyond known repo-relative artifact paths, write
+  on GET, execute artifact content, approve work, execute tasks, deploy, call
+  providers, use the network from the app, create PRs, push from the app, or
+  mutate external systems from ClankerOS.
+
 ## 2026-07-01 Deterministic Timeline Latest UX
 
 - Added a stable Goal timeline tie-breaker so same-second lifecycle events,

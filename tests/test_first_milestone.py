@@ -6110,7 +6110,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "aria-keyshortcuts='w'" in root.body
     assert 'data-shell-nav="true"' in root.body
     assert 'data-shell-nav-primary-count="7"' in root.body
-    assert 'data-shell-nav-secondary-count="15"' in root.body
+    assert 'data-shell-nav-secondary-count="16"' in root.body
     assert "data-shell-nav-primary='true'" in root.body
     assert (
         "<a href='/' aria-current='page' data-shortcut='h' "
@@ -6121,6 +6121,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert ".shell-nav-more:not([open]) > .shell-nav-more-menu { display:none; }" in root.body
     assert ".shell-nav { flex:0 1 auto; width:100%; }" in root.body
     assert "<a href='/actions'>Actions</a>" in root.body
+    assert "<a href='/artifacts'>Artifacts</a>" in root.body
     assert 'id="next-action-open"' in root.body
     assert 'aria-keyshortcuts="n"' in root.body
     assert 'data-next-action-button="true"' in root.body
@@ -6840,10 +6841,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Search Suggestions" in search.body
     assert "data-search-suggestions='true'" in search.body
     assert "data-search-suggestions-grid='true'" in search.body
-    assert "data-search-suggestion-key='start-goal' data-search-suggestion-source='first_run_fallback'" in search.body
-    assert "data-search-suggestion-key='demo' data-search-suggestion-source='first_run_fallback'" in search.body
-    assert "href='/goals'>Create first Goal</a>" in search.body
-    assert "href='/demo'>Open demo</a>" in search.body
+    assert "data-search-suggestion-key='artifacts' data-search-suggestion-source='known_artifact_paths'" in search.body
+    assert "href='/artifacts'>Browse artifacts</a>" in search.body
     assert "data-search-suggestions-evidence='true'" in search.body
     assert "Search Result Map" in search.body
     assert "data-search-result-map='true'" in search.body
@@ -6896,14 +6895,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "search_result_map_external_effects_created</dt><dd>false" in search.body
     assert "search_result_map_raw_filesystem_browsing</dt><dd>false" in search.body
     assert "search_result_map_safety: read-only indexed search; no raw filesystem browsing" in search.body
-    assert "search_suggestions_status</dt><dd>first_run" in search.body
+    assert "search_suggestions_status</dt><dd>local_state_ready" in search.body
     assert "search_suggestions_query</dt><dd>none" in search.body
     assert "search_suggestions_result_count</dt><dd>0" in search.body
-    assert "search_suggestions_total</dt><dd>2" in search.body
-    assert "search_suggestions_primary_key</dt><dd>start-goal" in search.body
-    assert "search_suggestions_primary_query</dt><dd>none" in search.body
-    assert "search_suggestions_primary_source</dt><dd>first_run_fallback" in search.body
-    assert "search_suggestions_primary_surface</dt><dd><a href='/goals'>Create first Goal</a>" in search.body
+    assert "search_suggestions_total</dt><dd>1" in search.body
+    assert "search_suggestions_primary_key</dt><dd>artifacts" in search.body
+    assert "search_suggestions_primary_query</dt><dd>artifact" in search.body
+    assert "search_suggestions_primary_source</dt><dd>known_artifact_paths" in search.body
+    assert "search_suggestions_primary_surface</dt><dd><a href='/artifacts'>Browse artifacts</a>" in search.body
     assert "search_suggestions_scope</dt><dd>local_index_or_first_run_fallback" in search.body
     assert "search_suggestions_write_on_get</dt><dd>false" in search.body
     assert "search_suggestions_provider_calls_taken</dt><dd>0" in search.body
@@ -16122,7 +16121,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "Search current Goal</a>"
     ) in search.body
     assert "href='/search?q=Create%20commit%20request'>Search next action</a>" in search.body
-    assert "href='/search?q=artifact'>Search artifacts</a>" in search.body
+    assert "href='/artifacts'>Browse artifacts</a>" in search.body
     assert "data-search-suggestions-evidence='true'" in search.body
     assert "Search Result Map" in search.body
     assert "data-search-result-map='true'" in search.body
@@ -16133,6 +16132,27 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Search Result Filter" in search.body
     assert "data-search-result-filter='true'" in search.body
     assert "data-search-result-filter-buttons='true'" in search.body
+    artifacts_index = render_local_app_route(tmp_path, "/artifacts")
+    assert artifacts_index.status == 200
+    assert "Artifact Index" in artifacts_index.body
+    assert "data-artifact-index='true'" in artifacts_index.body
+    assert "data-artifact-index-cards='true'" in artifacts_index.body
+    assert "data-artifact-index-primary='true'" in artifacts_index.body
+    assert "data-artifact-index-filter='true'" in artifacts_index.body
+    assert "data-goal-artifact-filter='true'" in artifacts_index.body
+    assert "data-artifact-index-list='true'" in artifacts_index.body
+    assert "data-artifact-index-item='true'" in artifacts_index.body
+    assert "artifact_index_total_records</dt><dd>" in artifacts_index.body
+    assert "artifact_index_available_records</dt><dd>" in artifacts_index.body
+    assert "artifact_index_latest_surface</dt><dd><a href='/artifacts?path=" in artifacts_index.body
+    assert "artifact_index_source</dt><dd>known_artifact_paths" in artifacts_index.body
+    assert "artifact_index_filter_memory_storage</dt><dd>localStorage:clankeros-artifact-index-filter" in artifacts_index.body
+    assert "artifact_index_raw_filesystem_browsing</dt><dd>false" in artifacts_index.body
+    assert "artifact_index_content_executed</dt><dd>false" in artifacts_index.body
+    assert "artifact_index_write_on_get</dt><dd>false" in artifacts_index.body
+    assert "artifact_index_network_actions_taken</dt><dd>0" in artifacts_index.body
+    assert "artifact_index_external_effects_created</dt><dd>false" in artifacts_index.body
+    assert f"runs/{result.run_id}/review.md" in artifacts_index.body
     assert "data-search-result-filter-kind='all'" in search.body
     assert "data-search-result-filter-kind='goals'" in search.body
     assert "data-search-result-filter-kind='artifacts'" in search.body

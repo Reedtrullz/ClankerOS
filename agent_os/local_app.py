@@ -104,6 +104,7 @@ NAV_ITEMS = [
     ("Goals", "/goals"),
     ("Search", "/search"),
     ("Workspace", "/workspace"),
+    ("Artifacts", "/artifacts"),
     ("Memory", "/memory"),
     ("Skills", "/skills"),
     ("Profiles", "/profiles"),
@@ -459,7 +460,10 @@ def render_local_app_route(
             run_id = unquote(path.removeprefix("/runs/"))
             return page(f"Run {run_id}", _run_detail(root, run_id))
         if path == "/artifacts":
-            return _artifact_viewer(root, _one(query, "path"), current_path=raw_path)
+            artifact_path = _one(query, "path")
+            if artifact_path:
+                return _artifact_viewer(root, artifact_path, current_path=raw_path)
+            return page("Artifacts", _artifact_index_page(root))
         if path == "/health":
             return page("Health", _health(root, host=host, port=port))
         if path == "/demo":
@@ -6931,8 +6935,8 @@ def _search_suggestion_items(root: Path, storage: Storage) -> list[dict[str, str
             "artifacts",
             "Artifacts",
             f"{len(artifacts)} known artifact path{'s' if len(artifacts) != 1 else ''}",
-            "/search?q=artifact",
-            "Search artifacts",
+            "/artifacts",
+            "Browse artifacts",
             query="artifact",
             source="known_artifact_paths",
         )
@@ -7665,6 +7669,21 @@ def _known_artifact_paths(root: Path, storage: Storage) -> list[str]:
         remember(row["activity_path"])
         remember(row["summary_path"])
         remember(row["events_path"])
+    for run in list_coder_worktree_runs(root, limit=200):
+        evidence_path = Path(run.evidence_path)
+        remember(Path("runs") / run.source_run_id / "review.md")
+        for path in [
+            evidence_path / "run.json",
+            evidence_path / "diff.patch",
+            evidence_path / "changed_files.json",
+            evidence_path / "bounded_file_validation.json",
+            evidence_path / "git_status.txt",
+            evidence_path / "stdout.txt",
+            evidence_path / "stderr.txt",
+            evidence_path / "verification_stdout.txt",
+            evidence_path / "verification_stderr.txt",
+        ]:
+            remember(path)
     for delegation in storage.list_recent_subagent_delegations(limit=None):
         remember(delegation.result_artifact_path)
         metadata = load_delegation_result_metadata(delegation)
@@ -7679,6 +7698,13 @@ def _known_artifact_paths(root: Path, storage: Storage) -> list[str]:
         remember(memory.artifact_path)
     for skill in storage.list_skills(limit=100):
         remember(skill.path)
+    for path in [
+        Path(".clanker") / "app" / "local_app_status.json",
+        Path(".clanker") / "app" / "workspace.json",
+        Path("knowledge.md"),
+    ]:
+        if (root / path).exists():
+            remember(path)
     return paths[:200]
 
 
@@ -37452,6 +37478,309 @@ def _run_review_gate_state(root: Path, coder_run: Any) -> dict[str, Any]:
         "blocked_reason": blocked_reason,
         "commit_request_form_available": commit_request_form_available,
     }
+
+
+def _artifact_index_page(root: Path) -> str:
+    storage = _storage(root)
+    records = _artifact_index_records(root, storage)
+    counts = {kind: 0 for kind in ["markdown", "json", "patch", "text"]}
+    status_counts: dict[str, int] = {}
+    source_counts: dict[str, int] = {}
+    for record in records:
+        counts[record["kind"]] = counts.get(record["kind"], 0) + 1
+        status_counts[record["status"]] = status_counts.get(record["status"], 0) + 1
+        source_counts[record["source"]] = source_counts.get(record["source"], 0) + 1
+    available = status_counts.get("available", 0)
+    missing = status_counts.get("missing", 0)
+    rejected = status_counts.get("rejected", 0)
+    latest_record = next((record for record in records if record["status"] == "available"), None)
+    if latest_record is not None:
+        latest_href = _artifact_href(root, latest_record["path"])
+        latest_label = latest_record["label"]
+        latest_action = _compact_label(f"Open {latest_label}", 84)
+        latest_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_action)}</a>")
+        primary_href = latest_href
+        primary_action = latest_action
+        primary_reason = "latest available known artifact is ready for bounded review"
+    else:
+        latest_href = "/demo" if not records else "/search?q=artifact"
+        latest_label = "none"
+        latest_action = "Create demo data" if not records else "Search artifacts"
+        latest_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_action)}</a>")
+        primary_href = latest_href
+        primary_action = latest_action
+        primary_reason = "no available known artifacts were found"
+    status = "available" if available else "empty"
+    if available and (missing or rejected):
+        status = "partial"
+    source_summary = _count_summary(source_counts)
+    status_summary = _count_summary(status_counts)
+    type_buttons = [
+        (
+            "<button type='button' class='goal-artifact-filter-button' "
+            "data-goal-artifact-filter-kind='all' data-goal-artifact-filter-active='true' aria-pressed='true'>"
+            f"All <span>{len(records)}</span></button>"
+        )
+    ]
+    for kind, label in [
+        ("markdown", "Markdown"),
+        ("json", "JSON"),
+        ("patch", "Patch"),
+        ("text", "Text"),
+    ]:
+        type_buttons.append(
+            (
+                "<button type='button' class='goal-artifact-filter-button' "
+                f"data-goal-artifact-filter-kind='{_e(kind)}' aria-pressed='false'>{_e(label)} "
+                f"<span>{counts[kind]}</span></button>"
+            )
+        )
+    source_options = [
+        f"<option value='{_e(source)}'>{_e(source)} ({count})</option>"
+        for source, count in sorted(source_counts.items())
+    ]
+    rows = [
+        (
+            "<span data-goal-artifact-item='true' data-artifact-index-item='true' "
+            f"data-goal-artifact-type='{_e(record['kind'])}' "
+            f"data-goal-artifact-source='{_e(record['source'])}' "
+            f"data-goal-artifact-status='{_e(record['status'])}' "
+            f"data-goal-artifact-text='{_e(' '.join([record['label'], record['path'], record['kind'], record['status'], record['source']]).lower())}' "
+            f"data-artifact-index-path='{_e(record['path'])}'>"
+            f"<strong>{_e(record['label'])}</strong>: "
+            f"<a href='{_e(_artifact_href(root, record['path']))}'>{_e(record['path'])}</a> "
+            f"kind={_e(record['kind'])} status={_e(record['status'])} "
+            f"source={_e(record['source'])} updated={_e(record['updated_at'] or 'unknown')}</span>"
+        )
+        for record in records
+    ]
+    if not rows:
+        rows = ["artifact_index_empty: no known artifacts yet"]
+    return "".join(
+        [
+            "<section id='artifact-index' class='panel artifact-index' data-artifact-index='true'><h1>Artifact Index</h1>",
+            "<p class='muted'>A read-only index of ClankerOS-known artifacts. It links only into the bounded artifact viewer and never browses arbitrary filesystem paths.</p>",
+            "<div class='artifact-workbench-grid' data-artifact-index-cards='true'>",
+            "<article class='artifact-workbench-card artifact-workbench-primary' data-artifact-index-primary='true'><h3>Open</h3>",
+            f"<p>{_e(primary_reason)}.</p><a class='artifact-workbench-action' href='{_e(primary_href)}'>{_e(primary_action)}</a></article>",
+            "<article class='artifact-workbench-card' data-artifact-index-latest='true'><h3>Latest</h3>",
+            f"<p>{_e(latest_label)}.</p>{latest_surface}</article>",
+            "<article class='artifact-workbench-card' data-artifact-index-inventory='true'><h3>Inventory</h3>",
+            f"<p>{available} available / {missing} missing / {rejected} rejected.</p><a class='artifact-workbench-link' href='#artifact-index-list'>Artifact rows</a></article>",
+            "<article class='artifact-workbench-card' data-artifact-index-types='true'><h3>Types</h3>",
+            f"<p>{counts['markdown']} md / {counts['json']} json / {counts['patch']} patch / {counts['text']} text.</p><a class='artifact-workbench-link' href='#artifact-index-filter'>Filter</a></article>",
+            "<article class='artifact-workbench-card' data-artifact-index-safety='true'><h3>Safety</h3>",
+            "<p>Known artifacts only; no raw filesystem browsing, writes on GET, providers, or network actions.</p><a class='artifact-workbench-link' href='#artifact-index-evidence'>Evidence</a></article>",
+            "</div>",
+            "<details id='artifact-index-evidence' class='artifact-command-evidence' data-artifact-index-evidence='true'><summary>Artifact index evidence</summary>",
+            _kv(
+                [
+                    ("artifact_index_status", status),
+                    ("artifact_index_total_records", str(len(records))),
+                    ("artifact_index_available_records", str(available)),
+                    ("artifact_index_missing_records", str(missing)),
+                    ("artifact_index_rejected_records", str(rejected)),
+                    ("artifact_index_markdown_artifacts", str(counts["markdown"])),
+                    ("artifact_index_json_artifacts", str(counts["json"])),
+                    ("artifact_index_patch_artifacts", str(counts["patch"])),
+                    ("artifact_index_text_artifacts", str(counts["text"])),
+                    ("artifact_index_sources", source_summary),
+                    ("artifact_index_status_counts", status_summary),
+                    ("artifact_index_latest_label", latest_label),
+                    ("artifact_index_latest_path", latest_record["path"] if latest_record else "none"),
+                    ("artifact_index_latest_surface", latest_surface),
+                    ("artifact_index_source", "known_artifact_paths"),
+                    ("artifact_index_viewer_route", "/artifacts?path=<repo-relative-artifact>"),
+                    ("artifact_index_raw_filesystem_browsing", "false"),
+                    ("artifact_index_content_executed", "false"),
+                    ("artifact_index_write_on_get", "false"),
+                    ("artifact_index_provider_calls_taken", "0"),
+                    ("artifact_index_network_actions_taken", "0"),
+                    ("artifact_index_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"artifact_index_now: {_e(primary_action)}",
+                    f"artifact_index_click: <a href='{_e(primary_href)}'>{_e(primary_action)}</a>",
+                    f"artifact_index_latest: {latest_surface}",
+                    "artifact_index_safety: known artifact links only; full reads stay bounded in /artifacts?path=...",
+                ]
+            ),
+            "</details>",
+            "<section id='artifact-index-filter' class='goal-artifact-filter' data-artifact-index-filter='true' data-goal-artifact-filter='true' data-goal-artifact-filter-storage-key='clankeros-artifact-index-filter'>",
+            "<h2>Artifact Filter</h2>",
+            "<div class='goal-artifact-filter-buttons' data-goal-artifact-filter-buttons='true'>",
+            "".join(type_buttons),
+            "</div>",
+            "<div class='goal-artifact-filter-controls' data-goal-artifact-filter-controls='true'>",
+            "<label>Find <input type='search' data-goal-artifact-filter-query='true' placeholder='review, handoff, diff, status...'></label>",
+            "<label>Source <select data-goal-artifact-filter-source='true'>",
+            f"<option value='all'>All sources ({len(records)})</option>",
+            "".join(source_options),
+            "</select></label>",
+            "</div>",
+            "<div class='goal-artifact-filter-memory' data-goal-artifact-filter-memory='true'>",
+            "<span class='goal-artifact-filter-memory-status' data-goal-artifact-filter-view-status='true'>View: default</span>",
+            "<button type='button' class='goal-artifact-filter-reset' data-goal-artifact-filter-reset='true'>Reset filter</button>",
+            "</div>",
+            f"<p class='muted' data-goal-artifact-filter-status='true'>Showing {len(records)} of {len(records)} artifacts.</p>",
+            "<p class='muted goal-artifact-filter-empty' data-goal-artifact-filter-empty='true' hidden>No artifacts match this filter.</p>",
+            "<details class='goal-artifact-filter-evidence' data-artifact-index-filter-evidence='true' data-goal-artifact-filter-evidence='true'><summary>Artifact filter evidence</summary>",
+            _kv(
+                [
+                    ("artifact_index_filter_status", "available" if records else "empty"),
+                    ("artifact_index_filter_scope", "browser_local_rendered_known_artifacts"),
+                    ("artifact_index_filter_total_records", str(len(records))),
+                    ("artifact_index_filter_sources", source_summary),
+                    ("artifact_index_filter_memory_storage", "localStorage:clankeros-artifact-index-filter"),
+                    ("artifact_index_filter_memory_fields", "type source query"),
+                    ("artifact_index_filter_reset", "available"),
+                    ("artifact_index_filter_raw_filesystem_browsing", "false"),
+                    ("artifact_index_filter_write_on_get", "false"),
+                    ("artifact_index_filter_provider_calls_taken", "0"),
+                    ("artifact_index_filter_network_actions_taken", "0"),
+                    ("artifact_index_filter_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "artifact_index_filter_action: narrow already-rendered known artifact rows",
+                    "artifact_index_filter_memory: restores type/source/query from browser storage",
+                    "artifact_index_filter_safety: client-side display filter only",
+                ]
+            ),
+            "</details>",
+            "</section>",
+            "<section id='artifact-index-list' class='artifact-index-list' data-artifact-index-list='true'><h2>Known Artifacts</h2>",
+            _ul(rows),
+            "</section>",
+            "</section>",
+        ]
+    )
+
+
+def _artifact_index_records(root: Path, storage: Storage) -> list[dict[str, str]]:
+    records: list[dict[str, str]] = []
+    for relative_path in _known_artifact_paths(root, storage):
+        record = _artifact_index_record(root, relative_path)
+        if record is not None:
+            records.append(record)
+    return sorted(records, key=lambda record: _artifact_index_sort_key(root, record), reverse=True)
+
+
+def _artifact_index_record(root: Path, relative_path: str) -> dict[str, str] | None:
+    path_value = _repo_relative_artifact_path(root, relative_path)
+    if not path_value or path_value == "none":
+        return None
+    kind = _goal_artifact_render_kind(path_value)
+    if kind is None:
+        return None
+    status = "missing"
+    size_bytes = "0"
+    updated_at = ""
+    try:
+        path = resolve_artifact_path(root, path_value)
+    except ValueError:
+        status = "rejected"
+    else:
+        if path.exists() and path.is_file():
+            status = "available"
+            size_bytes = str(path.stat().st_size)
+            updated_at = _artifact_time(root, path_value) or ""
+        elif path.exists():
+            status = "rejected"
+    context = _artifact_context_from_path(path_value)
+    source_details = _artifact_source_details(path_value)
+    return {
+        "label": _artifact_index_label(path_value),
+        "path": path_value,
+        "kind": kind,
+        "status": status,
+        "source": _artifact_index_source(path_value, context, source_details),
+        "size_bytes": size_bytes,
+        "updated_at": updated_at,
+    }
+
+
+def _artifact_index_sort_key(root: Path, record: dict[str, str]) -> tuple[int, str, int, str, str]:
+    status_rank = {"available": 2, "missing": 1, "rejected": 0}.get(record["status"], 0)
+    rank = _artifact_index_record_rank(record)
+    timestamp = record.get("updated_at") or _artifact_time(root, record.get("path", "")) or ""
+    return (status_rank, timestamp, rank, record.get("label", ""), record.get("path", ""))
+
+
+def _artifact_index_record_rank(record: dict[str, str]) -> int:
+    label = record.get("label", "").lower()
+    source = record.get("source", "")
+    if source in {"publication", "commit"}:
+        return 120
+    if "review" in label:
+        return 100
+    if "implementation handoff" in label:
+        return 90
+    if "context pack" in label:
+        return 80
+    if record.get("kind") == "patch":
+        return 70
+    if source in {"goal_artifact", "goal_run_evidence"}:
+        return 60
+    if source.startswith("delegation"):
+        return 50
+    return 10
+
+
+def _artifact_index_label(relative_path: str) -> str:
+    parts = Path(relative_path).parts
+    name = Path(relative_path).name
+    stem = Path(relative_path).stem.replace("_", " ").replace("-", " ")
+    source = _artifact_source_details(relative_path)
+    run_id = source.get("run_id", "unknown")
+    if name == "review.md" and run_id != "unknown":
+        return _compact_label(f"run {run_id} review", 84)
+    if "implementation_handoff" in name:
+        return "implementation handoff"
+    if "context_pack" in name:
+        return "context pack"
+    if name == "GOAL.md":
+        return "Goal brief"
+    if name == "PLAN.md":
+        return "Goal plan"
+    if name == "TASKS.md":
+        return "Goal tasks"
+    if name == "CONTRACT.md":
+        return "Goal contract"
+    if len(parts) >= 3 and parts[0] == ".clanker" and parts[1] == "app":
+        return _compact_label(f"app {stem}", 84)
+    return _compact_label(stem or name or relative_path, 84)
+
+
+def _artifact_index_source(
+    relative_path: str,
+    context: dict[str, str],
+    source_details: dict[str, str],
+) -> str:
+    parts = Path(relative_path).parts
+    name = Path(relative_path).name
+    if len(parts) >= 2 and parts[0] == ".clanker" and parts[1] == "app":
+        return "app_state"
+    if len(parts) >= 2 and parts[0] == ".clanker" and parts[1] == "skills":
+        return "skill"
+    if name in {"knowledge.md", "operator-notes.md"}:
+        return "memory"
+    if "implementation_handoff" in name:
+        return "implementation_handoff"
+    if "context_pack" in name:
+        return "context_pack"
+    if context["source"] == "project_goal_path":
+        return "goal_artifact"
+    return source_details["source_family"]
+
+
+def _count_summary(counts: dict[str, int]) -> str:
+    if not counts:
+        return "none"
+    return ", ".join(f"{key}:{value}" for key, value in sorted(counts.items()))
 
 
 def _artifact_viewer(

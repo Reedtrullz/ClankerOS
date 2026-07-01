@@ -4,6 +4,18 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Bare `/artifacts` now opens a read-only global Artifact Index instead of a
+  missing-path error, while `/artifacts?path=...` remains the bounded inert
+  single-artifact viewer. The index exposes Open, Latest, Inventory, Types,
+  and Safety cards plus a browser-local type/source/text filter using
+  `localStorage:clankeros-artifact-index-filter`. Search suggestions and shell
+  navigation now route directly to `/artifacts` as `Browse artifacts`, and
+  known artifact paths include coder worktree reviews/evidence plus app
+  status/workspace artifacts when present. Local proof includes compile, diff
+  check, the broad local-app route smoke pytest (`1 passed`), and the
+  fixture-backed demo scenario pytest (`1 passed`). Previous GitHub Actions
+  run `28499347667` for commit `c22fe3a53f537edde7368f9a5c38cb44c8023934` is
+  fully green across fast smoke and full pytest.
 - Goal timeline latest ordering is now deterministic across local runs and
   GitHub Actions when lifecycle events and artifacts share the same timestamp.
   Today Session Summary / Activity Digest keep the workflow lifecycle latest
