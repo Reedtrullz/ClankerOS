@@ -2837,16 +2837,16 @@ def _today_activity_digest(
         operator_notes = sum(
             1 for item in items if _timeline_item_family(item) == "operator_note"
         )
-        if artifact_items:
+        if latest_artifact_record is not None:
+            artifact_href = _artifact_href(root, latest_artifact_record["path"])
+            artifact_label = _compact_label(f"Open {latest_artifact_record['label']}", 84)
+            artifact_available = True
+        elif artifact_items:
             artifact_href = artifact_items[-1].get("href") or f"/goals/{quote(goal_id)}#goal-artifacts"
             artifact_label = _timeline_item_action_label(
                 artifact_items[-1],
                 fallback="Open artifact",
             )
-            artifact_available = True
-        elif latest_artifact_record is not None:
-            artifact_href = _artifact_href(root, latest_artifact_record["path"])
-            artifact_label = _compact_label(f"Open {latest_artifact_record['label']}", 84)
             artifact_available = True
         else:
             artifact_href = f"/goals/{quote(goal_id)}#goal-artifacts"
@@ -24167,8 +24167,43 @@ def _goal_latest_artifact_record(root: Path, state: dict[str, Any]) -> dict[str,
         return None
     return max(
         existing,
-        key=lambda record: (root / record["path"]).stat().st_mtime,
+        key=lambda record: _goal_artifact_record_sort_key(root, record),
     )
+
+
+def _goal_artifact_record_sort_key(root: Path, record: dict[str, str]) -> tuple[str, int, str, str]:
+    timestamp = _artifact_time(root, record.get("path", "")) or ""
+    return (
+        timestamp,
+        _goal_artifact_record_rank(record),
+        str(record.get("label") or ""),
+        str(record.get("path") or ""),
+    )
+
+
+def _goal_artifact_record_rank(record: dict[str, str]) -> int:
+    source = str(record.get("source") or "")
+    label = str(record.get("label") or "").lower()
+    kind = str(record.get("kind") or "")
+    rank_by_source = {
+        "task": 10,
+        "run": 20,
+        "incident": 30,
+        "recommendation": 35,
+        "delegation": 40,
+        "delegation_metadata": 50,
+        "coder_prep": 60,
+        "worktree_plan": 70,
+        "coder_run": 80,
+        "commit": 110,
+        "publication": 120,
+    }
+    rank = rank_by_source.get(source, 0)
+    if source == "coder_run" and label.endswith(" review") and kind == "markdown":
+        rank = 100
+    elif kind == "markdown":
+        rank += 5
+    return rank
 
 
 def _goal_latest_artifact_path(root: Path, state: dict[str, Any]) -> str:

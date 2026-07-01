@@ -15,9 +15,17 @@
 - GitHub Actions root cause: run `28498425453` failed fast smoke in
   `test_local_app_demo_scenario_populates_fixture_state` because CI selected a
   different same-timestamp latest timeline item than local isolated runs.
+- GitHub Actions follow-up: run `28499106431` exposed the sibling artifact
+  selector issue, where the Today Activity Digest could prefer a recent raw
+  artifact timeline item over the operator-facing coder-run review artifact.
+  Latest artifact selection now uses a deterministic artifact-record rank, and
+  the Today Activity Digest prefers the ranked artifact registry before falling
+  back to raw timeline artifact events.
 - Local verification:
   - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
     passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed after the artifact selector fix.
   - Exact GitHub fast-smoke pytest selection:
     `python3 -m pytest tests/test_first_milestone.py -q -k "<15 local-app/CI smoke tests>"`:
     15 passed, 502 deselected.

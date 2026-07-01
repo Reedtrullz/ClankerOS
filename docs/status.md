@@ -10,7 +10,11 @@ Latest status focus:
   event stable while latest artifact labels still render as readable coder-run
   review copy. This fixes GitHub Actions fast-smoke run `28498425453`; local
   proof includes the exact fast-smoke pytest selection (`15 passed, 502
-  deselected`) plus compile and whitespace checks.
+  deselected`) plus compile and whitespace checks. Follow-up run `28499106431`
+  exposed the sibling latest-artifact selector issue; latest artifact records
+  now use deterministic ranking and Today Activity Digest prefers the ranked
+  artifact registry label before timeline fallbacks. The focused demo scenario
+  pytest passes after that selector fix.
 - `/artifacts?path=...` relationship-map source links now show operator-facing
   labels for run-backed artifacts, for example `Open run run_demo`, instead
   of raw `/runs/run_demo` route text. Exact local routes remain preserved in
