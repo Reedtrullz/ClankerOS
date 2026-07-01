@@ -1429,8 +1429,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   writes or local execution. A `Resume Tomorrow` receipt follows and reads
   `.clanker/app/workspace.json` back as the operator's return path, with
   visible Resume Tomorrow, Context, Artifact, Last Action, and Boundary cards.
-  Its `Action Resume Receipt` evidence preserves the saved project, Goal,
-  exact resume surface, latest artifact, updater, last action/result,
+  When first-run setup is incomplete and no Goal is saved yet, the primary
+  Resume Tomorrow link routes through `/resume#resume-first-run-action-form`
+  so the operator lands on the next setup form while the receipt evidence keeps
+  the raw saved project surface. Its `Action Resume Receipt` evidence
+  preserves the saved project, Goal, exact resume surface, latest artifact,
+  updater, last action/result,
   readiness, and zero-effect counters, before preserving the submitted payload,
   local result fields, artifact links, next-page link, safety boundary, and an
   `Action Continuation` block from the refreshed saved goal state with phase,

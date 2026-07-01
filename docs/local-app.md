@@ -1349,9 +1349,12 @@ links when paths are returned, a next-page link, and the safety boundary.
 Before those dense details, the result page also includes a `Resume Tomorrow`
 receipt that reads the saved workspace back as the operator's return path with
 visible Resume Tomorrow, Context, Artifact, Last Action, and Boundary cards.
-Its `Action Resume Receipt` evidence preserves the exact `resume_surface`,
-saved project/Goal, latest artifact, updater, last action/result, readiness,
-and zero-effect counters. They also render an
+If first-run setup is incomplete and no Goal is saved yet, the primary Resume
+Tomorrow link opens `/resume#resume-first-run-action-form` so the operator
+returns to the next setup form instead of a generic project page. Its
+`Action Resume Receipt` evidence still preserves the exact saved
+`resume_surface`, saved project/Goal, latest artifact, updater, last
+action/result, readiness, and zero-effect counters. They also render an
 `Action Continuation` block from the refreshed saved goal state, including the
 current phase, one next action, target surface, and the same confirmed local
 action form when available, so the operator can keep moving without guessing

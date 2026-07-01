@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- First-run action result receipts are now Resume-aware before a Goal exists:
+  after confirmed project registration, `Resume Tomorrow` points at
+  `/resume#resume-first-run-action-form` for `Create First Goal`, while the
+  older receipt evidence still records the raw saved project surface. Local
+  proof includes a red/green focused first-run route test plus the broader
+  route and Today finish receipt checks (`3 passed` together).
 - Confirmed local action result pages now lead the saved workspace receipt with
   a visible `Resume Tomorrow` section and primary return link. The older
   `Action Resume Receipt` evidence remains in place, now with

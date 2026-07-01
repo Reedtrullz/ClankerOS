@@ -9896,6 +9896,27 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert register_result.body.index("Action Result Next Step") < register_result.body.index(
         "Action Resume Receipt"
     )
+    assert "Resume Tomorrow" in register_result.body
+    assert "data-action-resume-tomorrow='true'" in register_result.body
+    assert "data-action-resume-tomorrow-primary='true'" in register_result.body
+    assert (
+        "data-action-resume-receipt-primary='true' "
+        "href='/resume#resume-first-run-action-form'>Create First Goal</a>"
+    ) in register_result.body
+    assert "action_resume_tomorrow_status</dt><dd>first_run" in register_result.body
+    assert "action_resume_tomorrow_source</dt><dd>first_run_progress_after_action" in register_result.body
+    assert "action_resume_tomorrow_ready</dt><dd>true" in register_result.body
+    assert "action_resume_tomorrow_primary_label</dt><dd>Create First Goal" in register_result.body
+    assert (
+        "action_resume_tomorrow_surface</dt><dd>"
+        "<a href='/resume#resume-first-run-action-form'>Create First Goal</a>"
+    ) in register_result.body
+    assert "action_resume_tomorrow_current_step</dt><dd>create_first_goal" in register_result.body
+    assert "action_resume_tomorrow_form_available</dt><dd>true" in register_result.body
+    assert (
+        "action_resume_receipt_resume_surface</dt><dd>"
+        "<a href='/projects/clankeros'>/projects/clankeros</a>"
+    ) in register_result.body
     assert "action_result_next_step_status</dt><dd>first_run_ready" in register_result.body
     assert "action_result_next_step_source</dt><dd>first_run_progress_after_action" in register_result.body
     assert "action_result_next_step_mode</dt><dd>first_run" in register_result.body

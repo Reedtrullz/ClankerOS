@@ -41964,6 +41964,40 @@ def _action_result_resume_receipt_section(
         open_project=open_project,
         fallback=resume_label,
     )
+    tomorrow_href = resume_href
+    tomorrow_label = resume_action_label
+    tomorrow_surface_label = resume_label
+    tomorrow_status = str(readiness["status"])
+    tomorrow_source = ".clanker/app/workspace.json"
+    tomorrow_ready = str(readiness["ready"]).lower()
+    tomorrow_current_step = "none"
+    tomorrow_reason = "workspace_resume"
+    tomorrow_form_available = "false"
+    if not open_goal:
+        try:
+            first_run_progress = _first_run_progress(root, _storage(root))
+            first_run_payload = _first_run_action_form_payload(root, first_run_progress)
+        except Exception:
+            first_run_progress = {}
+            first_run_payload = {}
+        if (
+            first_run_progress
+            and not bool(first_run_progress.get("complete"))
+            and bool(first_run_payload.get("form_available"))
+        ):
+            tomorrow_href = "/resume#resume-first-run-action-form"
+            tomorrow_label = str(
+                first_run_payload.get("form_title")
+                or first_run_progress.get("next_action")
+                or "Resume first run"
+            )
+            tomorrow_surface_label = tomorrow_label
+            tomorrow_status = "first_run"
+            tomorrow_source = "first_run_progress_after_action"
+            tomorrow_ready = "true"
+            tomorrow_current_step = str(first_run_progress.get("current_step") or "unknown")
+            tomorrow_reason = str(first_run_progress.get("next_reason") or "first_run")
+            tomorrow_form_available = "true"
     _goal_href, goal_label, goal_label_source, goal_surface = _goal_display_link(root, open_goal)
     project_surface: str | SafeHtml = (
         SafeHtml(f"<a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>")
@@ -41985,11 +42019,11 @@ def _action_result_resume_receipt_section(
                 "<article class='action-resume-receipt-card action-resume-receipt-primary' "
                 "data-action-resume-tomorrow-primary='true'><h3>Resume Tomorrow</h3>"
             ),
-            f"<p>{_e(resume_action_label)}</p>",
+            f"<p>{_e(tomorrow_label)}</p>",
             (
                 f"<a class='action-resume-receipt-action' data-action-resume-receipt-primary='true' "
-                f"href='{_e(resume_href)}'>"
-                f"{_e(resume_action_label)}</a></article>"
+                f"href='{_e(tomorrow_href)}'>"
+                f"{_e(tomorrow_label)}</a></article>"
             ),
             "<article class='action-resume-receipt-card'><h3>Context</h3>",
             f"<p>{_e(context_label)}</p>",
@@ -42012,15 +42046,18 @@ def _action_result_resume_receipt_section(
                     ("action_resume_receipt_workspace_available", str(workspace_available).lower()),
                     ("action_resume_receipt_action", action),
                     ("action_resume_receipt_result", message),
-                    ("action_resume_receipt_primary_label", resume_action_label),
-                    ("action_resume_tomorrow_status", str(readiness["status"])),
-                    ("action_resume_tomorrow_source", ".clanker/app/workspace.json"),
-                    ("action_resume_tomorrow_ready", str(readiness["ready"]).lower()),
-                    ("action_resume_tomorrow_primary_label", resume_action_label),
+                    ("action_resume_receipt_primary_label", tomorrow_label),
+                    ("action_resume_tomorrow_status", tomorrow_status),
+                    ("action_resume_tomorrow_source", tomorrow_source),
+                    ("action_resume_tomorrow_ready", tomorrow_ready),
+                    ("action_resume_tomorrow_primary_label", tomorrow_label),
                     (
                         "action_resume_tomorrow_surface",
-                        SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"),
+                        SafeHtml(f"<a href='{_e(tomorrow_href)}'>{_e(tomorrow_surface_label)}</a>"),
                     ),
+                    ("action_resume_tomorrow_current_step", tomorrow_current_step),
+                    ("action_resume_tomorrow_reason", tomorrow_reason),
+                    ("action_resume_tomorrow_form_available", tomorrow_form_available),
                     ("action_resume_tomorrow_artifact", artifact_surface),
                     ("action_resume_tomorrow_write_on_get", "false"),
                     ("action_resume_tomorrow_provider_calls_taken", "0"),
@@ -42059,8 +42096,8 @@ def _action_result_resume_receipt_section(
             ),
             _ul(
                 [
-                    f"action_resume_tomorrow_open: <a href='{_e(resume_href)}'>{_e(resume_action_label)}</a>",
-                    f"action_resume_receipt_saved_point: <a href='{_e(resume_href)}'>{_e(resume_action_label)}</a>",
+                    f"action_resume_tomorrow_open: <a href='{_e(tomorrow_href)}'>{_e(tomorrow_label)}</a>",
+                    f"action_resume_receipt_saved_point: <a href='{_e(tomorrow_href)}'>{_e(tomorrow_label)}</a>",
                     f"action_resume_receipt_context: project={_e(open_project or 'none')} goal={_e(open_goal or 'none')}",
                     f"action_resume_receipt_artifact: {artifact_surface}",
                     f"action_resume_receipt_last_action: {_e(last_action)} -> {_e(last_result)}",

@@ -1,5 +1,26 @@
 # Status
 
+## 2026-07-01 First Run Resume Tomorrow Target UX
+
+- First-run action result receipts now route the human `Resume Tomorrow`
+  primary link through `/resume#resume-first-run-action-form` when project
+  registration has completed but no Goal exists yet.
+- The older `Action Resume Receipt` evidence still records the raw saved
+  project surface (`/projects/<name>`), so review/automation can distinguish
+  canonical workspace state from the first-run next setup action.
+- TDD evidence: the focused first-run route test failed first because the
+  receipt primary link still pointed at `/projects/clankeros`, then passed
+  after the receipt became first-run-aware.
+- Local verification:
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed after the implementation.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface -q --tb=short`:
+    3 passed after checking the shared receipt path.
+- Non-claim: this is first-run resume UX only. It does not write workspace JSON
+  on GET, approve work, execute tasks, deploy, call providers, use the network
+  from the app, create PRs, push from the app, or mutate external systems from
+  ClankerOS.
+
 ## 2026-07-01 Resume Tomorrow Result Receipt UX
 
 - Confirmed local action result pages now lead the saved workspace receipt with
