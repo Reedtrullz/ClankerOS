@@ -45637,6 +45637,44 @@ def _proof_shortcut_context(
     }
 
 
+def _artifact_shortcut_context(
+    focus_context: dict[str, Any],
+    current_path: str = "",
+) -> dict[str, str]:
+    status = str(focus_context.get("status", "state_unavailable"))
+    source = str(focus_context.get("source") or status)
+    route_path = urlparse(current_path or "/").path or "/"
+    href = "/artifacts"
+    label = "Artifacts"
+    action = "Open artifacts"
+    shortcut_source = "artifact_index"
+
+    if status == "available":
+        goal = focus_context.get("goal")
+        if goal is not None:
+            goal_path = f"/goals/{quote(goal.id)}"
+            href = "#goal-artifact-command-bar" if route_path == goal_path else f"{goal_path}#goal-artifact-command-bar"
+            label = "Goal artifacts"
+            action = "Open Goal artifacts"
+            shortcut_source = f"{source}_goal_artifact_command_bar"
+
+    if href.startswith("#"):
+        safe_href = href
+    else:
+        safe_href = _safe_local_return_path(href) or "/artifacts"
+    return {
+        "status": status,
+        "source": shortcut_source,
+        "action": action,
+        "href": safe_href,
+        "label": label,
+        "write_on_get": "false",
+        "provider_calls_taken": "0",
+        "network_actions_taken": "0",
+        "external_effects_created": "false",
+    }
+
+
 def _finish_today_shortcut_context(
     current_path: str,
     focus_context: dict[str, Any] | None = None,
@@ -47650,6 +47688,7 @@ def _html_page(
     next_shortcut = _next_action_shortcut_context(focus_context, current_path)
     goal_shortcut = _goal_shortcut_context(focus_context)
     proof_shortcut = _proof_shortcut_context(focus_context, current_path)
+    artifact_shortcut = _artifact_shortcut_context(focus_context, current_path)
     finish_shortcut = _finish_today_shortcut_context(current_path, focus_context)
     operator_ribbon = _operator_status_ribbon(root, focus_context, current_path, title)
     breadcrumbs = _breadcrumbs(root, current_path, title, focus_context)
@@ -49820,7 +49859,7 @@ def _html_page(
   <header>
     <strong>ClankerOS Local Operator</strong>
     <nav class="shell-nav" aria-label="Shell navigation" data-shell-nav="true" data-shell-nav-primary-count="{nav_primary_count}" data-shell-nav-secondary-count="{nav_secondary_count}">{nav}</nav>
-    <div class="header-actions" data-keyboard-shortcuts="true" data-focus-mode-supported="true" data-focus-mode-storage="localStorage:clankeros-focus-mode" data-focus-mode-keeps-current-action="true" data-focus-mode-write-on-get="false" data-focus-mode-provider-calls-taken="0" data-focus-mode-network-actions-taken="0" data-focus-mode-external-effects-created="false" data-next-action-href="{_e(next_shortcut['href'])}" data-next-action-label="{_e(next_shortcut['label'])}" data-next-action-action="{_e(next_shortcut['action'])}" data-next-action-status="{_e(next_shortcut['status'])}" data-next-action-source="{_e(next_shortcut['source'])}" data-next-action-form-available="{_e(next_shortcut['form_available'])}" data-next-action-confirmation-required="{_e(next_shortcut['confirmation_required'])}" data-next-action-write-on-get="{_e(next_shortcut['write_on_get'])}" data-next-action-provider-calls-taken="{_e(next_shortcut['provider_calls_taken'])}" data-next-action-network-actions-taken="{_e(next_shortcut['network_actions_taken'])}" data-next-action-external-effects-created="{_e(next_shortcut['external_effects_created'])}" data-goal-shortcut-href="{_e(goal_shortcut['href'])}" data-goal-shortcut-label="{_e(goal_shortcut['label'])}" data-goal-shortcut-action="{_e(goal_shortcut['action'])}" data-goal-shortcut-status="{_e(goal_shortcut['status'])}" data-goal-shortcut-source="{_e(goal_shortcut['source'])}" data-goal-shortcut-write-on-get="{_e(goal_shortcut['write_on_get'])}" data-goal-shortcut-provider-calls-taken="{_e(goal_shortcut['provider_calls_taken'])}" data-goal-shortcut-network-actions-taken="{_e(goal_shortcut['network_actions_taken'])}" data-goal-shortcut-external-effects-created="{_e(goal_shortcut['external_effects_created'])}" data-proof-href="{_e(proof_shortcut['href'])}" data-proof-label="{_e(proof_shortcut['label'])}" data-proof-status="{_e(proof_shortcut['status'])}" data-proof-source="{_e(proof_shortcut['source'])}" data-proof-write-on-get="{_e(proof_shortcut['write_on_get'])}" data-proof-provider-calls-taken="{_e(proof_shortcut['provider_calls_taken'])}" data-proof-network-actions-taken="{_e(proof_shortcut['network_actions_taken'])}" data-proof-external-effects-created="{_e(proof_shortcut['external_effects_created'])}" data-finish-today-href="{_e(finish_shortcut['href'])}" data-finish-today-label="{_e(finish_shortcut['label'])}" data-finish-today-source="{_e(finish_shortcut['source'])}" data-finish-today-target="{_e(finish_shortcut['target'])}" data-finish-today-surface="{_e(finish_shortcut['surface'])}" data-finish-today-confirmation-required="{_e(finish_shortcut['confirmation_required'])}" data-finish-today-write-on-get="{_e(finish_shortcut['write_on_get'])}" data-finish-today-provider-calls-taken="{_e(finish_shortcut['provider_calls_taken'])}" data-finish-today-network-actions-taken="{_e(finish_shortcut['network_actions_taken'])}" data-finish-today-external-effects-created="{_e(finish_shortcut['external_effects_created'])}">
+    <div class="header-actions" data-keyboard-shortcuts="true" data-focus-mode-supported="true" data-focus-mode-storage="localStorage:clankeros-focus-mode" data-focus-mode-keeps-current-action="true" data-focus-mode-write-on-get="false" data-focus-mode-provider-calls-taken="0" data-focus-mode-network-actions-taken="0" data-focus-mode-external-effects-created="false" data-next-action-href="{_e(next_shortcut['href'])}" data-next-action-label="{_e(next_shortcut['label'])}" data-next-action-action="{_e(next_shortcut['action'])}" data-next-action-status="{_e(next_shortcut['status'])}" data-next-action-source="{_e(next_shortcut['source'])}" data-next-action-form-available="{_e(next_shortcut['form_available'])}" data-next-action-confirmation-required="{_e(next_shortcut['confirmation_required'])}" data-next-action-write-on-get="{_e(next_shortcut['write_on_get'])}" data-next-action-provider-calls-taken="{_e(next_shortcut['provider_calls_taken'])}" data-next-action-network-actions-taken="{_e(next_shortcut['network_actions_taken'])}" data-next-action-external-effects-created="{_e(next_shortcut['external_effects_created'])}" data-goal-shortcut-href="{_e(goal_shortcut['href'])}" data-goal-shortcut-label="{_e(goal_shortcut['label'])}" data-goal-shortcut-action="{_e(goal_shortcut['action'])}" data-goal-shortcut-status="{_e(goal_shortcut['status'])}" data-goal-shortcut-source="{_e(goal_shortcut['source'])}" data-goal-shortcut-write-on-get="{_e(goal_shortcut['write_on_get'])}" data-goal-shortcut-provider-calls-taken="{_e(goal_shortcut['provider_calls_taken'])}" data-goal-shortcut-network-actions-taken="{_e(goal_shortcut['network_actions_taken'])}" data-goal-shortcut-external-effects-created="{_e(goal_shortcut['external_effects_created'])}" data-proof-href="{_e(proof_shortcut['href'])}" data-proof-label="{_e(proof_shortcut['label'])}" data-proof-status="{_e(proof_shortcut['status'])}" data-proof-source="{_e(proof_shortcut['source'])}" data-proof-write-on-get="{_e(proof_shortcut['write_on_get'])}" data-proof-provider-calls-taken="{_e(proof_shortcut['provider_calls_taken'])}" data-proof-network-actions-taken="{_e(proof_shortcut['network_actions_taken'])}" data-proof-external-effects-created="{_e(proof_shortcut['external_effects_created'])}" data-artifact-shortcut-href="{_e(artifact_shortcut['href'])}" data-artifact-shortcut-label="{_e(artifact_shortcut['label'])}" data-artifact-shortcut-action="{_e(artifact_shortcut['action'])}" data-artifact-shortcut-status="{_e(artifact_shortcut['status'])}" data-artifact-shortcut-source="{_e(artifact_shortcut['source'])}" data-artifact-shortcut-write-on-get="{_e(artifact_shortcut['write_on_get'])}" data-artifact-shortcut-provider-calls-taken="{_e(artifact_shortcut['provider_calls_taken'])}" data-artifact-shortcut-network-actions-taken="{_e(artifact_shortcut['network_actions_taken'])}" data-artifact-shortcut-external-effects-created="{_e(artifact_shortcut['external_effects_created'])}" data-finish-today-href="{_e(finish_shortcut['href'])}" data-finish-today-label="{_e(finish_shortcut['label'])}" data-finish-today-source="{_e(finish_shortcut['source'])}" data-finish-today-target="{_e(finish_shortcut['target'])}" data-finish-today-surface="{_e(finish_shortcut['surface'])}" data-finish-today-confirmation-required="{_e(finish_shortcut['confirmation_required'])}" data-finish-today-write-on-get="{_e(finish_shortcut['write_on_get'])}" data-finish-today-provider-calls-taken="{_e(finish_shortcut['provider_calls_taken'])}" data-finish-today-network-actions-taken="{_e(finish_shortcut['network_actions_taken'])}" data-finish-today-external-effects-created="{_e(finish_shortcut['external_effects_created'])}">
       <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: question mark opens keyboard help; slash opens command palette; Escape closes dialogs; n opens next action; h opens home; y opens today; g opens current goal; r opens resume; s opens search; w opens workspace; a opens artifacts; v opens recent items; p opens proof; f opens Finish Today; m toggles focus mode; t toggles theme.</span>
       <button class="icon-button" id="shortcut-help-open" type="button" data-shortcut-help-open="true" data-shortcut="?" aria-keyshortcuts="?" aria-describedby="keyboard-shortcuts-help" title="Open keyboard help (?)">Keys</button>
       <button class="icon-button" id="palette-open" type="button" data-shortcut="/" aria-keyshortcuts="/" aria-describedby="keyboard-shortcuts-help" title="Open command palette (/)">Palette</button>
@@ -50005,6 +50044,11 @@ def _html_page(
     function openGoalShortcut() {{
       var href = keyboardShortcuts ? keyboardShortcuts.getAttribute("data-goal-shortcut-href") : "";
       if (!href) {{ href = "/goals"; }}
+      window.location.href = href;
+    }}
+    function openArtifactShortcut() {{
+      var href = keyboardShortcuts ? keyboardShortcuts.getAttribute("data-artifact-shortcut-href") : "";
+      if (!href) {{ href = "/artifacts"; }}
       window.location.href = href;
     }}
     function openFinishToday() {{
@@ -52747,7 +52791,7 @@ def _html_page(
       if (event.key === "r") {{ event.preventDefault(); window.location.href = "/resume"; }}
       if (event.key === "s") {{ event.preventDefault(); window.location.href = "/search"; }}
       if (event.key === "w") {{ event.preventDefault(); window.location.href = "/workspace"; }}
-      if (event.key === "a") {{ event.preventDefault(); window.location.href = "/artifacts"; }}
+      if (event.key === "a") {{ event.preventDefault(); openArtifactShortcut(); }}
       if (event.key === "v") {{ event.preventDefault(); openRecentItems(); }}
       if (event.key === "p") {{ event.preventDefault(); openProof(); }}
       if (event.key === "f") {{ event.preventDefault(); openFinishToday(); }}

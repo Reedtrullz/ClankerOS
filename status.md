@@ -1,5 +1,29 @@
 # Status
 
+## 2026-07-01 Goal-Aware Artifact Shortcut UX
+
+- The shared app shell now makes the `a` artifact keyboard shortcut
+  Goal-aware. Empty first-run sessions still route to the bounded
+  `/artifacts` index, while populated browser sessions route to the current
+  saved or lead Goal's `#goal-artifact-command-bar` surface.
+- The shell exposes explicit read-only `data-artifact-shortcut-*` metadata for
+  href, label, action, status, source, and zero-effect counters, so the
+  browser-local key handler uses the same evidence-backed target as the
+  current Goal context instead of hardcoding `/artifacts`.
+- TDD evidence: the modern local-app route test failed first because empty
+  Home had no `data-artifact-shortcut-href="/artifacts"` metadata; the
+  populated fixture-backed scenario failed first because Home had no
+  `data-artifact-shortcut-href="/goals/<goal_id>#goal-artifact-command-bar"`.
+  After implementation, the paired focused route tests passed.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed.
+- Non-claim: this is browser-local artifact shortcut routing only. It does not
+  write on GET, approve work, execute tasks, call providers, use the network,
+  push, create PRs, deploy, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Goal-Aware Proof Shortcut UX
 
 - The shared app shell now makes the global `Proof` button and `p` keyboard

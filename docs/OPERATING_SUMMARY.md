@@ -166,7 +166,11 @@ Core layers for the bootstrap:
   shared `Proof`/`p` shortcut is also Goal-aware: first-run/no-goal sessions
   keep the manual CI evidence recorder fallback, while populated sessions open
   the current saved or lead Goal's CI handoff surface using explicit read-only
-  proof shortcut metadata. The
+  proof shortcut metadata. The shared `a` artifact shortcut is also
+  Goal-aware: first-run/no-goal sessions keep the bounded `/artifacts` index
+  fallback, while populated sessions open the current saved or lead Goal's
+  `#goal-artifact-command-bar` surface using explicit read-only artifact
+  shortcut metadata. The
   local app also exposes `/guide` as an in-app `Suggested Use Guide` that maps
   `Today -> Goal -> Action -> Proof -> Finish -> Resume`, links first-run
   operators to Home/Today/Goals project/goal setup forms, links current-goal

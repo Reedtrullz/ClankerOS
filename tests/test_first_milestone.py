@@ -6175,6 +6175,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert 'data-proof-network-actions-taken="0"' in root.body
     assert 'data-proof-external-effects-created="false"' in root.body
     assert 'aria-keyshortcuts="p"' in root.body
+    assert 'data-artifact-shortcut-href="/artifacts"' in root.body
+    assert 'data-artifact-shortcut-label="Artifacts"' in root.body
+    assert 'data-artifact-shortcut-action="Open artifacts"' in root.body
+    assert 'data-artifact-shortcut-status="first_run"' in root.body
+    assert 'data-artifact-shortcut-source="artifact_index"' in root.body
+    assert 'data-artifact-shortcut-write-on-get="false"' in root.body
+    assert 'data-artifact-shortcut-provider-calls-taken="0"' in root.body
+    assert 'data-artifact-shortcut-network-actions-taken="0"' in root.body
+    assert 'data-artifact-shortcut-external-effects-created="false"' in root.body
     assert "aria-keyshortcuts=\"/\"" in root.body
     assert 'aria-keyshortcuts="m"' in root.body
     assert "aria-keyshortcuts=\"t\"" in root.body
@@ -6333,10 +6342,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "var keyboardShortcuts = document.querySelector(\"[data-keyboard-shortcuts='true']\");" in root.body
     assert "function openGoalShortcut()" in root.body
     assert 'if (event.key === "g") { event.preventDefault(); openGoalShortcut(); }' in root.body
+    assert "function openArtifactShortcut()" in root.body
     assert 'if (event.key === "r") { event.preventDefault(); window.location.href = "/resume"; }' in root.body
     assert 'if (event.key === "s") { event.preventDefault(); window.location.href = "/search"; }' in root.body
     assert 'if (event.key === "w") { event.preventDefault(); window.location.href = "/workspace"; }' in root.body
-    assert 'if (event.key === "a") { event.preventDefault(); window.location.href = "/artifacts"; }' in root.body
+    assert 'if (event.key === "a") { event.preventDefault(); openArtifactShortcut(); }' in root.body
     assert 'if (event.key === "v") { event.preventDefault(); openRecentItems(); }' in root.body
     assert 'if (event.key === "p") { event.preventDefault(); openProof(); }' in root.body
     assert 'if (event.key === "f") { event.preventDefault(); openFinishToday(); }' in root.body
@@ -17313,6 +17323,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert 'data-proof-source="saved_goal_goal_ci_handoff"' in restored_home.body
     assert 'data-proof-open="true"' in restored_home.body
     assert 'if (event.key === "p") { event.preventDefault(); openProof(); }' in restored_home.body
+    assert f'data-artifact-shortcut-href="/goals/{result.goal_id}#goal-artifact-command-bar"' in restored_home.body
+    assert 'data-artifact-shortcut-label="Goal artifacts"' in restored_home.body
+    assert 'data-artifact-shortcut-action="Open Goal artifacts"' in restored_home.body
+    assert 'data-artifact-shortcut-status="available"' in restored_home.body
+    assert 'data-artifact-shortcut-source="saved_goal_goal_artifact_command_bar"' in restored_home.body
+    assert 'data-artifact-shortcut-write-on-get="false"' in restored_home.body
+    assert 'data-artifact-shortcut-provider-calls-taken="0"' in restored_home.body
+    assert 'data-artifact-shortcut-network-actions-taken="0"' in restored_home.body
+    assert 'data-artifact-shortcut-external-effects-created="false"' in restored_home.body
+    assert 'if (event.key === "a") { event.preventDefault(); openArtifactShortcut(); }' in restored_home.body
     assert "data-live-refresh-script='home'" in restored_home.body
     assert "home_live_refresh_status</dt><dd>goal_ready" in restored_home.body
     assert (

@@ -866,6 +866,10 @@ open `/goals`, while populated operator sessions open the current saved or
 lead Goal cockpit directly. The global `Proof` button and `p` shortcut are
 also Goal-aware: first-run or empty states open the manual CI evidence
 recorder, while populated sessions open the current Goal's CI handoff surface.
+The `a` artifact shortcut keeps empty sessions on the bounded `/artifacts`
+index, but populated sessions jump straight to the current Goal's artifact
+command bar so generated handoffs, diffs, evidence, and notes stay attached to
+the Goal loop.
 Focus mode uses the header `Focus` button or `m`
 shortcut to hide Recent Items, Route Context, Operator Focus, and Last Action
 strips while keeping the Operator Ribbon and page body visible. It is stored in
