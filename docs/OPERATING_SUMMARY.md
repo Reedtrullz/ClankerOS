@@ -163,6 +163,10 @@ Core layers for the bootstrap:
   shared shell shortcut for `g` is now Goal-aware: first-run/no-goal sessions
   continue to open `/goals`, while populated sessions open the current saved or
   lead Goal cockpit directly using explicit read-only shortcut metadata. The
+  shared `Proof`/`p` shortcut is also Goal-aware: first-run/no-goal sessions
+  keep the manual CI evidence recorder fallback, while populated sessions open
+  the current saved or lead Goal's CI handoff surface using explicit read-only
+  proof shortcut metadata. The
   local app also exposes `/guide` as an in-app `Suggested Use Guide` that maps
   `Today -> Goal -> Action -> Proof -> Finish -> Resume`, links first-run
   operators to Home/Today/Goals project/goal setup forms, links current-goal

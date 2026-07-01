@@ -632,7 +632,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   available without expanding palette evidence. The `g` shortcut is now
   Goal-aware: first-run and no-goal sessions still open `/goals`, while
   populated sessions open the current saved or lead Goal cockpit directly from
-  any route. It also includes a visible
+  any route. The global `Proof` button and `p` shortcut are also Goal-aware:
+  first-run and no-goal sessions still open the manual CI evidence recorder,
+  while populated sessions open the current Goal's CI handoff section from any
+  route. It also includes a visible
   `Finish` control and the `f` shortcut resolves to the
   route-local Finish Today form on `/today` (`#today-finish`) and
   `/goals/<goal_id>` (`#goal-finish-today`), plus route-local forms on

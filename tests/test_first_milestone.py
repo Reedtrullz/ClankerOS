@@ -6168,6 +6168,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert 'data-proof-open="true"' in root.body
     assert 'data-proof-href="/ci-evidence#record-ci-snapshot-json"' in root.body
     assert 'data-proof-label="Record CI proof"' in root.body
+    assert 'data-proof-status="first_run"' in root.body
     assert 'data-proof-source="ci_evidence_record_form"' in root.body
     assert 'data-proof-write-on-get="false"' in root.body
     assert 'data-proof-provider-calls-taken="0"' in root.body
@@ -17306,6 +17307,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert 'data-goal-shortcut-source="saved_goal_current_goal"' in restored_home.body
     assert 'if (event.key === "g") { event.preventDefault(); openGoalShortcut(); }' in restored_home.body
     assert "data-live-refresh='home'" in restored_home.body
+    assert f'data-proof-href="/goals/{result.goal_id}#goal-ci-handoff"' in restored_home.body
+    assert 'data-proof-label="Goal CI handoff"' in restored_home.body
+    assert 'data-proof-status="available"' in restored_home.body
+    assert 'data-proof-source="saved_goal_goal_ci_handoff"' in restored_home.body
+    assert 'data-proof-open="true"' in restored_home.body
+    assert 'if (event.key === "p") { event.preventDefault(); openProof(); }' in restored_home.body
     assert "data-live-refresh-script='home'" in restored_home.body
     assert "home_live_refresh_status</dt><dd>goal_ready" in restored_home.body
     assert (

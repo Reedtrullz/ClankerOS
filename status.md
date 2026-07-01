@@ -1,5 +1,36 @@
 # Status
 
+## 2026-07-01 Goal-Aware Proof Shortcut UX
+
+- The shared app shell now makes the global `Proof` button and `p` keyboard
+  shortcut Goal-aware. Empty first-run sessions still route to
+  `/ci-evidence#record-ci-snapshot-json`, while populated browser sessions
+  route to the current saved or lead Goal's `#goal-ci-handoff` surface.
+- The shell and visible Proof button expose explicit read-only `data-proof-*`
+  metadata for href, label, status, source, and zero-effect counters, so the
+  browser-local key handler uses the same evidence-backed target as the
+  visible control.
+- TDD evidence: the modern local-app route test failed first because empty
+  Home had no `data-proof-status="first_run"` metadata; after implementation,
+  the populated fixture-backed scenario proved Home renders
+  `data-proof-href="/goals/<goal_id>#goal-ci-handoff"` with
+  `Goal CI handoff` and source `saved_goal_goal_ci_handoff`.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed after docs/status updates.
+- Non-claim: this is browser-local proof shortcut routing only. It does not
+  write on GET, poll GitHub from the app, approve work, execute tasks, call
+  providers, use the network, push, create PRs, deploy, or mutate external
+  systems from ClankerOS.
+
 ## 2026-07-01 Goal-Aware Keyboard Shortcut UX
 
 - The shared app shell now makes the `g` keyboard shortcut Goal-aware. Empty
