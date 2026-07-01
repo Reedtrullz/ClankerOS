@@ -10418,7 +10418,7 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     goal_workspace = json.loads(workspace_path.read_text(encoding="utf-8"))
     assert goal_workspace["open_project"] == "clankeros"
     assert goal_workspace["open_goal"] == created_goal_id
-    assert goal_workspace["resume_surface"] == f"/goals/{created_goal_id}"
+    assert goal_workspace["resume_surface"] == f"/goals/{created_goal_id}#goal-action-dock-form"
     assert goal_workspace["updated_by"] == "create-goal"
     resume = render_local_app_route(tmp_path, "/resume")
     assert "resume_workspace_available</dt><dd>true" in resume.body
@@ -10429,7 +10429,14 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     )
     assert f"resume_goal_id: {created_goal_id}" in resume.body
     assert "resume_goal_label_source: title" in resume.body
-    assert "Open saved Goal: Make ClankerOS resumable after first-run goal creation." in resume.body
+    assert (
+        f"data-resume-hero-primary='true' href='/goals/{created_goal_id}#goal-action-dock-form'>"
+        "Create scout delegation</a>"
+    ) in resume.body
+    assert (
+        f"resume_saved_surface</dt><dd><a href='/goals/{created_goal_id}#goal-action-dock-form'>"
+        f"/goals/{created_goal_id}#goal-action-dock-form</a>"
+    ) in resume.body
     assert "Open saved surface" not in resume.body
     assert "Resume Operator Workbench" in resume.body
     assert "data-resume-state-details='true'" in resume.body
@@ -10460,7 +10467,10 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "resume_workbench_phase</dt><dd>Ready for delegation" in resume.body
     assert "resume_workbench_next_action</dt><dd>Create scout delegation" in resume.body
     assert "resume_workbench_primary_surface</dt><dd><a href='#resume-workbench-action-form'>Create scout delegation</a>" in resume.body
-    assert f"resume_workbench_target_surface</dt><dd><a href='/goals/{created_goal_id}'>/goals/{created_goal_id}</a>" in resume.body
+    assert (
+        f"resume_workbench_target_surface</dt><dd><a href='/goals/{created_goal_id}#goal-action-dock-form'>"
+        "Create scout delegation</a>"
+    ) in resume.body
     assert "resume_workbench_reason</dt><dd>goal_has_no_delegation_yet" in resume.body
     assert "resume_workbench_action_form_available</dt><dd>true" in resume.body
     assert "resume_workbench_confirmation_required</dt><dd>true" in resume.body
@@ -10499,6 +10509,10 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "action='/actions/delegate'" in resume.body
     assert "resume_current_phase</dt><dd>Ready for delegation" in resume.body
     assert "resume_next_action</dt><dd>Create scout delegation" in resume.body
+    assert (
+        f"resume_command_next_surface</dt><dd><a href='/goals/{created_goal_id}#goal-action-dock-form'>"
+        "Create scout delegation</a>"
+    ) in resume.body
     home = render_local_app_route(tmp_path, "/")
     assert (
         f"resume_goal: <a href='/goals/{created_goal_id}'>"

@@ -1,5 +1,25 @@
 # Status
 
+## 2026-07-01 First Goal Creation Exact Action Resume UX
+
+- Updated confirmed `create-goal` handling so the first saved Goal workspace
+  stores the Goal's concrete action-dock route as `resume_surface`, for example
+  `/goals/<goal_id>#goal-action-dock-form`, instead of the broad Goal page.
+- `/resume` now turns that exact saved route into the primary hero action and
+  command/workbench target with the operator-facing label, such as
+  `Create scout delegation`, while preserving the raw exact route in saved
+  workspace evidence.
+- Local verification:
+  - Added failing-first assertions for the `create-goal` workspace JSON,
+    `/resume` hero action, saved-surface readback, command target, and
+    workbench target, then updated the POST handler and label/target helpers.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q`:
+    1 passed.
+- Non-claim: this only changes confirmed local first-Goal workspace state and
+  browser resume routing. It does not write on GET, approve work, execute
+  tasks, commit, push, create PRs, deploy, call providers, use the network, or
+  mutate external systems from ClankerOS.
+
 ## 2026-07-01 Goal Note Exact Resume Surface UX
 
 - Updated confirmed `save-goal-note` handling so saving a Goal operator note

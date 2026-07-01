@@ -7906,6 +7906,7 @@ def _resume_command_bar(
     first_run_home_href = "/"
     first_run_today_href = "/today"
     first_run_goals_href = "/goals"
+    saved_resume_surface = _safe_local_return_path(state.get("resume_surface")) or ""
 
     if _resume_should_use_first_run(root, open_goal):
         first_run = _resume_first_run_context(root)
@@ -7943,6 +7944,15 @@ def _resume_command_bar(
             target_href = action.href
             target_label = action.href
             form_available = bool(_goal_next_action_form(goal_state, action))
+            if saved_resume_surface:
+                target_href = saved_resume_surface
+                target_label = _saved_workspace_surface_action_label(
+                    root,
+                    saved_resume_surface,
+                    open_goal=open_goal,
+                    open_project=open_project,
+                    fallback=saved_resume_surface,
+                )
     elif open_project:
         status = "project_only"
         next_action = "Open saved project"
@@ -8070,6 +8080,7 @@ def _resume_operator_workbench(
     first_run_form = ""
     top_form_source = "none"
     top_form_heading = "Resume Workbench Action Form"
+    saved_resume_surface = _safe_local_return_path(state.get("resume_surface")) or ""
 
     if _resume_should_use_first_run(root, open_goal):
         first_run = _resume_first_run_context(root)
@@ -8136,6 +8147,15 @@ def _resume_operator_workbench(
             target_label = action.href
             action_form = _goal_next_action_form(goal_state, action)
             form_available = bool(action_form)
+            if saved_resume_surface:
+                target_href = saved_resume_surface
+                target_label = _saved_workspace_surface_action_label(
+                    root,
+                    saved_resume_surface,
+                    open_goal=open_goal,
+                    open_project=open_project,
+                    fallback=saved_resume_surface,
+                )
             if form_available:
                 top_form_source = "goal_next_action_form"
                 top_form_heading = next_action
@@ -13581,6 +13601,10 @@ def _saved_workspace_surface_action_label(
     path = urlparse(local_value).path
     if path.startswith("/goals/"):
         goal_id = unquote(path[len("/goals/") :].split("/", 1)[0]).strip() or open_goal
+        if goal_id and urlparse(local_value).fragment == "goal-action-dock-form":
+            _href, label, _form_available = _workspace_goal_action_resume_target(root, goal_id)
+            if label:
+                return label
         if goal_id:
             label, _source = _goal_display_label(root, goal_id)
             if label:
@@ -39705,6 +39729,10 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             )
             message = f"goal_created: {lifecycle.goal.id}"
             location = f"/goals/{quote(lifecycle.goal.id)}"
+            resume_surface, _resume_label, _form_available = _workspace_goal_action_resume_target(
+                root,
+                lifecycle.goal.id,
+            )
             _write_workspace_state(
                 root,
                 {
@@ -39712,7 +39740,7 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                     "open_project": lifecycle.goal.project_id,
                     "open_goal": lifecycle.goal.id,
                     "last_viewed_artifact": str(lifecycle.goal_artifact_path.relative_to(root)),
-                    "resume_surface": f"/goals/{quote(lifecycle.goal.id)}",
+                    "resume_surface": resume_surface or f"/goals/{quote(lifecycle.goal.id)}",
                     "updated_by": "create-goal",
                 },
             )

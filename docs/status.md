@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Confirmed `create-goal` now saves the first Goal's exact action-dock route
+  as `resume_surface`, for example `/goals/<goal_id>#goal-action-dock-form`,
+  instead of the broad Goal page. `/resume` uses that route as the primary
+  hero, command, and workbench target with labels such as
+  `Create scout delegation`, while saved-state evidence preserves the raw
+  route. Local proof includes the first-run/browser route pytest (`1 passed`).
 - Confirmed `save-goal-note` now saves the exact Goal operator-notes section
   as `resume_surface`, for example `/goals/<goal_id>#goal-operator-notes`,
   while keeping `operator-notes.md` as the last viewed artifact. `/resume`

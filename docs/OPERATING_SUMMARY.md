@@ -452,7 +452,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   `register-project` and `create-goal` forms, explicitly defaults the first
   dogfood project to `clankeros` at the current repository path, persists
   resume workspace state plus exact `resume_surface` routes after confirmed
-  browser project registration and first goal creation, keeps unsent setup and
+  browser project registration and first goal creation, now writes first Goal
+  creation resume state to the exact
+  `/goals/<goal_id>#goal-action-dock-form` route so `/resume` opens with the
+  next Goal action, such as `Create scout delegation`, instead of a broad Goal
+  overview, keeps unsent setup and
   Goal creation edits in browser-local
   `localStorage:clankeros-action-form-draft:<action>:<scope>` until cleared or
   confirmed-success cleanup, gives those setup forms action briefs, human
