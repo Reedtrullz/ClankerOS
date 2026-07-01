@@ -19868,6 +19868,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     goal_record = storage.get_goal(goal_id)
     delegation_record = storage.get_subagent_delegation(delegation_id)
     assert delegation_record is not None
+    goal_action_dock = f"/goals/{goal_id}#goal-action-dock"
 
     after_delegation = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert after_delegation.status == 200
@@ -19882,7 +19883,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     )
     assert (
         f"name='delegation_id' value='{delegation_id}'>"
-        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        f"<input type='hidden' name='return_to' value='{goal_action_dock}'>"
         in coder_prep_goal_form
     )
 
@@ -19903,7 +19904,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
         method="POST",
         form={
             "delegation_id": [delegation_id],
-            "return_to": [f"/goals/{goal_id}"],
+            "return_to": [goal_action_dock],
             "confirm": ["yes"],
         },
     )
@@ -19913,6 +19914,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
         f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
         in prep_result.body
     )
+    assert f"#goal-action-dock'>{goal_action_dock}</a>" in prep_result.body
     coder_prep_md = sorted(
         (tmp_path / ".clanker" / "delegations" / delegation_id / "runs").glob(
             "*/coder_prep/coder_prep.md"
@@ -19924,7 +19926,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert prep_workspace["last_viewed_artifact"] == str(
         coder_prep_md.relative_to(tmp_path)
     )
-    assert prep_workspace["resume_surface"] == f"/goals/{goal_id}"
+    assert prep_workspace["resume_surface"] == goal_action_dock
     assert prep_workspace["updated_by"] == "coder-prep"
     after_prep = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert after_prep.status == 200
@@ -19939,7 +19941,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     )
     assert (
         f"name='delegation_id' value='{delegation_id}'>"
-        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        f"<input type='hidden' name='return_to' value='{goal_action_dock}'>"
         in worktree_plan_goal_form
     )
 
@@ -19959,7 +19961,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
         method="POST",
         form={
             "delegation_id": [delegation_id],
-            "return_to": [f"/goals/{goal_id}"],
+            "return_to": [goal_action_dock],
             "confirm": ["yes"],
         },
     )
@@ -19969,6 +19971,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
         f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
         in plan_result.body
     )
+    assert f"#goal-action-dock'>{goal_action_dock}</a>" in plan_result.body
     coder_worktree_plan_md = coder_prep_md.with_name("coder_worktree_plan.md")
     assert coder_worktree_plan_md.exists()
     plan_workspace = json.loads(workspace_path.read_text(encoding="utf-8"))
@@ -19977,7 +19980,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert plan_workspace["last_viewed_artifact"] == str(
         coder_worktree_plan_md.relative_to(tmp_path)
     )
-    assert plan_workspace["resume_surface"] == f"/goals/{goal_id}"
+    assert plan_workspace["resume_surface"] == goal_action_dock
     assert plan_workspace["updated_by"] == "coder-worktree-plan"
     after_plan = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert after_plan.status == 200
@@ -20000,7 +20003,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     )
     assert (
         f"name='delegation_id' value='{delegation_id}'>"
-        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        f"<input type='hidden' name='return_to' value='{goal_action_dock}'>"
         in worktree_approval_goal_form
     )
 
@@ -20026,7 +20029,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
             "delegation_id": [delegation_id],
             "requested_by": ["operator"],
             "note": ["Approve bounded worktree execution"],
-            "return_to": [f"/goals/{goal_id}"],
+            "return_to": [goal_action_dock],
             "confirm": ["yes"],
         },
     )
@@ -20038,6 +20041,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
         f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
         in approval_result.body
     )
+    assert f"#goal-action-dock'>{goal_action_dock}</a>" in approval_result.body
     assert (
         "data-action-result-form-draft-key="
         f"'clankeros-action-form-draft:coder-worktree-approval:{delegation_id}'"
@@ -20055,7 +20059,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert approval_workspace["last_viewed_artifact"] == str(
         approval_request_md.relative_to(tmp_path)
     )
-    assert approval_workspace["resume_surface"] == f"/goals/{goal_id}"
+    assert approval_workspace["resume_surface"] == goal_action_dock
     assert approval_workspace["updated_by"] == "coder-worktree-approval"
     pending_approval = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert pending_approval.status == 200
@@ -20069,7 +20073,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
     assert "action='/actions/approve-coder-worktree'" in pending_approval.body
     assert (
         f"name='approval_id' value='{approval_id}'>"
-        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        f"<input type='hidden' name='return_to' value='{goal_action_dock}'>"
         in pending_approval.body
     )
     assert "data-action-draft-action='approve-coder-worktree'" in pending_approval.body
@@ -20090,7 +20094,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
             "approval_id": [approval_id],
             "decided_by": ["operator"],
             "note": ["Approved bounded execution"],
-            "return_to": [f"/goals/{goal_id}"],
+            "return_to": [goal_action_dock],
         },
     )
     assert approval_decision_confirmation.status == 409
@@ -20105,7 +20109,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
             "approval_id": [approval_id],
             "decided_by": ["operator"],
             "note": ["Approved bounded execution"],
-            "return_to": [f"/goals/{goal_id}"],
+            "return_to": [goal_action_dock],
             "confirm": ["yes"],
         },
     )
@@ -20117,6 +20121,7 @@ def test_goal_next_action_card_exposes_post_delegation_forms(
         f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
         in approval_decision.body
     )
+    assert f"#goal-action-dock'>{goal_action_dock}</a>" in approval_decision.body
     assert (
         "data-action-result-form-draft-key="
         f"'clankeros-action-form-draft:approve-coder-worktree:{approval_id}'"
@@ -20293,6 +20298,7 @@ def test_goal_next_action_card_exposes_reviewed_commit_request_form(
     goal_record = storage.get_goal(goal_id)
     coder_run = get_coder_worktree_run(storage, run_id)
     assert coder_run is not None
+    goal_action_dock = f"/goals/{goal_id}#goal-action-dock"
 
     before_review = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert before_review.status == 200
@@ -20312,7 +20318,7 @@ def test_goal_next_action_card_exposes_reviewed_commit_request_form(
     )
     assert (
         f"name='run_id' value='{run_id}'>"
-        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        f"<input type='hidden' name='return_to' value='{goal_action_dock}'>"
         in review_goal_form
     )
 
@@ -20330,7 +20336,7 @@ def test_goal_next_action_card_exposes_reviewed_commit_request_form(
         method="POST",
         form={
             "run_id": [run_id],
-            "return_to": [f"/goals/{goal_id}"],
+            "return_to": [goal_action_dock],
             "confirm": ["yes"],
         },
     )
@@ -20342,6 +20348,7 @@ def test_goal_next_action_card_exposes_reviewed_commit_request_form(
         f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
         in review_response.body
     )
+    assert f"#goal-action-dock'>{goal_action_dock}</a>" in review_response.body
     review_path = tmp_path / "runs" / source_run_id / "review.md"
     assert review_path.exists()
     assert run_id in review_path.read_text(encoding="utf-8")
@@ -20351,7 +20358,7 @@ def test_goal_next_action_card_exposes_reviewed_commit_request_form(
     assert review_workspace["open_project"] == "subject"
     assert review_workspace["open_goal"] == goal_id
     assert review_workspace["last_viewed_artifact"] == str(review_path.relative_to(tmp_path))
-    assert review_workspace["resume_surface"] == f"/goals/{goal_id}"
+    assert review_workspace["resume_surface"] == goal_action_dock
     assert review_workspace["updated_by"] == "review-run"
 
     after_review = render_local_app_route(tmp_path, f"/goals/{goal_id}")
@@ -20367,7 +20374,7 @@ def test_goal_next_action_card_exposes_reviewed_commit_request_form(
     )
     assert (
         f"name='run_id' value='{run_id}'>"
-        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        f"<input type='hidden' name='return_to' value='{goal_action_dock}'>"
         in commit_request_goal_form
     )
     assert "data-action-draft-action='coder-commit-request'" in after_review.body
@@ -20401,13 +20408,14 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     goal_record = storage.get_goal(goal_id)
     coder_run = get_coder_worktree_run(storage, run_id)
     assert coder_run is not None
+    goal_action_dock = f"/goals/{goal_id}#goal-action-dock"
     commit_request_goal_form = _goal_commit_request_form(
         tmp_path,
         {"goal": goal_record, "worktree_runs": [coder_run]},
     )
     assert (
         f"name='run_id' value='{run_id}'>"
-        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        f"<input type='hidden' name='return_to' value='{goal_action_dock}'>"
         in commit_request_goal_form
     )
 
@@ -20420,7 +20428,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
             "run_id": [run_id],
             "message": [commit_message],
             "note": ["Goal page commit request"],
-            "return_to": [f"/goals/{goal_id}"],
+            "return_to": [goal_action_dock],
             "confirm": ["yes"],
         },
     )
@@ -20431,6 +20439,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
         in commit_request.body
     )
+    assert f"#goal-action-dock'>{goal_action_dock}</a>" in commit_request.body
     assert (
         "data-action-result-form-draft-key="
         f"'clankeros-action-form-draft:coder-commit-request:{run_id}'"
@@ -20454,7 +20463,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert commit_request_workspace["last_viewed_artifact"] == str(
         commit_request_md.relative_to(tmp_path)
     )
-    assert commit_request_workspace["resume_surface"] == f"/goals/{goal_id}"
+    assert commit_request_workspace["resume_surface"] == goal_action_dock
     assert commit_request_workspace["updated_by"] == "coder-commit-request"
 
     pending_commit_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
@@ -20469,7 +20478,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     )
     assert (
         f"name='approval_id' value='{commit_approval.id}'>"
-        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        f"<input type='hidden' name='return_to' value='{goal_action_dock}'>"
         in commit_goal_form
     )
     assert "data-action-draft-action='approve-coder-commit'" in pending_commit_goal.body
@@ -20488,7 +20497,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         form={
             "approval_id": [commit_approval.id],
             "note": ["Approve goal page commit"],
-            "return_to": [f"/goals/{goal_id}"],
+            "return_to": [goal_action_dock],
             "confirm": ["yes"],
         },
     )
@@ -20499,6 +20508,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
         in approve_commit.body
     )
+    assert f"#goal-action-dock'>{goal_action_dock}</a>" in approve_commit.body
     assert (
         "data-action-result-form-draft-key="
         f"'clankeros-action-form-draft:approve-coder-commit:{commit_approval.id}'"
@@ -20540,7 +20550,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert (
         f"name='run_id' value='{run_id}'>"
         f"<input type='hidden' name='committed_by' value='operator'>"
-        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        f"<input type='hidden' name='return_to' value='{goal_action_dock}'>"
         in commit_worktree_goal_form
     )
     assert "data-action-draft-action='commit-coder-worktree'" in approved_commit_goal.body
@@ -20559,7 +20569,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
             "run_id": [run_id],
             "message": [commit_message],
             "committed_by": ["operator"],
-            "return_to": [f"/goals/{goal_id}"],
+            "return_to": [goal_action_dock],
             "confirm": ["yes"],
         },
     )
@@ -20570,6 +20580,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
         in commit_response.body
     )
+    assert f"#goal-action-dock'>{goal_action_dock}</a>" in commit_response.body
     assert (
         "data-action-result-form-draft-key="
         f"'clankeros-action-form-draft:commit-coder-worktree:{run_id}'"
@@ -20582,7 +20593,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert commit_workspace["open_project"] == "subject"
     assert commit_workspace["open_goal"] == goal_id
     assert commit_workspace["last_viewed_artifact"] == str(commit_md.relative_to(tmp_path))
-    assert commit_workspace["resume_surface"] == f"/goals/{goal_id}"
+    assert commit_workspace["resume_surface"] == goal_action_dock
     assert commit_workspace["updated_by"] == "commit-coder-worktree"
     publication_request_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert publication_request_goal.status == 200
@@ -20616,7 +20627,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         "<input type='hidden' name='requested_by' value='operator'>"
         "<input type='hidden' name='remote' value='origin'>"
         "<input type='hidden' name='target_branch' value='main'>"
-        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        f"<input type='hidden' name='return_to' value='{goal_action_dock}'>"
         in publication_request_goal_form
     )
     assert "data-action-draft-action='coder-publication-request'" in publication_request_goal.body
@@ -20637,7 +20648,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
             "remote": ["origin"],
             "target_branch": ["main"],
             "note": ["Goal page publication request"],
-            "return_to": [f"/goals/{goal_id}"],
+            "return_to": [goal_action_dock],
             "confirm": ["yes"],
         },
     )
@@ -20648,6 +20659,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
         in publication_request.body
     )
+    assert f"#goal-action-dock'>{goal_action_dock}</a>" in publication_request.body
     assert (
         "data-action-result-form-draft-key="
         f"'clankeros-action-form-draft:coder-publication-request:{run_id}'"
@@ -20671,7 +20683,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert publication_request_workspace["last_viewed_artifact"] == str(
         publication_request_md.relative_to(tmp_path)
     )
-    assert publication_request_workspace["resume_surface"] == f"/goals/{goal_id}"
+    assert publication_request_workspace["resume_surface"] == goal_action_dock
     assert publication_request_workspace["updated_by"] == "coder-publication-request"
     pending_publication_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert pending_publication_goal.status == 200
@@ -20684,7 +20696,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     )
     assert (
         f"name='publication_id' value='{publication.id}'>"
-        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        f"<input type='hidden' name='return_to' value='{goal_action_dock}'>"
         in publication_goal_form
     )
     assert "data-action-draft-action='approve-coder-publication'" in pending_publication_goal.body
@@ -20702,7 +20714,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         form={
             "publication_id": [publication.id],
             "note": ["Approve goal page publication"],
-            "return_to": [f"/goals/{goal_id}"],
+            "return_to": [goal_action_dock],
             "confirm": ["yes"],
         },
     )
@@ -20713,6 +20725,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
         in approve_publication.body
     )
+    assert f"#goal-action-dock'>{goal_action_dock}</a>" in approve_publication.body
     assert (
         "data-action-result-form-draft-key="
         f"'clankeros-action-form-draft:approve-coder-publication:{publication.id}'"
@@ -20746,7 +20759,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     )
     assert (
         f"name='run_id' value='{run_id}'>"
-        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        f"<input type='hidden' name='return_to' value='{goal_action_dock}'>"
         in publication_handoff_goal_form
     )
     assert "suggested manual commands only" in approved_publication_goal.body
@@ -20757,7 +20770,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         method="POST",
         form={
             "run_id": [run_id],
-            "return_to": [f"/goals/{goal_id}"],
+            "return_to": [goal_action_dock],
             "confirm": ["yes"],
         },
     )
@@ -20766,6 +20779,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
         in publication_handoff.body
     )
+    assert f"#goal-action-dock'>{goal_action_dock}</a>" in publication_handoff.body
     ready_publication = next(
         item
         for item in list_coder_publications(tmp_path, status="ready_for_operator", limit=10)
@@ -20783,7 +20797,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert publication_handoff_workspace["last_viewed_artifact"] == str(
         publication_handoff_md.relative_to(tmp_path)
     )
-    assert publication_handoff_workspace["resume_surface"] == f"/goals/{goal_id}"
+    assert publication_handoff_workspace["resume_surface"] == goal_action_dock
     assert publication_handoff_workspace["updated_by"] == "coder-publication-handoff"
     manual_publish_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert manual_publish_goal.status == 200

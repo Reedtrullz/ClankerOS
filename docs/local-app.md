@@ -405,11 +405,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   next local surface, and only renders the confirmed `complete-goal` form when
   the manual publish handoff is ready. Goal-origin coder-prep, worktree-plan,
   worktree-approval-request, review, commit-request, local-commit,
-  publication-request, and publication-handoff forms submit a safe
-  `return_to=/goals/<goal_id>` value, so confirmed action results and saved
-  workspace resume surfaces return to the Goal's next decision boundary after
-  local artifacts are written. Delegation-origin and run-origin actions still
-  fall back to their detail pages.
+  publication-request, approval, and publication-handoff forms submit a safe
+  `return_to=/goals/<goal_id>#goal-action-dock` value, so confirmed action
+  results and saved workspace resume surfaces return to the top Goal action
+  dock after local artifacts are written. Action-result notice links preserve
+  that dock fragment by inserting `?notice=...` before `#goal-action-dock`.
+  Delegation-origin and run-origin actions still fall back to their detail
+  pages.
   A
   read-only `Goal Git Command Bar` inside Git Status summarizes the registered
   project root, branch, commit, clean/dirty posture, tracked and untracked
@@ -1028,7 +1030,7 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   workbench decision forms submit `return_to=/approvals`, so approving from the
   queue returns to the queue result surface instead of dropping the operator on
   Home; Goal-origin worktree, commit, and publication approval forms submit
-  the owning Goal route.
+  the owning Goal action-dock route.
 - `/incidents` - recent local incidents and evidence links.
 - `/artifacts?path=<relative_path>` - safe read-only artifact viewer.
 - `/health` - Python, git, storage, command, import, route, and counter health.

@@ -1,5 +1,34 @@
 # Status
 
+## 2026-07-01 Goal Action Dock Return Anchor UX
+
+- Goal-origin coder prep, worktree plan, worktree approval, review, commit,
+  publication, and approval forms now submit safe
+  `return_to=/goals/<goal_id>#goal-action-dock` targets instead of only the
+  broad Goal page.
+- Confirmed local action result links now preserve fragments by inserting the
+  `notice` query before the fragment, for example
+  `/goals/<goal_id>?notice=...#goal-action-dock`, and saved workspace resume
+  surfaces keep the same action-dock target.
+- TDD evidence: the focused post-delegation Goal workflow test failed first
+  because `_goal_coder_prep_form` still emitted `return_to=/goals/<goal_id>`
+  without the action-dock fragment, then passed after the shared Goal
+  return-target and notice-link helpers were added.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms`:
+    2 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms`:
+    4 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py docs/local-app.md status.md`:
+    passed.
+- Non-claim: this is Goal-origin browser return/resume targeting for local
+  action results. It does not write on GET, run providers, use the network,
+  push, create PRs, deploy, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Goal Post-Delegation Return Coverage UX
 
 - Goal-origin coder prep, worktree plan, and worktree approval request forms

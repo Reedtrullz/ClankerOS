@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qs, quote, unquote, urlencode, urlparse
+from urllib.parse import parse_qs, quote, unquote, urlencode, urlparse, urlunparse
 
 from agent_os.coder_prep import (
     CoderPrepError,
@@ -13278,7 +13278,7 @@ def _remember_last_action_result(
     location: str,
 ) -> dict[str, Any]:
     safe_location = _safe_local_return_path(location) or "/"
-    next_href = f"{safe_location}?notice={quote(message, safe='')}"
+    next_href = _notice_href(safe_location, message)
     return _write_workspace_state(
         root,
         {
@@ -13291,6 +13291,14 @@ def _remember_last_action_result(
             "last_action_updated_at": utc_now(),
         },
     )
+
+
+def _notice_href(location: str, message: str) -> str:
+    safe_location = _safe_local_return_path(location) or "/"
+    parsed = urlparse(safe_location)
+    notice_param = f"notice={quote(message, safe='')}"
+    query = f"{parsed.query}&{notice_param}" if parsed.query else notice_param
+    return urlunparse(("", "", parsed.path or "/", parsed.params, query, parsed.fragment))
 
 
 def _remember_delegation_workspace(
@@ -19688,12 +19696,18 @@ def _goal_pause_form(state: dict[str, Any]) -> str:
     )
 
 
+def _goal_action_dock_return_path(state: dict[str, Any]) -> str:
+    goal = state.get("goal")
+    if goal is None:
+        return "/goals"
+    return f"/goals/{quote(goal.id)}#goal-action-dock"
+
+
 def _goal_approve_worktree_form(state: dict[str, Any]) -> str:
     approval = _goal_pending_worktree_approval(state)
     if approval is None:
         return "<p class='muted'>approve_worktree_form_status: unavailable_until_pending_worktree_approval_exists</p>"
-    goal = state.get("goal")
-    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
+    return_to = _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Approve Worktree</h3>",
@@ -19783,8 +19797,7 @@ def _goal_commit_request_form(root: Path, state: dict[str, Any]) -> str:
     run = _goal_reviewed_completed_worktree_run(root, state)
     if run is None:
         return "<p class='muted'>commit_request_form_status: unavailable_until_reviewed_completed_run_exists</p>"
-    goal = state.get("goal")
-    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
+    return_to = _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Create Commit Request</h3>",
@@ -19805,8 +19818,7 @@ def _goal_review_run_form(root: Path, state: dict[str, Any]) -> str:
     run = _goal_unreviewed_completed_worktree_run(root, state)
     if run is None:
         return "<p class='muted'>review_run_form_status: unavailable_until_completed_unreviewed_run_exists</p>"
-    goal = state.get("goal")
-    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
+    return_to = _goal_action_dock_return_path(state)
     review_path = Path("runs") / run.source_run_id / "review.md"
     return "".join(
         [
@@ -19828,8 +19840,7 @@ def _goal_approve_commit_form(state: dict[str, Any]) -> str:
     approval = _goal_pending_commit_approval(state)
     if approval is None:
         return "<p class='muted'>approve_commit_form_status: unavailable_until_pending_commit_approval_exists</p>"
-    goal = state.get("goal")
-    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
+    return_to = _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Approve Commit</h3>",
@@ -19850,8 +19861,7 @@ def _goal_commit_worktree_form(state: dict[str, Any]) -> str:
     approval = _goal_approved_commit_approval(state)
     if approval is None:
         return "<p class='muted'>commit_worktree_form_status: unavailable_until_commit_approval_exists</p>"
-    goal = state.get("goal")
-    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
+    return_to = _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Commit Approved Worktree</h3>",
@@ -19873,8 +19883,7 @@ def _goal_publication_request_form(state: dict[str, Any]) -> str:
     approval = _goal_committed_worktree_approval(state)
     if approval is None:
         return "<p class='muted'>publication_request_form_status: unavailable_until_local_commit_exists</p>"
-    goal = state.get("goal")
-    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
+    return_to = _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Create Publication Request</h3>",
@@ -19898,8 +19907,7 @@ def _goal_approve_publication_form(state: dict[str, Any]) -> str:
     publication = _goal_pending_publication(state)
     if publication is None:
         return "<p class='muted'>approve_publication_form_status: unavailable_until_pending_publication_approval_exists</p>"
-    goal = state.get("goal")
-    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
+    return_to = _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Approve Publication</h3>",
@@ -19920,8 +19928,7 @@ def _goal_publication_handoff_form(state: dict[str, Any]) -> str:
     publication = _goal_approved_publication(state)
     if publication is None:
         return "<p class='muted'>publication_handoff_form_status: unavailable_until_publication_approval_exists</p>"
-    goal = state.get("goal")
-    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
+    return_to = _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Create Publication Handoff</h3>",
@@ -20062,8 +20069,7 @@ def _goal_coder_prep_form(state: dict[str, Any]) -> str:
     delegation = _goal_completed_delegation(state)
     if delegation is None:
         return "<p class='muted'>coder_prep_form_status: unavailable_until_delegation_completes</p>"
-    goal = state.get("goal")
-    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
+    return_to = _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Run Coder Prep</h3>",
@@ -20077,8 +20083,7 @@ def _goal_worktree_plan_form(state: dict[str, Any]) -> str:
     delegation_id = _goal_packet_delegation_id(state.get("prep_packets", []))
     if not delegation_id:
         return "<p class='muted'>coder_worktree_plan_form_status: unavailable_until_coder_prep_exists</p>"
-    goal = state.get("goal")
-    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
+    return_to = _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Create Worktree Plan</h3>",
@@ -20095,8 +20100,7 @@ def _goal_worktree_approval_form(state: dict[str, Any]) -> str:
     delegation_id = _goal_packet_delegation_id(state.get("worktree_plans", []))
     if not delegation_id:
         return "<p class='muted'>coder_worktree_approval_form_status: unavailable_until_worktree_plan_exists</p>"
-    goal = state.get("goal")
-    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
+    return_to = _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Request Worktree Approval</h3>",
@@ -41621,7 +41625,7 @@ def _action_result_page(
     result: Any,
 ) -> str:
     safe_location = _safe_local_return_path(location) or "/"
-    next_href = f"{safe_location}?notice={quote(message)}"
+    next_href = _notice_href(safe_location, message)
     result_rows = _action_result_rows(root, result)
     action_label = _action_form_copy(action)["title"]
     next_step = _action_result_next_step_context(root, safe_location, message)
@@ -41675,7 +41679,7 @@ def _action_result_next_step_context(
     location: str,
     message: str,
 ) -> dict[str, Any]:
-    next_href = f"{location}?notice={quote(message)}"
+    next_href = _notice_href(location, message)
     base: dict[str, Any] = {
         "status": "state_unavailable",
         "source": "state_unavailable",
@@ -42388,7 +42392,7 @@ def _action_result_primary_artifact_surface(
 
 
 def _action_result_continuation_section(root: Path, location: str, message: str) -> str:
-    next_href = f"{location}?notice={quote(message)}"
+    next_href = _notice_href(location, message)
     try:
         storage = _storage(root)
         workspace = _load_workspace_state(root)
