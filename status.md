@@ -1,5 +1,29 @@
 # Status
 
+## 2026-07-01 Workflow Parent Goal Label UX
+
+- Updated the Workflow page so the Operator Workbench, Scope Picker, Journey,
+  Live State, Finish Today, and Command Bar render the selected parent Goal as
+  a title-first link instead of raw `/goals/<goal_id>` route text.
+- Workflow evidence now preserves explicit `*_goal_id`, `*_goal_label`, and
+  `*_goal_label_source` fields across the scoped workflow panels, so the
+  browser surface is readable while the persisted Goal key remains auditable.
+- The first-run completion target reused by workflow scope selection now also
+  returns the Goal title, so the first delegation completion path points back
+  to `Demo the ClankerOS local operator app with fixture-backed state` instead
+  of asking the operator to decode the Goal id.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py status.md docs/status.md`:
+    passed.
+- Non-claim: this is browser workflow-to-Goal navigation polish only. It does
+  not write on GET, approve work, execute tasks, run broad local verification,
+  commit, push, create PRs, deploy, call providers, use the network from the
+  app, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Run Readiness Parent Goal UX
 
 - Updated the coder-run `Run Readiness Strip` so it includes a visible parent

@@ -17553,7 +17553,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_workbench_scope</dt><dd>delegation" in workflow_for_delegation.body
     assert f"workflow_workbench_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in workflow_for_delegation.body
     assert f"workflow_workbench_run</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_delegation.body
-    assert f"workflow_workbench_goal</dt><dd><a href='/goals/{result.goal_id}'" in workflow_for_delegation.body
+    assert (
+        f"workflow_workbench_goal</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+        in workflow_for_delegation.body
+    )
+    assert f"workflow_workbench_goal_id</dt><dd>{result.goal_id}" in workflow_for_delegation.body
+    assert f"workflow_workbench_goal_label</dt><dd>{goal_title}" in workflow_for_delegation.body
+    assert "workflow_workbench_goal_label_source</dt><dd>title" in workflow_for_delegation.body
     assert "workflow_workbench_current_stage</dt><dd>Commit request" in workflow_for_delegation.body
     assert "workflow_workbench_next_action</dt><dd>request_commit_for_reviewed_run" in workflow_for_delegation.body
     assert "workflow_workbench_action_label</dt><dd>Request commit for reviewed run" in workflow_for_delegation.body
@@ -17599,9 +17606,20 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_scope_picker_candidate_count</dt><dd>2" in workflow_for_delegation.body
     assert f"workflow_scope_picker_delegation_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'" in workflow_for_delegation.body
     assert f"workflow_scope_picker_run_surface</dt><dd><a href='/workflow?run_id={result.coder_worktree_run_id}'" in workflow_for_delegation.body
-    assert f"workflow_scope_picker_goal_surface</dt><dd><a href='/goals/{result.goal_id}'" in workflow_for_delegation.body
+    assert (
+        f"workflow_scope_picker_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+        in workflow_for_delegation.body
+    )
+    assert f"workflow_scope_picker_goal_id</dt><dd>{result.goal_id}" in workflow_for_delegation.body
+    assert f"workflow_scope_picker_goal_label</dt><dd>{goal_title}" in workflow_for_delegation.body
+    assert "workflow_scope_picker_goal_label_source</dt><dd>title" in workflow_for_delegation.body
     assert "workflow_scope_picker_first_run_step</dt><dd>first_delegation_complete" in workflow_for_delegation.body
-    assert f"workflow_scope_picker_first_run_surface</dt><dd><a href='/goals/{result.goal_id}'" in workflow_for_delegation.body
+    assert (
+        f"workflow_scope_picker_first_run_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+        in workflow_for_delegation.body
+    )
     assert "workflow_scope_picker_source</dt><dd>recent_delegations_and_coder_runs" in workflow_for_delegation.body
     assert "workflow_scope_picker_write_on_get</dt><dd>false" in workflow_for_delegation.body
     assert "workflow_scope_picker_provider_calls_taken</dt><dd>0" in workflow_for_delegation.body
@@ -17615,7 +17633,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_journey_scope</dt><dd>delegation" in workflow_for_delegation.body
     assert f"workflow_journey_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in workflow_for_delegation.body
     assert f"workflow_journey_run</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_delegation.body
-    assert f"workflow_journey_goal</dt><dd><a href='/goals/{result.goal_id}'" in workflow_for_delegation.body
+    assert (
+        f"workflow_journey_goal</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+        in workflow_for_delegation.body
+    )
+    assert f"workflow_journey_goal_id</dt><dd>{result.goal_id}" in workflow_for_delegation.body
+    assert f"workflow_journey_goal_label</dt><dd>{goal_title}" in workflow_for_delegation.body
+    assert "workflow_journey_goal_label_source</dt><dd>title" in workflow_for_delegation.body
     assert "workflow_journey_current_stage</dt><dd>Commit request" in workflow_for_delegation.body
     assert "workflow_journey_current_stage_key</dt><dd>commit" in workflow_for_delegation.body
     assert "workflow_journey_current_position</dt><dd>8/9" in workflow_for_delegation.body
@@ -17638,7 +17663,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_live_refresh_scope</dt><dd>delegation" in workflow_for_delegation.body
     assert f"workflow_live_refresh_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in workflow_for_delegation.body
     assert f"workflow_live_refresh_run</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_delegation.body
-    assert f"workflow_live_refresh_goal</dt><dd><a href='/goals/{result.goal_id}'" in workflow_for_delegation.body
+    assert (
+        f"workflow_live_refresh_goal</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+        in workflow_for_delegation.body
+    )
+    assert f"workflow_live_refresh_goal_id</dt><dd>{result.goal_id}" in workflow_for_delegation.body
+    assert f"workflow_live_refresh_goal_label</dt><dd>{goal_title}" in workflow_for_delegation.body
+    assert "workflow_live_refresh_goal_label_source</dt><dd>title" in workflow_for_delegation.body
     assert f"workflow_live_refresh_project</dt><dd>{result.project_id}" in workflow_for_delegation.body
     assert "workflow_live_refresh_current_stage</dt><dd>Commit request" in workflow_for_delegation.body
     assert "workflow_live_refresh_current_stage_key</dt><dd>commit" in workflow_for_delegation.body
@@ -17656,7 +17688,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_finish_scope</dt><dd>delegation" in workflow_for_delegation.body
     assert f"workflow_finish_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in workflow_for_delegation.body
     assert f"workflow_finish_run</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_delegation.body
-    assert f"workflow_finish_goal</dt><dd><a href='/goals/{result.goal_id}'" in workflow_for_delegation.body
+    assert (
+        f"workflow_finish_goal</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+        in workflow_for_delegation.body
+    )
+    assert f"workflow_finish_goal_id</dt><dd>{result.goal_id}" in workflow_for_delegation.body
+    assert f"workflow_finish_goal_label</dt><dd>{goal_title}" in workflow_for_delegation.body
+    assert "workflow_finish_goal_label_source</dt><dd>title" in workflow_for_delegation.body
     assert f"workflow_finish_project</dt><dd>{result.project_id}" in workflow_for_delegation.body
     assert "workflow_finish_current_stage</dt><dd>Commit request" in workflow_for_delegation.body
     assert "workflow_finish_next_action</dt><dd>request_commit_for_reviewed_run" in workflow_for_delegation.body
@@ -17682,7 +17721,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_command_scope</dt><dd>delegation" in workflow_for_delegation.body
     assert f"workflow_command_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in workflow_for_delegation.body
     assert f"workflow_command_run</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_delegation.body
-    assert f"workflow_command_goal</dt><dd><a href='/goals/{result.goal_id}'" in workflow_for_delegation.body
+    assert (
+        f"workflow_command_goal</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+        in workflow_for_delegation.body
+    )
+    assert f"workflow_command_goal_id</dt><dd>{result.goal_id}" in workflow_for_delegation.body
+    assert f"workflow_command_goal_label</dt><dd>{goal_title}" in workflow_for_delegation.body
+    assert "workflow_command_goal_label_source</dt><dd>title" in workflow_for_delegation.body
     assert "workflow_command_current_stage</dt><dd>Commit request" in workflow_for_delegation.body
     assert "workflow_command_next_action</dt><dd>request_commit_for_reviewed_run" in workflow_for_delegation.body
     assert f"workflow_command_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_delegation.body
@@ -17796,7 +17842,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_scope_picker_candidate_count</dt><dd>2" in workflow_for_run.body
     assert f"workflow_scope_picker_delegation_surface</dt><dd><a href='/workflow?delegation_id={result.delegation_id}'" in workflow_for_run.body
     assert f"workflow_scope_picker_run_surface</dt><dd><a href='/workflow?run_id={result.coder_worktree_run_id}'" in workflow_for_run.body
-    assert f"workflow_scope_picker_goal_surface</dt><dd><a href='/goals/{result.goal_id}'" in workflow_for_run.body
+    assert (
+        f"workflow_scope_picker_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+        in workflow_for_run.body
+    )
+    assert f"workflow_scope_picker_goal_id</dt><dd>{result.goal_id}" in workflow_for_run.body
+    assert f"workflow_scope_picker_goal_label</dt><dd>{goal_title}" in workflow_for_run.body
+    assert "workflow_scope_picker_goal_label_source</dt><dd>title" in workflow_for_run.body
     assert "workflow_scope_picker_write_on_get</dt><dd>false" in workflow_for_run.body
     assert "workflow_scope_picker_provider_calls_taken</dt><dd>0" in workflow_for_run.body
     assert "workflow_scope_picker_network_actions_taken</dt><dd>0" in workflow_for_run.body
@@ -17806,6 +17859,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"workflow_scope_candidate: type=delegation id={result.delegation_id}" in workflow_for_run.body
     assert "workflow_journey_status</dt><dd>run_selected" in workflow_for_run.body
     assert "workflow_journey_scope</dt><dd>run" in workflow_for_run.body
+    assert (
+        f"workflow_journey_goal</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+        in workflow_for_run.body
+    )
+    assert f"workflow_journey_goal_id</dt><dd>{result.goal_id}" in workflow_for_run.body
+    assert f"workflow_journey_goal_label</dt><dd>{goal_title}" in workflow_for_run.body
+    assert "workflow_journey_goal_label_source</dt><dd>title" in workflow_for_run.body
     assert "workflow_journey_current_stage_key</dt><dd>commit" in workflow_for_run.body
     assert "workflow_journey_current_position</dt><dd>8/9" in workflow_for_run.body
     assert "workflow_journey_next_action</dt><dd>request_commit_for_reviewed_run" in workflow_for_run.body
@@ -17814,6 +17875,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_journey_stage: commit status=current" in workflow_for_run.body
     assert "workflow_live_refresh_status</dt><dd>scoped_workflow" in workflow_for_run.body
     assert "workflow_live_refresh_scope</dt><dd>run" in workflow_for_run.body
+    assert (
+        f"workflow_live_refresh_goal</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+        in workflow_for_run.body
+    )
+    assert f"workflow_live_refresh_goal_id</dt><dd>{result.goal_id}" in workflow_for_run.body
+    assert f"workflow_live_refresh_goal_label</dt><dd>{goal_title}" in workflow_for_run.body
+    assert "workflow_live_refresh_goal_label_source</dt><dd>title" in workflow_for_run.body
     assert "workflow_live_refresh_current_stage_key</dt><dd>commit" in workflow_for_run.body
     assert "workflow_live_refresh_current_position</dt><dd>8/9" in workflow_for_run.body
     assert "workflow_live_refresh_next_action</dt><dd>request_commit_for_reviewed_run" in workflow_for_run.body
@@ -17821,6 +17890,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"workflow_live_refresh_resume_surface</dt><dd><a href='/workflow?run_id={result.coder_worktree_run_id}'" in workflow_for_run.body
     assert "workflow_finish_status</dt><dd>scoped_workflow" in workflow_for_run.body
     assert "workflow_finish_scope</dt><dd>run" in workflow_for_run.body
+    assert (
+        f"workflow_finish_goal</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+        in workflow_for_run.body
+    )
+    assert f"workflow_finish_goal_id</dt><dd>{result.goal_id}" in workflow_for_run.body
+    assert f"workflow_finish_goal_label</dt><dd>{goal_title}" in workflow_for_run.body
+    assert "workflow_finish_goal_label_source</dt><dd>title" in workflow_for_run.body
     assert f"workflow_finish_resume_surface</dt><dd><a href='/workflow?run_id={result.coder_worktree_run_id}'" in workflow_for_run.body
     assert f"workflow_finish_open_project</dt><dd>{result.project_id}" in workflow_for_run.body
     assert f"workflow_finish_open_goal</dt><dd>{result.goal_id}" in workflow_for_run.body
@@ -17832,6 +17909,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workflow_command_scope</dt><dd>run" in workflow_for_run.body
     assert f"workflow_command_run</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_run.body
     assert f"workflow_command_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in workflow_for_run.body
+    assert (
+        f"workflow_command_goal</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+        in workflow_for_run.body
+    )
+    assert f"workflow_command_goal_id</dt><dd>{result.goal_id}" in workflow_for_run.body
+    assert f"workflow_command_goal_label</dt><dd>{goal_title}" in workflow_for_run.body
+    assert "workflow_command_goal_label_source</dt><dd>title" in workflow_for_run.body
     assert "workflow_command_next_action</dt><dd>request_commit_for_reviewed_run" in workflow_for_run.body
     assert f"workflow_command_next_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in workflow_for_run.body
     assert "workflow_command_write_on_get</dt><dd>false" in workflow_for_run.body

@@ -13040,6 +13040,9 @@ def _first_run_progress(root: Path, storage: Storage) -> dict[str, Any]:
     goals = _goal_rows(storage, limit=100)
     goal_row = goals[0] if goals else None
     goal_id = str(goal_row["id"]) if goal_row is not None else ""
+    goal_surface: str | SafeHtml = SafeHtml("<a href='/goals'>/goals</a>")
+    if goal_id:
+        _goal_href, _goal_label, _goal_label_source, goal_surface = _goal_display_link(root, goal_id)
     default_project = (
         str(goal_row["project_id"])
         if goal_row is not None
@@ -13077,22 +13080,22 @@ def _first_run_progress(root: Path, storage: Storage) -> dict[str, Any]:
         next_reason = "no_goal_created"
     elif not delegation_created:
         current_step = "create_first_delegation"
-        next_surface = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>")
+        next_surface = goal_surface
         next_action = "Create scout delegation"
         next_reason = "goal_ready_for_delegation"
     elif not context_pack_ready:
         current_step = "generate_context_pack"
-        next_surface = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>")
+        next_surface = goal_surface
         next_action = "Generate context pack"
         next_reason = "delegation_waiting_for_context_pack"
     elif not delegation_completed:
         current_step = "run_first_delegation"
-        next_surface = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>")
+        next_surface = goal_surface
         next_action = "Run delegation"
         next_reason = "context_pack_ready"
     else:
         current_step = "first_delegation_complete"
-        next_surface = SafeHtml(f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>")
+        next_surface = goal_surface
         next_action = "Review first delegation evidence"
         next_reason = "first_delegation_completed"
     return {
@@ -26356,6 +26359,8 @@ def _workflow_operator_context(
         "run_surface": SafeHtml("<a href='/delegation-runs'>/delegation-runs</a>"),
         "goal_id": "none",
         "goal_surface": SafeHtml("<a href='/goals'>/goals</a>"),
+        "goal_label": "none",
+        "goal_label_source": "none",
         "project": "none",
         "current_stage": "overview",
         "next_action": "Select delegation or run",
@@ -26459,9 +26464,14 @@ def _workflow_operator_context(
         publications=publications,
     )
     target_href, target_label, reason = _workflow_command_target(
+        root,
         next_action,
         delegation=delegation,
         run=selected_run,
+    )
+    _goal_href, goal_label, goal_label_source, goal_surface = _goal_display_link(
+        root,
+        delegation.parent_goal_id,
     )
     project = (
         selected_run.project_id
@@ -26495,7 +26505,9 @@ def _workflow_operator_context(
             else "<a href='/delegation-runs'>select run</a>"
         ),
         "goal_id": delegation.parent_goal_id,
-        "goal_surface": SafeHtml(f"<a href='/goals/{quote(delegation.parent_goal_id)}'>{_e(delegation.parent_goal_id)}</a>"),
+        "goal_surface": goal_surface,
+        "goal_label": goal_label,
+        "goal_label_source": goal_label_source,
         "project": project,
         "current_stage": stage,
         "next_action": next_action,
@@ -26545,6 +26557,9 @@ def _workflow_operator_workbench(
         ("workflow_workbench_delegation", context["delegation_surface"]),
         ("workflow_workbench_run", context["run_surface"]),
         ("workflow_workbench_goal", context["goal_surface"]),
+        ("workflow_workbench_goal_id", str(context["goal_id"])),
+        ("workflow_workbench_goal_label", str(context["goal_label"])),
+        ("workflow_workbench_goal_label_source", str(context["goal_label_source"])),
         ("workflow_workbench_project", str(context["project"])),
         ("workflow_workbench_current_stage", str(context["current_stage"])),
         ("workflow_workbench_next_action", str(context["next_action"])),
@@ -26857,9 +26872,11 @@ def _workflow_scope_picker(
     )
     first_run_candidate = next((item for item in candidate_rows if item["kind"] == "run"), None)
     goal_id = str(context["goal_id"])
-    goal_label, _goal_label_source = _goal_display_label(root, goal_id)
+    goal_label = str(context["goal_label"])
+    goal_label_source = str(context["goal_label_source"])
     goal_href = f"/goals/{quote(goal_id)}" if goal_id != "none" else "/goals"
     goal_label = goal_label if goal_id != "none" else "Goals"
+    goal_card_summary = goal_label if goal_id != "none" else "No scoped Goal selected"
     delegation_href = first_delegation["href"] if first_delegation else "/delegation-runs"
     delegation_label = first_delegation["label"] if first_delegation else "Delegation runs"
     run_href = first_run_candidate["href"] if first_run_candidate else "/delegation-runs"
@@ -26890,7 +26907,7 @@ def _workflow_scope_picker(
             "<article class='workflow-scope-card' data-workflow-scope-runs='true'><h3>Runs</h3>",
             f"<p>{len(runs)} recent coder run{'s' if len(runs) != 1 else ''}</p><a class='workflow-scope-link' href='{_e(run_href)}'>{_e(run_label)}</a></article>",
             "<article class='workflow-scope-card' data-workflow-scope-goal='true'><h3>Goal</h3>",
-            f"<p>{_e(goal_id if goal_id != 'none' else 'No scoped Goal selected')}</p><a class='workflow-scope-link' href='{_e(goal_href)}'>{_e(goal_label)}</a></article>",
+            f"<p>{_e(goal_card_summary)}</p><a class='workflow-scope-link' href='{_e(goal_href)}'>{_e(goal_label)}</a></article>",
             "<article class='workflow-scope-card' data-workflow-scope-safety='true'><h3>Safety</h3>",
             "<p>Read-only scope selection; actions stay on the selected workflow, Goal, run, or approval surface.</p><a class='workflow-scope-link' href='#workflow-scope-evidence'>Evidence</a></article>",
             "</div>",
@@ -26923,6 +26940,9 @@ def _workflow_scope_picker(
                         "workflow_scope_picker_goal_surface",
                         SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_label)}</a>"),
                     ),
+                    ("workflow_scope_picker_goal_id", goal_id),
+                    ("workflow_scope_picker_goal_label", goal_label),
+                    ("workflow_scope_picker_goal_label_source", goal_label_source),
                     ("workflow_scope_picker_first_run_step", str(first_run["current_step"])),
                     (
                         "workflow_scope_picker_first_run_surface",
@@ -27005,6 +27025,9 @@ def _workflow_finish_today(
                     ("workflow_finish_delegation", context["delegation_surface"]),
                     ("workflow_finish_run", context["run_surface"]),
                     ("workflow_finish_goal", context["goal_surface"]),
+                    ("workflow_finish_goal_id", str(context["goal_id"])),
+                    ("workflow_finish_goal_label", str(context["goal_label"])),
+                    ("workflow_finish_goal_label_source", str(context["goal_label_source"])),
                     ("workflow_finish_project", open_project or "none"),
                     ("workflow_finish_current_stage", str(context["current_stage"])),
                     ("workflow_finish_next_action", str(context["next_action"])),
@@ -27100,6 +27123,9 @@ def _workflow_live_state(
                     ("workflow_live_refresh_delegation", context["delegation_surface"]),
                     ("workflow_live_refresh_run", context["run_surface"]),
                     ("workflow_live_refresh_goal", context["goal_surface"]),
+                    ("workflow_live_refresh_goal_id", str(context["goal_id"])),
+                    ("workflow_live_refresh_goal_label", str(context["goal_label"])),
+                    ("workflow_live_refresh_goal_label_source", str(context["goal_label_source"])),
                     ("workflow_live_refresh_project", str(context["project"])),
                     ("workflow_live_refresh_current_stage", str(context["current_stage"])),
                     ("workflow_live_refresh_current_stage_key", stage_key),
@@ -27243,6 +27269,9 @@ def _workflow_journey(
                     ("workflow_journey_delegation", context["delegation_surface"]),
                     ("workflow_journey_run", context["run_surface"]),
                     ("workflow_journey_goal", context["goal_surface"]),
+                    ("workflow_journey_goal_id", str(context["goal_id"])),
+                    ("workflow_journey_goal_label", str(context["goal_label"])),
+                    ("workflow_journey_goal_label_source", str(context["goal_label_source"])),
                     ("workflow_journey_project", str(context["project"])),
                     ("workflow_journey_current_stage", str(context["current_stage"])),
                     ("workflow_journey_current_stage_key", current_key),
@@ -27441,6 +27470,7 @@ def _workflow_command_bar(
         publications=publications,
     )
     target_href, target_label, reason = _workflow_command_target(
+        root,
         next_action,
         delegation=delegation,
         run=selected_run,
@@ -27453,7 +27483,10 @@ def _workflow_command_bar(
         else _task_project(storage, delegation.parent_task_id)
     )
     stage = _workflow_stage_for_action(next_action)
-    goal_link = SafeHtml(f"<a href='/goals/{quote(delegation.parent_goal_id)}'>{_e(delegation.parent_goal_id)}</a>")
+    _goal_href, goal_label, goal_label_source, goal_link = _goal_display_link(
+        root,
+        delegation.parent_goal_id,
+    )
     delegation_link = SafeHtml(f"<a href='/delegations/{quote(delegation.id)}'>{_e(delegation.id)}</a>")
     run_value: str | SafeHtml = "none"
     if selected_run is not None:
@@ -27465,6 +27498,9 @@ def _workflow_command_bar(
         delegation=delegation_link,
         run=run_value,
         goal=goal_link,
+        goal_id=delegation.parent_goal_id,
+        goal_label=goal_label,
+        goal_label_source=goal_label_source,
         project=project,
         current_stage=stage,
         next_action=next_action,
@@ -27492,29 +27528,43 @@ def _workflow_command_bar_shell(
     target_surface: SafeHtml,
     lines: list[str],
     reason: str = "select a workflow scope to continue",
+    goal_id: str | None = None,
+    goal_label: str | None = None,
+    goal_label_source: str | None = None,
 ) -> str:
+    rows = [
+        ("workflow_command_status", status),
+        ("workflow_command_scope", scope),
+        ("workflow_command_delegation", delegation),
+        ("workflow_command_run", run),
+        ("workflow_command_goal", goal),
+    ]
+    if goal_id is not None:
+        rows.extend(
+            [
+                ("workflow_command_goal_id", goal_id),
+                ("workflow_command_goal_label", goal_label or "none"),
+                ("workflow_command_goal_label_source", goal_label_source or "none"),
+            ]
+        )
+    rows.extend(
+        [
+            ("workflow_command_project", project),
+            ("workflow_command_current_stage", current_stage),
+            ("workflow_command_next_action", next_action),
+            ("workflow_command_next_surface", target_surface),
+            ("workflow_command_reason", reason),
+            ("workflow_command_write_on_get", "false"),
+            ("workflow_command_network_actions_taken", "0"),
+            ("workflow_command_external_effects_created", "false"),
+        ]
+    )
     return "".join(
         [
             "<section id='workflow-command-bar' class='panel workflow-command-bar' data-workflow-command-bar='true'><h2>Workflow Command Bar</h2>",
             "<p class='muted'>One read-only workflow summary for the selected delegation or run before the detailed evidence map.</p>",
             "<details class='workflow-command-evidence' data-workflow-command-evidence='true'><summary>Workflow command evidence</summary>",
-            _kv(
-                [
-                    ("workflow_command_status", status),
-                    ("workflow_command_scope", scope),
-                    ("workflow_command_delegation", delegation),
-                    ("workflow_command_run", run),
-                    ("workflow_command_goal", goal),
-                    ("workflow_command_project", project),
-                    ("workflow_command_current_stage", current_stage),
-                    ("workflow_command_next_action", next_action),
-                    ("workflow_command_next_surface", target_surface),
-                    ("workflow_command_reason", reason),
-                    ("workflow_command_write_on_get", "false"),
-                    ("workflow_command_network_actions_taken", "0"),
-                    ("workflow_command_external_effects_created", "false"),
-                ]
-            ),
+            _kv(rows),
             _ul(lines),
             "</details>",
             "</section>",
@@ -27546,6 +27596,7 @@ def _workflow_command_selected_run(
 
 
 def _workflow_command_target(
+    root: Path,
     next_action: str,
     *,
     delegation: Any,
@@ -27556,7 +27607,7 @@ def _workflow_command_target(
     delegation_href = f"/delegations/{quote(delegation.id)}"
     delegation_label = f"/delegations/{delegation.id}"
     goal_href = f"/goals/{quote(delegation.parent_goal_id)}"
-    goal_label = f"/goals/{delegation.parent_goal_id}"
+    goal_label, _goal_label_source = _goal_display_label(root, str(delegation.parent_goal_id))
     if next_action == "generate_context_pack":
         return goal_href, goal_label, "context pack is missing"
     if next_action in {

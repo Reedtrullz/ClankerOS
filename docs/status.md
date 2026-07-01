@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Workflow page parent Goal links now show the Goal title across the Operator
+  Workbench, Scope Picker, Journey, Live State, Finish Today, and Command Bar,
+  while preserving `*_goal_id`, `*_goal_label`, and `*_goal_label_source`
+  evidence rows. The first-run completion target used by workflow scope
+  selection now also points back to
+  `Demo the ClankerOS local operator app with fixture-backed state` instead of
+  raw `/goals/<goal_id>` copy. Local proof includes the fixture-backed demo
+  workflow route pytest (`1 passed`) plus compile and whitespace checks.
 - Coder-run `Run Readiness Strip` now includes a visible parent Goal card and
   title-first Goal evidence. In the fixture demo, the strip links back to
   `Demo the ClankerOS local operator app with fixture-backed state` instead of
