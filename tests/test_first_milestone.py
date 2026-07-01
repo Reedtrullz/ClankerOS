@@ -14,6 +14,8 @@ from agent_os.coder_worktree_execution import (
 from agent_os.engine import AgentSystem
 from agent_os.eval import run_first_milestone_eval
 from agent_os.local_app import (
+    _goal_approve_commit_form,
+    _goal_approve_publication_form,
     render_local_app_route,
     resolve_artifact_path,
     run_demo_app_scenario,
@@ -20333,6 +20335,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         )
         if item.run_id == run_id
     )
+    goal_record = storage.get_goal(goal_id)
     commit_request_md = tmp_path / Path(commit_approval.request_artifact_path).with_suffix(".md")
     assert commit_request_md.exists()
     commit_request_workspace = json.loads(
@@ -20352,6 +20355,14 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "Approve Commit" in pending_commit_goal.body
     assert "action='/actions/approve-coder-commit'" in pending_commit_goal.body
     assert f"name='approval_id' value='{commit_approval.id}'" in pending_commit_goal.body
+    commit_goal_form = _goal_approve_commit_form(
+        {"goal": goal_record, "commit_approvals": [commit_approval]}
+    )
+    assert (
+        f"name='approval_id' value='{commit_approval.id}'>"
+        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        in commit_goal_form
+    )
     assert "data-action-draft-action='approve-coder-commit'" in pending_commit_goal.body
     assert (
         "data-action-draft-storage-key="
@@ -20368,12 +20379,17 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         form={
             "approval_id": [commit_approval.id],
             "note": ["Approve goal page commit"],
+            "return_to": [f"/goals/{goal_id}"],
             "confirm": ["yes"],
         },
     )
     assert approve_commit.status == 200
     assert "data-action-result-form-draft-cleanup='true'" in approve_commit.body
     assert "data-action-result-form-draft-action='approve-coder-commit'" in approve_commit.body
+    assert (
+        f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
+        in approve_commit.body
+    )
     assert (
         "data-action-result-form-draft-key="
         f"'clankeros-action-form-draft:approve-coder-commit:{commit_approval.id}'"
@@ -20504,6 +20520,14 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "Approve Publication" in pending_publication_goal.body
     assert "action='/actions/approve-coder-publication'" in pending_publication_goal.body
     assert f"name='publication_id' value='{publication.id}'" in pending_publication_goal.body
+    publication_goal_form = _goal_approve_publication_form(
+        {"goal": goal_record, "publications": [publication]}
+    )
+    assert (
+        f"name='publication_id' value='{publication.id}'>"
+        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        in publication_goal_form
+    )
     assert "data-action-draft-action='approve-coder-publication'" in pending_publication_goal.body
     assert (
         "data-action-draft-storage-key="
@@ -20519,12 +20543,17 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         form={
             "publication_id": [publication.id],
             "note": ["Approve goal page publication"],
+            "return_to": [f"/goals/{goal_id}"],
             "confirm": ["yes"],
         },
     )
     assert approve_publication.status == 200
     assert "data-action-result-form-draft-cleanup='true'" in approve_publication.body
     assert "data-action-result-form-draft-action='approve-coder-publication'" in approve_publication.body
+    assert (
+        f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
+        in approve_publication.body
+    )
     assert (
         "data-action-result-form-draft-key="
         f"'clankeros-action-form-draft:approve-coder-publication:{publication.id}'"

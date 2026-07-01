@@ -19824,13 +19824,15 @@ def _goal_approve_commit_form(state: dict[str, Any]) -> str:
     approval = _goal_pending_commit_approval(state)
     if approval is None:
         return "<p class='muted'>approve_commit_form_status: unavailable_until_pending_commit_approval_exists</p>"
+    goal = state.get("goal")
+    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
     return "".join(
         [
             "<h3>Approve Commit</h3>",
             "<p class='muted'>Records a local approval decision for the reviewed commit request. It does not stage, commit, push, create a PR, deploy, call a provider, or use the network.</p>",
             _input_form(
                 "approve-coder-commit",
-                {"approval_id": approval.id},
+                {"approval_id": approval.id, "return_to": return_to},
                 {
                     "decided_by": "operator",
                     "note": "Approved local commit from goal page",
@@ -19883,13 +19885,15 @@ def _goal_approve_publication_form(state: dict[str, Any]) -> str:
     publication = _goal_pending_publication(state)
     if publication is None:
         return "<p class='muted'>approve_publication_form_status: unavailable_until_pending_publication_approval_exists</p>"
+    goal = state.get("goal")
+    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
     return "".join(
         [
             "<h3>Approve Publication</h3>",
             "<p class='muted'>Records a local approval decision to prepare publication handoff artifacts. It does not push, create a PR, deploy, call a provider, or use the network.</p>",
             _input_form(
                 "approve-coder-publication",
-                {"publication_id": publication.id},
+                {"publication_id": publication.id, "return_to": return_to},
                 {
                     "decided_by": "operator",
                     "note": "Approved publication handoff from goal page",

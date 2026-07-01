@@ -1021,7 +1021,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   run and show the next local-only follow-up action after approval. Approval
   workbench decision forms submit `return_to=/approvals`, so approving from the
   queue returns to the queue result surface instead of dropping the operator on
-  Home; Goal-origin approval forms submit the owning Goal route.
+  Home; Goal-origin worktree, commit, and publication approval forms submit
+  the owning Goal route.
 - `/incidents` - recent local incidents and evidence links.
 - `/artifacts?path=<relative_path>` - safe read-only artifact viewer.
 - `/health` - Python, git, storage, command, import, route, and counter health.
