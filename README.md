@@ -907,7 +907,10 @@ Artifact, so the operator can reopen the latest surface, saved project/Goal,
 live Goal action, last action notice, or saved artifact without expanding the
 longer shortcut list. When a Goal is available, the Action card uses the same
 Goal action dock target as the command palette instead of falling back to the
-generic `/actions` catalog. The Artifact card also hydrates after load from browser-local
+generic `/actions` catalog, and the same Current Action is prepended to the
+filterable Recent shortcuts list as `current-action`, so filtering for action
+text such as `commit` finds the live Goal action instead of only older route
+shortcuts. The Artifact card also hydrates after load from browser-local
 `localStorage:clankeros-last-artifact`, so the most recently opened artifact
 is available from every shell route before the operator explicitly promotes it
 with `/workspace#save-workspace`. It also includes a browser-local

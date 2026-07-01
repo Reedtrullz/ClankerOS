@@ -663,7 +663,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   storage, the live Goal action when available, the last confirmed action, and
   write/provider/network/external-effect counters inside collapsed evidence.
   Its Action card prefers the Goal action dock over the generic `/actions`
-  catalog whenever a Goal exists. Its Artifact card hydrates after load
+  catalog whenever a Goal exists, and its filterable Recent shortcuts list
+  prepends the same Goal action as `current-action`, so text filtering for the
+  action label or dock route can reopen the live Goal action from the list too.
+  Its Artifact card hydrates after load
   from `localStorage:clankeros-last-artifact`, while durable resume promotion
   still requires the confirmed Workspace save flow.
   A browser-local `Viewed Pages` panel records local app routes in

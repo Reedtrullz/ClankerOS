@@ -13709,14 +13709,22 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-recent-items-filter-query='true'" in goal.body
     assert "data-recent-items-filter-reset='true'>Reset filter" in goal.body
     assert "data-recent-items-filter-view-status='true'>View: default" in goal.body
-    assert "data-recent-items-filter-status='true'>Showing 3 of 3 recent items." in goal.body
+    assert "data-recent-items-filter-status='true'>Showing 4 of 4 recent items." in goal.body
     assert "data-recent-items-filter-empty='true' hidden" in goal.body
     assert "data-recent-items-filter-evidence='true'" in goal.body
+    assert (
+        "data-recent-items-filter-item='true' data-recent-items-filter-kind='current-action' "
+        f"data-recent-items-filter-href='/goals/{result.goal_id}#goal-action-dock-form'"
+    ) in goal.body
+    assert (
+        f"data-recent-items-filter-text='create commit request /goals/{result.goal_id}#goal-action-dock-form current-action'"
+        in goal.body
+    )
     assert "data-recent-items-filter-item='true' data-recent-items-filter-kind='goal'" in goal.body
     assert "data-recent-items-filter-item='true' data-recent-items-filter-kind='delegation'" in goal.body
     assert "data-recent-items-filter-item='true' data-recent-items-filter-kind='run'" in goal.body
-    assert "recent_items_filter_total_rows</dt><dd>3" in goal.body
-    assert "recent_items_filter_kind_counts</dt><dd>delegation:1, goal:1, run:1" in goal.body
+    assert "recent_items_filter_total_rows</dt><dd>4" in goal.body
+    assert "recent_items_filter_kind_counts</dt><dd>current-action:1, delegation:1, goal:1, run:1" in goal.body
     assert "recent_items_filter_uses_defaults</dt><dd>false" in goal.body
     assert "recent_items_filter_memory_storage</dt><dd>localStorage:clankeros-recent-items-filter" in goal.body
     assert "recent_items_filter_memory_fields</dt><dd>query" in goal.body
@@ -13724,7 +13732,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "recent_items_filter_network_actions_taken</dt><dd>0" in goal.body
     assert "recent_items_filter_external_effects_created</dt><dd>false" in goal.body
     assert "data-recent-items-list-details='true'" in goal.body
-    assert "<summary>Recent shortcuts (3)</summary>" in goal.body
+    assert "<summary>Recent shortcuts (4)</summary>" in goal.body
     assert "data-recent-items-list='true'" in goal.body
     assert goal.body.index("data-recent-items-focus='true'") < goal.body.index(
         "data-recent-items-cards='true'"

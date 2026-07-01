@@ -44967,6 +44967,7 @@ def _recent_items_panel(root: Path, focus_context: dict[str, Any]) -> str:
             ("Demo", "/demo", "fixture"),
             ("Verification", "/verification", "proof"),
         ]
+    list_items = _recent_items_list_items(items, focus_context)
     rows = [
         (
             f"<li data-recent-items-filter-item='true' "
@@ -44975,7 +44976,7 @@ def _recent_items_panel(root: Path, focus_context: dict[str, Any]) -> str:
             f"data-recent-items-filter-text='{_e(' '.join([label, href, kind]).lower())}'>"
             f"<a href='{_e(href)}'>{_e(label)}</a><br><span class='muted'>{_e(kind)}</span></li>"
         )
-        for label, href, kind in items
+        for label, href, kind in list_items
     ]
     body = "".join(
         [
@@ -44988,8 +44989,8 @@ def _recent_items_panel(root: Path, focus_context: dict[str, Any]) -> str:
                 focus_context=focus_context,
             ),
             _browser_route_history_panel(),
-            _recent_items_filter_panel(items=items, used_defaults=used_defaults),
-            f"<details class='recent-items-list-details' data-recent-items-list-details='true'><summary>Recent shortcuts ({len(items)})</summary>",
+            _recent_items_filter_panel(items=list_items, used_defaults=used_defaults),
+            f"<details class='recent-items-list-details' data-recent-items-list-details='true'><summary>Recent shortcuts ({len(list_items)})</summary>",
             "<ul class='recent-items-list' data-recent-items-list='true'>",
             "".join(rows),
             "</ul>",
@@ -44998,6 +44999,32 @@ def _recent_items_panel(root: Path, focus_context: dict[str, Any]) -> str:
         ]
     )
     return body
+
+
+def _recent_items_list_items(
+    items: list[tuple[str, str, str]],
+    focus_context: dict[str, Any],
+) -> list[tuple[str, str, str]]:
+    if (
+        str(focus_context.get("status") or "") != "available"
+        or not isinstance(focus_context.get("next_action"), GoalNextAction)
+        or not isinstance(focus_context.get("goal_state"), dict)
+    ):
+        return items
+
+    next_action = focus_context["next_action"]
+    goal_state = focus_context["goal_state"]
+    href = _goal_primary_action_href(
+        goal_state,
+        next_action,
+        form_available=bool(focus_context.get("action_form")),
+        absolute=True,
+    )
+    if not href:
+        return items
+
+    action_item = (next_action.action, href, "current-action")
+    return [action_item, *[item for item in items if item[1] != href]]
 
 
 def _browser_route_history_panel() -> str:

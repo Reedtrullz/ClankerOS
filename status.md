@@ -1,5 +1,29 @@
 # Status
 
+## 2026-07-01 Recent Items Current Action List UX
+
+- The shared Recent Items rail now inserts the live Goal action into the
+  filterable Recent shortcuts list when a Goal action exists, using
+  `kind=current-action` and the Goal action dock href.
+- This keeps the Action card and searchable Recent list aligned: filtering for
+  action text such as `commit` finds the current Goal action, not only older
+  recent pages.
+- TDD evidence: the fixture-backed demo scenario failed first because the
+  populated Goal page still showed `Showing 3 of 3 recent items.` and lacked a
+  `current-action` row, then passed after `_recent_items_list_items` prepended
+  the current action row for available Goal focus contexts.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed after implementation.
+- Non-claim: this is read-only Recent Items list/filter routing only. It does
+  not write on GET, approve work, execute tasks, call providers, use the
+  network, push, create PRs, deploy, or mutate external systems from
+  ClankerOS.
+
 ## 2026-07-01 Recent Items Current Action UX
 
 - The shared Recent Items rail now prefers the live Goal action for its Action

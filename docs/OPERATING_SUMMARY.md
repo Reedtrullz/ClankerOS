@@ -1051,7 +1051,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   Goal action when a Goal exists, last action notice when no Goal action is
   available, saved artifact when present, and safe fallback surfaces otherwise.
   The Action card uses the same Goal action dock target as the command palette
-  instead of detouring through the generic `/actions` catalog. The Artifact card also hydrates after load from
+  instead of detouring through the generic `/actions` catalog, and the longer
+  Recent shortcuts list prepends the same live Goal action as
+  `current-action` so filter/search behavior matches the visible Action card.
+  The Artifact card also hydrates after load from
   browser-local `localStorage:clankeros-last-artifact`, so the last opened
   artifact can be reopened globally before the operator explicitly saves it to
   workspace state. Workspace/goal/delegation/run counts, saved
