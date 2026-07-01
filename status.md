@@ -1,5 +1,27 @@
 # Status
 
+## 2026-07-01 Workspace Last Artifact Save Promotion UX
+
+- Shared `save-workspace` / Finish Today forms now advertise and hydrate a
+  browser-local Last Artifact promotion contract. When this browser has
+  `localStorage:clankeros-last-artifact`, the form's `last_viewed_artifact`
+  field is filled from that breadcrumb before confirmation/submission unless
+  the operator manually edits the field.
+- Added form markers, field markers, a visible browser-last-artifact status
+  line, and collapsed evidence rows so the operator can see that browser-local
+  artifact memory can become tomorrow's canonical workspace artifact only
+  through an intentional save.
+- TDD evidence: the focused route smoke test failed first on the missing
+  `data-workspace-last-artifact-promote='true'` marker, then passed after the
+  shared form contract and JS hydrator were added.
+- Local verification:
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after the implementation.
+- Non-claim: this does not write workspace JSON on GET, broaden artifact
+  access, execute artifact content, approve work, execute tasks, deploy, call
+  providers, use the network from the app, create PRs, push from the app, or
+  mutate external systems from ClankerOS.
+
 ## 2026-07-01 Palette Last Artifact Shortcut UX
 
 - Added a browser-local Last Artifact result to the shared command palette, so

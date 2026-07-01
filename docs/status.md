@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Shared `save-workspace` / Finish Today forms now bridge browser-local Last
+  Artifact memory into the durable workspace save path. If this browser has
+  `localStorage:clankeros-last-artifact`, the `last_viewed_artifact` field is
+  hydrated before confirmation/submission unless the operator manually edits
+  it; `.clanker/app/workspace.json` still changes only after the confirmed
+  save. Local proof includes a red/green focused route smoke test (`1
+  passed`).
 - The command palette now exposes a browser-local Last Artifact result backed
   by `localStorage:clankeros-last-artifact`. Typing in the palette can find the
   fallback `/artifacts` result immediately, then hydrate to `Open last artifact`

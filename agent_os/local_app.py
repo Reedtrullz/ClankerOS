@@ -43376,16 +43376,39 @@ def _input_form(
     text_fields: dict[str, str],
 ) -> str:
     draft_enabled = action in ACTION_FORM_DRAFT_ACTIONS
+    workspace_artifact_promote = action == "save-workspace"
+    workspace_artifact_form_attrs = (
+        " data-workspace-last-artifact-promote='true'"
+        " data-workspace-last-artifact-storage-key='clankeros-last-artifact'"
+        " data-workspace-last-artifact-target-field='last_viewed_artifact'"
+        " data-workspace-last-artifact-write-on-get='false'"
+        " data-workspace-last-artifact-provider-calls-taken='0'"
+        " data-workspace-last-artifact-network-actions-taken='0'"
+        " data-workspace-last-artifact-external-effects-created='false'"
+        if workspace_artifact_promote
+        else ""
+    )
+
+    def workspace_artifact_input_attrs(key: str, value: str) -> str:
+        if not workspace_artifact_promote or key != "last_viewed_artifact":
+            return ""
+        return (
+            " data-workspace-last-artifact-input='true'"
+            f" data-workspace-last-artifact-default-value='{_e(value)}'"
+        )
+
     draft_values = {**hidden_fields, **text_fields}
     draft_storage_key = (
         _action_form_draft_storage_key(action, draft_values)
         if draft_enabled
         else ""
     )
-    inputs = "".join(
-        f"<input type='hidden' name='{_e(key)}' value='{_e(value)}'>"
-        for key, value in hidden_fields.items()
-    )
+    inputs = ""
+    for key, value in hidden_fields.items():
+        inputs += (
+            f"<input type='hidden' name='{_e(key)}' value='{_e(value)}'"
+            f"{workspace_artifact_input_attrs(key, value)}>"
+        )
     if draft_enabled:
         inputs += (
             "<input type='hidden' name='_action_draft_storage_key' "
@@ -43420,10 +43443,13 @@ def _input_form(
             field = (
                 f"<textarea name='{_e(key)}' "
                 f"rows='{_action_form_draft_textarea_rows(key)}' spellcheck='true'"
-                f"{draft_attrs}>{_e(value)}</textarea>"
+                f"{workspace_artifact_input_attrs(key, value)}{draft_attrs}>{_e(value)}</textarea>"
             )
         else:
-            field = f"<input name='{_e(key)}' value='{_e(value)}'{draft_attrs}>"
+            field = (
+                f"<input name='{_e(key)}' value='{_e(value)}'"
+                f"{workspace_artifact_input_attrs(key, value)}{draft_attrs}>"
+            )
         inputs += "".join(
             [
                 (
@@ -43436,10 +43462,44 @@ def _input_form(
                 "</label>",
             ]
         )
+    workspace_artifact_promote_panel = ""
+    if workspace_artifact_promote:
+        workspace_artifact_promote_panel = "".join(
+            [
+                "<div class='workspace-last-artifact-promote' data-workspace-last-artifact-promote-panel='true'>",
+                "<p class='muted' data-workspace-last-artifact-status='true'>Browser last artifact: default</p>",
+                "<details class='workspace-last-artifact-promote-evidence' data-workspace-last-artifact-promote-evidence='true'>",
+                "<summary>Last artifact promotion evidence</summary>",
+                _kv(
+                    [
+                        ("workspace_last_artifact_promote_status", "browser_local_pending"),
+                        ("workspace_last_artifact_promote_storage", "localStorage:clankeros-last-artifact"),
+                        ("workspace_last_artifact_promote_target_field", "last_viewed_artifact"),
+                        ("workspace_last_artifact_promote_form_action", "save-workspace"),
+                        ("workspace_last_artifact_promote_requires_submit", "true"),
+                        ("workspace_last_artifact_promote_respects_manual_edit", "true"),
+                        ("workspace_last_artifact_promote_workspace_json_write_on_get", "false"),
+                        ("workspace_last_artifact_promote_provider_calls_taken", "0"),
+                        ("workspace_last_artifact_promote_network_actions_taken", "0"),
+                        ("workspace_last_artifact_promote_external_effects_created", "false"),
+                    ]
+                ),
+                _ul(
+                    [
+                        "workspace_last_artifact_promote: browser-local artifact memory hydrates this form field before confirmation",
+                        "workspace_last_artifact_promote: confirmed save-workspace remains the only workspace JSON write",
+                        "workspace_last_artifact_promote_safety: no provider calls, network actions, pushes, PRs, deploys, or external mutations",
+                    ]
+                ),
+                "</details>",
+                "</div>",
+            ]
+        )
     if not draft_enabled:
         return (
-            f"<form method='post' action='/actions/{_e(action)}'>"
-            f"{brief}{inputs}<button type='submit'>{_e(copy['button'])}</button></form>"
+            f"<form method='post' action='/actions/{_e(action)}'{workspace_artifact_form_attrs}>"
+            f"{brief}{inputs}{workspace_artifact_promote_panel}"
+            f"<button type='submit'>{_e(copy['button'])}</button></form>"
         )
     return "".join(
         [
@@ -43452,10 +43512,12 @@ def _input_form(
                 "data-action-draft-write-on-get='false' "
                 "data-action-draft-provider-calls-taken='0' "
                 "data-action-draft-network-actions-taken='0' "
-                "data-action-draft-external-effects-created='false'>"
+                "data-action-draft-external-effects-created='false'"
+                f"{workspace_artifact_form_attrs}>"
             ),
             brief,
             inputs,
+            workspace_artifact_promote_panel,
             "<div class='action-draft-toolbar' data-action-draft-toolbar='true'>",
             "<span class='action-draft-status' data-action-draft-status='true'>Draft: default</span>",
             "<button type='button' class='action-draft-reset' data-action-draft-reset='true'>Clear draft</button>",
@@ -49577,6 +49639,66 @@ def _html_page(
         }}
       }});
     }}
+    function workspaceLastArtifactForms() {{
+      return Array.prototype.slice.call(document.querySelectorAll("[data-workspace-last-artifact-promote='true']"));
+    }}
+    function workspaceLastArtifactInput(form) {{
+      if (!form) {{ return null; }}
+      return form.querySelector("[data-workspace-last-artifact-input='true'], [name='last_viewed_artifact']");
+    }}
+    function setWorkspaceLastArtifactStatus(form, status, message) {{
+      if (!form) {{ return; }}
+      form.setAttribute("data-workspace-last-artifact-status-value", status);
+      var statusNode = form.querySelector("[data-workspace-last-artifact-status='true']");
+      if (statusNode) {{ statusNode.textContent = message || ("Browser last artifact: " + status); }}
+    }}
+    function promoteBrowserLastArtifactToWorkspaceForm(form, mode) {{
+      var input = workspaceLastArtifactInput(form);
+      if (!input) {{
+        setWorkspaceLastArtifactStatus(form, "missing-input", "Browser last artifact: no target field");
+        return false;
+      }}
+      if (!window.localStorage) {{
+        setWorkspaceLastArtifactStatus(form, "unavailable", "Browser last artifact: localStorage unavailable");
+        return false;
+      }}
+      var storageKey = form.getAttribute("data-workspace-last-artifact-storage-key") || "clankeros-last-artifact";
+      var record = browserLastArtifactRecord(storageKey);
+      if (!record || !record.path) {{
+        setWorkspaceLastArtifactStatus(form, "empty", "Browser last artifact: none yet");
+        return false;
+      }}
+      form.setAttribute("data-workspace-last-artifact-path-value", record.path);
+      form.setAttribute("data-workspace-last-artifact-href-value", record.href || "/artifacts");
+      if (input.getAttribute("data-workspace-last-artifact-user-edited") === "true") {{
+        setWorkspaceLastArtifactStatus(form, "manual", "Browser last artifact: manual field kept");
+        return false;
+      }}
+      input.value = record.path;
+      input.setAttribute("data-workspace-last-artifact-promoted-value", record.path);
+      setWorkspaceLastArtifactStatus(form, mode === "submit" ? "promoted-on-submit" : "promoted", "Browser last artifact: " + record.path);
+      return true;
+    }}
+    function hydrateWorkspaceLastArtifactInputs() {{
+      workspaceLastArtifactForms().forEach(function(form) {{
+        promoteBrowserLastArtifactToWorkspaceForm(form, "hydrate");
+      }});
+    }}
+    function initializeWorkspaceLastArtifactPromotion() {{
+      workspaceLastArtifactForms().forEach(function(form) {{
+        var input = workspaceLastArtifactInput(form);
+        if (input) {{
+          input.addEventListener("input", function() {{
+            input.setAttribute("data-workspace-last-artifact-user-edited", "true");
+            setWorkspaceLastArtifactStatus(form, "manual", "Browser last artifact: manual field kept");
+          }});
+        }}
+        promoteBrowserLastArtifactToWorkspaceForm(form, "hydrate");
+        form.addEventListener("submit", function() {{
+          promoteBrowserLastArtifactToWorkspaceForm(form, "submit");
+        }});
+      }});
+    }}
     function makeBrowserRouteHistoryItem(entry) {{
       var li = document.createElement("li");
       li.setAttribute("data-browser-route-history-item", "true");
@@ -52027,6 +52149,7 @@ def _html_page(
     initializeScrollPositionMemoryState();
     initializeActionFormDraftState();
     initializeGoalNoteDraftState();
+    initializeWorkspaceLastArtifactPromotion();
     window.addEventListener("hashchange", function() {{
       openCurrentHashDetails();
       scrollToCurrentHashTarget();

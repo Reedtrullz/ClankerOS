@@ -7202,6 +7202,25 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_save_defaults_confirmation_required</dt><dd>true" in workspace.body
     assert "workspace_save_defaults_write_on_get</dt><dd>false" in workspace.body
     assert "workspace_save_defaults_external_effects_created</dt><dd>false" in workspace.body
+    assert "data-workspace-last-artifact-promote='true'" in workspace.body
+    assert "data-workspace-last-artifact-storage-key='clankeros-last-artifact'" in workspace.body
+    assert "data-workspace-last-artifact-input='true'" in workspace.body
+    assert "data-workspace-last-artifact-default-value=''" in workspace.body
+    assert "data-workspace-last-artifact-status='true'>Browser last artifact: default" in workspace.body
+    assert (
+        "workspace_last_artifact_promote_storage</dt><dd>"
+        "localStorage:clankeros-last-artifact"
+    ) in workspace.body
+    assert "workspace_last_artifact_promote_target_field</dt><dd>last_viewed_artifact" in workspace.body
+    assert "workspace_last_artifact_promote_requires_submit</dt><dd>true" in workspace.body
+    assert "workspace_last_artifact_promote_workspace_json_write_on_get</dt><dd>false" in workspace.body
+    assert "workspace_last_artifact_promote_provider_calls_taken</dt><dd>0" in workspace.body
+    assert "workspace_last_artifact_promote_network_actions_taken</dt><dd>0" in workspace.body
+    assert "workspace_last_artifact_promote_external_effects_created</dt><dd>false" in workspace.body
+    assert "function promoteBrowserLastArtifactToWorkspaceForm(form, mode)" in workspace.body
+    assert "function hydrateWorkspaceLastArtifactInputs()" in workspace.body
+    assert "initializeWorkspaceLastArtifactPromotion()" in workspace.body
+    assert 'promoteBrowserLastArtifactToWorkspaceForm(form, "submit");' in workspace.body
     assert "name='open_project' value=''" in workspace.body
     assert "name='open_goal' value=''" in workspace.body
     assert "name='resume_surface' value='#workspace-first-run-action-form'" in workspace.body

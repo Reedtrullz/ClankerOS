@@ -185,7 +185,10 @@ Core layers for the bootstrap:
   when available. It also reads `localStorage:clankeros-last-artifact` and
   shows a `Last Artifact` card for the most recently opened artifact in this
   browser while leaving canonical resume state to the explicit
-  `/workspace#save-workspace` form. It shows saved `resume_surface`, goal,
+  `/workspace#save-workspace` form. The shared `save-workspace` / Finish Today
+  form can hydrate its `last_viewed_artifact` field from that browser-local
+  breadcrumb before confirmation/submission unless the operator manually edits
+  the field. It shows saved `resume_surface`, goal,
   project, artifact, filters, expanded panels, and zero-effect counters inside
   collapsed saved-state/browser-resume/command/workbench evidence. The shared
   `Workspace Panel Restore` strip now treats saved

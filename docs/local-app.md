@@ -197,8 +197,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `localStorage:clankeros-last-artifact` and shows a `Last Artifact` card for
   the most recently opened artifact in this browser, while still treating that
   artifact as browser-local view memory until the operator confirms a workspace
-  save. It falls back to the Goal cockpit and keeps canonical tomorrow state
-  behind the explicit
+  save. The shared `save-workspace` / Finish Today form now hydrates its
+  `last_viewed_artifact` field from that browser-local breadcrumb before
+  confirmation/submission unless the operator manually edits the field, so
+  "Finish Today" can intentionally promote the latest artifact into tomorrow's
+  resume state. It falls back to the Goal cockpit and keeps canonical tomorrow
+  state behind the explicit
   `/workspace#save-workspace` Finish Today form. `/resume` also links the
   saved goal, project, and last artifact, preserves filters and expanded panel
   readbacks, and keeps saved-state, browser-local resume, command, and
