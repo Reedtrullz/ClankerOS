@@ -572,7 +572,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   event-family, run/task/note, and zero-effect evidence. A read-only
   `Goal Timeline Digest` follows with Span, Latest, Artifact, Next, and Safety
   cards, plus collapsed evidence for item counts, current gate, latest
-  artifact, next surface, and zero-effect counters. A browser-local
+  artifact, next surface, and zero-effect counters. Its Artifact card uses
+  the concrete bounded artifact action label, such as
+  `Open coder run <run_id> review`, instead of generic latest-artifact copy.
+  A browser-local
   `Timeline Lane Filter` follows the digest, using existing
   `data-timeline-kind` markers to hide or show rendered artifact, approval,
   delegation, run, task, note, and generic event rows. It remembers the
@@ -658,7 +661,8 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   A read-only `Goal Activity Pulse` follows the digest as visible Latest,
   Recent Three, Mix, Artifact, and Next cards, reusing the Goal timeline so a
   returning operator can see the newest linked movement before opening the
-  full event list.
+  full event list. Its Artifact card uses the same concrete artifact action
+  label and preserves the exact artifact route in collapsed evidence.
   A read-only `Goal Continuation Rail` follows the pulse as visible Now, Next Gate,
   Then, Publish Boundary, and Finish Today cards, with detailed gate rows,
   exact surfaces, the manual publish boundary, and zero-effect counters kept

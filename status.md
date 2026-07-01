@@ -1,5 +1,27 @@
 # Status
 
+## 2026-07-01 Goal Timeline Artifact Action Label UX
+
+- Updated `/goals/<goal_id>` scan-first Goal history surfaces so latest
+  artifact links in `Goal Activity Pulse` and `Goal Timeline Digest` use the
+  concrete artifact action label, for example
+  `Open coder run <run_id> review`, instead of generic `Open artifact` or
+  `Latest artifact` copy.
+- The cards now route through the bounded Goal artifact registry target while
+  preserving the event/timeline summary text in the card body.
+- Collapsed evidence now records
+  `goal_activity_pulse_latest_artifact_label` and
+  `timeline_digest_latest_artifact_label` next to the exact artifact surfaces.
+- Local verification:
+  - Added failing-first assertions against the fixture-backed demo Goal page,
+    then updated the renderers.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this is browser copy/routing polish only. It does not read raw
+  filesystem paths, run verification, approve work, execute tasks, commit,
+  push, create PRs, deploy, call providers, use the network, or mutate
+  external systems from ClankerOS.
+
 ## 2026-07-01 Skills Usage Primary Action Label UX
 
 - Updated the `/skills` Skills Usage Map `Now` card so its primary action

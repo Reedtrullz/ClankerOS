@@ -14185,6 +14185,30 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_activity_pulse_delegation_events</dt><dd>" in goal.body
     assert "goal_activity_pulse_run_events</dt><dd>" in goal.body
     assert "goal_activity_pulse_latest_artifact</dt><dd><a href='/artifacts?path=" in goal.body
+    assert (
+        f"goal_activity_pulse_latest_artifact_label</dt><dd>Open coder run {result.coder_worktree_run_id} review"
+        in goal.body
+    )
+    activity_pulse_artifact_card = goal.body[
+        goal.body.index("data-goal-activity-pulse-artifact='true'") :
+        goal.body.index("data-goal-activity-pulse-next='true'")
+    ]
+    assert "goal-activity-pulse-link' href='/artifacts?path=runs/" in activity_pulse_artifact_card
+    assert (
+        f"Open coder run {result.coder_worktree_run_id} review</a>"
+        in activity_pulse_artifact_card
+    )
+    assert "Open artifact</a>" not in activity_pulse_artifact_card
+    activity_pulse_artifact_evidence = goal.body[
+        goal.body.index("goal_activity_pulse_artifact: <a href='/artifacts?path=runs/") :
+        goal.body.index("goal_activity_pulse_next:")
+    ]
+    assert f"Open coder run {result.coder_worktree_run_id} review</a>" in activity_pulse_artifact_evidence
+    assert "Open artifact</a>" not in activity_pulse_artifact_evidence
+    assert (
+        f"goal-activity-pulse-link' href='/artifacts?path=runs/{result.coder_worktree_run_id}/review.md'>Open artifact</a>"
+        not in goal.body
+    )
     assert "goal_activity_pulse_next_action</dt><dd>Create commit request" in goal.body
     assert "goal_activity_pulse_next_surface</dt><dd><a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "goal_activity_pulse_action_form_available</dt><dd>true" in goal.body
@@ -14775,6 +14799,20 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in goal.body
     assert "timeline_digest_artifact_events</dt><dd>" in goal.body
     assert "timeline_digest_latest_artifact</dt><dd><a href='/artifacts?path=" in goal.body
+    assert (
+        f"timeline_digest_latest_artifact_label</dt><dd>Open coder run {result.coder_worktree_run_id} review"
+        in goal.body
+    )
+    timeline_digest_artifact_card = goal.body[
+        goal.body.index("data-goal-timeline-digest-artifact='true'") :
+        goal.body.index("data-goal-timeline-digest-next='true'")
+    ]
+    assert "goal-timeline-link' href='/artifacts?path=runs/" in timeline_digest_artifact_card
+    assert (
+        f"Open coder run {result.coder_worktree_run_id} review</a>"
+        in timeline_digest_artifact_card
+    )
+    assert "Latest artifact</a>" not in timeline_digest_artifact_card
     assert "timeline_digest_current_gate</dt><dd>commit_request" in goal.body
     assert "timeline_digest_gate_progress</dt><dd>8/15 gates done" in goal.body
     assert "timeline_digest_next_action</dt><dd>Create commit request" in goal.body

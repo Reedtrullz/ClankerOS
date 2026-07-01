@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/goals/<goal_id>` scan-first history surfaces now name latest artifact
+  actions in `Goal Activity Pulse` and `Goal Timeline Digest`, such as
+  `Open coder run <run_id> review`, instead of `Open artifact` or
+  `Latest artifact`. Collapsed evidence records the new artifact action label
+  fields while preserving exact bounded artifact routes. Local proof includes
+  the fixture-backed demo Goal route pytest (`1 passed`).
 - `/skills` Skills Usage Map now names the selected skill in the `Now` card's
   primary action, such as `Open local-files skill`, instead of the generic
   `Open artifact` copy. Collapsed evidence records

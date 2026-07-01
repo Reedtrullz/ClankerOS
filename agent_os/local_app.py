@@ -18176,6 +18176,18 @@ def _goal_activity_pulse(
     latest_artifact_at = _format_time(latest_artifact.get("at") or "") if latest_artifact else "none"
     latest_artifact_label = latest_artifact.get("message") or "No artifact recorded yet"
     latest_artifact_href = latest_artifact.get("href") or "#goal-artifact-command-bar"
+    latest_artifact_action_label = _timeline_item_action_label(
+        latest_artifact,
+        fallback="Open artifact",
+    ) if latest_artifact else "Open artifacts"
+    latest_artifact_record = _goal_latest_artifact_record(root, state)
+    if latest_artifact_record is not None:
+        latest_artifact_href = _artifact_href(root, latest_artifact_record["path"])
+        latest_artifact_label = latest_artifact_record["label"]
+        latest_artifact_action_label = _compact_label(
+            f"Open {latest_artifact_record['label']}",
+            84,
+        )
     action_form_available = bool(_goal_next_action_form(state, next_action))
     primary_href = _goal_primary_action_href(
         state,
@@ -18218,7 +18230,7 @@ def _goal_activity_pulse(
     latest_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_action_label)}</a>")
     latest_raw_surface = SafeHtml(f"<a href='{_e(latest_href)}'>{_e(latest_href)}</a>")
     artifact_surface = SafeHtml(
-        f"<a href='{_e(latest_artifact_href)}'>{_e(latest_artifact_label)}</a>"
+        f"<a href='{_e(latest_artifact_href)}'>{_e(latest_artifact_action_label)}</a>"
     )
     next_surface = SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")
     mix_label = (
@@ -18244,7 +18256,7 @@ def _goal_activity_pulse(
             "<article class='goal-activity-pulse-card' data-goal-activity-pulse-artifact='true'>",
             "<h3>Artifact</h3>",
             f"<p>{_e(latest_artifact_at)} · {_e(latest_artifact_label)}</p>",
-            f"<a class='goal-activity-pulse-link' href='{_e(latest_artifact_href)}'>Open artifact</a>",
+            f"<a class='goal-activity-pulse-link' href='{_e(latest_artifact_href)}'>{_e(latest_artifact_action_label)}</a>",
             "</article>",
             "<article class='goal-activity-pulse-card' data-goal-activity-pulse-next='true'>",
             "<h3>Next</h3>",
@@ -18283,6 +18295,7 @@ def _goal_activity_pulse(
                     ("goal_activity_pulse_operator_note_events", str(family_counts["operator_note"])),
                     ("goal_activity_pulse_event_events", str(family_counts["event"])),
                     ("goal_activity_pulse_latest_artifact_at", latest_artifact_at),
+                    ("goal_activity_pulse_latest_artifact_label", latest_artifact_action_label),
                     ("goal_activity_pulse_latest_artifact", artifact_surface),
                     ("goal_activity_pulse_next_action", next_action.action),
                     ("goal_activity_pulse_next_surface", next_surface),
@@ -21108,13 +21121,26 @@ def _goal_timeline_digest(
     latest_artifact = artifact_items[-1] if artifact_items else {}
     latest_artifact_href = latest_artifact.get("href") or ""
     latest_artifact_label = latest_artifact.get("message") or "No artifact recorded yet"
+    latest_artifact_action_label = (
+        _timeline_item_action_label(latest_artifact, fallback="Open artifact")
+        if latest_artifact
+        else "Open artifacts"
+    )
     latest_artifact_at = (
         _format_time(latest_artifact.get("at") or "") if latest_artifact else "none"
     )
+    latest_artifact_record = _goal_latest_artifact_record(root, state)
+    if latest_artifact_record is not None:
+        latest_artifact_href = _artifact_href(root, latest_artifact_record["path"])
+        latest_artifact_label = latest_artifact_record["label"]
+        latest_artifact_action_label = _compact_label(
+            f"Open {latest_artifact_record['label']}",
+            84,
+        )
     artifact_surface: str | SafeHtml = "none"
     if latest_artifact_href:
         artifact_surface = SafeHtml(
-            f"<a href='{_e(latest_artifact_href)}'>{_e(latest_artifact_label)}</a>"
+            f"<a href='{_e(latest_artifact_href)}'>{_e(latest_artifact_action_label)}</a>"
         )
     status = "available" if items else "empty"
     return "".join(
@@ -21135,7 +21161,7 @@ def _goal_timeline_digest(
             "<article class='goal-timeline-card' data-goal-timeline-digest-artifact='true'>"
             "<h3>Artifact</h3>"
             f"<p>{_e(latest_artifact_label)} · {_e(latest_artifact_at)}</p>"
-            f"<a class='goal-timeline-link' href='{_e(latest_artifact_href or '#goal-artifact-command-bar')}'>Latest artifact</a>"
+            f"<a class='goal-timeline-link' href='{_e(latest_artifact_href or '#goal-artifact-command-bar')}'>{_e(latest_artifact_action_label)}</a>"
             "</article>",
             "<article class='goal-timeline-card' data-goal-timeline-digest-next='true'>"
             "<h3>Next</h3>"
@@ -21170,6 +21196,7 @@ def _goal_timeline_digest(
                     ),
                     ("timeline_digest_artifact_events", str(len(artifact_items))),
                     ("timeline_digest_latest_artifact_at", latest_artifact_at),
+                    ("timeline_digest_latest_artifact_label", latest_artifact_action_label),
                     ("timeline_digest_latest_artifact", artifact_surface),
                     ("timeline_digest_current_gate", current_gate),
                     ("timeline_digest_gate_progress", f"{gate_counts.get('done', 0)}/{len(gates)} gates done"),
