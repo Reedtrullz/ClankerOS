@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- `/skills` Skills Usage Map now names the selected skill in the `Now` card's
+  primary action, such as `Open local-files skill`, instead of the generic
+  `Open artifact` copy. Collapsed evidence records
+  `skills_usage_map_primary_label` while preserving the exact artifact route.
+  Local proof includes the fixture-backed demo skills route pytest
+  (`1 passed`).
 - Confirmed action-result command cards now name the concrete next workflow
   action instead of showing generic `Continue workflow` copy. First-run setup
   results link the Workflow card to `Create first goal`; saved-Goal

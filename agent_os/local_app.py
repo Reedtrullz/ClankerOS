@@ -10944,7 +10944,7 @@ def _skills_usage_map(
             primary_artifact_path = _repo_relative_artifact_path(root, first_skill.path)
             primary_artifact = _artifact_link(primary_artifact_path)
             primary_href = f"/artifacts?path={quote(primary_artifact_path)}"
-            primary_label = "Open artifact"
+            primary_label = _compact_label(f"Open {primary_name} skill", 72)
         elif first_skill.source_run_id:
             primary_href = "#skills-generated"
             primary_label = "Review generated"
@@ -10967,6 +10967,7 @@ def _skills_usage_map(
         ("skills_usage_map_used_skill_names", str(len(used_names))),
         ("skills_usage_map_projects_using_skills", str(len(projects))),
         ("skills_usage_map_primary_skill", primary_name),
+        ("skills_usage_map_primary_label", primary_label),
         ("skills_usage_map_primary_status", primary_status),
         ("skills_usage_map_primary_usage_count", primary_usage_count),
         ("skills_usage_map_primary_last_used", primary_last_used),

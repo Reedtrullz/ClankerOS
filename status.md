@@ -1,5 +1,23 @@
 # Status
 
+## 2026-07-01 Skills Usage Primary Action Label UX
+
+- Updated the `/skills` Skills Usage Map `Now` card so its primary action
+  names the selected skill, for example `Open local-files skill`, instead of
+  showing the generic `Open artifact` label.
+- Collapsed usage-map evidence now records
+  `skills_usage_map_primary_label` alongside the existing exact artifact link,
+  preserving the operator-facing copy and the local target separately.
+- Local verification:
+  - Added a failing-first fixture assertion for the demo skills route, then
+    updated the renderer.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this is browser copy/evidence polish only. It does not install
+  skills, execute skills, approve work, run verification, commit, push, create
+  PRs, deploy, call providers, use the network, or mutate external systems
+  from ClankerOS.
+
 ## 2026-07-01 Action Result Workflow Action Label UX
 
 - Replaced the remaining generic `Continue workflow` link in confirmed

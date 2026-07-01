@@ -16171,9 +16171,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-skills-usage-card='safety'" in skills.body
     assert (
         "data-skills-usage-primary='true' href='/artifacts?path=.clanker/skills/local-files/SKILL.md'>"
-        "Open artifact</a>"
+        "Open local-files skill</a>"
         in skills.body
     )
+    assert "data-skills-usage-primary='true' href='/artifacts?path=.clanker/skills/local-files/SKILL.md'>Open artifact</a>" not in skills.body
     assert "data-skills-usage-evidence='true'" in skills.body
     assert "Skills Inventory Filter" in skills.body
     assert "data-skills-inventory-filter='true'" in skills.body
@@ -16255,9 +16256,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     )
     assert (
         "skills_usage_map_primary_surface</dt><dd><a href='/artifacts?path=.clanker/skills/local-files/SKILL.md'>"
-        "Open artifact</a>"
+        "Open local-files skill</a>"
         in skills.body
     )
+    assert "skills_usage_map_primary_label</dt><dd>Open local-files skill" in skills.body
     assert "skills_usage_map_available_surface</dt><dd><a href='#skills-available'>Available Skills</a>" in skills.body
     assert "skills_usage_map_generated_surface</dt><dd><a href='#skills-generated'>Generated Skills</a>" in skills.body
     assert "skills_usage_map_install_available</dt><dd>false" in skills.body

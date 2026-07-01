@@ -390,7 +390,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   route/focus diagnostics or command readback, with cards for the next skill
   review, generated skills, usage, and `/resume` or Goal context. A visible
   `Skills Usage Map` follows with Now, Available, Generated, Usage, Projects,
-  and Safety cards. A browser-local `Skills Inventory Filter` then narrows
+  and Safety cards; the Now card's primary action names the selected skill
+  when opening a skill artifact, such as `Open local-files skill`, instead of
+  generic artifact copy. A browser-local `Skills Inventory Filter` then narrows
   already-rendered skill rows by lane or text and restores lane/query from
   `localStorage:clankeros-skills-inventory-filter` before the dense inventory.
   Skills state, usage-map, filter, workbench evidence, and command evidence
