@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Saved-Goal action result pages now include a visible `Continue Goal` panel
+  inside `Action Result Next Step`, before the inline confirmed next-action
+  form. After first Goal creation, the success page names `Create scout
+  delegation`, points directly at the existing confirmation-gated form, and
+  records `action_result_goal_continuation_*` evidence plus zero-effect
+  counters. Local proof includes the red/green focused first-run/resume test,
+  compile, the three-route first-run/resume/Today selection, and the
+  fixture-backed demo scenario result-page regression.
 - First-run action result receipts are now Resume-aware before a Goal exists:
   after confirmed project registration, `Resume Tomorrow` points at
   `/resume#resume-first-run-action-form` for `Create First Goal`, while the

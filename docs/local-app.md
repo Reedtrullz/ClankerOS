@@ -1343,7 +1343,10 @@ Confirmed actions render a top `Action Result Next Step` panel before the
 dense details, promoting the refreshed next operator move after the local
 action succeeds. When the next move has a confirmed browser form, that form is
 rendered inline while preserving the same confirmation screen before any local
-write or local execution. Confirmed actions still render `Action Result
+write or local execution. For saved-Goal continuations, the same panel also
+shows a visible `Continue Goal` block before the form, naming the Goal, phase,
+next action, confirmation posture, and zero-effect evidence so the result page
+feels like a usable handoff instead of only a receipt. Confirmed actions still render `Action Result
 Details` with the attempted action, submitted payload, result fields, artifact
 links when paths are returned, a next-page link, and the safety boundary.
 Before those dense details, the result page also includes a `Resume Tomorrow`

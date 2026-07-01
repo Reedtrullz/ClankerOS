@@ -1,5 +1,32 @@
 # Status
 
+## 2026-07-01 Action Result Continue Goal UX
+
+- Saved-Goal action result pages now include a visible `Continue Goal` panel
+  inside `Action Result Next Step`, before the inline confirmed next-action
+  form. After first Goal creation, the success page names `Create scout
+  delegation` and points directly at the existing confirmation-gated form.
+- Added `action_result_goal_continuation_*` evidence rows for source, Goal id,
+  Goal surface, phase, next action, primary surface, form availability,
+  confirmation requirement, and zero-effect counters.
+- TDD evidence: the focused first-run/resume route test failed first because
+  the created-Goal result page did not contain `Continue Goal` or
+  `data-action-result-goal-continuation='true'`, then passed after the
+  Goal-mode continuation panel was added.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed after implementation.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface -q --tb=short`:
+    3 passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed.
+- Non-claim: this is action-result browser UX only. It does not write on GET,
+  approve work, execute tasks, deploy, call providers, use the network from the
+  app, create PRs, push from the app, or mutate external systems from
+  ClankerOS.
+
 ## 2026-07-01 First Run Resume Tomorrow Target UX
 
 - First-run action result receipts now route the human `Resume Tomorrow`

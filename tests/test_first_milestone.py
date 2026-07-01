@@ -10558,6 +10558,31 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
             """,
             ("clankeros",),
         ).fetchone()[0]
+    assert "Continue Goal" in create_goal_result.body
+    assert "data-action-result-goal-continuation='true'" in create_goal_result.body
+    assert (
+        "data-action-result-goal-continuation-primary='true' "
+        "href='#action-result-next-step-form'>Create scout delegation</a>"
+    ) in create_goal_result.body
+    assert "action_result_goal_continuation_status</dt><dd>action_form_ready" in create_goal_result.body
+    assert "action_result_goal_continuation_source</dt><dd>saved_workspace_goal_after_action" in create_goal_result.body
+    assert f"action_result_goal_continuation_goal_id</dt><dd>{created_goal_id}" in create_goal_result.body
+    assert "action_result_goal_continuation_phase</dt><dd>Ready for delegation" in create_goal_result.body
+    assert "action_result_goal_continuation_next_action</dt><dd>Create scout delegation" in create_goal_result.body
+    assert (
+        "action_result_goal_continuation_primary_surface</dt><dd>"
+        "<a href='#action-result-next-step-form'>Create scout delegation</a>"
+    ) in create_goal_result.body
+    assert (
+        f"action_result_goal_continuation_goal_surface</dt><dd>"
+        f"<a href='/goals/{created_goal_id}'>"
+        "Make ClankerOS resumable after first-run goal creation.</a>"
+    ) in create_goal_result.body
+    assert "action_result_goal_continuation_form_available</dt><dd>true" in create_goal_result.body
+    assert "action_result_goal_continuation_confirmation_required</dt><dd>true" in create_goal_result.body
+    assert "action_result_goal_continuation_write_on_get</dt><dd>false" in create_goal_result.body
+    assert "action_result_goal_continuation_network_actions_taken</dt><dd>0" in create_goal_result.body
+    assert "action_result_goal_continuation_external_effects_created</dt><dd>false" in create_goal_result.body
     goal_workspace = json.loads(workspace_path.read_text(encoding="utf-8"))
     assert goal_workspace["open_project"] == "clankeros"
     assert goal_workspace["open_goal"] == created_goal_id

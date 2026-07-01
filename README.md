@@ -1242,7 +1242,10 @@ artifact, confirmation source, and zero-effect counters. An
 `Action Result Next Step` panel follows the command bar and promotes the
 refreshed next operator move before the dense result details. When that next
 move has a confirmed browser form, the panel renders it inline and keeps the
-same confirmation screen in front of any local write or local execution. An
+same confirmation screen in front of any local write or local execution. For
+saved-Goal continuations, it also shows a visible `Continue Goal` panel with
+the Goal, phase, primary next action, form availability, confirmation posture,
+and zero-effect evidence before the form. An
 `Resume Tomorrow` follows, reading `.clanker/app/workspace.json` back as the
 operator's return path with visible Resume Tomorrow, Context, Artifact, Last
 Action, and Boundary cards. During incomplete first-run setup, the primary

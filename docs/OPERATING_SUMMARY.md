@@ -1426,7 +1426,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   command bar and turns the refreshed first-run or saved-Goal state into the
   next visible operator move, rendering the same confirmed browser form inline
   when one exists while preserving the confirmation boundary before local
-  writes or local execution. A `Resume Tomorrow` receipt follows and reads
+  writes or local execution. For saved-Goal continuations, that panel also
+  renders a visible `Continue Goal` block before the form with Goal, phase,
+  next action, form availability, confirmation posture, and zero-effect
+  evidence. A `Resume Tomorrow` receipt follows and reads
   `.clanker/app/workspace.json` back as the operator's return path, with
   visible Resume Tomorrow, Context, Artifact, Last Action, and Boundary cards.
   When first-run setup is incomplete and no Goal is saved yet, the primary
