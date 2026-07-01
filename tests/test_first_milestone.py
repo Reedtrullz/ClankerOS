@@ -6212,6 +6212,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert 'data-next-action-provider-calls-taken="0"' in root.body
     assert 'data-next-action-network-actions-taken="0"' in root.body
     assert 'data-next-action-external-effects-created="false"' in root.body
+    assert 'data-goal-shortcut-href="/goals"' in root.body
+    assert 'data-goal-shortcut-label="Goals"' in root.body
+    assert 'data-goal-shortcut-action="Open goals"' in root.body
+    assert 'data-goal-shortcut-source="first_run_progress_goals_index"' in root.body
+    assert 'data-goal-shortcut-write-on-get="false"' in root.body
+    assert 'data-goal-shortcut-provider-calls-taken="0"' in root.body
+    assert 'data-goal-shortcut-network-actions-taken="0"' in root.body
+    assert 'data-goal-shortcut-external-effects-created="false"' in root.body
     assert 'id="finish-today-open"' in root.body
     assert 'aria-keyshortcuts="f"' in root.body
     assert 'data-finish-today-button="true"' in root.body
@@ -6227,6 +6235,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Keyboard shortcuts: question mark opens keyboard help" in root.body
     assert "slash opens command palette" in root.body
     assert "n opens next action" in root.body
+    assert "g opens current goal" in root.body
     assert "w opens workspace; a opens artifacts; v opens recent items; p opens proof; f opens Finish Today" in root.body
     assert "m toggles focus mode" in root.body
     assert "id='shortcut-help-dialog'" in root.body
@@ -6320,6 +6329,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "function openProof()" in root.body
     assert 'if (proofOpen) { proofOpen.addEventListener("click", openProof); }' in root.body
     assert 'if (event.key === "n") { event.preventDefault(); openNextAction(); }' in root.body
+    assert "var keyboardShortcuts = document.querySelector(\"[data-keyboard-shortcuts='true']\");" in root.body
+    assert "function openGoalShortcut()" in root.body
+    assert 'if (event.key === "g") { event.preventDefault(); openGoalShortcut(); }' in root.body
     assert 'if (event.key === "r") { event.preventDefault(); window.location.href = "/resume"; }' in root.body
     assert 'if (event.key === "s") { event.preventDefault(); window.location.href = "/search"; }' in root.body
     assert 'if (event.key === "w") { event.preventDefault(); window.location.href = "/workspace"; }' in root.body
@@ -17288,6 +17300,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workspace_workflow_map_external_effects_created</dt><dd>false" in restored_workspace.body
     restored_home = render_local_app_route(tmp_path, "/")
     assert "Home Live State" in restored_home.body
+    assert f'data-goal-shortcut-href="/goals/{result.goal_id}"' in restored_home.body
+    assert f'data-goal-shortcut-label="{goal_title}"' in restored_home.body
+    assert 'data-goal-shortcut-action="Open current goal"' in restored_home.body
+    assert 'data-goal-shortcut-source="saved_goal_current_goal"' in restored_home.body
+    assert 'if (event.key === "g") { event.preventDefault(); openGoalShortcut(); }' in restored_home.body
     assert "data-live-refresh='home'" in restored_home.body
     assert "data-live-refresh-script='home'" in restored_home.body
     assert "home_live_refresh_status</dt><dd>goal_ready" in restored_home.body

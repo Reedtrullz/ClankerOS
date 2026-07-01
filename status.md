@@ -1,5 +1,34 @@
 # Status
 
+## 2026-07-01 Goal-Aware Keyboard Shortcut UX
+
+- The shared app shell now makes the `g` keyboard shortcut Goal-aware. Empty
+  first-run sessions still route to `/goals`, while populated browser sessions
+  route directly to the current saved or lead Goal cockpit.
+- The shell exposes explicit read-only `data-goal-shortcut-*` metadata for
+  href, label, action, status, source, and zero-effect counters, and the
+  browser-local key handler uses that metadata instead of a hardcoded
+  `/goals` target.
+- TDD evidence: the modern local-app route test failed first because empty
+  Home had no `data-goal-shortcut-href="/goals"` metadata; after implementation
+  the populated fixture-backed scenario also proved Home renders
+  `data-goal-shortcut-href="/goals/<goal_id>"` with `Open current goal`. A
+  follow-up red assertion caught stale shortcut copy that still said
+  `g opens goals`, then passed after the screen-reader help text changed to
+  `g opens current goal`.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed after implementation.
+- Non-claim: this is browser-local shortcut routing only. It does not write on
+  GET, approve work, execute tasks, call providers, use the network, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Command Palette Workspace Action UX
 
 - The command palette Quick Switch `Workspace` card now routes the current

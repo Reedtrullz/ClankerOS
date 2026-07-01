@@ -160,6 +160,9 @@ Core layers for the bootstrap:
   the Start Here, Home Day Plan, Attention Brief,
   Focus Queue, recent activity, inbox, recommendations, incidents, and
   first-run panels without writing on GET or adding action authority. The
+  shared shell shortcut for `g` is now Goal-aware: first-run/no-goal sessions
+  continue to open `/goals`, while populated sessions open the current saved or
+  lead Goal cockpit directly using explicit read-only shortcut metadata. The
   local app also exposes `/guide` as an in-app `Suggested Use Guide` that maps
   `Today -> Goal -> Action -> Proof -> Finish -> Resume`, links first-run
   operators to Home/Today/Goals project/goal setup forms, links current-goal

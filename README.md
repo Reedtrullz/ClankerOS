@@ -861,7 +861,9 @@ toggle on every page. The header keeps the daily routes visible
 moves advanced routes under `More`, which opens automatically on secondary
 pages. The header also exposes a visible `Keys` control and the `?` shortcut
 to open the same local keyboard-help dialog without opening palette evidence
-first. Focus mode uses the header `Focus` button or `m`
+first. The `g` keyboard shortcut is Goal-aware: first-run or empty states still
+open `/goals`, while populated operator sessions open the current saved or
+lead Goal cockpit directly. Focus mode uses the header `Focus` button or `m`
 shortcut to hide Recent Items, Route Context, Operator Focus, and Last Action
 strips while keeping the Operator Ribbon and page body visible. It is stored in
 `localStorage:clankeros-focus-mode` only and does not write server state. The
