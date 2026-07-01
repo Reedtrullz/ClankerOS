@@ -1,5 +1,32 @@
 # Status
 
+## 2026-07-01 Action Result Workflow Action Label UX
+
+- Replaced the remaining generic `Continue workflow` link in confirmed
+  action-result command cards with the concrete next operator action already
+  computed for that result page.
+- First-run setup results now route the Workflow card to
+  `#action-result-next-step-form` as `Create first goal`, and saved-Goal
+  commit-request results route it to the same inline next-step form as
+  `Approve commit`.
+- Collapsed result evidence now records
+  `action_result_command_workflow_surface` and
+  `action_result_command_workflow_summary`, preserving the exact local target
+  and current action label for review.
+- Local verification:
+  - Added failing-first assertions to the first-run action-result path and the
+    saved-Goal commit-request path.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q`:
+    1 passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form -q`:
+    1 passed.
+- Non-claim: this only improves post-action browser routing and evidence. It
+  does not approve work, execute tasks, run verification, commit, push, create
+  PRs, deploy, call providers, use the network, or mutate external systems
+  from ClankerOS.
+
 ## 2026-07-01 Goal Task Closeout Current Action UX
 
 - Updated blocked `Goal Task Closeout` states so they point back to the

@@ -1375,7 +1375,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   decision, or bounded local execution; confirmed action result pages
   now open with an action-first `Action Complete` surface containing Continue,
   Completed, Artifact, Workflow, and Boundary cards plus collapsed
-  result-command evidence. An `Action Result Next Step` panel follows the
+  result-command evidence. The Workflow card uses the concrete refreshed next
+  operator action, such as `Create first goal` or `Approve commit`, instead of
+  generic continuation copy. An `Action Result Next Step` panel follows the
   command bar and turns the refreshed first-run or saved-Goal state into the
   next visible operator move, rendering the same confirmed browser form inline
   when one exists while preserving the confirmation boundary before local

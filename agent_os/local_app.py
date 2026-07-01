@@ -41092,6 +41092,9 @@ def _action_result_command_bar(
     primary_href = str(next_step.get("primary_href") or next_href)
     primary_label = str(next_step.get("primary_label") or "Open next surface")
     primary_summary = str(next_step.get("summary") or location)
+    workflow_href = primary_href
+    workflow_label = primary_label
+    workflow_summary = str(next_step.get("next_action") or primary_summary)
     return "".join(
         [
             (
@@ -41111,8 +41114,8 @@ def _action_result_command_bar(
             f"<p>{artifact_surface}</p>",
             "<a class='action-result-command-link' href='#action-result-fields'>Result fields</a></article>",
             "<article class='action-result-command-card'><h3>Workflow</h3>",
-            "<p>Saved continuation after this action.</p>",
-            "<a class='action-result-command-link' href='#action-continuation'>Continue workflow</a></article>",
+            f"<p>{_e(workflow_summary)}</p>",
+            f"<a class='action-result-command-link' href='{_e(workflow_href)}'>{_e(workflow_label)}</a></article>",
             "<article class='action-result-command-card'><h3>Boundary</h3>",
             "<p>No push, PR, deploy, provider call, network action, or external mutation.</p>",
             "<a class='action-result-command-link' href='#action-result-command-evidence'>Safety evidence</a></article>",
@@ -41126,6 +41129,8 @@ def _action_result_command_bar(
                     ("action_result_command_result", message),
                     ("action_result_command_next_surface", SafeHtml(f"<a href='{_e(next_href)}'>{_e(location)}</a>")),
                     ("action_result_command_primary_surface", SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")),
+                    ("action_result_command_workflow_surface", SafeHtml(f"<a href='{_e(workflow_href)}'>{_e(workflow_label)}</a>")),
+                    ("action_result_command_workflow_summary", workflow_summary),
                     ("action_result_command_primary_source", str(next_step.get("source") or "unknown")),
                     ("action_result_command_artifact_surface", artifact_surface),
                     ("action_result_command_expected_output", context["output"]),
@@ -41146,6 +41151,7 @@ def _action_result_command_bar(
                     f"action_result_command_completed: {_e(action_label)}",
                     f"action_result_command_continue: <a href='{_e(next_href)}'>{_e(location)}</a>",
                     f"action_result_command_primary: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    f"action_result_command_workflow: <a href='{_e(workflow_href)}'>{_e(workflow_label)}</a>",
                     f"action_result_command_result: {_e(message)}",
                     f"action_result_command_artifact: {artifact_surface}",
                     "action_result_command_safety: confirmed local action only",

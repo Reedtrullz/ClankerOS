@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Confirmed action-result command cards now name the concrete next workflow
+  action instead of showing generic `Continue workflow` copy. First-run setup
+  results link the Workflow card to `Create first goal`; saved-Goal
+  commit-request results link it to `Approve commit`. Local proof includes
+  the focused first-run, demo-scenario, and reviewed-commit pytest paths
+  (`1 passed` each).
 - `/goals/<goal_id>` Goal Task Closeout now routes blocked closeout states
   back to the concrete current Goal action. At the publication-request gate it
   links to `#goal-action-dock-form` as `Create publication request` instead of

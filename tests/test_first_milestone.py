@@ -9747,6 +9747,15 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
         "action_result_command_primary_surface</dt><dd>"
         "<a href='#action-result-next-step-form'>Create first goal</a>"
     ) in register_result.body
+    assert (
+        "action_result_command_workflow_surface</dt><dd>"
+        "<a href='#action-result-next-step-form'>Create first goal</a>"
+    ) in register_result.body
+    assert (
+        "action_result_command_workflow: "
+        "<a href='#action-result-next-step-form'>Create first goal</a>"
+    ) in register_result.body
+    assert "Continue workflow</a>" not in register_result.body
     assert "action_result_command_primary_source</dt><dd>first_run_progress_after_action" in register_result.body
     assert "action_label</dt><dd>First project setup" in register_result.body
     assert "ClankerOS registered the local project and saved the return point" in register_result.body
@@ -18451,6 +18460,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "Action Resume Receipt"
     )
     assert "action_result_command_primary_surface</dt><dd><a href='#action-result-next-step-form'>Approve commit</a>" in commit_request.body
+    assert "action_result_command_workflow_surface</dt><dd><a href='#action-result-next-step-form'>Approve commit</a>" in commit_request.body
+    assert "action_result_command_workflow: <a href='#action-result-next-step-form'>Approve commit</a>" in commit_request.body
+    assert "Continue workflow</a>" not in commit_request.body
     assert "action_result_command_primary_source</dt><dd>saved_workspace_goal_after_action" in commit_request.body
     assert "data-action-result-command-primary='true' href='#action-result-next-step-form'>Approve commit</a>" in commit_request.body
     assert "action_result_next_step_status</dt><dd>available" in commit_request.body
