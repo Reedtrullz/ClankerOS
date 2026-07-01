@@ -139,6 +139,7 @@ ROUTE_KEYBOARD_SHORTCUTS = {
     "/goals": "g",
     "/search": "s",
     "/workspace": "w",
+    "/artifacts": "a",
 }
 GLOBAL_KEYBOARD_SHORTCUTS = {
     "?": "Open keyboard help",
@@ -151,6 +152,7 @@ GLOBAL_KEYBOARD_SHORTCUTS = {
     "r": "Open resume",
     "s": "Open search",
     "w": "Open workspace",
+    "a": "Open artifacts",
     "f": "Finish today",
     "m": "Toggle focus mode",
     "t": "Toggle theme",
@@ -48941,7 +48943,7 @@ def _html_page(
     <strong>ClankerOS Local Operator</strong>
     <nav class="shell-nav" aria-label="Shell navigation" data-shell-nav="true" data-shell-nav-primary-count="{nav_primary_count}" data-shell-nav-secondary-count="{nav_secondary_count}">{nav}</nav>
     <div class="header-actions" data-keyboard-shortcuts="true" data-focus-mode-supported="true" data-focus-mode-storage="localStorage:clankeros-focus-mode" data-focus-mode-keeps-current-action="true" data-focus-mode-write-on-get="false" data-focus-mode-provider-calls-taken="0" data-focus-mode-network-actions-taken="0" data-focus-mode-external-effects-created="false" data-next-action-href="{_e(next_shortcut['href'])}" data-next-action-label="{_e(next_shortcut['label'])}" data-next-action-action="{_e(next_shortcut['action'])}" data-next-action-status="{_e(next_shortcut['status'])}" data-next-action-source="{_e(next_shortcut['source'])}" data-next-action-form-available="{_e(next_shortcut['form_available'])}" data-next-action-confirmation-required="{_e(next_shortcut['confirmation_required'])}" data-next-action-write-on-get="{_e(next_shortcut['write_on_get'])}" data-next-action-provider-calls-taken="{_e(next_shortcut['provider_calls_taken'])}" data-next-action-network-actions-taken="{_e(next_shortcut['network_actions_taken'])}" data-next-action-external-effects-created="{_e(next_shortcut['external_effects_created'])}" data-finish-today-href="{_e(finish_shortcut['href'])}" data-finish-today-label="{_e(finish_shortcut['label'])}" data-finish-today-source="{_e(finish_shortcut['source'])}" data-finish-today-target="{_e(finish_shortcut['target'])}" data-finish-today-surface="{_e(finish_shortcut['surface'])}" data-finish-today-confirmation-required="{_e(finish_shortcut['confirmation_required'])}" data-finish-today-write-on-get="{_e(finish_shortcut['write_on_get'])}" data-finish-today-provider-calls-taken="{_e(finish_shortcut['provider_calls_taken'])}" data-finish-today-network-actions-taken="{_e(finish_shortcut['network_actions_taken'])}" data-finish-today-external-effects-created="{_e(finish_shortcut['external_effects_created'])}">
-      <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: question mark opens keyboard help; slash opens command palette; Escape closes dialogs; n opens next action; h opens home; y opens today; g opens goals; r opens resume; s opens search; w opens workspace; f opens Finish Today; m toggles focus mode; t toggles theme.</span>
+      <span class="sr-only" id="keyboard-shortcuts-help">Keyboard shortcuts: question mark opens keyboard help; slash opens command palette; Escape closes dialogs; n opens next action; h opens home; y opens today; g opens goals; r opens resume; s opens search; w opens workspace; a opens artifacts; f opens Finish Today; m toggles focus mode; t toggles theme.</span>
       <button class="icon-button" id="shortcut-help-open" type="button" data-shortcut-help-open="true" data-shortcut="?" aria-keyshortcuts="?" aria-describedby="keyboard-shortcuts-help" title="Open keyboard help (?)">Keys</button>
       <button class="icon-button" id="palette-open" type="button" data-shortcut="/" aria-keyshortcuts="/" aria-describedby="keyboard-shortcuts-help" title="Open command palette (/)">Palette</button>
       <button class="icon-button" id="next-action-open" type="button" data-shortcut="n" aria-keyshortcuts="n" aria-describedby="keyboard-shortcuts-help" aria-label="Open {_e(next_shortcut['label'])} (n)" data-next-action-button="true" data-next-action-href="{_e(next_shortcut['href'])}" data-next-action-button-label="{_e(next_shortcut['label'])}" title="Open {_e(next_shortcut['label'])} (n)">{_e(next_shortcut['label'])}</button>
@@ -51573,6 +51575,7 @@ def _html_page(
       if (event.key === "r") {{ event.preventDefault(); window.location.href = "/resume"; }}
       if (event.key === "s") {{ event.preventDefault(); window.location.href = "/search"; }}
       if (event.key === "w") {{ event.preventDefault(); window.location.href = "/workspace"; }}
+      if (event.key === "a") {{ event.preventDefault(); window.location.href = "/artifacts"; }}
       if (event.key === "f") {{ event.preventDefault(); openFinishToday(); }}
       if (event.key === "y") {{ event.preventDefault(); window.location.href = "/today"; }}
       if (event.key === "m") {{ event.preventDefault(); toggleFocusMode(); }}

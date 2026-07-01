@@ -1,5 +1,30 @@
 # Status
 
+## 2026-07-01 Artifact Shortcut UX
+
+- Added a global `a` keyboard shortcut for `/artifacts`, making the Artifact
+  Index reachable from the same browser shortcut layer as Home, Today, Goals,
+  Resume, Search, Workspace, Next Action, and Finish Today.
+- Shell navigation now renders `Artifacts (a)` shortcut metadata, the
+  `Keyboard Shortcuts` dialog lists `a` as `Open artifacts`, and the shared
+  keydown handler routes `a` to `/artifacts`.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py docs/OPERATING_SUMMARY.md status.md docs/status.md`:
+    passed.
+- GitHub Actions note: previous pushed run `28531550665` for commit
+  `ced147c4f31610a597acc44726f4e17f6e675e4f` had fast smoke passing; its
+  full pytest job was still in progress when checked during this shortcut
+  slice.
+- Non-claim: this is browser-local shortcut and navigation polish only. It
+  does not change artifact access bounds, execute artifact content, write on
+  GET, approve work, execute tasks, deploy, call providers, use the network
+  from the app, create PRs, push from the app, or mutate external systems from
+  ClankerOS.
+
 ## 2026-07-01 Workspace Artifact Index View Memory UX
 
 - Added the global Artifact Index filter key,

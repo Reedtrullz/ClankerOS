@@ -881,8 +881,8 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   with existing evidence artifacts and refreshes saved workspace state to that
   artifact with zero provider, network, or external mutation effects.
   The shared browser shell now exposes accessible shortcut metadata for Home,
-  Today, Resume, Goals, Search, Workspace, Finish Today, palette, and theme
-  controls, plus a compact primary/More route split. Dashboard, Today, Guide,
+  Today, Resume, Goals, Search, Workspace, Artifacts, Finish Today, palette,
+  and theme controls, plus a compact primary/More route split. Dashboard, Today, Guide,
   Resume, Goals, Search, and Workspace stay visible for daily operation, while
   advanced routes stay available under `More` and in the command palette.
   `More` opens automatically when the current route is secondary. The shell
@@ -892,7 +892,7 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   has a confirmed browser form, `n` opens the Goal Action Dock, using
   `#goal-action-dock-form` on that Goal page or
   `/goals/<goal_id>#goal-action-dock-form` from other routes. `w` opens
-  `/workspace`, and `f` opens the
+  `/workspace`, `a` opens `/artifacts`, and `f` opens the
   route-local Finish Today form on `/today` (`#today-finish`) or
   `/goals/<goal_id>` (`#goal-finish-today`) before falling back to
   `/workspace#save-workspace` elsewhere. The palette can be closed with Escape

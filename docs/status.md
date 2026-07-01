@@ -4,6 +4,12 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- The shared browser shell now treats the global Artifact Index as a first-class
+  daily destination. `/artifacts` exposes `Artifacts (a)` shortcut metadata,
+  `Keyboard Shortcuts` lists `a` as `Open artifacts`, and the shared keydown
+  handler routes `a` to `/artifacts` without server writes, provider calls,
+  network actions, or external effects. Local proof includes compile, diff
+  check, and the broad local-app route smoke pytest (`1 passed`).
 - Workspace View Memory now includes the global Artifact Index filter key
   `localStorage:clankeros-artifact-index-filter`, with a separate
   `Artifact Index Filter` card alongside per-Goal `Goal Artifact Filters`.

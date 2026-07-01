@@ -6108,6 +6108,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "aria-keyshortcuts='r'" in root.body
     assert "aria-keyshortcuts='s'" in root.body
     assert "aria-keyshortcuts='w'" in root.body
+    assert "aria-keyshortcuts='a'" in root.body
     assert 'data-shell-nav="true"' in root.body
     assert 'data-shell-nav-primary-count="7"' in root.body
     assert 'data-shell-nav-secondary-count="16"' in root.body
@@ -6121,7 +6122,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert ".shell-nav-more:not([open]) > .shell-nav-more-menu { display:none; }" in root.body
     assert ".shell-nav { flex:0 1 auto; width:100%; }" in root.body
     assert "<a href='/actions'>Actions</a>" in root.body
-    assert "<a href='/artifacts'>Artifacts</a>" in root.body
+    assert "<a href='/artifacts' data-shortcut='a' aria-keyshortcuts='a' title='Artifacts (a)'>Artifacts</a>" in root.body
     assert 'id="next-action-open"' in root.body
     assert 'aria-keyshortcuts="n"' in root.body
     assert 'data-next-action-button="true"' in root.body
@@ -6151,7 +6152,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Keyboard shortcuts: question mark opens keyboard help" in root.body
     assert "slash opens command palette" in root.body
     assert "n opens next action" in root.body
-    assert "w opens workspace; f opens Finish Today" in root.body
+    assert "w opens workspace; a opens artifacts; f opens Finish Today" in root.body
     assert "m toggles focus mode" in root.body
     assert "id='shortcut-help-dialog'" in root.body
     assert "data-shortcut-help-dialog='true'" in root.body
@@ -6168,13 +6169,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "<kbd>r</kbd> <span>Open resume</span>" in root.body
     assert "<kbd>s</kbd> <span>Open search</span>" in root.body
     assert "<kbd>w</kbd> <span>Open workspace</span>" in root.body
+    assert "<kbd>a</kbd> <span>Open artifacts</span>" in root.body
     assert "<kbd>f</kbd> <span>Finish today</span>" in root.body
     assert "<kbd>m</kbd> <span>Toggle focus mode</span>" in root.body
     assert "<kbd>t</kbd> <span>Toggle theme</span>" in root.body
     assert "Shortcut help evidence" in root.body
     assert "data-shortcut-help-dialog-evidence='true'" in root.body
     assert "shortcut_help_open_keyboard</dt><dd>?" in root.body
-    assert "shortcut_help_shortcut_count</dt><dd>13" in root.body
+    assert "shortcut_help_shortcut_count</dt><dd>14" in root.body
     assert "shortcut_help_write_on_get</dt><dd>false" in root.body
     assert "shortcut_help_provider_calls_taken</dt><dd>0" in root.body
     assert "shortcut_help_network_actions_taken</dt><dd>0" in root.body
@@ -6238,6 +6240,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert 'if (event.key === "r") { event.preventDefault(); window.location.href = "/resume"; }' in root.body
     assert 'if (event.key === "s") { event.preventDefault(); window.location.href = "/search"; }' in root.body
     assert 'if (event.key === "w") { event.preventDefault(); window.location.href = "/workspace"; }' in root.body
+    assert 'if (event.key === "a") { event.preventDefault(); window.location.href = "/artifacts"; }' in root.body
     assert 'if (event.key === "f") { event.preventDefault(); openFinishToday(); }' in root.body
     assert 'if (event.key === "y") { event.preventDefault(); window.location.href = "/today"; }' in root.body
     assert 'if (event.key === "m") { event.preventDefault(); toggleFocusMode(); }' in root.body
