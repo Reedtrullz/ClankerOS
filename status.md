@@ -1,5 +1,32 @@
 # Status
 
+## 2026-07-01 Goal Publication Handoff Return UX
+
+- Goal-origin publication handoff forms now include a safe
+  `return_to=/goals/<goal_id>` target, so the confirmed result page returns to
+  the Goal manual publish/complete boundary instead of sending the operator
+  back to the run detail page.
+- The `coder-publication-handoff` browser action now honors safe submitted
+  local return targets and saves that Goal surface as the workspace resume
+  surface after writing local handoff artifacts. Launches without `return_to`
+  still fall back to `/runs/<run_id>`.
+- TDD evidence: the focused Goal workflow test failed first because
+  `_goal_publication_handoff_form` only emitted `run_id` and lacked
+  `return_to=/goals/<goal_id>`, then passed after the Goal form and handler
+  were wired together.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms`:
+    3 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py docs/local-app.md status.md`:
+    passed.
+- Non-claim: this is Goal-origin browser return/resume routing for the local
+  publication handoff. It does not write on GET, push, create PRs, deploy, call
+  providers, fetch GitHub status, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Goal Approval Return Coverage UX
 
 - Goal-origin commit approval and publication approval forms now include the

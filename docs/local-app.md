@@ -403,7 +403,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   after manual publication. It opens with visible Now, Gates, Waiting,
   Publish, and Safety cards before collapsed readiness evidence, links the
   next local surface, and only renders the confirmed `complete-goal` form when
-  the manual publish handoff is ready.
+  the manual publish handoff is ready. Goal-origin publication handoff forms
+  submit a safe `return_to=/goals/<goal_id>` value, so the confirmed action
+  result and saved workspace resume surface return to the Goal's manual
+  publish/complete boundary after the local handoff artifacts are written,
+  while run-origin handoff actions still fall back to the run detail page.
   A
   read-only `Goal Git Command Bar` inside Git Status summarizes the registered
   project root, branch, commit, clean/dirty posture, tracked and untracked

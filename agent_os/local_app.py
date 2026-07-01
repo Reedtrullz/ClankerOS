@@ -19907,11 +19907,16 @@ def _goal_publication_handoff_form(state: dict[str, Any]) -> str:
     publication = _goal_approved_publication(state)
     if publication is None:
         return "<p class='muted'>publication_handoff_form_status: unavailable_until_publication_approval_exists</p>"
+    goal = state.get("goal")
+    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
     return "".join(
         [
             "<h3>Create Publication Handoff</h3>",
             "<p class='muted'>Writes local publication handoff and PR-body artifacts with suggested manual commands only. It does not push, create a PR, deploy, call a provider, or use the network.</p>",
-            _form("coder-publication-handoff", {"run_id": publication.run_id}),
+            _form(
+                "coder-publication-handoff",
+                {"run_id": publication.run_id, "return_to": return_to},
+            ),
         ]
     )
 
@@ -41090,7 +41095,8 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             run_id = _required(form, "run_id")
             result = create_coder_publication_handoff(root, storage, run_id)
             message = f"coder_publication_handoff: {result.status}"
-            location = f"/runs/{quote(run_id)}"
+            run_location = f"/runs/{quote(run_id)}"
+            location = _safe_local_return_path(_one(form, "return_to")) or run_location
             _remember_delegation_workspace(
                 root,
                 storage,

@@ -16,6 +16,7 @@ from agent_os.eval import run_first_milestone_eval
 from agent_os.local_app import (
     _goal_approve_commit_form,
     _goal_approve_publication_form,
+    _goal_publication_handoff_form,
     render_local_app_route,
     resolve_artifact_path,
     run_demo_app_scenario,
@@ -20582,15 +20583,31 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "Create Publication Handoff" in approved_publication_goal.body
     assert "action='/actions/coder-publication-handoff'" in approved_publication_goal.body
     assert f"name='run_id' value='{run_id}'" in approved_publication_goal.body
+    publication_handoff_goal_form = _goal_publication_handoff_form(
+        {"goal": goal_record, "publications": [approved_publication]}
+    )
+    assert (
+        f"name='run_id' value='{run_id}'>"
+        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        in publication_handoff_goal_form
+    )
     assert "suggested manual commands only" in approved_publication_goal.body
 
     publication_handoff = render_local_app_route(
         tmp_path,
         "/actions/coder-publication-handoff",
         method="POST",
-        form={"run_id": [run_id], "confirm": ["yes"]},
+        form={
+            "run_id": [run_id],
+            "return_to": [f"/goals/{goal_id}"],
+            "confirm": ["yes"],
+        },
     )
     assert publication_handoff.status == 200
+    assert (
+        f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
+        in publication_handoff.body
+    )
     ready_publication = next(
         item
         for item in list_coder_publications(tmp_path, status="ready_for_operator", limit=10)
@@ -20608,6 +20625,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert publication_handoff_workspace["last_viewed_artifact"] == str(
         publication_handoff_md.relative_to(tmp_path)
     )
+    assert publication_handoff_workspace["resume_surface"] == f"/goals/{goal_id}"
     assert publication_handoff_workspace["updated_by"] == "coder-publication-handoff"
     manual_publish_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert manual_publish_goal.status == 200
