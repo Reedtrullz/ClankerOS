@@ -866,7 +866,8 @@ shared shortcut layer now includes `w` for `/workspace` and a route-aware `f`
 for Finish Today: populated Home opens `#home-finish-today`, Today opens
 `#today-finish`, Goal pages open `#goal-finish-today`, `/workflow` opens
 `#workflow-finish-today`, `/actions` opens `#action-finish-today`,
-`/verification` opens `#verification-finish-today`, `/inbox` opens
+`/verification` opens `#verification-finish-today`, project detail pages open
+`#project-finish-today`, run detail pages open `#run-finish-today`, `/inbox` opens
 `#inbox-finish-today`, `/approvals` opens `#approval-finish-today`,
 `/incidents` opens `#incident-finish-today`,
 and other routes fall back to `/workspace#save-workspace`.

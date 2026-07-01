@@ -633,8 +633,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Finish` control and the `f` shortcut resolves to the
   route-local Finish Today form on `/today` (`#today-finish`) and
   `/goals/<goal_id>` (`#goal-finish-today`), plus route-local forms on
-  `/workflow`, `/actions`, `/verification`, `/inbox`, `/approvals`, and
-  `/incidents`, falling back to `/workspace#save-workspace` on routes without
+  `/workflow`, `/actions`, `/verification`, project detail pages, run detail
+  pages, `/inbox`, `/approvals`, and `/incidents`, falling back to
+  `/workspace#save-workspace` on routes without
   a local Finish form. The `n` next-action control is
   labeled with the resolved operator move, such as `Create Project` or
   `Create commit request`, while preserving raw action metadata and only
@@ -717,7 +718,7 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   exists to save. `/workflow` now follows the same route-local pattern by
   opening `#workflow-finish-today`, which is the existing confirmed workflow
   workspace-save form. `/actions`, `/verification`, `/inbox`, `/approvals`,
-  and `/incidents` also use their
+  `/incidents`, project detail pages, and run detail pages also use their
   same-page Finish Today forms from the shared header button, `f` shortcut,
   Operator Ribbon Finish card, and command palette Finish card.
 - `/profiles` reads both `.clanker/profiles.yml` and SQLite profile rows. It

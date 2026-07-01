@@ -45530,6 +45530,34 @@ def _finish_today_shortcut_context(
             "network_actions_taken": "0",
             "external_effects_created": "false",
         }
+    prefix_finish_targets = (
+        (
+            "/projects/",
+            "#project-finish-today",
+            "project_finish_form",
+            "Project local finish form",
+        ),
+        (
+            "/runs/",
+            "#run-finish-today",
+            "run_finish_form",
+            "Run local finish form",
+        ),
+    )
+    for prefix, href, source, target in prefix_finish_targets:
+        if route_path.startswith(prefix):
+            return {
+                "href": href,
+                "label": "Finish Today",
+                "source": source,
+                "target": target,
+                "surface": "route_local_form",
+                "confirmation_required": "true",
+                "write_on_get": "false",
+                "provider_calls_taken": "0",
+                "network_actions_taken": "0",
+                "external_effects_created": "false",
+            }
     route_finish_targets = {
         "/workflow": (
             "#workflow-finish-today",

@@ -17822,6 +17822,20 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "project_workbench_unblock: <a href='/approvals'>Review approvals</a>" in project.body
     assert "project_workbench_finish: <a href='#project-finish-today'>Finish Today</a>" in project.body
     assert "project_workbench_safety: confirmed local actions only; no write on GET" in project.body
+    assert 'data-finish-today-href="#project-finish-today"' in project.body
+    assert 'data-finish-today-source="project_finish_form"' in project.body
+    assert 'data-finish-today-surface="route_local_form"' in project.body
+    assert (
+        "operator_ribbon_finish_surface</dt><dd><a href='#project-finish-today'>"
+        "Finish Today</a>"
+    ) in project.body
+    assert "operator_ribbon_finish_source</dt><dd>project_finish_form" in project.body
+    assert (
+        "palette_quick_switch_finish_surface</dt><dd><a href='#project-finish-today'>"
+        "#project-finish-today</a>"
+    ) in project.body
+    assert "palette_quick_switch_finish_source</dt><dd>project_finish_form" in project.body
+    assert "palette_quick_switch_finish_route_surface</dt><dd>route_local_form" in project.body
     assert "Project Goal Map" in project.body
     assert "project_goal_map_status</dt><dd>attention_ready" in project.body
     assert "project_goal_map_project</dt><dd>local-app-demo" in project.body
@@ -18987,6 +19001,20 @@ def test_local_app_demo_scenario_populates_fixture_state(
     )
     assert "run_workbench_finish: <a href='#run-finish-today'>Finish Today</a>" in run_page.body
     assert "run_workbench_safety: confirmed local actions only" in run_page.body
+    assert 'data-finish-today-href="#run-finish-today"' in run_page.body
+    assert 'data-finish-today-source="run_finish_form"' in run_page.body
+    assert 'data-finish-today-surface="route_local_form"' in run_page.body
+    assert (
+        "operator_ribbon_finish_surface</dt><dd><a href='#run-finish-today'>"
+        "Finish Today</a>"
+    ) in run_page.body
+    assert "operator_ribbon_finish_source</dt><dd>run_finish_form" in run_page.body
+    assert (
+        "palette_quick_switch_finish_surface</dt><dd><a href='#run-finish-today'>"
+        "#run-finish-today</a>"
+    ) in run_page.body
+    assert "palette_quick_switch_finish_source</dt><dd>run_finish_form" in run_page.body
+    assert "palette_quick_switch_finish_route_surface</dt><dd>route_local_form" in run_page.body
     assert "id='run-finish-today'" in run_page.body
     assert "name='filters' value='run:" in run_page.body
     assert "run-workbench,workflow,review,evidence,actions" in run_page.body

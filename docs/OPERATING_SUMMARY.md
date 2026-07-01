@@ -909,8 +909,8 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   Recent Items rail, and `f` opens the
   route-local Finish Today form on `/today` (`#today-finish`) or
   `/goals/<goal_id>` (`#goal-finish-today`), plus the route-local forms on
-  `/workflow`, `/actions`, `/verification`, `/inbox`, `/approvals`, and
-  `/incidents`, before falling back to
+  `/workflow`, `/actions`, `/verification`, project detail pages, run detail
+  pages, `/inbox`, `/approvals`, and `/incidents`, before falling back to
   `/workspace#save-workspace` elsewhere. The palette can be closed with Escape
   even while the search input is focused; the shortcut layer remains
   local-only and creates no server writes.
@@ -1121,9 +1121,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   save form that persists the exact scoped workflow route for `/resume`.
   The shared shell's route-aware Finish shortcut now opens that same
   `#workflow-finish-today` form from `/workflow`, and uses the matching
-  same-page Finish forms on `/actions`, `/verification`, `/inbox`,
-  `/approvals`, and `/incidents` instead of sending those operator routes to
-  the generic Workspace save form.
+  same-page Finish forms on `/actions`, `/verification`, project detail pages,
+  run detail pages, `/inbox`, `/approvals`, and `/incidents` instead of
+  sending those operator routes to the generic Workspace save form.
   Journey, live-state, finish, and command evidence stay collapsed by default
   while preserving selected delegation/run, parent Goal, project, current
   stage, journey position, exact resume surface, next local action, target

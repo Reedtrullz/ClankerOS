@@ -1,5 +1,28 @@
 # Status
 
+## 2026-07-01 Project And Run Finish Shortcut UX
+
+- Project detail pages and run detail pages now route the shared `Finish`
+  header button, `f` shortcut, Operator Ribbon Finish card, and command
+  palette Finish card to their same-page Finish Today forms instead of
+  detouring to `/workspace#save-workspace`.
+- The target forms remain existing confirmed local `save-workspace` handoffs;
+  GET stays read-only and the shared shortcut only navigates.
+- TDD evidence: the fixture-backed demo scenario test failed first because
+  `/projects/local-app-demo` still emitted the generic Workspace finish
+  shortcut, then passed after `_finish_today_shortcut_context` learned the
+  project/run detail local finish routes.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed after implementation.
+- Non-claim: this is route-local browser shortcut/ribbon/palette routing only.
+  It does not write on GET, call providers, use the network, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Action And Verification Finish Shortcut UX
 
 - `/actions` and `/verification` now route the shared `Finish` header button,
