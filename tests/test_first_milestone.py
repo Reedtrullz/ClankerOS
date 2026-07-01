@@ -11098,6 +11098,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     tmp_path: Path,
 ) -> None:
     result = run_demo_app_scenario(tmp_path)
+    goal_title = "Demo the ClankerOS local operator app with fixture-backed state"
 
     assert result.project_id == "local-app-demo"
     assert result.project_root.exists()
@@ -11762,6 +11763,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in home_resume_workspace_section
     )
     assert "data-home-day-plan='true'" in dashboard.body
+    assert (
+        f"home_day_plan_primary_goal</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+        in dashboard.body
+    )
+    assert f"home_day_plan_goal_id</dt><dd>{result.goal_id}" in dashboard.body
+    assert f"home_day_plan_goal_label</dt><dd>{goal_title}" in dashboard.body
+    assert "home_day_plan_goal_label_source</dt><dd>title" in dashboard.body
     assert "home_day_plan_finish_status</dt><dd>needs_workspace_save" in dashboard.body
     assert "home_day_plan_finish_action</dt><dd>save-workspace" in dashboard.body
     assert "home_day_plan_finish_form_available</dt><dd>true" in dashboard.body
@@ -11779,6 +11788,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"day_plan_finish_resume: <a href='{home_day_plan_action_surface}'>"
         "Create commit request</a>"
     ) in dashboard.body
+    assert f"day_plan_goal_surface: <a href='/goals/{result.goal_id}'>{goal_title}</a>" in dashboard.body
     home_day_plan_section = dashboard.body[
         dashboard.body.index("data-home-day-plan='true'") :
         dashboard.body.index("data-home-attention-brief='true'")
@@ -12597,13 +12607,24 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Today Workflow Map" in today.body
     assert "data-today-workflow-map='true'" in today.body
     assert "today_workflow_map_status</dt><dd>available" in today.body
-    assert f"today_workflow_map_goal</dt><dd><a href='/goals/{result.goal_id}'" in today.body
+    assert (
+        f"today_workflow_map_goal</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+        in today.body
+    )
+    assert f"today_workflow_map_goal_id</dt><dd>{result.goal_id}" in today.body
+    assert f"today_workflow_map_goal_label</dt><dd>{goal_title}" in today.body
+    assert "today_workflow_map_goal_label_source</dt><dd>title" in today.body
     assert f"today_workflow_map_project</dt><dd><a href='/projects/{result.project_id}'" in today.body
     assert "today_workflow_map_current_phase</dt><dd>Ready to commit" in today.body
     assert "today_workflow_map_current_gate</dt><dd>commit_request" in today.body
     assert "today_workflow_map_next_action</dt><dd>Create commit request" in today.body
     assert "today_workflow_map_next_surface</dt><dd><a href='#today-current-action'>Create commit request</a>" in today.body
-    assert f"today_workflow_map_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>" in today.body
+    assert (
+        f"today_workflow_map_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+        in today.body
+    )
     assert "today_workflow_map_action_form_available</dt><dd>true" in today.body
     assert "today_workflow_map_source</dt><dd>goal_remaining_work_gates" in today.body
     assert "today_workflow_map_write_on_get</dt><dd>false" in today.body
@@ -16766,7 +16787,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workspace_workflow_map_pending_count</dt><dd>1" in restored_workspace.body
     assert "workspace_workflow_map_waiting_count</dt><dd>6" in restored_workspace.body
     assert "workspace_workflow_map_source</dt><dd>goal_remaining_work_gates" in restored_workspace.body
-    assert f"workspace_workflow_map_goal_surface</dt><dd><a href='/goals/{result.goal_id}'" in restored_workspace.body
+    assert f"workspace_workflow_map_goal_id</dt><dd>{result.goal_id}" in restored_workspace.body
+    assert f"workspace_workflow_map_goal_label</dt><dd>{goal_title}" in restored_workspace.body
+    assert "workspace_workflow_map_goal_label_source</dt><dd>title" in restored_workspace.body
+    assert (
+        f"workspace_workflow_map_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+        in restored_workspace.body
+    )
     assert "workspace_workflow_map_save_surface</dt><dd><a href='#save-workspace'>#save-workspace</a>" in restored_workspace.body
     assert "workspace_workflow_map_step: commit_request status=pending marker=current next=Create commit request" in restored_workspace.body
     assert "data-workspace-workflow-gate='manual_publish' data-gate-status='waiting'" in restored_workspace.body
@@ -17011,7 +17039,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "resume_workflow_map_pending_count</dt><dd>1" in resume.body
     assert "resume_workflow_map_waiting_count</dt><dd>6" in resume.body
     assert "resume_workflow_map_source</dt><dd>goal_remaining_work_gates" in resume.body
-    assert f"resume_workflow_map_goal_surface</dt><dd><a href='/goals/{result.goal_id}'" in resume.body
+    assert f"resume_workflow_map_goal_id</dt><dd>{result.goal_id}" in resume.body
+    assert f"resume_workflow_map_goal_label</dt><dd>{goal_title}" in resume.body
+    assert "resume_workflow_map_goal_label_source</dt><dd>title" in resume.body
+    assert (
+        f"resume_workflow_map_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+        in resume.body
+    )
     assert "resume_workflow_map_step: commit_request status=pending marker=current next=Create commit request" in resume.body
     assert "data-resume-workflow-gate='manual_publish' data-gate-status='waiting'" in resume.body
     assert "resume_workflow_map_write_on_get</dt><dd>false" in resume.body

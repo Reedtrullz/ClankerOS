@@ -3629,7 +3629,7 @@ def _today_workflow_map(
             f"<strong>{_e(label)}</strong> "
             f"today_workflow_map_step: {_e(name)} status={_e(status)} marker={_e(marker)}{next_label}</li>"
         )
-    label = str(lead_goal["title"] or lead_goal["description"] or goal_id)
+    _goal_href, goal_label, goal_label_source, goal_surface = _goal_display_link(root, goal_id)
     return "".join(
         [
             "<section id='today-workflow-map' class='panel today-workflow-map' data-today-workflow-map='true'><h2>Today Workflow Map</h2>",
@@ -3639,10 +3639,11 @@ def _today_workflow_map(
                     ("today_workflow_map_status", "available"),
                     (
                         "today_workflow_map_goal",
-                        SafeHtml(
-                            f"<a href='/goals/{quote(goal_id)}'>{_e(_compact_label(label, 72))}</a>"
-                        ),
+                        goal_surface,
                     ),
+                    ("today_workflow_map_goal_id", goal_id),
+                    ("today_workflow_map_goal_label", goal_label),
+                    ("today_workflow_map_goal_label_source", goal_label_source),
                     (
                         "today_workflow_map_project",
                         SafeHtml(
@@ -3660,9 +3661,7 @@ def _today_workflow_map(
                     ),
                     (
                         "today_workflow_map_goal_surface",
-                        SafeHtml(
-                            f"<a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>"
-                        ),
+                        goal_surface,
                     ),
                     (
                         "today_workflow_map_action_form_available",
@@ -5553,6 +5552,7 @@ def _home_day_plan(
         goal_id = str(lead_goal["id"])
         state = _goal_state(root, storage, goal_id)
         goal = state["goal"]
+        _goal_href, goal_label, goal_label_source, goal_surface = _goal_display_link(root, goal_id)
         phase = _goal_current_phase(state)
         next_action = _goal_next_action(root, state)
         next_action_form_available = bool(_goal_next_action_form(state, next_action))
@@ -5589,7 +5589,10 @@ def _home_day_plan(
         rows.extend(
             [
                 ("home_day_plan_status", "goal_ready"),
-                ("home_day_plan_primary_goal", SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(lead_goal['title'] or lead_goal['description'] or goal_id)}</a>")),
+                ("home_day_plan_primary_goal", goal_surface),
+                ("home_day_plan_goal_id", goal_id),
+                ("home_day_plan_goal_label", goal_label),
+                ("home_day_plan_goal_label_source", goal_label_source),
                 ("home_day_plan_current_phase", phase),
                 ("home_day_plan_next_action", next_action.action),
                 (
@@ -5632,7 +5635,7 @@ def _home_day_plan(
             [
                 f"day_plan_now: {_e(next_action.action)}",
                 f"day_plan_current_phase: {_e(phase)}",
-                f"day_plan_goal_surface: <a href='/goals/{quote(goal_id)}'>/goals/{_e(goal_id)}</a>",
+                f"day_plan_goal_surface: {goal_surface}",
                 f"day_plan_next_surface: <a href='{_e(next_action_surface_href)}'>{_e(next_action_surface_label)}</a>",
                 f"day_plan_waiting: approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations}",
                 f"day_plan_end_of_day_resume: {'ready' if readiness['ready'] else 'needs_saved_workspace'}",
@@ -8659,6 +8662,7 @@ def _resume_workflow_map_section(root: Path, open_goal: str) -> str:
         )
     phase = _goal_current_phase(state)
     next_action = _goal_next_action(root, state)
+    _goal_href, goal_label, goal_label_source, goal_surface = _goal_display_link(root, open_goal)
     gates, counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
     done = counts.get("done", 0)
     pending = counts.get("pending", 0)
@@ -8690,6 +8694,9 @@ def _resume_workflow_map_section(root: Path, open_goal: str) -> str:
                 [
                     ("resume_workflow_map_status", "available"),
                     ("resume_workflow_map_saved_goal", open_goal),
+                    ("resume_workflow_map_goal_id", open_goal),
+                    ("resume_workflow_map_goal_label", goal_label),
+                    ("resume_workflow_map_goal_label_source", goal_label_source),
                     ("resume_workflow_map_current_phase", phase),
                     ("resume_workflow_map_current_gate", current_gate),
                     ("resume_workflow_map_next_action", next_action.action),
@@ -8706,7 +8713,7 @@ def _resume_workflow_map_section(root: Path, open_goal: str) -> str:
                     ("resume_workflow_map_source", "goal_remaining_work_gates"),
                     (
                         "resume_workflow_map_goal_surface",
-                        SafeHtml(f"<a href='/goals/{quote(open_goal)}'>/goals/{_e(open_goal)}</a>"),
+                        goal_surface,
                     ),
                     ("resume_workflow_map_write_on_get", "false"),
                     ("resume_workflow_map_provider_calls_taken_by_clankeros", "0"),
@@ -10174,6 +10181,7 @@ def _workspace_workflow_map_section(root: Path, open_goal: str) -> str:
         )
     phase = _goal_current_phase(state)
     next_action = _goal_next_action(root, state)
+    _goal_href, goal_label, goal_label_source, goal_surface = _goal_display_link(root, open_goal)
     gates, counts, current_gate = _goal_workflow_gate_summary(root, state, next_action)
     done = counts.get("done", 0)
     pending = counts.get("pending", 0)
@@ -10205,6 +10213,9 @@ def _workspace_workflow_map_section(root: Path, open_goal: str) -> str:
                 [
                     ("workspace_workflow_map_status", "available"),
                     ("workspace_workflow_map_saved_goal", open_goal),
+                    ("workspace_workflow_map_goal_id", open_goal),
+                    ("workspace_workflow_map_goal_label", goal_label),
+                    ("workspace_workflow_map_goal_label_source", goal_label_source),
                     ("workspace_workflow_map_current_phase", phase),
                     ("workspace_workflow_map_current_gate", current_gate),
                     ("workspace_workflow_map_next_action", next_action.action),
@@ -10221,7 +10232,7 @@ def _workspace_workflow_map_section(root: Path, open_goal: str) -> str:
                     ("workspace_workflow_map_source", "goal_remaining_work_gates"),
                     (
                         "workspace_workflow_map_goal_surface",
-                        SafeHtml(f"<a href='/goals/{quote(open_goal)}'>/goals/{_e(open_goal)}</a>"),
+                        goal_surface,
                     ),
                     ("workspace_workflow_map_save_surface", SafeHtml("<a href='#save-workspace'>#save-workspace</a>")),
                     ("workspace_workflow_map_write_on_get", "false"),

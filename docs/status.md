@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Return-path workflow maps now show the saved/lead Goal title across Home Day
+  Plan, Today, Workspace, and Resume instead of raw `/goals/<goal_id>` copy,
+  while preserving `*_goal_id`, `*_goal_label`, and `*_goal_label_source`
+  evidence rows. In the fixture demo those surfaces point back to
+  `Demo the ClankerOS local operator app with fixture-backed state`. Local
+  proof includes the fixture-backed demo Home/Today/Workspace/Resume route
+  pytest (`1 passed`) plus compile and whitespace checks.
 - Workflow page parent Goal links now show the Goal title across the Operator
   Workbench, Scope Picker, Journey, Live State, Finish Today, and Command Bar,
   while preserving `*_goal_id`, `*_goal_label`, and `*_goal_label_source`
