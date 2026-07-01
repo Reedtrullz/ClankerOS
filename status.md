@@ -1,5 +1,32 @@
 # Status
 
+## 2026-07-01 Goal Run Gate Return Coverage UX
+
+- Goal-origin review, commit request, local commit, and publication request
+  forms now include safe `return_to=/goals/<goal_id>` targets, matching the
+  existing Goal-origin approval and publication-handoff return behavior.
+- Confirmed `review-run`, `coder-commit-request`, `commit-coder-worktree`, and
+  `coder-publication-request` browser actions now honor safe submitted local
+  return targets and save that Goal surface as the workspace resume surface.
+  Launches without `return_to` still fall back to `/runs/<run_id>`.
+- TDD evidence: the two focused Goal workflow tests failed first because
+  `_goal_review_run_form` and `_goal_commit_request_form` only emitted
+  `run_id` and lacked `return_to=/goals/<goal_id>`, then passed after the Goal
+  forms and handlers were wired together.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms`:
+    2 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms`:
+    4 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py docs/local-app.md status.md`:
+    passed.
+- Non-claim: this is Goal-origin browser return/resume routing for local run,
+  commit, and publication gates. It does not write on GET, push, create PRs,
+  deploy, call providers, fetch GitHub status, or mutate external systems from
+  ClankerOS.
+
 ## 2026-07-01 Goal Publication Handoff Return UX
 
 - Goal-origin publication handoff forms now include a safe

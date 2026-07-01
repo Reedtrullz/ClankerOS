@@ -19783,13 +19783,15 @@ def _goal_commit_request_form(root: Path, state: dict[str, Any]) -> str:
     run = _goal_reviewed_completed_worktree_run(root, state)
     if run is None:
         return "<p class='muted'>commit_request_form_status: unavailable_until_reviewed_completed_run_exists</p>"
+    goal = state.get("goal")
+    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
     return "".join(
         [
             "<h3>Create Commit Request</h3>",
             "<p class='muted'>Creates a pending local commit approval request from the reviewed worktree evidence. It does not stage, commit, push, create a PR, deploy, call a provider, or use the network.</p>",
             _input_form(
                 "coder-commit-request",
-                {"run_id": run.id, "requested_by": "operator"},
+                {"run_id": run.id, "return_to": return_to, "requested_by": "operator"},
                 {
                     "message": "Implement bounded change from approved worktree run",
                     "note": "Request local commit after review from goal page",
@@ -19803,6 +19805,8 @@ def _goal_review_run_form(root: Path, state: dict[str, Any]) -> str:
     run = _goal_unreviewed_completed_worktree_run(root, state)
     if run is None:
         return "<p class='muted'>review_run_form_status: unavailable_until_completed_unreviewed_run_exists</p>"
+    goal = state.get("goal")
+    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
     review_path = Path("runs") / run.source_run_id / "review.md"
     return "".join(
         [
@@ -19815,7 +19819,7 @@ def _goal_review_run_form(root: Path, state: dict[str, Any]) -> str:
                     ("review_artifact", review_path.as_posix()),
                 ]
             ),
-            _form("review-run", {"run_id": run.id}),
+            _form("review-run", {"run_id": run.id, "return_to": return_to}),
         ]
     )
 
@@ -19846,13 +19850,19 @@ def _goal_commit_worktree_form(state: dict[str, Any]) -> str:
     approval = _goal_approved_commit_approval(state)
     if approval is None:
         return "<p class='muted'>commit_worktree_form_status: unavailable_until_commit_approval_exists</p>"
+    goal = state.get("goal")
+    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
     return "".join(
         [
             "<h3>Commit Approved Worktree</h3>",
             "<p class='muted'>Creates one local commit only inside the isolated coder worktree after the existing backend gate re-checks review, source hashes, branch/HEAD, changed files, bounded-file validation, and verifier state. It does not push, create a PR, deploy, call a provider, or use the network.</p>",
             _input_form(
                 "commit-coder-worktree",
-                {"run_id": approval.run_id, "committed_by": "operator"},
+                {
+                    "run_id": approval.run_id,
+                    "committed_by": "operator",
+                    "return_to": return_to,
+                },
                 {"message": approval.commit_message},
             ),
         ]
@@ -19863,6 +19873,8 @@ def _goal_publication_request_form(state: dict[str, Any]) -> str:
     approval = _goal_committed_worktree_approval(state)
     if approval is None:
         return "<p class='muted'>publication_request_form_status: unavailable_until_local_commit_exists</p>"
+    goal = state.get("goal")
+    return_to = f"/goals/{quote(goal.id)}" if goal is not None else "/goals"
     return "".join(
         [
             "<h3>Create Publication Request</h3>",
@@ -19874,6 +19886,7 @@ def _goal_publication_request_form(state: dict[str, Any]) -> str:
                     "requested_by": "operator",
                     "remote": "origin",
                     "target_branch": "main",
+                    "return_to": return_to,
                 },
                 {"note": "Request publication handoff from goal page"},
             ),
@@ -40971,6 +40984,8 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 "external_mutations_taken": 0,
             }
             if coder_run is not None:
+                run_location = f"/runs/{quote(requested_run_id)}"
+                location = _safe_local_return_path(_one(form, "return_to")) or run_location
                 _remember_delegation_workspace(
                     root,
                     storage,
@@ -40990,7 +41005,8 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 note=_one(form, "note") or "Requested from local app.",
             )
             message = f"coder_commit_request: {result.approval.id}"
-            location = f"/runs/{quote(run_id)}"
+            run_location = f"/runs/{quote(run_id)}"
+            location = _safe_local_return_path(_one(form, "return_to")) or run_location
             _remember_delegation_workspace(
                 root,
                 storage,
@@ -41033,7 +41049,8 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 committed_by=_one(form, "committed_by") or "operator",
             )
             message = f"commit_coder_worktree: {result.status}"
-            location = f"/runs/{quote(run_id)}"
+            run_location = f"/runs/{quote(run_id)}"
+            location = _safe_local_return_path(_one(form, "return_to")) or run_location
             _remember_delegation_workspace(
                 root,
                 storage,
@@ -41058,7 +41075,8 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
                 note=_required(form, "note"),
             )
             message = f"coder_publication_request: {result.publication.id}"
-            location = f"/runs/{quote(run_id)}"
+            run_location = f"/runs/{quote(run_id)}"
+            location = _safe_local_return_path(_one(form, "return_to")) or run_location
             _remember_delegation_workspace(
                 root,
                 storage,

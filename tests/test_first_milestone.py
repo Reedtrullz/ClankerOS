@@ -8,6 +8,7 @@ from agent_os.dashboard import generate_static_dashboard
 from agent_os.cli import build_parser, main
 from agent_os.coder_publication import list_coder_publications
 from agent_os.coder_worktree_execution import (
+    get_coder_worktree_run,
     list_coder_worktree_approvals,
     list_coder_worktree_commit_approvals,
 )
@@ -16,7 +17,11 @@ from agent_os.eval import run_first_milestone_eval
 from agent_os.local_app import (
     _goal_approve_commit_form,
     _goal_approve_publication_form,
+    _goal_commit_request_form,
+    _goal_commit_worktree_form,
     _goal_publication_handoff_form,
+    _goal_publication_request_form,
+    _goal_review_run_form,
     render_local_app_route,
     resolve_artifact_path,
     run_demo_app_scenario,
@@ -20230,6 +20235,9 @@ def test_goal_next_action_card_exposes_reviewed_commit_request_form(
     delegation = storage.get_subagent_delegation(delegation_id)
     assert delegation is not None
     goal_id = delegation.parent_goal_id
+    goal_record = storage.get_goal(goal_id)
+    coder_run = get_coder_worktree_run(storage, run_id)
+    assert coder_run is not None
 
     before_review = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert before_review.status == 200
@@ -20243,6 +20251,15 @@ def test_goal_next_action_card_exposes_reviewed_commit_request_form(
     assert "review_artifact</dt><dd>runs/" in before_review.body
     assert "does not approve commits, stage files, commit, push" in before_review.body
     assert "action='/actions/coder-commit-request'" not in before_review.body
+    review_goal_form = _goal_review_run_form(
+        tmp_path,
+        {"goal": goal_record, "worktree_runs": [coder_run]},
+    )
+    assert (
+        f"name='run_id' value='{run_id}'>"
+        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        in review_goal_form
+    )
 
     review_confirmation = render_local_app_route(
         tmp_path,
@@ -20256,12 +20273,20 @@ def test_goal_next_action_card_exposes_reviewed_commit_request_form(
         tmp_path,
         "/actions/review-run",
         method="POST",
-        form={"run_id": [run_id], "confirm": ["yes"]},
+        form={
+            "run_id": [run_id],
+            "return_to": [f"/goals/{goal_id}"],
+            "confirm": ["yes"],
+        },
     )
     assert review_response.status == 200
     assert "Action Result Details" in review_response.body
     assert "run_review" in review_response.body
     assert "review_path" in review_response.body
+    assert (
+        f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
+        in review_response.body
+    )
     review_path = tmp_path / "runs" / source_run_id / "review.md"
     assert review_path.exists()
     assert run_id in review_path.read_text(encoding="utf-8")
@@ -20271,6 +20296,7 @@ def test_goal_next_action_card_exposes_reviewed_commit_request_form(
     assert review_workspace["open_project"] == "subject"
     assert review_workspace["open_goal"] == goal_id
     assert review_workspace["last_viewed_artifact"] == str(review_path.relative_to(tmp_path))
+    assert review_workspace["resume_surface"] == f"/goals/{goal_id}"
     assert review_workspace["updated_by"] == "review-run"
 
     after_review = render_local_app_route(tmp_path, f"/goals/{goal_id}")
@@ -20280,6 +20306,15 @@ def test_goal_next_action_card_exposes_reviewed_commit_request_form(
     assert "Create Commit Request" in after_review.body
     assert "action='/actions/coder-commit-request'" in after_review.body
     assert f"name='run_id' value='{run_id}'" in after_review.body
+    commit_request_goal_form = _goal_commit_request_form(
+        tmp_path,
+        {"goal": goal_record, "worktree_runs": [coder_run]},
+    )
+    assert (
+        f"name='run_id' value='{run_id}'>"
+        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        in commit_request_goal_form
+    )
     assert "data-action-draft-action='coder-commit-request'" in after_review.body
     assert (
         "data-action-draft-storage-key="
@@ -20308,6 +20343,19 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert main(["--root", str(tmp_path), "review", source_run_id]) == 0
     capsys.readouterr()
 
+    goal_record = storage.get_goal(goal_id)
+    coder_run = get_coder_worktree_run(storage, run_id)
+    assert coder_run is not None
+    commit_request_goal_form = _goal_commit_request_form(
+        tmp_path,
+        {"goal": goal_record, "worktree_runs": [coder_run]},
+    )
+    assert (
+        f"name='run_id' value='{run_id}'>"
+        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        in commit_request_goal_form
+    )
+
     commit_message = "Implement bounded change from approved worktree run"
     commit_request = render_local_app_route(
         tmp_path,
@@ -20317,12 +20365,17 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
             "run_id": [run_id],
             "message": [commit_message],
             "note": ["Goal page commit request"],
+            "return_to": [f"/goals/{goal_id}"],
             "confirm": ["yes"],
         },
     )
     assert commit_request.status == 200
     assert "data-action-result-form-draft-cleanup='true'" in commit_request.body
     assert "data-action-result-form-draft-action='coder-commit-request'" in commit_request.body
+    assert (
+        f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
+        in commit_request.body
+    )
     assert (
         "data-action-result-form-draft-key="
         f"'clankeros-action-form-draft:coder-commit-request:{run_id}'"
@@ -20336,7 +20389,6 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         )
         if item.run_id == run_id
     )
-    goal_record = storage.get_goal(goal_id)
     commit_request_md = tmp_path / Path(commit_approval.request_artifact_path).with_suffix(".md")
     assert commit_request_md.exists()
     commit_request_workspace = json.loads(
@@ -20347,6 +20399,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert commit_request_workspace["last_viewed_artifact"] == str(
         commit_request_md.relative_to(tmp_path)
     )
+    assert commit_request_workspace["resume_surface"] == f"/goals/{goal_id}"
     assert commit_request_workspace["updated_by"] == "coder-commit-request"
 
     pending_commit_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
@@ -20417,6 +20470,24 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "Commit Approved Worktree" in approved_commit_goal.body
     assert "action='/actions/commit-coder-worktree'" in approved_commit_goal.body
     assert f"name='run_id' value='{run_id}'" in approved_commit_goal.body
+    approved_commit_approval = next(
+        item
+        for item in list_coder_worktree_commit_approvals(
+            tmp_path,
+            status="approved",
+            limit=10,
+        )
+        if item.run_id == run_id
+    )
+    commit_worktree_goal_form = _goal_commit_worktree_form(
+        {"goal": goal_record, "commit_approvals": [approved_commit_approval]}
+    )
+    assert (
+        f"name='run_id' value='{run_id}'>"
+        f"<input type='hidden' name='committed_by' value='operator'>"
+        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        in commit_worktree_goal_form
+    )
     assert "data-action-draft-action='commit-coder-worktree'" in approved_commit_goal.body
     assert (
         "data-action-draft-storage-key="
@@ -20433,12 +20504,17 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
             "run_id": [run_id],
             "message": [commit_message],
             "committed_by": ["operator"],
+            "return_to": [f"/goals/{goal_id}"],
             "confirm": ["yes"],
         },
     )
     assert commit_response.status == 200
     assert "data-action-result-form-draft-cleanup='true'" in commit_response.body
     assert "data-action-result-form-draft-action='commit-coder-worktree'" in commit_response.body
+    assert (
+        f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
+        in commit_response.body
+    )
     assert (
         "data-action-result-form-draft-key="
         f"'clankeros-action-form-draft:commit-coder-worktree:{run_id}'"
@@ -20451,6 +20527,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert commit_workspace["open_project"] == "subject"
     assert commit_workspace["open_goal"] == goal_id
     assert commit_workspace["last_viewed_artifact"] == str(commit_md.relative_to(tmp_path))
+    assert commit_workspace["resume_surface"] == f"/goals/{goal_id}"
     assert commit_workspace["updated_by"] == "commit-coder-worktree"
     publication_request_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert publication_request_goal.status == 200
@@ -20467,6 +20544,26 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "Create Publication Request" in publication_request_goal.body
     assert "action='/actions/coder-publication-request'" in publication_request_goal.body
     assert f"name='run_id' value='{run_id}'" in publication_request_goal.body
+    committed_commit_approval = next(
+        item
+        for item in list_coder_worktree_commit_approvals(
+            tmp_path,
+            status="committed",
+            limit=10,
+        )
+        if item.run_id == run_id
+    )
+    publication_request_goal_form = _goal_publication_request_form(
+        {"goal": goal_record, "commit_approvals": [committed_commit_approval]}
+    )
+    assert (
+        f"name='run_id' value='{run_id}'>"
+        "<input type='hidden' name='requested_by' value='operator'>"
+        "<input type='hidden' name='remote' value='origin'>"
+        "<input type='hidden' name='target_branch' value='main'>"
+        f"<input type='hidden' name='return_to' value='/goals/{goal_id}'>"
+        in publication_request_goal_form
+    )
     assert "data-action-draft-action='coder-publication-request'" in publication_request_goal.body
     assert (
         "data-action-draft-storage-key="
@@ -20485,12 +20582,17 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
             "remote": ["origin"],
             "target_branch": ["main"],
             "note": ["Goal page publication request"],
+            "return_to": [f"/goals/{goal_id}"],
             "confirm": ["yes"],
         },
     )
     assert publication_request.status == 200
     assert "data-action-result-form-draft-cleanup='true'" in publication_request.body
     assert "data-action-result-form-draft-action='coder-publication-request'" in publication_request.body
+    assert (
+        f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
+        in publication_request.body
+    )
     assert (
         "data-action-result-form-draft-key="
         f"'clankeros-action-form-draft:coder-publication-request:{run_id}'"
@@ -20514,6 +20616,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert publication_request_workspace["last_viewed_artifact"] == str(
         publication_request_md.relative_to(tmp_path)
     )
+    assert publication_request_workspace["resume_surface"] == f"/goals/{goal_id}"
     assert publication_request_workspace["updated_by"] == "coder-publication-request"
     pending_publication_goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
     assert pending_publication_goal.status == 200
