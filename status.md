@@ -1,5 +1,30 @@
 # Status
 
+## 2026-07-01 Run Parent Goal Label UX
+
+- Updated run-level parent Goal links so the Run Operator Workbench and Run
+  Continuation Strip show the Goal title instead of raw `/goals/<goal_id>`
+  route text.
+- Run workbench evidence now preserves `run_workbench_goal_id` and
+  `run_workbench_goal_label_source`, while the visible and collapsed Goal
+  links use copy such as
+  `Demo the ClankerOS local operator app with fixture-backed state`.
+- Run continuation evidence now exposes
+  `run_continuation_goal_label` and
+  `run_continuation_goal_label_source`, and its Goal card returns to the
+  titled Goal surface instead of asking the operator to decode a raw path.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+- Non-claim: this is browser run-to-Goal navigation polish only. It does not
+  write on GET, approve work, execute tasks, run broad local verification,
+  commit, push, create PRs, deploy, call providers, use the network from the
+  app, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Project Goal Action Entry UX
 
 - Updated project-level Goal entry cards so the Project Operator Workbench and

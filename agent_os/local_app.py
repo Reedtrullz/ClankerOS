@@ -36160,8 +36160,12 @@ def _run_operator_workbench(root: Path, coder_run: Any) -> str:
     storage = _storage(root)
     delegation = storage.get_subagent_delegation(coder_run.delegation_id)
     goal_id = delegation.parent_goal_id if delegation is not None else ""
+    goal_display_label, goal_display_source = (
+        _goal_display_label(root, goal_id) if goal_id else ("none", "none")
+    )
+    goal_link_label = _compact_label(goal_display_label or goal_id, 72) if goal_id else "/goals"
     goal_surface: str | SafeHtml = (
-        SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(goal_id)}</a>")
+        SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(goal_link_label)}</a>")
         if goal_id
         else "none"
     )
@@ -36270,6 +36274,8 @@ def _run_operator_workbench(root: Path, coder_run: Any) -> str:
                     ("run_workbench_status", status),
                     ("run_workbench_run_id", coder_run.id),
                     ("run_workbench_goal", goal_surface),
+                    ("run_workbench_goal_id", goal_id or "none"),
+                    ("run_workbench_goal_label_source", goal_display_source),
                     ("run_workbench_project", coder_run.project_id),
                     (
                         "run_workbench_delegation",
@@ -36311,7 +36317,7 @@ def _run_operator_workbench(root: Path, coder_run: Any) -> str:
                     ),
                     (
                         "run_workbench_goal_surface",
-                        SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_href)}</a>"),
+                        SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_link_label)}</a>"),
                     ),
                     (
                         "run_workbench_finish_surface",
@@ -36338,7 +36344,7 @@ def _run_operator_workbench(root: Path, coder_run: Any) -> str:
                     f"run_workbench_action_form: available={str(action_form_available).lower()} action={_e(str(action_form['action_name']))} source=<a href='{_e(target_href)}'>{_e(target_label)}</a>",
                     "run_workbench_check: <a href='#run-review-gate'>Run Review Gate</a>",
                     "run_workbench_unblock: <a href='/approvals'>/approvals</a>",
-                    f"run_workbench_goal: <a href='{_e(goal_href)}'>{_e(goal_href)}</a>",
+                    f"run_workbench_goal: <a href='{_e(goal_href)}'>{_e(goal_link_label)}</a>",
                     "run_workbench_finish: <a href='#run-finish-today'>Finish Today</a>",
                     "run_workbench_safety: confirmed local actions only",
                 ]
@@ -36489,7 +36495,10 @@ def _run_continuation_strip(root: Path, coder_run: Any) -> str:
     delegation = storage.get_subagent_delegation(coder_run.delegation_id)
     goal_id = delegation.parent_goal_id if delegation is not None else ""
     goal_href = f"/goals/{quote(goal_id)}" if goal_id else "/goals"
-    goal_label = f"/goals/{goal_id}" if goal_id else "/goals"
+    goal_display_label, goal_display_source = (
+        _goal_display_label(root, goal_id) if goal_id else ("none", "none")
+    )
+    goal_label = _compact_label(goal_display_label or goal_id, 72) if goal_id else "/goals"
     commit_approvals = [
         item
         for item in list_coder_worktree_commit_approvals(root, limit=50)
@@ -36585,8 +36594,8 @@ def _run_continuation_strip(root: Path, coder_run: Any) -> str:
             f"<p>{_e(change_summary['changed_files_count'])} files, {_e(change_summary['diff_summary'])}</p>",
             "<a class='run-continuation-link' href='#coder-worktree-evidence'>Open evidence</a></article>",
             "<article class='run-continuation-card'><h3>Goal</h3>",
-            f"<p>{_e(goal_id or 'No parent Goal found')}</p>",
-            f"<a class='run-continuation-link' href='{_e(goal_href)}'>Return to Goal</a></article>",
+            f"<p>{_e(goal_label if goal_id else 'No parent Goal found')}</p>",
+            f"<a class='run-continuation-link' href='{_e(goal_href)}'>Return to {_e(goal_label) if goal_id else 'Goals'}</a></article>",
             "<article class='run-continuation-card'><h3>Boundary</h3>",
             f"<p>{_e(manual_boundary_status)}</p>",
             f"<a class='run-continuation-link' href='{_e(manual_href)}'>{_e(manual_label)}</a></article>",
@@ -36597,6 +36606,8 @@ def _run_continuation_strip(root: Path, coder_run: Any) -> str:
                     ("run_continuation_status", continuation_status),
                     ("run_continuation_run_id", coder_run.id),
                     ("run_continuation_goal", goal_id or "none"),
+                    ("run_continuation_goal_label", goal_label if goal_id else "none"),
+                    ("run_continuation_goal_label_source", goal_display_source),
                     ("run_continuation_project", coder_run.project_id),
                     ("run_continuation_delegation", SafeHtml(f"<a href='/delegations/{quote(coder_run.delegation_id)}'>{_e(coder_run.delegation_id)}</a>")),
                     ("run_continuation_current_gate", current_gate),

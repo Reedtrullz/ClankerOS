@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Run-level parent Goal links now show the Goal title instead of raw
+  `/goals/<goal_id>` route text. In the fixture demo, the Run Operator
+  Workbench and Run Continuation Strip use
+  `Demo the ClankerOS local operator app with fixture-backed state` while
+  preserving the raw Goal id/source in evidence. Local proof includes the
+  fixture-backed demo run/Goal route pytest (`1 passed`) plus compile and
+  whitespace checks.
 - Project-level Goal entry cards now route to the concrete current Goal action
   when available. In the fixture demo, the Project Operator Workbench and
   Project Goal Map lead cards open

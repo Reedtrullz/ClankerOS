@@ -18328,7 +18328,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-run-workbench-actions='true'" in run_page.body
     assert "run_workbench_status</dt><dd>action_form_ready" in run_page.body
     assert f"run_workbench_run_id</dt><dd>{result.coder_worktree_run_id}" in run_page.body
-    assert f"run_workbench_goal</dt><dd><a href='/goals/{result.goal_id}'>{result.goal_id}</a>" in run_page.body
+    goal_title = "Demo the ClankerOS local operator app with fixture-backed state"
+    assert (
+        f"run_workbench_goal</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+    ) in run_page.body
+    assert f"run_workbench_goal_id</dt><dd>{result.goal_id}" in run_page.body
+    assert "run_workbench_goal_label_source</dt><dd>title" in run_page.body
     assert "run_workbench_project</dt><dd>local-app-demo" in run_page.body
     assert f"run_workbench_delegation</dt><dd><a href='/delegations/{result.delegation_id}'" in run_page.body
     assert "run_workbench_worktree_status</dt><dd>completed" in run_page.body
@@ -18350,7 +18356,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "run_workbench_confirmation_required</dt><dd>true" in run_page.body
     assert "run_workbench_approval_surface</dt><dd><a href='/approvals'>/approvals</a>" in run_page.body
     assert "run_workbench_evidence_surface</dt><dd><a href='#coder-worktree-evidence'>Coder Worktree Evidence</a>" in run_page.body
-    assert f"run_workbench_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>/goals/{result.goal_id}</a>" in run_page.body
+    assert (
+        f"run_workbench_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+    ) in run_page.body
     assert "run_workbench_finish_surface</dt><dd><a href='#run-finish-today'>Finish Today</a>" in run_page.body
     assert "run_workbench_finish_form_available</dt><dd>true" in run_page.body
     assert "run_workbench_finish_confirmation_required</dt><dd>true" in run_page.body
@@ -18368,7 +18377,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "run_workbench_action_form: available=true action=coder-commit-request source=<a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
     assert "run_workbench_check: <a href='#run-review-gate'>Run Review Gate</a>" in run_page.body
     assert "run_workbench_unblock: <a href='/approvals'>/approvals</a>" in run_page.body
-    assert f"run_workbench_goal: <a href='/goals/{result.goal_id}'>/goals/{result.goal_id}</a>" in run_page.body
+    assert (
+        f"run_workbench_goal: <a href='/goals/{result.goal_id}'>{goal_title}</a>"
+        in run_page.body
+    )
     assert "run_workbench_finish: <a href='#run-finish-today'>Finish Today</a>" in run_page.body
     assert "run_workbench_safety: confirmed local actions only" in run_page.body
     assert "id='run-finish-today'" in run_page.body
@@ -18466,7 +18478,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "run_continuation_evidence_surface</dt><dd><a href='#coder-worktree-evidence'>Coder Worktree Evidence</a>" in run_page.body
     assert "run_continuation_changed_files_count</dt><dd>1" in run_page.body
     assert "run_continuation_diff_summary</dt><dd>files:1," in run_page.body
-    assert f"run_continuation_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>/goals/{result.goal_id}</a>" in run_page.body
+    assert f"run_continuation_goal_label</dt><dd>{goal_title}" in run_page.body
+    assert "run_continuation_goal_label_source</dt><dd>title" in run_page.body
+    assert (
+        f"run_continuation_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+    ) in run_page.body
     assert "run_continuation_manual_boundary</dt><dd>outside_clankeros" in run_page.body
     assert "run_continuation_manual_boundary_status</dt><dd>not_ready" in run_page.body
     assert "run_continuation_manual_boundary_surface</dt><dd><a href='#run-gate-map'>Run Gate Map</a>" in run_page.body
@@ -18477,7 +18494,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "run_continuation_now: Create commit request" in run_page.body
     assert "run_continuation_click: <a href='#run-approval-actions'>Run approval actions</a>" in run_page.body
     assert f"run_continuation_approval: <a href='/approvals?run_id={result.coder_worktree_run_id}'>/approvals</a>" in run_page.body
-    assert f"run_continuation_goal: <a href='/goals/{result.goal_id}'>/goals/{result.goal_id}</a>" in run_page.body
+    assert (
+        f"run_continuation_goal: <a href='/goals/{result.goal_id}'>{goal_title}</a>"
+        in run_page.body
+    )
+    assert (
+        f"run_workbench_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"/goals/{result.goal_id}</a>"
+        not in run_page.body
+    )
+    assert (
+        f"run_continuation_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"/goals/{result.goal_id}</a>"
+        not in run_page.body
+    )
+    assert (
+        f"run_continuation_goal: <a href='/goals/{result.goal_id}'>"
+        f"/goals/{result.goal_id}</a>"
+        not in run_page.body
+    )
     assert "run_continuation_boundary: <a href='#run-gate-map'>Run Gate Map</a>" in run_page.body
     assert "run_continuation_safety: read-only run continuation; confirmed forms own writes" in run_page.body
     assert "id='run-workflow-state'" in run_page.body
