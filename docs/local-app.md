@@ -1233,9 +1233,13 @@ commit/publication gate sequence to walk from the selected `/runs/<run_id>`
 page.
 
 The page starts with `Dogfooding Operator Workbench` before shared diagnostics,
-a read-only scan surface with Do Now, ClankerOS, Workflow, and Proof cards for
-continuing the fixture-backed local pass. Dogfooding workbench evidence and the
-fixture evidence, and the lower `Dogfooding Command Bar` evidence stay
+a scan surface with Do Now, ClankerOS, Workflow, and Proof cards for
+continuing the fixture-backed local pass. It now includes a confirmation-gated
+`demo-app-scenario` form that creates or refreshes deterministic local fixture
+state and returns to `/dogfooding`, so the route walk can start from the
+checklist without hopping through `/demo`. Dogfooding workbench evidence,
+fixture action evidence, fixture evidence, and the lower `Dogfooding Command
+Bar` evidence stay
 collapsed by default while preserving fixture status, selected
 project/Goal/delegation/run, one recommended target surface, demo command,
 route-walk/CI/action/health links, and zero-effect counters in the DOM. It also
@@ -1243,8 +1247,8 @@ includes `Dogfooding Next Action`, a read-only state panel that names the
 current fixture-backed next action and links the selected project, delegation,
 scoped workflow, coder run, approval queue, inbox, action catalog, and
 verification surfaces. The page reports zero app network actions, zero external
-mutations, zero provider calls, no GitHub status fetch, and the manual push/PR
-boundary outside ClankerOS.
+mutations, zero provider calls, no GitHub status fetch, no write-on-GET for the
+fixture form, and the manual push/PR boundary outside ClankerOS.
 
 ## Artifact Viewer
 

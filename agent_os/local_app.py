@@ -29886,6 +29886,37 @@ def _dogfooding_fixture_evidence(lines: list[tuple[str, str]]) -> str:
     )
 
 
+def _dogfooding_fixture_action_form(fixture_status: str) -> str:
+    action_label = "Create demo fixture" if fixture_status == "missing" else "Refresh demo fixture"
+    return "".join(
+        [
+            "<div id='dogfooding-fixture-action' class='dogfooding-fixture-action' data-dogfooding-fixture-action='true'>",
+            "<form method='post' action='/actions/demo-app-scenario' data-dogfooding-fixture-action-form='true'>",
+            "<input type='hidden' name='requested_by' value='operator'>",
+            "<input type='hidden' name='return_to' value='/dogfooding'>",
+            "<input type='hidden' name='resume_surface' value='/dogfooding'>",
+            f"<button type='submit'>{_e(action_label)}</button>",
+            "</form>",
+            "<p class='muted'>Confirmed local action. Seeds deterministic ClankerOS fixture state and returns here for the route walk.</p>",
+            "<details class='dogfooding-fixture-action-evidence' data-dogfooding-fixture-action-evidence='true'><summary>Dogfooding fixture action evidence</summary>",
+            _kv(
+                [
+                    ("dogfooding_fixture_action_status", fixture_status),
+                    ("dogfooding_fixture_action_name", "demo-app-scenario"),
+                    ("dogfooding_fixture_action_return_to", "/dogfooding"),
+                    ("dogfooding_fixture_action_resume_surface", "/dogfooding"),
+                    ("dogfooding_fixture_action_write_on_get", "false"),
+                    ("dogfooding_fixture_action_provider_calls_taken", "0"),
+                    ("dogfooding_fixture_action_network_actions_taken", "0"),
+                    ("dogfooding_fixture_action_external_effects_created", "false"),
+                ]
+            ),
+            "</details>",
+            "</div>",
+        ]
+    )
+
+
 def _dogfooding_operator_workbench(root: Path) -> str:
     project, selected_delegation, selected_run = _demo_selected_state(root)
     run_id = selected_run.id if selected_run else ""
@@ -30019,6 +30050,7 @@ def _dogfooding_operator_workbench(root: Path) -> str:
             "<article class='dogfooding-workbench-card'><h3>Proof</h3>",
             f"<p>{_e(proof_summary)}</p><a class='dogfooding-workbench-link' href='{_e(proof_href)}'>{_e(proof_label)}</a></article>",
             "</div>",
+            _dogfooding_fixture_action_form(fixture_status),
             "<details class='dogfooding-workbench-evidence' data-dogfooding-workbench-evidence='true'><summary>Dogfooding workbench evidence</summary>",
             _kv(rows),
             _ul(lines),
@@ -48714,9 +48746,13 @@ def _html_page(
     .dogfooding-workbench-action, .dogfooding-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .dogfooding-workbench-action {{ background:var(--accent); color:#fff; }}
     .dogfooding-workbench-link {{ background:var(--surface); color:var(--accent); }}
-    .dogfooding-workbench-evidence, .dogfooding-fixture-evidence, .dogfooding-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .dogfooding-workbench-evidence summary, .dogfooding-fixture-evidence summary, .dogfooding-command-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .dogfooding-workbench-evidence:not([open]) > :not(summary), .dogfooding-fixture-evidence:not([open]) > :not(summary), .dogfooding-command-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .dogfooding-fixture-action {{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; margin:12px 0; padding:12px; border:1px solid var(--line); background:var(--surface); }}
+    .dogfooding-fixture-action form {{ margin:0; }}
+    .dogfooding-fixture-action .muted {{ margin:0; flex:1 1 260px; }}
+    .dogfooding-fixture-action-evidence {{ flex:1 1 100%; }}
+    .dogfooding-workbench-evidence, .dogfooding-fixture-evidence, .dogfooding-fixture-action-evidence, .dogfooding-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .dogfooding-workbench-evidence summary, .dogfooding-fixture-evidence summary, .dogfooding-fixture-action-evidence summary, .dogfooding-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .dogfooding-workbench-evidence:not([open]) > :not(summary), .dogfooding-fixture-evidence:not([open]) > :not(summary), .dogfooding-fixture-action-evidence:not([open]) > :not(summary), .dogfooding-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .dogfooding-command-bar {{ border-left:4px solid var(--accent); }}
     .dogfooding-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .dogfooding-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}

@@ -9009,6 +9009,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-dogfooding-workbench-evidence='true'" in dogfooding.body
     assert "data-dogfooding-fixture-evidence='true'" in dogfooding.body
     assert "data-dogfooding-workbench-actions='true'" in dogfooding.body
+    assert "data-dogfooding-fixture-action='true'" in dogfooding.body
+    assert "data-dogfooding-fixture-action-form='true'" in dogfooding.body
+    assert "action='/actions/demo-app-scenario'" in dogfooding.body
+    assert "name='return_to' value='/dogfooding'" in dogfooding.body
+    assert "name='resume_surface' value='/dogfooding'" in dogfooding.body
+    assert "dogfooding_fixture_action_write_on_get</dt><dd>false" in dogfooding.body
+    assert "dogfooding_fixture_action_external_effects_created</dt><dd>false" in dogfooding.body
+    assert dogfooding.body.index("data-dogfooding-fixture-action-form='true'") < dogfooding.body.index(
+        "data-dogfooding-workbench-evidence='true'"
+    )
     assert "dogfooding_workbench_status</dt><dd>fixture_missing" in dogfooding.body
     assert "dogfooding_workbench_fixture_status</dt><dd>missing" in dogfooding.body
     assert "dogfooding_workbench_selected_project</dt><dd>none" in dogfooding.body
@@ -11660,6 +11670,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-dogfooding-workbench-primary='true'" in dogfooding_with_demo.body
     assert "data-dogfooding-workbench-evidence='true'" in dogfooding_with_demo.body
     assert "data-dogfooding-fixture-evidence='true'" in dogfooding_with_demo.body
+    assert "data-dogfooding-fixture-action='true'" in dogfooding_with_demo.body
+    assert "data-dogfooding-fixture-action-form='true'" in dogfooding_with_demo.body
+    assert "Refresh demo fixture" in dogfooding_with_demo.body
+    assert "name='return_to' value='/dogfooding'" in dogfooding_with_demo.body
+    assert "name='resume_surface' value='/dogfooding'" in dogfooding_with_demo.body
+    assert "dogfooding_fixture_action_status</dt><dd>available" in dogfooding_with_demo.body
+    assert "dogfooding_fixture_action_write_on_get</dt><dd>false" in dogfooding_with_demo.body
+    assert (
+        "dogfooding_fixture_action_external_effects_created</dt><dd>false"
+        in dogfooding_with_demo.body
+    )
     assert (
         "dogfooding_workbench_status</dt><dd>fixture_available"
         in dogfooding_with_demo.body

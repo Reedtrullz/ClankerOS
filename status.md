@@ -1,5 +1,31 @@
 # Status
 
+## 2026-07-01 Dogfooding Fixture Action UX
+
+- `/dogfooding` now includes a confirmation-gated `demo-app-scenario` form
+  inside `Dogfooding Operator Workbench`. Missing fixture state shows
+  `Create demo fixture`; existing fixture state shows `Refresh demo fixture`.
+- The form returns to `/dogfooding` through `return_to` and `resume_surface`,
+  so the operator can start or refresh the deterministic local demo fixture
+  from the checklist and continue the route walk without detouring through
+  `/demo`.
+- Added `dogfooding_fixture_action_*` evidence rows for fixture status, action
+  name, return surface, resume surface, write-on-GET, provider/network counts,
+  and external-effect posture.
+- TDD evidence: the focused modern route test failed first because
+  `/dogfooding` did not expose `data-dogfooding-fixture-action='true'`, then
+  passed after the direct browser action form was added.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state`:
+    2 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md status.md`:
+    passed.
+- Non-claim: this is dogfooding browser UX only. It does not write on GET,
+  approve work, execute tasks, deploy, call providers, fetch GitHub status, push
+  from the app, create PRs, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Action Result Continue Goal UX
 
 - Saved-Goal action result pages now include a visible `Continue Goal` panel
