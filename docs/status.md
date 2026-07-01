@@ -4,6 +4,14 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Goal Daily Loop now names the working Goal and saved return action in the
+  visible context line, and its Finish Today evidence is title/action-first
+  while preserving the raw Goal id and exact resume href fields. In the fixture
+  demo this reads back
+  `Demo the ClankerOS local operator app with fixture-backed state` and
+  `Create commit request` instead of raw `/goals/<goal_id>` copy. Local proof
+  includes the fixture-backed demo Goal route pytest (`1 passed`) plus compile
+  and whitespace checks.
 - Return-path workflow maps now show the saved/lead Goal title across Home Day
   Plan, Today, Workspace, and Resume instead of raw `/goals/<goal_id>` copy,
   while preserving `*_goal_id`, `*_goal_label`, and `*_goal_label_source`

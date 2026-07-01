@@ -14105,8 +14105,19 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-daily-loop-evidence='true'" in goal.body
     assert "data-goal-pause-details='true'" in goal.body
     assert "data-goal-finish-details='true'" in goal.body
+    assert (
+        f"Working goal: <a href='/goals/{result.goal_id}'>{goal_title}</a>. "
+        f"Saved return point: <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>."
+    ) in goal.body
     assert "href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert f"goal_daily_loop_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_daily_loop_goal_label</dt><dd>{goal_title}" in goal.body
+    assert "goal_daily_loop_goal_label_source</dt><dd>title" in goal.body
+    assert (
+        f"goal_daily_loop_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+    ) in goal.body
     assert f"goal_daily_loop_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_daily_loop_phase</dt><dd>Ready to commit" in goal.body
     assert "goal_daily_loop_start_surface</dt><dd><a href='/resume'>/resume</a>" in goal.body
@@ -14129,9 +14140,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_daily_loop_pause_confirmation_required</dt><dd>true" in goal.body
     assert "goal_daily_loop_pause_surface</dt><dd><a href='#goal-pause'>Pause Goal</a>" in goal.body
     assert "goal_daily_loop_finish_surface</dt><dd><a href='#goal-finish-today'>Finish Today</a>" in goal.body
-    assert f"goal_daily_loop_finish_return_to</dt><dd><a href='/goals/{result.goal_id}'" in goal.body
+    assert (
+        f"goal_daily_loop_finish_return_to</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+    ) in goal.body
     assert (
         f"goal_daily_loop_finish_resume_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in goal.body
+    assert (
+        f"goal_daily_loop_finish_resume_href</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
         f"/goals/{result.goal_id}#goal-action-dock-form</a>"
     ) in goal.body
     assert "goal_daily_loop_finish_resume_reason</dt><dd>current_action_form_available" in goal.body
@@ -14147,7 +14165,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_daily_loop_step: pause available=true surface=<a href='#goal-pause'>Pause Goal</a>" in goal.body
     assert "goal_daily_loop_step: finish status=needs_workspace_save surface=<a href='#goal-finish-today'>Finish Today</a>" in goal.body
     assert (
+        f"goal_daily_loop_return_to: <a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+    ) in goal.body
+    assert (
         f"goal_daily_loop_resume_surface: <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in goal.body
+    assert (
+        f"goal_daily_loop_resume_href: <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
         f"/goals/{result.goal_id}#goal-action-dock-form</a>"
     ) in goal.body
     assert "goal_daily_loop_safety: confirmed local pause or workspace save only" in goal.body

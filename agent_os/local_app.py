@@ -17679,6 +17679,10 @@ def _goal_daily_loop(
     next_action: GoalNextAction,
 ) -> str:
     goal = state["goal"]
+    goal_href, goal_label, goal_label_source, goal_surface = _goal_display_link(
+        root,
+        goal.id,
+    )
     workspace = _load_workspace_state(root)
     saved_goal = str(workspace.get("open_goal") or "").strip()
     saved_project = str(workspace.get("open_project") or "").strip()
@@ -17776,6 +17780,12 @@ def _goal_daily_loop(
         form_available,
         fallback="Open next surface",
     )
+    finish_resume_link = SafeHtml(
+        f"<a href='{_e(finish_resume_surface)}'>{_e(continue_label)}</a>"
+    )
+    finish_resume_href = SafeHtml(
+        f"<a href='{_e(finish_resume_surface)}'>{_e(finish_resume_surface)}</a>"
+    )
     start_status = "ready" if workspace_matches_goal else "needs_saved_goal"
     pause_label = "Pause Goal" if pause_form else "Pause unavailable"
     daily_loop_cards = "".join(
@@ -17811,6 +17821,11 @@ def _goal_daily_loop(
         [
             "<section id='goal-daily-loop' class='panel goal-daily-loop' data-goal-daily-loop='true'><h2>Goal Daily Loop</h2>",
             "<p class='muted'>Start, continue, unblock, and finish this goal from local browser state with a confirmed local resume save.</p>",
+            (
+                "<p class='muted goal-daily-loop-context'>"
+                f"Working goal: {goal_surface}. Saved return point: {finish_resume_link}."
+                "</p>"
+            ),
             "<div class='goal-daily-loop-grid' data-goal-daily-loop-actions='true'>",
             daily_loop_cards,
             "</div>",
@@ -17819,6 +17834,9 @@ def _goal_daily_loop(
                 [
                     ("goal_daily_loop_status", "available"),
                     ("goal_daily_loop_goal", goal.id),
+                    ("goal_daily_loop_goal_label", goal_label),
+                    ("goal_daily_loop_goal_label_source", goal_label_source),
+                    ("goal_daily_loop_goal_surface", goal_surface),
                     ("goal_daily_loop_project", goal.project_id),
                     ("goal_daily_loop_phase", phase),
                     ("goal_daily_loop_start_surface", SafeHtml("<a href='/resume'>/resume</a>")),
@@ -17854,14 +17872,13 @@ def _goal_daily_loop(
                     ),
                     (
                         "goal_daily_loop_finish_return_to",
-                        SafeHtml(f"<a href='/goals/{quote(goal.id)}'>/goals/{_e(goal.id)}</a>"),
+                        goal_surface,
                     ),
                     (
                         "goal_daily_loop_finish_resume_surface",
-                        SafeHtml(
-                            f"<a href='{_e(finish_resume_surface)}'>{_e(finish_resume_surface)}</a>"
-                        ),
+                        finish_resume_link,
                     ),
+                    ("goal_daily_loop_finish_resume_href", finish_resume_href),
                     ("goal_daily_loop_finish_resume_reason", finish_resume_reason),
                     ("goal_daily_loop_saved_goal_matches_current", str(workspace_matches_goal).lower()),
                     ("goal_daily_loop_saved_project_matches_current", str(workspace_matches_project).lower()),
@@ -17881,7 +17898,9 @@ def _goal_daily_loop(
                     f"goal_daily_loop_step: unblock action={_e(unblock_action)} surface={unblock_surface} waiting={waiting_items}",
                     f"goal_daily_loop_step: pause available={pause_available} surface=<a href='#goal-pause'>Pause Goal</a>",
                     f"goal_daily_loop_step: finish status={_e(finish_status)} surface=<a href='#goal-finish-today'>Finish Today</a>",
-                    f"goal_daily_loop_resume_surface: <a href='{_e(finish_resume_surface)}'>{_e(finish_resume_surface)}</a>",
+                    f"goal_daily_loop_return_to: <a href='{_e(goal_href)}'>{_e(goal_label)}</a>",
+                    f"goal_daily_loop_resume_surface: <a href='{_e(finish_resume_surface)}'>{_e(continue_label)}</a>",
+                    f"goal_daily_loop_resume_href: <a href='{_e(finish_resume_surface)}'>{_e(finish_resume_surface)}</a>",
                     "goal_daily_loop_safety: confirmed local pause or workspace save only",
                 ]
             ),

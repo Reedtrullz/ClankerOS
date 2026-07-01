@@ -1,5 +1,34 @@
 # Status
 
+## 2026-07-01 Goal Daily Loop Return Target UX
+
+- Updated the Goal Daily Loop so the visible context line names the working
+  Goal and the saved return action, for example
+  `Demo the ClankerOS local operator app with fixture-backed state` and
+  `Create commit request`, instead of making the operator infer the resume
+  target from raw `/goals/<goal_id>` routes.
+- Daily Loop evidence now preserves the raw `goal_daily_loop_goal` id while
+  adding `goal_daily_loop_goal_label`, `goal_daily_loop_goal_label_source`,
+  and `goal_daily_loop_goal_surface`.
+- The Finish Today return target and resume-surface readback are now
+  title/action-first, while `goal_daily_loop_finish_resume_href` and
+  `goal_daily_loop_resume_href` retain the exact `/goals/<goal_id>#...` route
+  for audit and automation.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py status.md docs/status.md`:
+    passed.
+- GitHub Actions note: previous pushed commit `0605437e...` has the fast smoke
+  job passing; its remote full pytest job was still running while this local UX
+  slice was prepared.
+- Non-claim: this is browser Goal Daily Loop copy/navigation polish only. It
+  does not write on GET, approve work, execute tasks, run broad local
+  verification, commit, push, create PRs, deploy, call providers, use the
+  network from the app, or mutate external systems from ClankerOS.
+
 ## 2026-07-01 Return Workflow Map Goal Label UX
 
 - Updated Home Day Plan plus the Today, Workspace, and Resume workflow maps so
