@@ -12228,7 +12228,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_attention_approval_card_surface</dt><dd><a href='/approvals'>/approvals</a>" in dashboard.body
     assert "home_attention_incident_card_surface</dt><dd><a href='/incidents'>/incidents</a>" in dashboard.body
     assert "home_attention_recommendation_card_surface</dt><dd><a href='/incidents'>/incidents</a>" in dashboard.body
-    assert "home_attention_proof_card_surface</dt><dd><a href='/verification'>/verification</a>" in dashboard.body
+    assert (
+        f"home_attention_proof_card_surface</dt><dd><a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in dashboard.body
+    )
     assert "home_attention_ci_status</dt><dd>success" in dashboard.body
     assert "home_attention_ci_source</dt><dd>direct_public_snapshot" in dashboard.body
     assert "home_attention_click: <a href='/approvals'>/approvals</a>" in dashboard.body
@@ -12633,7 +12637,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_session_rail_waiting_items</dt><dd>1" in today.body
     assert "today_session_rail_ci_status</dt><dd>success" in today.body
     assert "today_session_rail_ci_source</dt><dd>direct_public_snapshot" in today.body
-    assert "today_session_rail_proof_surface</dt><dd><a href='/verification'>Review CI proof</a>" in today.body
+    assert (
+        f"today_session_rail_proof_surface</dt><dd><a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in today.body
+    )
     assert "today_session_rail_finish_status</dt><dd>needs_workspace_save" in today.body
     assert "today_session_rail_finish_surface</dt><dd><a href='#today-finish'>Finish Today</a>" in today.body
     assert "today_session_rail_resume_ready</dt><dd>false" in today.body
@@ -12642,7 +12650,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_session_rail_external_effects_created</dt><dd>false" in today.body
     assert (
         "today_session_rail_path: now=<a href='#today-current-action'>Create commit request</a> "
-        "attention=<a href='/approvals'>/approvals</a> proof=<a href='/verification'>Review CI proof</a> "
+        f"attention=<a href='/approvals'>/approvals</a> proof=<a href='/goals/{result.goal_id}#goal-ci-handoff'>Goal CI handoff</a> "
         "finish=<a href='#today-finish'>Finish Today</a>"
         in today.body
     )
@@ -12731,7 +12739,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"/runs/{result.coder_worktree_run_id}</a>"
         in today.body
     )
-    assert "today_session_proof_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>" in today.body
+    assert (
+        f"today_session_proof_surface</dt><dd><a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in today.body
+    )
     assert "today_session_resume_card_surface</dt><dd><a href='/goals'>Open Goals</a>" in today.body
     assert "today_session_resume_card_label</dt><dd>Open Goals" in today.body
     assert "today_session_resume_surface_source</dt><dd>workspace_readiness" in today.body
@@ -17419,6 +17431,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_attention_status</dt><dd>needs_approval_review" in restored_home.body
     assert "home_attention_primary_surface</dt><dd><a href='/approvals'>/approvals</a>" in restored_home.body
     assert "home_attention_ci_status</dt><dd>success" in restored_home.body
+    assert (
+        f"home_attention_proof_card_surface</dt><dd><a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in restored_home.body
+    )
     assert "Home Focus Queue" in restored_home.body
     assert "focus_queue_source</dt><dd>goal_state_next_actions" in restored_home.body
     assert "focus_queue_item: <a href='/goals/" in restored_home.body

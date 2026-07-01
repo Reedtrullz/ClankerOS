@@ -2680,6 +2680,11 @@ def _today_session_summary(
     if proof_href.startswith("#"):
         proof_href = f"/ci-evidence{proof_href}"
     proof_label = str(ci_state["next_action"])
+    proof_href, proof_label, proof_source = _goal_ci_handoff_target(
+        lead_goal,
+        fallback_href=proof_href,
+        fallback_label=proof_label,
+    )
     proof_surface = SafeHtml(f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>")
     explicit_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
     resume_next_surface = explicit_resume_surface or str(resume["next_surface"])
@@ -2741,6 +2746,7 @@ def _today_session_summary(
                     ("today_session_latest_surface", latest_surface),
                     ("today_session_latest_raw_surface", latest_raw_surface),
                     ("today_session_proof_surface", proof_surface),
+                    ("today_session_proof_source", proof_source),
                     ("today_session_resume_card_surface", resume_card_surface),
                     ("today_session_resume_card_label", resume_label),
                     ("today_session_resume_surface_source", resume_surface_source),
@@ -2776,6 +2782,22 @@ def _today_session_summary(
             ),
             "</section>",
         ]
+    )
+
+
+def _goal_ci_handoff_target(
+    lead_goal: sqlite3.Row | None,
+    *,
+    fallback_href: str,
+    fallback_label: str,
+) -> tuple[str, str, str]:
+    if lead_goal is None:
+        return fallback_href, fallback_label, "ci_evidence_fallback"
+    goal_id = str(lead_goal["id"])
+    return (
+        f"/goals/{quote(goal_id)}#goal-ci-handoff",
+        "Goal CI handoff",
+        "lead_goal_ci_handoff",
     )
 
 
@@ -4417,9 +4439,15 @@ def _today_session_rail(
     finish_label: str,
     resume_ready: bool,
     resume_status: str,
+    lead_goal: sqlite3.Row | None = None,
 ) -> str:
     proof_href = "/verification" if ci_status == "success" else "/ci-evidence"
     proof_label = "Review CI proof" if ci_status == "success" else "Record CI proof"
+    proof_href, proof_label, proof_source = _goal_ci_handoff_target(
+        lead_goal,
+        fallback_href=proof_href,
+        fallback_label=proof_label,
+    )
     now_surface = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
     attention_surface = SafeHtml(
         f"<a href='{_e(attention_href)}'>{_e(attention_href)}</a>"
@@ -4471,6 +4499,7 @@ def _today_session_rail(
                     ("today_session_rail_ci_status", ci_status),
                     ("today_session_rail_ci_source", ci_source),
                     ("today_session_rail_proof_surface", proof_surface),
+                    ("today_session_rail_proof_source", proof_source),
                     ("today_session_rail_finish_status", finish_status),
                     ("today_session_rail_finish_surface", finish_surface),
                     ("today_session_rail_resume_ready", str(resume_ready).lower()),
@@ -4724,6 +4753,7 @@ def _today_command_center(
         finish_label=rail_finish_label,
         resume_ready=bool(readiness["ready"]),
         resume_status=str(readiness["status"]),
+        lead_goal=lead_goal,
     )
     rows: list[tuple[str, str | SafeHtml]] = [
         ("today_command_status", status),
@@ -5763,7 +5793,12 @@ def _home_attention_brief(root: Path, storage: Storage, lead_goal: sqlite3.Row |
     approval_surface = SafeHtml("<a href='/approvals'>/approvals</a>")
     incident_surface = SafeHtml("<a href='/incidents'>/incidents</a>")
     recommendation_surface = SafeHtml("<a href='/incidents'>/incidents</a>")
-    proof_surface = SafeHtml("<a href='/verification'>/verification</a>")
+    proof_href, proof_label, proof_source = _goal_ci_handoff_target(
+        lead_goal,
+        fallback_href="/verification",
+        fallback_label="/verification",
+    )
+    proof_surface = SafeHtml(f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>")
     inbox_label = "item" if inbox_items == 1 else "items"
     approval_label = "approval" if pending_approvals == 1 else "approvals"
     incident_label = "incident" if open_incidents == 1 else "incidents"
@@ -5785,7 +5820,7 @@ def _home_attention_brief(root: Path, storage: Storage, lead_goal: sqlite3.Row |
             "<article class='home-attention-card' data-home-attention-recommendations='true'><h3>Recommendations</h3>",
             f"<p>{open_recommendations} {_e(recommendation_label)}</p><a class='home-attention-link' href='/incidents'>/incidents</a></article>",
             "<article class='home-attention-card' data-home-attention-proof='true'><h3>Proof</h3>",
-            f"<p>{_e(ci_status)}</p><a class='home-attention-link' href='/verification'>/verification</a></article>",
+            f"<p>{_e(ci_status)}</p><a class='home-attention-link' href='{_e(proof_href)}'>{_e(proof_label)}</a></article>",
             "</div>",
             _kv(
                 [
@@ -5811,6 +5846,7 @@ def _home_attention_brief(root: Path, storage: Storage, lead_goal: sqlite3.Row |
                     ("home_attention_incident_card_surface", incident_surface),
                     ("home_attention_recommendation_card_surface", recommendation_surface),
                     ("home_attention_proof_card_surface", proof_surface),
+                    ("home_attention_proof_source", proof_source),
                     ("home_attention_ci_status", ci_status),
                     ("home_attention_ci_source", ci_source),
                     ("home_attention_ci_surface", proof_surface),
@@ -5829,7 +5865,7 @@ def _home_attention_brief(root: Path, storage: Storage, lead_goal: sqlite3.Row |
                     f"home_attention_now: {_e(primary_action)}",
                     f"home_attention_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
                     f"home_attention_review: approvals={pending_approvals} incidents={open_incidents} recommendations={open_recommendations} inbox={inbox_items}",
-                    f"home_attention_ci: status={_e(ci_status)} source={_e(ci_source)} surface=<a href='/verification'>/verification</a>",
+                    f"home_attention_ci: status={_e(ci_status)} source={_e(ci_source)} surface=<a href='{_e(proof_href)}'>{_e(proof_label)}</a>",
                     "home_attention_safety: read-only local triage; confirmed actions remain on target surfaces",
                 ]
             ),

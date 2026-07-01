@@ -122,10 +122,11 @@ Home state plus board evidence collapsed by default. The `Home Operator Board`
 shows visible Do Now, Attention, Resume, and Proof cards for the lead Goal or
 first-run step, routing browser-available work to existing confirmed forms,
 lead-goal approval attention to `/approvals?goal_id=<goal_id>`, unfinished
-resume state to the Home Finish Today anchor, and proof review to the local CI
-evidence surfaces. Home also includes a scan-first `Home Goal Board` with
-active, paused, and completed lanes, a browser-local Find box, lane buttons,
-live match count, first-match jump, no-match empty state, visible View status,
+resume state to the Home Finish Today anchor, and proof review to the current
+Goal's CI handoff when a lead Goal exists, falling back to the local CI
+evidence surfaces during first run. Home also includes a scan-first
+`Home Goal Board` with active, paused, and completed lanes, a browser-local
+Find box, lane buttons, live match count, first-match jump, no-match empty state, visible View status,
 reload persistence in `localStorage:clankeros-home-goal-board-view`, and reset
 coverage in `/workspace#workspace-view-memory`. It also includes
 recent activity, the operator inbox, recommendations, incidents, saved
@@ -210,9 +211,10 @@ or a form field is focused, so the all-day cockpit can reflect changing local
 goal state without adding action authority. A read-only
 `Today Session Summary` then gives a return-to-work brief with visible
 Continue, Latest, Proof, and Resume cards before the detailed readback. The
-cards point at the current goal or first-run step, latest activity, recorded
-CI proof, and workspace resume posture so the operator can act from the brief
-without reading the whole evidence table. A read-only `Today Activity Digest`
+cards point at the current goal or first-run step, latest activity, the
+current Goal's CI handoff or first-run CI proof recorder, and workspace resume
+posture so the operator can act from the brief without reading the whole
+evidence table. A read-only `Today Activity Digest`
 follows with Now, Window, Artifacts, Notes, and Safety cards plus a compact
 recent timeline list for the lead Goal or current first-run step, so the daily
 cockpit carries enough context to regain the thread without opening the full
@@ -254,8 +256,9 @@ Use `/guide` as the in-app `Suggested Use Guide` when you want the operator
 loop in browser form. It maps `Today -> Goal -> Action -> Proof -> Finish ->
 Resume`: start in `/today`, choose or create the Goal through the Home
 first-run forms or `/goals`, follow the current action to the existing
-confirmed action form or Goal page, check proof in `/verification` or
-`/ci-evidence`, save the day with the route-local Finish Today form or
+confirmed action form or Goal page, check proof in the current Goal's CI
+handoff with `/verification` or `/ci-evidence` as the first-run fallback, save
+the day with the route-local Finish Today form or
 `/workspace#save-workspace`, and return through `/resume`. A visible
 `Guide Command Panel` now embeds the existing confirmed first-run or current
 Goal action form when available, so an empty checkout can register a project

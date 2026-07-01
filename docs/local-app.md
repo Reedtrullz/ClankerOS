@@ -43,9 +43,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Home Operator Board` that turns the lead Goal or first-run step into
   visible Do Now, Attention, Resume, and Proof cards with scoped approval
   links, direct action-form targets, Finish Today resume routing, and local CI
-  proof surfaces. It also includes a scan-first `Home Goal Board` with active,
-  paused, and completed lanes, a browser-local Find box, lane mode buttons,
-  live match count, first-match jump, no-match empty state, visible View
+  proof surfaces, with populated sessions routing the visible Proof card to the
+  current Goal's CI handoff. It also includes a scan-first `Home Goal Board`
+  with active, paused, and completed lanes, a browser-local Find box, lane mode
+  buttons, live match count, first-match jump, no-match empty state, visible View
   status, reload persistence in
   `localStorage:clankeros-home-goal-board-view`, and reset coverage in
   `/workspace#workspace-view-memory`. It continues with
@@ -130,7 +131,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   reports zero provider/network/external-effect counters. A read-only
   `Today Session Summary` follows with the current goal or first-run step,
   current gate, next surface, latest activity, latest artifact, workspace
-  resume posture, and recorded CI proof in a single return-to-work brief. A
+  resume posture, and a Proof card that routes to the current Goal CI handoff
+  or the first-run CI proof recorder in a single return-to-work brief. A
   read-only `Today Activity Digest` then exposes Now, Window, Artifacts, Notes,
   and Safety cards plus a compact chronological list from the lead Goal timeline
   or first-run progress, giving the operator enough recent context to continue

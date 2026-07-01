@@ -116,9 +116,10 @@ Core layers for the bootstrap:
   focused and reports zero provider/network/external-effect counters. A
   read-only `Today Session Summary` follows with visible Continue, Latest,
   Proof, and Resume cards before the detailed readback. Those cards point at
-  the current goal or first-run step, latest activity, recorded CI proof, and
-  workspace resume posture so the operator can act from the browser return
-  brief without reading the whole evidence table.
+  the current goal or first-run step, latest activity, the current Goal CI
+  handoff or first-run CI proof recorder, and workspace resume posture so the
+  operator can act from the browser return brief without reading the whole
+  evidence table.
   A read-only `Today Activity Digest` follows with Now, Window, Artifacts,
   Notes, and Safety cards plus a compact recent timeline list for the lead Goal
   or current first-run step, preserving source, item-count, latest-event,

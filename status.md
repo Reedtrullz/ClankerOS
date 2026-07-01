@@ -1,5 +1,35 @@
 # Status
 
+## 2026-07-02 Goal-Aware Day Proof Cards UX
+
+- Home Attention, Today Session Rail, and Today Session Summary Proof cards now
+  route populated sessions to the current Goal's `#goal-ci-handoff` surface
+  instead of sending the operator to a generic proof page.
+- First-run/no-goal sessions keep the existing `/verification` and
+  `/ci-evidence` fallbacks, so empty checkout setup still has a manual proof
+  recorder before a Goal exists.
+- The read-only evidence rows now expose proof-source fields such as
+  `lead_goal_ci_handoff` or `ci_evidence_fallback`, keeping the visible cards
+  aligned with the global Goal-aware `Proof` button and `p` shortcut.
+- TDD evidence: the populated fixture-backed scenario failed first because
+  Home Attention still rendered
+  `home_attention_proof_card_surface` as `/verification`; after implementation
+  it renders `/goals/<goal_id>#goal-ci-handoff` with `Goal CI handoff` across
+  Home and Today surfaces.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed after docs/status updates.
+- Non-claim: this is read-only browser routing for existing proof surfaces. It
+  does not write on GET, poll GitHub from the app, approve work, execute
+  tasks, call providers, use the network, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
 ## 2026-07-01 Goal-Aware Artifact Shortcut UX
 
 - The shared app shell now makes the `a` artifact keyboard shortcut
