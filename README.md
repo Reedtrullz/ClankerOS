@@ -486,10 +486,11 @@ operator notes, a goal-scoped resume snapshot, and remaining work. The page
 auto-refreshes by local polling, pauses while the operator is editing a form or
 the tab is hidden, and stays local-only. The Goal Command Bar near the top now
 opens with visible Now, Phase, Progress, Proof, and Resume cards, while its
-full current phase, primary action, target local surface, progress, waiting
-counts, resume route, latest project-scoped CI proof state, same-page Goal CI
-handoff target, and zero-effect boundary stay available in collapsed command
-evidence. Goal
+Resume card keeps any explicitly saved workspace surface first and otherwise
+routes to the current Goal action. The full current phase, primary action,
+target local surface, progress, waiting counts, resolved resume route/source,
+latest project-scoped CI proof state, same-page Goal CI handoff target, and
+zero-effect boundary stay available in collapsed command evidence. Goal
 Operator Workbench follows it with a human-readable do/check/unblock/finish
 strip: its primary action points directly at the in-page Goal action form when
 one is available, links

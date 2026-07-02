@@ -374,10 +374,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   latest activity, and zero-effect boundary so the operator knows what is
   happening without opening the CLI. A read-only `Goal Command Bar` appears
   above the detailed cards with visible Now, Phase, Progress, Proof, and Resume
-  cards, while the current phase, one primary action, target local surface,
-  progress, open/waiting counts, resume route, project-scoped CI proof state,
-  same-page Goal CI handoff target, and write-on-GET/network/external-effect
-  boundaries remain in collapsed command evidence. A
+  cards. Its Resume card keeps an explicit saved workspace surface first and
+  otherwise routes to the current Goal action, while the current phase, one
+  primary action, target local surface, progress, open/waiting counts, resolved
+  resume route/source, project-scoped CI proof state, same-page Goal CI handoff
+  target, and write-on-GET/network/external-effect boundaries remain in
+  collapsed command evidence. A
   `Goal Operator Workbench` follows with a human-readable do/check/unblock/
   finish strip, with its primary action jumping directly to the in-page
   action-form target when available, the

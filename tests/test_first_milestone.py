@@ -14574,7 +14574,19 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_command_bar_pending_approvals</dt><dd>1" in goal.body
     assert "goal_command_bar_open_incidents</dt><dd>0" in goal.body
     assert "goal_command_bar_open_recommendations</dt><dd>0" in goal.body
-    assert "goal_command_bar_resume_surface</dt><dd><a href='/resume'>/resume</a>" in goal.body
+    assert (
+        "<a class='goal-command-link' data-goal-command-resume='true' "
+        "href='#goal-action-dock-form'>Create commit request</a>"
+    ) in goal.body
+    assert (
+        "goal_command_bar_resume_surface</dt><dd>"
+        "<a href='#goal-action-dock-form'>Create commit request</a>"
+    ) in goal.body
+    assert (
+        "goal_command_bar_resume_href</dt><dd>"
+        "<a href='#goal-action-dock-form'>#goal-action-dock-form</a>"
+    ) in goal.body
+    assert "goal_command_bar_resume_source</dt><dd>current_goal_action" in goal.body
     assert "goal_command_bar_ci_status</dt><dd>success" in goal.body
     assert "goal_command_bar_ci_source</dt><dd>direct_public_snapshot" in goal.body
     assert "goal_command_bar_ci_surface</dt><dd><a href='#goal-ci-handoff'>Goal CI handoff</a>" in goal.body
@@ -14585,7 +14597,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_command_click: <a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "goal_command_progress: 0/1 tasks completed" in goal.body
     assert "goal_command_waiting: approvals=1 incidents=0 recommendations=0" in goal.body
-    assert "goal_command_resume: <a href='/resume'>/resume</a>" in goal.body
+    assert "goal_command_resume: <a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
+    assert "goal_command_resume_href: <a href='#goal-action-dock-form'>#goal-action-dock-form</a>" in goal.body
     assert "goal_command_ci: status=success source=direct_public_snapshot surface=<a href='#goal-ci-handoff'>Goal CI handoff</a>" in goal.body
     assert "Goal Operator Workbench" in goal.body
     assert "data-goal-operator-workbench='true'" in goal.body
@@ -21461,6 +21474,19 @@ def test_today_finish_today_saves_exact_resume_surface(tmp_path: Path) -> None:
         "goal_return_resume: <a href='/today#today-current-action'>"
         "Open Today current action</a>"
     ) in goal_after_save.body
+    assert (
+        "data-goal-command-resume='true' href='/today#today-current-action'>"
+        "Open Today current action</a>"
+    ) in goal_after_save.body
+    assert (
+        "goal_command_bar_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>Open Today current action</a>"
+    ) in goal_after_save.body
+    assert (
+        "goal_command_bar_resume_href</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in goal_after_save.body
+    assert "goal_command_bar_resume_source</dt><dd>saved_resume_surface" in goal_after_save.body
 
     resume = render_local_app_route(tmp_path, "/resume")
     assert resume.status == 200

@@ -650,8 +650,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   from `localStorage:clankeros-goal-decision-filter:<goal_id>`, and is
   included in `/workspace#workspace-view-memory` reset coverage. The page also includes a
   read-only `Goal Command Bar` near the top that opens with visible Now,
-  Phase, Progress, Proof, and Resume cards while keeping phase, one primary
-  action, target local surface, progress, waiting counts, `/resume`, latest
+  Phase, Progress, Proof, and Resume cards. Its Resume card keeps an explicit
+  saved workspace surface first and otherwise routes to the current Goal
+  action, while keeping phase, one primary action, target local surface,
+  progress, waiting counts, resolved resume route/source, latest
   project-scoped CI proof status, same-page Goal CI handoff target, and
   write-on-GET/network/external-effect boundaries in collapsed command
   evidence. A `Goal Operator Workbench` follows it

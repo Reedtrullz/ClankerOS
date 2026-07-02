@@ -17777,6 +17777,30 @@ def _goal_command_bar(
         form_available=form_available,
     )
     primary_label = _goal_action_cta_label(next_action, form_available)
+    workspace = _load_workspace_state(root)
+    saved_project = str(workspace.get("open_project") or "").strip()
+    saved_goal = str(workspace.get("open_goal") or "").strip()
+    saved_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
+    if saved_resume_surface:
+        resume_href = saved_resume_surface
+        resume_label = _saved_workspace_surface_action_label(
+            root,
+            saved_resume_surface,
+            open_goal=saved_goal,
+            open_project=saved_project,
+            fallback=saved_resume_surface,
+        )
+        resume_source = "saved_resume_surface"
+    else:
+        resume_href = primary_href
+        resume_label = primary_label
+        resume_source = "current_goal_action"
+    resume_surface = SafeHtml(
+        f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"
+    )
+    resume_raw_surface = SafeHtml(
+        f"<a href='{_e(resume_href)}'>{_e(resume_href)}</a>"
+    )
     ci_href = "#goal-ci-handoff"
     ci_label = "Goal CI handoff"
     ci_surface = SafeHtml(f"<a href='{ci_href}'>{ci_label}</a>")
@@ -17804,8 +17828,8 @@ def _goal_command_bar(
             "</div>",
             "<div class='goal-command-card'>",
             "<span class='goal-command-label'>Resume</span>",
-            "<strong>/resume</strong>",
-            "<a class='goal-command-link' data-goal-command-resume='true' href='/resume'>Resume workspace</a>",
+            f"<strong>{_e(resume_label)}</strong>",
+            f"<a class='goal-command-link' data-goal-command-resume='true' href='{_e(resume_href)}'>{_e(resume_label)}</a>",
             "</div>",
         ]
     )
@@ -17837,7 +17861,9 @@ def _goal_command_bar(
                     ("goal_command_bar_pending_approvals", str(pending_approvals)),
                     ("goal_command_bar_open_incidents", str(open_incidents)),
                     ("goal_command_bar_open_recommendations", str(open_recommendations)),
-                    ("goal_command_bar_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+                    ("goal_command_bar_resume_surface", resume_surface),
+                    ("goal_command_bar_resume_href", resume_raw_surface),
+                    ("goal_command_bar_resume_source", resume_source),
                     ("goal_command_bar_ci_status", ci_status),
                     ("goal_command_bar_ci_source", ci_source),
                     (
@@ -17860,7 +17886,8 @@ def _goal_command_bar(
                         f"incidents={open_incidents} "
                         f"recommendations={open_recommendations}"
                     ),
-                    "goal_command_resume: <a href='/resume'>/resume</a>",
+                    f"goal_command_resume: <a href='{_e(resume_href)}'>{_e(resume_label)}</a>",
+                    f"goal_command_resume_href: <a href='{_e(resume_href)}'>{_e(resume_href)}</a>",
                     (
                         "goal_command_ci: "
                         f"status={_e(ci_status)} source={_e(ci_source)} "
