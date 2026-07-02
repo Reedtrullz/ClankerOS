@@ -12321,6 +12321,37 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_ci_github_status_fetch</dt><dd>none" in dashboard.body
     assert "home_ci_app_network_actions_taken</dt><dd>0" in dashboard.body
     assert "home_ci_external_mutations_taken</dt><dd>0" in dashboard.body
+    resume_unsaved = render_local_app_route(tmp_path, "/resume")
+    assert resume_unsaved.status == 200
+    assert "Browser Resume" in resume_unsaved.body
+    assert "Resume Operator Workbench" in resume_unsaved.body
+    assert "Resume Command Bar" in resume_unsaved.body
+    assert "resume_workbench_status</dt><dd>action_form_ready" in resume_unsaved.body
+    assert "resume_workbench_source</dt><dd>lead_goal_state" in resume_unsaved.body
+    assert f"resume_workbench_goal_id</dt><dd>{result.goal_id}" in resume_unsaved.body
+    assert "resume_workbench_next_action</dt><dd>Create commit request" in resume_unsaved.body
+    assert (
+        "resume_workbench_primary_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Create commit request</a>"
+    ) in resume_unsaved.body
+    assert (
+        f"resume_workbench_target_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in resume_unsaved.body
+    assert "resume_workbench_action_form_available</dt><dd>true" in resume_unsaved.body
+    assert "resume_workbench_top_form_source</dt><dd>goal_next_action_form" in resume_unsaved.body
+    assert "id='resume-workbench-action-form'" in resume_unsaved.body
+    assert "action='/actions/coder-commit-request'" in resume_unsaved.body
+    assert "resume_command_status</dt><dd>available" in resume_unsaved.body
+    assert "resume_command_source</dt><dd>lead_goal_state" in resume_unsaved.body
+    assert f"resume_command_goal_id</dt><dd>{result.goal_id}" in resume_unsaved.body
+    assert "resume_command_next_action</dt><dd>Create commit request" in resume_unsaved.body
+    assert (
+        f"resume_command_next_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in resume_unsaved.body
+    assert "resume_command_action_form_available</dt><dd>true" in resume_unsaved.body
+    assert "resume_command_continue: <a href='/goals/" in resume_unsaved.body
     home_day_plan_resume_artifact = result.review_path.relative_to(tmp_path).as_posix()
     home_day_plan_workspace_confirmation = render_local_app_route(
         tmp_path,

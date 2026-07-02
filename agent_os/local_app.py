@@ -4426,6 +4426,30 @@ def _workspace_should_use_first_run(root: Path, open_goal: str) -> bool:
     return _resume_should_use_first_run(root, open_goal)
 
 
+def _resume_goal_state(
+    root: Path,
+    storage: Storage,
+    open_goal: str,
+) -> tuple[str, dict[str, Any] | None, str]:
+    goal_id = str(open_goal or "").strip()
+    if goal_id:
+        return goal_id, _goal_state(root, storage, goal_id), "saved_goal_state"
+
+    rows = _goal_rows(storage, limit=20)
+    active = [row for row in rows if _goal_bucket(row) == "active"]
+    paused = [row for row in rows if _goal_bucket(row) == "paused"]
+    completed = [row for row in rows if _goal_bucket(row) == "completed"]
+    lead = (
+        active[0]
+        if active
+        else (paused[0] if paused else (completed[0] if completed else None))
+    )
+    if lead is None:
+        return "", None, "none"
+    goal_id = str(lead["id"])
+    return goal_id, _goal_state(root, storage, goal_id), "lead_goal_state"
+
+
 def _today_goal_queue_line(
     root: Path,
     storage: Storage,
@@ -8102,6 +8126,9 @@ def _resume_command_bar(
     first_run_today_href = "/today"
     first_run_goals_href = "/goals"
     saved_resume_surface = _safe_local_return_path(state.get("resume_surface")) or ""
+    selected_project = open_project
+    selected_goal = open_goal
+    source = ".clanker/app/workspace.json"
 
     if _resume_should_use_first_run(root, open_goal):
         first_run = _resume_first_run_context(root)
@@ -8118,27 +8145,38 @@ def _resume_command_bar(
         first_run_home_href = str(first_run["home_href"])
         first_run_today_href = str(first_run["today_href"])
         first_run_goals_href = str(first_run["goals_href"])
+        source = "first_run_progress"
 
-    elif open_goal:
+    else:
         storage = _storage(root)
-        goal_state = _goal_state(root, storage, open_goal)
-        goal = goal_state.get("goal")
-        if goal is None:
+        goal_id, goal_state, goal_source = _resume_goal_state(root, storage, open_goal)
+        goal = goal_state.get("goal") if goal_state is not None else None
+        if goal_id and goal is None:
             status = "missing_goal"
             phase = "missing"
             current_gate = "missing_goal"
             reason = "saved_goal_missing"
-        else:
+            selected_goal = goal_id
+            source = goal_source
+        elif goal is not None:
+            selected_goal = goal_id
+            selected_project = open_project or str(goal.project_id)
             status = "available"
+            source = goal_source
             phase = _goal_current_phase(goal_state)
             action = _goal_next_action(root, goal_state)
             gates, counts, current_gate = _goal_workflow_gate_summary(root, goal_state, action)
             progress = f"{counts.get('done', 0)}/{len(gates)} gates done"
             next_action = action.action
             reason = action.reason
-            target_href = action.href
-            target_label = action.href
             form_available = bool(_goal_next_action_form(goal_state, action))
+            target_href = _goal_primary_action_href(
+                goal_state,
+                action,
+                form_available=form_available,
+                absolute=True,
+            )
+            target_label = _goal_action_cta_label(action, form_available)
             if saved_resume_surface:
                 target_href = saved_resume_surface
                 target_label = _saved_workspace_surface_action_label(
@@ -8148,23 +8186,23 @@ def _resume_command_bar(
                     open_project=open_project,
                     fallback=saved_resume_surface,
                 )
-    elif open_project:
-        status = "project_only"
-        next_action = "Open saved project"
-        reason = "saved_project_without_goal"
-        target_href = f"/projects/{quote(open_project)}"
-        target_label = f"/projects/{open_project}"
+        elif open_project:
+            status = "project_only"
+            next_action = "Open saved project"
+            reason = "saved_project_without_goal"
+            target_href = f"/projects/{quote(open_project)}"
+            target_label = f"/projects/{open_project}"
 
     project_value: str | SafeHtml = "none"
-    if open_project:
+    if selected_project:
         project_value = SafeHtml(
-            f"<a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>"
+            f"<a href='/projects/{quote(selected_project)}'>{_e(selected_project)}</a>"
         )
     goal_value: str | SafeHtml = "none"
     goal_label = ""
     goal_label_source = "none"
-    if open_goal:
-        _goal_href, goal_label, goal_label_source, goal_value = _goal_display_link(root, open_goal)
+    if selected_goal:
+        _goal_href, goal_label, goal_label_source, goal_value = _goal_display_link(root, selected_goal)
     artifact_value: str | SafeHtml = "none"
     if last_artifact:
         artifact_value = SafeHtml(_artifact_link(last_artifact))
@@ -8175,7 +8213,7 @@ def _resume_command_bar(
         ("resume_command_ready", "true" if readiness["ready"] else "false"),
         ("resume_command_readiness_status", str(readiness["status"])),
         ("resume_command_project", project_value),
-        ("resume_command_goal_id", open_goal or "none"),
+        ("resume_command_goal_id", selected_goal or "none"),
         ("resume_command_goal_label", goal_label or "none"),
         ("resume_command_goal_label_source", goal_label_source),
         ("resume_command_goal", goal_value),
@@ -8203,7 +8241,7 @@ def _resume_command_bar(
         ),
         ("resume_command_last_artifact", artifact_value),
         ("resume_command_progress", progress),
-        ("resume_command_source", ".clanker/app/workspace.json"),
+        ("resume_command_source", source),
         ("resume_command_updated_at", state.get("updated_at", "never")),
         ("resume_command_write_on_get", "false"),
         ("resume_command_provider_calls_taken_by_clankeros", "0"),
@@ -8276,6 +8314,8 @@ def _resume_operator_workbench(
     top_form_source = "none"
     top_form_heading = "Resume Workbench Action Form"
     saved_resume_surface = _safe_local_return_path(state.get("resume_surface")) or ""
+    selected_project = open_project
+    selected_goal = open_goal
 
     if _resume_should_use_first_run(root, open_goal):
         first_run = _resume_first_run_context(root)
@@ -8302,11 +8342,11 @@ def _resume_operator_workbench(
             top_form_source = str(first_run_payload.get("form_source") or "first_run_progress")
             top_form_heading = str(first_run_payload.get("form_title") or target_label)
         source = "first_run_progress"
-    elif open_goal:
+    else:
         storage = _storage(root)
-        goal_state = _goal_state(root, storage, open_goal)
-        goal = goal_state.get("goal")
-        if goal is None:
+        goal_id, goal_state, goal_source = _resume_goal_state(root, storage, open_goal)
+        goal = goal_state.get("goal") if goal_state is not None else None
+        if goal_id and goal is None:
             status = "missing_goal"
             phase = "missing"
             current_gate = "missing_goal"
@@ -8314,7 +8354,11 @@ def _resume_operator_workbench(
             next_action = "Open goals"
             target_href = "/goals"
             target_label = "/goals"
-        else:
+            selected_goal = goal_id
+            source = goal_source
+        elif goal is not None:
+            selected_goal = goal_id
+            selected_project = open_project or str(goal.project_id)
             action = _goal_next_action(root, goal_state)
             gates, counts, current_gate = _goal_workflow_gate_summary(
                 root, goal_state, action
@@ -8338,10 +8382,15 @@ def _resume_operator_workbench(
             phase = _goal_current_phase(goal_state)
             next_action = action.action
             reason = action.reason
-            target_href = action.href
-            target_label = action.href
             action_form = _goal_next_action_form(goal_state, action)
             form_available = bool(action_form)
+            target_href = _goal_primary_action_href(
+                goal_state,
+                action,
+                form_available=form_available,
+                absolute=True,
+            )
+            target_label = _goal_action_cta_label(action, form_available)
             if saved_resume_surface:
                 target_href = saved_resume_surface
                 target_label = _saved_workspace_surface_action_label(
@@ -8356,19 +8405,19 @@ def _resume_operator_workbench(
                 top_form_heading = next_action
             progress = f"{done_gates}/{total_gates} gates done"
             status = (
-                "attention_ready"
-                if waiting_items
-                else "action_form_ready"
+                "action_form_ready"
                 if form_available
+                else "attention_ready"
+                if waiting_items
                 else "continue_ready"
             )
-            source = "saved_goal_state"
-    elif open_project:
-        status = "project_only"
-        next_action = "Open saved project"
-        reason = "saved_project_without_goal"
-        target_href = f"/projects/{quote(open_project)}"
-        target_label = f"/projects/{open_project}"
+            source = goal_source
+        elif open_project:
+            status = "project_only"
+            next_action = "Open saved project"
+            reason = "saved_project_without_goal"
+            target_href = f"/projects/{quote(open_project)}"
+            target_label = f"/projects/{open_project}"
 
     top_form = action_form or first_run_form
     top_form_available = bool(top_form)
@@ -8401,15 +8450,15 @@ def _resume_operator_workbench(
     unblock_surface_label = target_label if status == "first_run" else unblock_href
 
     project_surface: str | SafeHtml = "none"
-    if open_project:
+    if selected_project:
         project_surface = SafeHtml(
-            f"<a href='/projects/{quote(open_project)}'>{_e(open_project)}</a>"
+            f"<a href='/projects/{quote(selected_project)}'>{_e(selected_project)}</a>"
         )
     goal_surface: str | SafeHtml = "none"
     goal_label = ""
     goal_label_source = "none"
-    if open_goal:
-        _goal_href, goal_label, goal_label_source, goal_surface = _goal_display_link(root, open_goal)
+    if selected_goal:
+        _goal_href, goal_label, goal_label_source, goal_surface = _goal_display_link(root, selected_goal)
     artifact_surface: str | SafeHtml = "none"
     if last_artifact:
         artifact_surface = SafeHtml(_artifact_link(last_artifact))
@@ -8480,7 +8529,7 @@ def _resume_operator_workbench(
                     ("resume_workbench_ready", "true" if readiness["ready"] else "false"),
                     ("resume_workbench_readiness_status", str(readiness["status"])),
                     ("resume_workbench_project", project_surface),
-                    ("resume_workbench_goal_id", open_goal or "none"),
+                    ("resume_workbench_goal_id", selected_goal or "none"),
                     ("resume_workbench_goal_label", goal_label or "none"),
                     ("resume_workbench_goal_label_source", goal_label_source),
                     ("resume_workbench_goal", goal_surface),

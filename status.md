@@ -1,5 +1,41 @@
 # Status
 
+## 2026-07-02 Resume Lead Goal Current Action UX
+
+- `/resume` now promotes the lead Goal into the return-to-work surface when
+  the database has a populated Goal but `.clanker/app/workspace.json` has not
+  been explicitly saved yet.
+- The Resume Operator Workbench renders the current Goal's confirmed browser
+  action form as `#resume-workbench-action-form`, routes the target surface to
+  `/goals/<goal_id>#goal-action-dock-form`, and records
+  `resume_workbench_source=lead_goal_state`.
+- The Resume Command Bar uses the same lead Goal source and labels the
+  actionable next surface with the current Goal action instead of falling back
+  to the generic `/goals` inventory.
+- Saved `resume_surface` values still win, and first-run/no-goal states still
+  use setup-safe first-run resume forms.
+- TDD evidence: the fixture-backed populated `/resume` test failed first
+  because `resume_workbench_status` was not `action_form_ready`; after
+  implementation it proved lead-goal source routing, the top action form, and
+  the command-bar target surface.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    failed first, then 1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed after docs/status updates.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface --tb=short`:
+    3 passed after docs/status updates.
+- Non-claim: this is read-only browser resume routing only. It does not write
+  on GET, poll GitHub from the app, approve work, execute tasks, call
+  providers, use the network, push, create PRs, deploy, or mutate external
+  systems from ClankerOS.
+
 ## 2026-07-02 Recent Items Resume Current Action UX
 
 - The shared Recent Items command bar Resume shortcut now routes populated

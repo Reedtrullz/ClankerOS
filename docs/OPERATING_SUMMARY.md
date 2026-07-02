@@ -209,7 +209,12 @@ Core layers for the bootstrap:
   breadcrumb before confirmation/submission unless the operator manually edits
   the field. It shows saved `resume_surface`, goal,
   project, artifact, filters, expanded panels, and zero-effect counters inside
-  collapsed saved-state/browser-resume/command/workbench evidence. The shared
+  collapsed saved-state/browser-resume/command/workbench evidence. When no
+  workspace has been explicitly saved yet but a lead Goal exists, `/resume`
+  now derives the return source from that lead Goal, renders the same confirmed
+  current-action form as the Goal page, and records `lead_goal_state` in the
+  command/workbench evidence; first-run/no-goal states keep the setup-safe
+  first-run path. The shared
   `Workspace Panel Restore` strip now treats saved
   `expanded_panels` as actionable return context on `/resume`, `/workspace`,
   and the saved Goal page; it links to saved Goal panels and browser-locally

@@ -298,7 +298,12 @@ The rest of `/resume` reads the saved workspace state, prefers the exact saved
 `resume_surface` local route when one exists, shows the saved
 goal/project/artifact links, preserves filters and expanded panel readbacks,
 and keeps saved-state, command, workbench, and browser-local resume evidence
-collapsed by default.
+collapsed by default. When no workspace has been explicitly saved yet but the
+database already has a lead Goal, `/resume` now treats that Goal as the return
+source, renders its current confirmed action form at
+`#resume-workbench-action-form`, and labels the command/workbench source as
+`lead_goal_state`; first-run/no-goal states still use the setup-safe first-run
+forms.
 Saved Goal links on Home, `/resume`, `/workspace`, and the Goal resume snapshot
 are now title-first when a title exists, while raw Goal ids and label-source
 readbacks remain in collapsed evidence for review and automation.

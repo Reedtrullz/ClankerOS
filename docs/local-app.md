@@ -218,7 +218,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `/workspace#save-workspace` Finish Today form. `/resume` also links the
   saved goal, project, and last artifact, preserves filters and expanded panel
   readbacks, and keeps saved-state, browser-local resume, command, and
-  workbench evidence collapsed by default. Saved Goal links on Home, `/resume`,
+  workbench evidence collapsed by default. If no workspace has been saved yet
+  but a lead Goal exists, `/resume` now uses that lead Goal as the return
+  source, routes the primary workbench and command-bar action to the same
+  confirmed Goal action form as the Goal page, and records `lead_goal_state`
+  in the collapsed evidence; first-run/no-goal states continue to use the
+  setup-safe first-run forms. Saved Goal links on Home, `/resume`,
   `/workspace`, and the Goal resume snapshot are title-first when a title
   exists, while raw Goal ids and label-source fields remain available in
   collapsed evidence for review and automation. The shared
