@@ -269,12 +269,11 @@ After the run passes, prefer the JSON-validated direct-push proof recorder:
 
 ```bash
 gh run view <run_id> --repo Reedtrullz/ClankerOS \
-  --json status,conclusion,headSha,headBranch,url,jobs \
+  --json status,conclusion,headSha,headBranch,databaseId,url,jobs \
 | python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json \
   --project clankeros \
   --branch main \
   --commit <commit_sha> \
-  --external-run-id <run_id> \
   --status-json -
 ```
 

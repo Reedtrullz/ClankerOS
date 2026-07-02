@@ -754,7 +754,7 @@ def build_parser() -> argparse.ArgumentParser:
     app.add_argument("--allow-nonlocal-bind", action="store_true")
     subparsers.add_parser(
         "demo-app-scenario",
-        aliases=["app-demo"],
+        aliases=["app-demo", "demo"],
         help="Create fixture-backed local app demo state.",
     )
     subparsers.add_parser(
@@ -2104,7 +2104,10 @@ def build_parser() -> argparse.ArgumentParser:
     ci_snapshot_from_gh_json_parser.add_argument("--branch", default="main")
     ci_snapshot_from_gh_json_parser.add_argument("--commit", required=True)
     ci_snapshot_from_gh_json_parser.add_argument("--provider", default="github-actions")
-    ci_snapshot_from_gh_json_parser.add_argument("--external-run-id", required=True)
+    ci_snapshot_from_gh_json_parser.add_argument(
+        "--external-run-id",
+        help="Optional when the GitHub JSON includes databaseId or an actions run URL.",
+    )
     ci_snapshot_from_gh_json_parser.add_argument("--status-json", required=True)
     ci_snapshot_from_gh_json_parser.add_argument(
         "--job-name",
@@ -2226,7 +2229,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
 
-    if args.command in {"demo-app-scenario", "app-demo"}:
+    if args.command in {"demo-app-scenario", "app-demo", "demo"}:
         result = run_demo_app_scenario(root)
         print("demo_app_scenario: ready")
         print(f"project_id: {result.project_id}")
@@ -7611,8 +7614,8 @@ def main(argv: list[str] | None = None) -> int:
         repo_arg = f" --repo {shlex.quote(args.repo)}" if args.repo else ""
         status_command = (
             f"gh run view {shlex.quote(args.external_run_id)}{repo_arg} "
-            "--json status,conclusion,headSha,headBranch,url,jobs "
-            "--jq '{status, conclusion, headSha, headBranch, url, jobs: [.jobs[] | {name, status, conclusion}]}'"
+            "--json status,conclusion,headSha,headBranch,databaseId,url,jobs "
+            "--jq '{status, conclusion, headSha, headBranch, databaseId, url, jobs: [.jobs[] | {name, status, conclusion}]}'"
         )
         record_command = (
             "python3 -m agent_os.cli ci-snapshot-evidence "

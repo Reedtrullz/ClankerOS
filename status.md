@@ -1,5 +1,14001 @@
 # Status
 
+## 2026-07-02 Verification Goal CI Handoff UX
+
+- `/verification` now treats a saved or lead Goal as the primary proof owner
+  when the GitHub Actions workflow is configured.
+- The Verification Operator Workbench routes Now and Proof to
+  `/goals/<goal_id>#goal-ci-handoff`, records `verification_workbench_goal_id`
+  plus `verification_workbench_goal_source`, and keeps the global
+  `/ci-evidence#record-ci-snapshot-json` recorder visible as a fallback
+  evidence row.
+- The Verification Proof Map and Verification Command Bar now record the same
+  Goal id/source and target surface, so the proof page agrees with Home,
+  Today, Guide, Goal, and `/resume` proof routing.
+- Missing workflow configuration still points first to the GitHub Actions
+  workflow repair section, and no-Goal states keep the global CI evidence
+  recorder.
+- TDD evidence: the fixture-backed populated `/verification` assertion failed
+  first because no `verification_workbench_goal_id` row existed; after
+  implementation it proved lead-goal source routing. The broader local app
+  route test then failed on the stale generic recorder expectation and passed
+  after updating saved-Goal proof expectations.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    failed first, then 1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    failed first on stale generic expectations, then 1 passed after updates.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed after docs/status updates.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed after docs/status updates.
+  - `python3 -m agent_os.cli app-smoke-test`:
+    passed with `/verification` route marker matched and zero provider,
+    network, or external mutation counters.
+- Non-claim: this is read-only browser proof routing only. It does not write
+  on GET, poll GitHub from the app, approve work, execute tasks, call
+  providers, use the network, push, create PRs, deploy, or mutate external
+  systems from ClankerOS.
+
+## 2026-07-02 Resume Lead Goal Current Action UX
+
+- `/resume` now promotes the lead Goal into the return-to-work surface when
+  the database has a populated Goal but `.clanker/app/workspace.json` has not
+  been explicitly saved yet.
+- The Resume Operator Workbench renders the current Goal's confirmed browser
+  action form as `#resume-workbench-action-form`, routes the target surface to
+  `/goals/<goal_id>#goal-action-dock-form`, and records
+  `resume_workbench_source=lead_goal_state`.
+- The Resume Command Bar uses the same lead Goal source and labels the
+  actionable next surface with the current Goal action instead of falling back
+  to the generic `/goals` inventory.
+- Saved `resume_surface` values still win, and first-run/no-goal states still
+  use setup-safe first-run resume forms.
+- TDD evidence: the fixture-backed populated `/resume` test failed first
+  because `resume_workbench_status` was not `action_form_ready`; after
+  implementation it proved lead-goal source routing, the top action form, and
+  the command-bar target surface.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    failed first, then 1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed after docs/status updates.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface --tb=short`:
+    3 passed after docs/status updates.
+  - GitHub Actions push run `28579477566` initially failed in
+    `app-demo-smoke-test` because the fixture smoke expectation still required
+    `/resume` to report `no_saved_workspace`; the smoke contract was updated
+    to require `lead_goal_state`, `action_form_ready`, and the commit-request
+    action form instead.
+  - `python3 -m agent_os.cli --root /tmp/clankeros-ci-root-local-resume-fix app-demo-smoke-test`:
+    passed after the smoke expectation update.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed after the smoke expectation update.
+- Non-claim: this is read-only browser resume routing only. It does not write
+  on GET, poll GitHub from the app, approve work, execute tasks, call
+  providers, use the network, push, create PRs, deploy, or mutate external
+  systems from ClankerOS.
+
+## 2026-07-02 Recent Items Resume Current Action UX
+
+- The shared Recent Items command bar Resume shortcut now routes populated
+  sessions with no explicit saved resume surface to the current Goal action
+  instead of the generic `/resume` hub.
+- Explicitly saved resume surfaces still win, so a saved
+  `/today#today-current-action` return point remains the Recent Items Resume
+  target even when a live Goal action is available.
+- First-run/no-goal sessions keep the setup-safe `/resume` fallback.
+- Recent Items evidence now records `recent_items_resume_status`,
+  `recent_items_resume_exact_surface`, and
+  `recent_items_resume_surface_source`, plus the visible Resume link.
+- TDD evidence: the populated fixture-backed Goal page failed first because
+  `data-recent-items-resume` still rendered `/resume`; after implementation it
+  proved `Create commit request` with source `current_goal_action`. The saved
+  Finish Today test proved `saved_resume_surface` still wins.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    failed first, then 1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed after docs/status updates.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface --tb=short`:
+    3 passed after docs/status updates.
+- Non-claim: this is read-only shared browser Recent Items routing only. It
+  does not write on GET, poll GitHub from the app, approve work, execute
+  tasks, call providers, use the network, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
+## 2026-07-02 Operator Focus Resume Current Action UX
+
+- The shared Operator Focus Resume card now routes populated sessions with no
+  explicit saved resume surface to the current Goal action instead of the
+  generic `/resume` hub.
+- Explicitly saved resume surfaces still win, so a saved
+  `/today#today-current-action` return point remains the Operator Focus Resume
+  target even on Goal pages that also have their own action form.
+- First-run/no-goal sessions keep the setup-safe resume hub fallback.
+- The focus evidence now records `operator_focus_resume_status`,
+  `operator_focus_resume_exact_surface`, and
+  `operator_focus_resume_surface_source`, plus the visible Resume link.
+- TDD evidence: the populated fixture-backed dashboard failed first because
+  `data-operator-focus-resume` still rendered `/resume`; after implementation
+  it proved `Create commit request` with source `current_goal_action`. The
+  saved Finish Today test proved `saved_resume_surface` still wins.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    failed first, then 1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed after docs/status updates.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface --tb=short`:
+    3 passed after docs/status updates.
+- Non-claim: this is read-only shared browser Operator Focus routing only. It
+  does not write on GET, poll GitHub from the app, approve work, execute
+  tasks, call providers, use the network, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
+## 2026-07-02 Home Operator Board Resume Current Action UX
+
+- The Home Operator Board Resume card now routes populated sessions with no
+  explicit saved resume surface to the current Goal action instead of the Home
+  Finish Today save anchor or the generic `/resume` hub.
+- Explicitly saved resume surfaces still win, so a saved
+  `/goals/<goal_id>#goal-action-dock-form` surface becomes the Home board
+  Resume target with the current action label.
+- First-run/no-goal sessions keep the `/resume` fallback, preserving the
+  empty-checkout setup path.
+- The board evidence now records `home_operator_board_resume_source` as
+  `resume_page`, `current_goal_action`, or `saved_resume_surface`, plus the
+  resolved href.
+- TDD evidence: the populated fixture-backed Home page failed first because
+  the post-save board still rendered `/resume`; after implementation it proved
+  saved-surface routing, while the pre-save populated Home board proved
+  current-action routing and the first-run route test preserved `/resume`.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    failed first, then 1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed after docs/status updates.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed after docs/status updates.
+- Non-claim: this is read-only browser Home Operator Board routing only. It
+  does not write on GET, poll GitHub from the app, approve work, execute
+  tasks, call providers, use the network, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
+## 2026-07-02 Goal Command Bar Resume Current Action UX
+
+- The Goal Command Bar Resume card now routes Goal pages with no explicit
+  saved resume surface to the current Goal action instead of the generic
+  `/resume` hub.
+- Explicitly saved resume surfaces still win, so a saved
+  `/today#today-current-action` return point remains the Goal Command Bar
+  Resume target even when the Goal page has its own action form.
+- The command evidence now records `goal_command_bar_resume_source` as either
+  `current_goal_action` or `saved_resume_surface`, plus the resolved href, so
+  the visible card has a reviewable source.
+- TDD evidence: the populated fixture-backed Goal page failed first because
+  `data-goal-command-resume` still rendered `/resume`; after implementation it
+  proved `#goal-action-dock-form` with label `Create commit request`, while
+  the saved workspace test proved `/today#today-current-action` still wins.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    failed first, then 1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed after docs/status updates.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface --tb=short`:
+    3 passed after docs/status updates.
+- Non-claim: this is read-only browser Goal Command Bar routing only. It does
+  not write on GET, poll GitHub from the app, approve work, execute tasks,
+  call providers, use the network, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
+## 2026-07-02 Goal Return Brief Resume Current Action UX
+
+- The Goal Return Brief Resume card now routes Goal pages with no explicit
+  saved resume surface to the current Goal action instead of the generic
+  `/resume` hub.
+- Explicitly saved resume surfaces still win, so a saved
+  `/today#today-current-action` return point remains the Goal Return Brief
+  Resume target even when the Goal page has its own action form.
+- The return evidence now records `goal_return_resume_source` as either
+  `current_goal_action` or `saved_resume_surface` so the visible card has a
+  reviewable source.
+- TDD evidence: the populated fixture-backed Goal page failed first because
+  `data-goal-return-resume` still rendered `/resume`; after implementation it
+  proved `#goal-action-dock-form` with label `Create commit request`, while
+  the saved workspace test proved `/today#today-current-action` still wins.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    failed first, then 1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed after docs/status updates.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface --tb=short`:
+    3 passed after docs/status updates.
+- Non-claim: this is read-only browser Goal Return Brief routing only. It does
+  not write on GET, poll GitHub from the app, approve work, execute tasks,
+  call providers, use the network, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
+## 2026-07-02 Operator Ribbon Resume Current Action UX
+
+- The shared Operator Ribbon Resume card now routes populated sessions with no
+  explicit saved resume surface to the current Goal action instead of the
+  generic `/resume` hub.
+- Explicitly saved resume surfaces still win, preserving exact Finish Today
+  return points across Home, Today, Workspace, Resume, and Goal surfaces.
+- First-run/no-goal sessions keep the `/resume` hub fallback, preserving the
+  empty-checkout setup path.
+- TDD evidence: the populated fixture-backed scenario failed first because the
+  shared ribbon still rendered `operator_ribbon_resume_surface` as `/resume`;
+  after implementation it proved `Create commit request` with source
+  `current_goal_action`, while the first-run route test continued to prove
+  `Open resume` with source `resume_page`.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    failed first, then 1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed after docs/status updates.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed after docs/status updates.
+- Non-claim: this is read-only shared browser ribbon routing only. It does not
+  write on GET, poll GitHub from the app, approve work, execute tasks, call
+  providers, use the network, push, create PRs, deploy, or mutate external
+  systems from ClankerOS.
+
+## 2026-07-02 Today Command Resume Current Action UX
+
+- The `/today` Command Center Resume card now routes populated sessions with
+  no explicit saved resume surface to the current Goal action
+  `#today-current-action` instead of the generic `/resume` hub.
+- Explicitly saved resume surfaces still win, preserving the exact
+  `saved_resume_surface` return point after Finish Today.
+- First-run/no-goal sessions keep the `/resume` hub fallback, preserving the
+  empty-checkout setup path.
+- TDD evidence: the populated fixture-backed scenario failed first because
+  `today_command_resume` still rendered `/resume`; after implementation it
+  proved `Create commit request` with source `current_goal_action`, while the
+  first-run route test continued to prove `Open resume` with source
+  `resume_page`.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed after docs/status updates.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed after docs/status updates.
+- Non-claim: this is read-only browser Today Command Center routing only. It
+  does not write on GET, poll GitHub from the app, approve work, execute
+  tasks, call providers, use the network, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
+## 2026-07-02 Today Session Resume Current Action UX
+
+- The `/today` Session Summary Resume card now routes populated sessions with
+  no explicit saved resume surface to the current Goal action
+  `#today-current-action` instead of the generic `/goals` index.
+- Explicitly saved resume surfaces still win, preserving the existing
+  `saved_resume_surface` behavior for tomorrow's exact return point.
+- First-run/no-goal sessions keep the `/goals` setup fallback, so empty
+  checkouts still guide the operator toward project/goal creation.
+- TDD evidence: the populated fixture-backed scenario first proved the stale
+  `/goals` fallback; after implementation it proved `Create commit request`
+  with source `current_goal_action`, while the first-run route test continued
+  to prove `Open Goals` with source `workspace_readiness`.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed after docs/status updates.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed after docs/status updates.
+- Non-claim: this is read-only browser Today Session Summary routing only. It
+  does not write on GET, poll GitHub from the app, approve work, execute
+  tasks, call providers, use the network, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
+## 2026-07-02 Goal Page Proof Card UX
+
+- The Goal Command Bar Proof link and collapsed command evidence now point to
+  the same-page `#goal-ci-handoff` target with the operator-facing `Goal CI
+  handoff` label instead of reporting `/verification`.
+- The Goal Return Brief now includes a visible Proof card, making the top
+  return board Continue, Latest, Proof, Blocker, Finish, and Resume.
+- Goal Return Brief CI evidence now names the same-page `#goal-ci-handoff`
+  surface, keeping the Goal page self-contained before the operator opens
+  global proof pages.
+- TDD evidence: the populated fixture-backed scenario failed first because
+  `goal_command_bar_ci_surface` still rendered `/verification`; after
+  implementation it proved the same-page Goal CI handoff link in the Goal
+  Command Bar and Goal Return Brief.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed after implementation.
+- Non-claim: this is read-only browser Goal-page routing and card polish only.
+  It does not write on GET, poll GitHub from the app, approve work, execute
+  tasks, call providers, use the network, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
+## 2026-07-02 Goal-Aware Home Proof Start UX
+
+- The Home Operator Board Proof card and Home `Start Here` CI readback now
+  route populated sessions to the current Goal's `#goal-ci-handoff` surface.
+- First-run/no-goal sessions keep the existing `/verification` fallback so the
+  empty-checkout setup path still has a proof target before a Goal exists.
+- The Home Operator Board and Start Here evidence rows now expose proof-source
+  readbacks, keeping the top Home surfaces aligned with `/guide`, day-level
+  Proof cards, and the global `Proof` button.
+- TDD evidence: the populated fixture-backed scenario failed first because
+  `home_operator_board_ci_surface` still rendered `/verification`; after
+  implementation it proved `/goals/<goal_id>#goal-ci-handoff` for both Home
+  Operator Board and Start Here.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed after docs/status updates.
+- Non-claim: this is read-only browser Home routing only. It does not write on
+  GET, poll GitHub from the app, approve work, execute tasks, call providers,
+  use the network, push, create PRs, deploy, or mutate external systems from
+  ClankerOS.
+
+## 2026-07-02 Goal-Aware Guide Proof UX
+
+- The `/guide` daily loop Proof card, `Guide Command Panel` Proof card, and
+  `Operator Recipes` Check Proof card now route populated sessions to the
+  current Goal's `#goal-ci-handoff` surface.
+- First-run/no-goal sessions keep the `/verification` fallback, with explicit
+  `verification_fallback` evidence rows so setup still works before a Goal
+  exists.
+- The guide now emits proof-surface/source readbacks for the command panel,
+  recipe panel, and daily loop, aligning the in-app suggested-use path with
+  the Goal-aware global `Proof` button and day-level Proof cards.
+- TDD evidence: the modern local-app route test failed first because
+  `guide_command_proof_surface` was missing; after implementation, first-run
+  Guide proof fallback passed. The populated demo scenario then proved
+  `/goals/<goal_id>#goal-ci-handoff` across Guide command, recipes, and daily
+  loop evidence.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed after docs/status updates.
+- Non-claim: this is read-only browser Guide routing only. It does not write on
+  GET, poll GitHub from the app, approve work, execute tasks, call providers,
+  use the network, push, create PRs, deploy, or mutate external systems from
+  ClankerOS.
+
+## 2026-07-02 Goal-Aware Day Proof Cards UX
+
+- Home Attention, Today Session Rail, and Today Session Summary Proof cards now
+  route populated sessions to the current Goal's `#goal-ci-handoff` surface
+  instead of sending the operator to a generic proof page.
+- First-run/no-goal sessions keep the existing `/verification` and
+  `/ci-evidence` fallbacks, so empty checkout setup still has a manual proof
+  recorder before a Goal exists.
+- The read-only evidence rows now expose proof-source fields such as
+  `lead_goal_ci_handoff` or `ci_evidence_fallback`, keeping the visible cards
+  aligned with the global Goal-aware `Proof` button and `p` shortcut.
+- TDD evidence: the populated fixture-backed scenario failed first because
+  Home Attention still rendered
+  `home_attention_proof_card_surface` as `/verification`; after implementation
+  it renders `/goals/<goal_id>#goal-ci-handoff` with `Goal CI handoff` across
+  Home and Today surfaces.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed after docs/status updates.
+- Non-claim: this is read-only browser routing for existing proof surfaces. It
+  does not write on GET, poll GitHub from the app, approve work, execute
+  tasks, call providers, use the network, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
+## 2026-07-01 Goal-Aware Artifact Shortcut UX
+
+- The shared app shell now makes the `a` artifact keyboard shortcut
+  Goal-aware. Empty first-run sessions still route to the bounded
+  `/artifacts` index, while populated browser sessions route to the current
+  saved or lead Goal's `#goal-artifact-command-bar` surface.
+- The shell exposes explicit read-only `data-artifact-shortcut-*` metadata for
+  href, label, action, status, source, and zero-effect counters, so the
+  browser-local key handler uses the same evidence-backed target as the
+  current Goal context instead of hardcoding `/artifacts`.
+- TDD evidence: the modern local-app route test failed first because empty
+  Home had no `data-artifact-shortcut-href="/artifacts"` metadata; the
+  populated fixture-backed scenario failed first because Home had no
+  `data-artifact-shortcut-href="/goals/<goal_id>#goal-artifact-command-bar"`.
+  After implementation, the paired focused route tests passed.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed.
+- Non-claim: this is browser-local artifact shortcut routing only. It does not
+  write on GET, approve work, execute tasks, call providers, use the network,
+  push, create PRs, deploy, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Goal-Aware Proof Shortcut UX
+
+- The shared app shell now makes the global `Proof` button and `p` keyboard
+  shortcut Goal-aware. Empty first-run sessions still route to
+  `/ci-evidence#record-ci-snapshot-json`, while populated browser sessions
+  route to the current saved or lead Goal's `#goal-ci-handoff` surface.
+- The shell and visible Proof button expose explicit read-only `data-proof-*`
+  metadata for href, label, status, source, and zero-effect counters, so the
+  browser-local key handler uses the same evidence-backed target as the
+  visible control.
+- TDD evidence: the modern local-app route test failed first because empty
+  Home had no `data-proof-status="first_run"` metadata; after implementation,
+  the populated fixture-backed scenario proved Home renders
+  `data-proof-href="/goals/<goal_id>#goal-ci-handoff"` with
+  `Goal CI handoff` and source `saved_goal_goal_ci_handoff`.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed after docs/status updates.
+- Non-claim: this is browser-local proof shortcut routing only. It does not
+  write on GET, poll GitHub from the app, approve work, execute tasks, call
+  providers, use the network, push, create PRs, deploy, or mutate external
+  systems from ClankerOS.
+
+## 2026-07-01 Goal-Aware Keyboard Shortcut UX
+
+- The shared app shell now makes the `g` keyboard shortcut Goal-aware. Empty
+  first-run sessions still route to `/goals`, while populated browser sessions
+  route directly to the current saved or lead Goal cockpit.
+- The shell exposes explicit read-only `data-goal-shortcut-*` metadata for
+  href, label, action, status, source, and zero-effect counters, and the
+  browser-local key handler uses that metadata instead of a hardcoded
+  `/goals` target.
+- TDD evidence: the modern local-app route test failed first because empty
+  Home had no `data-goal-shortcut-href="/goals"` metadata; after implementation
+  the populated fixture-backed scenario also proved Home renders
+  `data-goal-shortcut-href="/goals/<goal_id>"` with `Open current goal`. A
+  follow-up red assertion caught stale shortcut copy that still said
+  `g opens goals`, then passed after the screen-reader help text changed to
+  `g opens current goal`.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed after implementation.
+- Non-claim: this is browser-local shortcut routing only. It does not write on
+  GET, approve work, execute tasks, call providers, use the network, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Command Palette Workspace Action UX
+
+- The command palette Quick Switch `Workspace` card now routes the current
+  Goal fallback to the live Goal action dock when no saved workspace surface is
+  stronger, using the concrete action label such as `Create commit request`.
+- Saved exact workspace surfaces still win first, and project-only saved
+  routes keep their project label.
+- TDD evidence: the fixture-backed demo scenario failed first because the
+  populated Home palette still rendered
+  `data-command-palette-quick-workspace='true' href='/goals/<goal_id>'` with
+  `Open current goal`, then passed after `_command_palette_quick_switch`
+  resolved the current Goal action surface from the shared focus context.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed after implementation.
+- Non-claim: this is read-only command palette routing only. It does not write
+  on GET, approve work, execute tasks, call providers, use the network, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Command Palette Current Action Result UX
+
+- The command palette's filterable `Palette Results` list now prepends the
+  live Goal action when a Goal action exists, using `kind=current-action` and
+  the absolute Goal action dock href.
+- This makes the keyboard launcher behave like an action surface: filtering
+  for action text such as `commit` finds `Create commit request` before static
+  route matches.
+- TDD evidence: the fixture-backed demo scenario failed first because the
+  populated Home command palette had no `current-action` result row for the
+  Goal action dock, then passed after `_command_palette_current_action_links`
+  inserted the current action command from the shared focus context.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed after implementation.
+- Non-claim: this is read-only command palette routing only. It does not write
+  on GET, approve work, execute tasks, call providers, use the network, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Recent Items Current Action List UX
+
+- The shared Recent Items rail now inserts the live Goal action into the
+  filterable Recent shortcuts list when a Goal action exists, using
+  `kind=current-action` and the Goal action dock href.
+- This keeps the Action card and searchable Recent list aligned: filtering for
+  action text such as `commit` finds the current Goal action, not only older
+  recent pages.
+- TDD evidence: the fixture-backed demo scenario failed first because the
+  populated Goal page still showed `Showing 3 of 3 recent items.` and lacked a
+  `current-action` row, then passed after `_recent_items_list_items` prepended
+  the current action row for available Goal focus contexts.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed after implementation.
+- Non-claim: this is read-only Recent Items list/filter routing only. It does
+  not write on GET, approve work, execute tasks, call providers, use the
+  network, push, create PRs, deploy, or mutate external systems from
+  ClankerOS.
+
+## 2026-07-01 Recent Items Current Action UX
+
+- The shared Recent Items rail now prefers the live Goal action for its Action
+  card whenever a Goal is available, using the same operator focus context and
+  Goal action dock target as the command palette.
+- Last-action receipt routing remains available when there is no active Goal
+  action, so first-run/no-goal return paths still point at the saved action
+  result instead of losing the receipt.
+- TDD evidence: the fixture-backed demo scenario test failed first because the
+  populated Goal page still rendered
+  `data-recent-items-action-card='true' href='/actions'`, then passed after
+  Recent Items received the shared focus context and resolved the current Goal
+  action surface.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed after implementation.
+- Non-claim: this is read-only Recent Items routing only. It does not write on
+  GET, approve work, execute tasks, call providers, use the network, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Search Current Action Suggestion UX
+
+- `/search` now makes the Search Suggestions panel Goal-action-first when a
+  Goal exists: the primary suggestion is `Current Action`, sourced from the
+  shared Goal next-action helpers, and links directly to the Goal action dock.
+- The older current-Goal and next-action search-query suggestions remain as
+  secondary discovery paths, so search still works as an index while also
+  behaving like a command surface for the live Goal loop.
+- TDD evidence: the fixture-backed demo scenario test failed first because
+  `/search?q=fixture-backed` did not render
+  `data-search-suggestion-key='current-action'`, then passed after
+  `_search_suggestion_items` added the action-surface suggestion.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed after implementation.
+- Non-claim: this is read-only Search Suggestions routing only. It does not
+  write on GET, call providers, use the network, push, create PRs, deploy, or
+  mutate external systems from ClankerOS.
+
+## 2026-07-01 Project And Run Finish Shortcut UX
+
+- Project detail pages and run detail pages now route the shared `Finish`
+  header button, `f` shortcut, Operator Ribbon Finish card, and command
+  palette Finish card to their same-page Finish Today forms instead of
+  detouring to `/workspace#save-workspace`.
+- The target forms remain existing confirmed local `save-workspace` handoffs;
+  GET stays read-only and the shared shortcut only navigates.
+- TDD evidence: the fixture-backed demo scenario test failed first because
+  `/projects/local-app-demo` still emitted the generic Workspace finish
+  shortcut, then passed after `_finish_today_shortcut_context` learned the
+  project/run detail local finish routes.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed after implementation.
+- Non-claim: this is route-local browser shortcut/ribbon/palette routing only.
+  It does not write on GET, call providers, use the network, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Action And Verification Finish Shortcut UX
+
+- `/actions` and `/verification` now route the shared `Finish` header button,
+  `f` shortcut, Operator Ribbon Finish card, and command palette Finish card
+  to their same-page Finish Today forms instead of detouring to
+  `/workspace#save-workspace`.
+- The target forms remain existing confirmed local `save-workspace` handoffs;
+  GET stays read-only and the shared shortcut only navigates.
+- TDD evidence: the modern local-app route test failed first because
+  `/actions` still emitted the generic Workspace finish shortcut, then passed
+  after `_finish_today_shortcut_context` learned the action/proof local finish
+  routes.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed after implementation.
+- Non-claim: this is route-local browser shortcut/ribbon/palette routing only.
+  It does not write on GET, call providers, use the network, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Queue Finish Shortcut UX
+
+- `/inbox`, `/approvals`, and `/incidents` now route the shared `Finish`
+  header button, `f` shortcut, Operator Ribbon Finish card, and command
+  palette Finish card to their same-page Finish Today forms instead of
+  detouring to `/workspace#save-workspace`.
+- The queue forms remain the existing confirmed local `save-workspace`
+  handoffs; GET stays read-only and the shared shortcut only navigates.
+- TDD evidence: the modern local-app route test failed first because `/inbox`
+  still emitted the generic Workspace finish shortcut, then passed after
+  `_finish_today_shortcut_context` learned the queue-local finish routes.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form`:
+    4 passed.
+- Non-claim: this is route-local browser shortcut/ribbon/palette routing only.
+  It does not write on GET, call providers, use the network, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Workflow Finish Shortcut UX
+
+- `/workflow` now routes the shared `Finish` header button, `f` shortcut,
+  Operator Ribbon Finish card, and command palette Finish card to the existing
+  same-page `#workflow-finish-today` form instead of detouring to
+  `/workspace#save-workspace`.
+- The target form is still the existing confirmed local `save-workspace`
+  workflow handoff; GET stays read-only and the shortcut only navigates.
+- TDD evidence: the modern local-app route test failed first because
+  `/workflow` still emitted the generic Workspace finish shortcut, then passed
+  after `_finish_today_shortcut_context` learned the Workflow local finish
+  route.
+- Local verification:
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form --tb=short`:
+    2 passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    1 passed.
+- Non-claim: this is route-local browser shortcut/ribbon/palette routing only.
+  It does not write on GET, call providers, use the network, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Home Finish Shortcut UX
+
+- Populated Home sessions now route the shared `Finish` header button, `f`
+  shortcut, Operator Ribbon Finish card, and command palette Finish card to the
+  same-page `#home-finish-today` form instead of detouring to
+  `/workspace#save-workspace`.
+- Empty first-run Home still falls back to `/workspace#save-workspace`, so the
+  shortcut only uses the Home-local finish form after a current Goal exists.
+- TDD evidence: the fixture-backed Home route test failed first because the
+  header still emitted `data-finish-today-href="/workspace#save-workspace"`,
+  then passed after the Finish shortcut context became focus-aware.
+- Local verification:
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface --tb=short`:
+    1 passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form --tb=short`:
+    1 passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health --tb=short`:
+    1 passed.
+- Non-claim: this is route-local browser shortcut/ribbon/palette routing only.
+  It does not write on GET, call providers, use the network, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Goal First-Run Action Dock Return UX
+
+- Goal-origin `delegate`, `context-pack`, and `run-delegation` browser forms
+  now submit safe `return_to=/goals/<goal_id>#goal-action-dock` targets, so the
+  first-run path stays in the Goal action loop after the first delegation
+  contract, context pack, and scout run.
+- Confirmed `delegate`, `context-pack`, and `run-delegation` actions now honor
+  safe submitted local return targets and save the same action-dock route as
+  the workspace `resume_surface`. Launches without `return_to` still fall back
+  to `/delegations/<delegation_id>`.
+- TDD evidence: the focused browser run-delegation test failed first because
+  the Goal `run-delegation` form lacked the hidden
+  `return_to=/goals/<goal_id>#goal-action-dock` field, then passed after the
+  early Goal action forms and handlers were wired together.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_runs_delegation_from_browser_action`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace tests/test_first_milestone.py::test_local_app_runs_delegation_from_browser_action tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms`:
+    6 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py docs/local-app.md status.md`:
+    passed.
+- Non-claim: this is Goal-origin browser return/resume routing for the early
+  local first-run chain. It does not write on GET, call providers, use the
+  network, push, create PRs, deploy, or mutate external systems from
+  ClankerOS.
+
+## 2026-07-01 Goal Action Dock Return Anchor UX
+
+- Goal-origin coder prep, worktree plan, worktree approval, review, commit,
+  publication, and approval forms now submit safe
+  `return_to=/goals/<goal_id>#goal-action-dock` targets instead of only the
+  broad Goal page.
+- Confirmed local action result links now preserve fragments by inserting the
+  `notice` query before the fragment, for example
+  `/goals/<goal_id>?notice=...#goal-action-dock`, and saved workspace resume
+  surfaces keep the same action-dock target.
+- TDD evidence: the focused post-delegation Goal workflow test failed first
+  because `_goal_coder_prep_form` still emitted `return_to=/goals/<goal_id>`
+  without the action-dock fragment, then passed after the shared Goal
+  return-target and notice-link helpers were added.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms`:
+    2 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms`:
+    4 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py docs/local-app.md status.md`:
+    passed.
+- Non-claim: this is Goal-origin browser return/resume targeting for local
+  action results. It does not write on GET, run providers, use the network,
+  push, create PRs, deploy, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Goal Post-Delegation Return Coverage UX
+
+- Goal-origin coder prep, worktree plan, and worktree approval request forms
+  now include safe `return_to=/goals/<goal_id>` targets, matching the later
+  Goal-origin review, commit, publication, approval, and handoff gates.
+- Confirmed `coder-prep`, `coder-worktree-plan`, and
+  `coder-worktree-approval` browser actions now honor safe submitted local
+  return targets and save that Goal surface as the workspace resume surface.
+  Launches without `return_to` still fall back to `/delegations/<delegation_id>`.
+- TDD evidence: the focused post-delegation Goal workflow test failed first
+  because `_goal_coder_prep_form` only emitted `delegation_id` and lacked
+  `return_to=/goals/<goal_id>`, then passed after the Goal forms and handlers
+  were wired together.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms`:
+    4 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py docs/local-app.md status.md`:
+    passed.
+- Non-claim: this is Goal-origin browser return/resume routing for local
+  post-delegation setup gates. It does not write on GET, run providers, use the
+  network, push, create PRs, deploy, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Goal Run Gate Return Coverage UX
+
+- Goal-origin review, commit request, local commit, and publication request
+  forms now include safe `return_to=/goals/<goal_id>` targets, matching the
+  existing Goal-origin approval and publication-handoff return behavior.
+- Confirmed `review-run`, `coder-commit-request`, `commit-coder-worktree`, and
+  `coder-publication-request` browser actions now honor safe submitted local
+  return targets and save that Goal surface as the workspace resume surface.
+  Launches without `return_to` still fall back to `/runs/<run_id>`.
+- TDD evidence: the two focused Goal workflow tests failed first because
+  `_goal_review_run_form` and `_goal_commit_request_form` only emitted
+  `run_id` and lacked `return_to=/goals/<goal_id>`, then passed after the Goal
+  forms and handlers were wired together.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms`:
+    2 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms`:
+    4 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py docs/local-app.md status.md`:
+    passed.
+- Non-claim: this is Goal-origin browser return/resume routing for local run,
+  commit, and publication gates. It does not write on GET, push, create PRs,
+  deploy, call providers, fetch GitHub status, or mutate external systems from
+  ClankerOS.
+
+## 2026-07-01 Goal Publication Handoff Return UX
+
+- Goal-origin publication handoff forms now include a safe
+  `return_to=/goals/<goal_id>` target, so the confirmed result page returns to
+  the Goal manual publish/complete boundary instead of sending the operator
+  back to the run detail page.
+- The `coder-publication-handoff` browser action now honors safe submitted
+  local return targets and saves that Goal surface as the workspace resume
+  surface after writing local handoff artifacts. Launches without `return_to`
+  still fall back to `/runs/<run_id>`.
+- TDD evidence: the focused Goal workflow test failed first because
+  `_goal_publication_handoff_form` only emitted `run_id` and lacked
+  `return_to=/goals/<goal_id>`, then passed after the Goal form and handler
+  were wired together.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms`:
+    3 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py docs/local-app.md status.md`:
+    passed.
+- Non-claim: this is Goal-origin browser return/resume routing for the local
+  publication handoff. It does not write on GET, push, create PRs, deploy, call
+  providers, fetch GitHub status, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Goal Approval Return Coverage UX
+
+- Goal-origin commit approval and publication approval forms now include the
+  same safe Goal `return_to` target as Goal-origin worktree approval.
+- Confirmed commit/publication approval results launched from a Goal now expose
+  `/goals/<goal_id>?notice=...` as the next result page, while their saved
+  workspace resume state can still point at the owning run for the next gate.
+- TDD evidence: the focused Goal workflow test failed first against
+  `_goal_approve_commit_form` because the helper output lacked
+  `return_to=/goals/<goal_id>`, then passed after both Goal approval helpers
+  added the hidden return target.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms`:
+    3 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py docs/local-app.md status.md`:
+    passed.
+- Non-claim: this is Goal-origin browser return-routing UX only. It does not
+  write on GET, execute work, stage, commit, push, create PRs, deploy, call
+  providers, fetch GitHub status, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Approval Decision Return UX
+
+- Goal-origin worktree approval forms now include a safe Goal `return_to`
+  target, so the confirmed result page opens the owning Goal as the next result
+  surface instead of falling back to Home.
+- Inbox and Approvals operator workbench decision forms now submit
+  `return_to=/inbox` or `return_to=/approvals` for worktree, commit, and
+  publication approvals. Commit/publication approval handlers still save run
+  resume state to the owning run, while the action result respects the queue
+  surface that launched the decision.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_goal_runs_approved_worktree_from_browser_action tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health`:
+    2 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md status.md`:
+    passed.
+- Non-claim: this is browser return-routing UX only. It does not write on GET,
+  execute work, stage, commit, push, create PRs, deploy, call providers, fetch
+  GitHub status, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Dogfooding Action Result Return UX
+
+- `demo-app-scenario` now honors safe submitted `return_to` and
+  `resume_surface` values. When the fixture action is launched from
+  `/dogfooding`, the confirmed action result points back to `/dogfooding` and
+  the saved workspace resume surface stays `/dogfooding`.
+- The existing `/demo` fixture form still falls back to `/demo`, so demo-origin
+  setup keeps its previous launchpad behavior.
+- TDD evidence: the focused modern route test failed first because a
+  dogfooding-origin `demo-app-scenario` result still exposed `/demo` as the
+  next result surface, then passed after the handler used the submitted safe
+  local return/resume surfaces.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health`:
+    1 passed after implementation.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state`:
+    2 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md status.md`:
+    passed.
+- Non-claim: this is action-result routing UX only. It does not write on GET,
+  approve work, execute tasks, deploy, call providers, fetch GitHub status,
+  push from the app, create PRs, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Dogfooding Fixture Action UX
+
+- `/dogfooding` now includes a confirmation-gated `demo-app-scenario` form
+  inside `Dogfooding Operator Workbench`. Missing fixture state shows
+  `Create demo fixture`; existing fixture state shows `Refresh demo fixture`.
+- The form returns to `/dogfooding` through `return_to` and `resume_surface`,
+  so the operator can start or refresh the deterministic local demo fixture
+  from the checklist and continue the route walk without detouring through
+  `/demo`.
+- Added `dogfooding_fixture_action_*` evidence rows for fixture status, action
+  name, return surface, resume surface, write-on-GET, provider/network counts,
+  and external-effect posture.
+- TDD evidence: the focused modern route test failed first because
+  `/dogfooding` did not expose `data-dogfooding-fixture-action='true'`, then
+  passed after the direct browser action form was added.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state`:
+    2 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md status.md`:
+    passed.
+- Non-claim: this is dogfooding browser UX only. It does not write on GET,
+  approve work, execute tasks, deploy, call providers, fetch GitHub status, push
+  from the app, create PRs, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Action Result Continue Goal UX
+
+- Saved-Goal action result pages now include a visible `Continue Goal` panel
+  inside `Action Result Next Step`, before the inline confirmed next-action
+  form. After first Goal creation, the success page names `Create scout
+  delegation` and points directly at the existing confirmation-gated form.
+- Added `action_result_goal_continuation_*` evidence rows for source, Goal id,
+  Goal surface, phase, next action, primary surface, form availability,
+  confirmation requirement, and zero-effect counters.
+- TDD evidence: the focused first-run/resume route test failed first because
+  the created-Goal result page did not contain `Continue Goal` or
+  `data-action-result-goal-continuation='true'`, then passed after the
+  Goal-mode continuation panel was added.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed after implementation.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface -q --tb=short`:
+    3 passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed.
+- Non-claim: this is action-result browser UX only. It does not write on GET,
+  approve work, execute tasks, deploy, call providers, use the network from the
+  app, create PRs, push from the app, or mutate external systems from
+  ClankerOS.
+
+## 2026-07-01 First Run Resume Tomorrow Target UX
+
+- First-run action result receipts now route the human `Resume Tomorrow`
+  primary link through `/resume#resume-first-run-action-form` when project
+  registration has completed but no Goal exists yet.
+- The older `Action Resume Receipt` evidence still records the raw saved
+  project surface (`/projects/<name>`), so review/automation can distinguish
+  canonical workspace state from the first-run next setup action.
+- TDD evidence: the focused first-run route test failed first because the
+  receipt primary link still pointed at `/projects/clankeros`, then passed
+  after the receipt became first-run-aware.
+- Local verification:
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed after the implementation.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface -q --tb=short`:
+    3 passed after checking the shared receipt path.
+- Non-claim: this is first-run resume UX only. It does not write workspace JSON
+  on GET, approve work, execute tasks, deploy, call providers, use the network
+  from the app, create PRs, push from the app, or mutate external systems from
+  ClankerOS.
+
+## 2026-07-01 Resume Tomorrow Result Receipt UX
+
+- Confirmed local action result pages now lead the saved workspace receipt with
+  `Resume Tomorrow`, making the return path after a successful local action
+  feel like the next human move instead of an implementation readback.
+- Preserved the existing `Action Resume Receipt` contract and added
+  `action_resume_tomorrow_*` evidence rows for readiness, saved surface,
+  primary label, latest artifact, and zero-effect counters.
+- TDD evidence: the focused route smoke test failed first on the missing
+  `Resume Tomorrow` label and `data-action-resume-tomorrow='true'` marker,
+  then passed after the result receipt was promoted.
+- Local verification:
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after the implementation.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface -q --tb=short`:
+    2 passed after preserving the older receipt-primary link shape.
+- Non-claim: this is action-result resume UX only. It does not write workspace
+  JSON on GET, approve work, execute tasks, deploy, call providers, use the
+  network from the app, create PRs, push from the app, or mutate external
+  systems from ClankerOS.
+
+## 2026-07-01 Workspace Last Artifact Save Promotion UX
+
+- Shared `save-workspace` / Finish Today forms now advertise and hydrate a
+  browser-local Last Artifact promotion contract. When this browser has
+  `localStorage:clankeros-last-artifact`, the form's `last_viewed_artifact`
+  field is filled from that breadcrumb before confirmation/submission unless
+  the operator manually edits the field.
+- Added form markers, field markers, a visible browser-last-artifact status
+  line, and collapsed evidence rows so the operator can see that browser-local
+  artifact memory can become tomorrow's canonical workspace artifact only
+  through an intentional save.
+- TDD evidence: the focused route smoke test failed first on the missing
+  `data-workspace-last-artifact-promote='true'` marker, then passed after the
+  shared form contract and JS hydrator were added.
+- Local verification:
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after the implementation.
+- Non-claim: this does not write workspace JSON on GET, broaden artifact
+  access, execute artifact content, approve work, execute tasks, deploy, call
+  providers, use the network from the app, create PRs, push from the app, or
+  mutate external systems from ClankerOS.
+
+## 2026-07-01 Palette Last Artifact Shortcut UX
+
+- Added a browser-local Last Artifact result to the shared command palette, so
+  typing in the palette can find the latest artifact breadcrumb written by
+  `/artifacts?path=...`.
+- The result starts as a safe `/artifacts` fallback and hydrates after load
+  from `localStorage:clankeros-last-artifact`; when a record exists, it changes
+  to `Open last artifact` and points at the bounded `/artifacts?path=...`
+  viewer.
+- Preserved the promotion boundary: the command palette reads browser-local
+  artifact memory on GET; canonical workspace state still changes only through
+  the confirmed `/workspace#save-workspace` flow.
+- TDD evidence: the focused route smoke test failed first on the missing
+  `data-command-palette-last-artifact='true'` marker, then passed after the
+  palette section, evidence rows, and JS hydrator were added.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after the implementation.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/OPERATING_SUMMARY.md docs/local-app.md docs/status.md status.md`:
+    passed.
+- Non-claim: this is browser-local palette/navigation UX only. It does not
+  write workspace JSON on GET, broaden artifact access, execute artifact
+  content, approve work, execute tasks, deploy, call providers, use the
+  network from the app, create PRs, push from the app, or mutate external
+  systems from ClankerOS.
+
+## 2026-07-01 Global Last Artifact Shortcut UX
+
+- Extended the shared Recent Items Artifact card so every local-app route can
+  read browser-local `localStorage:clankeros-last-artifact` after load and turn
+  the card into an `Open last artifact` shortcut when a recent artifact exists.
+- Kept the existing saved-workspace fallback intact: before browser-local
+  hydration, the Artifact card still uses `.clanker/app/workspace.json`
+  `last_viewed_artifact` when present, or `/workspace` when none exists.
+- Preserved the promotion boundary: Recent Items reads browser-local artifact
+  memory on GET; canonical workspace state still changes only through the
+  confirmed `/workspace#save-workspace` flow.
+- TDD evidence: the focused route smoke test failed first on the missing
+  `data-recent-items-last-artifact='true'` marker, then passed after the
+  Recent Items card, evidence rows, and JS hydrator were added.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after the implementation.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/OPERATING_SUMMARY.md docs/local-app.md docs/status.md status.md`:
+    passed.
+- Non-claim: this is browser-local navigation/resume UX only. It does not
+  write workspace JSON on GET, broaden artifact access, execute artifact
+  content, approve work, execute tasks, deploy, call providers, use the
+  network from the app, create PRs, push from the app, or mutate external
+  systems from ClankerOS.
+
+## 2026-07-01 Resume Last Artifact UX
+
+- Added a `Last Artifact` card to `/resume` inside the existing
+  `Browser Resume` panel. It reads browser-local
+  `localStorage:clankeros-last-artifact` after load and links back to the most
+  recently opened artifact without requiring a saved workspace anchor.
+- Kept the boundary explicit: `/resume` only reads browser-local artifact
+  memory on GET; promoting that artifact to the canonical
+  `.clanker/app/workspace.json` resume anchor still requires the confirmed
+  `/workspace#save-workspace` flow.
+- TDD evidence: the focused route smoke test failed first on the missing
+  `data-browser-resume-artifact-key='clankeros-last-artifact'` marker, then
+  passed after the Browser Resume card and JS updater were added.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after the implementation.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/OPERATING_SUMMARY.md docs/local-app.md docs/status.md status.md`:
+    passed.
+- Non-claim: this is browser-local resume UX only. It does not write
+  workspace JSON on GET, broaden artifact access, execute artifact content,
+  approve work, execute tasks, deploy, call providers, use the network from the
+  app, create PRs, push from the app, or mutate external systems from
+  ClankerOS.
+
+## 2026-07-01 Artifact Continuity Memory UX
+
+- Added an `Artifact Continuity` panel to `/artifacts?path=...` that records
+  the opened artifact in browser-local
+  `localStorage:clankeros-last-artifact`, so Workspace can inspect or reset the
+  latest artifact breadcrumb without requiring a durable workspace save.
+- Added a `Last Artifact` card to `/workspace#workspace-view-memory`, bringing
+  that breadcrumb into the same resettable browser-memory console as route
+  history, scroll state, artifact filters, notes, approvals, inbox, and profile
+  filters.
+- Preserved the explicit promotion boundary: the artifact viewer may update
+  browser-local view memory on load, but `.clanker/app/workspace.json` still
+  changes only after the confirmed `save-workspace` form.
+- TDD evidence: the focused route/artifact test selection failed first on the
+  missing Workspace memory card and missing `Artifact Continuity` surface, then
+  passed after the implementation.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_artifact_viewer_is_read_only_and_bounded" --tb=short`:
+    2 passed after the implementation.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/OPERATING_SUMMARY.md docs/local-app.md docs/status.md status.md`:
+    passed.
+- Non-claim: this is browser-local artifact continuity only. It does not write
+  workspace JSON on GET, broaden artifact access, execute artifact content,
+  approve work, execute tasks, deploy, call providers, use the network from the
+  app, create PRs, push from the app, or mutate external systems from
+  ClankerOS.
+
+## 2026-07-01 Codex Branch CI Trigger UX
+
+- Updated `.github/workflows/tests.yml` so pushes to `codex/**` branches run
+  the same `Tests` workflow automatically as main pushes, instead of requiring
+  a manual `workflow_dispatch` after each ClankerOS UX slice.
+- `/verification` now reads back `push_to_codex_branches: configured` beside
+  push-to-main, pull-request, and manual workflow trigger posture, so the
+  browser proof map tells the operator whether codex branch pushes are covered.
+- TDD evidence: the focused workflow/route test selection failed first on the
+  missing `codex/**` trigger and missing `/verification` readback, then passed
+  after the workflow/helper implementation.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py -q -k "github_actions_workflow_runs_automatic_verification or local_app_routes_render_modern_workflow_and_health" --tb=short`:
+    2 passed after the implementation.
+  - `git diff --check -- .github/workflows/tests.yml agent_os/local_app.py tests/test_first_milestone.py docs/github-testing.md docs/local-app.md status.md docs/status.md`:
+    passed.
+- Non-claim: this only changes GitHub workflow triggering and local readback.
+  It does not make the browser app push branches, open PRs, deploy, call
+  providers, fetch GitHub status, or mutate external systems.
+
+## 2026-07-01 Proof Shortcut UX
+
+- Added a global `p` keyboard shortcut and header `Proof` button so the
+  operator can jump from any browser route directly to
+  `/ci-evidence#record-ci-snapshot-json` without hunting through Today,
+  Verification, or CLI commands.
+- The shared browser shell now renders proof shortcut metadata, keyboard help,
+  and no-write/no-provider/no-network/no-external-effect counters beside the
+  existing Next Action, Recent Items, and Finish Today controls.
+- TDD evidence: the focused route test failed first on the missing
+  `proof-open` header control, then passed after the implementation.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed after the implementation.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py docs/OPERATING_SUMMARY.md status.md docs/status.md`:
+    passed.
+- Non-claim: this is browser-local navigation polish only. It does not record
+  CI evidence on GET, approve work, execute tasks, deploy, call providers, use
+  the network from the app, create PRs, push from the app, or mutate external
+  systems from ClankerOS.
+
+## 2026-07-01 Recent Items Shortcut UX
+
+- Added a global `v` keyboard shortcut and header `Recent` button for the
+  existing Recent Items / Viewed Pages rail, making browser-local return paths
+  reachable from every route without scrolling or using the CLI.
+- The Recent Items rail now has a stable `#recent-items` anchor; activating
+  `v` or the header button updates the local hash, scrolls to the rail, and
+  focuses the primary recent link while preserving the existing
+  `localStorage:clankeros-route-history` and `localStorage:clankeros-recent-items-filter`
+  state boundaries.
+- TDD evidence: the focused route test failed first on the missing
+  `#recent-items` anchor/shortcut wiring, then passed after the implementation.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed after the implementation.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py docs/OPERATING_SUMMARY.md status.md docs/status.md`:
+    passed.
+- Non-claim: this is browser-local navigation polish only. It does not change
+  `.clanker/app/workspace.json` on GET, broaden artifact access, execute
+  artifact content, approve work, execute tasks, deploy, call providers, use
+  the network from the app, create PRs, push from the app, or mutate external
+  systems from ClankerOS.
+
+## 2026-07-01 Artifact Shortcut UX
+
+- Added a global `a` keyboard shortcut for `/artifacts`, making the Artifact
+  Index reachable from the same browser shortcut layer as Home, Today, Goals,
+  Resume, Search, Workspace, Next Action, and Finish Today.
+- Shell navigation now renders `Artifacts (a)` shortcut metadata, the
+  `Keyboard Shortcuts` dialog lists `a` as `Open artifacts`, and the shared
+  keydown handler routes `a` to `/artifacts`.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py docs/OPERATING_SUMMARY.md status.md docs/status.md`:
+    passed.
+- GitHub Actions note: previous pushed run `28531550665` for commit
+  `ced147c4f31610a597acc44726f4e17f6e675e4f` had fast smoke passing; its
+  full pytest job was still in progress when checked during this shortcut
+  slice.
+- Non-claim: this is browser-local shortcut and navigation polish only. It
+  does not change artifact access bounds, execute artifact content, write on
+  GET, approve work, execute tasks, deploy, call providers, use the network
+  from the app, create PRs, push from the app, or mutate external systems from
+  ClankerOS.
+
+## 2026-07-01 Workspace Artifact Index View Memory UX
+
+- Added the global Artifact Index filter key,
+  `localStorage:clankeros-artifact-index-filter`, to Workspace View Memory so
+  `/workspace` can inspect and reset the browser-local `/artifacts` filter
+  alongside Goal artifact filters, search lanes, timeline lanes, and other
+  return-path view state.
+- Renamed the existing per-Goal artifact view-memory card to `Goal Artifact
+  Filters` and added a separate `Artifact Index Filter` card, making saved
+  Goal artifact views and the global Artifact Index view easy to distinguish.
+- Updated Workspace View Memory evidence and reset-scope readback to include
+  `artifact-index`, preserving the explicit no-write/no-provider/no-network/
+  no-external-effect boundaries.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py docs/OPERATING_SUMMARY.md status.md docs/status.md`:
+    passed.
+- GitHub Actions note: previous pushed run `28531032189` for commit
+  `dde948c2228756404a5bffb7658ce7aeb0e5c14b` has fast smoke passing while its
+  full pytest job is still running remotely.
+- Non-claim: this is browser-local Workspace view-memory inventory/reset UX
+  only. It does not change `.clanker/app/workspace.json` on GET, broaden
+  artifact access, execute artifact content, approve work, execute tasks,
+  deploy, call providers, use the network from the app, create PRs, push from
+  the app, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Artifact Index UX
+
+- Turned bare `/artifacts` from a missing-path error into a read-only global
+  Artifact Index over ClankerOS-known artifact paths, while preserving
+  `/artifacts?path=...` as the bounded inert single-artifact viewer.
+- Added artifact command cards for Open, Latest, Inventory, Types, and Safety,
+  plus a browser-local type/source/text filter that reuses the existing
+  artifact filter behavior with `localStorage:clankeros-artifact-index-filter`.
+- Expanded known artifacts to include coder worktree review/evidence files,
+  app status/workspace artifacts, and existing memory/status artifacts when
+  present, so the index surfaces the run-review files operators actually need
+  during daily browser work.
+- Search suggestions and shell navigation now expose `/artifacts` directly as
+  `Browse artifacts`; when local artifact evidence exists, Search no longer
+  falls back to empty first-run suggestions.
+- GitHub Actions note: previous run `28499347667` for commit
+  `c22fe3a53f537edde7368f9a5c38cb44c8023934` is now fully successful, with
+  both fast smoke and full pytest jobs green.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py status.md docs/status.md`:
+    passed.
+- Non-claim: this is browser artifact index/navigation/filter UX only. It does
+  not broaden artifact access beyond known repo-relative artifact paths, write
+  on GET, execute artifact content, approve work, execute tasks, deploy, call
+  providers, use the network from the app, create PRs, push from the app, or
+  mutate external systems from ClankerOS.
+
+## 2026-07-01 Deterministic Timeline Latest UX
+
+- Added a stable Goal timeline tie-breaker so same-second lifecycle events,
+  review artifacts, and generated artifact records sort predictably across
+  local Python and GitHub Actions environments.
+- The Today Session Summary and Activity Digest can now keep their `Latest`
+  event focused on the workflow lifecycle event, such as the completed coder
+  run, instead of letting same-timestamp artifact enumeration accidentally
+  become the newest item.
+- Hardened the demo assertion for latest artifact labels to require
+  human-readable coder-run review copy while allowing the bounded artifact
+  record to come from the latest registered artifact path.
+- GitHub Actions root cause: run `28498425453` failed fast smoke in
+  `test_local_app_demo_scenario_populates_fixture_state` because CI selected a
+  different same-timestamp latest timeline item than local isolated runs.
+- GitHub Actions follow-up: run `28499106431` exposed the sibling artifact
+  selector issue, where the Today Activity Digest could prefer a recent raw
+  artifact timeline item over the operator-facing coder-run review artifact.
+  Latest artifact selection now uses a deterministic artifact-record rank, and
+  the Today Activity Digest prefers the ranked artifact registry before falling
+  back to raw timeline artifact events.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed after the artifact selector fix.
+  - Exact GitHub fast-smoke pytest selection:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "<15 local-app/CI smoke tests>"`:
+    15 passed, 502 deselected.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py status.md docs/status.md`:
+    passed.
+- Non-claim: this is deterministic local browser timeline ordering and test
+  hardening only. It does not broaden artifact access, write on GET, approve
+  work, execute tasks, deploy, call providers, use the network from the app,
+  or mutate external systems from ClankerOS.
+
+## 2026-07-01 Artifact Source Label UX
+
+- Updated `/artifacts?path=...` relationship-map source links so run-backed
+  artifacts render operator-facing labels such as `Open run run_demo` instead
+  of raw `/runs/run_demo` route text.
+- Added explicit `artifact_relationship_source_href` and
+  `artifact_relationship_source_label` evidence rows so the exact local route
+  remains auditable while the visible card copy is easier to scan.
+- Preserved bounded artifact-reader safety: no raw filesystem browsing, no
+  content execution, no writes on GET, no provider calls, no network actions,
+  and no external effects.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_artifact_viewer_is_read_only_and_bounded -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py status.md docs/status.md`:
+    passed.
+- Non-claim: this is browser artifact relationship-map copy/evidence polish
+  only. It does not broaden artifact access, write on GET, execute artifact
+  content, approve work, execute tasks, deploy, call providers, use the
+  network from the app, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Goal Workflow Action Dock Routing UX
+
+- Updated Goal workflow/continuation guidance so waiting local action gates
+  route to the `Goal Action Dock` section instead of the older generic
+  `#goal-next-action` anchor.
+- Approval gates in the Goal Continuation Rail, Goal Workflow Map, command
+  palette continuation readback, and action-result workflow map now render
+  `Review approvals` as operator-facing copy while preserving the raw
+  `/approvals` route in the link href.
+- First-run and failed-action recovery fallbacks that have a Goal context now
+  return operators to `/goals/<goal_id>#goal-action-dock`, keeping recovery
+  and handoff flows pointed at the actionable browser surface.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py status.md docs/status.md`:
+    passed.
+- Non-claim: this is browser navigation/copy polish only. It does not write on
+  GET, approve work, execute tasks, run broad local verification, deploy, call
+  providers, use the network from the app, or mutate external systems from
+  ClankerOS.
+
+## 2026-07-01 Goal Return Brief Label UX
+
+- Updated the Goal Return Brief so its visible context line names the working
+  Goal, concrete next action, and blocker action, for example
+  `Demo the ClankerOS local operator app with fixture-backed state`,
+  `Create commit request`, and `Review approvals`.
+- Return Brief evidence now preserves the raw `goal_return_goal` id while
+  adding `goal_return_goal_label`, `goal_return_goal_label_source`, and
+  `goal_return_goal_surface`.
+- Blocker and resume evidence now show operator-facing action labels through
+  `goal_return_blocker_surface` and `goal_return_resume_surface`, while
+  `goal_return_blocker_href` and `goal_return_resume_href` retain exact raw
+  local routes such as `/approvals` and `/resume`.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py status.md docs/status.md`:
+    passed.
+- GitHub Actions note: previous pushed commit `a7269188...` has the fast smoke
+  job passing; its remote full pytest job was still running while this local UX
+  slice was prepared.
+- Non-claim: this is browser Goal Return Brief copy/navigation polish only. It
+  does not write on GET, approve work, execute tasks, run broad local
+  verification, commit, push, create PRs, deploy, call providers, use the
+  network from the app, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Goal Daily Loop Return Target UX
+
+- Updated the Goal Daily Loop so the visible context line names the working
+  Goal and the saved return action, for example
+  `Demo the ClankerOS local operator app with fixture-backed state` and
+  `Create commit request`, instead of making the operator infer the resume
+  target from raw `/goals/<goal_id>` routes.
+- Daily Loop evidence now preserves the raw `goal_daily_loop_goal` id while
+  adding `goal_daily_loop_goal_label`, `goal_daily_loop_goal_label_source`,
+  and `goal_daily_loop_goal_surface`.
+- The Finish Today return target and resume-surface readback are now
+  title/action-first, while `goal_daily_loop_finish_resume_href` and
+  `goal_daily_loop_resume_href` retain the exact `/goals/<goal_id>#...` route
+  for audit and automation.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py status.md docs/status.md`:
+    passed.
+- GitHub Actions note: previous pushed commit `0605437e...` has the fast smoke
+  job passing; its remote full pytest job was still running while this local UX
+  slice was prepared.
+- Non-claim: this is browser Goal Daily Loop copy/navigation polish only. It
+  does not write on GET, approve work, execute tasks, run broad local
+  verification, commit, push, create PRs, deploy, call providers, use the
+  network from the app, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Return Workflow Map Goal Label UX
+
+- Updated Home Day Plan plus the Today, Workspace, and Resume workflow maps so
+  their lead/saved Goal links render the Goal title instead of raw
+  `/goals/<goal_id>` route text.
+- Added explicit `*_goal_id`, `*_goal_label`, and `*_goal_label_source`
+  evidence rows for the return-path workflow maps, preserving the persisted
+  Goal key while making the browser surface readable during daily resume.
+- In the fixture demo, Home, Today, Workspace, and Resume now point back to
+  `Demo the ClankerOS local operator app with fixture-backed state` across
+  their workflow-map and day-plan readbacks.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py status.md docs/status.md`:
+    passed.
+- Non-claim: this is browser return-path workflow-map navigation polish only.
+  It does not write on GET, approve work, execute tasks, run broad local
+  verification, commit, push, create PRs, deploy, call providers, use the
+  network from the app, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Workflow Parent Goal Label UX
+
+- Updated the Workflow page so the Operator Workbench, Scope Picker, Journey,
+  Live State, Finish Today, and Command Bar render the selected parent Goal as
+  a title-first link instead of raw `/goals/<goal_id>` route text.
+- Workflow evidence now preserves explicit `*_goal_id`, `*_goal_label`, and
+  `*_goal_label_source` fields across the scoped workflow panels, so the
+  browser surface is readable while the persisted Goal key remains auditable.
+- The first-run completion target reused by workflow scope selection now also
+  returns the Goal title, so the first delegation completion path points back
+  to `Demo the ClankerOS local operator app with fixture-backed state` instead
+  of asking the operator to decode the Goal id.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py status.md docs/status.md`:
+    passed.
+- Non-claim: this is browser workflow-to-Goal navigation polish only. It does
+  not write on GET, approve work, execute tasks, run broad local verification,
+  commit, push, create PRs, deploy, call providers, use the network from the
+  app, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Run Readiness Parent Goal UX
+
+- Updated the coder-run `Run Readiness Strip` so it includes a visible parent
+  Goal card between the Run and Review cards.
+- The readiness strip now resolves the parent Goal title for the card and for
+  `run_readiness_goal_surface`, while preserving the raw
+  `run_readiness_goal` id plus `run_readiness_goal_label` and
+  `run_readiness_goal_label_source` evidence fields.
+- In the populated demo, the run readiness strip now links back to
+  `Demo the ClankerOS local operator app with fixture-backed state` instead of
+  labeling the parent Goal link as raw `/goals/<goal_id>` route text.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this is browser coder-run-to-Goal navigation polish only. It does
+  not write on GET, approve work, execute tasks, run broad local verification,
+  commit, push, create PRs, deploy, call providers, use the network from the
+  app, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Delegation Run Parent Goal Label UX
+
+- Updated delegation-run continuation links so the parent Goal card and
+  collapsed evidence show the Goal title instead of raw `/goals/<goal_id>`
+  route text.
+- Delegation-run continuation evidence now preserves the raw
+  `delegation_run_continuation_goal` id while adding
+  `delegation_run_continuation_goal_label` and
+  `delegation_run_continuation_goal_label_source` for the operator-facing
+  label source.
+- In the populated demo, the Delegation Run Continuation Goal card now points
+  back to
+  `Demo the ClankerOS local operator app with fixture-backed state` instead of
+  asking the operator to decode the Goal id.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this is browser delegation-run-to-Goal navigation polish only. It
+  does not write on GET, approve work, execute tasks, run broad local
+  verification, commit, push, create PRs, deploy, call providers, use the
+  network from the app, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Run Parent Goal Label UX
+
+- Updated run-level parent Goal links so the Run Operator Workbench and Run
+  Continuation Strip show the Goal title instead of raw `/goals/<goal_id>`
+  route text.
+- Run workbench evidence now preserves `run_workbench_goal_id` and
+  `run_workbench_goal_label_source`, while the visible and collapsed Goal
+  links use copy such as
+  `Demo the ClankerOS local operator app with fixture-backed state`.
+- Run continuation evidence now exposes
+  `run_continuation_goal_label` and
+  `run_continuation_goal_label_source`, and its Goal card returns to the
+  titled Goal surface instead of asking the operator to decode a raw path.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+- Non-claim: this is browser run-to-Goal navigation polish only. It does not
+  write on GET, approve work, execute tasks, run broad local verification,
+  commit, push, create PRs, deploy, call providers, use the network from the
+  app, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Project Goal Action Entry UX
+
+- Updated project-level Goal entry cards so the Project Operator Workbench and
+  Project Goal Map route the lead Goal card to the concrete current Goal
+  action when one exists, for example
+  `/goals/<goal_id>#goal-action-dock-form` with `Create commit request`,
+  instead of broad `Open lead goal` / `Open Goal` links.
+- The Project Goal Map now reuses the same exact Goal action target for its
+  lead-card surface and no-waiting fallback, while preserving the broad lead
+  Goal identity link in evidence.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+- Non-claim: this is browser project-to-Goal navigation polish only. It does
+  not write on GET, approve work, execute tasks, run broad local verification,
+  commit, push, create PRs, deploy, call providers, use the network from the
+  app, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Recent Goal Item Action Label UX
+
+- Updated the Recent Items Command Bar so a populated Goal shortcut names the
+  concrete Goal in its visible primary/card actions instead of showing generic
+  `Open Goal` copy.
+- Goal recent-item actions now resolve `/goals/<goal_id>` through the existing
+  Goal display-label helper, so the fixture demo renders copy such as
+  `Open Demo the ClankerOS local operator app with fixture-backed state` in
+  the focus button, card button, and collapsed recent-items evidence.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+- Non-claim: this is browser Recent Items copy/navigation polish only. It does
+  not write on GET, approve work, execute tasks, run broad local verification,
+  commit, push, create PRs, deploy, call providers, use the network from the
+  app, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Goal Command Palette Section Label UX
+
+- Updated command-palette Goal section shortcuts so stateful Goal anchors name
+  the current operator context instead of only repeating the Goal title.
+- The palette now labels key entries with concrete state, such as
+  `Goal Next action: Create commit request`,
+  `Goal Decision queue: Create commit request; 1 waiting`,
+  `Goal Approvals: 1 pending`, `Goal Artifacts: 21/21 available`,
+  `Goal Artifact reader: Read coder run <run_id> review`, and
+  `Goal Remaining work: 1 open task(s), 1 waiting, gate commit_request`.
+- Collapsed palette evidence now records each generated Goal section command's
+  operator-facing label next to the exact local anchor surface.
+- Local verification:
+  - Rendered the fixture-backed demo Goal page and confirmed the command
+    palette now exposes the action-aware labels while the old title-only
+    `Goal Next action: Demo...` label is absent.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+- GitHub Actions note: previous pushed commit `3e2df43d...` has the fast smoke
+  job passing; the remote full pytest job was still running when this local UX
+  slice was prepared.
+- Non-claim: this is browser command-palette copy/search polish only. It does
+  not write on GET, approve work, execute tasks, run broad local verification,
+  commit, push, create PRs, deploy, call providers, use the network from the
+  app, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Saved Goal Action Quick Switch CI Fix
+
+- Fixed the GitHub fast-smoke failure from run `28493458234` by extending the
+  saved exact Goal action route behavior to the command palette Quick Switch
+  workspace card when `resume_surface` is
+  `/goals/<goal_id>#goal-action-dock-form`.
+- The Quick Switch workspace card now labels that saved action route with the
+  concrete current action, such as `Create commit request`, while preserving
+  project-only saved routes as `Open saved project`.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q`:
+    1 passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this only changes local browser labeling and test coverage for
+  saved resume surfaces. It does not write on GET, approve work, execute tasks,
+  commit, push, create PRs, deploy, call providers, use the network, or mutate
+  external systems from ClankerOS.
+
+## 2026-07-01 First Goal Creation Exact Action Resume UX
+
+- Updated confirmed `create-goal` handling so the first saved Goal workspace
+  stores the Goal's concrete action-dock route as `resume_surface`, for example
+  `/goals/<goal_id>#goal-action-dock-form`, instead of the broad Goal page.
+- `/resume` now turns that exact saved route into the primary hero action and
+  command/workbench target with the operator-facing label, such as
+  `Create scout delegation`, while preserving the raw exact route in saved
+  workspace evidence.
+- Local verification:
+  - Added failing-first assertions for the `create-goal` workspace JSON,
+    `/resume` hero action, saved-surface readback, command target, and
+    workbench target, then updated the POST handler and label/target helpers.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q`:
+    1 passed.
+- Non-claim: this only changes confirmed local first-Goal workspace state and
+  browser resume routing. It does not write on GET, approve work, execute
+  tasks, commit, push, create PRs, deploy, call providers, use the network, or
+  mutate external systems from ClankerOS.
+
+## 2026-07-01 Goal Note Exact Resume Surface UX
+
+- Updated confirmed `save-goal-note` handling so saving a Goal operator note
+  stores the Goal's operator-notes section as `resume_surface`, for example
+  `/goals/<goal_id>#goal-operator-notes`, instead of the broad Goal page.
+- The saved workspace still remembers `operator-notes.md` as the last viewed
+  artifact, while `/resume` now exposes the exact notes-section route as the
+  saved surface.
+- Local verification:
+  - Added failing-first fixture assertions for the saved note workspace JSON
+    and `/resume` saved-surface readback, then updated the POST handler.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed.
+- Non-claim: this only changes confirmed local Goal note workspace state. It
+  does not write on GET, approve work, execute tasks, commit, push, create
+  PRs, deploy, call providers, use the network, or mutate external systems
+  from ClankerOS.
+
+## 2026-07-01 Save Workspace POST Exact Resume Fallback UX
+
+- Updated confirmed `save-workspace` POST handling so a saved Goal workspace
+  with an omitted or broad Goal `resume_surface` stores the Goal's concrete
+  current action route, for example `/goals/<goal_id>#goal-action-dock-form`,
+  instead of falling back to the broad Goal page from `return_to`.
+- Home, `/workspace`, and `/resume` now read back the same exact saved route
+  after that operator save, so "come back tomorrow" opens the actionable Goal
+  surface instead of only the Goal overview.
+- Local verification:
+  - Added failing-first fixture assertions for the operator save JSON,
+    Home Resume Workspace readback, and `/resume` saved-surface evidence,
+    then updated the POST handler.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this only changes confirmed local workspace save behavior. It
+  does not write on GET, approve work, execute tasks, commit, push, create
+  PRs, deploy, call providers, use the network, or mutate external systems
+  from ClankerOS.
+
+## 2026-07-01 Workspace Exact Resume Defaults UX
+
+- Updated `/workspace` save defaults and restore guidance so suggested or
+  repairable saved Goal resume targets use the Goal's concrete current action
+  route as `resume_surface`, for example
+  `/goals/<goal_id>#goal-action-dock-form`, instead of the broad Goal page.
+- The Workspace Restore Map now uses the same operator-facing next-action
+  label as the Goal action dock, such as `Create commit request`, when it
+  links the suggested return route.
+- Local verification:
+  - Added failing-first fixture assertions for the suggested Workspace restore
+    map, save-defaults readback, hidden `resume_surface`, and repair of an
+    old broad `/goals/<goal_id>` saved route, then updated the renderer.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this only improves local browser workspace guidance and confirmed
+  save form defaults. It does not write on GET, approve work, execute tasks,
+  commit, push, create PRs, deploy, call providers, use the network, or mutate
+  external systems from ClankerOS.
+
+## 2026-07-01 Home Remember Current Goal Resume Surface UX
+
+- Updated the root `/` Home Resume Workspace `Remember Current Goal` form so
+  it saves the lead Goal's concrete current action route as `resume_surface`,
+  for example `/goals/<goal_id>#goal-action-dock-form`, instead of the broad
+  Goal page.
+- The Home Resume Workspace readback now exposes
+  `home_resume_remember_resume_surface` with the same operator-facing action
+  label as the Goal action dock, such as `Create commit request`.
+- Local verification:
+  - Added a failing-first fixture assertion for the Home Resume Workspace
+    hidden `resume_surface` and concrete readback, then updated the renderer.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this only improves the confirmed local workspace resume payload.
+  It does not write on GET, approve work, execute tasks, commit, push, create
+  PRs, deploy, call providers, use the network, or mutate external systems
+  from ClankerOS.
+
+## 2026-07-01 Home Day Plan Resume Surface UX
+
+- Updated the root `/` Home Day Plan Finish Today form so it saves the current
+  concrete Goal action surface as `resume_surface`, for example
+  `/goals/<goal_id>#goal-action-dock-form`, instead of only saving the lead
+  Goal, filters, panels, and latest artifact.
+- The Day Plan evidence and readback now expose
+  `home_day_plan_finish_resume_surface` plus `day_plan_finish_resume`, using
+  the same operator-facing action label as the Goal action dock, such as
+  `Create commit request`.
+- Local verification:
+  - Added failing-first fixture assertions for the Home Day Plan hidden
+    `resume_surface`, preflight submitted field count, and concrete resume
+    readback, then updated the renderer.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this only improves the confirmed local workspace resume payload.
+  It does not write on GET, approve work, execute tasks, commit, push, create
+  PRs, deploy, call providers, use the network, or mutate external systems
+  from ClankerOS.
+
+## 2026-07-01 Home Recent Activity Artifact UX
+
+- Updated the root `/` Home Recent Activity command card so the Artifacts card
+  carries the latest Goal artifact even when the bounded recent timeline window
+  is full of newer run/approval events.
+- The card and collapsed `home_activity_artifact_surface` evidence now route to
+  the exact bounded `/artifacts?path=...` target and use concrete copy such as
+  `Open coder run <run_id> review` instead of falling back to `Search artifacts`
+  or generic `Open artifact` labels.
+- Local verification:
+  - Added failing-first assertions against the fixture-backed demo Home page,
+    then updated the Home activity builder and artifact action label helper.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this is browser copy/routing polish only. It does not read raw
+  filesystem paths outside the bounded artifact viewer, run verification,
+  approve work, execute tasks, commit, push, create PRs, deploy, call providers,
+  use the network, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Goal Quick Artifact Action UX
+
+- Updated `/goals/<goal_id>` command-palette Quick Switch and the Goal Review
+  Strip artifact card so artifact links name the exact artifact action, for
+  example `Open coder run <run_id> review` and
+  `Read coder run <run_id> review`, instead of generic `Open artifact` or
+  `Read artifact` copy.
+- Added a shared artifact action-label helper that can use a Goal artifact
+  record when available and falls back to a concrete filename for saved
+  workspace artifact paths.
+- Local verification:
+  - Rendered the fixture-backed demo Goal page and confirmed the concrete
+    open/read labels appear while the old generic quick-switch label does not.
+  - `python3 -m compileall agent_os/local_app.py`: passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+- GitHub Actions note: previous pushed commit `ef0768fa...` has the fast smoke
+  job passing; the remote full pytest job was still running when this local UX
+  slice was prepared for push.
+- Non-claim: this is browser copy/routing polish only. It does not read raw
+  filesystem paths, run broad local verification, approve work, execute tasks,
+  commit, push, create PRs, deploy, call providers, use the network from the
+  app, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Goal Timeline Artifact Action Label UX
+
+- Updated `/goals/<goal_id>` scan-first Goal history surfaces so latest
+  artifact links in `Goal Activity Pulse` and `Goal Timeline Digest` use the
+  concrete artifact action label, for example
+  `Open coder run <run_id> review`, instead of generic `Open artifact` or
+  `Latest artifact` copy.
+- The cards now route through the bounded Goal artifact registry target while
+  preserving the event/timeline summary text in the card body.
+- Collapsed evidence now records
+  `goal_activity_pulse_latest_artifact_label` and
+  `timeline_digest_latest_artifact_label` next to the exact artifact surfaces.
+- Local verification:
+  - Added failing-first assertions against the fixture-backed demo Goal page,
+    then updated the renderers.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this is browser copy/routing polish only. It does not read raw
+  filesystem paths, run verification, approve work, execute tasks, commit,
+  push, create PRs, deploy, call providers, use the network, or mutate
+  external systems from ClankerOS.
+
+## 2026-07-01 Skills Usage Primary Action Label UX
+
+- Updated the `/skills` Skills Usage Map `Now` card so its primary action
+  names the selected skill, for example `Open local-files skill`, instead of
+  showing the generic `Open artifact` label.
+- Collapsed usage-map evidence now records
+  `skills_usage_map_primary_label` alongside the existing exact artifact link,
+  preserving the operator-facing copy and the local target separately.
+- Local verification:
+  - Added a failing-first fixture assertion for the demo skills route, then
+    updated the renderer.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this is browser copy/evidence polish only. It does not install
+  skills, execute skills, approve work, run verification, commit, push, create
+  PRs, deploy, call providers, use the network, or mutate external systems
+  from ClankerOS.
+
+## 2026-07-01 Action Result Workflow Action Label UX
+
+- Replaced the remaining generic `Continue workflow` link in confirmed
+  action-result command cards with the concrete next operator action already
+  computed for that result page.
+- First-run setup results now route the Workflow card to
+  `#action-result-next-step-form` as `Create first goal`, and saved-Goal
+  commit-request results route it to the same inline next-step form as
+  `Approve commit`.
+- Collapsed result evidence now records
+  `action_result_command_workflow_surface` and
+  `action_result_command_workflow_summary`, preserving the exact local target
+  and current action label for review.
+- Local verification:
+  - Added failing-first assertions to the first-run action-result path and the
+    saved-Goal commit-request path.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q`:
+    1 passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form -q`:
+    1 passed.
+- Non-claim: this only improves post-action browser routing and evidence. It
+  does not approve work, execute tasks, run verification, commit, push, create
+  PRs, deploy, call providers, use the network, or mutate external systems
+  from ClankerOS.
+
+## 2026-07-01 Goal Task Closeout Current Action UX
+
+- Updated blocked `Goal Task Closeout` states so they point back to the
+  current concrete Goal action instead of generic `Continue workflow` copy.
+- When publication handoff evidence is not ready but the Goal's next safe
+  browser action is available, the closeout panel now links to
+  `#goal-action-dock-form` with labels such as `Create publication request`.
+- Local verification:
+  - Added a failing-first assertion against the publication-request gate in
+    `test_goal_next_action_card_exposes_commit_publication_gate_forms`, then
+    updated the candidate routing.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q`:
+    1 passed.
+- Non-claim: this only improves Goal-page browser routing for blocked
+  closeout guidance. It does not run verification, approve work, execute
+  tasks, commit, push, create PRs, deploy, call providers, use the network, or
+  mutate external systems from ClankerOS.
+
+## 2026-07-01 Goal Board Card Action Labels UX
+
+- Replaced generic `Use action form` Goal-board card copy with the concrete
+  current Goal action label, such as `Create commit request`, while preserving
+  the existing action-form href and confirmation boundary.
+- This makes `/goals` more useful as a daily Goal picker: each lane card now
+  names the actual next action instead of asking the operator to infer it from
+  the metrics below the title.
+- Local verification:
+  - Added a failing-first fixture assertion for the ready-to-commit demo Goal
+    card link, then updated the renderer.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+- Non-claim: this is browser copy/routing polish only. It does not change GET
+  behavior, approve work, execute tasks, commit, push, create PRs, deploy, call
+  providers, use the network, or mutate external systems from ClankerOS.
+
+## 2026-07-01 CI Evidence Readiness Strip UX
+
+- Added a scan-first `CI Evidence Readiness Strip` to `/ci-evidence` between
+  the existing `CI Proof Workbench` and `CI JSON Assistant`.
+- The strip shows five visible cards for current proof posture, latest local
+  CI record, operator-supplied GitHub JSON, the confirmed local recorder, and
+  the no-fetch safety boundary.
+- Collapsed evidence preserves the same proof contract as the command bar:
+  command status, handoff/snapshot record counts, branch/current commit,
+  current proof, latest source/status/scope/commit/run id, next action, target
+  surface, reason, and explicit no-write/no-fetch/no-effect counters.
+- Covered the current fixture state where one successful handoff record exists
+  for `abc123` but the temporary checkout commit is unknown, so the visible
+  next action remains `Confirm checkout then record CI proof`.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed.
+  - `python3 -m compileall agent_os/local_app.py`: passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py status.md docs/status.md docs/OPERATING_SUMMARY.md`:
+    passed.
+- Non-claim: this only improves CI evidence orientation in the browser; it
+  does not fetch GitHub status, run tests, record proof on GET, approve,
+  execute work, commit, push, create PRs, deploy, call providers, use the
+  network, or mutate external systems.
+
+## 2026-07-01 Health Readiness Strip UX
+
+- Added a scan-first `Health Readiness Strip` to `/health` between the
+  existing `Health Operator Workbench` and `Health Command Bar`.
+- The strip shows five visible cards for local bind scope, initialized local
+  storage, workflow import readiness, the next local action, and the safety
+  boundary for the refreshed local status artifact.
+- Collapsed evidence preserves the same operator contract as the surrounding
+  health surfaces: ready/warnings status, warning count, bind, branch/commit,
+  storage totals, workflow status, status-artifact link,
+  `status_artifact_write_on_get=true`, target surface, and explicit zero
+  provider/network/external-effect counters.
+- Covered both ready and nonlocal-warning states: local `127.0.0.1:8787`
+  renders ready cards and `/resume` as the next action, while `0.0.0.0:8787`
+  renders warning cards and routes the operator to `#health-warnings`.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q`:
+    1 passed.
+  - `python3 -m compileall agent_os/local_app.py`: passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py status.md docs/status.md docs/OPERATING_SUMMARY.md`:
+    passed.
+- Non-claim: this only improves health-page orientation in the browser; it
+  does not approve, reject, execute work, commit, push, create PRs, deploy,
+  call providers, use the network, or mutate external systems beyond the
+  existing bounded local status-artifact write on `/health` GET.
+
+## 2026-07-01 Run Readiness Strip UX
+
+- Added a scan-first `Run Readiness Strip` to `/runs/<coder_run_id>` between
+  the `Run Command Bar` and the `Run Operator Workbench`.
+- The strip shows five visible cards for run status, review gate, bounded
+  evidence, next local action, and safety posture. Its collapsed evidence
+  readback includes the current run gate, gate progress, review status,
+  changed-file count, diff summary, action-form availability, target surface,
+  and explicit no-effect counters.
+- Covered both ready and blocked review states: a reviewed demo run shows
+  `action_form_ready` for `Create commit request`, while a missing review file
+  shows `same_page_review` and keeps the commit-request form unavailable.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`:
+    1 passed.
+  - `python3 -m compileall agent_os/local_app.py`: passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+- Non-claim: this only improves run-page orientation in the browser; it does
+  not approve, reject, execute work, commit, push, create PRs, deploy, call
+  providers, use the network, or mutate external systems from page load.
+
+## 2026-07-01 Approval Readiness Strip UX
+
+- Added a scan-first `Approval Readiness Strip` to `/approvals` between the
+  operator workbench and the older command/filter inventory.
+- The strip shows queue counts, the focused approval decision, scoped
+  Goal/run/delegation context, evidence artifact routing, after-decision
+  guidance, and the existing confirmed approval form anchor when a decision is
+  ready.
+- Preserved safety boundaries: read-only GET, no approval on page load, no
+  execution on page load, no provider calls, no network actions, no push, no
+  PR, no deploy, and no external effects.
+- Local verification:
+  - `PYTHONPATH=. python3 -m compileall -q agent_os tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check`: passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state"`:
+    2 passed, 515 deselected.
+- Non-claim: this only improves approval queue orientation in the browser; it
+  does not approve, reject, run work, commit, push, create PRs, deploy, call
+  providers, or mutate external systems from ClankerOS.
+
+## 2026-07-01 Profile Routing Readiness UX
+
+- Added a scan-first `Profile Routing Readiness` strip to `/profiles` between
+  the operator workbench and the detailed command/matrix surfaces.
+- The strip shows inactive routing posture, storage/configured profile counts,
+  lane readiness counts, and the next local inspection surface while keeping
+  provider and model routing explicitly disabled.
+- Preserved safety boundaries: read-only GET, no provider calls, no network
+  actions, no execution, no push, no PR, no deploy, and no external effects.
+- Local verification:
+  - `PYTHONPATH=. python3 -m compileall -q agent_os tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check`: passed.
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py -q -k "profiles_route_reads_storage_profiles_without_enabling_providers or local_app_demo_scenario_populates_fixture_state"`:
+    2 passed, 515 deselected.
+- Non-claim: this only improves profile-routing browser orientation; it does
+  not enable providers, models, routing decisions, execution, cost tracking,
+  scheduling, GitHub mutation, deploys, or trust promotion.
+
+## 2026-07-01 Search Suggestions UX
+
+- Added a visible read-only `Search Suggestions` panel to `/search` before the
+  `Search Operator Workbench`, so operators can start from current local state
+  instead of guessing query strings.
+- Suggestions derive from the current Goal title, next action, registered
+  projects, approvals, incidents/recommendations, memory, skills, and known
+  artifact paths when present. Empty first-run search falls back to `/goals`
+  and `/demo` links instead of showing only a blank form.
+- Preserved search trust boundaries: suggestions are GET-only links over
+  indexed local state, record source/query/surface evidence, and report zero
+  provider calls, network actions, external effects, and raw filesystem
+  browsing.
+- Local verification: `df -h /System/Volumes/Data` showed 73Gi free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  passed; focused pytest
+  `tests/test_first_milestone.py -k 'test_local_app_routes_render_modern_workflow_and_health or test_local_app_demo_scenario_populates_fixture_state'`
+  passed (`2 passed, 515 deselected`); and
+  `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+  passed with all route markers matched and provider/network/external
+  mutation counters at `0`.
+- Non-claim: this change only improves browser search discovery. It does not
+  write search state on GET, browse raw filesystem paths, call providers,
+  poll GitHub, perform network work, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
+## 2026-07-01 Memory Workbench Pin Form UX
+
+- Made `/memory` usable from the top workbench when proposed memories are
+  waiting: the `Memory Operator Workbench` now opens a same-page
+  `pin-memory` form for the first proposed memory before collapsed evidence.
+- Preserved the existing trust boundary. The top form uses the existing
+  confirmed `pin-memory` POST action, keeps GET read-only, records evidence
+  rows for form availability, target memory id, action, confirmation
+  requirement, and zero provider/network/external effects, and renders no form
+  in empty memory states.
+- Updated focused route/demo coverage for the proposed-memory happy path,
+  empty-state absence, DOM ordering before workbench evidence, and hidden
+  `memory_id` handoff to the existing action.
+- Local verification: `df -h /System/Volumes/Data` showed 74Gi free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  passed; focused pytest
+  `tests/test_first_milestone.py -k 'test_local_app_routes_render_modern_workflow_and_health or test_local_app_demo_scenario_populates_fixture_state'`
+  passed (`2 passed, 515 deselected`); and
+  `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+  passed with all route markers matched and provider/network/external
+  mutation counters at `0`.
+- Non-claim: this change is a browser UX improvement for confirmed local
+  memory pinning only. It does not write on GET, browse raw filesystem paths,
+  call providers, perform network work, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
+## 2026-07-01 Goal Artifact Reader Focus UX
+
+- Made the Goal Artifact Reader show a visible selected-artifact focus strip
+  for Selected, Type, Source, Open, and Safety before the collapsed evidence
+  and previews.
+- Replaced generic `Open full artifact` reader links with concrete labels such
+  as `Open coder run <run_id> review`; the browser-local reader update script
+  keeps those labels and the focus strip in sync when a different registered
+  artifact is selected.
+- Preserved exact audit evidence: `goal_artifact_reader_full_surface` still
+  contains the raw `/artifacts?path=...` route, while new
+  `goal_artifact_reader_open_label`, `goal_artifact_reader_open_surface`, and
+  `goal_artifact_reader_focus_available` rows expose the operator-facing
+  label and focus state.
+- Local verification: `df -h /System/Volumes/Data` showed 73Gi free before the
+  proof loop; `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check -- agent_os/local_app.py
+  tests/test_first_milestone.py docs/OPERATING_SUMMARY.md docs/status.md
+  status.md`, focused pytest (`2 passed, 515 deselected`), and
+  `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` all passed.
+- Non-claim: this change only adjusts read-only artifact-reader labels,
+  browser-local selection display, and evidence rows; it does not execute
+  artifacts, browse raw filesystem paths, write on GET, call providers, use
+  the network, push, create PRs, deploy, or mutate external systems.
+
+## 2026-07-01 Next Action Source Label UX
+
+- Made the Goal Next Action focus strip use operator-facing source labels.
+  The third card now says `Action source` and links as `Review run <run_id>`
+  for run-backed actions instead of showing a generic `Target` label with a
+  raw route.
+- Preserved exact audit evidence: `next_action_focus_source_surface` still
+  contains the raw source href, while new `next_action_focus_source_label` and
+  `next_action_focus_source_label_surface` rows expose the human label.
+- Updated focused demo coverage so the ready-to-commit Goal proves the visible
+  `Action source` card, the `Review run <run_id>` link, the absence of the old
+  `Target` focus label, and unchanged raw source evidence.
+- Local verification: `df -h /System/Volumes/Data` showed 74Gi free before the
+  proof loop; `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check -- agent_os/local_app.py
+  tests/test_first_milestone.py docs/OPERATING_SUMMARY.md docs/status.md
+  status.md`, focused pytest (`2 passed, 515 deselected`), and
+  `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` all passed.
+- Non-claim: this change only adjusts read-only labels/evidence on the Goal
+  page; it does not deploy, create a PR, call providers, write on GET, push
+  from the app, or add any external mutation path.
+
+## 2026-06-30 Session Artifact Card Label UX
+
+- Made the Today Activity Digest and Goal Session Digest latest-artifact cards
+  name the concrete artifact/event they open instead of relying on generic
+  latest-artifact copy. In the demo state, Today now labels the artifact card
+  with concrete coder-run copy such as `Artifact recorded: coder run <run_id>
+  verification stderr.` or `Open coder run <run_id> review`, and the Goal
+  Session Digest uses `Open coder run <run_id> review`.
+- Also made the Goal Coder Handoff Digest Execute and Ship cards name the
+  concrete selected run when they open a run surface, replacing the last
+  generic latest-run labels in `agent_os/local_app.py`.
+- Preserved exact audit evidence with raw-surface rows:
+  `today_activity_digest_latest_artifact_raw_surface` and
+  `goal_session_digest_latest_artifact_raw_surface`. The visible browser UI is
+  more operator-readable while review/replay can still inspect exact
+  `/artifacts?path=...` targets.
+- Added `_goal_latest_artifact_record` so surfaces that need a human label can
+  reuse the same latest existing artifact selection as the artifact path
+  helper without changing artifact viewer behavior.
+- Updated focused route/demo coverage for concrete Today and Goal Session
+  artifact labels, raw artifact href evidence, and absence of stale `Open
+  latest` copy on the rendered demo Goal page.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused route/demo pytest
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`); and temp-root `python3 -m agent_os.cli --root "$scratch"
+  app-demo-smoke-test` with all demo routes matched and provider/network/
+  external mutation counters at `0`.
+- Non-claim: remote GitHub Actions proof for this slice is pending until it is
+  pushed and read back. This change only adjusts read-only labels and evidence
+  rows; it did not deploy, create a PR, call providers, write on GET, push
+  from the app, or add any external mutation path.
+
+## 2026-06-30 Project Goal Map Run Workflow Label UX
+
+- Made the `/projects/<project_id>` Project Goal Map Work card name the
+  concrete coder run it opens. When a run exists, the visible action now reads
+  `Open run <run_id> workflow` instead of generic `Open latest run workflow`
+  copy, while the empty-project case still shows `Open workflow`.
+- Preserved exact audit evidence with new rows:
+  `project_goal_map_workflow_label` and
+  `project_goal_map_workflow_raw_surface`, so the UI is operator-readable and
+  review/replay can still inspect the raw `/workflow?run_id=<run_id>` target.
+- Updated focused route/demo coverage for the run-specific workflow label,
+  raw workflow href evidence, and the empty-project `/workflow` fallback.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused route/demo pytest
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`); and temp-root `python3 -m agent_os.cli --root "$scratch"
+  app-demo-smoke-test` with all demo routes matched and provider/network/
+  external mutation counters at `0`.
+- Non-claim: remote GitHub Actions proof for this slice is pending until it is
+  pushed and read back. This change only adjusts read-only labels and evidence
+  rows; it did not deploy, create a PR, call providers, write on GET, push
+  from the app, or add any external mutation path.
+
+## 2026-06-30 Goal Evidence Artifact Label UX
+
+- Made the Goal Evidence Command Bar and Goal Artifact Command Bar name the
+  concrete artifact they open instead of showing generic `Open latest Goal
+  artifact` or `Open latest artifact` copy. The demo Goal now shows labels
+  such as `Open coder run <run_id> verification stderr` for the latest
+  evidence artifact and `Open coder run <run_id> review` for the latest review
+  artifact.
+- Preserved exact href evidence with new raw/artifact-surface rows:
+  `goal_evidence_command_latest_raw_surface`,
+  `goal_evidence_command_latest_artifact_surface`,
+  `goal_artifact_command_latest_raw_surface`, and
+  `goal_artifact_command_latest_artifact_surface`.
+- Updated focused demo coverage for concrete evidence/artifact action labels,
+  human-labeled latest surfaces, raw href evidence, and collapsed list entries.
+- Verification passed locally: data volume postcheck had `73Gi` free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`;
+  `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py
+  docs/OPERATING_SUMMARY.md docs/status.md status.md`; focused route/demo
+  pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`); and temp-root `python3 -m agent_os.cli --root "$scratch"
+  app-demo-smoke-test` with all demo routes matched and provider/network/
+  external mutation counters at `0`.
+- GitHub readback for the previous commit
+  `b62f2c910f158999f12446eb24af561e6fb591f6` showed Actions run
+  `28477260032` with `Fast smoke verification` successful and `Full pytest
+  suite` still in progress before this new slice was committed.
+- Non-claim: remote GitHub Actions proof for this slice is pending until it is
+  pushed and read back. This change only adjusts read-only labels and evidence
+  rows; it did not deploy, create a PR, call providers, write on GET, push
+  from the app, or add any external mutation path.
+
+## 2026-06-30 Goal Return Latest Label UX
+
+- Made the Goal Return Brief and Goal Session Digest use concrete latest-event
+  labels instead of generic `Open latest activity` copy or raw href text. For
+  the ready-to-commit demo Goal, both return-to-work surfaces now show
+  `Execution completed: <run_id>.` while opening the same `/runs/<run_id>`
+  local run page.
+- Preserved exact target evidence with new raw-surface rows and list entries:
+  `goal_return_latest_activity_raw_surface` and
+  `goal_session_digest_latest_raw_surface`. The visible resume UI is more
+  operator-readable while review/replay can still inspect the exact local
+  route.
+- Updated focused demo coverage for the Goal Return Brief and Goal Session
+  Digest latest labels, human-labeled links, raw href evidence, and collapsed
+  evidence list entries.
+- Verification passed locally: data volume precheck/postcheck had `72Gi`
+  free; `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; `git diff --check --
+  agent_os/local_app.py tests/test_first_milestone.py`; focused route/demo
+  pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`); and temp-root `python3 -m agent_os.cli --root "$scratch"
+  app-demo-smoke-test` with all demo routes matched and provider/network/
+  external mutation counters at `0`.
+- GitHub readback for the previous commit
+  `f8a73332487551183133d42d7da263a161cf5f2a` showed Actions run
+  `28476649818` with `Fast smoke verification` successful and `Full pytest
+  suite` still in progress before this new slice was committed.
+- Non-claim: remote GitHub Actions proof for this slice is not claimed by this
+  entry and should be read back after push. This change only adjusts read-only
+  labels and evidence rows; it did not deploy, create a PR, call providers,
+  write on GET, push from the app, or add any external mutation path.
+
+## 2026-06-30 Home Today Goal Latest Label UX
+
+- Replaced generic `Open latest` labels on the Home, Today, and Goal detail
+  operator surfaces with concrete action labels. Today Session Summary, Today
+  Activity Digest, Home Activity Command Bar, Goal Review Strip, Goal Activity
+  Pulse, and Goal Evidence Digest now name the event or artifact they open,
+  such as `Execution completed: <run_id>.`, `Create Project`, `Open goals`, or
+  `Open coder run <run_id> review`.
+- Preserved exact href evidence with new raw-surface rows and list entries:
+  `today_session_latest_raw_surface`,
+  `today_activity_digest_latest_raw_surface`,
+  `home_activity_command_latest_raw_surface`,
+  `goal_review_latest_raw_surface`,
+  `goal_activity_pulse_latest_raw_surface`, and
+  `goal_evidence_digest_latest_raw_surface`. The visible browser UI is more
+  human-readable while review/replay can still inspect the local route target.
+- Updated focused coverage for first-run and fixture-backed ready-to-commit
+  states so the app proves both the human label and the raw surface across
+  Home, Today, Goal Review, Activity Pulse, Timeline-adjacent evidence, and
+  Evidence Digest panels.
+- Verification passed locally: data volume precheck had `73Gi` free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`;
+  `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py`;
+  focused route/demo pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`); and temp-root `python3 -m agent_os.cli --root "$scratch"
+  app-demo-smoke-test` with all demo routes matched and provider/network/
+  external mutation counters at `0`.
+- GitHub readback for the previous commit
+  `134d289f8dfceab7f3ebefa0da9ad8e7527351fc` showed Actions run
+  `28475844915` with `Fast smoke verification` successful and `Full pytest
+  suite` still in progress.
+- Non-claim: pushed GitHub Actions proof is pending for this new slice until it
+  is committed and pushed. This change only adjusts read-only labels and
+  evidence rows; it did not deploy, create a PR, call providers, write on GET,
+  push from the app, or add any external mutation path.
+
+## 2026-06-30 Goal Timeline Latest Label UX
+
+- Made the Goal timeline and Activity Log top controls name the actual latest
+  event instead of generic `Open latest` / `Target` copy. For the
+  ready-to-commit demo Goal, the primary timeline, timeline digest, and
+  activity links now say `Execution completed: <run_id>.` and open the same
+  `/runs/<run_id>` surface.
+- Added explicit raw-surface evidence rows and list entries
+  (`timeline_command_latest_raw_surface`,
+  `timeline_digest_latest_raw_surface`, and
+  `goal_activity_command_latest_raw_surface`) so review and automation can
+  still inspect the exact href even though the visible UI uses human event
+  labels.
+- Updated focused demo coverage for the concrete latest-event labels, primary
+  latest-event surfaces, raw-surface evidence, and click evidence across the
+  Timeline Command Bar, Goal Timeline Digest, and Goal Activity Command Bar.
+- Verification passed locally: data volume precheck had `74Gi` free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`;
+  `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py`;
+  focused demo pytest `tests/test_first_milestone.py -k
+  'test_local_app_demo_scenario_populates_fixture_state'` (`1 passed, 516
+  deselected`); focused route/demo pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`); and temp-root `python3 -m agent_os.cli --root "$scratch"
+  app-smoke-test` with all route markers matched and provider/network/external
+  mutation counters at `0`.
+- GitHub readback for the previous commit
+  `f67336f9ead59b455d71c667fa9c5b074a588e1c` showed Actions run
+  `28475299124` with `Fast smoke verification` successful and `Full pytest
+  suite` still in progress before this new slice was committed.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice. The timeline/activity affordance remains read-only navigation
+  into existing local surfaces; it did not deploy, create a PR, call providers,
+  write on GET, push from the app, or add any external mutation path.
+
+## 2026-06-30 Search Goal Action UX
+
+- Made Global Search action-aware for Goal results. When a matched Goal has a
+  browser-confirmed current action form, the Search Operator Workbench, Search
+  Result Map, and Search Command Bar now point their primary surfaces directly
+  to `/goals/<goal_id>#goal-action-dock-form` with the concrete action label,
+  such as `Create commit request`, instead of only opening the raw Goal page.
+- The flat Search Results row still keeps the Goal title link to
+  `/goals/<goal_id>` and now adds a separate current-action link plus
+  `action_surface` and `goal_action_dock_form` source evidence. This keeps the
+  exact object link inspectable while making Search usable as a command
+  surface.
+- Updated focused route/demo coverage for empty-search source evidence,
+  populated Goal-search primary surfaces, command-bar first action/href/source,
+  raw Goal result fallback evidence, and the inline current-action result
+  link.
+- Verification passed locally: data volume precheck had `74Gi` free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`;
+  `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py`;
+  focused `tests/test_first_milestone.py -k
+  'test_local_app_demo_scenario_populates_fixture_state'` (`1 passed, 516
+  deselected`); focused route/demo pair `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`); and temp-root `python3 -m agent_os.cli --root "$scratch"
+  app-smoke-test` with all route markers matched and provider/network/external
+  mutation counters at `0`.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice. The Search affordance is read-only navigation into existing
+  confirmation-gated Goal forms; it did not deploy, create a PR, call
+  providers, push from the app, or add any external mutation path.
+
+## 2026-06-30 Goal Continuation Current Action UX
+
+- Made the Goal Continuation Rail and full Goal Workflow Map agree with the
+  rest of the Goal cockpit for the current actionable gate. When the current
+  Goal action has a confirmed browser form, the current gate now links to
+  `#goal-action-dock-form` instead of the older detailed
+  `#goal-next-action` surface. For the ready-to-commit demo Goal, the current
+  `commit_request` gate now routes to the visible `Create commit request`
+  dock form.
+- The change reuses the existing `_goal_continuation_gate_action` helper, so
+  the continuation rail and workflow map inherit the same current-gate
+  behavior without adding action authority. Future gates can still point to
+  their detailed lower workflow surfaces; only the current actionable gate is
+  promoted to the already-confirmed dock path.
+- Updated focused demo coverage so `goal_continuation_now_surface`, the first
+  continuation step line, and the workflow map current-gate row assert
+  `Create commit request -> #goal-action-dock-form`.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), and temp-root
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`.
+- Browser QA used the in-app Browser against a disposable demo app at
+  `127.0.0.1:51780` for `goal_8746c49e44ac`. Desktop 1280x720 verified page
+  identity, meaningful content, no framework overlay, clean warn/error logs,
+  no horizontal overflow, the continuation primary link href
+  `#goal-action-dock-form`, and click-through to the visible
+  `/actions/coder-commit-request` POST form. A tighter DOM read confirmed both
+  the continuation rail current gate and the full workflow map current gate
+  contain `#goal-action-dock-form` anchors labeled `Create commit request`.
+- GitHub readback for the previous commit `1075157c` showed Actions run
+  `28439852763` with `Fast smoke verification` successful and `Full pytest
+  suite` still in progress before this new slice was committed.
+- Non-claim: mobile Browser proof is not claimed for this slice; the rendered
+  proof was desktop-only. Pushed GitHub Actions proof for this new slice and
+  full-suite proof are pending. This slice did not deploy, create a PR, call
+  providers, write on GET, or mutate external systems.
+
+## 2026-06-30 Goal Jump Bar Current Action UX
+
+- Made the Goal Jump Bar `2` shortcut action-aware. Instead of showing the
+  generic `Action` label and linking to the older `#goal-next-action` section,
+  it now uses the actual current Goal action label and the same primary action
+  target as the rest of the Goal cockpit. For the ready-to-commit demo Goal it
+  shows `Create commit request` and links directly to the existing confirmed
+  `#goal-action-dock-form`.
+- The jump bar now receives the current Goal state, reuses
+  `_goal_next_action_form`, `_goal_primary_action_href`, and
+  `_goal_action_cta_label`, and records `goal_jump_action_surface` plus
+  `goal_jump_action_form_available` evidence rows. This preserves the
+  read-only local-anchor posture and does not add a write path, provider call,
+  network action, external mutation, or confirmation bypass.
+- Updated focused demo coverage so the jump bar action link, visible shortcut
+  label, evidence rows, and shortcut evidence line assert
+  `Create commit request -> #goal-action-dock-form` for the fixture-backed
+  ready-to-commit Goal.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), and temp-root
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`.
+- Browser QA used the in-app Browser against a disposable demo app at
+  `127.0.0.1:51779` for `goal_a1fa0df7f4d2`. Desktop 1280x720 verified page
+  identity, meaningful content, no framework overlay, clean warn/error logs,
+  no horizontal overflow, exactly one action shortcut, action text
+  `2 Create commit request`, evidence rows for the chosen action surface, and
+  both click plus keyboard `2` navigation to the visible
+  `/actions/coder-commit-request` form.
+- Non-claim: mobile Browser proof is incomplete for this slice because the
+  mobile viewport check timed out twice and the follow-up viewport reset
+  attempt also timed out after the Browser docs were re-read in chunks.
+  Pushed GitHub Actions proof and full-suite proof are pending. This slice did
+  not deploy, create a PR, call providers, or mutate external systems.
+
+## 2026-06-30 Goal Section Index Primary Action UX
+
+- Promoted the Goal Section Index `Operate` switchboard card from a generic
+  `Next action` jump into the actual current Goal action. When the Goal has a
+  confirmed browser action form, the card now says `Create commit request`
+  and links directly to `#goal-action-dock-form`, matching the Control Strip,
+  Summary Next card, and Action Dock instead of sending the operator to the
+  older deep `#goal-next-action` section.
+- The switchboard now receives the current `GoalNextAction`, reuses
+  `_goal_primary_action_href` and `_goal_action_cta_label`, and records
+  evidence for primary target, action label, primary surface, action-form
+  availability, and the existing read-only/no-provider/no-network/no-external-
+  effect posture. It does not add a new write path or bypass confirmation.
+- Updated focused demo coverage so the Section Index primary card, evidence
+  rows, and operate evidence line assert `#goal-action-dock-form` and
+  `Create commit request` for the fixture-backed ready-to-commit Goal.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), and temp-root
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`.
+- Browser QA used the in-app Browser against a disposable demo app at
+  `127.0.0.1:51136` for `goal_dbdde65e37cb`. Desktop 1280x720 verified page
+  identity, meaningful content, no framework overlay, clean warn/error logs,
+  no horizontal overflow, exactly one Section Index primary link, evidence
+  rows for the primary action, and click-through to the visible
+  `/actions/coder-commit-request` form. Mobile 390x844 verified the
+  switchboard stacks to a single 340px column, no page overflow, visible
+  `Create commit request` primary action, clean logs, and click-through to
+  the same confirmed form.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice. The Section Index remains read-only local anchor navigation over
+  existing confirmed forms; this slice did not deploy, create a PR, call
+  providers, or mutate external systems.
+
+## 2026-06-30 Goal Control Strip UX
+
+- Added a first-screen `Goal Control Strip` to Goal detail pages, directly
+  after the Goal title and before the Path Rail, Review Strip, phase banner,
+  and Action Dock. It makes the daily browser workflow more usable by putting
+  the current action, state, waiting attention, proof, notes, and finish-today
+  return point in one compact operator band.
+- The strip reuses existing Goal state, workflow-gate summary, CI evidence,
+  operator notes, approval counts, and current-action helpers. It links to the
+  existing confirmation-gated surfaces such as `#goal-action-dock-form`,
+  `/approvals?goal_id=...`, `#goal-ci-handoff`,
+  `#goal-operator-note-form`, and `#goal-finish-today`; it does not add a new
+  write path.
+- Added collapsed `Goal control strip evidence` rows for Goal/project, phase,
+  current gate, gate progress, next action, primary surface, form
+  availability, waiting/approval/incident/recommendation counts, CI
+  status/source, note status/entries, finish resume surface, source, and
+  explicit no-write/no-provider/no-network/no-external-effect counters. The
+  Goal section finder now includes `Control strip`, bringing the Goal section
+  count to 64.
+- Updated route/demo regression coverage for the strip CSS contract, six
+  cards, primary/attention/proof/notes/finish link targets, evidence rows,
+  read-only counters, section finder count, and ordering
+  (`summary -> control strip -> path rail -> review strip -> phase -> action`).
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check`, focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), and temp-root
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`.
+- Browser QA used the in-app Browser against a disposable demo app at
+  `127.0.0.1:50378` for `goal_ce91a374ab64`. Desktop 1280x720 verified the
+  strip is visible in the first viewport, has six cards, no page overflow,
+  clean warn/error logs, correct ordering before Path Rail/Review Strip, and
+  click-through from `Create commit request` to the visible
+  `/actions/coder-commit-request` form, from `Capture note` to the visible
+  `/actions/save-goal-note` form, and from `Finish Today` to the open
+  `/actions/save-workspace` finish panel. Mobile 390x844 verified single-
+  column strip cards, no page overflow, first-viewport visibility, and
+  current-action click-through.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice. The strip is read-only browser orientation over existing local
+  confirmation forms; this slice did not deploy, create a PR, call providers,
+  or mutate external systems.
+
+## 2026-06-30 Goal Path Rail UX
+
+- Added a first-screen `Goal Path Rail` to Goal detail pages, directly in the
+  Goal header path after the title and before the review strip, summary cards,
+  phase banner, and Action Dock. It shows the full local lifecycle as a
+  compact horizontal rail so the operator can see where the Goal is without
+  scrolling to the lower Workflow Map.
+- The rail reuses `_goal_workflow_gate_summary`, highlights the current gate,
+  shows done/pending/waiting counts, and links the current gate plus the
+  visible current-action button to the existing confirmed Goal action surface
+  such as `#goal-action-dock-form`. Non-current gates link to the existing
+  `#goal-workflow-map` readback.
+- Added collapsed `Goal path rail evidence` rows for gate counts, current
+  position, next action, current surface, action-form availability, source, and
+  explicit no-write/no-provider/no-network/no-external-effect counters. The
+  Goal section finder now includes `Path rail`, bringing the Goal section
+  count to 63.
+- Updated route/demo regression coverage for the rail CSS contract, 15 demo
+  gates, current `commit_request` marker, current-action href, evidence rows,
+  read-only counters, section finder count, and ordering
+  (`summary -> path rail -> review strip -> phase -> action`).
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check`, focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), and temp-root
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`.
+- Browser QA used the in-app Browser against a disposable demo app at
+  `127.0.0.1:8815` for `goal_9bbf2d790d66`. Desktop 1280x720 verified the
+  rail starts at 470px and is visible in the first viewport, has 15 gates,
+  highlights `commit_request`, links to `#goal-action-dock-form`, scrolls
+  inside the rail without page overflow, has clean warn/error logs, and
+  clicking the rail action lands on the visible
+  `/actions/coder-commit-request` form. Mobile 390x844 verified first-viewport
+  rail visibility, contained horizontal rail scrolling, no page overflow,
+  clean logs, and the same action-form click-through.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice. The rail is read-only orientation; existing confirmed forms own
+  local writes/execution, and this slice did not deploy, create a PR, call
+  providers, or mutate external systems.
+
+## 2026-06-30 Goal Review Strip Header UX
+
+- Made Goal detail pages show a first-class `Goal Review Strip` in the Goal
+  header path, immediately after the Goal title and before the summary cards,
+  phase banner, Action Dock, jump bar, and lower review surfaces.
+- The strip summarizes the latest timeline event, local proof count, latest
+  artifact, risk/remaining gate, and safety posture, with direct links to the
+  timeline/evidence/artifact/approval surfaces. It reuses existing timeline,
+  evidence, artifact, risk, gate, and remaining-work helpers instead of adding
+  new action authority.
+- Added collapsed `Goal review strip evidence` rows for source counts,
+  artifact availability, latest artifact/read surface, workflow gate progress,
+  waiting/open-work counts, risk labels, the current next action, and explicit
+  no-write/no-provider/no-network/no-external-effect counters.
+- Added the Review strip to the Goal section finder and updated route/demo
+  regression coverage for the strip cards, evidence rows, link targets,
+  section count, and ordering (`summary -> review strip -> phase -> action`).
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check`, focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), and temp-root
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`.
+- Browser QA used the in-app Browser against a disposable demo app at
+  `127.0.0.1:8814` for `goal_77c1949b806b`. Desktop 1280x720 verified the
+  review strip starts at 470px and is visible in the first viewport, has clean
+  warn/error logs, no horizontal overflow, correct link targets, and correct
+  ordering before phase/action. Mobile 390x844 verified the strip starts at
+  490px, cards stack to one column without overflow, clean logs, and tapping
+  `Read artifact` lands on visible `#goal-artifact-reader`.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice. The strip is a read-only review surface; existing confirmed
+  forms still own local writes/execution, and this slice did not push, create a
+  PR, deploy, call providers, or mutate external systems.
+
+## 2026-06-30 Goal Summary Next Card UX
+
+- Made the Goal summary itself action-first. Goal detail pages now render a
+  first `Next` summary card before Project, Status, Phase, and Live, with the
+  exact current operator move and a direct link to the existing confirmed
+  action surface.
+- The summary action reuses `_goal_primary_action_href` and
+  `_goal_action_cta_label`, so a ready commit Goal links to
+  `#goal-action-dock-form` as `Create commit request` instead of creating any
+  new action authority or bypassing the Action Dock.
+- Added Goal summary evidence rows for the next action, chosen summary
+  surface, original source surface, next-action reason, form availability, and
+  confirmation requirement. Existing no-write and no-external-effect counters
+  remain visible in the collapsed evidence block.
+- Updated route and demo regression coverage for the new summary card,
+  summary action href/label, evidence rows, card ordering before Project, and
+  ordering before the lower phase/action-dock surfaces.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check`, focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), and temp-root
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`.
+- Browser QA used the in-app Browser against a disposable demo app at
+  `127.0.0.1:8813` for `goal_116d933b7319`. Desktop 1280x720 verified the
+  Next card is in the first viewport, before Project/Phase/Action Dock, links
+  to `#goal-action-dock-form`, has clean console logs, no framework overlay,
+  and no horizontal overflow. Mobile 390x844 verified the Next card is still
+  in the first viewport, no horizontal overflow, clean logs, and tapping it
+  lands on the visible confirmation form with `Confirmation` required before
+  local write and `External effects` set to `none`.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice. The summary card is a shortcut into the existing confirmed
+  action form, not execution, staging, committing, pushing, provider use, PR
+  creation, deployment, or any external mutation.
+
+## 2026-06-30 Goal Mobile Compact Chrome UX
+
+- Made Goal detail pages advertise a dedicated mobile Goal-detail shell state
+  with `data-goal-detail-page='true'` and
+  `data-operator-ribbon-compact-mobile='true'`. Non-Goal pages keep
+  `data-goal-detail-page='false'` and the full operator ribbon behavior.
+- Added a mobile-only compact chrome contract for Goal detail pages. At 640px
+  and below, the shared header/nav/action rows stay on one scrollable line,
+  the page padding tightens, and the operator ribbon shows only the first-
+  screen `Now` and `Finish` cards while preserving the full evidence rows and
+  all non-mobile ribbon cards in the DOM.
+- Preserved the existing confirmation-gated action authority: the compact
+  first-screen `Now` card still links to `#goal-action-dock-form`, which uses
+  the existing `/actions/coder-commit-request` confirmation route before any
+  local write or local execution.
+- Updated route and demo regression coverage for Goal-detail mobile markers,
+  compact-ribbon evidence rows, non-Goal full-ribbon behavior, and the
+  mobile CSS contract that hides only secondary ribbon cards on Goal detail
+  viewports.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), `git diff --check`, and temp-root
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`.
+- Browser QA used the in-app Browser against a disposable demo app at
+  `127.0.0.1:8812` for `goal_45b78760a153`. Desktop 1280x720 verified all
+  six ribbon cards remain visible, Goal summary is in the first viewport,
+  logs are clean, and there is no horizontal overflow. Mobile 390x844
+  verified only `Now` and `Finish` are visible in the ribbon, the Goal summary
+  starts at 318px, the page width stays at 390px, logs are clean, and clicking
+  the visible `Create commit request` card lands on
+  `#goal-action-dock-form` with the `/actions/coder-commit-request` form
+  visible.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice. The mobile Action Dock form itself still starts below the first
+  viewport before clicking; the first-screen path is the compact `Now` action
+  and header next-action control.
+
+## 2026-06-30 Goal Detail First-Screen UX
+
+- Made Goal detail pages use Goal-first shell ordering. The main Goal cockpit
+  now renders before Recent Items, and the Workspace Panel Restore strip moves
+  after the Goal content so the first screen starts with the active Goal
+  instead of global utility surfaces. Home, Goal index, Today, and other
+  default routes keep the existing utility-first shell.
+- Reworked the Goal summary and Current Phase banner into compact scan-first
+  cards for project, status, phase, refresh cadence, next action, attention,
+  and latest activity. Full exact evidence remains available in collapsed
+  `Goal summary evidence` and `Current phase evidence` blocks with explicit
+  no-write/no-external-effect rows.
+- Moved the Goal Action Dock before the Goal jump bar so the primary browser
+  action is nearer the top of the Goal page while preserving the same
+  confirmation-gated action form and lower detailed readback surfaces.
+- Updated route and demo regression coverage for Goal-first shell ordering,
+  collapsed evidence, summary/phase card contracts, action-before-jump
+  ordering, and unchanged non-Goal shell behavior.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check`, and focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`).
+- Browser QA used the in-app Browser against a disposable demo app at
+  `127.0.0.1:8811`. Desktop 1280x720 verified Goal-first shell order,
+  summary/phase card rendering, collapsed evidence, action dock before jump
+  bar, clean browser logs, no horizontal overflow, and click-through from the
+  dock action to the visible `/actions/coder-commit-request` form. Mobile
+  390x844 verified the same ordering, collapsed evidence, no horizontal
+  overflow, clean logs, and action click-through.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice. Mobile still spends too much of the first viewport on shared
+  header/ribbon chrome, even though the Goal action is reachable and the page
+  no longer overflows horizontally.
+
+## 2026-06-30 Today First-Screen Resume UX
+
+- Made the first-screen `/today` Resume affordance use the exact saved
+  `resume_surface` when one exists. A saved `/today#today-current-action`
+  target now appears in both the shared operator ribbon and Today Command
+  Center as `Open Today current action`, so tomorrow's top Resume card returns
+  to the working action area instead of the generic `/resume` hub.
+- Kept `/resume` available and explicit as the broader resume hub via separate
+  evidence rows. The visible card surface now exposes
+  `operator_ribbon_resume_surface` / `today_command_resume_surface`, while
+  `operator_ribbon_resume_hub_surface` / `today_command_resume_hub_surface`
+  preserve the hub link and `*_resume_surface_source` names whether the card
+  came from `saved_resume_surface` or the fallback `resume_page`.
+- Updated first-run, demo, and saved Today regression coverage so the fallback
+  still says `Open resume`, saved Today state says `Open Today current action`,
+  and the exact href remains inspectable in evidence rows.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check`, and focused
+  `tests/test_first_milestone.py -k
+  'test_today_finish_today_saves_exact_resume_surface or
+  test_local_app_demo_scenario_populates_fixture_state or
+  test_local_app_routes_render_modern_workflow_and_health'` (`3 passed, 514
+  deselected`).
+- Browser QA used a disposable saved-Today demo app at `127.0.0.1:8805` with
+  system Chrome through Playwright because the dedicated browser MCP surface
+  was not exposed and Playwright's bundled Chromium was missing. Desktop
+  verified `/today` identity, nonblank content, clean console, no horizontal
+  overflow, top ribbon href `/today#today-current-action`, visible label
+  `Open Today current action`, source `saved_resume_surface`, and click-through
+  to the visible `/actions/coder-commit-request` form. Mobile 390x844 verified
+  the same label/href/source with clean console and no horizontal overflow.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice.
+
+## 2026-06-30 Today Session Resume Label UX
+
+- Made the `/today` Session Summary Resume card honor an explicitly saved
+  `resume_surface` before falling back to the generic workspace readiness
+  target. A saved `/today#today-current-action` surface now renders as
+  `Open Today current action` directly inside the daily return-to-work summary.
+- Kept the exact raw route evidence visible via `today_session_resume_surface`
+  and added `today_session_resume_surface_source` so operators can see whether
+  the card used `saved_resume_surface` or `workspace_readiness`.
+- Updated first-run, demo, and saved Today regression coverage so the Session
+  Summary card uses human action labels (`Open Goals` or
+  `Open Today current action`) while preserving exact href evidence.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check`, and focused
+  `tests/test_first_milestone.py -k
+  'test_today_finish_today_saves_exact_resume_surface or
+  test_local_app_demo_scenario_populates_fixture_state or
+  test_local_app_routes_render_modern_workflow_and_health'` (`3 passed, 514
+  deselected`).
+- Browser QA used a disposable saved-Today demo app at `127.0.0.1:8802`.
+  Desktop verified `/today` identity, nonblank content, clean console, no
+  framework overlay, no horizontal overflow, Resume card href
+  `/today#today-current-action`, visible label `Open Today current action`,
+  source `saved_resume_surface`, and click-through to the visible
+  `/actions/coder-commit-request` form. Mobile 390x844 verified the same label
+  and href, clean console, no overlay, and no horizontal overflow.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice.
+
+## 2026-06-30 Today Resume Label UX
+
+- Made saved Today section anchors first-class return labels. A saved
+  `/today#today-current-action` surface now renders as `Open Today current
+  action` instead of flattening to `Open today` or the generic action-result
+  `Open saved point` label.
+- The label helper now recognizes Today section anchors for current action,
+  finish, note, pause, goal queue, live state, session summary, activity
+  digest, operator workbench, decision queue/filter, workflow map, and CI
+  handoff while preserving raw route href evidence.
+- Updated the confirmed action resume receipt so its visible Resume card and
+  receipt line use the same human label, while evidence still exposes the
+  exact `/today#today-current-action` href.
+- Added focused regression coverage for Resume hero, Workspace restore map,
+  Recent Items, Quick Switch, and action receipt labels after a confirmed
+  Today `Finish Today` save.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, focused
+  `tests/test_first_milestone.py -k
+  'test_today_finish_today_saves_exact_resume_surface or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), and `git diff --check`.
+- Browser QA used a disposable saved-Today demo app at `127.0.0.1:8801`.
+  Desktop 1280px verified `/resume` identity, nonblank content, no framework
+  overlay, clean console, primary `Open Today current action` link to
+  `/today#today-current-action`, click-through to the visible
+  `/actions/coder-commit-request` form, and `/workspace` restore map label.
+  Mobile 390x844 verified the same labels, clean console, and no horizontal
+  overflow.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are pending for
+  this slice.
+
+## 2026-06-30 Today Exact Resume Surface UX
+
+- Updated the Today Command Center `Finish Today` flow so the confirmed
+  workspace save preserves the exact daily action surface,
+  `/today#today-current-action`, whenever the current Today action form exists.
+  The action result still returns to `/today`, but tomorrow's saved resume
+  target now lands on the daily cockpit action area instead of a broad page.
+- Added Today command evidence for the finish resume surface and the reason it
+  was chosen, and included the exact surface as a hidden `resume_surface` field
+  in the confirmation-gated `save-workspace` form.
+- Added focused regression coverage proving the rendered Today form exposes the
+  exact resume target and that a confirmed Finish Today save writes
+  `.clanker/app/workspace.json` with `resume_surface:
+  /today#today-current-action` and a matching `/resume` readback.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, focused
+  `tests/test_first_milestone.py -k
+  'test_today_finish_today_saves_exact_resume_surface or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 515
+  deselected`), and `git diff --check`.
+- Browser QA used a disposable demo app at `127.0.0.1:8799`. Desktop 1280px
+  verified `/today` identity, nonblank Today Command Center content, no
+  framework overlay, clean console, hidden `resume_surface` value
+  `/today#today-current-action`, command evidence for that same target, and
+  clicking `Finish Today save form` opened the confirmation form without
+  submitting it.
+- Non-claim: full-suite proof and pushed GitHub Actions proof are pending for
+  this slice.
+
+## 2026-06-30 Today Session Rail UX
+
+- Added a first-screen `Today Session Rail` inside the Today Command Center so
+  the daily cockpit now shows the current action, attention count, CI proof
+  state, and Finish Today target in one compact strip before the larger command
+  grid.
+- The rail reuses existing safe surfaces only: current action links to
+  `#today-current-action`, attention links to the current inbox/approval/
+  incident route, proof links to `/verification` or `/ci-evidence`, and Finish
+  links to the existing `#today-finish` form when a lead Goal exists. First-run
+  state routes the finish slot back to the current first-run setup action
+  instead of a disabled save form.
+- Added route and smoke coverage for first-run and goal-ready Today states,
+  including rail ordering before the command grid, mobile grid collapse, exact
+  target evidence, no-write GET posture, and zero provider/network/external
+  effect counters.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, focused
+  `tests/test_first_milestone.py -k 'test_local_app_routes_render_modern_workflow_and_health or test_local_app_demo_scenario_populates_fixture_state'`
+  (`2 passed, 514 deselected`), `python3 -m agent_os.cli --root "$scratch"
+  app-smoke-test`, and `git diff --check`.
+- Browser QA used a disposable demo app at `127.0.0.1:55739`. Desktop 1280px
+  verified `/today` identity, rail rendering, no console warnings/errors, no
+  framework overlay, no horizontal overflow, and clicking the rail's
+  `Create commit request` link landed on `#today-current-action` with the
+  `/actions/coder-commit-request` form visible. Mobile 390x844 verified the
+  rail collapses to one column with no horizontal overflow and clean console.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are still pending
+  for this slice.
+
+## 2026-06-30 Goal Dock Shortcut UX
+
+- Repointed the shared header `n` / next-action shortcut at the Goal Action
+  Dock whenever the current Goal action already has a confirmed browser form.
+  On the Goal page it now uses the same-page `#goal-action-dock-form` target;
+  from other routes it opens `/goals/<goal_id>#goal-action-dock-form`.
+- Kept the lower shared `Operator Focus` form as a fallback/readback copy, but
+  made the global shortcut prefer the top-of-page Goal action surface so the
+  operator lands on the page's primary action dock instead of a secondary strip.
+- Added route coverage for both the dashboard/global path and the Goal-page
+  same-page hash, including the `lead_goal_goal_action_dock_form` source
+  evidence.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, focused
+  `tests/test_first_milestone.py -k
+  test_local_app_demo_scenario_populates_fixture_state` (`1 passed, 515
+  deselected`), focused `tests/test_first_milestone.py -k
+  test_local_app_routes_render_modern_workflow_and_health` (`1 passed, 515
+  deselected`), `python3 -m agent_os.cli --root "$scratch" app-smoke-test`,
+  and `git diff --check`.
+- Browser QA used a disposable demo app at `127.0.0.1:55737` for
+  `goal_bce63387c7ef`. Desktop 1280px verified the Dashboard header shortcut
+  shows `Create commit request`, points to
+  `/goals/<goal_id>#goal-action-dock-form`, clicks through to the Goal dock,
+  and then exposes same-page `#goal-action-dock-form` from the Goal page. The
+  actual `n` key on the Goal page scrolled to the dock/form
+  `/actions/coder-commit-request`. Mobile 390x844 verified the same visible
+  action button, same-page dock target, clean browser logs, no framework
+  overlay, and no horizontal overflow.
+- Non-claim: pushed GitHub Actions proof and full-suite proof are still pending
+  for this slice.
+
+## 2026-06-30 Focus Mode Current Action UX
+
+- Updated browser-local Focus mode so it no longer hides the shared
+  `Operator Focus` strip. The `n` shortcut can target
+  `#operator-focus-current-action`, so Focus mode now hides surrounding chrome
+  without hiding the current-action launcher/form the operator may need next.
+- Added `data-focus-mode-keeps-current-action="true"` to the shared header
+  evidence and updated route coverage so the CSS contract excludes
+  `.operator-focus-strip` from the Focus-mode hidden selector.
+- Made Goal `Finish Today` saves preserve an exact next-morning surface:
+  `/goals/<goal_id>#goal-action-dock-form` when a current action form exists,
+  otherwise `/goals/<goal_id>#goal-next-action`. The Goal Daily Loop and Goal
+  Resume Snapshot now expose that `resume_surface` in evidence and hidden
+  `save-workspace` fields while keeping `return_to` on the broad Goal page for
+  action-result navigation.
+- Preserved the same localStorage-only preference, no-write GET posture,
+  confirmation-gated action forms, and no provider/non-loopback network/
+  external-mutation behavior.
+- Verification passed locally: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, focused
+  `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` (`2 passed, 514
+  deselected`), `python3 -m agent_os.cli --root "$scratch" app-smoke-test`,
+  and `git diff --check`.
+- Browser QA used a disposable demo app at `127.0.0.1:55631`. Desktop 1280px
+  and mobile 390x844 verified Focus mode keeps Operator Focus/current action
+  visible, hides side/context chrome, has no console warnings/errors, has no
+  horizontal overflow, and preserves
+  `/goals/<goal_id>#goal-action-dock-form` in the Goal finish form. The header
+  `Finish` shortcut landed on `#goal-finish-today` without submitting a form.
+- Non-claim: pushed GitHub Actions proof is still pending for this slice.
+
+## 2026-06-30 Guide Action Label UX
+
+- Replaced the remaining `/guide` `Use command form` and `Guide command form`
+  labels with the concrete browser action. In first-run state, the Guide
+  Command Panel `Do Now` card, Operator Recipes primary card, recipe evidence,
+  and command form-surface evidence now say `Register ClankerOS project` while
+  preserving the same `#guide-command-panel` anchor and confirmed
+  `register-project` form.
+- Preserved the existing Guide routing, first-run form, confirmation boundary,
+  action URLs, evidence rows, and zero-effect GET posture. This is an
+  orientation/copy change only; no provider calls, non-loopback network
+  actions, push, PR, deploy, or external mutation paths were added.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`, focused
+  pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health'`,
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`, and
+  `git diff --check` passed locally.
+- Browser QA used a disposable first-run app at `127.0.0.1:55513`. Desktop
+  `/guide` verified `Suggested Use Guide`, visible `Register ClankerOS project`
+  labels in Operator Recipes and the Guide Command Panel, no `Use command form`
+  or `Guide command form` copy, clean browser logs, `scrollWidth=1280`, and a
+  primary recipe click to `#guide-command-panel` with the form present. Mobile
+  390x844 repeated the label sweep with no old guide form labels, clean logs,
+  and `scrollWidth=390`.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
+## 2026-06-30 Workbench Action Label UX
+
+- Replaced the remaining visible workbench action-form labels on Workflow,
+  Approval, Inbox, Delegation Run Continuation, and Run operator surfaces with
+  the concrete next local action. Primary links and evidence rows now say
+  `Request commit for reviewed run`, `Approve worktree`, `Approve commit`,
+  `Approve publication`, `Prepare coder packet`, or
+  `Create commit request` instead of exposing `* Workbench Action Form`
+  implementation copy.
+- Preserved the same local anchors and confirmation-gated forms:
+  `#workflow-workbench-action-form`, `#approval-workbench-action-form`,
+  `#inbox-workbench-action-form`,
+  `#delegation-run-continuation-action-form`, and
+  `#run-workbench-action-form`. This is a label/orientation change only; GET
+  remains read-only and no provider, push, PR, deploy, or external mutation path
+  was added.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`, focused
+  pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_first_run_browser_actions_persist_resume_workspace or
+  test_local_app_demo_scenario_populates_fixture_state'`, `git diff --check`,
+  and `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` passed
+  locally.
+- Browser QA used a disposable fixture-backed app at `127.0.0.1:54888` for
+  `goal_70819378d814`, delegation `subagent_delegation_b3ec7b97993a`, and
+  coder run `run_50746f5d839c`. Desktop verified Workflow, Approvals, Inbox,
+  and Run pages had the new concrete labels, contained none of the old exact
+  form labels, showed no framework overlay, logged no console warnings/errors,
+  and kept `scrollWidth=1280`. A same-page click on
+  `Request commit for reviewed run` landed on
+  `#workflow-workbench-action-form` with the form present and no write. Mobile
+  390x844 repeated the four-page label sweep with no old labels, clean logs,
+  and `scrollWidth=390`.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
+## 2026-06-30 Saved Return Label UX
+
+- Replaced the remaining visible `Open saved surface` return labels in Resume,
+  Workspace restore, Workflow finish, action-result fallback state, and recent
+  operator links with route-aware product labels. Saved Goal return points now
+  say `Open saved Goal: <Goal title>` when a title is available, saved
+  projects say `Open saved project: <project>`, and workflow return points say
+  `Open workflow`.
+- Preserved the same saved `resume_surface` hrefs, workspace JSON readback,
+  confirmation-gated `save-workspace` action, local route targets, browser
+  route history, command palette/recent-item behavior, and zero-effect GET
+  posture. Exact saved routes remain visible in collapsed evidence; only the
+  operator-facing action labels changed.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_first_run_browser_actions_persist_resume_workspace or
+  test_local_app_demo_scenario_populates_fixture_state'`, and
+  `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` passed
+  locally.
+- Browser QA used a disposable fixture-backed app at `127.0.0.1:53611` for
+  `goal_f43859de7526`. After a confirmed local `save-workspace` POST wrote the
+  saved route with `network_actions_taken=0` and
+  `external_effects_created=false`, desktop `/resume` showed
+  `Open saved Goal: Demo the ClankerOS local operator app with fixture-backed
+  state`, contained no `Open saved surface` copy, clicked through to the saved
+  Goal route, had clean logs, and kept `scrollWidth=1280`. Desktop
+  `/workspace` showed the same saved-Goal label, and `/workflow` showed
+  `Open workflow` in the finish card. Mobile 390x844 verified `/resume` and
+  `/workspace` with the same new label, no old label, clean logs, and
+  `scrollWidth=390`.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
+## 2026-06-30 Recent Items Action Label UX
+
+- Replaced the shared Recent Items and Quick Switch generic launcher labels
+  with concrete destination/action labels. The primary recent shortcut now
+  says `Open Goal`, `Open run`, `Open delegation`, or `Open Goal cockpit`
+  instead of `Open recent item`; saved workspace shortcuts infer labels such
+  as `Open saved project`, `Open saved Goal`, or `Open saved run` instead of
+  `Open saved surface`; and saved last-action shortcuts reuse the action's
+  human title such as `First project setup`.
+- Preserved the same local hrefs, recent-item list, browser-local filtering,
+  route-history behavior, workspace JSON readback, command-palette surfaces,
+  and zero-effect GET posture. This is a navigation-label/orientation change
+  only: no provider calls, non-loopback network actions, push, PR, deploy, or
+  external mutation paths were added.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_first_run_browser_actions_persist_resume_workspace or
+  test_local_app_demo_scenario_populates_fixture_state'`, and
+  `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` passed
+  locally.
+- Browser QA used a disposable fixture-backed app at `127.0.0.1:53569` for
+  `goal_d74e3d740aeb`. Desktop verified the Recent Items rail says
+  `Open Goal`, workspace/action/artifact fallback labels are concrete, Quick
+  Switch no longer says `Open saved surface` / `Open last action`, the primary
+  recent click stays on the Goal route, browser logs are clean, and
+  `scrollWidth=1280`. Mobile 390x844 verified `Open Goal`, no old recent
+  labels, clean logs, and `scrollWidth=390`.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
+## 2026-06-30 Resume Workspace Action Label UX
+
+- Replaced remaining resume, workspace, and home saved-action form labels with
+  the concrete operator move. Saved Goal return surfaces now say
+  `Create commit request` or `Create scout delegation` in the primary
+  workbench links, top action form headings, deep form evidence links, and Home
+  live-state resume target instead of `Use resume action form`,
+  `Use workspace action form`, `Resume Action Form`, `Workspace Action Form`,
+  or `Home Resume Action Form`.
+- Preserved the same local anchors and confirmation routes:
+  `#resume-workbench-action-form`, `#resume-action-form`,
+  `#workspace-action-form`, `#home-resume-action-form`, and the existing
+  `/actions/<action>` POST confirmation screens. GET remains read-only and the
+  change does not add provider calls, non-loopback network actions, push, PR,
+  deploy, or external mutation paths.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_first_run_browser_actions_persist_resume_workspace or
+  test_local_app_demo_scenario_populates_fixture_state'`, and
+  `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` passed
+  locally.
+- Browser QA used a disposable fixture-backed app at `127.0.0.1:52837`.
+  Desktop saved a workspace return point, then verified Home, Resume, and
+  Workspace expose `Create commit request`, contain none of the old form labels
+  in visible or hidden evidence text, have clean browser logs, and keep
+  `scrollWidth=1280`. The Resume primary click landed on
+  `#resume-workbench-action-form` with heading `Create commit request`. Mobile
+  390x844 verified the same Resume heading, no old labels, clean logs, and
+  `scrollWidth=390`.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
+## 2026-06-30 First-Run Next Action State UX
+
+- Changed the post-Goal first-run state from the route-oriented
+  `Open goal to create scout delegation` to the actual operator move,
+  `Create scout delegation`. The first-run guide, command bar, next-step
+  card, action ladder, header next-action, and Goal first-run rail now agree
+  on the same action wording while preserving the existing
+  `#first-run-command-action` target and `/actions/delegate` confirmation
+  route.
+- Preserved the existing first-run progress reason, target surface, form
+  availability, evidence rows, and local confirmation boundary. This is a
+  state/copy alignment only; GET remains read-only and the scout delegation
+  write still requires the confirmed POST flow.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health'`, and
+  `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` passed
+  locally.
+- Browser QA used a disposable Git-initialized app root at
+  `127.0.0.1:63816`. Desktop exercised `/goals` first-run setup through
+  project registration and first-Goal creation, then verified
+  `first_run_next_action`, `first_run_command_next_action`,
+  `first_run_next_step_action`, and `first_run_action_ladder_next_action` all
+  report `Create scout delegation`, the inline command summary and next-step
+  link match, `/actions/delegate` remains the form action, old route copy is
+  absent, browser logs are clean, and `scrollWidth=1280`. Mobile 390x844
+  verified the same state/action copy, clean logs, and `scrollWidth=390`.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
+## 2026-06-30 First-Run Action Label UX
+
+- Replaced the remaining generic `Run First-Run Action` and inline
+  first-run form-surface labels with the concrete browser action for the
+  current first-run gate. After a new user creates the first Goal, the guide,
+  next-step card, action ladder, header next-action, and inline expander now
+  say `Create scout delegation`; later gates say `Generate context pack` and
+  `Run delegation` while preserving the same `#first-run-command-action`
+  anchor and confirmation-gated action routes.
+- Preserved the existing local confirmation flow and evidence rows. This is a
+  copy/orientation change only; GET remains read-only and first-run writes
+  still happen through the existing confirmed POST screens.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health'`, and
+  `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` passed
+  locally.
+- Browser QA used a disposable Git-initialized app root at
+  `127.0.0.1:63815`. Desktop exercised `/goals` first-run setup through
+  project registration and first-Goal creation, then verified the post-Goal
+  first-run guide exposes `Create scout delegation` on the inline command
+  summary and next-step link, posts to `/actions/delegate`, has no
+  `Run First-Run Action` copy, clean browser logs, and `scrollWidth=1280`.
+  Mobile 390x844 verified the same label/form target, clean logs, and
+  `scrollWidth=390`.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
+## 2026-06-30 Goal Workflow Surface Label UX
+
+- Replaced remaining generic `Goal action form` labels in Goal continuation
+  and workflow-map action surfaces with the concrete gate action. The same
+  local anchors still point to `#goal-next-action`, but the cards and map rows
+  now say moves such as `Create commit request`, `Commit approved worktree`,
+  and `Create publication request`.
+- Action-result workflow maps that point back to a Goal action surface now use
+  the same action label for follow-on gates, for example `Commit approved
+  worktree`, while preserving the Goal route, raw evidence, and zero-effect
+  GET posture.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_demo_scenario_populates_fixture_state'`, and
+  `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` passed
+  locally.
+- Browser QA used a disposable demo app at `127.0.0.1:63814` for
+  `goal_0b73b1f8491a`. Desktop verified the Goal continuation rail and
+  workflow map expose concrete labels on `#goal-next-action` links including
+  `Create commit request`, `Commit approved worktree`, and
+  `Create publication request`, with zero clickable `Goal action form` labels,
+  no framework overlay, clean browser logs, and `scrollWidth=1280`. Mobile
+  390x844 verified the same labels, clean logs, and `scrollWidth=390`.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
+## 2026-06-30 Action Workflow Map Label UX
+
+- Replaced the action-result workflow map's remaining generic
+  `Action continuation form` links with the concrete operator move. First-run
+  result maps now point at `Create first goal`, and saved-Goal result maps now
+  point at the refreshed next action such as `Approve commit`.
+- Preserved the existing local anchors, confirmation-gated forms, raw action
+  evidence, and read-only/zero-effect GET posture. This is a wording and
+  operator-orientation pass only.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, focused pytest `tests/test_first_milestone.py -k
+  'test_first_run_browser_actions_persist_resume_workspace or
+  test_local_app_demo_scenario_populates_fixture_state'`, and
+  `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test` passed
+  locally.
+- Browser QA used a disposable demo app at `127.0.0.1:63813` for
+  `goal_472d8f621b72` and coder run `run_a0a51035c468`. Desktop exercised
+  the visible Goal `Create commit request` form through the local confirmation
+  page to the action result, then verified the workflow map reports
+  `action_result_workflow_next_surface=Approve commit` and no
+  `Action continuation form` copy. Mobile 390x844 verified the same workflow
+  map label, clean browser logs, and `scrollWidth=390`.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
+## 2026-06-30 Continuation Action Label UX
+
+- Replaced remaining generic continuation labels on Goal and action-result
+  surfaces with concrete operator moves. The Goal Next Action primary button
+  now says `Create commit request` instead of `Use confirmed form`, and action
+  result continuation pages now say `Create first goal` or `Approve commit`
+  instead of `Use next action`.
+- Updated the Goal Operator Workbench secondary copy from
+  `Open source surface` / `Open finish form` to `Review action source` and
+  `Save return point`, keeping the same local links and confirmation-gated
+  action routes.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, `python3 -m agent_os.cli --root "$scratch"
+  app-demo-smoke-test`, and focused pytest `tests/test_first_milestone.py -k
+  'test_first_run_browser_actions_persist_resume_workspace or
+  test_local_app_demo_scenario_populates_fixture_state'` passed locally.
+- Browser QA used a disposable demo app at `127.0.0.1:63812` for
+  `goal_130cca19bebf`. Desktop verified the Goal primary action,
+  workbench check, and finish labels as `Create commit request`,
+  `Review action source`, and `Save return point` with no old generic label
+  copy and no horizontal overflow. The local commit-request confirmation flow
+  was exercised in the disposable root; the result page promoted
+  `Approve commit` in the command bar, next-step card, and inline form.
+  Mobile 390x844 verified the same result labels with `scrollWidth=390` and
+  clean browser logs.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
+## 2026-06-30 Inline Current Action Form Label UX
+
+- Replaced generic inline current-action form labels on Today, Goal, and
+  Operator Focus surfaces with the concrete operator move, such as
+  `Create commit request`. Links still target the same local inline forms and
+  confirmation-gated action routes, but the visible copy now tells the
+  operator exactly what will happen next.
+- Extended the mobile shell collapse rule to include `.today-workbench-grid`,
+  fixing the 390px Today page horizontal overflow caused by the desktop
+  four-column workbench layout.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, `python3 -m agent_os.cli --root "$scratch"
+  app-demo-smoke-test`, and focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_demo_scenario_populates_fixture_state or
+  test_local_app_routes_render_modern_workflow_and_health'` passed locally.
+- Browser QA used a disposable demo app at `127.0.0.1:63811` for
+  `goal_4cdcadca2004`. Desktop verified Today and Goal primary/form headings
+  show `Create commit request`, no generic `Run Current Action`,
+  `Today Current Action`, or `Current Action Form` copy remained on the checked
+  surfaces, no horizontal overflow appeared, and browser logs were clean.
+  Mobile 390x844 verified the same concrete label copy and
+  `scrollWidth=390`, with `.today-workbench-grid` cards stacked in one column.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
+## 2026-06-30 Compact Shell Navigation UX
+
+- Reworked the shared header navigation into a daily primary row plus a
+  compact `More` disclosure. The always-visible routes are now Dashboard,
+  Today, Guide, Resume, Goals, Search, and Workspace; advanced routes such as
+  Memory, Skills, Workflow, Actions, Verification, Dogfooding, Projects,
+  Inbox, Approvals, Incidents, Health, and Demo remain reachable under `More`
+  and in the command palette.
+- `More` opens automatically when the current route belongs to the secondary
+  group, so advanced pages still show their active nav context while Goal and
+  Today pages keep the first viewport focused on the operator cockpit.
+- Added shell-nav metadata and tests for primary/secondary counts, closed
+  primary-route `More`, open/current secondary-route `More`, zero-height
+  closed `More` content, and the mobile flex-basis override that keeps the
+  header from reserving a blank first-viewport block.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py` passed;
+  focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` passed locally.
+- Browser QA used a disposable demo app at `127.0.0.1:63770` for
+  `goal_a26bbaa49381`. Desktop verified seven primary links, fifteen
+  secondary routes, closed `More` on the Goal page, `More` auto-open/current
+  on `/actions`, no horizontal overflow, a visible `Create commit request`
+  next-action button, no framework overlay, and clean browser logs. Mobile
+  390x844 verified no horizontal overflow, closed `More` with zero-height
+  secondary menu content, a content-sized shell nav, visible next-action
+  controls, and an opened `More` menu exposing all secondary routes without
+  overflow.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
+## 2026-06-30 Global Next Action Label UX
+
+- Made the shared header `n` / `Next` control show the concrete operator move,
+  such as `Create Project` or `Create commit request`, instead of the generic
+  `Next` label. The control still routes to the same local target, records the
+  raw action in `data-next-action-action`, and does not submit forms.
+- Updated command palette focus and quick-switch primary/action cards to use
+  the exact current action label, such as `Create commit request`, instead of
+  generic `Run current action` / `Open action source` copy while preserving
+  the same `#command-palette-continue-form` route and evidence rows.
+- Added bounded header-button wrapping so longer action names stay readable in
+  the shared shell without forcing layout overflow.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, `python3 -m agent_os.cli --root "$scratch"
+  app-demo-smoke-test`, and focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` passed locally.
+- Browser QA used a disposable demo app at `127.0.0.1:62855` for
+  `goal_d21a51f436cf`. Desktop verified page identity, meaningful Goal
+  content, clean console, no framework overlay, header button text
+  `Create commit request`, `data-next-action-href="#operator-focus-current-action"`,
+  form action `/actions/coder-commit-request`, click navigation to
+  `#operator-focus-current-action`, and palette Focus/Quick Switch labels of
+  `Create commit request` with no `Run current action` or `Open action source`
+  copy. 390x844 mobile verified the same header label, no horizontal overflow,
+  no framework overlay, and clean console.
+- Non-claim: full CI proof and full-suite proof are still pending for this
+  slice.
+
+## 2026-06-30 Verb-First Current Action CTAs
+
+- Made current-action CTAs name the actual operator move instead of generic
+  form plumbing across Goal, Home, Action Notice, and delegation-run
+  continuation surfaces. Primary links now say things like `Create commit
+  request`, `Approve commit`, or `Prepare coder packet` while still pointing
+  at the same confirmation-gated browser forms.
+- Added a shared Goal CTA label helper so form-backed Goal surfaces keep the
+  same action copy in the dock, board, progress meter, attention digest,
+  decision queue, live state, workflow map, command bar, daily loop, return
+  brief, session digest, activity pulse, continuation rail, timeline digest,
+  coder handoff digest, remaining-work command bar, and operator ribbon.
+- Updated Action Notice inline continuation copy so a completed commit-request
+  notice promotes `Approve commit` directly instead of `Use current action`,
+  while preserving the original Goal dock source surface and
+  `/actions/approve-coder-commit` confirmation path in evidence.
+- Updated delegation execution continuation copy from `Continue Here` /
+  `Prepare coder from handoff` to `Prepare coder packet`, preserving raw
+  `prepare_coder_from_handoff` and `coder-prep-from-handoff` identifiers in
+  next-action evidence, form actions, and DOM metadata.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, and focused pytest `tests/test_first_milestone.py -k
+  'test_local_app_demo_scenario_populates_fixture_state or
+  test_local_app_routes_render_modern_workflow_and_health'` passed locally.
+- Browser QA used a disposable demo app at `127.0.0.1:62214`. Desktop verified
+  the Goal primary `Create commit request` link jumps to
+  `#goal-action-dock-form` and keeps `/actions/coder-commit-request`, a
+  completed local commit-request notice promotes `Approve commit` and keeps
+  `/actions/approve-coder-commit`, and the delegation execution continuation
+  promotes `Prepare coder packet` while keeping
+  `/actions/coder-prep-from-handoff`. 390x844 mobile checks for Goal and
+  delegation-run pages showed no horizontal overflow, no framework overlay,
+  and no console warnings/errors.
+- Non-claim: pushed CI proof and full-suite proof are still pending for this
+  slice.
+
+## 2026-06-30 Daily Workflow Action Copy UX
+
+- Replaced raw visible action ids across the daily scout-to-publication browser
+  workflow with operator-language copy while preserving raw ids in action URLs,
+  DOM metadata, workspace state, and evidence fields.
+- Added shared copy for implementation handoff review, coder prep,
+  coder-prep-from-handoff, worktree plan/approval, commit request/approval,
+  local worktree commit, publication request/approval, and publication
+  handoff. Visible buttons and confirmation/result titles now use phrases such
+  as `Prepare coder packet`, `Confirm commit request`, `Create local commit`,
+  and `Prepare publication handoff`.
+- Added field labels/help for approval, run, decision, publication, remote, and
+  target-branch fields so confirmation forms read as operator forms rather
+  than database payloads.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, `python3 -m agent_os.cli app-smoke-test`, and focused
+  pytest `tests/test_first_milestone.py -k
+  'test_local_app_demo_scenario_populates_fixture_state or
+  test_goal_next_action_card_exposes_commit_publication_gate_forms'` passed
+  locally.
+- Browser QA used a disposable demo app at `127.0.0.1:62153`, opened
+  delegation execution run `run_b70999502e0b`, verified the inline continuation
+  form now shows `Prepare coder packet` while preserving
+  `coder-prep-from-handoff` in the form action, DOM metadata, and evidence,
+  then submitted only as far as `Confirm coder prep` without final
+  confirmation. Desktop and 390x844 mobile checks had no console warnings or
+  errors, no framework overlay, no horizontal overflow, and retained the raw
+  action id in evidence.
+- Non-claim: pushed CI proof is still pending for this slice.
+
+## 2026-06-30 Delegation Run Inline Continuation UX
+
+- Made `/runs/<delegation_execution_run_id>` directly actionable from the
+  `Delegation Run Continuation` strip by rendering the current form-backed
+  delegation continuation action inline at
+  `#delegation-run-continuation-action-form`.
+- `prepare_coder_from_handoff` now preserves the implementation handoff path,
+  delegation id, run id, project, Goal, `return_to`, and `resume_surface`
+  fields on the run page, then posts through the existing
+  `/actions/coder-prep-from-handoff` confirmation flow.
+- The continuation strip promotes the inline form as the primary Now target
+  while preserving `/delegations/<id>#safe-local-actions` as source/fallback
+  evidence and keeping GET read-only with explicit no-provider/no-network/
+  no-external-effect counters.
+- Verification: `python3 -m py_compile agent_os/local_app.py`,
+  `git diff --check`, `python3 -m agent_os.cli app-smoke-test`, and focused pytest
+  `tests/test_first_milestone.py -k
+  test_local_app_demo_scenario_populates_fixture_state` passed locally. Browser
+  QA used a disposable root at `127.0.0.1:62149`, opened delegation execution
+  run `run_9cd549171a95`, verified page identity, no console warnings/errors,
+  no framework overlay, primary link to
+  `#delegation-run-continuation-action-form`, form action
+  `/actions/coder-prep-from-handoff`, handoff/return/resume fields, and POST to
+  the confirmation page without final confirmation. At 390x844,
+  verified no horizontal overflow and the primary anchor landed on the inline
+  form. Pushed CI proof is next.
+
+## 2026-06-30 Run Workbench Inline Action UX
+
+- Made `/runs/<coder_run_id>` directly actionable from the top `Run Operator
+  Workbench` by rendering the current confirmed run action inline at
+  `#run-workbench-action-form`.
+- The workbench now promotes that inline form as its primary Do Now target
+  while preserving the original run gate surface, such as
+  `#run-approval-actions`, in `run_workbench_source_primary_surface` evidence.
+- Covered commit request, approved local commit, publication request, and
+  publication handoff gates without adding a new write path; forms still post
+  to the existing `/actions/<action>` routes and require confirmation before
+  local artifacts or local git changes are written.
+- Kept GET read-only and explicit no-provider/no-network/no-push/no-PR/
+  no-deploy boundaries in the DOM, including blocked-reason readbacks when the
+  run is not ready for an inline form.
+
+## 2026-06-30 Workflow Inline Commit Request UX
+
+- Made scoped `/workflow?delegation_id=...` and `/workflow?run_id=...`
+  directly actionable at the reviewed-run commit request gate by rendering
+  `#workflow-workbench-action-form` inside the `Workflow Operator Workbench`.
+- The inline form reuses the existing confirmed `coder-commit-request` action
+  route, preserves `/runs/<id>` as source evidence, and carries the scoped
+  workflow route through `return_to`/`resume_surface`.
+- Kept the authority boundary intact: workflow GETs still write nothing, and
+  the inline form does not stage, commit, push, create PRs, deploy, call
+  providers, use non-loopback network actions, or mutate external systems.
+- Fixed same-page anchor behavior for local app links so mobile taps on the
+  workflow primary action actively scroll to the target form instead of only
+  changing the hash and returning to the top of the page.
+- Updated README, local app docs, operating summary, and latest-status docs so
+  `/workflow` is described as a first-class action surface when a confirmed
+  local form is available.
+- Verification: `df -h /System/Volumes/Data` showed 80Gi free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  passed; `git diff --check` passed; focused pytest
+  `tests/test_first_milestone.py -q -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'` passed; `python3 -m
+  agent_os.cli app-smoke-test` passed.
+- Browser QA: launched a disposable demo app at `127.0.0.1:62137` for
+  `run_69a42bc42510`, verified desktop `/workflow?run_id=...` page identity,
+  no blank page/framework overlay/console warnings/errors, primary action
+  target `#workflow-workbench-action-form`, `coder-commit-request` form action,
+  scoped `return_to`/`resume_surface`, and POST to
+  `Confirm coder-commit-request` without pressing the final confirmation. On
+  390x844 mobile, verified no horizontal overflow and that tapping the
+  workflow primary action lands on the form with scroll memory status
+  `hash-target`. The disposable root was removed afterward.
+- Non-claim: pushed CI proof and any real commit/push are still pending for
+  this slice.
+
+## 2026-06-30 Scoped Inbox Inline Approval UX
+
+- Made `/inbox` directly actionable for the first approval-backed coder
+  worktree, commit, or publication decision by rendering an
+  `#inbox-workbench-action-form` in the `Inbox Operator Workbench` before
+  workbench evidence.
+- Added server-side route scoping for the top Inbox workbench. `/inbox`
+  preserves global queue priority, while `/inbox?run_id=<coder_run_id>`
+  promotes that run's pending commit or publication approval into the inline
+  workbench form instead of letting unrelated global approvals mask it.
+- Kept the existing authority boundary intact: the inline Inbox forms reuse
+  the existing `/actions/<action>` confirmation route, write nothing on GET,
+  and do not execute work, stage, commit, push, create PRs, deploy, call
+  providers, use non-loopback network actions, or mutate external systems.
+- Updated README, local app docs, operating summary, and latest-status docs so
+  Inbox is described as a scoped, confirmation-gated action surface rather
+  than only a read-only queue.
+- Verification: `df -h /System/Volumes/Data` showed 80Gi free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `git diff --check`, focused pytest
+  `tests/test_first_milestone.py -q -k
+  'test_local_app_routes_render_modern_workflow_and_health or
+  test_local_app_demo_scenario_populates_fixture_state'`, and
+  `python3 -m agent_os.cli app-smoke-test` passed locally.
+- Browser QA: launched a disposable demo app at `127.0.0.1:62132`, created a
+  pending commit approval for run `run_83672a134b48`, opened
+  `/inbox?run_id=run_83672a134b48`, verified the workbench primary action
+  targets `#inbox-workbench-action-form`, the form is
+  `approve-coder-commit` for commit approval
+  `coder_worktree_commit_approval_9e5d262c0edf`, and submitting it reaches
+  `Confirm approve-coder-commit` with `confirm=yes` available but without
+  approving. Desktop and 390x844 mobile had no horizontal overflow and no
+  console warnings/errors. The disposable root was removed afterward.
+- Non-claim: the full pytest suite and CI proof remain delegated to GitHub
+  Actions for this slice.
+
+## 2026-06-30 Today Current Action Form UX
+
+- Made `/today` directly actionable from the daily command center when the
+  lead Goal's next action already has a confirmed browser form. The
+  `#today-current-action` section now renders visibly before Today command
+  evidence instead of living inside a collapsed details panel.
+- Kept the existing action authority intact: the visible form still posts to
+  the same `/actions/<action>` confirmation route, confirmation is required
+  before local writes or local execution, and no provider calls,
+  non-loopback network actions, pushes, PRs, deploys, or external mutations
+  are introduced.
+- Updated README, local app docs, operating summary, and latest-status docs so
+  `/today` is described as a direct action surface, not only a dashboard.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check`, focused pytest
+  `tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state`, and `python3 -m
+  agent_os.cli app-smoke-test` passed locally.
+- Browser QA: launched a disposable demo app at `127.0.0.1:62129`, opened
+  `/today`, verified `#today-current-action` rendered as a visible block
+  before `data-today-command-evidence`, verified the form posts to
+  `/actions/coder-commit-request`, and submitted it only as far as the local
+  confirmation preflight. Desktop and 390x844 mobile had no horizontal
+  overflow and no console warnings/errors. Non-claim: the full pytest suite is
+  delegated to GitHub Actions for this slice.
+
+## 2026-06-30 Resume Workbench Action Form UX
+
+- Made `/resume` directly actionable from the top `Resume Operator Workbench`.
+  When the saved Goal has a confirmed browser action form, the workbench now
+  renders a `Resume Current Action Form` before its evidence. When the operator
+  is still in first-run setup, it renders the current `register-project` or
+  `create-goal` setup form in the same top workbench position.
+- Updated the workbench primary action to point at
+  `#resume-workbench-action-form` whenever that top form exists, while keeping
+  the deeper `Resume Next Action` or `Resume First-Run Action` section as the
+  detailed source/fallback surface in evidence.
+- Kept the existing action authority intact: `/resume` only duplicates the
+  existing confirmed local form, still routes through `/actions/<action>`
+  confirmation, writes nothing on GET, and does not add provider calls,
+  non-loopback network actions, pushes, PRs, deploys, or external mutations.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`, `git diff --check`, and focused pytest
+  `tests/test_first_milestone.py -q -k
+  'local_app_routes_render_modern_workflow_and_health or
+  first_run_browser_actions_persist_resume_workspace'` passed locally.
+- Browser QA: launched a disposable demo app at `127.0.0.1:62128`, saved the
+  demo Goal as the workspace through confirmed `save-workspace`, opened
+  `/resume`, and verified the workbench primary action targets
+  `#resume-workbench-action-form`, the top form posts to
+  `/actions/coder-commit-request`, the top form appears before workbench
+  evidence, and the old lower `Resume Next Action` form remains present as the
+  detailed fallback. Desktop and 390x844 mobile had no horizontal overflow and
+  no console warnings/errors. The mobile action brief was corrected to a
+  one-column readout so field values do not wrap one letter per line. Non-claim:
+  the full pytest suite remains delegated to GitHub Actions for this slice.
+
+## 2026-06-30 Action Notice Inline Next Step UX
+
+- Made completed-action notice pages directly actionable for saved Goal
+  continuations. When the refreshed saved or lead Goal has a confirmed browser
+  form for its next action, `Action Notice` now renders an inline
+  `Action Notice Next Step` section before notice evidence.
+- Updated the notice primary `Next Step` card to point at
+  `#action-notice-next-step-form` when that inline form exists, while
+  preserving the original Goal/workflow source surface in collapsed evidence.
+- Kept the existing action authority intact: the notice only duplicates the
+  existing confirmed Goal action form, still routes through
+  `/actions/<action>` confirmation, and does not add provider calls,
+  non-loopback network actions, pushes, PRs, deploys, or external mutations.
+- Fixed the run notice page's later `Run Evidence` card grid to use auto-fit
+  columns so the actionable notice return path does not create horizontal
+  overflow in the operator shell.
+- Verification: `df -h /System/Volumes/Data` showed 80Gi free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `git diff --check`, and focused pytest
+  `tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state`, and `python3 -m
+  agent_os.cli app-smoke-test` passed locally.
+- Browser QA: launched a disposable fixture app at `127.0.0.1:62127`,
+  submitted the Goal Action Dock `coder-commit-request` form, confirmed the
+  local action, opened the returned run notice URL, and verified `Action
+  Notice` points its primary action to `#action-notice-next-step-form`, renders
+  `Action Notice Next Step` with an inline `/actions/approve-coder-commit`
+  form before notice evidence, reports no console warnings/errors, and has no
+  horizontal overflow at default desktop width or `390x844` mobile. The
+  disposable scratch root was removed afterward. Non-claim: the full pytest
+  suite remains delegated to GitHub Actions for this slice.
+
+## 2026-06-30 Action Result Next Step UX
+
+- Promoted post-confirmation continuation into a top-of-page `Action Result
+  Next Step` panel. Successful local action result pages now read refreshed
+  first-run or saved-Goal state immediately after the action command bar,
+  name the next operator move, and render the next confirmed browser form
+  inline when one exists.
+- Updated the result command bar's primary visible action to point at the new
+  next-step form when available, while preserving the existing next-page
+  notice surface, `Action Resume Receipt`, `Action Result Details`,
+  `Action Continuation`, and `Action Result Workflow Map` evidence below.
+- Kept the existing action authority intact: the result page only duplicates
+  the rendered confirmed form, still routes through `/actions/<action>`
+  confirmation, and does not add provider calls, non-loopback network actions,
+  pushes, PRs, deploys, or external mutations.
+- Updated README, local app docs, operating summary, and latest-status docs so
+  confirmed action result pages are described as a continuation surface rather
+  than only a receipt/details page.
+- Verification: `df -h /System/Volumes/Data` showed 80Gi free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `git diff --check`, focused pytest
+  `tests/test_first_milestone.py -q -k
+  'first_run_browser_actions_persist_resume_workspace or
+  local_app_demo_scenario_populates_fixture_state'`, and
+  `python3 -m agent_os.cli app-smoke-test` passed locally.
+- Browser QA: launched a disposable demo app at `127.0.0.1:62126`, opened the
+  demo Goal, submitted the top current-action form, confirmed
+  `coder-commit-request`, and verified the result page command primary plus
+  `Action Result Next Step` both target `#action-result-next-step-form`.
+  The top next-step form posts to `/actions/approve-coder-commit`, appears
+  before `Action Result Details`, desktop and 390x844 mobile had no horizontal
+  overflow, and console warnings/errors were empty. Non-claim: the full pytest
+  suite is delegated to GitHub Actions for this slice.
+
+## 2026-06-30 Goal Action Dock Current Form UX
+
+- Made the Goal Action Dock directly usable for form-backed next actions. When
+  `_goal_next_action_form` returns a confirmed browser form, the dock now
+  renders a top-of-page `Current Action Form` before its collapsed evidence
+  instead of only linking down to the deeper Next Action copy.
+- Kept the existing action authority intact: the dock reuses the same
+  confirmed form HTML, still routes through `/actions/<action>` confirmation,
+  still requires confirmation before local writes or local execution, and does
+  not add provider calls, non-loopback network actions, pushes, PRs, deploys,
+  or external mutations.
+- The deeper `Goal Next Action` section remains available as the detailed
+  action readback/fallback surface, so existing anchors and tests still have a
+  stable lower page target while daily operators can act from the top surface.
+- Updated README, local app docs, operating summary, and latest-status docs to
+  describe the dock as a top current-action form rather than a jump-only
+  action link.
+- Verification: `df -h /System/Volumes/Data` showed 80Gi free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `git diff --check`, focused pytest
+  `tests/test_first_milestone.py -q -k
+  'local_app_demo_scenario_populates_fixture_state or
+  local_app_routes_render_modern_workflow_and_health or
+  first_run_browser_actions_persist_resume_workspace'`, and
+  `python3 -m agent_os.cli app-smoke-test` passed locally.
+- Final rerun after the quoted-route comparison cleanup:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `git diff --check`, and focused pytest
+  `tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state` passed locally.
+- Browser QA: launched a disposable local app at `127.0.0.1:62125`, verified
+  the Goal page operator ribbon and Goal Action Dock both route `Use current
+  action` to `#goal-action-dock-form`, verified the top form posts to
+  `/actions/coder-commit-request`, submitted it to the confirmation page, and
+  checked a 390x844 viewport with no horizontal overflow. Non-claim: the full
+  pytest suite is delegated to GitHub Actions for this slice.
+
+## 2026-06-30 First-Run Scout Workflow Copy UX
+
+- Extended human action copy through the next first-run workflow gates after
+  Goal creation. `delegate` now presents `Create scout delegation`, confirms
+  with `Confirm scout delegation`, and finishes with `Scout delegation
+  created`; `context-pack` presents `Generate context pack`, confirms with
+  `Confirm context pack`, and finishes with `Context pack ready`;
+  `run-delegation` presents `Run scout delegation`, confirms with
+  `Confirm scout run`, and finishes with `Scout run finished`.
+- Added human labels/help for the fields that appear in these gates:
+  delegation, task, profile, title, requested-by, and operator id. The compact
+  hidden-field forms now use opt-in action button copy for these productized
+  actions without renaming every generic internal action.
+- Kept the existing safety model: all three actions still require explicit
+  confirmation before local writes or local execution, raw action ids remain in
+  evidence fields, GET rendering is read-only, and no provider calls,
+  non-loopback network actions, pushes, PRs, deploys, or external mutations are
+  introduced.
+- Updated README, local app docs, operating summary, and latest-status docs so
+  the first-run path describes a guided project -> Goal -> scout delegation ->
+  context pack -> scout run sequence instead of falling back to raw action ids.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; `git diff --check`; focused pytest
+  `tests/test_first_milestone.py -q -k
+  first_run_browser_actions_persist_resume_workspace`; focused pytest
+  `tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health`; and
+  `python3 -m agent_os.cli app-smoke-test` all passed locally.
+- Browser QA: launched a disposable local app at `127.0.0.1:62124`, completed
+  project and Goal setup, verified `delegate` reaches `Confirm scout
+  delegation` and `Scout delegation created`, verified the live Goal page shows
+  `Generate context pack` as the next visible action, and checked a `390x844`
+  viewport with no horizontal overflow. The embedded browser click wrapper was
+  noisy on the deep repeated forms, so context-pack/run-delegation
+  confirmation/result coverage is from the focused route tests above.
+- GitHub Actions offload: previous pushed commit
+  `7d61ac3ac6b542d967c70be31cce8b51a121a126` had the `Fast smoke
+  verification` job passing in run `28410608822`; the full pytest suite job was
+  still running when this slice was prepared.
+
+## 2026-06-30 First-Run Confirmation Copy UX
+
+- Extended the first-run form guidance through the confirmation and result
+  pages. `register-project` now presents `Confirm project setup` before the
+  write and `Project setup complete` after success, while retaining
+  `register-project` in evidence fields.
+- Added matching Goal setup copy for `create-goal`: `Confirm Goal setup`
+  before the write and `Goal setup complete` after success, while retaining
+  `create-goal` in evidence fields.
+- Kept the existing safety model: confirmation pages still return `409` until
+  `confirm=yes`, raw action ids remain in collapsed evidence, GET rendering is
+  read-only, and no external effects are introduced.
+- Updated README, local app docs, operating summary, and latest-status docs so
+  the first-run path describes the full browser setup gate rather than only the
+  pre-confirm form.
+- Verification: `df -h /System/Volumes/Data` showed 81Gi free;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `git diff --check`, `python3 -m pytest tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health`, `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  first_run_browser_actions_persist_resume_workspace`, and `python3 -m
+  agent_os.cli app-smoke-test` passed locally.
+- Browser QA: ran `python3 -m agent_os.cli --root <throwaway-root> app --host
+  127.0.0.1 --port 62123`, submitted and confirmed the first project and first
+  Goal setup forms, verified `Project setup complete` and `Goal setup
+  complete`, verified raw `register-project` / `create-goal` evidence remained,
+  checked no browser console warnings/errors, and checked a 390x844 mobile
+  viewport with no horizontal overflow. Non-claim: the full pytest suite is
+  delegated to GitHub Actions for this slice.
+
+## 2026-06-30 First-Run Form Guidance UX
+
+- Made shared confirmed action forms more usable in first-run flows:
+  `register-project` now presents `First project setup`, human labels for
+  project name/path/verifier/write roots, field help, explicit confirmation and
+  external-effect notes, and an outcome button labeled `Create project`.
+- Added matching guidance for `create-goal` continuation forms after project
+  registration, including `First Goal setup`, human labels for project, Goal
+  intent, and profile, field help, and an outcome button labeled `Create Goal`.
+- Kept the existing safety model: GET rendering remains read-only, browser
+  drafts still use `localStorage:clankeros-action-form-draft:<action>:<scope>`,
+  and writes still require the existing confirmation screen before local state
+  changes.
+- Updated README, local app docs, operating summary, and latest-status docs so
+  the first-run path is described as guided browser setup rather than raw
+  action-id forms.
+- Verification: `df -h /System/Volumes/Data` showed 81Gi free before the local
+  loop; `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed; focused
+  pytest `python3 -m pytest tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health` passed with `1 passed,
+  515 deselected in 41.25s`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  first_run_browser_actions_persist_resume_workspace` passed with `1 passed,
+  515 deselected in 17.79s`; `python3 -m agent_os.cli app-smoke-test` passed
+  with all route markers matched and provider/network/external-mutation
+  counters at 0.
+- Browser verification: in-app browser against throwaway scratch app
+  `http://127.0.0.1:62122/` confirmed the desktop dashboard title
+  `Dashboard - ClankerOS Local Operator`, meaningful DOM content, no framework
+  overlay, no console warnings/errors, the `First project setup` brief, human
+  labels and help text, `Create project` submit text, no desktop overflow at
+  `1280px`, successful navigation to `/actions/register-project`, confirmation
+  page title `Confirm Action - ClankerOS Local Operator`, submitted
+  `register-project` payload and safety context, no confirmation-page overflow,
+  and no console warnings/errors. Mobile `390x844` at
+  `/#first-run-create-project` confirmed the form, labels, four help rows,
+  `Create project` button, 358px form width inside 390px, no overflow, and no
+  console warnings/errors.
+- Non-claims: this does not create projects, goals, delegations, context
+  packs, runs, approvals, execution, provider calls, non-loopback network
+  actions, pushes, PRs, deploys, or external mutations.
+
+## 2026-06-30 Browser Demo Fixture Action UX
+
+- Made demo fixture setup first-class in the browser: `/demo#demo-fixture-action`
+  posts to the confirmed `demo-app-scenario` action, seeds the deterministic
+  `.clanker/demo` fixture, sets `/demo` as the next/resume surface, and
+  keeps CLI commands as fallbacks.
+- Added the action to the safe action catalog and confirmation context so the
+  review screen explicitly marks it as a local command with no provider call,
+  no push, no PR, no deploy, and no external mutation.
+- Updated `/demo` and `/dogfooding` copy and targets so missing fixture state
+  points at the exact browser form instead of telling the operator to leave the
+  product for a CLI command.
+- Verification: `df -h /System/Volumes/Data` showed 81Gi free before the
+  local loop; `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed;
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health` passed with `1 passed,
+  515 deselected in 29.04s`; `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state` passed with `1 passed, 515
+  deselected in 33.48s`; `python3 -m agent_os.cli app-smoke-test` passed with
+  all route markers matched and provider/network/external-mutation counters at
+  0; `python3 -m agent_os.cli app-demo-smoke-test` passed across the
+  fixture-backed route set with the same zero-effect counters.
+- Browser verification: in-app browser against throwaway scratch app
+  `http://127.0.0.1:62121/demo` confirmed the missing-fixture page shows the
+  `Create demo fixture` form, no desktop overflow at `1280px`, the
+  confirmation review records `demo-app-scenario`,
+  `executes_local_command=true`, `write_before_confirm=false`, and network
+  actions `0`, the confirmed result records `Action Complete`,
+  `project_id=local-app-demo`, `next_page=/demo`, `resume_surface=/demo`,
+  network actions `0`, and external effects `false`, and the seeded `/demo`
+  page shows `Refresh demo fixture`, `fixture_status=available`,
+  `walkthrough_stage=run`, no desktop overflow at `1280px`, no mobile overflow
+  at `390x844`, and zero browser console warnings/errors.
+- Non-claims: this does not run providers, perform non-loopback network work,
+  push, create PRs, deploy, or mutate external projects.
+
+## 2026-06-30 Guide Operator Recipes UX
+
+- Added a read-only `Operator Recipes` panel to `/guide` between the Guide
+  Command Panel and the Daily Loop.
+- The panel gives seven intent cards for Start The Day, Set Up Or Select Goal,
+  Do The Next Thing, Unblock Work, Check Proof, Finish Today, and Resume
+  Tomorrow. Each card routes to an existing browser surface or existing
+  confirmed form instead of introducing a new action path.
+- The recipe evidence records mode, phase, first-run step, primary action,
+  action-form availability, waiting queue counts, proof status, workspace
+  resume state, and zero-effect counters.
+- Kept the product's one-next-action posture by making `next_action` the only
+  primary recipe card in first-run state.
+- Updated README, local app docs, operating summary, and latest-status docs so
+  the guide now describes both the command form and the intent-recipe layer.
+- Stabilized the focused demo smoke after GitHub Actions exposed stale
+  assertions: the palette section count now compares rendered evidence fields,
+  the section-finder preview asserts the current first-eight targets, and the
+  artifact reader preview count now counts actual preview articles instead of
+  JavaScript selector references.
+- Verification: `df -h /System/Volumes/Data` showed 81Gi free before work;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  passed; `git diff --check` passed; focused pytest
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health` passed with `1 passed,
+  515 deselected in 34.68s`; focused pytest
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state` passed with `1 passed, 515
+  deselected in 40.52s`; `python3 -m agent_os.cli app-smoke-test` passed with
+  all route markers matched and provider/network/external-mutation counters at
+  0.
+- Browser verification: Playwright against throwaway empty root
+  `http://127.0.0.1:62113/guide` confirmed the recipe panel, seven recipe
+  cards, exactly one primary card (`next_action`), setup routing to
+  `/today#first-run-create-project`, next action routing to
+  `#guide-command-panel`, recipe evidence present, no desktop overflow at
+  `1280px`, no mobile overflow at `390x844`, and zero console warnings/errors.
+  Screenshot: `.playwright-cli/page-2026-06-29T22-41-50-971Z.png`.
+- Non-claims: this does not create projects, goals, delegations, context
+  packs, runs, approvals, execution, pushes, PRs, deploys, provider calls,
+  non-loopback network actions, server writes on GET, or external mutations.
+
+## 2026-06-30 Goal Artifact Reader UX
+
+- Added a browser-local `Goal Artifact Reader` to the Goal page after the
+  existing Goal Artifact Filter. It lets the operator preview one
+  already-registered artifact inline with the same inert Markdown, JSON,
+  Patch/Diff, Text, and Log renderers used by `/artifacts`.
+- The reader stores only the selected artifact path in
+  `localStorage:clankeros-goal-artifact-reader:<goal_id>`, restores that
+  selection per Goal, exposes Reset reader, and appears in Workspace View
+  Memory so the operator can inspect or clear that browser-local state.
+- Added the reader to the Goal section finder and command palette so long Goal
+  pages can jump directly to the inline preview surface.
+- Tightened duplicate-path handling in the browser helper: if two artifact
+  records share the same path with different labels, selecting that path shows
+  one preview instead of opening multiple duplicate previews.
+- Updated README, local app docs, the operating summary, and latest-status docs
+  to describe the reader and its zero-effect boundary.
+- Verification: `df -h /System/Volumes/Data` showed 82Gi free before the test
+  loop; `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed;
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health` passed with `1 passed,
+  515 deselected in 34.97s`; `python3 -m agent_os.cli app-smoke-test` passed
+  with all required route markers matched and provider/network/external
+  mutation counters at 0.
+- Browser verification: Playwright against throwaway demo Goal
+  `goal_f3e6c640d859` on `127.0.0.1:62111` confirmed 21 reader options and
+  previews, one visible preview, the default Markdown renderer, a bounded full
+  artifact link, the per-Goal storage key, JSON selection save/restore across
+  reload with `View: restored`, Reset reader clearing storage, no desktop
+  overflow at `1280px`, no mobile overflow at `390x844`, and zero console
+  warnings/errors. Screenshot:
+  `.playwright-cli/page-2026-06-29T22-26-48-294Z.png`.
+- Duplicate-path browser recheck: Playwright against throwaway demo Goal
+  `goal_2fc6f193e09a` on `127.0.0.1:62112` selected the duplicated
+  `coder_prep.json` path and confirmed `duplicateOptionCount=2`,
+  `matchingPreviewCount=2`, `visiblePreviews=1`, and `matchingVisible=1`.
+- Non-claims: this does not execute artifact content, browse raw filesystem
+  paths, write Goal state on GET, append memory, call providers, perform
+  non-loopback network actions, push, create PRs, deploy, or mutate external
+  systems.
+
+## 2026-06-29 First Run Action Ladder UX
+
+- Added a visible read-only `First Run Action Ladder` to the First Run Guide
+  after `First Run Next Step` and before the empty-state map. It renders five
+  action cards for Project, Goal, Delegation, Context, and Run, highlights the
+  current card, and records the concrete action name (`register-project`,
+  `create-goal`, `delegate`, `context-pack`, or `run-delegation`), browser
+  target, proof surface, form availability, confirmation requirement, and
+  zero-effect counters.
+- The ladder reuses existing first-run state and confirmed forms only. Empty
+  checkout points at `#first-run-create-project`; registered-project/no-goal
+  points at `#first-run-create-goal`; goal-created/no-delegation points at
+  `#first-run-command-action` and the existing `/actions/delegate` form.
+- Updated focused route assertions for empty checkout, registered-project
+  without a goal, and goal-created without a delegation so the fast GitHub
+  smoke path proves the ladder advances from `register-project` to
+  `create-goal` to `delegate`.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed;
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health` passed with `1 passed,
+  515 deselected in 37.48s`; `python3 -m agent_os.cli app-smoke-test` passed
+  with all required route markers matched and zero provider/network/external
+  mutation counters.
+- Browser verification: Playwright against throwaway root
+  `http://127.0.0.1:62110/` confirmed the ladder on empty Home with five
+  cards, current step `create_project`, current action `register-project`,
+  correct ordering after Next Step and before Empty State, and no horizontal
+  overflow at `1280px`. Mobile `390x844` kept the ladder at `358px` and the
+  grid at `329px` with no horizontal overflow.
+- Browser verification after seeding local project `first-target` and Goal
+  `goal_06259033d59b`: Playwright opened
+  `http://127.0.0.1:62110/goals` and confirmed five ladder cards, current step
+  `create_first_delegation`, current action `delegate`, current status
+  `current`, inline form action `/actions/delegate`, target text
+  `Run First-Run Action`, proof text `Goal workflow`, no desktop or mobile
+  horizontal overflow, and zero console warnings/errors. Screenshot:
+  `.playwright-cli/page-2026-06-29T22-03-23-759Z.png`. Browser, server, and
+  scratch root were cleaned up.
+- Non-claims: this does not create projects, goals, delegations, context
+  packs, runs, approvals, execution, pushes, PRs, deploys, provider calls,
+  non-loopback network actions, server writes on GET, or external mutations.
+
+## 2026-06-29 Guide Command Panel UX
+
+- Added a visible `Guide Command Panel` to `/guide` before the daily loop. It
+  renders four action cards for Do Now, State, Proof, and Resume, plus
+  evidence for command mode, source, project/Goal, current step, action name,
+  confirmation requirement, and zero-effect counters.
+- The panel reuses existing confirmed forms rather than creating a new write
+  path: an empty checkout embeds `register-project`, a registered project
+  advances to `create-goal`, and current-goal work can embed the current Goal
+  next-action form when available.
+- Updated focused route assertions so `/guide` proves the empty first-run
+  `register-project` form and the post-registration `create-goal` form are
+  both reachable from the browser guide.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed;
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health` passed with `1 passed,
+  515 deselected in 32.96s`; `python3 -m agent_os.cli app-smoke-test` passed
+  with `/guide` marker matched and zero provider/network/external-mutation
+  counters.
+- Browser verification: Playwright against throwaway first-run root
+  `http://127.0.0.1:62109/guide` confirmed the `Guide Command Panel`, four
+  command cards, embedded `register-project` form with draft action metadata,
+  six daily cards, five first-run cards, four safety cards, command-before-daily
+  ordering, and no horizontal overflow at `1280px`. Mobile `390x844` kept the
+  command panel at `358px` and the embedded form at `332px` with no horizontal
+  overflow. Screenshot:
+  `.playwright-cli/page-2026-06-29T21-42-45-397Z.png`. Browser, server, and
+  scratch root were cleaned up.
+- GitHub evidence: Actions run `28404670806` completed `Fast smoke
+  verification` successfully for commit
+  `95c745fa8a9a48e97c6647013853be759386d41e`, including compile, local CLI
+  smoke, focused local-app pytest smoke, and whitespace. `Full pytest suite`
+  started and was running `Run full test suite` at final check:
+  https://github.com/Reedtrullz/ClankerOS/actions/runs/28404670806.
+- Non-claims: this does not create projects, goals, delegations, context
+  packs, runs, approvals, execution, pushes, PRs, deploys, provider calls,
+  non-loopback network actions, server writes on GET, or external mutations.
+
+## 2026-06-29 Suggested Use Guide UX
+
+- Added `/guide` as a first-class local app route and top-level nav item. The
+  page opens with `Suggested Use Guide`, a text map for
+  `[ Today ] -> [ Goal ] -> [ Action ] -> [ Proof ] -> [ Finish ] -> [ Resume ]`,
+  a six-card daily loop, a five-step first-run path, and a four-card safety
+  boundary.
+- The guide is state-aware: empty checkouts point toward the first-run browser
+  setup path, while populated/current-goal work points at the active Goal or
+  existing confirmed action form. It also exposes evidence for mode, focus
+  status, project/goal counts, first-run step, workspace resume state, latest
+  CI status, and zero-effect counters.
+- Wired `/guide` into `routes_available`, `app-smoke-test`, content-first page
+  ordering, README, local app docs, operating summary, and focused
+  first-milestone assertions.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed;
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health` passed with `1 passed,
+  515 deselected in 32.19s`; `python3 -m agent_os.cli app-smoke-test` passed
+  with `/guide` marker matched and zero provider/network/external-mutation
+  counters.
+- Browser verification: Playwright opened
+  `http://127.0.0.1:62108/guide`, confirmed title
+  `Guide - ClankerOS Local Operator`, six daily cards, five first-run cards,
+  four safety cards, the current primary Goal/action link, and no horizontal
+  overflow at both `1280px` and mobile `390x844`. Screenshot:
+  `.playwright-cli/page-2026-06-29T21-29-21-861Z.png`. Browser and local app
+  server were closed.
+- Non-claims: this does not create projects, goals, delegations, context
+  packs, runs, approvals, execution, pushes, PRs, deploys, provider calls,
+  non-loopback network actions, server writes on GET, or external mutations.
+
+## 2026-06-29 First Run Empty State Text Map UX
+
+- Promoted the first-run empty-state illustration into the visible First Run
+  Guide. A fresh checkout now shows `First Run Empty State Map` between the
+  `First Run Next Step` and `First Run Checklist` panels.
+- The map renders the text-only path
+  `[ Project ] -- [ Goal ] -- [ Delegation ] -- [ Context ] -- [ Run ]`, five
+  step cards, and a current `Create Project` action so a new operator can see
+  the path to the first completed delegation without opening hidden evidence
+  first.
+- Added machine-readable evidence for the active step, target surface, total
+  steps, illustration text, per-step statuses, and no-effect counters for
+  write-on-GET, provider calls, network actions, and external effects.
+- Updated README, local app docs, operating summary, docs status, and focused
+  first-milestone assertions for the new first-run map, ordering, CTA,
+  evidence rows, and safety lines.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed; focused
+  local-app pytest passed with `2 passed in 56.02s`.
+- Browser verification: Playwright against a throwaway empty root at
+  `http://127.0.0.1:62107/` confirmed `First Run Empty State Map`, the text
+  illustration, five step cards, current `create_project`, `Create Project`
+  CTA to `#first-run-create-project`, evidence rows with zero-effect values,
+  and DOM ordering after Next Step and before Checklist. Mobile `390x844`
+  kept the panel at `358px` inside a `390px` viewport with no horizontal
+  overflow, and console warnings/errors were zero. The scratch root, browser,
+  and server were cleaned up.
+- Non-claims: this does not create projects, goals, delegations, context
+  packs, runs, approvals, execution, pushes, PRs, deploys, provider calls,
+  network actions beyond local loopback, server writes, or external mutations.
+
+## 2026-06-29 Keyboard Shortcut Help Dialog UX
+
+- Promoted shortcut discovery into the shared browser shell. Every route now
+  exposes a visible `Keys` header control plus the `?` shortcut, opening a
+  local `Keyboard Shortcuts` dialog without requiring the operator to expand
+  command-palette evidence first.
+- The dialog reuses the global shortcut list, now including `?`, and records
+  explicit no-effect evidence for write-on-GET, provider calls, network
+  actions, and external effects.
+- Updated README, local app docs, operating summary, docs status, and focused
+  first-milestone assertions for the visible button, dialog metadata, shortcut
+  count, script hooks, and safety counters.
+- Safety: browser-local dialog only; no server write, provider call, network
+  action, approval, execution, push, PR, deploy, or external mutation
+  authority added.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed; focused
+  local-app pytest passed with `2 passed in 65.66s`.
+- Browser verification: Playwright against throwaway demo `/profiles` at
+  `http://127.0.0.1:62106/profiles` confirmed the visible `Keys` button had
+  `aria-keyshortcuts="?"`, clicking it opened `Keyboard Shortcuts` with 13
+  rows and zero-effect attributes, pressing `?` opened the same dialog after
+  Escape closed it, mobile `390x844` kept the dialog at `358px` inside a
+  `390px` viewport with no horizontal overflow, and console warnings/errors
+  were zero. The scratch root, browser, and server were cleaned up.
+- Non-claims: this does not make shortcuts execute work beyond local
+  navigation/dialog opening, approve decisions, submit forms, call providers,
+  fetch GitHub, push, create PRs, deploy, mutate external systems, or write
+  `.clanker/app/workspace.json`.
+
+## 2026-06-29 Command Palette Active Result Keyboard UX
+
+- Promoted `Palette Results` from a filter-only list into a keyboard-operated
+  local launcher. Results now render with listbox/option metadata, an active
+  row, `aria-activedescendant`, and selected-state styling.
+- ArrowDown/ArrowUp move through the currently visible local commands, and
+  Enter opens the active local route or anchor. When no local result is visible,
+  Enter is left to the existing Search form so full indexed `/search` remains
+  the explicit fallback.
+- Dynamically injected browser-local viewed-page results are normalized into
+  the same active-result model after route-history readback, so recent routes
+  participate in keyboard navigation without server writes.
+- Updated README, local app docs, operating summary, docs status, and focused
+  first-milestone assertions for the keyboard navigation metadata, evidence,
+  script hooks, and no-effect boundaries.
+- Safety: browser-local navigation only; read-only GET rendering with no
+  approval, execution, push, PR, deploy, provider call, app-side GitHub polling,
+  server write, or external mutation authority added.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed; focused
+  local-app pytest passed with `2 passed in 67.62s`.
+- Browser verification: Playwright against throwaway demo Goal
+  `http://127.0.0.1:62105/goals/goal_e60c5f216e8b` confirmed `/` opened the
+  palette, query `goal` showed 18 visible commands, ArrowDown changed the
+  active result from `/goals` to the demo Goal route, query `timeline` plus
+  Enter opened `#goal-timeline`, query `zzzz-no-match` showed zero visible
+  results with `data-command-palette-active-index=-1`, and Enter fell through
+  to `/search?q=zzzz-no-match`. Mobile `390x844` kept the open palette inside
+  the viewport with no horizontal overflow, and console warnings/errors were
+  zero.
+- Non-claims: this does not make the palette execute work, approve decisions,
+  call providers, fetch GitHub, push, create PRs, deploy, mutate external
+  systems, or write `.clanker/app/workspace.json`.
+
+## 2026-06-29 First Run Checklist View Memory UX
+
+- Added a state-aware `First Run Checklist` between `First Run Next Step` and
+  `First Run Progress` so a fresh operator can mark setup checks and keep a
+  short return note while walking Project -> Goal -> Delegation -> Context ->
+  Run.
+- The checklist keeps only operator marks and the note in browser-local
+  `localStorage:clankeros-first-run-checklist`; real step state still comes
+  from ClankerOS progress and is rendered as current/done/waiting without
+  trusting the browser checklist as canonical progress.
+- `/workspace#workspace-view-memory` now includes a first-class `First Run
+  Checklist` exact-key card, raising the visible view-memory inventory to 24
+  cards and allowing the setup checks/note to be inspected or cleared alongside
+  the rest of the browser-local view state.
+- Updated README, local app docs, operating summary, docs status, and focused
+  first-milestone assertions for the new checklist, persistence key, workspace
+  reset surface, and zero-effect evidence.
+- Safety: browser-local checklist memory only; read-only GET rendering with no
+  approval, execution, push, PR, deploy, provider call, network action, server
+  write, GitHub polling, or external mutation authority added.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed; focused
+  local-app pytest passed with `2 passed in 54.98s`.
+- Browser verification: Playwright against a throwaway first-run app at
+  `http://127.0.0.1:62104` confirmed the checklist defaulted to
+  `State: 0/5 complete; operator checks: 0/5.`, saving project/goal checks
+  plus note `Resume by creating the first project.` wrote
+  `{"checked":["create_project","create_first_goal"],"note":"Resume by creating the first project."}`,
+  reload restored both checks and the note with `View: restored`, Workspace
+  View Memory showed 24 cards plus the `first-run` exact-key card for
+  `clankeros-first-run-checklist`, its Reset cleared the storage key, mobile
+  `390x844` had no horizontal overflow, and console warnings/errors were zero.
+- Non-claims: this does not make first-run setup execute work, create projects
+  or goals, approve decisions, call providers, fetch GitHub, push, create PRs,
+  deploy, mutate external systems, or write `.clanker/app/workspace.json` from
+  GET rendering.
+
+## 2026-06-29 Today Goal Queue Filter UX
+
+- Reworked `/today#today-goal-queue` into a scan-first daily goal switcher
+  with a browser-local Find box, All / Active / Paused / Completed lane
+  buttons, live match count, first-match link, no-match state, visible View
+  status, and reload persistence in
+  `localStorage:clankeros-today-goal-queue-view`.
+- `/workspace#workspace-view-memory` now includes a first-class `Today Goal
+  Queue` exact-key card, raising the visible view-memory inventory to 23 cards
+  and allowing the saved Today queue lane/query to be inspected or cleared
+  alongside other browser-local view state.
+- Fixed the queue script to initialize after `DOMContentLoaded`; browser QA
+  caught the pre-fix race where the script ran before the goal rows existed and
+  showed `0 of 0 goals` even though a row rendered below the filter.
+- Updated README, local app docs, operating summary, docs status, and focused
+  first-milestone assertions for the new queue persistence and workspace reset
+  surface.
+- Safety: browser-local filtering and view memory only; read-only GET rendering
+  with no approval, execution, push, PR, deploy, provider call, network action,
+  server write, GitHub polling, or external mutation authority added.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused local-app pytest passed with
+  `2 passed in 58.82s`.
+- Browser verification: Playwright against throwaway demo `/today` at
+  `http://127.0.0.1:62093/today` confirmed the default queue showed
+  `1 of 1 goals`; typing `demo` saved
+  `{"query":"demo","mode":"all"}`; Active mode saved
+  `{"query":"demo","mode":"active"}` and kept `1 of 1`; Paused mode showed
+  `0 of 1 goals`, revealed the empty state, and hid the first-match link;
+  reload restored `demo` plus Paused with `View: restored`; Reset cleared
+  storage and returned to All with `1 of 1`; mobile `390x844` restored the
+  Active/demo view with no horizontal overflow; Workspace View Memory showed
+  23 cards, the `today-goals` card, exact key
+  `clankeros-today-goal-queue-view`, and cleared that storage key from its
+  Reset control; console warnings/errors were zero.
+- Non-claims: this does not make `/today` execute work, approve decisions,
+  call providers, fetch GitHub, push, create PRs, deploy, mutate external
+  systems, or write `.clanker/app/workspace.json`.
+
+## 2026-06-29 Goal Section Finder View Memory UX
+
+- Added per-Goal browser-local view memory to the `Goal Section Index` section
+  finder on `/goals/<goal_id>#goal-section-index`. Section search now exposes
+  the Goal id, uses `localStorage:clankeros-goal-section-finder:<goal_id>`,
+  restores the previous query after reload, shows visible View status for
+  default/restored/saved/reset states, and provides Reset section search.
+- `/workspace#workspace-view-memory` now includes a `Goal Section Finder`
+  prefix-key card for `clankeros-goal-section-finder:`, raising the visible
+  view-memory inventory to 22 cards and allowing stale Goal section searches
+  to be inspected or cleared alongside other browser-local view state.
+- Updated README, local app docs, operating summary, docs status, and focused
+  first-milestone assertions for the new Goal section finder persistence and
+  workspace reset surface.
+- Safety: read-only GET rendering and client-side filtering only; no approval,
+  execution, push, PR, deploy, provider call, network action, server write,
+  GitHub polling, or external mutation authority added.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed; focused
+  local-app pytest passed with `2 passed in 52.38s`.
+- Browser verification: Playwright against throwaway demo Goal
+  `goal_8d4b99bdae9a` at `http://127.0.0.1:62092` confirmed typing `git`
+  filtered the section finder to `2 of 60 sections`, first match became
+  `Git command`, and storage saved `{"query":"git"}` under
+  `clankeros-goal-section-finder:goal_8d4b99bdae9a`; reload restored the query
+  with `View: restored`; Reset section search cleared storage and returned to
+  `60 of 60 sections`; Workspace View Memory showed 22 cards, the Goal Section
+  Finder prefix key, and `1 saved view`, then its Reset cleared the stored key;
+  mobile `390x844` had no horizontal overflow on both Workspace View Memory
+  and the Goal section finder, and console warnings/errors were zero. The
+  scratch root, browser, and server were cleaned up.
+- Non-claims: this does not make the Goal page execute work, approve
+  decisions, call providers, fetch GitHub, push, create PRs, deploy, mutate
+  external systems, or write `.clanker/app/workspace.json`.
+
+## 2026-06-29 Home Goal Board Filter UX
+
+- Reworked the root `/` `Home Goal Board` from a static active/paused/completed
+  lane inventory into a scan-first board with a browser-local Find box, All /
+  Active / Paused / Completed mode buttons, live match count, first-match link,
+  no-match empty state, and visible View status.
+- The Home board now persists only its browser-local query/lane state in
+  `localStorage:clankeros-home-goal-board-view`, restores that state after
+  reload, and exposes Reset view without writing server state.
+- `/workspace#workspace-view-memory` now includes a `Home Goal Board` exact-key
+  card for `clankeros-home-goal-board-view`, so stale Home filters can be
+  inspected or cleared next to the rest of the app's browser-local view memory.
+- Safety: read-only GET rendering and client-side filtering only; no approval,
+  execution, push, PR, deploy, provider call, network action, server write,
+  GitHub polling, or external mutation authority added.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused Home demo pytest passed with
+  `1 passed in 43.79s`; focused local-app route pytest passed with
+  `1 passed in 36.26s`.
+- Browser verification: Playwright against throwaway demo `/` at
+  `http://127.0.0.1:62091` confirmed Active mode and query `demo` saved
+  `{"query":"demo","mode":"active"}`, reload restored the query and Active
+  mode with `View: restored`, Reset view cleared storage and returned to All,
+  no-match search showed `0 of 1 goals` with the empty state visible,
+  `/workspace#workspace-view-memory` showed the Home Goal Board exact key and
+  21 total view-memory cards, mobile `390x844` had document width 390 with
+  Home board width 358 and filter width 342, and console warnings/errors were
+  zero. The scratch root, browser, and server were cleaned up.
+- Non-claims: this does not make Home execute work, approve decisions, call
+  providers, fetch GitHub, push, create PRs, deploy, or mutate external
+  systems. The local full suite was left to GitHub Actions for this slice.
+
+## 2026-06-29 Today Palette Section Shortcuts
+
+- Added route-aware Today section commands to the command palette when the
+  current route is `/today`. The palette now indexes daily cockpit anchors for
+  Current Action, Goal Queue, Live State, Session Summary, Activity Digest,
+  Operator Workbench, Decision Queue, Decision Filter, Workflow Map, CI
+  Handoff, and Finish Today.
+- The new commands are local `/today#...` links only. Palette evidence now
+  reports Today section command counts and source separately from Goal section
+  commands.
+- Updated `docs/status.md`, `docs/local-app.md`, and
+  `docs/OPERATING_SUMMARY.md` so the daily command-palette affordance is
+  visible in operator docs.
+- Safety: read-only GET rendering and browser-local filtering only; no
+  approval, execution, push, PR, deploy, provider call, network action, server
+  write, or external mutation authority added.
+- Verification: TDD red run failed first on missing `Today Current action`;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  passed; `git diff --check` passed; focused local-app pytest passed with
+  `2 passed in 55.71s`; `python3 -m compileall -q agent_os tests` passed.
+- Browser verification: Playwright against throwaway demo `/today` at
+  `http://127.0.0.1:61894/today` opened the palette with `/`, confirmed
+  `50 local commands available`, filtered `ci` to seven visible commands
+  including `/today#today-ci-handoff`, confirmed no desktop horizontal
+  overflow at `1280px`, resized to `390x844`, confirmed the Today CI command
+  remained visible with dialog width `358px`, document/client width `390px`,
+  no horizontal overflow, and zero browser console warnings/errors. The
+  scratch root, server, and browser session were cleaned up.
+- Non-claims: Today palette section shortcuts do not persist workspace state,
+  approve decisions, execute work, create commit/publication requests, mark
+  goals complete, call providers, fetch GitHub, push, create PRs, deploy, or
+  mutate external systems.
+
+## 2026-06-29 Today Decision Filter
+
+- Added a browser-local `Today Decision Filter` inside
+  `/today#today-decision-queue`, after the rendered daily decision rows and
+  before queue evidence.
+- The filter narrows already-rendered Today Decision Queue rows by all,
+  first-run action, current action, worktree approval, commit approval,
+  publication approval, incidents, recommendations, blocked tasks, or local
+  text search. Rows now expose `data-today-decision-item-id` and
+  `data-today-decision-text` metadata so filtering never needs a server write.
+- The selected daily lane/query are restored from
+  `localStorage:clankeros-today-decision-filter`. `/workspace#workspace-view-memory`
+  now includes a `Today Decision Filter` exact-key card so operators can
+  inspect/reset that daily cockpit filter with the rest of browser-local view
+  memory.
+- Safety: read-only GET rendering; no approval, execution, push, PR, deploy,
+  provider call, network action, or external mutation authority added.
+- Verification: TDD red run failed first on missing
+  `data-today-decision-item-id='create_project'`; `python3 -m py_compile
+  agent_os/local_app.py tests/test_first_milestone.py` passed;
+  `python3 -m compileall -q agent_os tests` passed; `git diff --check`
+  passed; focused local-app pytest passed with `2 passed in 58.42s`;
+  bounded scratch-root `app-demo-smoke-test` passed across fixture-backed
+  routes with provider/network/external mutation counters at zero.
+- Browser verification: Playwright against throwaway demo `/today` at
+  `http://127.0.0.1:55633/today` confirmed two initial rows
+  (`current_action`, `worktree_approval`), Worktree lane filtering hid only
+  the current-action row, reload restored
+  `localStorage:clankeros-today-decision-filter`, text query `commit` showed
+  only the current-action row, Reset restored both rows and cleared storage,
+  desktop and mobile had no horizontal overflow, mobile filter panel measured
+  `329px` with `300px` controls, and browser console warnings/errors were
+  zero.
+- Non-claims: Today Decision Filter is browser-local view state only. It does
+  not write `.clanker/app/workspace.json`, approve or execute work, create
+  commit/publication requests, mark goals complete, bypass confirmed action
+  review, call providers, fetch GitHub, push, create PRs, deploy, or mutate
+  external systems.
+
+## 2026-06-29 Browser-Local Resume Panel
+
+- Added a read-only `Browser Resume` panel near the top of `/resume`, before
+  the existing operator workbench. It reads this browser's
+  `localStorage:clankeros-route-history`, skips `/resume` itself, and points
+  the operator back to the most recent non-resume route.
+- The panel also reports route-scoped scroll and open-panel memory using the
+  existing `clankeros-scroll-position:` and `clankeros-open-panels:` prefixes,
+  with a Goal cockpit fallback when no prior browser route exists.
+- The surface keeps canonical saved workspace state separate: the durable
+  resume point is still `.clanker/app/workspace.json`, updated only by the
+  explicit `/workspace#save-workspace` Finish Today form.
+- Verification: `df -h /System/Volumes/Data` showed 80Gi free before the
+  longer local loop; `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused
+  `test_local_app_routes_render_modern_workflow_and_health` passed with
+  `1 passed in 39.60s`; `python3 -m compileall -q agent_os tests` passed;
+  `git diff --check` passed; bounded scratch-root `app-smoke-test` and
+  `app-demo-smoke-test` passed with ClankerOS provider/network/external
+  mutation counters at zero.
+- Browser verification: Playwright against throwaway demo app
+  `http://127.0.0.1:58047` visited `/goals/goal_7a57eb8dcad1`, seeded route
+  history plus scroll/open-panel memory, then opened `/resume` and confirmed
+  `data-browser-resume-status-value=available`,
+  `data-browser-resume-href=/goals/goal_7a57eb8dcad1`,
+  route key `/goals/goal_7a57eb8dcad1`, link href
+  `/goals/goal_7a57eb8dcad1`, and memory text
+  `scroll=saved panels=saved`. Mobile `390x844` had document width 390,
+  no horizontal overflow, and zero browser console warnings/errors.
+- Non-claims: browser resume is browser-local view memory only. It does not
+  write `.clanker/app/workspace.json`, create or update goals, call providers,
+  fetch GitHub, push, create PRs, deploy, or mutate external systems.
+
+## 2026-06-29 Browser-Local Workflow Form Drafts
+
+- Extended browser-local action form draft memory from setup forms to the
+  high-friction Goal workflow forms: `coder-worktree-approval`,
+  `approve-coder-worktree`, `run-coder-worktree`, `coder-commit-request`,
+  `approve-coder-commit`, `commit-coder-worktree`,
+  `coder-publication-request`, `approve-coder-publication`, and
+  `complete-goal`.
+- Workflow draft keys are now scoped by durable local identifiers such as
+  `goal_id`, `run_id`, `delegation_id`, `approval_id`, or `publication_id`, so
+  separate pending workflow actions do not share unsent operator text. Notes,
+  messages, safe local commands, and verifier command fields render as
+  multiline draft-backed textareas.
+- Confirmed successful workflow action-result pages now clear the exact
+  submitted draft key. `/workspace#workspace-view-memory` labels the shared
+  `clankeros-action-form-draft:` prefix as setup and Goal workflow drafts so
+  operators can inspect or reset those browser-local entries with the other
+  view memory.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused Goal workflow pytest passed
+  with `4 passed in 45.99s`; `python3 -m compileall -q agent_os tests`
+  passed; `git diff --check` passed; bounded scratch-root `app-smoke-test`
+  passed across core routes with provider/network/external mutation counters
+  at zero; bounded scratch-root `app-demo-smoke-test` passed across
+  fixture-backed routes with the same zero-effect counters.
+- Browser verification: Playwright against throwaway local app
+  `http://127.0.0.1:56916` confirmed `coder-commit-request` draft save to
+  `clankeros-action-form-draft:coder-commit-request:run_9e32837ada72`, reload
+  restore of the commit message and multiline note, Workspace View Memory
+  `Form Drafts` reset clearing that key, confirmed action cleanup after the
+  commit request succeeds, transition to the next draft-backed
+  `approve-coder-commit` form, mobile viewport `390x844` with no horizontal
+  overflow, zero browser console errors/warnings, and cleanup of the scratch
+  server/root plus Playwright snapshots.
+- Non-claims: workflow form draft memory is browser-local unsent text only. It
+  does not write `.clanker/app/workspace.json`, approve or execute work,
+  create commit/publication requests, commit, mark goals complete, bypass the
+  confirmed action review page, call providers, fetch GitHub, push, create
+  PRs, deploy, or mutate external systems without the existing explicit
+  confirmed local action.
+
+## 2026-06-29 Browser-Local Setup Form Drafts
+
+- Added browser-local draft memory for confirmed `register-project` and
+  `create-goal` setup forms, backed by scoped
+  `localStorage:clankeros-action-form-draft:<action>:<scope>` entries.
+- First-run project registration, first Goal creation, Resume/Workspace
+  first-run continuation forms, project-scoped Goal creation, and the
+  `/goals` Start Another Goal form now share the same draft behavior: unsent
+  edits save after typing, restore after local reloads, report draft status in
+  the DOM, and expose a `Clear draft` button. `create-goal` prompts now render
+  as multiline textareas.
+- Confirmed successful `register-project` and `create-goal` action-result
+  pages now clear the submitted browser-local form draft key. The
+  confirmation/review payload hides draft bookkeeping fields from the visible
+  operator payload.
+- `/workspace#workspace-view-memory` now includes a `Form Drafts` prefix card
+  and reset scope, so unsent setup and Goal creation drafts can be inspected
+  or cleared with the other browser-local view state.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused local app pytest passed with
+  `3 passed in 71.59s`; `python3 -m compileall -q agent_os tests` passed;
+  `git diff --check` passed; bounded scratch-root `app-smoke-test` passed
+  across core routes with provider/network/external mutation counters at zero;
+  bounded scratch-root `app-demo-smoke-test` passed across fixture-backed
+  routes with the same zero-effect counters.
+- Browser verification: Chrome Playwright against throwaway local app
+  `http://127.0.0.1:61906` confirmed `register-project` draft save to
+  `clankeros-action-form-draft:register-project:clankeros`, reload restore,
+  Workspace View Memory reset clearing that draft, confirmed
+  `register-project` cleanup after success, `create-goal` draft save to
+  `clankeros-action-form-draft:create-goal:draft-project`, multiline reload
+  restore, confirmed `create-goal` cleanup after success, mobile viewport
+  `390x844` with no horizontal overflow, and cleanup of the scratch server and
+  root. The only browser console errors were the expected `409 Conflict`
+  confirmation responses.
+- Non-claims: setup form draft memory is browser-local unsent text only. It
+  does not write `.clanker/app/workspace.json`, register projects or create
+  goals without explicit confirmation, bypass the confirmed action review
+  page, approve or execute work, call providers, fetch GitHub, push, create
+  PRs, deploy, or mutate external systems.
+
+## 2026-06-29 Browser-Local Note Drafts
+
+- Added browser-local draft memory for confirmed Goal and Today
+  `save-goal-note` forms, backed by per-Goal
+  `localStorage:clankeros-goal-note-draft:<goal_id>` entries.
+- The note capture form is now multiline, saves unsent text after operator
+  typing, restores it after local reloads, tracks saved/restored/submitted
+  status in the DOM, and exposes a `Clear draft` button. Confirmed
+  `save-goal-note` action-result pages now clear the submitted draft key after
+  the local note append succeeds.
+- `/workspace#workspace-view-memory` now includes a `Note Drafts` prefix card
+  and reset scope, so unsent operator note drafts can be inspected or cleared
+  with the other browser-local view state.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `python3 -m compileall -q agent_os
+  tests` passed; `git diff --check` passed; focused route/demo pytest passed
+  with `2 passed, 514 deselected in 71.76s`; bounded scratch-root
+  `app-smoke-test` passed across core routes with provider/network/external
+  mutation counters at zero; bounded scratch-root `app-demo-smoke-test` passed
+  across fixture-backed routes with the same zero-effect counters; Chrome
+  Playwright against throwaway demo Goal
+  `http://127.0.0.1:61905/goals/goal_edb089ed670d` confirmed draft save to
+  `clankeros-goal-note-draft:goal_edb089ed670d`, reload restore of a multiline
+  draft, Workspace View Memory reset removing the draft, default empty reload
+  after reset, submitted draft state before confirmation, action-result cleanup
+  clearing the key after confirmed note append, saved note text visible on the
+  Goal page, mobile viewport `390px` with no horizontal overflow, and no
+  unexpected console warnings/errors. The only ignored browser console line
+  was the intentional `409 Conflict` confirmation response.
+- Non-claims: note draft memory is browser-local unsent text only. It does not
+  write `.clanker/app/workspace.json`, append notes without explicit
+  confirmation, bypass the confirmed action review page, record workflow
+  memory, approve or execute work, call providers, fetch GitHub, push, create
+  PRs, deploy, or mutate external systems.
+
+## 2026-06-29 Browser-Local Scroll Position
+
+- Added shared browser-local scroll-position memory to the app shell, backed by
+  route-scoped `localStorage:clankeros-scroll-position:<route>` entries.
+- The shell records the route scroll position only after operator scrolling,
+  restores long pages near the prior working position on reload, and marks
+  hash-anchor routes as `hash-skip` so anchor navigation does not overwrite the
+  route-scoped saved position.
+- `/workspace#workspace-view-memory` now includes a `Scroll Position` prefix
+  card and reset scope, so route-scoped return position can be inspected or
+  cleared with the other browser-local view state.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused route/demo pytest passed with
+  `2 passed, 514 deselected in 50.55s`; `python3 -m compileall -q agent_os
+  tests` passed; `git diff --check` passed; bounded scratch-root
+  `app-smoke-test` passed across core routes with provider/network/external
+  mutation counters at zero; bounded scratch-root `app-demo-smoke-test` passed
+  across fixture-backed routes with the same zero-effect counters; Chrome
+  Playwright against throwaway demo Goal
+  `http://127.0.0.1:61904/goals/goal_768833a78f32` confirmed no key on first
+  load, save to `clankeros-scroll-position:/goals/goal_768833a78f32` after
+  scrolling to `y=900`, reload restore at `y=900`, hash navigation to
+  `#goal-timeline` reported `hash-skip` and did not overwrite the saved
+  position, Workspace View Memory reset removed the key, mobile viewport
+  `390px` had no horizontal overflow, and console warning/error logs were
+  empty.
+- Non-claims: scroll-position memory is browser-local view state only. It does
+  not write `.clanker/app/workspace.json`, record workflow memory, approve or
+  execute work, call providers, fetch GitHub, push, create PRs, deploy, or
+  mutate external systems.
+
+## 2026-06-29 Browser-Local Open Panels
+
+- Added shared browser-local open-panel memory to the app shell, backed by
+  route-scoped `localStorage:clankeros-open-panels:<route>` entries.
+- The shell records stable `<details id=...>` panels after a browser has saved
+  state for that route, restores the exact open/closed set after reload, and
+  keeps first visits on the server-rendered default panel posture.
+- `/workspace#workspace-view-memory` now includes an `Open Panels` prefix card
+  and reset scope, so route-scoped panel state can be inspected or cleared with
+  the other browser-local view state.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused route/demo pytest passed with
+  `2 passed, 514 deselected in 61.10s`; `python3 -m compileall -q agent_os
+  tests` passed; `git diff --check` passed; bounded scratch-root
+  `app-smoke-test` passed across core routes with provider/network/external
+  mutation counters at zero; bounded scratch-root `app-demo-smoke-test` passed
+  across fixture-backed routes with the same zero-effect counters; Playwright
+  against throwaway demo Goal `http://127.0.0.1:61892/goals/goal_e64c2fe6e0d1`
+  confirmed route key `clankeros-open-panels:/goals/goal_e64c2fe6e0d1`,
+  saving two open panels, reload-restoring the same two, closing one and
+  reload-restoring only the remaining panel, Workspace View Memory reset
+  removing the saved key, no desktop or mobile horizontal overflow, and zero
+  console warnings/errors.
+- Non-claims: open-panel memory is browser-local view state only. It does not
+  write `.clanker/app/workspace.json`, record workflow memory, approve or
+  execute work, call providers, fetch GitHub, push, create PRs, deploy, or
+  mutate external systems.
+
+## 2026-06-29 Browser-Local Viewed Pages
+
+- Added a shared browser-local `Viewed Pages` panel to the app shell, backed by
+  `localStorage:clankeros-route-history`.
+- The panel records local app routes visited in the current browser, dedupes by
+  href, caps the history at 12 entries, shows the entries in the Recent Items
+  sidebar, and exposes a click-only clear action.
+- The command palette now includes a `Viewed Pages` section and appends those
+  browser-local route entries as searchable palette results after localStorage
+  readback, so recent route hops can be reopened from the keyboard launcher.
+- `/workspace#workspace-view-memory` now includes the
+  `clankeros-route-history` key in the browser-local view-memory inspector and
+  reset scope.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed; focused
+  route/demo pytest passed with `2 passed, 514 deselected in 61.98s`;
+  bounded scratch-root `app-smoke-test` passed across core routes with
+  provider/network/external mutation counters at zero; bounded scratch-root
+  `app-demo-smoke-test` passed across fixture-backed routes with the same
+  zero-effect counters; Playwright against throwaway demo root at
+  `http://127.0.0.1:61891` visited `/`, `/today`,
+  `/goals/goal_365146bc8752`, and `/workspace`, confirmed four stored
+  route-history entries, four sidebar rows, four palette rows, no desktop or
+  mobile horizontal overflow, mobile palette width `358px` at `390x844`, and
+  zero console warnings/errors.
+- Non-claims: the route history is browser-local view state only. It does not
+  write `.clanker/app/workspace.json` on GET, record workflow memory, approve
+  or execute work, call providers, fetch GitHub, push, create PRs, deploy, or
+  mutate external systems.
+
+## 2026-06-29 Today Decision Queue
+
+- Added a read-only `Today Decision Queue` to `/today` after the Today
+  Operator Workbench and before the Today Workflow Map.
+- Empty first-run checkouts now show one concrete `first_run_current_action`
+  row that links back to the same-page Create Project/Create First Goal target.
+  Populated daily cockpits show the lead Goal's current action first, then
+  pending worktree, commit, publication, incident, recommendation, or
+  blocked-task decision rows.
+- The queue preserves explicit evidence for status, Goal, project, phase, next
+  action, row counts, waiting counts, approval breakdowns, incident/
+  recommendation/task counts, same-page action availability, first-run form
+  availability, and zero write/provider/network/external-effect counters.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused route/demo pytest passed with
+  `2 passed, 514 deselected in 59.90s`; `python3 -m compileall -q agent_os
+  tests` passed; `git diff --check` passed; bounded scratch-root
+  `app-smoke-test` passed across core routes with provider/network/external
+  mutation counters at zero; bounded scratch-root `app-demo-smoke-test` passed
+  across fixture-backed stateful routes with provider/network/external
+  mutation counters at zero; Playwright browser QA against throwaway demo
+  `/today` at `http://127.0.0.1:55629/today` confirmed two decision rows
+  (`current_action` and `worktree_approval`), the primary row linked to
+  `#today-current-action`, the approval row linked to
+  `/approvals?goal_id=goal_bb0caa420575`, the queue sat between Today
+  Operator Workbench and Today Workflow Map, emitted no console errors or
+  warnings, had no desktop horizontal overflow at `1280x900`, and stacked to
+  one `329px` column with no horizontal overflow at mobile `390x844`.
+
+## 2026-06-29 Goal Decision Filter
+
+- Added a browser-local `Goal Decision Filter` inside
+  `/goals/<goal_id>#goal-decision-queue`, after the rendered queue rows and
+  before queue evidence.
+- The filter narrows already-rendered Goal decision rows by all/current action,
+  worktree approval, commit approval, publication approval, incidents,
+  recommendations, blocked tasks, or local text search. Rows now carry
+  `data-goal-decision-kind`, `data-goal-decision-item-id`, and
+  `data-goal-decision-text` metadata so filtering never needs a server write.
+- The selected lane/query are restored per Goal from
+  `localStorage:clankeros-goal-decision-filter:<goal_id>`, the filter is
+  discoverable through the command palette and Goal Section Index, and
+  `/workspace#workspace-view-memory` can inspect/reset the prefix with the
+  other browser-local view state.
+- Safety: read-only GET rendering; no approval, execution, push, PR, deploy,
+  provider call, network action, or external mutation authority added.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `git diff --check` passed;
+  `python3 -m compileall -q agent_os tests` passed; focused local-app pytest
+  passed for `test_local_app_routes_render_modern_workflow_and_health` and
+  `test_local_app_demo_scenario_populates_fixture_state`; Playwright browser
+  QA against throwaway demo Goal `goal_dbee795d326b` at
+  `http://127.0.0.1:55631/goals/goal_dbee795d326b` confirmed Worktree lane
+  filtering shows only the `worktree_approval` row, reload restores
+  `localStorage:clankeros-goal-decision-filter:<goal_id>`, text query
+  `commit` shows only the `current_action` row, Reset restores both rows and
+  clears storage, console warnings/errors were zero, desktop `1280x900` had no
+  horizontal overflow, and mobile `390x844` stacked filter controls at 300px
+  with no horizontal overflow.
+
+## 2026-06-29 Goal Decision Queue
+
+- Added a read-only `Goal Decision Queue` to `/goals/<goal_id>` after the
+  Goal Attention Digest and before the Goal Command Bar.
+- The queue renders concrete Goal-scoped operator rows for the current next
+  action plus pending worktree, commit, publication, incident, recommendation,
+  or blocked-task decisions. Rows link to the existing confirmed Goal action
+  form, scoped approvals, incidents, recommendations, or risk surfaces instead
+  of adding new write authority.
+- It is included in the command palette's Goal section commands and the Goal
+  Section Index, preserving explicit evidence for Goal, project, phase, row
+  counts, waiting counts, approval/incidents/recommendation/task counts, action
+  form availability, and zero write/provider/network/external-effect counters.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused route/demo pytest passed with
+  `2 passed, 514 deselected in 61.21s`; `python3 -m compileall -q agent_os
+  tests` passed; `git diff --check` passed; bounded scratch-root
+  `app-smoke-test` passed across core routes with provider/network/external
+  mutation counters at zero; bounded scratch-root `app-demo-smoke-test` passed
+  across fixture-backed stateful routes with provider/network/external
+  mutation counters at zero; Playwright browser QA against a throwaway demo
+  Goal at `http://127.0.0.1:55628/goals/goal_064371858de9` confirmed the
+  queue rendered two rows (`current_action` and `worktree_approval`), linked
+  the current action to `#goal-next-action-form`, linked the approval row to
+  `/approvals?goal_id=goal_064371858de9`, sat between Goal Attention Digest
+  and Goal Command Bar, emitted no console errors or warnings, had no desktop
+  horizontal overflow at `1280x900`, and stacked to one `329px` column with no
+  horizontal overflow at mobile `390x844`.
+
+## 2026-06-29 Goal Activity Pulse
+
+- Added a read-only `Goal Activity Pulse` to `/goals/<goal_id>` after the
+  Goal Session Digest and before the Goal Continuation Rail.
+- The pulse reuses existing Goal timeline data to show Latest, Recent Three,
+  Mix, Artifact, and Next cards near the top of the Goal page, so returning
+  operators can see the newest linked movement before opening the full
+  Timeline.
+- It preserves explicit evidence for Goal, project, phase, total timeline
+  items, recent count, latest event, event-family counts, latest artifact,
+  next action, action-form availability, and zero write/provider/network/
+  external-effect counters.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused route/demo pytest passed with
+  `2 passed, 514 deselected in 61.34s`; `python3 -m compileall -q agent_os
+  tests` passed; `git diff --check` passed; bounded scratch-root
+  `app-smoke-test` passed across core routes with provider/network/external
+  mutation counters at zero; bounded scratch-root `app-demo-smoke-test` passed
+  across fixture-backed stateful routes with provider/network/external
+  mutation counters at zero; Playwright browser QA against a throwaway demo
+  Goal at `http://127.0.0.1:55627/goals/goal_66ce127ba7e1` confirmed the
+  pulse rendered with five cards and three recent events, sat between Goal
+  Session Digest and Goal Continuation Rail, linked Latest to
+  `/runs/run_2164d62cad57`, linked Next to `#goal-next-action-form`, emitted
+  no console errors or warnings, had no desktop horizontal overflow at
+  `1280x900`, and stacked to one `329px` column with no horizontal overflow at
+  mobile `390x844`.
+
+## 2026-06-29 Goal First Run Rail
+
+- Added a read-only `Goal First Run Rail` to active first-run Goal pages before
+  the Goal Command Bar.
+- The rail keeps the Project, Goal, Delegation, Context, and Run onboarding
+  path visible inside `/goals/<goal_id>` until the first delegation completes.
+- The current first-run gate routes to the existing confirmed Goal action form
+  when available, so Create scout delegation, Generate context pack, and Run
+  delegation stay one obvious browser action without adding any new action
+  authority.
+- The rail preserves explicit evidence for current step, next action, target
+  surface, Goal, project, delegation, context-pack readiness, delegation
+  completion, step counts, and zero write/provider/network/external-effect
+  counters.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; focused route/demo pytest passed with
+  `2 passed, 514 deselected in 64.71s`; `python3 -m compileall -q agent_os
+  tests` passed; `git diff --check` passed; scratch-root
+  `app-smoke-test` passed across core routes with provider/network/external
+  mutation counters at zero; scratch-root `app-demo-smoke-test` passed across
+  fixture-backed stateful routes with provider/network/external mutation
+  counters at zero; Playwright browser QA against a throwaway first-run Goal
+  at `http://127.0.0.1:55626/goals/goal_d5dcd20e4aee` confirmed the rail
+  rendered with five cards, the current `create_first_delegation` card linked
+  to `#goal-next-action-form`, the Goal action form existed, no console errors
+  were emitted, desktop had no horizontal overflow, and mobile `390x844`
+  stacked the five cards at 329px with no horizontal overflow.
+
+## 2026-06-29 Goal Section Palette Commands
+
+- Added focused Goal section jump commands to the shared command palette's
+  browser-local filtered `Palette Results` list.
+- When the current route is a Goal page, or when Operator Focus has a lead or
+  saved Goal, the palette now adds direct links for Next action, Timeline,
+  Evidence, Delegations, Runs, Approvals, Artifacts, Memory, Skills used, Git
+  status, Operator notes, and Remaining work.
+- Operators can open the palette and type terms like `timeline`, `approval`,
+  `artifact`, `memory`, `git`, or `remaining` to jump directly to the
+  corresponding Goal section instead of scanning the full Goal page or opening
+  the Goal section finder first.
+- Palette evidence now reports the Goal-section command count, source, and
+  target Goal id. First-run/no-Goal state reports zero Goal section commands.
+- The behavior is local route/anchor navigation only: no server state write, no
+  workspace JSON write, no provider calls, no network actions, and no external
+  mutation.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py` passed; `python3 -m compileall -q agent_os
+  tests` passed; focused route/demo pytest passed with `2 passed, 514
+  deselected in 68.33s`; scratch-root `python3 -m agent_os.cli --root
+  <scratch> app-smoke-test` passed across core routes with provider calls,
+  network actions, and external mutations at zero; scratch-root `python3 -m
+  agent_os.cli --root <scratch> app-demo-smoke-test` passed across
+  fixture-backed stateful routes with provider calls, network actions, and
+  external mutations at zero; direct rendered Goal readback confirmed 12
+  palette Goal-section commands and Artifacts/Git/Remaining-work links;
+  Playwright browser QA against the scratch demo Goal at
+  `http://127.0.0.1:55625/goals/goal_131ef6ff4237` confirmed `/` opened the
+  palette, `git` linked to `#goal-git-status`, `remaining` linked to
+  `#goal-remaining-work`, `artifact` included `#goal-artifacts`, no console
+  errors were emitted, and the desktop page had no horizontal overflow; final
+  `git diff --check` passed.
+
+## 2026-06-29 Recent Items Filter UX
+
+- Added a browser-local `Find Recent` filter to the shared Recent Items
+  sidebar on every local-app route, between the Recent Items Command Bar and
+  the collapsed shortcut list.
+- Operators can narrow already-rendered recent shortcut rows by local text
+  search across label, local href, and item kind, so Goal, delegation, run,
+  artifact, proof, fixture, or first-run shortcuts are easier to recover
+  without expanding and scanning the whole sidebar.
+- The query is remembered in
+  `localStorage:clankeros-recent-items-filter`, shows `View: default`,
+  `View: saved`, `View: restored`, or `View: reset`, and is cleared with
+  `Reset filter`.
+- Recent shortcut rows now expose stable `data-recent-items-filter-item`,
+  kind, href, and text metadata so the filter can hide unmatched rendered
+  rows without changing workspace state or route data.
+- Workspace View Memory now includes the Recent Items filter key, so
+  `/workspace#workspace-view-memory` can inspect and reset it with the rest of
+  the browser-local view state.
+- The behavior is browser-local display filtering only during GET/filter
+  interactions: no server state write, no workspace JSON write, no provider
+  calls, no network actions, and no external mutation.
+- Verification: `python3 -m py_compile agent_os/local_app.py` passed;
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  passed; focused pytest for local-app route/demo coverage passed with
+  `2 passed, 514 deselected in 75.72s`; `python3 -m compileall -q agent_os
+  tests` passed; `python3 -m agent_os.cli --root <scratch> app-smoke-test`
+  passed across core routes with provider/network/external mutation counters
+  at zero; `python3 -m agent_os.cli --root <scratch> app-demo-smoke-test`
+  passed across fixture-backed stateful routes with provider/network/external
+  mutation counters at zero; post-edit `python3 -m py_compile
+  agent_os/local_app.py tests/test_first_milestone.py` and `git diff --check`
+  passed.
+- Browser QA: local throwaway app at `http://127.0.0.1:55624` showed the
+  Recent Items filter on a fixture-backed Goal page; desktop filtering,
+  no-match empty state, saved-query reload restore, reset, and no desktop
+  horizontal overflow were verified. Mobile in-app Browser control hung while
+  trying to reset the viewport after a 390px attempt, so no mobile browser proof
+  is claimed for this slice.
+
+## 2026-06-29 Profile Routing Filter UX
+
+- Added a browser-local `Profile Routing Filter` to
+  `/profiles#profile-routing-filter` after the Profile Routing Matrix and
+  before configured/storage/future profile lists.
+- Operators can narrow already-rendered matrix cards and profile rows by All,
+  Planning, Coding, Review, Docs, Cheap Model, Frontier Model, Storage,
+  Configured, or local text search across lane, readiness, profile name,
+  label, mode, model placeholder, cost tier, `use_for`, write posture, adapter
+  posture, and inactive provider metadata.
+- The selected lane/query view is remembered in
+  `localStorage:clankeros-profile-routing-filter` and cleared with
+  `Reset filter`.
+- Profile matrix cards and list rows now expose stable
+  `data-profile-filter-item`, lane, kind, readiness, cost, and text metadata
+  so the filter can hide unmatched rendered rows without changing profile
+  records or enabling provider/model routing.
+- Workspace View Memory now includes the Profile Routing filter key, so
+  `/workspace#workspace-view-memory` can inspect and reset it with the rest of
+  the browser-local view state.
+- The behavior is browser-local display filtering only: no write on GET, no
+  provider routing activation, no model routing, no execution, no provider
+  calls, no network actions, no push, no PR, no deploy, and no external
+  mutation.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused profile pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  "profiles_route_reads_storage_profiles_without_enabling_providers"
+  --tb=short` passed with `1 passed, 515 deselected in 12.80s`; focused
+  route/demo pytest `python3 -m pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 52.47s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55623` showed `/profiles` rendering 22 filterable rows
+  with no desktop overflow, Cheap Model + text `failure_summary` filtering to
+  two visible rows, reload restoring that saved view, Storage +
+  `failure_summary` filtering to one visible storage profile row, Configured +
+  `failure_summary` showing the empty state with zero visible rows, Reset
+  filter returning All with 22 visible rows and staying default after reload,
+  mobile `390x844` stacking lane buttons, query, Reset filter, and status at
+  `329px` width inside a `358px` panel, Storage + `tester` filtering to one
+  visible row, no horizontal overflow, no console warnings/errors, and the
+  browser viewport reset after QA. GitHub Actions proof remains pending after
+  push.
+
+## 2026-06-29 Inbox Queue Filter UX
+
+- Added a browser-local `Inbox Queue Filter` to
+  `/inbox#inbox-queue-filter` after the Inbox Command Bar and before the
+  dense queue summaries/lists.
+- Operators can narrow already-rendered inbox rows by All, Attention,
+  Decisions, Work, Publication, Scoped Goal, Scoped Run, or local text search
+  across row kind, status, project, Goal, delegation, run, source run,
+  rendered row text, and linked evidence/artifact metadata.
+- The selected lane/query view is remembered in
+  `localStorage:clankeros-inbox-queue-filter` and cleared with
+  `Reset filter`; scoped lanes fall back to All when the current route has no
+  matching `goal_id` or `run_id` scope.
+- Inbox rows now expose stable `data-inbox-filter-item`, lane, kind, status,
+  project, Goal, delegation, run, source-run, and text metadata so the filter
+  can hide unmatched rendered rows without changing inbox records or granting
+  any decision authority.
+- Workspace View Memory now includes the Inbox Queue filter key, so
+  `/workspace#workspace-view-memory` can inspect and reset it with the rest of
+  the browser-local view state.
+- The behavior is browser-local display filtering only: no write on GET, no
+  decision, no approval, no execution, no provider calls, no network actions,
+  no push, no PR, no deploy, and no external mutation.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused route/demo pytest `python3 -m
+  pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 67.06s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55622` showed scoped `/inbox?goal_id=...` with four
+  rendered rows, no desktop overflow, Decisions + text `worktree` filtering
+  to one visible worktree-approval row, reload restoring that saved view,
+  Publication + `worktree` showing the empty state with zero visible rows,
+  Reset filter returning All with four visible rows and staying default after
+  reload, saved Scoped Goal falling back to All on unscoped `/inbox`, mobile
+  `390x844` stacking lane buttons, query, Reset filter, and status at `329px`
+  width inside a `358px` panel, Work + `run` filtering to two visible rows,
+  no horizontal overflow, no console warnings/errors, and the browser
+  viewport reset after QA. GitHub Actions proof remains pending after push.
+
+## 2026-06-29 Approval Queue Filter UX
+
+- Added a browser-local `Approval Queue Filter` to
+  `/approvals#approval-queue-filter` after the Approval Decision Brief and
+  before the pending worktree/commit/publication approval lists.
+- Operators can narrow already-rendered approval rows by All, Worktree,
+  Commit, Publication, Scoped Goal, Scoped Run, or local text search across
+  approval id, status, project, Goal, delegation, run, source run, action,
+  request/evidence artifacts, remote/target branch, and changed files.
+- The selected lane/query view is remembered in
+  `localStorage:clankeros-approval-queue-filter` and cleared with
+  `Reset filter`; scoped lanes fall back to All when the current route has no
+  matching `goal_id` or `run_id` scope.
+- Approval rows now expose stable `data-approval-filter-item`, kind, status,
+  project, Goal, run, source-run, and text metadata so the filter can hide
+  unmatched rendered rows without changing approval records or granting any
+  decision authority.
+- Workspace View Memory now includes the Approval Queue filter key, so
+  `/workspace#workspace-view-memory` can inspect and reset it with the rest of
+  the browser-local view state.
+- The behavior is browser-local display filtering only: no write on GET, no
+  approval decision, no execution, no provider calls, no network actions, no
+  push, no PR, no deploy, and no external mutation.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused route/demo pytest `python3 -m
+  pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 56.58s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55621` showed the scoped approvals page with one
+  rendered approval row and no desktop overflow, Scoped Goal + text
+  `worktree` filtering to one visible row, reload restoring that saved view,
+  unscoped `/approvals` falling back from Scoped Goal to All while preserving
+  the text query, Commit + `worktree` showing the empty state with one hidden
+  row, Reset filter returning All and staying default after reload, mobile
+  `390x844` stacking lane buttons, query, Reset filter, and status at `329px`
+  width inside a `358px` panel, no horizontal overflow, no framework overlay,
+  and no console warnings/errors.
+
+## 2026-06-29 Skills Inventory Filter UX
+
+- Added a browser-local `Skills Inventory Filter` to
+  `/skills#skills-inventory-filter` after the Skills Usage Map and before the
+  Skills Command Bar.
+- Operators can narrow already-rendered skill rows by All, Available,
+  Generated, Active, Proposed, Used, or Unused, plus local text search across
+  skill id, name, status, project, usage count, last-used timestamp, artifact
+  path, and generated/available posture.
+- The selected lane/query view is remembered in
+  `localStorage:clankeros-skills-inventory-filter` and cleared with
+  `Reset filter`; the visible status reports `View: default`, `View: saved`,
+  `View: restored`, or `View: reset`.
+- Skill rows now expose stable `data-skills-inventory-item`, lane, status,
+  usage-count, generated, and text metadata so the filter can hide unmatched
+  rendered rows without changing server-side skill records or granting install
+  or execution authority.
+- Workspace View Memory now includes the Skills Inventory filter key, so
+  `/workspace#workspace-view-memory` can inspect and reset it with the rest of
+  the browser-local view state.
+- The Skills Usage Map now uses an auto-fitting grid so the six summary cards
+  do not force horizontal scrolling in the standard desktop content lane.
+- The behavior is browser-local display filtering only: no write on GET, no
+  skill install, no skill execution, no provider calls, no network actions, no
+  approval, no deploy, no raw filesystem browsing, and no external mutation.
+- Verification:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `python3 -m compileall -q agent_os tests`, `git diff --check`,
+  focused `pytest` for the local app route/demo tests,
+  `python3 -m agent_os.cli app-smoke-test`, and
+  `python3 -m agent_os.cli app-demo-smoke-test` all passed.
+- Browser QA at `http://127.0.0.1:55620/skills` proved the fresh demo state
+  starts with two rows and no desktop overflow, `Generated` + `local-files`
+  narrows to one visible row, reload restores the saved view, reset returns to
+  default, and mobile 390x844 keeps controls inside the panel with no console
+  warnings/errors and no horizontal overflow.
+
+## 2026-06-29 Memory Inventory Filter UX
+
+- Added a browser-local `Memory Inventory Filter` to
+  `/memory#memory-inventory-filter` after the Memory Pinboard and before the
+  Memory Command Bar.
+- Operators can narrow already-rendered memory rows by All, Proposed, Active
+  Pins, Project, Global, Generated, Notes, or Future Work, plus local text
+  search across id, project, scope, status, key, value, source, note path, and
+  future-work summary metadata.
+- The selected lane/query view is remembered in
+  `localStorage:clankeros-memory-inventory-filter` and cleared with
+  `Reset filter`; the visible status reports `View: default`, `View: saved`,
+  `View: restored`, or `View: reset`.
+- Memory rows now expose stable `data-memory-inventory-item`, lane, status,
+  and text metadata so the filter can hide unmatched rendered rows without
+  changing server-side memory records or pin authority.
+- Workspace View Memory now includes the Memory Bank filter key, so
+  `/workspace#workspace-view-memory` can inspect and reset it with the rest of
+  the browser-local view state.
+- The behavior is browser-local display filtering only: no write on GET, no
+  memory write, no provider calls, no network actions, no execution, no
+  approval, no push, no PR, no deploy, no raw filesystem browsing, and no
+  external mutation.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused route/demo pytest `python3 -m
+  pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 62.01s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55619` with two seeded proposed memory rows showed the
+  Memory Inventory Filter with 5 rendered inventory rows, Proposed + text
+  `handoff` filtering to 1 visible row and 4 hidden rows, reload restoring the
+  same view with `View: restored`, Reset filter returning All with `Showing 5
+  of 5 memory rows`, reload after reset staying default, mobile `390x844`
+  stacking lane buttons, query, and Reset filter at `329px` width inside a
+  `358px` panel, no horizontal overflow, no framework overlay, and no console
+  warnings/errors.
+
+## 2026-06-29 Workspace View Memory UX
+
+- Added a visible `Workspace View Memory` panel to
+  `/workspace#workspace-view-memory` after the Workspace Restore Map and
+  before the Workspace Daily Brief.
+- The panel inventories browser-local view state for theme, focus mode, Goal
+  board view, search result lanes, timeline lanes, artifact filters, and
+  operator-note filters.
+- Operators can refresh the inventory, reset one view-memory family, or reset
+  all known ClankerOS view-memory keys. Resetting theme or focus mode also
+  updates the current page shell immediately, so clearing Focus mode returns
+  the header button from `Focus On` to `Focus` without waiting for a reload.
+- The behavior only reads or removes browser `localStorage` values after
+  explicit browser clicks. It does not write `.clanker/app/workspace.json`,
+  browse raw filesystem paths, call providers, use the network, push, create
+  PRs, deploy, or mutate external systems.
+- Updated README, local app docs, operating summary, docs status, demo smoke
+  expectations, and the fixture-backed first-milestone workspace regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; `git diff --check`; focused route/demo
+  pytest `python3 -m pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 61.77s`; bounded temp-root `app-smoke-test`;
+  bounded temp-root `app-demo-smoke-test`; in-app Browser QA against a
+  throwaway demo server on `127.0.0.1:55618` showed theme/focus stored,
+  Goal board query `commit` plus title sort stored, Search Work lane stored,
+  `Reset all view memory` clearing four browser values, Focus returning from
+  `Focus On` to `Focus`, desktop `1280x900` and mobile `390x844` with no
+  horizontal overflow, no framework error overlay, and no console
+  warnings/errors.
+
+## 2026-06-29 Goal Operator Notes Browser UX
+
+- Added a visible `Goal Notes Browser` to
+  `/goals/<goal_id>#goal-operator-notes-browser` after the Goal Operator Notes
+  Command Bar and before the confirmed append form.
+- The browser parses the existing goal-scoped `operator-notes.md` sections and
+  renders them as scan-first note cards with timestamp, author, and body text,
+  so saved resume notes can be reviewed without opening the raw Markdown file.
+- Operators can narrow already-rendered note cards with local text search; the
+  query is remembered per Goal in
+  `localStorage:clankeros-goal-notes-filter:<goal_id>` and cleared with
+  `Reset notes`.
+- The behavior is read-only display filtering on GET: note creation still goes
+  only through the confirmed `save-goal-note` action, previous notes are not
+  overwritten, no raw filesystem browsing is exposed, and no provider,
+  network, push, PR, deploy, or external mutation is performed.
+- Hardened an existing progress-meter action width rule found during Browser QA
+  so desktop Goal pages do not overflow horizontally.
+- Updated README, local app docs, operating summary, docs status, demo smoke
+  expectations, and the fixture-backed first-milestone Goal note regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused route/demo pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 52.04s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55617` showed the Goal Notes Browser with one saved
+  note, text filter `publication` saving `View: saved` and `Showing 1 of 1
+  notes matching text publication.`, reload restoring the query with `View:
+  restored`, Reset notes returning `Showing 1 of 1 notes.`, desktop
+  `1280x900` and mobile `390x844` both with no horizontal overflow, no
+  framework error overlay, and no console warnings/errors.
+
+## 2026-06-29 Goal Artifact Filter UX
+
+- Added a browser-local `Goal Artifact Filter` to
+  `/goals/<goal_id>#goal-artifact-filter` at the top of the typed Goal
+  Artifact Explorer.
+- Operators can narrow already-rendered Goal artifact rows by artifact type,
+  source, and text query without reading new paths or submitting a new request.
+- The selected type/source/query view is remembered per Goal in
+  `localStorage:clankeros-goal-artifact-filter:<goal_id>` and can be cleared
+  with `Reset filter`; the visible status reports `View: default`,
+  `View: saved`, `View: restored`, or `View: reset`.
+- Goal artifact rows now expose stable `data-goal-artifact-item`,
+  type/source/status, and text metadata so the filter can hide unmatched
+  rendered rows without changing the server-side artifact registry.
+- The behavior is browser-local display filtering only: no write on GET, no
+  provider calls, no network actions, no execution, no approval, no push, no
+  PR, no deploy, no raw filesystem browsing, and no external mutation.
+- Updated README, local app docs, operating summary, docs status, demo smoke
+  expectations, and the fixture-backed Goal route regression.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state --tb=short` passed with
+  `1 passed, 515 deselected in 38.83s`; focused route/demo pytest `python3 -m
+  pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 52.23s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55616` showed the Goal Artifact Filter with 21
+  artifacts, Patch filtering to 1 visible artifact and 20
+  hidden rows, source `coder_run` plus text `diff.patch` filtering to the exact
+  diff artifact, reload restoring source/text with `View: restored`, Reset
+  filter returning All with `Showing 21 of 21 artifacts`, reload after reset
+  staying default, mobile `390x844` stacking type buttons, source, query, and
+  Reset filter at `329px` width inside a `358px` panel, no horizontal overflow,
+  no framework overlay, and no console warnings/errors.
+
+## 2026-06-29 Search Result Filter UX
+
+- Added a browser-local `Search Result Filter` to
+  `/search#search-result-filter` after the Search Result Map and before the
+  Search Command Bar.
+- Operators can narrow the already-rendered local search results by All,
+  Goals, Projects, Work, Decisions, Knowledge, or Artifacts without submitting
+  a new request.
+- The selected lane is remembered per query in
+  `localStorage:clankeros-search-result-lane:<query-hash>` and can be cleared
+  with `Reset lane`; the visible status reports `View: default`, `View: saved`,
+  `View: restored`, or `View: reset`.
+- Search result rows now expose stable `data-search-result-item`,
+  `data-search-result-lane`, category, and text metadata so the filter can hide
+  unmatched rendered rows without changing the server-side search result set.
+- The behavior is browser-local display filtering only: no write on GET, no
+  provider calls, no network actions, no execution, no approval, no push, no
+  PR, no deploy, no raw filesystem browsing, and no external mutation.
+- Updated README, local app docs, operating summary, docs status, demo smoke
+  expectations, and first-milestone route/demo regressions.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 61.39s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55615` showed the fixture-backed search filter with 3
+  results, Work lane filtering to 1 visible Work result and 2
+  hidden rows, reload restoring Work with `View: restored`, Reset lane returning
+  All with `Showing 3 of 3 results`, reload after reset staying default, mobile
+  `390x844` stacking lane buttons and Reset lane at `329px` width inside a
+  `358px` panel, no horizontal overflow, no framework overlay, and no console
+  warnings/errors.
+
+## 2026-06-29 Timeline Lane View Memory UX
+
+- Added browser-local view memory to `/goals/<goal_id>#goal-timeline-filter`
+  so the selected Timeline lane restores per Goal across reloads from
+  `localStorage:clankeros-goal-timeline-lane:<goal_id>`.
+- Added visible `View: default/saved/restored/reset` status and a `Reset lane`
+  control that clears the per-Goal browser-local lane state and returns to the
+  full chronology.
+- Preserved the server-rendered default All lane, existing lane buttons,
+  rendered timeline rows, count text, and lane-filter safety evidence. The
+  helper writes only to browser local storage after browser interaction; GET
+  rendering remains read-only.
+- The behavior is browser-local Timeline view restoration only: no Goal state
+  write on GET, no provider calls, no network actions, no execution, no
+  approval, no push, no PR, no deploy, and no external mutation.
+- Updated README, local app docs, operating summary, docs status, and the
+  fixture-backed Goal route regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state --tb=short` passed with
+  `1 passed, 515 deselected in 29.53s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55614` showed Artifact lane saved, reloaded with
+  `View: restored`, `Showing 19 of 29 events in artifact`, only artifact rows
+  visible, Reset lane returned All with `Showing 29 of 29 events`, reload after
+  reset stayed default, mobile `390x844` stacked lane buttons and Reset lane at
+  `329px` width inside a `358px` panel, no horizontal overflow, and no console
+  warnings/errors.
+
+## 2026-06-29 Goal Board View Memory UX
+
+- Added browser-local view memory to `/goals#goal-board-filter` so the Goal
+  board restores the operator's query, active/paused/completed mode, and sort
+  mode across reloads from `localStorage:clankeros-goal-board-view`.
+- Added a visible `Reset view` control that clears the browser-local board
+  state, resets the search box, returns the lane mode to All, returns sort to
+  Updated, and leaves the default view intact after the next reload.
+- Preserved the existing server-rendered default board, filter/sort controls,
+  first-match routing, and no-results behavior. The view memory writes only to
+  browser local storage after browser interaction; GET rendering remains
+  read-only.
+- Tightened the hidden first-match link CSS so the no-match affordance does
+  not render as a button when there is no visible match.
+- The behavior is browser-local view restoration only: no write on GET, no
+  provider calls, no network actions, no execution, no approval, no push, no
+  PR, no deploy, and no external mutation.
+- Updated README, local app docs, operating summary, docs status, and the
+  fixture-backed Goal board regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state --tb=short` passed with
+  `1 passed, 515 deselected in 40.00s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55613` showed `commit` + Paused + Waiting persisted
+  after reload with `View: restored` and `0 of 1 goals`, Reset view returned
+  All + Updated + empty query with `1 of 1 goals` and stayed default after
+  reload, mobile `390x844` showed Title sort saved, Reset view `329px` wide,
+  card width `358px`, no horizontal overflow, and no console warnings/errors.
+
+## 2026-06-29 Goal Board Sort UX
+
+- Added browser-local sort controls to `/goals#goal-board-filter` so the
+  already-rendered active, paused, and completed Goal cards can be reordered
+  within each lane by updated time, waiting items, open work, progress, or
+  title.
+- Goal cards now expose stable local sort metadata for updated time, waiting
+  count, open-work count, task progress, title, and phase while preserving the
+  existing filter/search metadata and legacy row text.
+- The sort helper composes with the existing Goal Board Filter: filtering still
+  hides non-matching cards, sort buttons update `aria-pressed`, first-match
+  routing follows the sorted visible card order, and hidden cards stay hidden.
+- The behavior is browser-local card reordering only: no write on GET, no
+  provider calls, no network actions, no execution, no approval, no push, no
+  PR, no deploy, and no external mutation.
+- Updated README, local app docs, operating summary, docs status, and the
+  fixture-backed Goal board regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state --tb=short` passed with
+  `1 passed, 515 deselected in 40.50s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55612` showed `/goals#goal-board-filter` with sort
+  controls present, `Updated` pressed after cycling Waiting/Open Work/Title,
+  `commit` filtering still at `1 of 1 goals`, first-match link
+  `/goals/goal_13d46a6fb3a9`, one visible card with waiting `1`, open work
+  `1`, progress ratio `0`, no desktop overflow at `1280x900`, mobile
+  `390x844` sort buttons stacked at `329px` wide and `32px` tall, card width
+  `358px`, and no console warnings/errors.
+
+## 2026-06-29 Goal Board Cards UX
+
+- Reworked shared Goal rows on `/goals` and Home goal lanes into scan-first
+  cards instead of dense one-line inventory strings.
+- Each card now shows the Goal title, lane, project, phase, task progress, next
+  action, waiting count, open work, plus direct Goal, project, and next-action
+  links.
+- Preserved the legacy `project=... status=... phase=... next_action=...
+  progress=... remaining_work=...` row text and `data-goal-board-search`
+  metadata so existing filters, tests, and automation keep their stable readback.
+- The behavior is read-only card rendering: no write on GET, no provider calls,
+  no network actions, no execution, no approval, no push, no PR, no deploy, and
+  no external mutation.
+- Updated README, local app docs, operating summary, docs status, and the
+  fixture-backed Goal board regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state --tb=short` passed with
+  `1 passed, 515 deselected in 40.27s`; `python3 -m compileall -q agent_os
+  tests`; `git diff --check`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; in-app Browser QA against a throwaway demo
+  server on `127.0.0.1:55611` showed one rendered Goal card with Goal link
+  `/goals/goal_ffc365383f06`, next link
+  `/goals/goal_ffc365383f06#goal-next-action-form`, project link
+  `/projects/local-app-demo`, `commit` filtering still at `1 of 1 goals`, no
+  desktop overflow at `1280px`, mobile `390x844` card width `358px`, action
+  buttons `34px` tall, and no console warnings/errors.
+
+## 2026-06-29 Goal Board Filter UX
+
+- Added a browser-local `Goal Board Filter` to `/goals` after the goal creation
+  form and before the active, paused, and completed lanes.
+- The filter exposes a search input, all/active/paused/completed mode buttons,
+  live match count, no-results state, and first-match jump over already-rendered
+  Goal rows.
+- Goal rows now carry local search metadata for title, description, project,
+  status, lane, phase, next action, progress, and remaining work.
+- The behavior is read-only row filtering: no write on GET, no provider calls,
+  no network actions, no execution, no approval, no push, no PR, no deploy, and
+  no external mutation.
+- Updated README, local app docs, operating summary, docs status, and the
+  fixture-backed Goal board regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state --tb=short` passed with
+  `1 passed, 515 deselected`; `python3 -m compileall -q agent_os tests`;
+  `git diff --check`; bounded temp-root `app-smoke-test`; bounded temp-root
+  `app-demo-smoke-test`; in-app Browser QA against a throwaway demo server on
+  `127.0.0.1:54949` showed the filter's initial state at `1 of 1 goals`,
+  `commit` filtering to `1 of 1 goals`, `Completed` mode showing
+  `0 of 1 goals` with `No matching goals`, and `Active` restoring the
+  first-match link to `/goals/goal_29a44a288472`; mobile-width `390x844`
+  filtering `local-app-demo` stayed at `1 of 1 goals` with no horizontal
+  overflow and no console warnings/errors.
+
+## 2026-06-29 Goal Section Finder UX
+
+- Added a browser-local section finder to the `Goal Section Index` on
+  `/goals/<goal_id>`.
+- The finder exposes a search input, live match count, first-match jump, compact
+  anchor chips, and a no-results state over the existing Goal section anchors.
+- The behavior is read-only anchor navigation: no write on GET, no provider
+  calls, no network actions, no execution, no approval, no push, no PR, no
+  deploy, and no external mutation.
+- Updated README, local app docs, operating summary, docs status, and the
+  fixture-backed Goal route regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state --tb=short` passed with
+  `1 passed, 515 deselected`; `python3 -m compileall -q agent_os tests`;
+  `git diff --check`; bounded temp-root `app-smoke-test`; bounded temp-root
+  `app-demo-smoke-test`; in-app Browser QA against a throwaway demo server on
+  `127.0.0.1:8795` showed `git` filtering to `2 of 56` sections with first
+  jump `Git command`, and mobile-width `approval` filtering to `2 of 56`
+  sections with first jump `Approval command`; console warnings/errors were
+  empty.
+
+## 2026-06-29 Artifact Goal Title Context UX
+
+- Made stored Goal artifact pages title-first across the `Artifact Operator
+  Workbench`, `Artifact Relationship Map`, `Artifact Command Bar`, and
+  `Artifact Review Brief`.
+- Raw Goal ids are still preserved in collapsed evidence with label-source
+  fields, and synthetic/orphan artifact paths keep their existing ID fallback
+  behavior.
+- Updated README, local app docs, operating summary, docs status, and the
+  focused artifact route regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_routes_render_modern_workflow_and_health --tb=short` passed with
+  `1 passed, 515 deselected`; `python3 -m compileall -q agent_os tests`;
+  `git diff --check`; bounded temp-root `app-smoke-test`; bounded temp-root
+  `app-demo-smoke-test`.
+
+## 2026-06-29 Workspace Panel Restore UX
+
+- Added a shared `Workspace Panel Restore` strip to the browser shell for
+  `/resume`, `/workspace`, and the saved Goal page whenever
+  `.clanker/app/workspace.json` contains `expanded_panels`.
+- Saved panels such as Timeline and Evidence now become direct links from the
+  return-to-work surfaces. On the saved Goal page, a browser-local helper
+  reopens matching details panels so the operator lands back near the useful
+  sections instead of only seeing a saved-state readback.
+- The restore strip exposes DOM evidence for source, current path, saved
+  project/Goal, saved panels, target count, auto-open posture, and explicit
+  no-write/no-provider/no-network/no-external-effect counters.
+- Updated README, local app docs, operating summary, docs status, and the
+  fixture-backed demo workspace regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  local_app_demo_scenario_populates_fixture_state --tb=short` passed with
+  `1 passed, 515 deselected`; `python3 -m compileall -q agent_os tests`;
+  `git diff --check`; bounded temp-root `app-smoke-test`; bounded temp-root
+  `app-demo-smoke-test`.
+
+## 2026-06-29 Goal Recovery Command Routing UX
+
+- Made open task recommendations with stored `recommended_commands` route the
+  Goal's primary recovery affordances to
+  `/goals/<goal_id>#goal-recovery-commands` instead of sending the operator to
+  `/incidents` first.
+- Updated the Goal Next Action, header `Next` shortcut context, operator
+  ribbon, attention digest, Goal board/workbench/daily-loop/session/overview/
+  incident/remaining-work surfaces, and `Next Recommendation` rows to point at
+  the copy-only recovery-command cards when they exist.
+- Preserved `/incidents#incident-recommendations` as the secondary triage
+  surface and kept all recovery commands copy-only with no execute/retry/
+  replan/write/provider/network/external effects on GET.
+- Updated README, local app docs, operating summary, docs status, and the
+  fixture-backed blocked-task recommendation regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; `python3 -m compileall -q agent_os tests`;
+  focused pytest `python3 -m pytest tests/test_first_milestone.py -q -k
+  task_recommendations_surfaces_blocked_planned_task` passed with `1 passed,
+  515 deselected`; bounded temp-root `app-smoke-test`; bounded temp-root
+  `app-demo-smoke-test`; `git diff --check`.
+
+## 2026-06-29 Goal Recovery Command Cards UX
+
+- Added copy-only `Goal Recovery Commands` cards inside `/goals/<goal_id>`
+  `Next Recommendation` whenever the open task recommendation has stored
+  `recommended_commands`.
+- Each command renders as wrapped code with a clipboard copy button, plus a
+  collapsed evidence ledger linking to the recommendation artifact and
+  recording no-execute/no-retry/no-replan/no-write boundaries.
+- This keeps task recovery available from the Goal page without making GET
+  requests execute commands, reset tasks, replan, call providers, use the
+  network, push, create PRs, deploy, or mutate external systems.
+- Updated README, local app docs, operating summary, docs status, and a
+  fixture-backed blocked-task recommendation regression.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest `python3 -m pytest
+  tests/test_first_milestone.py -q -k
+  task_recommendations_surfaces_blocked_planned_task` passed with `1 passed,
+  515 deselected`; `python3 -m compileall -q agent_os tests`; bounded
+  temp-root `app-smoke-test`; bounded temp-root `app-demo-smoke-test`; `git
+  diff --check`.
+
+## 2026-06-29 Goal Timeline Lane Filter UX
+
+- Added a browser-local `Timeline Lane Filter` to the Goal timeline after the
+  `Goal Timeline Digest` and before timeline metadata/the full chronological
+  list.
+- The filter reuses existing rendered `data-timeline-kind` markers so the
+  operator can switch between all events, artifacts, approvals, delegations,
+  runs, tasks, notes, and generic events without leaving the Goal page.
+- The helper only hides/shows already-rendered rows and updates a visible
+  count. It has no persistence, no provider call, no network action, no local
+  write, no retry/replan action, no GitHub action, and no external mutation.
+- Updated README, local app docs, operating summary, docs status, and focused
+  Goal timeline assertions.
+- Verification: `python3 -m py_compile agent_os/local_app.py`; focused pytest
+  `python3 -m pytest
+  tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state
+  -q --tb=short` passed with `1 passed in 39.25s`; `python3 -m py_compile
+  agent_os/local_app.py tests/test_first_milestone.py`; `python3 -m
+  compileall -q agent_os tests`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; `git diff --check`; Playwright browser
+  pass against `http://127.0.0.1:8793/goals/goal_35dbc8f1ef9c` showed
+  Artifact filtering to `19 of 29` rendered events with `10` hidden rows, and
+  All restoring `29 of 29` rendered events.
+
+## 2026-06-29 CI JSON Assistant UX
+
+- Added a browser-local `CI JSON Assistant` to `/ci-evidence` between the
+  `CI Proof Workbench` and the collapsed CI summary.
+- The assistant gives the operator copy buttons for the current `gh run view
+  <run_id> --json ...` command, an optional clipboard paste button targeting
+  the `status_json` recorder textarea, quick job-name fill buttons for
+  `Fast smoke verification` and `Full pytest suite`, and a direct recorder
+  link.
+- The existing confirmed `ci-snapshot-evidence-from-gh-json` form remains the
+  only write path. The helper performs no GitHub polling, no provider call, no
+  push, no PR, no deploy, no external mutation, and no write on GET; clipboard
+  use is browser-local and optional.
+- Updated README, local app docs, operating summary, docs status, and focused
+  CI evidence route assertions.
+- Verification: `python3 -m py_compile agent_os/local_app.py`; focused pytest
+  `python3 -m pytest
+  tests/test_first_milestone.py::test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json
+  -q --tb=short` passed with `1 passed in 11.06s`; `python3 -m py_compile
+  agent_os/local_app.py tests/test_first_milestone.py`; `python3 -m
+  compileall -q agent_os tests`; bounded temp-root `app-smoke-test`; bounded
+  temp-root `app-demo-smoke-test`; `git diff --check`; Playwright browser
+  pass against `http://127.0.0.1:8792/ci-evidence` rendered the assistant,
+  filled `job_name` with both `Fast smoke verification` and `Full pytest
+  suite`, and clicked Copy command with a visible success status.
+- Non-claims at implementation time: no full local pytest suite, PR, or deploy
+  was run for this slice; GitHub CI proof is expected from the pushed branch.
+
+## 2026-06-29 Goal Task Closeout UX
+
+- Added a visible `Goal Task Closeout` panel to `/goals/<goal_id>` between the
+  Remaining Work command cards and the detailed checklist.
+- The panel shows one task, local evidence posture, linked plan-step posture,
+  and safety boundary; it only exposes the confirmed `complete-goal-task`
+  action when ready publication-handoff evidence or an already completed Goal
+  can back the task closeout.
+- Confirmed `complete-goal-task` marks the selected task completed, updates the
+  linked plan step when present, refreshes `TASKS.md` and plan artifacts, saves
+  the workspace resume point, and records a goal-scoped timeline event.
+- Updated README, local app docs, operating summary, docs status, app-demo
+  smoke markers, and focused Goal workflow assertions.
+- Verification so far: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest
+  `python3 -m pytest
+  tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms
+  -q --tb=short` passed with `1 passed in 25.76s`.
+- Non-claims: no fresh verification run, no automatic task completion on GET,
+  no approval, no execution, no provider calls, no non-loopback network action,
+  no push, no PR, no deploy, and no external mutation from the app.
+
+## 2026-06-29 Search Approval Results UX
+
+- Added first-class coder approval records to `/search`: worktree approval,
+  commit approval, and publication approval rows now appear as decision results
+  with scoped links back to `/approvals?goal_id=...`, `/approvals?run_id=...`,
+  workflow, or run detail surfaces.
+- This makes the browser search useful for daily unblock work: searching
+  `approval` can find the actual pending gate instead of only older generic
+  approval rows.
+- Updated README, local app docs, operating summary, and docs status to
+  describe the expanded indexed scope.
+- Verification: `python3 -m py_compile agent_os/local_app.py`; focused pytest
+  `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q`
+  passed with `1 passed in 39.68s`.
+- Non-claims: no new action authority, no write on GET, no approval decision,
+  no execution, no provider calls, no non-loopback network actions, no push, no
+  PR, no deploy, and no external mutation from the app.
+
+## 2026-06-29 First Run Next Step UX
+
+- Added a visible read-only `First Run Next Step` panel to the First Run Guide
+  between the launchpad and progress strip.
+- The panel turns the current first-run gate into one primary same-page browser
+  action, with compact Setup, Handoff, Resume, and Safety cards around it.
+- Collapsed evidence records current step, next action, route surface, target
+  surface, setup/handoff status, project, goal, delegation, context-pack
+  readiness, confirmation requirement, and zero-effect counters.
+- The panel reuses existing confirmed first-run forms and inline goal next
+  action forms; it does not introduce another write path, execution path,
+  provider call, GitHub action, PR, deploy, approval, or external effect.
+- Updated README, local app docs, operating summary, docs status, and focused
+  first-run route assertions for empty checkout, registered-project/no-goal,
+  created-goal, delegation-created, and context-pack-ready states.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; `git diff --check`; focused pytest
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  first_run_browser_actions_persist_resume_workspace" --tb=short` passed with
+  `2 passed, 514 deselected in 25.54s`; bounded temp-root `app-smoke-test`;
+  bounded temp-root `app-demo-smoke-test`.
+- Non-claims: no full local pytest suite for this slice, no browser
+  screenshot/Playwright interaction proof, no new action authority, no write on
+  GET, no provider calls, no non-loopback network actions, no approval, no
+  execution, no push, no PR, no deploy, and no external mutation from the app.
+
+## 2026-06-29 Route-Aware Finish Today UX
+
+- Made the shared Finish Today target route-aware across the browser shell.
+  `/today` now points the header `Finish` control, `f` shortcut, Operator
+  Ribbon, and command-palette Quick Switch to `#today-finish`; Goal detail
+  pages point them to `#goal-finish-today`; every other route still falls back
+  to `/workspace#save-workspace`.
+- Added finish-target metadata to the shared header and finish evidence to the
+  ribbon/palette so the operator can see whether the current end-of-day handoff
+  is a route-local confirmed form or the generic workspace save surface.
+- The behavior is navigation-only on GET. The actual resume write still
+  requires the existing confirmed local `save-workspace` form, with no provider
+  calls, external mutation, approval, execution, push, PR, or deploy from the
+  app.
+- Updated README, local app docs, operating summary, docs status, and focused
+  rendered-shell assertions for root fallback, Today local finish, and Goal
+  local finish.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 62.38s`; `python3 -m compileall -q agent_os
+  tests`; bounded temp-root `app-smoke-test`; bounded temp-root
+  `app-demo-smoke-test`; `git diff --check`.
+- Non-claims: no browser screenshot/Playwright interaction proof for this
+  slice, no new action authority, no write on GET, no provider calls, no
+  non-loopback network actions, no approval, no execution, no push, no PR, no
+  deploy, and no external mutation from the app.
+
+## 2026-06-29 First-Run Return Surface UX
+
+- Added same-page `Resume First-Run Action` and `Workspace First-Run Action`
+  sections for first-run states before a saved Goal exists.
+- Fresh `/resume` and `/workspace` checkouts now route their command bars,
+  workbenches, readiness/brief sections, restore links, next-action readbacks,
+  and workflow maps to the route-local `register-project` form instead of
+  sending the operator back to Home.
+- Registered-project/no-goal `/resume` and `/workspace` states now route to a
+  route-local `create-goal` form while preserving the saved project link and
+  Home/Today/Goals fallback setup links in collapsed evidence.
+- The new sections expose first-run step, action name, target surface, project,
+  optional goal/delegation ids, confirmation requirement, no-write-on-GET,
+  no-provider/no-network/no-external-effect evidence, and reuse the existing
+  confirmed first-run forms.
+- Updated README, local app docs, operating summary, docs status, and focused
+  first-run route assertions for empty and registered-project/no-goal states.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  first_run_browser_actions_persist_resume_workspace" --tb=short` passed with
+  `2 passed, 514 deselected in 34.65s`; `python3 -m compileall -q agent_os
+  tests`; bounded temp-root `app-smoke-test`; bounded temp-root
+  `app-demo-smoke-test`; `git diff --check`.
+- Non-claims: no new action authority, no write on GET, no provider calls, no
+  non-loopback network actions, no approval, no execution, no push, no PR, no
+  deploy, and no external mutation from the app.
+
+## 2026-06-29 Workflow Scope Picker UX
+
+- Added a read-only `Workflow Scope Picker` immediately after the
+  `Workflow Operator Workbench` on `/workflow`.
+- The picker gives direct cards for the primary pickup, recent delegations,
+  recent coder runs, parent Goal, and safety evidence before the detailed
+  workflow journey rail, so a direct `/workflow` visit can choose a concrete
+  delegation/run scope without detouring through `/delegation-runs`.
+- Scoped delegation and coder-run workflow pages now keep the selected URL
+  surface as the primary pickup while still showing the related run,
+  delegation, Goal, current stage, and zero-effect evidence.
+- Normalized first-run fallback targets so completed first-run states reuse
+  plain Goal hrefs instead of nested anchor strings in scope evidence.
+- Updated README, local app docs, operating summary, and docs status so the
+  workflow route docs match the new operator order.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 62.47s`; `python3 -m compileall -q agent_os
+  tests`; bounded temp-root `app-smoke-test`; bounded temp-root
+  `app-demo-smoke-test`; `git diff --check`.
+- Non-claims: no new action authority, no write on GET, no provider calls, no
+  non-loopback network actions, no approval, no execution, no push, no PR, no
+  deploy, and no external mutation from the app.
+
+## 2026-06-29 Today Activity Digest UX
+
+- Added a read-only `Today Activity Digest` immediately after `Today Session
+  Summary` on `/today`.
+- The digest gives the daily cockpit visible Now, Window, Artifacts, Notes, and
+  Safety cards plus a compact recent timeline list for the lead Goal or current
+  first-run step.
+- Collapsed digest evidence records source, Goal/project, phase, item counts,
+  latest event, linked activity window, artifact count/latest artifact,
+  operator-note count, no write on GET, and no-provider/no-network/no-external
+  counters.
+- Updated README, local app docs, operating summary, and docs status so the
+  daily cockpit docs describe the new regain-context panel.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 60.32s`; `python3 -m compileall -q agent_os
+  tests`; bounded temp-root `app-smoke-test`; bounded temp-root
+  `app-demo-smoke-test`; `git diff --check`.
+- Non-claims: no new action authority, no write on GET, no provider calls, no
+  non-loopback network actions, no push, no PR, no deploy, and no external
+  mutation from the app.
+
+## 2026-06-29 Action Resume Receipt UX
+
+- Added a read-only `Action Resume Receipt` immediately after the
+  `Action Complete` command bar on confirmed local action result pages.
+- The receipt turns the saved workspace state into visible Resume, Context,
+  Artifact, Last Action, and Boundary cards before the dense payload/result
+  details.
+- Collapsed receipt evidence records `.clanker/app/workspace.json` as the
+  source, saved project and Goal, exact `resume_surface`, latest artifact,
+  updater, last action/result, resume readiness, no write on GET, and
+  no-provider/no-network/no-push/no-PR/no-deploy counters.
+- Updated README, local app docs, operating summary, and status entry point so
+  the post-action resume receipt is documented as part of the daily browser
+  loop.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest
+  `python3 -m pytest tests/test_first_milestone.py -q -k
+  "local_app_routes_render_modern_workflow_and_health or
+  local_app_demo_scenario_populates_fixture_state" --tb=short` passed with
+  `2 passed, 514 deselected in 60.70s`; `python3 -m compileall -q agent_os
+  tests`; `python3 -m agent_os.cli --root /tmp/clankeros-receipt.bEDTuO
+  app-smoke-test`; `python3 -m agent_os.cli --root
+  /tmp/clankeros-receipt.bEDTuO app-demo-smoke-test`; `git diff --check`.
+- Non-claims: no automatic resume execution, no new action authority, no write
+  on GET, no provider calls, no non-loopback network actions, no push, no PR,
+  no deploy, and no external mutation.
+
+## 2026-06-29 Action Preflight Confirmation UX
+
+- Added a read-only `Action Preflight` block to every local app confirmation
+  page before the existing `Action Confirmation Review`.
+- The final safety checkpoint now shows visible Confirm, Returns, Local Write,
+  Context, and Boundary cards before the payload and final `confirm=yes`
+  submit.
+- Collapsed preflight evidence records the action, category, surface, return
+  route/source, submitted project, Goal, artifact, field names/count, expected
+  output, confirmation requirement, and no write/provider/network/external
+  effect counters before confirmation.
+- The existing confirmation review, command evidence, payload table, and
+  confirmation semantics remain intact.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest
+  `python3 -m pytest -q tests/test_first_milestone.py -k
+  'local_app_artifact_viewer_is_read_only_and_bounded or
+  local_app_demo_scenario_populates_fixture_state'` passed with `2 passed, 514
+  deselected in 41.73s`; Playwright browser check against a temp-root local
+  app submitted the artifact `save-workspace` form, rendered
+  `Action Preflight` before review/command/payload, confirmed return route
+  `/artifacts?path=docs/sample.md`, artifact `docs/sample.md`, no write before
+  confirm, no network/external effects, then completed the existing
+  `Confirm local action` path to the `Action Result` page; `python3 -m
+  compileall -q agent_os tests`; bounded temp-root `python3 -m agent_os.cli
+  --root "$scratch" app-smoke-test`; bounded temp-root `python3 -m agent_os.cli
+  --root "$scratch" app-demo-smoke-test`; `git diff --check`.
+- Non-claims: no confirmation bypass, no new action authority, no write before
+  confirmation, no provider calls, no network actions, no push, no PR, no
+  deploy, and no external mutation.
+
+## 2026-06-29 Command Palette Results Filter UX
+
+- Added a visible browser-local `Palette Results` list to the shared command
+  palette on every route.
+- Typing in `command-palette-search` now filters local route/recent-work
+  commands in place, updates the visible match count, and shows a no-match
+  state without leaving the palette.
+- The existing Search button still opens full indexed `/search` results, so
+  palette filtering improves launcher navigation without replacing global
+  search.
+- Evidence attributes and collapsed filter evidence record item count, source,
+  scope, no write on GET, provider/network/external effects at `0`, and
+  client-side filtering only.
+- Verification: `python3 -m py_compile agent_os/local_app.py
+  tests/test_first_milestone.py`; focused pytest
+  `python3 -m pytest -q tests/test_first_milestone.py -k
+  local_app_demo_scenario_populates_fixture_state` passed with `1 passed, 515
+  deselected in 38.14s`; Playwright DOM check against a temp-root local app
+  confirmed `/` opens the palette, `workflow` narrows to `1` result, a no-match
+  query shows the empty state, and `demo` restores `3` results;
+  `python3 -m compileall -q agent_os tests`; bounded temp-root
+  `python3 -m agent_os.cli --root "$scratch" app-smoke-test`; bounded
+  temp-root `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`;
+  `git diff --check`.
+- Non-claims: no new search backend, no server persistence, no retained browser
+  screenshot artifact, no write on GET, no provider calls, no external
+  mutation, no PR creation, and no deploy from ClankerOS itself.
+
+## 2026-06-29 Browser Focus Mode UX
+
+- Added browser-local Focus mode to the shared app shell on every route.
+- The header `Focus` button and `m` shortcut toggle `data-focus-mode="true"`
+  and persist the presentation preference in
+  `localStorage:clankeros-focus-mode`.
+- Focus mode hides the Recent Items side rail, Route Context strip, and Last
+  Action strip while keeping Operator Focus/current action, the Operator
+  Ribbon, and page body visible.
+- Evidence attributes record no write on GET, provider/network/external effects
+  at `0`, and browser-local storage only.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  focused `tests/test_first_milestone.py` demo route coverage
+  (`1 passed, 515 deselected in 37.46s`), `python3 -m compileall -q agent_os tests`,
+  bounded `app-smoke-test`, bounded `app-demo-smoke-test`, and
+  `git diff --check`.
+- Non-claims: no server persistence for Focus mode, no browser screenshot QA
+  for this slice, no write on GET, no provider calls, no external mutation, no
+  PR creation, and no deploy from ClankerOS itself.
+
+## 2026-06-29 Goal Coder Handoff Digest UX
+
+- Added a visible read-only `Goal Coder Handoff Digest` to `/goals/<goal_id>`
+  after the Goal Workflow Map and before the Goal CI Handoff.
+- The digest turns the implementation handoff path into six scan-first cards:
+  Now, Handoff, Prep, Execute, Ship, and Safety.
+- It is sourced from existing Goal state only: delegations, context-pack
+  readiness, implementation handoff summaries, coder prep packets, worktree
+  plans, worktree approvals/runs, commit approvals, and publication handoffs.
+- Collapsed digest evidence records the selected delegation, next handoff
+  token/status, context/handoff/prep/plan/run/review/commit/publication counts,
+  routed local surfaces, and zero-effect counters.
+- Updated README, local app docs, operating summary, current status focus, and
+  fixture-backed Goal route assertions.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  focused `tests/test_first_milestone.py` demo route coverage
+  (`1 passed, 515 deselected in 34.58s`), `python3 -m compileall -q agent_os tests`,
+  bounded `app-smoke-test`, bounded `app-demo-smoke-test`, and
+  `git diff --check`.
+- Non-claims: no browser screenshot QA for this slice, no write on GET, no
+  approval or execution on GET, no app-side GitHub polling, no provider calls,
+  no external mutation, no PR creation, and no deploy from ClankerOS itself.
+
+## 2026-06-29 Goal Evidence Digest UX
+
+- Added a visible read-only `Goal Evidence Digest` to `/goals/<goal_id>` after
+  the Goal Evidence Command Bar and before the collapsed detailed evidence
+  inventory.
+- The digest turns evidence review into six scan-first cards: Proof, Latest,
+  Run Proof, Artifact Mix, CI Proof, and Safety.
+- It is sourced from existing Goal evidence lines, typed artifact records, and
+  operator-supplied project CI evidence; it does not fetch GitHub status or add
+  action authority on page load.
+- Collapsed digest evidence records proof counts, available/missing artifacts,
+  run/worktree/incident/recommendation counts, typed artifact counts, latest
+  artifact surface, local CI proof status/scope/run/commit/current-checkout
+  match, and zero-effect counters.
+- Updated README, local app docs, operating summary, current status focus, and
+  fixture-backed Goal route assertions.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  focused `tests/test_first_milestone.py` demo route coverage
+  (`1 passed, 515 deselected in 38.43s`), `python3 -m compileall -q agent_os tests`,
+  bounded `app-smoke-test`, bounded `app-demo-smoke-test`, and
+  `git diff --check`.
+
+## 2026-06-29 Goal Timeline Digest UX
+
+- Added a visible read-only `Goal Timeline Digest` to `/goals/<goal_id>` after
+  the Goal Timeline Command Bar and before metadata plus the full
+  chronological list.
+- The digest turns the long timeline into five scan-first cards: Span, Latest,
+  Artifact, Next, and Safety.
+- It is sourced from existing Goal timeline items and workflow gates, linking
+  to the latest local event, latest artifact, and current next-action surface
+  without adding storage or action authority.
+- Collapsed digest evidence records item count, first/latest timestamps,
+  latest kind/message/surface, artifact event count, latest artifact, current
+  gate, gate progress, next action/surface, form availability, and zero-effect
+  counters.
+- Updated README, local app docs, operating summary, current status focus, and
+  fixture-backed Goal route assertions.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  focused `tests/test_first_milestone.py` demo route coverage
+  (`1 passed, 515 deselected in 37.34s`), `python3 -m compileall -q agent_os tests`,
+  bounded `app-smoke-test`, bounded `app-demo-smoke-test`, and
+  `git diff --check`.
+- Non-claims: no browser screenshot QA for this slice, no write on GET, no
+  approval or execution on GET, no app-side GitHub polling, no provider calls,
+  no external mutation, no PR creation, and no deploy from ClankerOS itself.
+
+## 2026-06-29 Saved Workspace Goal Title-First UX
+
+- Made saved workspace and return-to-work Goal identity title-first.
+- Home Resume Workspace, `/resume` targets, `Resume Command Bar`,
+  `Resume Operator Workbench`, `/workspace` restore links, Workspace Restore
+  Map, Workspace Operator Workbench, and the Goal resume snapshot now render
+  visible saved Goal links with the human Goal title when one exists.
+- Raw Goal ids remain available through explicit `*_goal_id` fields, and
+  label-source fields record whether the visible label came from `title` or a
+  fallback.
+- `/resume` now labels its primary saved-surface action as
+  `Open saved surface for <Goal title>` when a saved Goal is present, while
+  retaining the exact saved `resume_surface` route in evidence.
+- Updated README, local app docs, operating summary, current status focus, and
+  first-run/demo route assertions for the return-to-work title-first contract.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `python3 -m compileall -q agent_os tests`, focused
+  `tests/test_first_milestone.py` route/demo coverage
+  (`2 passed, 514 deselected in 49.21s`), bounded `app-smoke-test`, bounded
+  `app-demo-smoke-test`, and `git diff --check`.
+- Non-claims: no browser screenshot QA for this slice, no write on GET, no
+  workspace save without confirmation, no approval or execution on GET, no
+  app-side GitHub polling, no provider calls, no external mutation, no PR
+  creation, and no deploy from ClankerOS itself.
+
+## 2026-06-29 Queue Goal Title-First UX
+
+- Made `/inbox` and `/approvals` queue Goal links title-first.
+- `Inbox Next Item Brief`, `Inbox Operator Workbench`, and
+  `Approval Operator Workbench` now render the human Goal title in visible
+  Goal cards, list readbacks, and Goal links when a Goal title is available.
+- Raw Goal ids remain available through explicit `*_goal` fields, with new
+  `*_goal_label` and `*_goal_label_source` fields recording the visible label
+  and whether it came from `title` or a fallback.
+- Updated README, local app docs, operating summary, current status focus, and
+  first-run/demo route assertions for the queue title-first contract.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  focused `tests/test_first_milestone.py` route coverage
+  (`2 passed, 514 deselected in 57.44s`), `python3 -m compileall -q agent_os tests`,
+  bounded `app-smoke-test`, bounded `app-demo-smoke-test`, and
+  `git diff --check`.
+- Non-claims: no browser screenshot QA for this slice, no write on GET, no
+  approval or execution on GET, no app-side GitHub polling, no provider calls,
+  no external mutation, no PR creation, and no deploy from ClankerOS itself.
+
+## 2026-06-29 Shared Goal Navigation Title-First UX
+
+- Made shared Goal identity in browser navigation title-first.
+- Breadcrumbs, the shared Route Context strip, and command-palette route
+  evidence now render visible Goal links with the human Goal title/intent
+  instead of the raw Goal id.
+- The raw Goal id remains available through explicit `*_goal_id` evidence
+  fields, and title-source fields record whether the label came from `title`
+  or a safe fallback.
+- The same title-first label now follows the Goal into related run pages, so a
+  deep run route still points back to the recognizable work object.
+- Updated README, local app docs, operating summary, current status focus, and
+  fixture-backed Goal/run route assertions for the shared navigation contract.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  and focused `tests/test_first_milestone.py` demo route coverage
+  (`1 passed, 515 deselected in 38.05s`), `python3 -m compileall -q agent_os tests`,
+  bounded `app-smoke-test`, bounded `app-demo-smoke-test`, and
+  `git diff --check`.
+- Non-claims: no browser QA for this slice, no write on GET, no approval or
+  execution on GET, no app-side GitHub polling, no provider calls, no external
+  mutation, no PR creation, and no deploy from ClankerOS itself.
+
+## 2026-06-29 Goal Summary Title-First UX
+
+- Made `/goals/<goal_id>` title-first at the top of the operator surface.
+- The Goal detail browser title and H1 now use the human Goal title/intent
+  instead of `Goal <id>`.
+- The Goal id remains visible as metadata in the summary, alongside explicit
+  title-source, intent, project, status, current phase, and local refresh
+  readback.
+- This keeps direct Goal links recognizable as human work objects while
+  preserving stable machine-readable id evidence for review, automation, and
+  tests.
+- Updated README, local app docs, operating summary, current status focus, and
+  fixture-backed Goal route assertions for the title-first summary contract.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `python3 -m compileall -q agent_os tests`, focused
+  `tests/test_first_milestone.py` demo route coverage
+  (`1 passed, 515 deselected in 35.28s`), bounded `app-smoke-test`, bounded
+  `app-demo-smoke-test`, and `git diff --check`.
+- Non-claims: no browser QA for this slice, no write on GET, no approval or
+  execution on GET, no app-side GitHub polling, no provider calls, no external
+  mutation, no PR creation, and no deploy from ClankerOS itself.
+
+## 2026-06-29 Goal Attention Digest UX
+
+- Added a visible read-only `Goal Attention Digest` to `/goals/<goal_id>` after
+  the Goal Progress Meter and before the Goal Command Bar.
+- The digest turns the immediate Goal queues into six cards: Now, Approvals,
+  Incidents, Recommendations, Open Work, and Safety.
+- It ranks the first waiting queue across incidents, approvals,
+  recommendations, blocked work, and open work while routing the primary next
+  click to the existing confirmed Goal action form when available.
+- Collapsed digest evidence records the current phase/gate, primary surface,
+  first queue surface, approval counts, incidents, recommendations, open tasks,
+  workflow gates, waiting items, and no-write/no-provider/no-network/
+  no-external-effect counters.
+- Updated README, local app docs, operating summary, current status focus,
+  app-demo smoke markers, responsive mobile layout, scroll-margin behavior, and
+  fixture-backed Goal route assertions.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  focused `tests/test_first_milestone.py` demo route coverage
+  (`1 passed, 515 deselected in 38.17s`),
+  `python3 -m compileall -q agent_os tests`, bounded `app-smoke-test`,
+  bounded `app-demo-smoke-test`, and `git diff --check`.
+- Non-claims: no browser QA for this slice, no write on GET, no approval or
+  execution on GET, no app-side GitHub polling, no provider calls, no external
+  mutation, no PR creation, and no deploy from ClankerOS itself.
+
+## 2026-06-29 Goal Detail Content-First UX
+
+- Made `/goals/<goal_id>` content-first in the shared app shell.
+- Direct Goal detail links now render the Goal summary, Current Phase banner,
+  Goal Jump Bar, Goal Action Dock, and Goal Progress Meter before the shared
+  Route Context and Operator Focus diagnostics.
+- This keeps the Goal page aligned with the daily-usable product objective:
+  opening a Goal starts on the working cockpit instead of on generic route
+  readbacks.
+- Updated README, local app docs, operating summary, current status focus, and
+  fixture-backed Goal route assertions for the new ordering.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `python3 -m compileall -q agent_os tests`, focused
+  `tests/test_first_milestone.py` route/demo coverage
+  (`2 passed, 514 deselected in 60.33s`), bounded `app-smoke-test`, bounded
+  `app-demo-smoke-test`, and `git diff --check`.
+- Non-claims: no browser QA for this slice, no write on GET, no approval or
+  execution on GET, no app-side GitHub polling, no provider calls, no external
+  mutation, no PR creation, and no deploy from ClankerOS itself.
+
+## 2026-06-29 Goal Progress Meter UX
+
+- Added a visible read-only `Goal Progress Meter` to `/goals/<goal_id>` after
+  the Goal Action Dock and before the Goal Command Bar.
+- The meter turns the immediate goal posture into five cards: Tasks, Workflow,
+  Waiting, Proof, and Next.
+- It uses native browser progress bars for completed tasks and workflow gates,
+  links to the existing detailed Goal progress/workflow/proof surfaces, and
+  routes the primary next action to the existing confirmed Goal action form when
+  that form is available.
+- Collapsed meter evidence records task progress, workflow-gate progress,
+  waiting approvals/incidents/recommendations, latest project-scoped CI proof
+  status/source, next action surface, card count, and zero-effect counters.
+- Updated README, local app docs, operating summary, current status focus,
+  app-demo smoke markers, responsive mobile layout, scroll-margin behavior, and
+  fixture-backed Goal route assertions.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `python3 -m compileall -q agent_os tests`, focused
+  `tests/test_first_milestone.py` route/demo coverage
+  (`2 passed, 514 deselected in 56.56s`), bounded `app-smoke-test`, bounded
+  `app-demo-smoke-test`, `git diff --check`, and a temp-root Playwright CLI
+  rendered snapshot of `/goals/<goal_id>` confirming the Action Dock, Goal
+  Progress Meter cards/progress bars, and Goal Command Bar order.
+- Non-claims: no screenshot artifact kept for this slice, no write on GET, no
+  approval or execution on GET, no app-side GitHub polling, no provider calls,
+  no external mutation, no PR creation, and no deploy from ClankerOS itself.
+
+## 2026-06-29 Goal Session Digest UX
+
+- Added a visible read-only `Goal Session Digest` to `/goals/<goal_id>` after
+  the Goal Return Brief and before the Goal Continuation Rail.
+- The digest turns the immediate return-to-work state into five cards:
+  Continue, Since Save, Latest Artifact, Waiting, and Finish Today.
+- It is sourced from existing Goal state, saved workspace timestamp, latest
+  local timeline item, latest artifact, and waiting queue counts. No new
+  storage or action authority was added.
+- Collapsed digest evidence records current gate, next action/surface,
+  workspace save match, latest activity/artifact, waiting counts, last action
+  readback, card count, and zero-effect counters.
+- Updated README, local app docs, operating summary, current status focus,
+  app-demo smoke markers, and fixture-backed Goal route assertions.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `python3 -m compileall -q agent_os tests`, focused
+  `tests/test_first_milestone.py` route/demo coverage
+  (`2 passed, 514 deselected in 50.81s`), bounded `app-smoke-test`, bounded
+  `app-demo-smoke-test`, and `git diff --check`.
+- Non-claims: no browser QA for this slice, no write on GET, no workspace save
+  without confirmation, no approval or execution on GET, no app-side GitHub
+  polling, no PR, and no deploy from ClankerOS itself.
+
+## 2026-06-29 Verification Proof Map UX
+
+- Added a visible read-only `Verification Proof Map` to `/verification` after
+  the operator workbench and before the command bar.
+- The map turns the local-vs-GitHub proof posture into five cards: Current,
+  Fast Smoke, Full Suite, Record, and Boundary.
+- It makes the fast-smoke early proof versus completed full workflow proof
+  boundary visible before the longer GitHub Actions workflow and command
+  templates.
+- Collapsed proof-map evidence records workflow status, branch/commit, current
+  proof state, latest operator-supplied CI evidence, current/record/handoff/
+  workflow surfaces, copy-only command templates, card count, and zero-effect
+  counters.
+- Updated README, operating summary, local status focus, and focused
+  verification route assertions.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `python3 -m compileall -q agent_os tests`, focused
+  `tests/test_first_milestone.py` route/demo coverage
+  (`2 passed, 514 deselected in 48.78s`), `app-smoke-test`,
+  `app-demo-smoke-test`, and `git diff --check`.
+- Non-claims: no browser QA for this slice, no app-side GitHub polling, no
+  write on GET, no proof record without confirmation, no PR, no deploy, and no
+  provider/network/external mutation from ClankerOS itself.
+
+## 2026-06-29 Project Goal Map UX
+
+- Added a visible read-only `Project Goal Map` to `/projects/<project_id>`
+  after the project-scoped Goal creation form and before the dense Goal list.
+- The map turns the project-to-Goal bridge into five cards: Lead Goal, Phase,
+  Work, Waiting, and Finish.
+- Empty registered projects point the map back to `Start Goal For This
+  Project`; fixture-backed project pages point at the lead Goal, current phase,
+  latest run workflow, approvals, and Finish Today.
+- Collapsed map evidence records lead Goal label/phase/next action, active/
+  paused/completed/total Goal counts, tasks, delegations, coder runs, latest
+  delegation/run, waiting counts, card count, and zero-effect counters.
+- Updated README, operating summary, local status focus, empty-project route
+  assertions, and fixture-backed project route assertions.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `python3 -m compileall -q agent_os tests`, focused
+  `tests/test_first_milestone.py` route/demo coverage
+  (`2 passed, 514 deselected in 45.94s`), `app-smoke-test`,
+  `app-demo-smoke-test`, and `git diff --check`.
+- Non-claims: no browser QA for this slice, no write on GET, no project/Goal
+  creation without confirmation, no approval or execution on GET, no app-side
+  GitHub polling, no PR, and no deploy from ClankerOS itself.
+
+## 2026-06-29 Workspace Restore Map UX
+
+- Added a visible read-only `Workspace Restore Map` to `/workspace` after the
+  operator workbench/action form and before the daily brief.
+- The map turns tomorrow's return state into five cards: Restore, Goal,
+  Artifact, Filters + Panels, and Tomorrow.
+- It distinguishes saved workspace state from suggested lead-goal or first-run
+  defaults, including the exact `resume_surface` when one is saved.
+- Collapsed restore-map evidence records saved versus suggested resume
+  surfaces, project/Goal/artifact/filter/panel readiness, restore readiness,
+  `/resume`, `#save-workspace`, card count, and zero-effect counters.
+- Updated README, operating summary, local status focus, focused workspace
+  route assertions, and fixture-backed demo workspace assertions.
+- Compact local verification completed:
+  `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`,
+  `python3 -m compileall -q agent_os tests`, focused
+  `tests/test_first_milestone.py` route/demo coverage
+  (`2 passed, 514 deselected in 45.35s`), `app-smoke-test`,
+  `app-demo-smoke-test`, and `git diff --check`.
+- Non-claims: no browser QA for this slice, no write on GET, no workspace save
+  without confirmation, no approval or execution on GET, no app-side GitHub
+  polling, no PR, and no deploy from ClankerOS itself.
+
+## 2026-06-29 Artifact Relationship Map UX
+
+- Added a visible read-only `Artifact Relationship Map` to
+  `/artifacts?path=...` after the `Artifact Format Lens` and before dense
+  command/review evidence.
+- The map gives each artifact Workflow, Goal, Source, Resume, and Boundary
+  cards so plain local docs, Goal artifacts, saved workspace anchors, and
+  delegation-run artifacts expose the next return path without raw filesystem
+  browsing.
+- Focused artifact coverage verifies unclassified docs, saved resume anchors,
+  Goal/project inference, delegation/run inference, collapsed relationship
+  evidence, zero-effect counters, and the render order
+  `Artifact Format Lens` -> `Artifact Relationship Map` ->
+  `Artifact Command Bar`.
+- Updated README, operating summary, local status focus, and focused artifact
+  route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'artifact_viewer' --tb=short`
+    -> passed, `1 passed, 515 deselected in 10.43s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all local app route markers matched, provider/network/external
+    counters stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, fixture-backed route snippets matched, provider/network/
+    external counters stayed at `0`
+  - `git diff --check` -> passed
+- GitHub Actions proof is expected after pushing this slice; remote status will
+  be tracked by the branch run rather than by a longer local suite.
+- Non-claims until remote proof: no browser QA for this slice, no new run
+  execution, no approval or commit action on GET, no raw filesystem browsing,
+  no app-side GitHub polling, no PR, and no deploy from ClankerOS itself.
+
+## 2026-06-29 Demo Walkthrough Map UX
+
+- Added a visible read-only `Demo Walkthrough Map` to `/demo` between the
+  `Demo Operator Workbench` and `Demo Command Bar`.
+- The map turns the demo route walk into seven cards: Fixture, Project + Goal,
+  Workflow, Run, Approval, Publish Boundary, and Resume + Proof.
+- The current card is derived from existing demo fixture/progress state. In the
+  fixture-backed demo, the map lands on Run because the next gate is
+  `request_commit_for_reviewed_run`.
+- Collapsed walkthrough evidence records fixture status, current stage,
+  selected project/Goal/delegation/run, card counts, manual publish boundary,
+  and zero-effect counters.
+- Updated README, operating summary, local status focus, fixture demo smoke
+  snippets, and focused demo route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `1 passed, 515 deselected in 34.47s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all route markers matched, provider/network/external counters
+    stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, fixture-backed route snippets matched, provider/network/
+    external counters stayed at `0`
+- Non-claims until remote proof: no browser QA for this slice, no write on GET,
+  no fixture creation from the browser, no approval or execution on GET, no
+  app-side GitHub polling, no PR, and no deploy from ClankerOS itself.
+
+## 2026-06-28 Run Evidence Map UX
+
+- Added a visible read-only `Run Evidence Map` to `/runs/<coder_run_id>` after
+  the `Run Review Gate` and before the dense `Coder Worktree Evidence` list.
+- The map turns review, diff, changed files, bounded validation, logs, and
+  verification output into scan-first cards backed only by existing bounded
+  `/artifacts?path=...` links or same-page fallback anchors.
+- Fixture-backed run detail coverage verifies the reviewed/commit-ready state
+  exposes reviewed Review, available Diff/Changed Files/Validation/Logs, and
+  passed Verification cards; missing-review coverage verifies the Review card
+  switches to `missing` while the map keeps the verification proof visible.
+- Updated README, operating summary, local status focus, app demo smoke
+  markers, and run detail route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 51.69s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli app-smoke-test` -> passed, all local app route
+    markers matched, provider/network/external counters stayed at `0`
+  - `python3 -m agent_os.cli app-demo-smoke-test` -> passed,
+    fixture-backed route snippets matched including `/runs/<coder_run_id>`,
+    provider, network, and external counters stayed at `0`
+  - `git diff --check` -> passed
+- GitHub Actions proof is expected after pushing this slice; remote status will
+  be tracked by the branch run rather than by a longer local suite.
+- Non-claims until remote proof: no browser QA for this slice, no new run
+  execution, no approval or commit action on GET, no raw filesystem browsing,
+  no app-side GitHub polling, no PR, and no deploy from ClankerOS itself.
+
+## 2026-06-28 Action Workflow Map UX
+
+- Added a visible read-only `Action Workflow Map` to `/actions` between the
+  Action Operator Workbench and the Action Catalog Command Bar.
+- The map arranges browser actions into Setup, Scout, Context, Prep, Approval,
+  Execute, Commit, Publish, and Proof cards, marks the current stage from the
+  same first-run or lead-Goal focus context as the workbench, and links each
+  stage to existing safe local surfaces.
+- First-run/normal route coverage verifies a `run-delegation` focus marks
+  Scout current; fixture-backed demo coverage verifies a `coder-commit-request`
+  focus marks Commit current after Execute is done and Publish is waiting.
+- Updated README, operating summary, local status focus, demo smoke markers,
+  and focused `/actions` route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 53.70s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all local app route markers matched, provider/network/external
+    counters stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, fixture-backed route snippets matched including `/actions`,
+    provider, network, and external counters stayed at `0`
+  - `git diff --check` -> passed
+- GitHub Actions proof is expected after pushing this slice; remote status will
+  be tracked by the branch run rather than by a longer local suite.
+- Non-claims until remote proof: no browser QA for this slice, no action forms
+  moved onto `/actions`, no app-side GitHub polling, no PR, and no deploy from
+  ClankerOS itself.
+
+## 2026-06-28 Inbox Next Item Brief UX
+
+- Added a visible read-only `Inbox Next Item Brief` to `/inbox` between the
+  Inbox Triage Board and the dense command/queue evidence.
+- The brief turns the first queue item into Next, Inspect, Evidence, After,
+  and Safety cards, preserving the existing queue anchor, inspection route,
+  bounded `/artifacts?path=...` target or queue fallback, follow-up surface,
+  and no-write/no-approve/no-execute/no-network boundary.
+- Empty inboxes now point the primary card at the existing Finish Today save
+  form, while pending delegation inboxes point the primary card at the
+  subagent delegation queue, the Inspect card at the delegation detail page,
+  Evidence at the bounded artifact renderer when a result artifact exists, and
+  After at the scoped workflow route.
+- Updated README, operating summary, local status focus, app demo smoke
+  markers, and empty plus fixture-backed inbox route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 53.13s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all local app route markers matched, provider/network/external
+    counters stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, fixture-backed route snippets matched including `/inbox`,
+    provider, network, and external counters stayed at `0`
+  - `git diff --check` -> passed
+- GitHub Actions proof is expected after pushing this slice; remote status will
+  be tracked by the branch run rather than by a longer local suite.
+- Non-claims until remote proof: no browser QA for this slice, no inbox-side
+  approval or execution form, no app-side GitHub polling, no PR, and no deploy
+  from ClankerOS itself.
+
+## 2026-06-28 Approval Decision Cards UX
+
+- Promoted `Approval Decision Brief` from an always-expanded evidence block
+  into visible Decision, Inspect, Evidence, After, and Safety cards before
+  collapsed approval decision evidence.
+- Empty approval queues now show the safe Goal fallback as the primary card,
+  while fixture-backed pending worktree approvals point directly at the
+  pending worktree decision anchor, scoped workflow inspection surface,
+  bounded artifact evidence, and local post-decision follow-up.
+- Kept every existing `approval_decision_*` evidence key in the DOM and added
+  card handles so the decision path remains testable without approving or
+  executing anything on GET.
+- Updated README, operating summary, local status focus, and empty plus
+  fixture-backed approval route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 53.13s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all local app route markers matched, provider/network/external
+    counters stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, fixture-backed route snippets matched, provider, network, and
+    external counters stayed at `0`
+  - `git diff --check` -> passed
+- GitHub Actions proof is expected after pushing this slice; remote status will
+  be tracked by the branch run rather than by a longer local suite.
+- Non-claims until remote proof: no browser QA for this slice, no approval
+  decision, no execution, no app-side GitHub polling, no PR, and no deploy from
+  ClankerOS itself.
+
+## 2026-06-28 Skills Usage Map UX
+
+- Added a visible read-only `Skills Usage Map` to `/skills` between the
+  `Skills Operator Workbench` and command/list evidence.
+- The map exposes Now, Available, Generated, Usage, Projects, and Safety cards
+  so skill records can be scanned by availability, generated origin, usage
+  count, project attribution, last-used posture, first bounded artifact, and
+  no-install/no-execution boundaries before reading the dense inventory.
+- Empty checkouts fall back to the Goal context path, while fixture-backed demo
+  data routes the primary action through the existing bounded
+  `/artifacts?path=.clanker/skills/local-files/SKILL.md` renderer.
+- Updated README, operating summary, local status focus, and empty plus
+  fixture-backed Skills route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 56.95s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all local app route markers matched, provider/network/external
+    counters stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, fixture-backed route snippets matched, provider, network, and
+    external counters stayed at `0`
+  - `git diff --check` -> passed
+- GitHub Actions proof is expected after pushing this slice; remote status will
+  be tracked by the branch run rather than by a longer local suite.
+- Non-claims until remote proof: no browser QA for this slice, no app-side
+  GitHub polling, no skill install/execution, no approval decision, no PR, and
+  no deploy from ClankerOS itself.
+
+## 2026-06-28 Home Attention Cards UX
+
+- Promoted `Home Attention Brief` from a readback-first triage section into a
+  visible card surface with Now, Inbox, Approvals, Incidents, Recommendations,
+  and Proof cards.
+- The Now card follows the same priority logic as the existing brief
+  (incidents, approvals, recommendations, inbox, first-run, CI proof, or
+  current Goal next action), while the other cards point at existing local
+  operator surfaces.
+- Added card availability, count, and per-card surface evidence so Home remains
+  easy to assert in route tests and implementation handoffs without giving the
+  page new write authority.
+- Updated README, operating summary, local status focus, and first-run plus
+  fixture-backed Home route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 56.48s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all local app route markers matched, provider/network/external
+    counters stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, fixture-backed route snippets matched, provider, network, and
+    external counters stayed at `0`
+  - `git diff --check` -> passed
+- GitHub Actions proof is expected after pushing this slice; remote status will
+  be tracked by the branch run rather than by a longer local suite.
+- Non-claims until remote proof: no browser QA for this slice, no app-side
+  GitHub polling, no approval decision, no execution, no PR, and no deploy from
+  ClankerOS itself.
+
+## 2026-06-28 Home Activity Cards UX
+
+- Promoted Home Recent Activity from a command readback plus chronological
+  list into a scan-first activity surface with visible Latest, Goals,
+  Artifacts, and Notes cards.
+- Empty checkouts now point the activity cards at real local fallback
+  surfaces (`/goals`, `/search?q=artifact`, and `/memory`), while populated
+  demo state links to the latest timeline, artifact, and note surfaces when
+  available.
+- Kept the detailed human-readable timeline and evidence readback in place,
+  adding card availability/count/surface evidence so the browser UI remains
+  testable without adding write authority.
+- Updated README, operating summary, local status focus, and first-run plus
+  fixture-backed Home route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 60.43s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all local app route markers matched, provider/network/external
+    counters stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, fixture-backed route snippets matched, provider, network, and
+    external counters stayed at `0`
+  - `git diff --check` -> passed
+- GitHub Actions proof is expected after pushing this slice; remote status will
+  be tracked by the branch run rather than by a longer local suite.
+- Non-claims until remote proof: no browser QA for this slice, no app-side
+  GitHub polling, no approval decision, no execution, no PR, and no deploy from
+  ClankerOS itself.
+
+## 2026-06-28 Today Session Summary Cards UX
+
+- Promoted `Today Session Summary` on `/today` from a compact evidence block
+  into a visible return-to-work action surface with Continue, Latest, Proof,
+  and Resume cards before the detailed readback.
+- The Continue card points at the same current Goal or first-run target the
+  rest of `/today` already trusts; Latest points at the newest activity; Proof
+  points at the bounded CI evidence surface; Resume points at the workspace
+  resume surface.
+- Kept the detailed evidence table for source/proof/debuggability and added
+  card availability/count/surface readbacks so the browser UI remains
+  testable without adding write authority.
+- Updated README, operating summary, local status focus, and first-run plus
+  fixture-backed `/today` route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 53.91s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all local app route markers matched, provider/network/external
+    counters stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, fixture-backed `/today` snippets matched, provider, network,
+    and external counters stayed at `0`
+  - `git diff --check` -> passed
+- GitHub Actions proof is expected after pushing this slice; remote status will
+  be tracked by the branch run rather than by a longer local suite.
+- Non-claims until remote proof: no browser QA for this slice, no app-side
+  GitHub polling, no approval decision, no execution, no PR, and no deploy from
+  ClankerOS itself.
+
+## 2026-06-28 Workflow Live State UX
+
+- Added a visible read-only `Workflow Live State` section to `/workflow`
+  between the `Workflow Journey` and `Workflow Finish Today`.
+- The panel gives selected workflow pages Now, Stage, Refresh, Pause, and
+  Safety cards so a delegation-scoped or coder-run-scoped workflow can remain
+  open during the day without manual refresh.
+- Refresh uses local page reload polling every five seconds and pauses when a
+  form field is focused, content is editable, or the tab is hidden.
+- Empty `/workflow`, `/workflow?delegation_id=<id>`, and
+  `/workflow?run_id=<coder_run_id>` expose live-state evidence for status,
+  scope, selected delegation/run, parent Goal, project, current stage,
+  journey stage key, stage position, next local target, exact resume surface,
+  selected-step counts, and zero-effect boundaries.
+- Existing confirmed local forms remain the only write paths; the live-state
+  panel does not write on GET, call providers, poll GitHub, push, deploy,
+  create PRs, approve work, execute work, or create external effects.
+- Updated README, operating summary, local status focus, and focused workflow
+  route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 54.51s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all local app route markers matched, provider/network/external
+    counters stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, demo workflow/delegation/run route markers matched,
+    provider/network/external counters stayed at `0`
+  - `git diff --check` -> passed
+- GitHub Actions proof is expected after pushing this slice; remote status will
+  be tracked by the branch run rather than by a longer local suite.
+- Non-claims until remote proof: no browser QA for this slice, no app-side
+  GitHub polling, no approval decision, no execution, no PR, and no deploy from
+  ClankerOS itself.
+
+## 2026-06-28 Workflow Finish Today UX
+
+- Added a visible read-only `Workflow Finish Today` section to `/workflow`
+  after the `Workflow Journey` and before the `Workflow Command Bar`.
+- The section shows Current, Save, Resume, and Safety cards for the selected
+  workflow scope.
+- The included confirmed `save-workspace` form stores the exact workflow
+  route as `resume_surface`, so `/resume` can reopen
+  `/workflow`, `/workflow?delegation_id=<id>`, or
+  `/workflow?run_id=<coder_run_id>` instead of losing the operator in a
+  generic route.
+- Scoped delegation/run workflow pages prefill project, Goal, filters,
+  expanded workflow panels, latest workflow artifact, and
+  `updated_by=workflow-finish-today`.
+- Empty `/workflow` can still save the workflow chooser as a local resume
+  surface, with blank project/Goal fields and `workflow:all` filters.
+- Finish evidence stays collapsed and records selected delegation/run, parent
+  Goal, project, current stage, next action, exact resume surface, form
+  availability, confirmation requirement, and zero-effect boundaries.
+- Existing confirmed local forms remain the only write paths; the finish
+  handoff does not write on GET, call providers, poll GitHub, push, deploy,
+  create PRs, or create external effects.
+- Updated README, operating summary, local status focus, and focused workflow
+  route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 53.74s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all local app route markers matched, provider/network/external
+    counters stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, demo workflow/delegation/run/resume route markers matched,
+    provider/network/external counters stayed at `0`
+  - `git diff --check` -> passed
+- GitHub Actions proof is expected after pushing this slice; remote status will
+  be tracked by the branch run rather than by a longer local suite.
+- Non-claims until remote proof: no browser QA for this slice, no app-side
+  GitHub polling, no approval decision, no execution, no PR, and no deploy from
+  ClankerOS itself.
+
+## 2026-06-29 First Run Launchpad UX
+
+- Added a visible read-only `First Run Launchpad` to the First Run Guide between
+  the command bar and progress strip.
+- The launchpad gives fresh operators five browser choices: continue guided
+  setup, open the populated demo, inspect workflow, review verification proof,
+  or check health/safety.
+- The guided setup card points at the same same-page first-run form as the
+  command bar, so the launchpad does not introduce another write path.
+- Collapsed evidence records the current first-run step, selected project, goal
+  and delegation ids, all card surfaces, card count, and zero-effect counters.
+- Updated README, operating summary, local status focus, and first-run route
+  assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> passed, `1 passed, 515 deselected in 27.49s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed, all route markers matched, provider/network/external counters
+    stayed at `0`
+  - bounded `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider/network/external
+    counters stayed at `0`
+- Non-claims until remote proof: no browser QA for this slice, no write on GET,
+  no provider call, no app-side GitHub polling, no approval decision, no
+  execution, no commit, no push, no PR, and no deploy from ClankerOS itself.
+
+## 2026-06-28 Workflow Journey UX
+
+- Added a visible read-only `Workflow Journey` section to `/workflow` between
+  the `Workflow Operator Workbench` and `Workflow Command Bar`.
+- The journey renders nine operator-readable stages: Select, Goal + Scout,
+  Context, Handoff, Coder Prep, Approval, Execution, Commit, and Publish.
+- Empty workflow pages now mark `select_scope` as current and point to
+  `/delegation-runs`; scoped delegation/run pages mark the current journey
+  stage from the same existing workflow next-action state used by the
+  workbench and command bar.
+- Fixture-backed commit-ready workflows now show Commit as current, Publish
+  as waiting, a `7/9 stages done` progress summary, and the selected run as
+  the next safe local surface.
+- Journey evidence stays collapsed and records scope, selected delegation/run,
+  parent Goal, project, current stage key, journey position, next action,
+  selected-step counts, source, and zero-effect boundaries.
+- Existing confirmed local forms remain the only write paths; the journey does
+  not write on GET, call providers, poll GitHub, push, deploy, create PRs, or
+  create external effects.
+- Updated README, operating summary, local status focus, and focused workflow
+  route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 60.68s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+- Full pytest/browser regression proof is intentionally left to GitHub Actions
+  for this GitHub-first testing loop.
+- Non-claims until remote proof: no browser QA for this slice, no write on
+  GET, no provider call, no app-side GitHub polling, no approval decision, no
+  execution, no commit, no push, no PR, and no deploy from ClankerOS itself.
+
+## 2026-06-28 First Run Progress Strip UX
+
+- Added a visible read-only `First Run Progress` strip to the First Run Guide.
+- The strip renders a progress bar plus five step cards for Project, Goal,
+  Delegation, Context, and Run, using the existing `_first_run_progress`
+  source instead of a new state model.
+- Empty checkouts now show step 1 as current, with one current step and four
+  waiting steps; after confirmed project registration, the strip advances to
+  `create_first_goal` with one done/current split.
+- Detailed progress evidence stays collapsed and records current step, next
+  action, reason, done/current/waiting counts, total steps, and zero-effect
+  boundaries.
+- Existing confirmed `register-project`, `create-goal`, and inline first-run
+  action forms remain the only write paths; the strip does not write on GET.
+- Updated README, operating summary, local status focus, and focused first-run
+  route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> passed, `2 passed, 514 deselected in 31.75s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+- Full pytest/browser regression proof is intentionally left to GitHub Actions
+  for this GitHub-first testing loop.
+- Non-claims until remote proof: no browser QA for this slice, no write on GET,
+  no provider call, no app-side GitHub polling, no approval decision, no
+  execution, no commit, no push, no PR, and no deploy from ClankerOS itself.
+
+## 2026-06-28 Exact Workspace Resume Surface UX
+
+- Promoted `resume_surface` to a first-class saved workspace field in
+  `.clanker/app/workspace.json`.
+- Confirmed `save-workspace` now accepts `resume_surface` directly, or derives
+  it from safe local `return_to`, so artifact, goal, and action forms can save
+  the exact browser route the operator should return to tomorrow.
+- `/resume` now prefers the saved `resume_surface` as its primary return link
+  before falling back to the saved Goal or project, and exposes
+  `resume_saved_surface` evidence.
+- `/workspace` now renders saved and suggested `resume_surface` values in
+  restore state, save-default evidence, and the editable confirmed form.
+- Home's `Home Resume Workspace`, the Recent Items dock, the command palette
+  Quick Switch card, and shared recent operator links now prefer the exact
+  saved surface while retaining `/resume` as the hub route.
+- Project/Goal/delegation/coder browser actions that refresh workspace state
+  now also set an intentional safe local resume surface instead of preserving a
+  stale prior route.
+- Updated README, operating summary, local status focus, and focused local app
+  assertions for first-run, explicit workspace save, and demo workspace paths.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `3 passed, 513 deselected in 56.62s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+- Full pytest/browser regression proof is intentionally left to GitHub Actions
+  for this GitHub-first testing loop.
+- Non-claims until remote proof: no browser QA for this slice, no write on GET,
+  no provider call, no app-side GitHub polling, no approval decision, no
+  execution, no commit, no push, no PR, and no deploy from ClankerOS itself.
+
+## 2026-06-28 Global Next Action Shortcut UX
+
+- Added a global keyboard-first `n` shortcut and visible header `Next` control
+  to the shared local app shell.
+- The target is derived from the same saved-workspace or lead-Goal focus
+  context as the Operator Ribbon, Operator Focus, route context, and command
+  palette.
+- In first-run states, `n` opens the current setup target such as the
+  same-page `Create Project` form.
+- When a browser-available confirmed action form exists, `n` opens the
+  existing `#operator-focus-current-action` details panel instead of submitting
+  it; otherwise it navigates to the recommended local target.
+- Header metadata records target, status, source, form availability,
+  confirmation requirement, and zero-effect counters for the shortcut.
+- Updated README, operating summary, local status focus, and rendered shell
+  assertions for first-run and populated Goal states.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 57.63s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+- Full pytest/browser regression proof is intentionally left to GitHub Actions
+  for this GitHub-first testing loop.
+- Non-claims until remote proof: no browser QA for this slice, no write on GET,
+  no provider call, no app-side GitHub polling, no approval decision, no
+  execution, no commit, no push, no PR, and no deploy from ClankerOS itself.
+
+## 2026-06-28 Keyboard Finish Workspace UX
+
+- Added shared keyboard shortcuts for daily browser operation:
+  - `w` opens `/workspace`
+  - `f` opens `/workspace#save-workspace`
+- The shortcuts are exposed through the same accessible shortcut metadata and
+  command-palette help as the existing Home, Today, Goals, Resume, Search,
+  palette, Escape, and theme shortcuts.
+- `f` is navigation-only: it opens the existing Finish Today save surface, and
+  the actual `save-workspace` write still requires the confirmed local form.
+- Updated README, operating summary, local status focus, and rendered shell
+  assertions for shortcut metadata/help/JavaScript handlers.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health --tb=short`
+    -> passed, `1 passed, 515 deselected in 27.98s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 45.31s`
+  - `git diff --check` -> passed
+- Full pytest/browser regression proof is intentionally left to GitHub Actions
+  for this GitHub-first testing loop.
+- Non-claims until remote proof: no browser QA for this slice, no write on GET,
+  no provider call, no app-side GitHub polling, no approval decision, no
+  execution, no commit, no push, no PR, and no deploy from ClankerOS itself.
+
+## 2026-06-28 Action Notice Next Step UX
+
+- Completed-action notice pages now open with a primary `Next Step` card.
+- The card is sourced from the same first-run or saved-Goal state as the
+  shared operator shell, so a post-action notice points to the next confirmed
+  form or workflow surface instead of only echoing the previous action.
+- Notice evidence now reports recommendation status, source, action, surface,
+  reason, phase, current gate/step, action-form availability, confirmation
+  requirement, card count `6`, and no-write/no-provider/no-network/
+  no-external-effect counters.
+- The clean current-surface link, last-action link, resume link, details, and
+  safety evidence remain available; the notice grid now uses responsive
+  auto-fit columns for the additional card.
+- Updated README, operating summary, local status focus, and first-run
+  browser-flow assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k first_run_browser_actions_persist_resume_workspace --tb=short`
+    -> passed, `1 passed, 515 deselected in 11.13s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 514 deselected in 46.57s`
+  - `git diff --check` -> passed
+- Full pytest/browser regression proof is intentionally left to GitHub Actions
+  for this GitHub-first testing loop.
+- Non-claims until remote proof: no browser QA for this slice, no write on GET,
+  no provider call, no app-side GitHub polling, no approval decision, no
+  execution, no commit, no push, no PR, and no deploy from ClankerOS itself.
+
+## 2026-06-28 Command Palette Finish Today UX
+
+- Added a fifth `Finish` card to the global command palette `Quick Switch`
+  dock.
+- The card links to `/workspace#save-workspace`, so pressing `/` gives the
+  operator a keyboard-first route to the same confirmed Finish Today handoff
+  exposed by the global ribbon.
+- Quick-switch evidence now reports the finish source, target, confirmation
+  requirement, card count `5`, and no-write/no-provider/no-network/
+  no-external-effect counters.
+- Switched the quick-switch grid to responsive auto-fit columns so adding the
+  fifth card does not create fixed-width palette overflow.
+- Updated README, operating summary, local status focus, and focused
+  first-run plus fixture-backed route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state"`
+    -> passed, `2 passed, 514 deselected in 57.97s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+- Full pytest/browser regression proof is intentionally left to GitHub Actions
+  for this GitHub-first testing loop.
+- Non-claims until remote proof: no write on GET, no provider call, no app-side
+  GitHub polling, no approval decision, no execution, no commit, no push, no
+  PR, and no deploy from ClankerOS itself.
+
+## 2026-06-28 Workspace Finish Defaults UX
+
+- Added first-class `Workspace save defaults` evidence inside
+  `/workspace#save-workspace`.
+- Empty first-run workspaces still render blank save fields and report
+  `workspace_save_defaults_status=first_run`.
+- When no workspace Goal is saved but a lead Goal exists, the confirmed
+  Finish Today form is prefilled from the lead project, Goal, goal-scoped
+  filters, default panels, and latest artifact, while saved-state evidence
+  remains unchanged until the operator confirms `save-workspace`.
+- Saved workspaces remain authoritative and report
+  `workspace_save_defaults_status=saved_workspace`.
+- Updated README, operating summary, local status focus, and focused first-run
+  plus fixture-backed route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state"`
+    -> passed, `2 passed, 514 deselected in 48.92s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+- Full pytest/browser regression proof is intentionally left to GitHub Actions
+  for this GitHub-first testing loop.
+- Non-claims until remote proof: no write on GET, no provider call, no app-side
+  GitHub polling, no approval decision, no execution, no commit, no push, no
+  PR, and no deploy from ClankerOS itself.
+
+## 2026-06-28 Operator Ribbon Finish Today UX
+
+- Added a shared read-only `Finish` card to the global `Operator Ribbon` on
+  every local app route.
+- The card links to the existing confirmed `/workspace#save-workspace`
+  surface and labels the action as `Finish Today`, making the
+  leave-and-resume loop visible without adding write authority to the ribbon.
+- Collapsed ribbon evidence now preserves the Finish Today target,
+  `save workspace for tomorrow` action, and confirmation-required boundary
+  alongside the existing route, Goal, attention, resume, command-palette, and
+  zero-effect readbacks.
+- Switched the ribbon grid to auto-fit columns so the sixth card remains
+  responsive instead of creating tablet-width overflow.
+- Updated README, operating summary, local status focus, and focused
+  first-run plus fixture-backed route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected in 47.39s`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+- Browser QA against fixture-backed scratch local app `127.0.0.1:8865`
+  verified desktop `/` with 6 ribbon cards, Finish target
+  `/workspace#save-workspace`, collapsed evidence, ribbon before shell, no
+  horizontal overflow, no framework overlay, and empty warning/error logs.
+- Browser interaction QA clicked the new Finish card and confirmed the app
+  landed on `/workspace#save-workspace`, rendered the Workspace page, opened
+  the existing `#save-workspace` details panel, and showed the confirmed save
+  form with no horizontal overflow or warning/error logs.
+- Mobile browser QA at `390x844` verified `/goals/<goal_id>` with 6 one-column
+  ribbon cards, Finish target `/workspace#save-workspace`, collapsed evidence,
+  no horizontal overflow, no framework overlay, and empty warning/error logs.
+- Cleanup evidence: local app server on port `8865` was stopped, no listener
+  remained, and the scratch app root was removed. Tooling note: the Browser
+  viewport reset call timed out repeatedly after mobile QA, so viewport reset
+  could not be proven from the Browser bridge in this run.
+- Non-claims until broader proof: GitHub Actions proof is not yet complete for
+  this slice. The Finish card is a navigation/readback UX improvement only:
+  no write on GET, no provider call, no external network action beyond local
+  browser/server loopback, no approval decision, no execution, no commit, no
+  push, no PR, and no deploy from ClankerOS itself.
+
+## 2026-06-28 Global Operator Ribbon UX
+
+- Added a shared read-only `Operator Ribbon` above the sidebar/page shell on
+  every local app route.
+- The ribbon turns the saved workspace Goal, current lead Goal, or first-run
+  state into five scan-first cards: Now, Goal, Attention, Resume, and Search.
+- Collapsed ribbon evidence preserves the current route, source, phase,
+  primary action, attention target, progress/waiting counts, saved workspace
+  context, command-palette availability, and zero-effect counters.
+- Updated README, operating summary, local status docs, demo route markers,
+  and focused first-run plus fixture-backed route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected in 40.18s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+- Browser QA against fixture-backed scratch local app `127.0.0.1:8864`
+  verified the global ribbon on desktop `/` and mobile `/goals/<goal_id>`.
+  Desktop rendered 5 cards, linked Now to the current run, Goal to the demo
+  Goal, Attention to `/approvals`, kept evidence collapsed, ordered the ribbon
+  before the operator shell, had no horizontal overflow, and reported no
+  warning/error logs. Mobile `390x844` rendered the 5 cards in one column,
+  preserved the same action/attention readbacks, kept evidence collapsed, had
+  no horizontal overflow, reported no warning/error logs, and the viewport was
+  reset after the check.
+- The scratch local app server was stopped after browser QA, no listener
+  remained on port `8864`, and the scratch root was removed.
+- Non-claims until broader proof: GitHub Actions proof is not yet complete for
+  this slice. The ribbon is a local readback/navigation UX improvement only:
+  no write on GET, no provider call, no external network action beyond local
+  browser/server loopback, no approval decision, no execution, no commit, no
+  push, no PR, and no deploy from ClankerOS itself.
+
+## 2026-06-28 Memory Pinboard UX
+
+- Added a visible read-only `Memory Pinboard` to `/memory` between the Memory
+  Operator Workbench and command/inventory sections.
+- The pinboard turns durable memory into seven scan-first lanes: Active Pins,
+  Proposed Pins, Project, Global, Generated, Operator Notes, and Future Work,
+  each with counts, first-target routing, and collapsed pinboard evidence.
+- Updated README, operating summary, local status docs, demo route markers,
+  and focused memory assertions for empty and proposed-pin states.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'first_run_browser_actions_persist_resume_workspace or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected in 32.48s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed; provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed; fixture-backed `/memory` matched, provider calls `0`, network
+    actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+  - In-app browser QA against bounded seeded demo data on `127.0.0.1:8862`
+    -> passed: desktop and 390px mobile showed 7 lane cards, proposed pin as
+    primary, the existing confirmed pin form in Proposed Memories, collapsed
+    evidence, correct workbench/pinboard/command ordering, no console warnings
+    or errors, and no horizontal overflow
+  - `lsof -nP -iTCP:8862 -sTCP:LISTEN` after cleanup -> no listener
+- Non-claims until remote proof: GitHub Actions proof is not yet complete for
+  this slice. The change is intended to remain a local readback/navigation UX
+  improvement: no write on GET, no pin without the existing confirmed form, no
+  provider call, no external network action beyond local browser/server
+  loopback, no PR, and no deploy from ClankerOS itself.
+
+## 2026-06-28 Search Result Map UX
+
+- Added a visible read-only `Search Result Map` to `/search` between the
+  Search Operator Workbench and dense command/result sections.
+- The map turns global search results into six scan-first lanes: Goals,
+  Projects, Work, Decisions, Knowledge, and Artifacts, each with result
+  counts, first-target links, and collapsed result-map evidence.
+- Updated README, operating summary, local status docs, demo route markers,
+  and focused search assertions for empty and fixture-backed search states.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected in 39.79s`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed; provider calls `0`, network actions `0`, external mutations `0`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed; fixture-backed `/search?q=fixture-backed` matched, provider
+    calls `0`, network actions `0`, external mutations `0`
+  - `git diff --check` -> passed
+  - In-app browser QA against bounded demo data on `127.0.0.1:8861` -> passed:
+    desktop and 390px mobile showed 6 lane cards, collapsed evidence, correct
+    workbench/map/command ordering, goal primary target, no console warnings or
+    errors, and no horizontal overflow after the auto-fit grid fix
+  - `lsof -nP -iTCP:8861 -sTCP:LISTEN` after cleanup -> no listener
+- Non-claims until remote proof: GitHub Actions proof is not yet complete for
+  this slice. The change is intended to remain a local readback/navigation UX
+  improvement: no write on GET, no approval, no execution, no provider call, no
+  external network action beyond local browser/server loopback, no PR, and no
+  deploy from ClankerOS itself.
+
+## 2026-06-28 Inbox Triage Board UX
+
+- Added a visible read-only `Inbox Triage Board` to `/inbox` between the
+  Inbox Operator Workbench and the dense command/queue sections.
+- The board turns the operator queue into five scan-first lanes: Attention,
+  Decisions, Work, Publication, and Finish Today, each with count-backed
+  links to the existing queue anchors and collapsed triage evidence.
+- Updated README, operating summary, local status docs, demo route markers,
+  and focused Inbox assertions for empty, delegation-only, and demo worktree
+  approval queues.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against fixture-backed scratch local app `127.0.0.1:8860`
+  verified `/inbox` in the in-app browser. Desktop rendered five triage
+  cards, selected Decisions as the primary lane, showed Work as ready, kept
+  triage evidence collapsed, ordered the board between the workbench and
+  command sections, had no horizontal overflow, and reported no warning/error
+  logs.
+- Mobile `390x844` in-app browser QA rendered the five triage cards in one
+  column, kept triage evidence collapsed, preserved the same primary target,
+  had no horizontal overflow, reported no warning/error logs, and the viewport
+  was reset after the check.
+- The scratch local app server was stopped after browser QA, and no listener
+  remained on port `8860`.
+- Non-claims: this is a local readback/navigation UX change. It does not write
+  on GET, approve work, execute work, create commits, push, create PRs,
+  deploy, fetch GitHub status, call providers, or mutate external systems.
+
+## 2026-06-28 Artifact Format Lens UX
+
+- Added a visible `Artifact Format Lens` to `/artifacts?path=...` between the
+  Artifact Operator Workbench and dense command/review evidence.
+- The lens makes Markdown, JSON, patch/diff, text, and log artifact rendering
+  explicit with format-specific read/review actions, structure and byte-count
+  cards, a review target, and a local inert-renderer safety boundary.
+- Updated README, operating summary, local status docs, and focused artifact
+  route assertions for Markdown, JSON, patch/diff, text, and log renderer
+  families.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'artifact_viewer' --tb=short`
+    -> passed, `1 passed, 515 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against scratch local app `127.0.0.1:8859` verified
+  `/artifacts?path=docs/sample.md` in the in-app browser. Desktop rendered
+  four Artifact Format Lens cards, kept format evidence collapsed, ordered the
+  lens between the workbench and command/content sections, had no horizontal
+  overflow, and reported no warning/error logs.
+- Mobile `390x844` in-app browser QA rendered the four format cards in one
+  column, kept evidence collapsed, had no horizontal overflow, reported no
+  warning/error logs, and the viewport was reset after the check.
+- The scratch local app server was stopped after browser QA, and no listener
+  remained on port `8859`.
+- Non-claims: this is a local readback/navigation UX change. It does not write
+  on GET, approve work, execute work, create commits, push, create PRs,
+  deploy, fetch GitHub status, call providers, or mutate external systems.
+
+## 2026-06-28 Profile Routing Matrix UX
+
+- Added a read-only `Profile Routing Matrix` to `/profiles` after the
+  Profiles Operator Workbench and command bar.
+- The matrix makes Planning, Coding, Review, Docs, Cheap Model, and Frontier
+  Model lanes visible as six browser cards, mapping each lane to stored local
+  profile rows, cost posture, `use_for` labels, and inactive provider/model
+  routing status.
+- Updated README, operating summary, local status docs, and focused route
+  assertions for populated profile storage and empty first-run profile states.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'profiles_route_reads_storage_profiles_without_enabling_providers or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against fixture-backed scratch local app `127.0.0.1:8858`
+  verified `/profiles` in the in-app browser. Desktop rendered six
+  storage-ready matrix cards, kept matrix evidence collapsed, had no
+  horizontal overflow, and reported no warning/error logs.
+- Mobile `390x844` in-app browser QA rendered the six profile-lane cards in
+  one column, kept evidence collapsed, had no horizontal overflow, reported no
+  warning/error logs, and the viewport was reset after the check.
+- The scratch local app server was stopped after browser QA, and no listener
+  remained on port `8858`.
+- Non-claims: this is a local readback/navigation UX change. It does not write
+  on GET, approve work, execute work, create commits, push, create PRs,
+  deploy, fetch GitHub status, call providers, or mutate external systems.
+
+## 2026-06-28 Command Palette Quick Switch
+
+- Added a visible `Quick Switch` dock inside the global command palette with
+  Continue, Workspace, Action, and Artifact cards.
+- The dock prefers saved workspace Goal/project/action/artifact state when
+  available, falls back to the current lead Goal and latest Goal artifact when
+  workspace state is empty, and otherwise points at safe first-run/resume
+  surfaces.
+- Updated README, operating summary, local status docs, and focused route
+  assertions for empty first-run, saved-workspace resume, fixture-backed Home,
+  and fixture-backed Goal states.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against fixture-backed scratch local app `127.0.0.1:8857`
+  verified `/goals/goal_196b7638c69a` in the in-app browser. Desktop opened
+  the command palette, rendered four Quick Switch cards, linked Continue and
+  Action to the palette action form, linked Workspace to the current Goal, and
+  linked Artifact to the latest review artifact with quick-switch evidence
+  collapsed, no horizontal overflow, and no warning/error logs.
+- Mobile `390x844` in-app browser QA rendered the four Quick Switch cards in
+  one column inside the palette, kept evidence collapsed, had no horizontal
+  overflow, reported no warning/error logs, and the viewport was reset after
+  the check.
+- The scratch local app server was stopped after browser QA, and no listener
+  remained on port `8857`.
+- Non-claims: this is a local navigation/readback UX change. It does not write
+  on GET, approve work, execute work, create commits, push, create PRs,
+  deploy, fetch GitHub status, call providers, or mutate external systems.
+
+## 2026-06-28 Recent Items Return Dock
+
+- Made the shared Recent Items sidebar a richer return-to-work surface with
+  visible Recent, Workspace, Action, and Artifact cards before collapsed
+  evidence or the longer shortcut list.
+- The dock opens the primary recent local surface, saved project/Goal when one
+  exists, last action notice when one exists, saved artifact when one exists,
+  and safe fallback surfaces otherwise.
+- Updated README, operating summary, local status docs, and focused route
+  assertions for empty first-run, fixture-backed Goal, and first-run resume
+  states.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against fixture-backed scratch local app `127.0.0.1:8856`
+  verified `/goals/<fixture-goal>` in the in-app browser. Desktop rendered
+  four return dock cards, kept recent evidence and shortcut details collapsed,
+  had no horizontal overflow, and reported no warning/error logs.
+- Mobile `390x844` in-app browser QA rendered the four cards in one side-rail
+  column below the main content, kept evidence/details collapsed, had no
+  horizontal overflow, reported no warning/error logs, and the viewport was
+  reset after the check.
+- Non-claims: this is a local navigation/readback UX change. It does not write
+  on GET, approve work, execute work, create commits, push, create PRs,
+  deploy, fetch GitHub status, call providers, or mutate external systems.
+
+## 2026-06-28 Action Notice Continuation Surface
+
+- Made GET notice targets action-first with an `Action Notice` surface before
+  the target page content instead of a plain banner.
+- The notice surface shows Continue Here, Last Action, Resume, Details, and
+  Boundary cards, plus collapsed notice/workspace evidence preserving the
+  notice query, saved last action, saved project/Goal context, and zero-effect
+  counters.
+- Updated README, operating summary, local status docs, and focused route
+  assertions so notice links stay a continuation surface after confirmed
+  local actions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against scratch local app `127.0.0.1:8855` used the in-app
+  browser for the desktop `/actions -> confirmation -> result -> notice`
+  path. Desktop rendered five notice cards, placed `Action Notice` first in
+  `.operator-main`, kept evidence collapsed, had no horizontal overflow, and
+  reported no warning/error logs.
+- The in-app browser viewport capability timed out during mobile resize and
+  reset attempts, so mobile proof used an isolated standalone Playwright CLI
+  session against the same scratch app. Mobile `390x844` rendered the notice
+  first, collapsed five cards into one column, kept evidence collapsed, had no
+  horizontal overflow, and reported zero console warnings/errors.
+- The standalone browser session was closed, the local app server was stopped,
+  and `lsof -nP -iTCP:8855 -sTCP:LISTEN` showed no remaining listener.
+- Non-claims: this is a local notice-target UX/readback change. It does not
+  write before confirmation, approve work, execute work, create commits, push,
+  create PRs, deploy, fetch GitHub status, call providers, or mutate external
+  systems.
+
+## 2026-06-28 Action Error Recovery Surface
+
+- Made failed local action pages action-first with an `Action Needs Attention`
+  recovery surface before `Action Error Details`.
+- The recovery surface shows Fix Input, Retry Surface, Error, Catalog, and
+  Boundary cards, linking to the payload, inferred retry surface, diagnostic
+  details, action catalog, and collapsed safety evidence without adding action
+  authority.
+- Detailed attempted action, error type/message, submitted payload, and
+  no-action-completed boundary remain below the recovery surface with stable
+  anchors and zero-effect counters preserved in the DOM.
+- Updated README, operating summary, status entry point, and focused local app
+  route/error assertions for missing form input and rejected GitHub status JSON
+  paths.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or ci_snapshot and status_json' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against scratch local app `127.0.0.1:8854` submitted the
+  first-run `register-project` form with an invalid path and confirmed the
+  local action to trigger a validation failure.
+- Desktop `1280x720` rendered five recovery cards, ordered recovery before
+  details, linked primary Fix Input to `#action-error-payload`, linked Retry
+  Surface to `/#first-run-create-project`, kept evidence collapsed, had no
+  horizontal overflow, and reported no warning/error logs.
+- Mobile `390x844` rendered the five recovery cards in one column, kept
+  evidence collapsed, had no horizontal overflow, and reported no
+  warning/error logs.
+- The browser viewport was reset, the browser tab was closed, the local app
+  server was stopped, `lsof -nP -iTCP:8854 -sTCP:LISTEN` showed no remaining
+  listener, and the bounded scratch app root was removed by the server
+  command's cleanup trap.
+- Non-claims: this is a local error-page UX/routing change. It does not write
+  before confirmation, complete failed actions, approve work, execute work,
+  create commits, push, create PRs, deploy, fetch GitHub status, call
+  providers, or mutate external systems.
+
+## 2026-06-28 Action Result Complete Surface
+
+- Made confirmed local action result pages action-first with an `Action
+  Complete` surface before `Action Result Details`.
+- The new result surface shows Continue, Completed, Artifact, Workflow, and
+  Boundary cards, linking to the next notice surface, local artifact,
+  continuation block, and collapsed safety evidence without adding new action
+  authority.
+- Detailed payload/result fields, `Action Continuation`, and `Action Result
+  Workflow Map` remain below the new surface with stable anchors and
+  zero-effect counters preserved in the DOM.
+- Updated README, operating summary, status entry point, and focused local app
+  route assertions for first-run and dashboard-refresh result pages.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `4 passed, 512 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against scratch local app `127.0.0.1:8853` clicked
+  `/actions` refresh-dashboard-state, confirmed the local scratch write, and
+  verified the result page opened with `Action Complete` before
+  `Action Result Details`.
+- Desktop `1280x720` rendered five result cards, linked the primary Continue
+  card to the next notice surface, exposed the status artifact link, kept
+  command evidence collapsed, had no horizontal overflow, and reported no
+  warning/error logs.
+- Mobile `390x844` rendered the five result cards in one column, kept command
+  evidence collapsed, had no horizontal overflow, and reported no
+  warning/error logs.
+- The browser viewport was reset, the browser tab was closed, the local app
+  server was stopped, `lsof -nP -iTCP:8853 -sTCP:LISTEN` showed no remaining
+  listener, and the bounded scratch app root was removed by the server
+  command's cleanup trap.
+- Non-claims: this is a local result-page UX/routing change. It does not
+  write before confirmation, approve work, execute work, create commits, push,
+  create PRs, deploy, fetch GitHub status, call providers, or mutate external
+  systems.
+
+## 2026-06-28 Action Confirmation Review Cards
+
+- Made every local app confirmation page action-first with a read-only
+  `Action Confirmation Review` before the payload and command evidence.
+- The review shows Confirm, Requires, Writes, Scope, and Boundary cards for
+  the exact pending action, links the primary card to the stable
+  `#action-confirm-local-action` form, links payload/safety/evidence anchors,
+  and keeps review evidence collapsed by default.
+- The existing `Action Confirmation Command Bar` is still present but its
+  detailed rows now sit inside collapsed command evidence, preserving action
+  category, required input, output artifact, local mutation/execution posture,
+  and zero-effect counters in the DOM.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against a scratch local app on `127.0.0.1:8852` opened the
+  `/actions` refresh-dashboard confirmation page. Desktop `1280x720`
+  rendered five confirmation review cards, kept review and command evidence
+  collapsed, ordered the review before command evidence and payload, kept the
+  stable confirm form present, had no horizontal overflow, and reported no
+  warning/error logs.
+- Browser interaction QA clicked the primary Confirm card, navigated to
+  `#action-confirm-local-action`, kept the form in viewport, had no
+  horizontal overflow, and did not submit the confirmation.
+- Browser QA mobile `390x844` rendered the confirmation review cards in one
+  column, kept review and command evidence collapsed, had no horizontal
+  overflow, and reported no warning/error logs.
+- Screenshots: `/tmp/clankeros-confirmation-review-desktop.png` and
+  `/tmp/clankeros-confirmation-review-mobile.png`.
+- The local app server was stopped after browser QA, `lsof -nP -iTCP:8852
+  -sTCP:LISTEN` showed no remaining listener, the bounded scratch app root was
+  removed, and the browser viewport was reset.
+- Non-claims: this is a confirmation-page layout and reviewability change. It
+  does not write before confirmation, approve work, execute work, create
+  commits, push, create PRs, deploy, fetch GitHub status, call providers, or
+  mutate external systems.
+
+## 2026-06-28 Delegation Run Continuation Strip
+
+- Made delegation execution run detail pages action-first with a visible
+  read-only `Delegation Run Continuation` strip before the detailed scout
+  evidence and artifact/workflow readbacks.
+- The strip shows Now, Workflow, Handoff, Artifacts, and Goal cards for the
+  selected delegation execution run, linking only to existing local surfaces:
+  the owning delegation's `#safe-local-actions`, `/workflow?delegation_id=...`,
+  the delegation artifact anchor, and the parent Goal.
+- Added a stable `#safe-local-actions` anchor on delegation detail pages and
+  expanded the deterministic demo smoke contract to cover delegation execution
+  run detail pages directly.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including
+    `/runs/<delegation_execution_run_id>`, provider calls 0, network actions
+    0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against
+  `http://127.0.0.1:8851/runs/run_2971a780daca#delegation-run-continuation`:
+  desktop `1280x900` rendered five continuation cards, kept continuation
+  evidence closed, had no horizontal overflow, and reported no warning/error
+  logs.
+- Browser interaction QA clicked the primary Now card, navigated to the
+  existing `/delegations/<id>#safe-local-actions` surface, kept the target
+  form anchor present, had no horizontal overflow, and reported no
+  warning/error logs.
+- Browser QA mobile `390x844` rendered the five continuation cards in one
+  column, kept continuation evidence closed, ordered the strip before
+  Delegation Run Evidence and Delegation Execution Artifacts, had no
+  horizontal overflow, and reported no warning/error logs.
+- Screenshots: `/tmp/clankeros-delegation-continuation-desktop.png` and
+  `/tmp/clankeros-delegation-continuation-mobile.png`.
+- The local app server was stopped after browser QA, and
+  `lsof -nP -iTCP:8851 -sTCP:LISTEN || true` showed no remaining listener. The
+  bounded scratch demo root was removed.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  fetch GitHub status, call providers, or mutate external systems.
+
+## 2026-06-28 Run Continuation Strip
+
+- Made `/runs/<run_id>#run-continuation-strip` action-first with a visible
+  read-only `Run Continuation Strip` after the `Run Gate Map` and before the
+  dense workflow/evidence stack.
+- The strip shows Next Gate, Approval, Evidence, Goal, and Boundary cards for
+  the selected coder worktree run, using the existing run gate state, scoped
+  `/approvals?run_id=<run_id>` route, evidence anchors, parent Goal link, and
+  manual publication boundary. Detailed continuation evidence stays collapsed
+  by default and preserves zero-effect counters in the DOM.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed run route contract, and focused route assertions for normal,
+  missing-review, pending-approval, and publication-handoff-ready states.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including the run detail route,
+    provider calls 0, network actions 0, external mutations 0
+  - `git diff --check` -> passed
+- Browser QA against
+  `http://127.0.0.1:8850/runs/run_82ad28b78d77#run-continuation-strip`:
+  desktop `1280x900` rendered five continuation cards, kept continuation
+  evidence closed, ordered the strip between the gate map and workflow state,
+  had no horizontal overflow, and reported no warning/error logs.
+- Browser interaction QA clicked the primary Next Gate card, navigated to
+  `#run-approval-actions`, kept continuation evidence closed, had no
+  horizontal overflow, and reported no warning/error logs.
+- Browser QA mobile `390x844` rendered the five continuation cards in one
+  column, kept continuation evidence closed, had no horizontal overflow, and
+  reported no warning/error logs.
+- Screenshots: `/tmp/clankeros-run-continuation-desktop.png` and
+  `/tmp/clankeros-run-continuation-mobile.png`.
+- The local app server was stopped after browser QA, and
+  `lsof -nP -iTCP:8850 -sTCP:LISTEN || true` showed no remaining listener. The
+  bounded scratch demo root was removed.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  fetch GitHub status, call providers, or mutate external systems.
+
+## 2026-06-28 Goal Section Switchboard Cards
+
+- Made `/goals/<goal_id>#goal-section-index` action-first with visible
+  Operate, Proof, Work, Knowledge, and Finish switchboard cards before the
+  collapsed full Goal anchor map.
+- Kept the full section index as collapsed read-only evidence, with no writes
+  or external effects on GET. The Proof card now jumps directly to
+  `#goal-verification-command-bar` without disturbing the 1-9 Goal Jump Bar
+  shortcuts.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused Goal route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including the new Goal Section
+    Switchboard handles, provider calls 0, network actions 0, external
+    mutations 0
+  - `git diff --check` -> passed
+- Browser QA against
+  `http://127.0.0.1:8849/goals/goal_31994d404bd1#goal-section-index`:
+  desktop `1280x900` rendered five switchboard cards, kept the full section
+  index closed, had no horizontal overflow, and reported no warning/error
+  logs.
+- Browser QA mobile `390x844` rendered the switchboard in one column, kept the
+  full section index closed, had no horizontal overflow, and reported no
+  warning/error logs.
+- Browser interaction QA clicked the Proof card, navigated to
+  `#goal-verification-command-bar`, landed below the sticky header, kept the
+  section-index evidence closed, rendered five Verification cards, had no
+  horizontal overflow, and reported no warning/error logs.
+- Screenshots: `/tmp/clankeros-goal-section-switchboard-desktop.png` and
+  `/tmp/clankeros-goal-section-switchboard-mobile.png`.
+- The local app server was stopped after browser QA, and
+  `lsof -nP -iTCP:8849 -sTCP:LISTEN || true` showed no remaining listener.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  fetch GitHub status, call providers, or mutate external systems.
+
+## 2026-06-28 Goal Verification Action Cards
+
+- Made `/goals/<goal_id>#goal-verification-command-bar` action-first with
+  visible Now, Current, Latest, Record, and Safety cards before collapsed
+  command evidence and collapsed proof lines.
+- Kept the Goal-scoped `ci-snapshot-evidence-from-gh-json` recording form as
+  the explicit local write path for pasted GitHub Actions JSON, with no
+  app-side GitHub polling or external effects on GET.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused Goal route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including the new Goal
+    Verification handles, provider calls 0, network actions 0, external
+    mutations 0
+  - `git diff --check` -> passed
+- Browser QA against
+  `http://127.0.0.1:8848/goals/goal_31994d404bd1#goal-verification-command-bar`:
+  desktop `1280x900` rendered five Verification cards, kept command evidence
+  and proof details closed, kept the recording form present, had no horizontal
+  overflow, and reported no warning/error logs.
+- Browser QA mobile `390x844` rendered the Verification cards in one column,
+  kept command evidence and proof details closed, had no horizontal overflow,
+  and reported no warning/error logs.
+- Browser interaction QA clicked the Record card, navigated to
+  `#record-goal-ci-proof`, kept the form present below the sticky header, kept
+  verification evidence/details closed, had no horizontal overflow, and
+  reported no warning/error logs.
+- Screenshots: `/tmp/clankeros-goal-verification-desktop.png` and
+  `/tmp/clankeros-goal-verification-mobile.png`.
+- The local app server was stopped after browser QA, and
+  `lsof -nP -iTCP:8848 -sTCP:LISTEN || true` showed no remaining listener.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  fetch GitHub status, call providers, or mutate external systems.
+
+## 2026-06-28 Goal Completion Resume Notes Action Cards
+
+- Made `/goals/<goal_id>#goal-completion-readiness` action-first with visible
+  Now, Gates, Waiting, Publish, and Safety cards before collapsed readiness
+  evidence; manual completion links directly to the confirmed Complete Goal
+  disclosure after the manual publish handoff.
+- Made `/goals/<goal_id>#goal-resume-snapshot` action-first with visible Now,
+  Current, Saved, Artifact, and Safety cards before collapsed resume evidence,
+  restore state, and save-workspace form.
+- Made `/goals/<goal_id>#goal-operator-notes-command-bar` action-first with
+  visible Now, Artifact, Resume, Capture, and Safety cards before collapsed
+  notes evidence/details while keeping the confirmed save-goal-note form
+  available.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including the new Completion
+    Readiness, Resume Snapshot, and Operator Notes handles, provider calls 0,
+    network actions 0, external mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8847/goals/goal_31994d404bd1#goal-completion-readiness`:
+    desktop `1280x900` rendered five Completion cards, five Resume cards, and
+    five Operator Notes cards; kept completion evidence, resume evidence,
+    restore state, save form, notes evidence, and note details closed; had no
+    horizontal overflow; and reported no warning/error logs.
+  - Browser QA mobile `390x844` against `#goal-operator-notes-command-bar`:
+    Completion, Resume, and Operator Notes card grids each stacked in one
+    column, kept all evidence/details closed, had no horizontal overflow, and
+    reported no warning/error logs.
+  - Browser interaction QA clicked the Resume primary action, navigated to
+    `#goal-resume-save-form`, opened only the save-workspace disclosure, kept
+    the form present, had no horizontal overflow, and reported no
+    warning/error logs.
+  - Screenshots: `/tmp/clankeros-goal-resume-notes-desktop.png` and
+    `/tmp/clankeros-goal-resume-notes-mobile.png`.
+  - The local app server was stopped after browser QA, and
+    `lsof -nP -iTCP:8847 -sTCP:LISTEN || true` showed no remaining listener.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  fetch GitHub status, call providers, or mutate external systems.
+
+## 2026-06-28 Goal Timeline Activity Action Cards
+
+- Made `/goals/<goal_id>#goal-timeline-command-bar` action-first with visible
+  Now, Latest, Families, Flow, and Safety cards before collapsed command
+  evidence and collapsed timeline metadata.
+- Made `/goals/<goal_id>#goal-activity-command-bar` action-first with visible
+  Now, Latest, Signals, Window, and Safety cards before collapsed command
+  evidence and collapsed activity metadata.
+- Kept the chronological timeline and recent activity rows visible with their
+  existing event links, kind badges, target badges, artifact/delegation/run
+  routing, and zero-effect counters preserved in the DOM.
+- Updated README, local app docs, operating summary, the fixture-backed demo
+  smoke route contract, and focused route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including the new Goal Timeline
+    and Activity handles, provider calls 0, network actions 0, external
+    mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8846/goals/goal_31994d404bd1#goal-timeline-command-bar`:
+    desktop `1280x900` rendered five Timeline cards and five Activity cards,
+    kept command evidence and metadata closed, kept 41 timeline events
+    visible, had no horizontal overflow, and reported no warning/error logs.
+  - Browser QA mobile `390x844` against
+    `#goal-activity-command-bar`: Timeline and Activity card grids each
+    stacked in one column, kept command evidence and metadata closed, kept 41
+    timeline events in the DOM, had no horizontal overflow, and reported no
+    warning/error logs.
+  - Browser interaction QA clicked the Activity `Open latest` card and
+    navigated to `/runs/run_53a3221e4c44` with the run workbench present, no
+    horizontal overflow, and no warning/error logs.
+  - Screenshots: `/tmp/clankeros-goal-timeline-activity-desktop.png` and
+    `/tmp/clankeros-goal-timeline-activity-mobile.png`.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  fetch GitHub status, call providers, or mutate external systems.
+
+## 2026-06-28 Goal Overview Risk Criteria Progress Action Cards
+
+- Made `/goals/<goal_id>#goal-overview-command-bar` action-first with visible
+  Now, Scope, Progress, Waiting, and Safety cards before collapsed command
+  evidence and collapsed detailed overview metadata.
+- Made `/goals/<goal_id>#goal-risk-command-bar` action-first with visible Now,
+  Counts, Boundary, First Task, and Safety cards before collapsed command
+  evidence and collapsed detailed risk rows.
+- Made `/goals/<goal_id>#goal-criteria-command-bar` action-first with visible
+  Now, Source, Progress, First, and Safety cards before collapsed command
+  evidence and collapsed detailed criteria rows.
+- Made `/goals/<goal_id>#goal-progress-command-bar` action-first with visible
+  Now, Tasks, Gates, Waiting, and Safety cards before collapsed command
+  evidence, the browser progress bar, and collapsed detailed progress counts.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including the new Goal Overview,
+    Risk, Criteria, and Progress handles, provider calls 0, network actions 0,
+    external mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8845/goals/goal_31994d404bd1#goal-overview-command-bar`:
+    desktop `1280x900` rendered five cards in each of Overview, Risk,
+    Criteria, and Progress, kept command evidence and detailed rows closed, had
+    no horizontal overflow, and reported no warning/error logs.
+  - Browser QA mobile `390x844`: Overview, Risk, Criteria, and Progress cards
+    each stacked in one column, kept command evidence/details closed, had no
+    horizontal overflow, and reported no warning/error logs.
+  - Screenshots: `/tmp/clankeros-goal-early-cards-desktop.png` and
+    `/tmp/clankeros-goal-early-cards-mobile.png`.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  fetch GitHub status, call providers, or mutate external systems.
+
+## 2026-06-28 Goal Workflow Middle Action Cards
+
+- Made `/goals/<goal_id>#goal-delegation-command-bar` action-first with
+  visible Now, Latest, Workflow, Handoff, and Safety cards before collapsed
+  command evidence and collapsed detailed delegation rows.
+- Made `/goals/<goal_id>#goal-run-command-bar` action-first with visible Now,
+  Latest Run, Review, Changes, and Safety cards before collapsed command
+  evidence and collapsed detailed run rows.
+- Made `/goals/<goal_id>#goal-approval-command-bar` action-first with visible
+  Now, Pending, Approved, Downstream, and Safety cards before collapsed
+  command evidence and collapsed detailed approval rows.
+- Made `/goals/<goal_id>#goal-incident-command-bar` action-first with visible
+  Now, Open, First, Recovery, and Safety cards before collapsed command
+  evidence and collapsed detailed incident rows.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including the new Goal
+    Delegation/Run/Approval/Incident handles, provider calls 0, network
+    actions 0, external mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8844/goals/goal_31994d404bd1#goal-delegation-command-bar`:
+    desktop `1280x900` rendered five cards in each of Delegation, Run,
+    Approval, and Incident, kept command evidence and detailed rows closed, had
+    no horizontal overflow, and reported no warning/error logs.
+  - Browser interaction QA clicked the Delegation `Open` card and navigated to
+    the selected `/runs/<run_id>` surface with run approval actions present, no
+    horizontal overflow, and no warning/error logs.
+  - Browser QA mobile `390x844`: Delegation, Run, Approval, and Incident cards
+    each stacked in one column, kept command evidence/details closed, had no
+    horizontal overflow, and reported no warning/error logs.
+  - Screenshots: `/tmp/clankeros-workflow-middle-desktop.png` and
+    `/tmp/clankeros-workflow-middle-mobile.png`.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  fetch GitHub status, call providers, or mutate external systems.
+
+## 2026-06-28 Goal Memory, Skills, Git Action Cards
+
+- Made `/goals/<goal_id>#goal-memory-command-bar` action-first with visible
+  Now, Notes, Memory Bank, Pin, and Safety cards before collapsed command
+  evidence and a collapsed detailed memory readback.
+- Made `/goals/<goal_id>#goal-skills-command-bar` action-first with visible
+  Now, Record, Usage, Profile, and Safety cards before collapsed command
+  evidence and a collapsed detailed skill readback.
+- Made `/goals/<goal_id>#goal-git-command-bar` action-first with visible Now,
+  Branch, Changes, Proof, and Safety cards before collapsed command evidence
+  and a collapsed repository snapshot.
+- Changed the Goal Action Dock from a fixed desktop overlay to an in-flow panel
+  so deep Goal anchors no longer render it over later sections.
+- Updated README, local app docs, operating summary, status focus, demo smoke
+  route markers, and focused route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including the new Goal
+    Memory/Skills/Git handles, provider calls 0, network actions 0, external
+    mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8843/goals/goal_31994d404bd1#goal-memory-command-bar`:
+    desktop `1280x900` rendered five Memory cards, five Skills cards, and
+    five Git cards, kept command evidence/readback/snapshot details closed,
+    verified the Goal Action Dock is static and not covering the Skills
+    section, had no horizontal overflow, and reported no warning/error logs.
+  - Browser interaction QA clicked the Memory `Open` card and navigated to
+    `#goal-operator-notes` with the Memory disclosures still closed and no
+    warning/error logs.
+  - Browser QA mobile `390x844`: Memory, Skills, and Git cards each stacked in
+    one column, kept command evidence/readback/snapshot details closed, had no
+    horizontal overflow, and reported no warning/error logs.
+  - Screenshots: `/tmp/clankeros-memory-skills-git-desktop.png` and
+    `/tmp/clankeros-memory-skills-git-mobile.png`.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  fetch GitHub status, call providers, or mutate external systems.
+
+## 2026-06-28 Goal Evidence And Artifact Action Cards
+
+- Made `/goals/<goal_id>#goal-evidence-command-bar` action-first by adding
+  visible Now, Latest, Inventory, Attention, and Safety cards before the
+  detailed evidence readback.
+- Made `/goals/<goal_id>#goal-artifact-command-bar` action-first by adding
+  visible Open, Latest, Types, Inventory, and Safety cards before the artifact
+  inventory.
+- Kept all `goal_evidence_command_*`, `goal_artifact_command_*`, artifact
+  explorer counts, bounded artifact links, raw-filesystem guards, and
+  zero-effect counters in collapsed command evidence.
+- Moved the detailed evidence list, detailed artifact list, and typed artifact
+  explorer groups into collapsed disclosures while preserving the rows in the
+  DOM for review, search, and automated route checks.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including the new Evidence and
+    Artifact handles, provider calls 0, network actions 0, external mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8842/goals/goal_31994d404bd1#goal-evidence-command-bar`:
+    desktop `1280x900` rendered five Evidence cards and five Artifact cards,
+    kept evidence/artifact command evidence and detailed lists closed, kept
+    artifact explorer groups closed, had no horizontal overflow, and reported
+    no warning/error logs.
+  - Browser interaction QA clicked the Artifact `Open` card and navigated to
+    `/artifacts?path=runs/run_5a14dc27124a/review.md`, where the inert artifact
+    workbench and content rendered with no warning/error logs and no horizontal
+    overflow.
+  - Browser QA mobile `390x844`: `#goal-artifact-command-bar` rendered five
+    Artifact cards in one column, kept command evidence, the detailed artifact
+    list, and all typed explorer groups closed, had no horizontal overflow, and
+    reported no warning/error logs.
+  - Screenshots: `/tmp/clankeros-evidence-artifact-desktop.png` and
+    `/tmp/clankeros-evidence-artifact-mobile.png`.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  fetch GitHub status, call providers, or mutate external systems.
+
+## 2026-06-28 Goal Remaining Work Action Cards
+
+- Made `/goals/<goal_id>#goal-remaining-work-command-bar` action-first by
+  adding visible Now, Gate Progress, Waiting, Open Work, and Finish cards near
+  the end of the Goal page.
+- Kept current gate, gate counts, waiting item counts, target surfaces,
+  action-form availability, completion-readiness routing, and zero-effect
+  counters in collapsed `Goal remaining work evidence`.
+- Moved the long gate-aware remaining-work checklist into a collapsed
+  `Remaining work checklist` disclosure while preserving all existing
+  `remaining_work_*` lines in the DOM.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  fetch GitHub status, call providers, or mutate external systems.
+
+## 2026-06-28 Goal Live State Action Cards
+
+- Made `/goals/<goal_id>#goal-live-state` action-first by adding visible Now,
+  Phase, Refresh, Pause Rules, and Safety cards after the Goal CI Handoff.
+- Kept the five-second local page reload script, edit/hidden-tab pause rules,
+  current phase, next action, target surface, workflow gate counts, waiting
+  item counts, and zero-effect counters in collapsed `Goal live state
+  evidence`.
+- Added a local `Refresh now` control that only reloads the current browser
+  page and does not add any provider, GitHub polling, push, PR, deploy, or
+  external-mutation authority.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Non-claims: this is a local browser UX and documentation slice. It does not
+  fetch GitHub status, poll external network services, write workspace state
+  on GET, create CI evidence, call providers, push, create PRs, deploy, or
+  mutate external systems from ClankerOS.
+
+## 2026-06-28 Goal CI Handoff Action Cards
+
+- Made `/goals/<goal_id>#goal-ci-handoff` action-first by adding visible Check
+  GitHub, Record Proof, Current Proof, Full Suite, and Finish Today cards after
+  the Goal Workflow Map.
+- Kept the exact `gh run list` / `gh run view` command templates, current
+  project proof status, checkout match status, same-page proof recording target,
+  global CI evidence target, and zero-effect counters in collapsed
+  `Goal CI handoff evidence`.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Non-claims: this is a local browser UX and documentation slice. It does not
+  fetch GitHub status, poll network services, write workspace state on GET,
+  create CI evidence without confirmation, call providers, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+
+## 2026-06-28 Goal Workflow Map Action Cards
+
+- Made `/goals/<goal_id>#goal-workflow-map` action-first by adding visible
+  Now, Progress, Approvals, Publish Boundary, and Finish Today cards after the
+  Goal Continuation Rail and Next Action section.
+- Kept the current action wired to the existing in-page Goal action form when
+  available, Progress wired to Remaining Work, Approvals wired to the
+  goal-scoped approval queue, Publish Boundary wired to Goal CI Handoff, and
+  Finish Today wired to the existing hash-opened `#goal-finish-today`
+  `save-workspace` form.
+- Moved the detailed lifecycle rail and `workflow_map_*` readbacks into
+  collapsed `Goal workflow evidence` while preserving goal/project, current
+  gate, position, gate counts, waiting counts, surfaces, manual publish
+  boundary, per-gate action guidance, and zero-effect counters in the DOM.
+- Added scroll-margin handling for the Workflow Map, CI Handoff, and Remaining
+  Work anchors so sticky-header hash navigation lands on readable headings on
+  desktop and mobile.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Non-claims: this is local browser routing and layout. `/goals/<goal_id>` does
+  not write on GET, approve work, execute work, create commits, push, create
+  PRs, deploy, call providers, fetch GitHub, mutate external systems, or expose
+  arbitrary raw filesystem browsing. Existing confirmed forms still own writes.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, route markers matched, artifact rejection checks matched,
+    provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including new Goal Workflow Map
+    action/evidence handles, provider calls 0, network actions 0, external
+    mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8831/goals/goal_13ed39833e1d`: desktop `1280x900`
+    rendered five Workflow Map cards, kept workflow evidence closed, reported
+    no warning/error logs, had no horizontal overflow, and kept
+    `#goal-workflow-map` clear of the sticky header after the scroll-margin
+    adjustment.
+  - Browser interaction QA: clicking the new Now card opened
+    `#goal-next-action-form` with the existing Goal action form; clicking the
+    new Finish Today card opened `#goal-finish-today`, revealed the existing
+    `save-workspace` form, kept `updated_by=goal-daily-loop`, and had no
+    horizontal overflow.
+  - Browser QA mobile `390x844`: a fresh anchored load stacked five Workflow
+    Map cards one column, kept workflow evidence closed, kept the heading clear
+    of the sticky header, had no horizontal overflow, and reported no
+    warning/error logs.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Goal Continuation Rail Action Cards
+
+- Made `/goals/<goal_id>#goal-continuation-rail` action-first by adding
+  visible Now, Next Gate, Then, Publish Boundary, and Finish Today cards after
+  the Goal Return Brief.
+- Moved the detailed continuation readback into collapsed
+  `Goal continuation evidence` while preserving goal/project/phase, current
+  gate, current position, next gate/action/surface, manual publish boundary,
+  per-gate step rows, and zero-effect counters in the DOM.
+- Kept Now wired to the existing in-page Goal action form when available,
+  Next Gate wired to `/approvals` in the fixture-backed waiting-approval state,
+  Publish Boundary wired to the Goal Workflow Map, and Finish Today wired to
+  the existing hash-opened `#goal-finish-today` `save-workspace` form.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Non-claims: this is local browser routing and layout. `/goals/<goal_id>` does
+  not write on GET, approve work, execute work, create commits, push, create
+  PRs, deploy, call providers, fetch GitHub, mutate external systems, or expose
+  arbitrary raw filesystem browsing. Existing confirmed forms still own writes.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, route markers matched, artifact rejection checks matched,
+    provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including new Goal Continuation
+    Rail action/evidence handles, provider calls 0, network actions 0,
+    external mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8830/goals/goal_9237f6a743f8`: desktop `1280x900`
+    rendered five Continuation Rail cards, kept continuation evidence and
+    finish details closed on no-hash load, had no horizontal overflow, and
+    reported no warning/error logs.
+  - Browser interaction QA: clicking the new Now card opened
+    `#goal-next-action-form` with the existing Goal action form; clicking the
+    new Finish Today card opened `#goal-finish-today`, revealed the existing
+    `save-workspace` form, kept `updated_by=goal-daily-loop`, and had no
+    horizontal overflow.
+  - Browser QA mobile `390x844`: a fresh no-hash load stacked five
+    Continuation Rail cards one column, kept continuation evidence and finish
+    details closed, had no horizontal overflow, and reported no warning/error
+    logs.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Goal Return Brief Action Cards
+
+- Made `/goals/<goal_id>#goal-return-brief` action-first by adding visible
+  Continue, Latest, Blocker, Finish, and Resume cards after the Goal Daily
+  Loop.
+- Moved the detailed return-to-work readback into collapsed
+  `Goal return evidence` while preserving goal/project/phase, current gate,
+  gate progress, next action, resume readiness, saved workspace matches,
+  latest activity, latest artifact, CI proof posture, blocker routing,
+  finish/resume surfaces, and zero-effect counters in the DOM.
+- Kept Finish wired to the existing hash-opened `#goal-finish-today`
+  `save-workspace` form and Resume wired to `/resume`, so the new cards do not
+  introduce new write paths.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Non-claims: this is local browser routing and layout. `/goals/<goal_id>` does
+  not write on GET, approve work, execute work, create commits, push, create
+  PRs, deploy, call providers, fetch GitHub, mutate external systems, or expose
+  arbitrary raw filesystem browsing. Existing confirmed forms still own writes.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, route markers matched, artifact rejection checks matched,
+    provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including new Goal Return Brief
+    action/evidence handles, provider calls 0, network actions 0, external
+    mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8829/goals/goal_a1194bb6f5e4`: desktop `1280x900`
+    rendered five Return Brief cards, kept return/daily-loop evidence and
+    finish details closed on no-hash load, had no horizontal overflow, and
+    reported no warning/error logs.
+  - Browser interaction QA: clicking the new Finish card opened
+    `#goal-finish-today`, revealed the existing `save-workspace` form, kept
+    `updated_by=goal-daily-loop`, and had no horizontal overflow.
+  - Browser QA mobile `390x844`: five Return Brief cards stacked one column,
+    return evidence and finish details stayed closed on no-hash load, anchored
+    `#goal-return-brief` rendering showed the cards and closed evidence, no
+    horizontal overflow, and no warning/error logs.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Goal Daily Loop Action Cards
+
+- Made `/goals/<goal_id>#goal-daily-loop` card-first by adding visible
+  Continue, Start, Unblock, Pause, and Finish Today cards before the detailed
+  daily-loop readback.
+- Moved detailed daily-loop state and step proof into collapsed
+  `Goal daily loop evidence` while preserving goal/project/phase, next action,
+  waiting counts, pause availability, resume-save readiness, latest artifact,
+  and zero-effect counters in the DOM.
+- Changed Goal Operator Workbench and Goal Return Brief finish routing to open
+  the direct `#goal-finish-today` save form instead of sending the operator to
+  the top of the daily loop.
+- Wrapped the confirmed `pause-goal` and `save-workspace` controls in
+  hash-openable `#goal-pause` and `#goal-finish-today` details, reusing the
+  existing client-side hash opener and preserving confirmation gates.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Non-claims: this is local browser routing and layout. `/goals/<goal_id>` does
+  not write on GET, approve work, execute work, create commits, push, create
+  PRs, deploy, call providers, fetch GitHub, mutate external systems, or expose
+  arbitrary raw filesystem browsing. Existing confirmed forms still own writes.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, route markers matched, artifact rejection checks matched,
+    provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including new Goal Daily Loop
+    action/detail handles, provider calls 0, network actions 0, external
+    mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8828/goals/goal_0a4e6fb053a8`: desktop `1280x900`
+    rendered five Goal Daily Loop cards, kept daily-loop evidence, pause, and
+    finish details closed on no-hash load, opened `#goal-finish-today` with
+    the `save-workspace` form, opened `#goal-pause` with the `pause-goal`
+    form, had no horizontal overflow, and reported no warning/error logs.
+  - Browser QA mobile `390x844`: five Goal Daily Loop cards stacked one
+    column, daily-loop evidence, pause, and finish details stayed closed on
+    no-hash load, the Finish Today card opened the save form, no horizontal
+    overflow, and no warning/error logs.
+
+## 2026-06-28 Goal Detail Action-First Evidence Surface
+
+- Made `/goals/<goal_id>` more operator-first by keeping the Goal Jump Bar's
+  nine daily anchors visible while moving jump evidence into a collapsed
+  drawer.
+- Added a visible five-card Goal Command Strip for Now, Phase, Progress, Proof,
+  and Resume, then moved the detailed command readback into collapsed
+  `Goal command evidence`.
+- Kept the Goal Operator Workbench do/check/unblock/finish cards visible while
+  moving gate/progress/safety readbacks into collapsed `Goal workbench
+  evidence`.
+- Collapsed the full 52-link Goal Section Index by default while preserving the
+  entire anchor map, phase/action/proof/readiness state, and zero-effect
+  counters in the DOM.
+- Updated README, local app docs, operating summary, status focus, the
+  fixture-backed demo smoke route contract, and focused route assertions.
+- Non-claims: this is local browser routing and layout. `/goals/<goal_id>` does
+  not write on GET, approve work, execute work, create commits, push, create
+  PRs, deploy, call providers, fetch GitHub, mutate external systems, or expose
+  arbitrary raw filesystem browsing. Existing confirmed forms still own writes.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, route markers matched, artifact rejection checks matched,
+    provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched including new Goal detail
+    evidence handles, provider calls 0, network actions 0, external mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8827/goals/goal_ecbb4ebf1d50`: desktop `1280x900`
+    rendered five Goal Command Strip cards and four workbench cards, with jump,
+    command, workbench, and section-index evidence closed by default; clicking
+    the primary command card landed on `#goal-next-action-form`; no horizontal
+    overflow and no warning/error logs.
+  - Browser QA mobile `390x844`: five command cards stacked one column, four
+    workbench cards remained available, all four evidence drawers stayed closed
+    by default, no horizontal overflow, and no warning/error logs.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Goal Board Workbench-First Surface
+
+- Made `/goals` content-first and board-first by rendering `Goal Board
+  Workbench` before shared Route Context, Operator Focus, and the
+  `Goal Board Command Bar` in both first-run and populated states.
+- Collapsed goal board workbench evidence and command evidence by default
+  while preserving first-run state, selected Goal, phase, next action, waiting
+  counts, scoped approval routing, lane anchors, resume route, and zero-effect
+  counters in the DOM. In populated states, the Goal Cockpit count readback is
+  collapsed as evidence so the mobile page reaches the board sooner.
+- Added stable visible-card handles for first-run/project/resume and populated
+  selected/attention/start/resume board actions so the actual operator controls
+  are easy to test and target.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. `/goals` does not write
+  on GET, approve work, execute work, create commits, push, create PRs, deploy,
+  call providers, fetch GitHub, mutate external systems, or expose arbitrary
+  raw filesystem browsing. Existing confirmed first-run and create-goal forms
+  still handle writes through their existing confirmation paths.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, route markers matched, artifact rejection checks matched,
+    provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - Browser QA against `http://127.0.0.1:8826/goals`: desktop `1280x900`
+    rendered `Goal Board Workbench` before Route Context and
+    `Goal Board Command Bar`; four visible board cards rendered with stable
+    action handles; Goal cockpit, workbench, and command evidence disclosures
+    were closed by default; the primary card opened the selected Goal action
+    form; the Attention card opened the goal-scoped approvals view; no
+    horizontal overflow and no warning/error logs.
+  - Browser QA mobile `390x844`: Goal cockpit evidence stayed collapsed, four
+    board cards stacked one column, board evidence and command evidence stayed
+    closed by default, no horizontal overflow, and no warning/error logs.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Demo Operator Workbench Surface
+
+- Made `/demo` content-first and launchpad-first by rendering a visible
+  `Demo Operator Workbench` before shared Route Context, Operator Focus, Last
+  Action, `Demo Command Bar`, and the longer fixture walkthrough.
+- Added four visible cards for Now, Project, Workflow, and Proof. The primary
+  Now card routes missing fixture state to the demo command evidence and
+  fixture-backed state to the selected run, approval queue, or Goal evidence
+  depending on the current demo gate; Project opens the local demo project;
+  Workflow opens scoped run/delegation workflow or the manual browser script;
+  Proof jumps to route checkpoints.
+- Collapsed demo workbench evidence and command evidence by default while
+  preserving fixture status, selected project/Goal/delegation/run, next local
+  target, demo command templates, proof checkpoint target, and zero-effect
+  counters in the DOM.
+- Added stable visible-card handles for Project, Workflow, and Proof, and
+  hardened the fixture demo smoke contract so it checks durable route/safety
+  structure instead of volatile local Today/Profile state values.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. `/demo` does not write
+  on GET, create fixture data from the browser, call providers, fetch GitHub,
+  approve work, execute work, create commits, push, create PRs, deploy, mutate
+  external systems, or expose arbitrary raw filesystem browsing. Fixture
+  creation still uses the explicit `python3 -m agent_os.cli demo` command, and
+  gate forms still go through existing confirmation pages.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli app-smoke-test` -> passed, route markers
+    matched, artifact rejection checks matched, provider calls 0, network
+    actions 0, external mutations 0
+  - `python3 -m agent_os.cli app-demo-smoke-test` -> passed,
+    fixture-backed routes matched, provider calls 0, network actions 0,
+    external mutations 0
+  - Browser QA against `http://127.0.0.1:8825/demo`: desktop `1280x900`
+    rendered `Demo Operator Workbench` before the command bar and Route
+    Context; four visible cards rendered with stable Now/Project/Workflow/Proof
+    action handles; workbench and command evidence disclosures were closed by
+    default; the primary card opened the selected run workbench; the Proof card
+    jumped to `#manual-browser-checkpoints`; no horizontal overflow and no
+    warning/error logs.
+  - Browser QA mobile `390x844`: four demo cards stacked one column, evidence
+    disclosures stayed closed by default, no horizontal overflow, and no
+    warning/error logs.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Health Operator Workbench Surface
+
+- Made `/health` content-first and action-first by rendering a visible
+  `Health Operator Workbench` before shared Route Context, Operator Focus,
+  Last Action, `Health Command Bar`, and dense diagnostics.
+- Added four visible cards for Status, Artifact, Diagnostics, and Safety. The
+  primary Status card routes to warnings when warnings exist or `/resume` when
+  local health is ready; Artifact opens the refreshed
+  `.clanker/app/local_app_status.json` through the bounded artifact viewer;
+  Diagnostics jumps to the local Python/git/storage readback; Safety links to
+  the zero-effect counter evidence.
+- Collapsed health workbench evidence, command evidence, diagnostics, counts,
+  key command registrations, and workflow import readbacks by default while
+  preserving warning counts, bind scope, branch/commit, storage/import posture,
+  the explicit status-artifact write-on-GET boundary, and zero-effect counters
+  in the DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. `/health` still
+  intentionally writes only `.clanker/app/local_app_status.json` on GET. It
+  does not call providers, fetch GitHub, approve work, execute work, create
+  commits, push, create PRs, deploy, mutate external systems, or expose
+  arbitrary raw filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-smoke-test`
+    -> passed, route markers matched, artifact rejection checks matched,
+    provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root <bounded-temp-root> app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network
+    actions 0, external mutations 0
+  - Browser QA against `http://127.0.0.1:8824/health`: desktop `1280x900`
+    rendered `Health Operator Workbench` before command evidence and Route
+    Context; four health cards rendered in one row; all health evidence
+    disclosures were closed by default; the primary card jumped to
+    `#health-warnings`; the Status artifact card opened
+    `/artifacts?path=.clanker/app/local_app_status.json`; no horizontal
+    overflow and no warning/error logs.
+  - Browser QA mobile `390x844`: workbench rendered in the first page flow,
+    four health cards stacked one column, all health evidence disclosures were
+    closed by default, no horizontal overflow, and no warning/error logs.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Artifact Workbench Operator Surface
+
+- Made `/artifacts?path=...` content-first and artifact-action-first by
+  rendering `Artifact Operator Workbench` before shared Route Context,
+  Operator Focus, Last Action, command evidence, review evidence, and inert
+  content.
+- Added four visible cards for Read, Context, Resume, and Safety. The primary
+  Read card jumps to `#artifact-content`; Context returns delegation artifacts
+  to `/delegation-runs` or goal artifacts to their owning Goal; Resume links to
+  `#remember-artifact` until the artifact is saved as the workspace anchor;
+  Safety links to the command evidence.
+- Collapsed artifact workbench evidence, `Artifact Command Bar` evidence, and
+  `Artifact Review Brief` evidence by default while preserving bounded path,
+  renderer, inferred context, workspace-anchor posture, and zero-effect
+  readbacks in the DOM.
+- Split the artifact content heading from the long path so the page now shows a
+  clean `Artifact` heading plus a wrapped path code line instead of a giant
+  route-like heading.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. The page does not
+  write on GET, browse arbitrary raw filesystem paths, execute artifact
+  content, approve work, execute work, create commits, push, create PRs,
+  deploy, call providers, fetch GitHub, mutate external systems, or remember
+  an artifact without the existing confirmed `save-workspace` form.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_artifact_viewer_is_read_only_and_bounded or local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-artifact-workbench-smoke-final app-smoke-test`
+    -> passed, `/artifacts?path=.clanker/app/smoke-artifacts/sample.md`
+    marker matched, absolute/traversal/symlink escape checks matched, provider
+    calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root /tmp/clankeros-artifact-workbench-demo-final app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network actions
+    0, external mutations 0
+  - Browser QA against
+    `http://127.0.0.1:8823/artifacts?path=.clanker%2Fdelegations%2Fsubagent_delegation_52973d80d2b8%2Fruns%2Frun_75f5a4fcfc73%2Fevidence%2Fcontext_pack.md`:
+    desktop `1280x900` rendered `Artifact Operator Workbench` before command
+    evidence, review evidence, content, and Route Context; all three artifact
+    evidence disclosures were closed by default; the scoped `Open content`
+    action jumped to `#artifact-content`; the scoped Resume card action jumped
+    to `#remember-artifact` with form action `/actions/save-workspace`; the
+    artifact rendered with `markdown_safe_html`; no horizontal overflow and no
+    warning/error logs.
+  - Browser QA mobile `390x844`: workbench started in the first viewport, four
+    cards stacked one column, all artifact evidence disclosures were closed by
+    default, no horizontal overflow, and no warning/error logs.
+  - `git diff --check` -> passed
+
+## 2026-06-28 CI Evidence Proof-First Operator Surface
+
+- Made `/ci-evidence` content-first and proof-action-first by rendering
+  `CI Proof Workbench` before shared Route Context, Operator Focus, Last
+  Action, summary rows, and command evidence.
+- Kept the four visible cards for Check, Record Smoke, Record Full Suite, and
+  Manual Record as the first operator path for the copy-only GitHub Actions
+  proof loop, with long `gh run view` and recorder commands tucked behind
+  per-card `Command` disclosures so the first viewport stays action-oriented.
+- Moved CI summary rows, proof workbench details, and CI Evidence Command Bar
+  details into collapsed evidence so the page foregrounds the proof workflow
+  before dense state readbacks.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. The page does not write
+  on GET, fetch GitHub from ClankerOS, record proof without confirmation, rerun
+  tests, approve work, execute work, create commits, push, create PRs, deploy,
+  call providers, mutate external systems, or expose arbitrary raw filesystem
+  browsing.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py` -> passed
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'ci_snapshot_evidence_from_gh_json or local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `5 passed, 511 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-ci-evidence-workbench-smoke-compact app-smoke-test`
+    -> passed, `/ci-evidence` marker matched, artifact traversal checks matched,
+    provider calls 0, network actions 0, external mutations 0
+  - `python3 -m agent_os.cli --root /tmp/clankeros-ci-evidence-workbench-demo-compact app-demo-smoke-test`
+    -> passed, fixture-backed routes matched, provider calls 0, network actions
+    0, external mutations 0
+  - Browser QA against `http://127.0.0.1:8822/ci-evidence`: desktop
+    `1280x900` rendered `CI Proof Workbench` before summary, command bar, and
+    Route Context; all four per-card `Command` disclosures were closed by
+    default; the scoped `Record Smoke` -> `Paste JSON` action jumped to
+    `#record-ci-snapshot-json` with form action
+    `/actions/ci-snapshot-evidence-from-gh-json`; no horizontal overflow and
+    no console logs.
+  - Browser QA mobile `390x844`: proof workbench started in the first viewport,
+    all four cards stacked one column, command disclosures were closed by
+    default, no horizontal overflow, and no console logs.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Dogfooding Action-First Operator Surface
+
+- Made `/dogfooding` content-first and action-first by rendering a visible
+  `Dogfooding Operator Workbench` before shared Route Context, Operator Focus,
+  Last Action, command evidence, and the longer checklist.
+- Added four visible cards for Do Now, ClankerOS, Workflow, and Proof, with a
+  stable `data-dogfooding-workbench-primary` marker for the current local
+  fixture-backed next action.
+- Moved fixture readback, dogfooding workbench evidence, and command evidence
+  into collapsed details so mobile opens on the actual operator path instead
+  of a status table.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, refresh the fixture on GET, approve work, execute work, create commits,
+  push, create PRs, deploy, call providers, fetch GitHub from ClankerOS, mutate
+  external systems, or expose arbitrary raw filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-dogfooding-workbench-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-dogfooding-workbench-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/dogfooding` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - `git diff --check` -> passed
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8821/dogfooding` with fixture-backed demo state: desktop
+    `1280x900` rendered the Dogfooding Operator Workbench in the first
+    viewport before Route Context and Dogfooding Command Bar, kept workbench,
+    fixture, and command evidence collapsed, showed no horizontal overflow, no
+    framework overlay, and empty browser warning/error logs.
+  - Interaction proof: clicking the marked primary action changed the URL to
+    `/runs/run_df26375bff9e` and rendered Run Operator Workbench plus Run Gate
+    Map.
+  - Mobile Browser QA at `390x844` rendered the Dogfooding Operator Workbench
+    in the first viewport, stacked four workbench cards in one column, kept
+    dogfooding evidence/details collapsed, showed no horizontal overflow, and
+    had empty browser warning/error logs.
+
+## 2026-06-28 Projects Action-First Operator Surface
+
+- Made `/projects` usable as a project-selection and onboarding surface by
+  adding a visible `Project Index Workbench` before shared Route Context,
+  Operator Focus, Last Action, and route diagnostics.
+- Added four visible index cards for Open, Register, Goals, and Resume, with a
+  stable `data-project-index-workbench-primary` marker for the first registered
+  project or the registration anchor.
+- Made project detail pages fully action-first by rendering `Project Operator
+  Workbench` before the `Project Command Bar` and shared diagnostics, adding a
+  stable `data-project-workbench-primary` marker, and collapsing project
+  workbench evidence, project command evidence, and the Project Finish Today
+  save form by default.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, register projects on GET, create goals on GET, approve work, execute
+  work, create commits, push, create PRs, deploy, call providers, mutate
+  external systems from ClankerOS, or expose arbitrary raw filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-projects-workbench-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-projects-workbench-demo app-demo-smoke-test`
+    -> passed, fixture-backed project snippets matched, provider/network/
+    external mutation counters remained `0`
+  - `git diff --check` -> passed
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8820/projects` with fixture-backed demo state: desktop
+    `1280x900` rendered four Project Index Workbench cards before Route
+    Context, kept project-index evidence collapsed, showed no horizontal
+    overflow, no framework overlay, and empty browser warning/error logs.
+  - Interaction proof: clicking the marked project-index primary action
+    changed the URL to `/projects/local-app-demo` and rendered the project
+    detail page with Project Operator Workbench before Project Command Bar and
+    Route Context.
+  - Mobile Browser QA at `390x844` rendered four project-index cards and four
+    project-detail workbench cards in one column, kept project evidence/details
+    collapsed, showed no horizontal overflow, and had empty browser
+    warning/error logs.
+
+## 2026-06-28 Verification Action-First Operator Surface
+
+- Made `/verification` usable as an action-first proof handoff by rendering the
+  `Verification Operator Workbench` before shared Route Context, Operator
+  Focus, Last Action, and command evidence.
+- Added four visible cards for Now, Check GitHub, Proof, and Finish Today, with
+  a stable `data-verification-workbench-primary` marker for the current proof
+  target.
+- Kept verification workbench evidence, verification command evidence, and the
+  Finish Today save form collapsed by default while preserving workflow status,
+  current proof posture, latest local CI evidence, copy-only GitHub command
+  templates, proof-recording target, and zero-effect readbacks in the DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, fetch GitHub status from ClankerOS, record CI proof, rerun the full
+  suite locally, approve work, execute work, create commits, push, create PRs,
+  deploy, call providers, mutate external systems from ClankerOS, or expose
+  arbitrary raw filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-verification-workbench-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-verification-workbench-demo app-demo-smoke-test`
+    -> passed, fixture-backed snippets matched, provider/network/external
+    mutation counters remained `0`
+  - `git diff --check` -> passed
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8819/verification` with a temporary root containing the
+    checked-in workflow file: desktop `1280x900` rendered four Verification
+    Operator Workbench cards before Route Context and the Verification Command
+    Bar, kept workbench, command, and Finish Today details collapsed, showed no
+    horizontal overflow, no framework overlay, and empty browser warning/error
+    logs.
+  - Interaction proof: clicking the marked primary action changed the URL to
+    `/ci-evidence#record-ci-snapshot-json` and rendered the CI Evidence Records
+    page with the JSON record target present.
+  - Mobile Browser QA at `390x844` rendered four verification workbench cards
+    in one column, kept verification details collapsed, showed no horizontal
+    overflow, and had empty browser warning/error logs.
+
+## 2026-06-28 Incidents Action-First Operator Surface
+
+- Made `/incidents` usable as a triage-first operator surface by rendering the
+  `Incident Operator Workbench` before shared Route Context, Operator Focus,
+  Last Action, and incident command diagnostics.
+- Added four visible cards for Now, Evidence, Recover, and Finish Today, with a
+  stable `data-incident-workbench-primary` marker for the current local review
+  target.
+- Kept incident workbench evidence, incident command evidence, and the Finish
+  Today save form collapsed by default while preserving open/resolved incident
+  counts, open recommendation counts, first incident/recommendation routing,
+  evidence artifacts, no-resolution/no-retry posture, and zero-effect readbacks
+  in the DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, resolve incidents, retry tasks, reset tasks, approve work, execute work,
+  create commits, push, create PRs, deploy, call providers, fetch GitHub from
+  ClankerOS, poll network services, mutate external systems from ClankerOS, or
+  expose arbitrary raw filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'task_recommendations_surfaces_blocked_planned_task or goal_page_promotes_goal_incidents or local_app_routes_render_modern_workflow_and_health' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'task_recommendations_surfaces_blocked_planned_task or goal_page_promotes_goal_incidents or local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `4 passed, 512 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-incidents-workbench-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-incidents-workbench-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/incidents` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8818/incidents` with a fixture-backed open incident:
+    desktop `1280x900` rendered four Incident Operator Workbench cards before
+    Route Context and the Incident Triage Command Bar, kept incident workbench,
+    command, and Finish Today details collapsed, showed no horizontal
+    overflow, no framework overlay, and empty browser warning/error logs.
+  - Interaction proof: clicking the marked primary action changed the URL to
+    `/incidents#incident-open` and placed Open Incidents in view.
+  - Mobile Browser QA at `390x844` rendered four incident workbench cards in
+    one column, kept incident details collapsed, showed no horizontal overflow,
+    and had empty browser warning/error logs.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Approvals Action-First Operator Surface
+
+- Made `/approvals` usable as a decision-first operator surface by rendering
+  the `Approval Operator Workbench` before shared Route Context, Operator
+  Focus, Last Action, and approval queue diagnostics.
+- Added a stable `data-approval-workbench-primary` marker for the current
+  decision target and kept the visible cards focused on Do Now, Inspect, Goal,
+  and Finish Today.
+- Kept approval workbench evidence, approval command evidence, and the Finish
+  Today save form collapsed by default while preserving scoped run/Goal
+  matching, pending approval counts, request/evidence artifacts, confirmation
+  posture, and zero-effect readbacks in the DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, approve work, execute work, create commits, push, create PRs, deploy,
+  call providers, fetch GitHub from ClankerOS, poll network services, mutate
+  external systems from ClankerOS, or expose arbitrary raw filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-approvals-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-approvals-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/approvals` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8817/approvals`: desktop `1280x900` rendered four
+    Approval Operator Workbench cards before Route Context and the Approval
+    Queue Command Bar, kept approval workbench/command evidence and the Finish
+    Today form collapsed, showed no horizontal overflow, no framework overlay,
+    and empty browser warning/error logs.
+  - Interaction proof: clicking the marked primary action changed the URL to
+    `/approvals#pending-worktree-approvals` and placed Pending Worktree
+    Approvals in view.
+  - Mobile Browser QA at `390x844` rendered four approval workbench cards in
+    one column, kept evidence/details collapsed, showed no horizontal
+    overflow, and had empty browser warning/error logs.
+  - `git diff --check` -> passed.
+
+## 2026-06-28 Delegation Runs Action-First Operator Surface
+
+- Made `/delegation-runs` usable as an operator workbench by rendering the
+  `Delegation Run Operator Workbench` before shared Route Context, Operator
+  Focus, Last Action, and delegation-run command diagnostics.
+- Added four visible cards for the current delegation/run action, scoped
+  workflow, handoffs ready for coder prep, and resume context, with a stable
+  `data-delegation-run-workbench-primary` marker for the primary action.
+- Humanized visible action labels such as `Prepare coder from handoff` while
+  retaining raw `next_action` tokens in collapsed evidence for deterministic
+  review and tests.
+- Kept delegation-run workbench evidence and command evidence collapsed by
+  default while preserving selected delegation/run, project, status,
+  profile/category, context-pack and handoff counts, retry/incidents, result
+  artifact, and zero-effect readbacks in the DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, run delegations without confirmation, create coder prep, approve work,
+  execute work, stage files, commit, push, create PRs, deploy, call providers,
+  fetch GitHub from ClankerOS, poll network services, mutate external systems
+  from ClankerOS, or expose arbitrary raw filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-delegation-runs-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-delegation-runs-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/delegation-runs` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8816/delegation-runs`: desktop `1280x900` rendered four
+    Delegation Run Operator Workbench cards before Route Context and the
+    Delegation Run Command Bar, showed the primary action as
+    `Prepare coder from handoff`, retained raw next-action evidence, kept
+    workbench/command evidence collapsed, had no horizontal overflow, no
+    framework overlay, and empty browser warning/error logs.
+  - Interaction proof: clicking the marked primary action changed the URL to
+    `/runs/run_293a6a2c66ed` and rendered Delegation Run Evidence plus
+    Delegation Run Workflow State.
+  - Mobile Browser QA at `390x844` rendered four delegation-run workbench cards
+    in one column, kept delegation-run evidence collapsed, showed no horizontal
+    overflow, and had empty browser warning/error logs.
+  - `git diff --check` -> passed.
+
+## 2026-06-28 Workflow Action-First Operator Surface
+
+- Made `/workflow` usable as an operator workbench by rendering the
+  `Workflow Operator Workbench` before shared Route Context, Operator Focus,
+  Last Action, and workflow command diagnostics.
+- Added four visible cards for the current workflow action, selected workflow
+  state, local queue, and resume context, with a stable
+  `data-workflow-workbench-primary` marker for the primary action.
+- Humanized the visible primary action label while retaining the raw
+  `next_action` token in collapsed evidence for deterministic review and tests.
+- Kept workflow workbench evidence and command evidence collapsed by default
+  while preserving selected delegation/run, parent Goal, project, current
+  stage, target surface, selected-step counts, and zero-effect readbacks in the
+  DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, create commit requests without confirmation, approve work, stage files,
+  commit, push, create PRs, deploy, call providers, fetch GitHub from ClankerOS,
+  poll network services, mutate external systems from ClankerOS, or expose
+  arbitrary raw filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-workflow-final-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-workflow-final-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/workflow` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8815/workflow?run_id=run_fa75f835293b`: desktop
+    `1280x900` rendered four Workflow Operator Workbench cards before Route
+    Context and the Workflow Command Bar, showed the primary action as
+    `Request commit for reviewed run`, retained raw next-action evidence,
+    kept workbench/command evidence collapsed, had no horizontal overflow, no
+    framework overlay, and empty browser warning/error logs.
+  - Interaction proof: clicking the marked primary action changed the URL to
+    `/runs/run_fa75f835293b` and rendered the Run Operator Workbench plus Run
+    Gate Map.
+  - Mobile Browser QA at `390x844` rendered four workflow workbench cards in
+    one column, kept workflow evidence collapsed, showed no horizontal
+    overflow, and had empty browser warning/error logs.
+  - `git diff --check` -> passed.
+
+## 2026-06-28 Profiles Action-First Operator Surface
+
+- Made `/profiles` usable as an operator workbench by rendering the
+  `Profiles Operator Workbench` before shared Route Context, Operator Focus,
+  Last Action, and profiles command diagnostics.
+- Added four visible cards for the current profile review, future profile
+  lanes, storage/configured profile review, and resume/goal context, with a
+  stable `data-profiles-workbench-primary` marker for the primary action.
+- Kept profiles state evidence, workbench evidence, and command evidence
+  collapsed by default while preserving configured/storage/enabled/disabled
+  profile counts, future-lane posture, adapter/write/use-for posture, saved
+  workspace context, provider-disabled proof, model-routing-disabled proof,
+  and zero-effect readbacks in the DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, activate providers, enable model routing, install profiles, execute
+  work, create action authority, approve work, call providers, fetch GitHub
+  from ClankerOS, poll network services, commit, push, create PRs, deploy,
+  mutate external systems from ClankerOS, or expose arbitrary raw filesystem
+  browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'profiles_route_reads_storage_profiles_without_enabling_providers or local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-profiles-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-profiles-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/profiles` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8814/profiles`: desktop `1280x900` rendered four
+    Profiles Operator Workbench cards before Route Context and the Profiles
+    Command Bar, kept state/workbench/command evidence collapsed, had no
+    horizontal overflow, no framework overlay, and empty browser warning/error
+    logs.
+  - Interaction proof: clicking the marked primary action changed the URL to
+    `/profiles#profiles-future` and placed the future profile lanes section in
+    view.
+  - Mobile Browser QA at `390x844` rendered four profiles workbench cards in
+    one column, kept profiles evidence collapsed, showed no horizontal
+    overflow, and had empty browser warning/error logs.
+  - `git diff --check` -> passed.
+
+## 2026-06-28 Skills Action-First Operator Surface
+
+- Made `/skills` usable as an operator workbench by rendering the
+  `Skills Operator Workbench` before shared Route Context, Operator Focus,
+  Last Action, and skills command diagnostics.
+- Added four visible cards for the current skill review, generated skill
+  records, usage review, and resume/goal context, with a stable
+  `data-skills-workbench-primary` marker for the primary action.
+- Kept skills state evidence, workbench evidence, and command evidence
+  collapsed by default while preserving skill counts, generated-skill posture,
+  usage/project counts, first bounded skill artifact, saved workspace context,
+  and zero-effect readbacks in the DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, install skills, execute skills, create action authority, approve work,
+  run work, call providers, fetch GitHub from ClankerOS, poll network
+  services, commit, push, create PRs, deploy, mutate external systems from
+  ClankerOS, or expose arbitrary raw filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or first_run_browser_actions_persist_resume_workspace' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-skills-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-skills-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/skills` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8813/skills`: desktop `1280x900` rendered four Skills
+    Operator Workbench cards before Route Context and the Skills Command Bar,
+    kept state/workbench/command evidence collapsed, had no horizontal
+    overflow, no framework overlay, and empty browser warning/error logs.
+  - Interaction proof: clicking the marked primary action changed the URL to
+    `/skills#skills-generated` and placed the generated skills section in view.
+  - Mobile Browser QA at `390x844` rendered four skills workbench cards in one
+    column, kept all skills evidence collapsed, placed shared Route Context
+    below the workbench, showed no horizontal overflow, and had empty browser
+    warning/error logs.
+  - `git diff --check` -> passed.
+
+## 2026-06-28 Memory Action-First Operator Surface
+
+- Made `/memory` usable as an operator workbench by rendering the
+  `Memory Operator Workbench` before shared Route Context, Operator Focus,
+  Last Action, and memory command diagnostics.
+- Added four visible cards for the current memory action, proposed pin review,
+  operator-note review, and resume/goal context, with a stable
+  `data-memory-workbench-primary` marker for the primary action.
+- Kept memory state evidence, workbench evidence, and command evidence
+  collapsed by default while preserving memory counts, proposed pin posture,
+  saved workspace context, and zero-effect readbacks in the DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, pin memory without the existing confirmed form, create action
+  authority, approve work, run work, call providers, fetch GitHub from
+  ClankerOS, poll network services, commit, push, create PRs, deploy, mutate
+  external systems from ClankerOS, or expose arbitrary raw filesystem
+  browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or first_run_browser_actions_persist_resume_workspace' --tb=short`
+    -> passed, `3 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-memory-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-memory-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/memory` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8812/memory`: desktop `1280x900` rendered four Memory
+    Operator Workbench cards before Route Context and the Memory Command Bar,
+    kept state/workbench/command evidence collapsed, had no horizontal
+    overflow, and had empty browser logs.
+  - Interaction proof: in the empty demo memory state, clicking the marked
+    primary action opened `/goals`, which rendered the Goal board/cockpit
+    surface for creating or continuing goal context.
+  - Mobile Browser QA at `390x844` rendered four memory workbench cards in one
+    column, kept all memory evidence collapsed, placed shared Route Context
+    below the workbench, showed no horizontal overflow, and had empty browser
+    logs.
+  - `git diff --check` -> passed.
+
+## 2026-06-28 Search Action-First Operator Surface
+
+- Made `/search` usable as an operator workbench by rendering the
+  `Search Operator Workbench` before shared Route Context, Operator Focus,
+  Last Action, and search command diagnostics.
+- Added four visible cards for the current query, first useful local hit,
+  result list, and `/resume`, with a stable `data-search-workbench-primary`
+  marker for the primary query action.
+- Kept search state evidence, workbench evidence, and command evidence
+  collapsed by default while preserving result counts, category summaries,
+  first-result target links, and zero-effect/search-boundary readbacks in the
+  DOM.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, create action authority, approve work, run work, call providers, fetch
+  GitHub from ClankerOS, poll network services, commit, push, create PRs,
+  deploy, mutate external systems from ClankerOS, or expose arbitrary raw
+  filesystem browsing.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-search-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-search-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/search?q=fixture-backed` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8811/search?q=fixture-backed`: desktop `1280x900`
+    rendered four Search Operator Workbench cards before Route Context and the
+    Search Command Bar, kept state/workbench/command evidence collapsed, had
+    no horizontal overflow, and had empty browser logs.
+  - Interaction proof: clicking the marked first-result link opened
+    `/goals/goal_5991f16f7617`, which rendered the goal jump bar, action
+    dock, operator workbench, and daily loop markers.
+  - Mobile Browser QA at `390x844` rendered four search workbench cards in one
+    column, kept all search evidence collapsed, placed shared Route Context
+    below the workbench, showed no horizontal overflow, and had empty browser
+    logs.
+  - `git diff --check` -> passed.
+
+## 2026-06-28 Today Command-First Operator Surface
+
+- Made `/today` usable as the daily cockpit by rendering the `Today Command
+  Center` before shared Route Context, Operator Focus, and Last Action
+  diagnostics.
+- Kept the six visible daily command cards first, added a stable
+  `data-today-command-primary` marker for the Do Now action, and kept Today
+  state, command, and workbench evidence collapsed by default.
+- Converted the Today note, pause, and Finish Today surfaces into collapsed
+  hash-opened details so clicking their command cards reveals the confirmed
+  local forms without crowding the first screen.
+- Added first-run and fixture-backed route assertions plus demo smoke snippets
+  for the new command-first ordering, collapsed evidence markers, and
+  hash-opened form targets.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, create action authority, approve work, run work, call providers, fetch
+  GitHub from ClankerOS, poll network services, commit, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-today-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-today-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/today` snippets matched,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8810/today`: desktop `1280x900` rendered six Today
+    command cards with the command center before live state and shared route
+    context, collapsed state/command/workbench/note/pause/finish details, no
+    horizontal overflow, and no console warnings/errors.
+  - Interaction proof: clicking the visible Note card opened
+    `/today#today-note` and revealed the confirmed `save-goal-note` form;
+    clicking the Finish card opened `/today#today-finish` and revealed the
+    confirmed `save-workspace` form, with no console warnings/errors.
+  - Mobile Browser QA at `390x844` rendered six Today command cards in one
+    column, kept all Today evidence/forms collapsed, placed shared Route
+    Context below the cockpit, and showed no horizontal overflow or console
+    warnings/errors.
+
+## 2026-06-28 Workspace Action-First Operator Surface
+
+- Made `/workspace` usable as the leave/resume surface by rendering the
+  `Workspace Operator Workbench` before shared Route Context, Operator Focus,
+  Last Action, saved-state evidence, restore links, and the confirmed
+  `save-workspace` form.
+- Moved browser-available saved-goal action forms directly below the workbench
+  so a saved workspace can resume action before the daily brief, workflow map,
+  or evidence readbacks.
+- Kept saved workspace state, restore links, workbench evidence, and the
+  `save-workspace` form collapsed by default, while adding hash-aware details
+  opening so `/workspace#save-workspace` and same-page Finish Today links
+  reveal the form instead of hiding it behind a collapsed disclosure.
+- Added stable regression markers for workspace primary action, evidence,
+  saved-state details, restore evidence, and save details.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, create action authority, approve work, run work, call providers, fetch
+  GitHub from ClankerOS, poll network services, commit, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-workspace-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-workspace-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed routes matched expected snippets,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8809/workspace`: desktop `1280x900` rendered the
+    `Workspace Operator Workbench` at `y=260`, before the daily brief, Route
+    Context, and Operator Focus, with four workbench cards, collapsed
+    workbench/state/restore/save details, no horizontal overflow, and no
+    console warnings/errors.
+  - Interaction proof: clicking the visible Finish Today save link changed the
+    URL to `/workspace#save-workspace`, opened the collapsed save details, and
+    revealed the confirmed local `save-workspace` form; direct navigation to
+    `/workspace#save-workspace` also opened the details on load.
+  - Mobile Browser QA at `390x844` rendered the workbench before the daily
+    brief and Route Context, stacked four workbench cards in one column, kept
+    details collapsed, and showed no horizontal overflow or console
+    warnings/errors.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Inbox Queue-First Operator Surface
+
+- Made `/inbox` usable as a direct operator queue by rendering the
+  `Inbox Operator Workbench` before the `Inbox Command Bar`, shared Route
+  Context, Operator Focus, and Last Action strips.
+- Converted inbox workbench cards to semantic action cards with a stable
+  `data-inbox-workbench-primary` marker, while keeping workbench evidence,
+  command evidence, and the Finish Today workspace-save form collapsed by
+  default.
+- Added a small same-page details opener so the Finish Today card expands its
+  confirmed `save-workspace` form when the operator asks for it, without
+  writing on GET or adding decision authority.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, expose inbox decision forms, approve work, run work, call providers,
+  fetch GitHub from ClankerOS, poll network services, commit, push, create
+  PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-inbox-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-inbox-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed routes matched expected snippets,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8808/inbox`: desktop `1280x900` rendered the
+    `Inbox Operator Workbench` at `y=281`, before the command bar, Route
+    Context, and Operator Focus, with four workbench cards, collapsed
+    workbench/command/finish details, no horizontal overflow, and no console
+    warnings/errors.
+  - Interaction proof: clicking the marked workbench primary link changed the
+    URL to `/inbox#inbox-pending-worktree-approvals` with that section at the
+    top of the viewport; clicking the Finish Today card's save link changed
+    the URL to `/inbox#inbox-finish-today`, opened the collapsed details, and
+    revealed the confirmed local `save-workspace` form.
+  - Mobile Browser QA at `390x844` rendered the workbench before the command
+    bar and Route Context, stacked four workbench cards in one column, kept
+    details collapsed, and showed no horizontal overflow or console
+    warnings/errors.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Resume Return-To-Work First
+
+- Made `/resume` usable as the daily return surface by opening with a primary
+  saved-context link and `Resume Operator Workbench` before shared route/focus
+  diagnostics and before the command readback.
+- Moved saved workspace state, workbench evidence, and command evidence into
+  collapsed details so the first screen leads with the current action while
+  preserving saved project, Goal, artifact, filters, expanded panels, readiness,
+  and zero-effect counters in the DOM.
+- The workbench now uses semantic action cards with a stable
+  `data-resume-workbench-primary` marker and routes the primary action to the
+  same-page confirmed resume action form when one is available.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is local browser routing and layout. It does not write on
+  GET, create action authority, approve work, run work, call providers, fetch
+  GitHub from ClankerOS, poll network services, commit, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'first_run_browser_actions_persist_resume_workspace or local_app_daily_loop_restores_workspace_context or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-resume-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-resume-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed routes matched expected snippets,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8805/resume`: desktop `1280x900` rendered the
+    `Resume Operator Workbench` at `y=334`, before the command bar, Route
+    Context, and Operator Focus, with four workbench cards, collapsed saved
+    state/workbench/command evidence, no horizontal overflow, and no console
+    warnings/errors.
+  - Mobile Browser QA at `390x844` rendered the workbench before the command
+    bar, Route Context, and Operator Focus, kept evidence collapsed, showed no
+    horizontal overflow or console warnings/errors, and clicking the marked
+    workbench primary link changed the URL to `/resume#resume-action-form`
+    with the form at the top of the viewport.
+  - Regression Browser QA against `/resume?notice=workspace_saved...` on the
+    restarted updated server kept the notice visible, rendered the workbench
+    before the command bar, Route Context, and Operator Focus, kept evidence
+    collapsed, and showed no horizontal overflow or console warnings/errors.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Action-First Actions Page
+
+- Made `/actions` usable as a direct operator surface by rendering the safe
+  action header and `Action Operator Workbench` before shared route/focus
+  diagnostics and before the catalog readback.
+- Converted workbench cards to semantic action cards with a stable
+  `data-action-workbench-primary` marker, while keeping safety, workbench
+  evidence, and catalog evidence collapsed by default.
+- The catalog still exposes visible Catalog, Forms, Approvals, and Boundary
+  cards, and all prior zero-effect catalog/workbench counters remain in the
+  DOM for review and CI assertions.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is read-only routing and layout. It does not write on GET,
+  create action authority, approve work, run work, call providers, fetch
+  GitHub from ClankerOS, poll network services, commit, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-actions-content-first-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-actions-content-first-demo app-demo-smoke-test`
+    -> passed, fixture-backed routes matched expected snippets,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8804/actions`: desktop `1280x900` rendered the
+    `Action Operator Workbench` at `y=304`, before Route Context and Operator
+    Focus, with four workbench cards, four catalog cards, collapsed safety and
+    evidence details, no horizontal overflow, and no console warnings/errors.
+  - Mobile Browser QA at `390x844` rendered the main article before the Recent
+    Items sidebar, stacked workbench/catalog cards in one column, kept card
+    widths inside the viewport, and showed no horizontal overflow or console
+    warnings/errors.
+  - Interaction proof: clicking the marked workbench primary link opened
+    `/runs/run_b8e1f3b68cbc`, rendered the run page with `Run Gate Map` and
+    `Run Operator Workbench`, and kept console warnings/errors at `0`.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Home Operator Board
+
+- Made `/` more usable as the default operator surface by adding a
+  read-only `Home Operator Board` with visible Do Now, Attention, Resume, and
+  Proof cards for the lead Goal or first-run step.
+- Home now renders its own operating content before the shared route/focus
+  diagnostics, keeps Home state and board evidence collapsed by default, and
+  keeps the recent-items sidebar after the main article on narrow screens.
+- The board routes browser-available actions to the existing confirmed forms:
+  saved matching Goals use `#home-resume-action-form`, unsaved lead Goals use
+  `/goals/<goal_id>#goal-next-action-form`, approval attention uses
+  `/approvals?goal_id=<goal_id>`, unfinished resume state uses
+  `#home-finish-today`, and proof review uses the existing CI evidence
+  surfaces.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is read-only routing and layout. It does not write on GET,
+  create action authority, approve work, run work, call providers, fetch
+  GitHub from ClankerOS, poll network services, commit, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-home-board-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-home-board-demo app-demo-smoke-test`
+    -> passed, fixture-backed routes matched expected snippets,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through the in-app Browser against
+    `http://127.0.0.1:8803/`: desktop `1280x900` rendered the board at
+    `boardTop=284`, before Route Context, with four cards, collapsed Home
+    state and board evidence, no overflow, and no console warnings/errors;
+    clicking the Resume card changed the URL to `#home-finish-today` and put
+    Finish Today at the top of the viewport.
+  - Mobile Browser QA at `390x844` rendered the board at `boardTop=431` in
+    the first viewport, stacked four cards in one column, kept card widths
+    within the viewport, kept the main article at order `1` and the recent
+    sidebar at order `2`, and showed no overflow or console warnings/errors.
+
+## 2026-06-28 Goal Board Workbench
+
+- Made `/goals` more usable as a daily board by adding a `Goal Board
+  Workbench` immediately after the existing command bar. It shows four visible
+  cards for Do Now, Selected Goal, Attention, and Start/Resume before the
+  active/paused/completed lane lists.
+- The workbench follows the same saved-goal/active-goal selection logic as the
+  command bar, links directly to `/goals/<goal_id>#goal-next-action-form` when
+  the selected Goal has a confirmed browser action form, and routes pending
+  approval attention through `/approvals?goal_id=<goal_id>`.
+- Added stable `data-goal-board-workbench`,
+  `data-goal-board-workbench-actions`, and
+  `data-goal-board-workbench-primary` markers, plus explicit lane anchors for
+  `#active-goals`, `#paused-goals`, and `#completed-goals`.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is read-only board guidance and local browser navigation.
+  It does not write on GET, create action authority, approve work, run work,
+  call providers, fetch GitHub from ClankerOS, poll network services, commit,
+  push, create PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-board-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-board-demo app-demo-smoke-test`
+    -> passed, fixture-backed `/goals` and Goal routes matched expected
+    snippets, provider/network/external mutation counters remained `0`
+  - Browser QA through Playwright using local Chrome against
+    `http://127.0.0.1:8802/goals`: desktop and mobile rendered the
+    `Goal Board Workbench`, showed four cards, linked the primary action to
+    `/goals/goal_acd338438029#goal-next-action-form`, routed Attention to
+    `/approvals?goal_id=goal_acd338438029`, exposed active/paused/completed
+    lane anchors, collapsed the workbench grid to one column on `390x844`, and
+    showed no visible overflow or console warning/error logs.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Run Gate Map And Scoped Approvals
+
+- Made run detail pages more usable for daily operation by adding a read-only
+  `Run Gate Map` directly after the run operator workbench. It shows the
+  current gate, eight ordered gates from review through manual publish, the
+  right existing surface for the next decision, progress counts, and zero-effect
+  counters without writing on GET.
+- Made approval focus first-class from run and Goal surfaces. Run-specific
+  gates now link to `/approvals?run_id=<coder_run_id>`, Goal worktree gates can
+  link to `/approvals?goal_id=<goal_id>`, and the approval queue/workbench/
+  decision brief foreground matching commit, publication, or worktree approval
+  items before falling back to the global queue.
+- Kept the global `/approvals` queue behavior intact while making scoped
+  approvals return to the run after local commit/publication approval decisions.
+- Added responsive form/control sizing and one-column mobile key-value grids for
+  the new run/approval operator surfaces.
+- Updated README, local app docs, operating summary, and status focus with the
+  new run-gate and scoped-approval workflow.
+- Non-claims: this is local browser UI, local routing, and local decision
+  artifact flow. It does not approve on GET, run work, call providers, fetch
+  GitHub from ClankerOS, commit without an explicit approval POST, push, create
+  PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 515 deselected`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-run-gate-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-run-gate-demo app-demo-smoke-test`
+    -> passed, fixture-backed run and approval routes matched expected snippets,
+    provider/network/external mutation counters remained `0`
+  - Browser QA through Playwright using local Chrome against
+    `http://127.0.0.1:8801/runs/run_5d0168b63696`: desktop and mobile rendered
+    the `Run Gate Map`, showed eight gates, marked `commit_approval` current,
+    followed the scoped `/approvals?run_id=run_5d0168b63696` link, foregrounded
+    a run-matching commit approval with a decision brief and approval form,
+    collapsed key-value grids to one column on `390x844`, and showed no visible
+    overflow or console warning/error logs.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Palette Focus Launcher
+
+- Made the global command palette action-first across app pages: it now opens
+  with a visible `Palette Focus` launcher for continuing the current Goal
+  action, searching local state, resuming the saved workspace, or staying on
+  the current page.
+- Kept the goal-aware `Continue Current Goal` block and its confirmed local
+  action form directly below search, so the palette can still run the current
+  browser-available local action only after confirmation.
+- Moved the route readback, keyboard shortcuts, and long open list into
+  collapsed `Palette evidence and shortcuts`, while preserving
+  `palette_route_*`, `palette_continue_*`, and keyboard shortcut strings for
+  auditability and tests.
+- Added stable `data-command-palette-focus`,
+  `data-command-palette-focus-*`, `data-command-palette-evidence`, and
+  `data-command-palette-open-list` assertions to first-run, dashboard, and
+  Goal route fixtures.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is read-only local navigation, search submission to the
+  local app, and existing confirmed local action-form exposure. It does not
+  write on GET, create action authority, approve work, run work, call
+  providers, fetch GitHub from ClankerOS, poll network services, commit, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 515 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-palette-focus-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-palette-focus-demo app-demo-smoke-test`
+    -> passed, fixture-backed Goal route matched expected snippets, provider/
+    network/external mutation counters remained `0`
+  - Rendered in-app Browser QA against
+    `http://127.0.0.1:8799/goals/goal_8946f3687a52`: desktop viewport
+    opened the palette from the Goal page, rendered four Palette Focus cards
+    for Continue/Search/Resume/Current Page, focused the search input, linked
+    Continue to `#command-palette-continue-form`, exposed the existing
+    `/actions/coder-commit-request` form, kept focus evidence collapsed until
+    clicked, and showed no horizontal overflow, no framework overlay, and
+    empty console warning/error logs. Submitting palette search via the scoped
+    Search button navigated to `/search?q=commit` with a visible Search
+    Command Bar, matching commit results, no horizontal overflow, no framework
+    overlay, and empty console warning/error logs. Mobile viewport `390x844`
+    rendered the same Palette Focus as a one-column four-card stack with
+    dialog width `358`, `scrollWidth=390`, the search input focused, no
+    horizontal overflow, and empty console warning/error logs.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Compact Operator Focus
+
+- Made the shared `Operator Focus` strip compact and action-first across app
+  pages: it now opens with visible cards for primary action, phase, progress,
+  waiting counts, and `/resume` instead of a full diagnostic table.
+- Kept the existing confirmed local action form available when the current
+  next action is browser-available, but moved it after the focus cards and
+  before collapsed `Focus evidence`.
+- Moved the full focus readback, first-run routing rows, waiting counts,
+  confirmation posture, and zero-effect counters into collapsed
+  `Focus evidence` while preserving existing `operator_focus_*` strings for
+  auditability and tests.
+- Added stable `data-operator-focus-focus`, `data-operator-focus-primary`,
+  `data-operator-focus-*card`, `data-operator-focus-summary`, and
+  `data-operator-focus-details` assertions to first-run, dashboard, and Goal
+  route fixtures.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is read-only local navigation and browser rendering. It
+  does not write on GET, create action authority, approve work, run work, call
+  providers, fetch GitHub from ClankerOS, poll network services, commit, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 515 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-operator-focus-compact-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-operator-focus-compact-demo app-demo-smoke-test`
+    -> passed, fixture-backed Goal route matched expected snippets, provider/
+    network/external mutation counters remained `0`
+  - Rendered in-app Browser QA against
+    `http://127.0.0.1:8798/goals/goal_136c406a42d6`: desktop viewport
+    rendered a five-item Operator Focus card grid with primary
+    `Create commit request` to `/runs/run_d660d0fc59fb`, confirmed action form
+    after the cards, collapsed `Focus evidence`, hidden focus rows while
+    collapsed, a successful disclosure click, no horizontal overflow, no
+    framework overlay, and empty console warning/error logs. A scrolled desktop
+    check confirmed the focus cards and action form sit above the fixed Goal
+    Action Dock. Mobile viewport `390x844` rendered the same Operator Focus as
+    a one-column stack with no horizontal overflow (`scrollWidth=390`,
+    `viewportWidth=390`), collapsed evidence, no framework overlay, and empty
+    console warning/error logs.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Compact Route Context
+
+- Made the shared `Route Context` strip compact and action-first across app
+  pages: it now shows current page, one primary next local action, back target,
+  Goal/Project context, and `/resume` before any diagnostic route rows.
+- Moved the route summary rows, breadcrumb readbacks, saved workspace anchors,
+  focus target readback, and zero-effect counters into collapsed
+  `Route evidence`.
+- Combined Goal and Project into one compact context cell and added a mobile
+  breakpoint so the strip stacks cleanly on narrow screens without horizontal
+  overflow.
+- Added stable `data-route-context-focus`, `data-route-context-primary`,
+  `data-route-context-goal`, `data-route-context-project`,
+  `data-route-context-summary`, and existing `data-route-context-details`
+  assertions to fixture-backed route tests.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is read-only local navigation and browser rendering. It
+  does not write on GET, create action authority, approve work, run work, call
+  providers, fetch GitHub from ClankerOS, poll network services, commit, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 515 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-route-context-compact-smoke-final app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-route-context-compact-demo-final app-demo-smoke-test`
+    -> passed, fixture-backed Goal route matched expected snippets, provider/
+    network/external mutation counters remained `0`
+  - Rendered in-app Browser QA against
+    `http://127.0.0.1:8797/goals/goal_30f30aa197ec`: desktop viewport
+    rendered a five-item Route Context focus strip with primary
+    `Create commit request` to `/runs/run_3780f2fbded1`, collapsed
+    `Route evidence`, hidden route rows while collapsed, a successful
+    disclosure click, no horizontal overflow, no framework overlay, and empty
+    console warning/error logs. Mobile viewport `390x844` rendered the same
+    Route Context as a one-column stack with no horizontal overflow
+    (`scrollWidth=390`, `viewportWidth=390`), collapsed evidence, no framework
+    overlay, and empty console warning/error logs.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Recent Items Compact Rail
+
+- Made the shared Recent Items sidebar compact and action-first across app
+  pages: it now shows one primary `Open recent item` link plus a `/resume`
+  button before any diagnostic readback.
+- Moved recent-item counters, saved workspace context, last-action context, and
+  zero-effect counters into collapsed `Recent item evidence`.
+- Moved the longer recent shortcuts list into a second collapsed `Recent
+  shortcuts` disclosure, keeping the full navigation list available without
+  letting it dominate the first viewport.
+- Added stable `data-recent-items-focus`, `data-recent-items-primary`,
+  `data-recent-items-details`, and `data-recent-items-list-details` markers and
+  fixture-backed route assertions.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is read-only local navigation and browser rendering. It
+  does not write on GET, create action authority, approve work, run work, call
+  providers, fetch GitHub from ClankerOS, poll network services, commit, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 515 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-recent-items-compact-smoke-2 app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-recent-items-compact-demo-2 app-demo-smoke-test`
+    -> passed, fixture-backed Goal route matched expected snippets, provider/
+    network/external mutation counters remained `0`
+  - Rendered in-app Browser QA against
+    `http://127.0.0.1:8796/goals/goal_7411da502564`: desktop viewport
+    rendered one sticky Recent Items rail with primary `/goals/<goal_id>`
+    reopen link, `/resume`, collapsed evidence, collapsed shortcut list, no
+    horizontal overflow, no framework overlay, and empty console warning/error
+    logs. Mobile viewport `390x844` rendered the rail as `position: static`
+    with the same primary links, collapsed evidence, collapsed shortcuts,
+    article content starting within the first viewport, no horizontal overflow,
+    no framework overlay, and empty console warning/error logs. Clicking both
+    disclosures revealed the diagnostic status rows and all three recent
+    shortcuts without overflow.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Goal Form Anchors
+
+- Updated the Goal Action Dock so its primary `Open action form` link jumps
+  directly to `#goal-next-action-form` when the confirmed browser action form
+  exists, instead of landing on the broader Next Action section.
+- Updated the Goal Operator Workbench primary action to use the same direct
+  confirmed-form anchor, keeping the top-of-page and persistent action
+  controls aligned with the Goal Next Action focus strip.
+- Updated fixture-backed Goal route assertions plus README, local app docs,
+  operating summary, and status focus.
+- Non-claims: this is browser rendering and local anchor navigation to an
+  existing confirmed form. It does not write on GET, create action authority,
+  approve work, run work, call providers, fetch GitHub from ClankerOS, poll
+  network services, commit, push, create PRs, deploy, or mutate external
+  systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 515 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-form-anchor-smoke app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-form-anchor-demo app-demo-smoke-test`
+    -> passed, fixture-backed Goal route matched expected snippets, provider/
+    network/external mutation counters remained `0`
+  - Rendered in-app Browser QA against
+    `http://127.0.0.1:8794/goals/goal_f6f16f173554`: desktop viewport
+    rendered one fixed Goal Action Dock with `Open action form` pointing to
+    `#goal-next-action-form`, the Goal Operator Workbench primary action also
+    pointing to `#goal-next-action-form`, collapsed Action Evidence, no
+    horizontal overflow, no framework overlay, empty console warning/error
+    logs, and successful dock/workbench clicks landing the confirmed form below
+    the sticky header. Mobile viewport `390x844` rendered the dock as
+    `position: static` with one grid column, the same direct form anchors, no
+    horizontal overflow, no framework overlay, and empty console warning/error
+    logs.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Goal Next Action Focus
+
+- Added a human-first focus strip at the top of the Goal Next Action section,
+  turning the main decision point into four readable cards: Now, Gate, Target,
+  and Boundary.
+- The primary link points to the existing confirmed Goal action form when one
+  is available, or to the current source surface otherwise. The existing
+  diagnostic rows remain available for evidence and compatibility, but now sit
+  inside collapsed action evidence after the confirmed form.
+- Added stable `data-goal-next-action-focus-*` markers and fixture-backed Goal
+  route assertions for action, phase, gate progress, primary/source surfaces,
+  form availability, confirmation posture, and zero-effect counters.
+- Moved the confirmed form directly below the focus strip so the operator's
+  primary next click lands on the actionable form instead of a diagnostic
+  readback.
+- Moved the read-only Goal Jump Bar back into normal page flow so it keeps the
+  anchor buttons available without covering the Next Action focus strip or
+  intercepting clicks during long Goal-page scrolls.
+- Added a quiet `/favicon.ico` response so browser QA and operator sessions do
+  not carry a noisy missing-resource console error.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is browser rendering and local navigation to existing Goal
+  surfaces. It does not write on GET, create new action authority, approve
+  work, run work, call providers, fetch GitHub, poll network services, commit,
+  push, create PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k 'local_app_demo_scenario_populates_fixture_state or local_app_favicon_route_is_quiet_for_browser_qa' --tb=short`
+    -> passed, `2 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-next-action-details-smoke-final app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-next-action-details-demo-final app-demo-smoke-test`
+    -> passed, fixture-backed Goal route matched expected snippets, provider/
+    network/external mutation counters remained `0`
+  - Rendered in-app Browser QA against
+    `http://127.0.0.1:8793/goals/goal_61847442e89f`: desktop viewport
+    rendered the Next Action focus strip with four columns, DOM order
+    `focus > form > details`, `Use confirmed form` pointing to
+    `#goal-next-action-form`, collapsed `Action Evidence`, no diagnostic rows
+    visible while collapsed, no horizontal overflow, empty console
+    warning/error logs, and a successful click landing the confirmed form
+    below the sticky header. Mobile viewport `390x844` rendered one focus-grid
+    column with the same action-first order, collapsed evidence, no horizontal
+    overflow, empty console warning/error logs, and the same form-anchor proof.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Goal Action Dock
+
+- Added a compact fixed desktop `Goal Action Dock` immediately after the Goal
+  Jump Bar on `/goals/<goal_id>`, keeping the current action, current workflow
+  gate, CI handoff target, and `/resume` route visible while the operator
+  scrolls the long Goal workbench. The dock becomes static on narrow screens
+  to avoid covering mobile content.
+- The dock reuses the existing Goal Next Action surface: when a confirmed
+  browser action form is available, its primary link jumps to
+  `#goal-next-action`; otherwise it links to the current source surface from
+  the existing Goal recommendation.
+- Added the dock to the Goal Section Index and fixture-backed Goal route
+  assertions, including status, phase, gate progress, source surface, form
+  availability, confirmation posture, waiting counts, zero-effect counters,
+  and stable `data-goal-action-dock-*` markers.
+- Updated README, local app docs, operating summary, and status focus.
+- Non-claims: this is read-only local navigation to existing Goal surfaces. It
+  does not write on GET, duplicate action forms, create actions, approve work,
+  run work, call providers, fetch GitHub, poll network services, commit, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-action-dock-smoke-final app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-action-dock-demo-smoke-final app-demo-smoke-test`
+    -> passed, fixture-backed Goal route matched expected snippets, provider/
+    network/external mutation counters remained `0`
+  - Rendered browser QA against
+    `http://127.0.0.1:8791/goals/goal_7f2474d6cce3`: desktop viewport
+    found one fixed `data-goal-action-dock` with collapsed details,
+    `#goal-next-action` primary href, no horizontal overflow, no framework
+    overlay, and empty console warning/error logs; clicking the dock primary
+    link moved the page to `#goal-next-action` and the dock remained visible.
+    Mobile viewport `390x844` rendered the dock as `position: static` with one
+    grid column, no horizontal overflow, and empty console warning/error logs.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Goal Jump Shortcuts
+
+- Added visible `1`-`9` shortcut badges and `aria-keyshortcuts` to the sticky
+  read-only Goal Jump Bar so an operator can jump to phase, action, workflow,
+  timeline, evidence, artifacts, notes, git, and remaining work without using
+  the mouse or scrolling the long Goal workbench.
+- Extended the shared local keyboard handler to activate a Goal jump anchor
+  only when a matching `data-goal-jump-shortcut` exists on the current page,
+  and it still ignores input, textarea, and select focus before handling
+  navigation keys.
+- Updated README, local app docs, operating summary, status focus, and the
+  fixture-backed Goal route assertions.
+- Non-claims: this is read-only local anchor navigation. It does not write on
+  GET, submit forms, create actions, approve work, run work, call providers,
+  fetch GitHub, poll network services, commit, push, create PRs, deploy, or
+  mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests` -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-shortcut-smoke-2 app-smoke-test`
+    -> passed, route markers matched, provider/network/external mutation
+    counters remained `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-shortcut-demo-smoke-2 app-demo-smoke-test`
+    -> passed, fixture-backed Goal route matched expected snippets, provider/
+    network/external mutation counters remained `0`
+  - Rendered browser QA against
+    `http://127.0.0.1:8790/goals/goal_d00211404659`: found 9
+    `data-goal-jump-shortcut` links with visible `1`-`9` text and matching
+    `aria-keyshortcuts`; pressing `4` moved to
+    `#goal-timeline-command-bar`; pressing `2` moved to `#goal-next-action`;
+    console warning/error log was empty.
+  - `git diff --check` -> passed
+
+## 2026-06-28 Goal Jump Bar
+
+- Added a sticky read-only `Goal Jump Bar` immediately after the Goal Current
+  Phase banner, keeping phase, action, workflow, timeline, evidence,
+  artifacts, notes, git, and remaining work anchors one click away during long
+  Goal sessions.
+- The jump bar reports current phase, primary action, link count, write-on-GET
+  posture, and external-effect boundary, and uses stable `data-goal-jump-*`
+  markers for route tests and future browser QA.
+- Added responsive styling so the bar sticks on wider screens and becomes
+  static on narrow screens to avoid covering content under the mobile header.
+- Updated README, local app docs, operating summary, status focus, and the
+  fixture-backed Goal route assertions.
+- Non-claims: this is read-only local anchor navigation. It does not write on
+  GET, create actions, approve work, run work, call providers, fetch GitHub,
+  poll network services, commit, push, create PRs, deploy, or mutate external
+  systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests`
+    -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-jump-smoke app-smoke-test`
+    -> passed with route markers matched and provider/network/
+    external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-jump-demo-smoke app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched and
+    provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
+## 2026-06-28 Timeline Event Rows
+
+- Upgraded Goal Timeline and Activity Log entries from plain linked text into
+  scan-first event rows with a timestamp, event-kind badge, clickable local
+  message, target badge, and stable `data-timeline-event` /
+  `data-timeline-kind` markers.
+- The new rows reuse existing Goal timeline data and target local artifacts,
+  delegations, runs, approvals, goals, or local surfaces without adding new
+  writes or action authority.
+- Added responsive timeline styling so event rows collapse cleanly on narrow
+  screens while preserving readable badges and long local artifact links.
+- Updated README, local app docs, operating summary, status focus, and the
+  fixture-backed Goal route assertions.
+- Non-claims: this is read-only browser rendering only. It does not write on
+  GET, create actions, approve work, run work, call providers, fetch GitHub,
+  poll network services, commit, push, create PRs, deploy, or mutate external
+  systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests`
+    -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-timeline-event-smoke app-smoke-test`
+    -> passed with `/goals`, `/artifacts`, and core route markers matched and
+    provider/network/external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-timeline-event-demo-smoke app-demo-smoke-test`
+    -> passed with fixture-backed Goal route snippets matched and
+    provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
+## 2026-06-28 CI Proof Workbench
+
+- Added a first-class `CI Proof Workbench` to `/ci-evidence` after the command
+  bar so the browser shows four operator choices: check the pushed GitHub
+  Actions run, record job-scoped fast-smoke proof, record completed full-suite
+  proof, or use the manual record-after-success fallback.
+- The workbench reuses the current checkout branch/commit command context,
+  renders copy-only `gh run view` and validated recorder command templates,
+  links back to the confirmed paste form, and keeps fast-smoke proof labeled
+  as early route/CLI proof only.
+- Added workbench styling and mobile single-column behavior matching the
+  existing operator workbench surfaces.
+- Updated README, local app docs, operating summary, status focus, and
+  fixture-backed `/ci-evidence` route assertions.
+- Non-claims: the local app still does not run `gh`, fetch GitHub status,
+  poll network services, push, create PRs, deploy, call providers, or mutate
+  external systems. Local proof recording still requires pasted operator
+  evidence and confirmation.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_records_ci_snapshot_evidence_from_pasted_gh_json --tb=short`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_records_ci_snapshot_evidence_from_pasted_gh_json or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m compileall -q agent_os tests`
+    -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-ci-proof-workbench-smoke app-smoke-test`
+    -> passed with `/ci-evidence` route marker matched and provider/network/
+    external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-ci-proof-workbench-demo-smoke app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched and provider/network/
+    external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
+## 2026-06-28 Last Action Shell Strip
+
+- Added durable last-action fields to `.clanker/app/workspace.json` for
+  completed local app actions, including action kind, result message, target
+  notice URL, completion status, and timestamp.
+- Added a global read-only `Last Action` strip to the shared operator shell so
+  pages after an action can reopen the target notice and show the saved
+  project/goal context without requiring the operator to remember the result
+  page.
+- The recent-items command bar now includes the latest confirmed action and
+  result, and the recent-items list can reopen the last action notice when one
+  exists.
+- Updated README, local app docs, operating summary, status focus, and
+  milestone assertions for first-run and fixture-backed saved-Goal action
+  result flows.
+- Non-claims: this does not write on GET, create new actions, approve work,
+  run work, call providers, fetch GitHub, poll network services, commit, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "first_run_browser_actions_persist_resume_workspace or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m compileall -q agent_os tests`
+    -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-last-action-smoke app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation
+    counters at `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-last-action-demo-smoke app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed route snippets,
+    with provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
+## 2026-06-28 Action Result Workflow Map
+
+- Added an `Action Result Workflow Map` to successful local app action result
+  pages after the continuation block, so a confirmed local action now leaves
+  the operator with both the immediate next form and the surrounding workflow
+  rail.
+- The map has two modes: first-run state before a saved Goal exists, and the
+  refreshed saved-Goal workflow once a Goal is saved. It reports current gate,
+  next action, next local surface, gate progress, done/pending/waiting counts,
+  and the manual publication boundary when present.
+- The current gate points to the inline action-result continuation form when a
+  confirmed browser action is available. Future saved-Goal gates point to their
+  existing local surfaces, and `manual_publish` remains explicitly outside
+  ClankerOS.
+- Updated README, local app docs, operating summary, status focus, and
+  milestone assertions for first-run and fixture-backed saved-Goal action
+  result pages.
+- Non-claims: this does not write workspace state on GET, create new actions,
+  approve work, run work, call providers, fetch GitHub, poll network services,
+  commit, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "first_run_browser_actions_persist_resume_workspace or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m compileall -q agent_os tests`
+    -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-action-result-map-smoke app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation
+    counters at `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-action-result-map-demo-smoke app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed route snippets,
+    with provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed after docs/status updates
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
+## 2026-06-28 Goal CI Handoff
+
+- Added a top-of-page `Goal CI Handoff` to `/goals/<goal_id>` after the Goal
+  Workflow Map and before live refresh, so the primary Goal workbench now shows
+  project-scoped GitHub Actions proof posture without sending the operator to
+  lower verification details first.
+- The handoff shows the current project branch/commit, latest
+  operator-recorded CI evidence, whether that proof matches the current
+  checkout, exact `gh run list` / `gh run view` command templates, a same-page
+  Goal proof recording target, and the global `/ci-evidence` recording target.
+- Updated README, local app docs, operating summary, status focus, and
+  fixture-backed Goal route assertions for the new CI handoff surface.
+- Non-claims: this does not fetch GitHub status, poll network services, write
+  workspace state on GET, create CI evidence without confirmation, run tests,
+  call providers, commit, push, create PRs, deploy, or mutate external
+  systems from ClankerOS.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests`
+    -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-ci-smoke app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation
+    counters at `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-goal-ci-demo-smoke app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed route snippets,
+    with provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
+## 2026-06-28 Workflow Map Action Surfaces
+
+- Extended the Goal page `Goal Workflow Map` so every workflow gate now carries
+  a local operator action and surface, turning the full lifecycle rail into a
+  browser action guide from scout delegation through manual publish instead of
+  a status-only map.
+- Current gates point to the in-page Goal action form when the action is
+  browser-available. Future approval gates point to `/approvals`, future local
+  action gates point back to the Goal action form pattern, and
+  `manual_publish` remains explicitly `outside_clankeros`.
+- Updated README, local app docs, operating summary, and fixture-backed Goal
+  route assertions for the full workflow action guide.
+- Non-claims: this does not write workspace state on GET, create actions,
+  approve work, run work, call providers, fetch GitHub, poll network services,
+  commit, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests`
+    -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-workflow-guide-smoke app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation
+    counters at `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-workflow-guide-demo-smoke app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed route snippets,
+    with provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
+## 2026-06-28 Command Palette Goal Continuation
+
+- Added a compact `Goal Continuation` readback inside the global command
+  palette's `Continue Current Goal` block, so the operator can hit `/` from
+  Home or a Goal page and see the current gate, next local gates, target
+  surfaces, and manual publish boundary without navigating back to the full
+  Goal page.
+- The palette continuation reuses the existing saved/lead Goal focus context,
+  Goal remaining-work gates, and next-action form. When the current action is
+  browser-available, the current gate points to the in-palette confirmed local
+  action form; later gates point to their existing local surfaces such as
+  `/approvals` or the Goal action card.
+- Updated README, local app docs, operating summary, and fixture-backed command
+  palette assertions for the new global continuation surface.
+- Non-claims: this does not write workspace state on GET, create actions,
+  approve work, run work, call providers, fetch GitHub, poll network services,
+  commit, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests`
+    -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-palette-smoke app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation
+    counters at `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-palette-demo-smoke app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed route snippets,
+    with provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
+## 2026-06-28 Goal Continuation Rail
+
+- Added a first-class `Goal Continuation Rail` to `/goals/<goal_id>` after the
+  Goal Return Brief and before the Next Action card, so the Goal page now shows
+  the current gate plus the next few local gates as a short operator path
+  instead of forcing the operator to infer the sequence from the full workflow
+  map.
+- The rail is derived from existing Goal remaining-work gates and the current
+  next-action state. It reports current position, next local action surface,
+  upcoming approval/commit/publication gates, a link to the in-page Goal action
+  form when the current gate is browser-available, and the final manual publish
+  boundary as outside ClankerOS.
+- Updated README, local app docs, operating summary, section-index assertions,
+  and fixture-backed Goal route expectations for the new continuation surface.
+- Non-claims: this does not write workspace state on GET, create actions,
+  approve work, run work, call providers, fetch GitHub, poll network services,
+  commit, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m compileall -q agent_os tests`
+    -> passed
+  - `python3 -m agent_os.cli --root /tmp/clankeros-ux-smoke app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation
+    counters at `0`
+  - `python3 -m agent_os.cli --root /tmp/clankeros-ux-demo-smoke app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed
+    `/goals/<goal_id>` snippets, with provider/network/external-mutation
+    counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
+## 2026-06-27 Goal Return Brief
+
+- Added a top-of-page `Goal Return Brief` to `/goals/<goal_id>` after the
+  Goal Daily Loop and before the Next Action card, so the Goal page itself now
+  answers "where was I, what changed last, what proof exists, and what blocks
+  the next move?" without sending the operator to lower diagnostic sections.
+- The brief reuses existing local Goal, workspace, timeline, artifact,
+  workflow-gate, blocker, and CI evidence state. It reports current gate, next
+  local action, action-form availability, resume readiness, saved-workspace
+  match posture, latest activity, latest artifact, CI proof posture, blocker
+  route, `/resume`, and finish surface, and it is linked from the Goal Section
+  Index.
+- Updated README, local app docs, operating summary, CSS, and fixture-backed
+  Goal route assertions for the new scan-first return-to-work panel.
+- Non-claims: this does not write workspace state on GET, create actions,
+  approve work, run work, call providers, fetch GitHub, poll network services,
+  commit, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state --tb=short`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation
+    counters at `0`
+  - `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed
+    `/goals/<goal_id>` snippets, with provider/network/external-mutation
+    counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
+## 2026-06-27 Action Operator Workbench
+
+- Added a first-class `Action Operator Workbench` to `/actions` so the safe
+  action catalog now answers "what local action is useful right now?" instead
+  of only listing available actions.
+- The workbench reuses first-run or lead-Goal focus, maps the current
+  recommendation to the existing local action name, links the owning Goal,
+  run, approval, inbox, or setup surface where the confirmed form already
+  lives, routes blockers to inbox/approvals/incidents, and exposes a confirmed
+  `save-workspace` finish form for action context.
+- Updated the fixture-backed demo smoke expectations so `/actions` must render
+  the workbench and the current demo `coder-commit-request` action routing.
+- Updated README, local app docs, operating summary, and route assertions for
+  both first-run run-delegation state and fixture-backed commit-request state.
+- Non-claims: this does not submit actions from `/actions`, create projects or
+  goals without confirmation, write workspace state on GET, run delegations,
+  call providers, fetch GitHub, poll network services, approve work, commit,
+  push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `df -h /System/Volumes/Data`
+    -> `83Gi` available before smoke verification
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation
+    counters at `0`
+  - `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed `/actions`
+    workbench snippets, with provider/network/external-mutation counters at
+    `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
+## 2026-06-27 Project Operator Workbench
+
+- Added a first-class `Project Operator Workbench` to
+  `/projects/<project_id>` so a project page now starts with Do Now, Goal,
+  Unblock, and Finish Today cards instead of only a longer inventory.
+- The workbench derives the lead goal, queue counts, waiting items, next local
+  action, primary surface, unblock surface, and resume target from local
+  project operator state. Registered-project/no-goal pages now point directly
+  at `Start Goal For This Project` with `start_project_goal`.
+- Added a confirmed local `save-workspace` form under `Project Finish Today`
+  so the operator can save the project and lead goal as the next resume point
+  from the browser without editing files by hand.
+- Updated README, local app docs, operating summary, and route assertions for
+  both fixture-backed project work and registered-project/no-goal project
+  states.
+- Non-claims: this does not create projects or goals without confirmation,
+  write workspace state on GET, run delegations, call providers, fetch GitHub,
+  poll network services, approve work, commit, push, create PRs, deploy, or
+  mutate external systems.
+- Compact local verification for this slice:
+  - `df -h /System/Volumes/Data`
+    -> `83Gi` available before smoke verification
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation
+    counters at `0`
+  - `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed
+    `/projects/local-app-demo`, with provider/network/external-mutation
+    counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
+## 2026-06-27 Workspace First-Run Continuation
+
+- Made `/workspace` first-run-aware when no saved Goal exists, so the page now
+  continues setup instead of showing generic empty workspace/goals links.
+- Empty checkouts point the Workspace Daily Brief, Operator Workbench, restore
+  links, continuation readback, and Workflow Map at Home's `Create Project`
+  anchor. Registered-project/no-goal workspaces preserve the saved project
+  link and point the same surfaces at Home's `Create First Goal` anchor.
+- Reused the same first-run gate progress as Home, Today, Goals, and
+  `/resume`, including current gate, next action, done/pending/waiting counts,
+  setup targets, and zero-effect counters.
+- Updated README, local app docs, operating summary, and route assertions for
+  both empty checkout and registered-project/no-goal Workspace states.
+- Non-claims: this does not create projects or goals without confirmation,
+  write workspace state on GET, run delegations, call providers, fetch GitHub,
+  poll network services, approve work, commit, push, create PRs, deploy, or
+  mutate external systems.
+- Compact local verification for this slice:
+  - `df -h /System/Volumes/Data`
+    -> `83Gi` available before smoke verification
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed on a temporary root, including `/workspace`, with provider/network/external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed `/workspace`, with provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
+## 2026-06-27 Resume First-Run Continuation
+
+- Made `/resume` first-run-aware when no saved Goal exists, so the page now
+  continues setup instead of dead-ending at `/goals` or a saved project link.
+- Empty checkouts point the Resume command bar, operator workbench, readiness
+  panel, next-action panel, workflow map, and targets at Home's
+  `Create Project` anchor. Registered-project/no-goal workspaces still show
+  the saved project, but the primary resume action now points to Home's
+  `Create First Goal` anchor.
+- Reused the same first-run gate list as `/today`, so Resume reports current
+  gate, progress, done/pending/waiting counts, Home/Today/Goals setup
+  targets, and zero-effect counters consistently across those surfaces.
+- Updated README, local app docs, operating summary, and route assertions for
+  both empty checkout and registered-project/no-goal Resume states.
+- Non-claims: this does not create projects or goals without confirmation,
+  write workspace state on GET, run delegations, call providers, fetch GitHub,
+  poll network services, approve work, commit, push, create PRs, deploy, or
+  mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed on a temporary root, including `/resume`, with provider/network/external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed on a temporary root, including fixture-backed `/resume`, with provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
+## 2026-06-27 First-Run-Aware Shared App Shell
+
+- Updated the shared browser app shell so first-run state is treated as a real
+  operator workflow instead of a generic `no_goal` condition.
+- `Route Context`, the command palette, and the global `Operator Focus` strip
+  now read first-run progress when no Goal exists. On Home, Today, and Goals
+  they target the same-page `Create Project` or `Create First Goal` form; on
+  pages that do not render the first-run guide, they link back to the
+  Home/Today/Goals first-run anchors.
+- Kept the existing safety boundary: the shared shell remains read-only on
+  GET, exposes only confirmed local action targets, and does not create a
+  project, goal, delegation, approval, run, commit, push, PR, deploy, provider
+  call, or network action by itself.
+- Updated README, local app docs, operating summary, and route tests for both
+  empty first-run state and registered-project/no-goal state.
+- Non-claims: this does not fetch GitHub status, poll GitHub from the app, call
+  providers, approve work, execute runs, commit, push, create PRs, deploy,
+  create projects or goals without confirmation, write on GET, use non-loopback
+  network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `df -h /System/Volumes/Data`
+    -> `83Gi` available before work
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed on a temporary root with fixture-backed route snippets matched and provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
+## 2026-06-27 First-Run Action Result Continuation
+
+- Updated successful local app action result pages so a first-run operator can
+  keep moving even before a saved Goal exists.
+- When `register-project` completes and `.clanker/app/workspace.json` has a
+  saved project but no saved Goal, `Action Result Details` now renders an
+  `Action Continuation` block from first-run progress, links Home and Today
+  fallback targets, and shows the existing confirmation-required
+  `create-goal` form inline.
+- Kept the existing safety boundary: the result page is read-only on GET, the
+  inline form still routes through the normal confirmation page, and no
+  follow-up work runs automatically.
+- Updated README, local app docs, operating summary, and first-run browser
+  action assertions.
+- Non-claims: this does not fetch GitHub status, poll GitHub from the app, call
+  providers, approve work, execute runs, commit, push, create PRs, deploy,
+  create projects or goals without confirmation, write on GET, use non-loopback
+  network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `df -h /System/Volumes/Data`
+    -> `84Gi` available before work
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root "$tmp" app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root "$tmp" app-demo-smoke-test`
+    -> passed on a temporary root with fixture-backed route snippets matched and provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
+## 2026-06-27 Home First-Run Same-Page Actions
+
+- Updated the root `/` Goal-First Home board so first-run operators no longer
+  have to detour to `/goals` for the first local setup step.
+- Home Live State, Start Here, Home Day Plan, Home Attention Brief, and Home
+  Focus Queue now point at the same-page `Create Project` form before a
+  project exists, and the same-page `Create First Goal` form after a project
+  is registered but no Goal exists yet.
+- Kept the existing confirmation boundary: these Home surfaces remain
+  read-only on GET and only route the operator to the existing confirmed
+  `register-project` or `create-goal` forms.
+- Updated README, local app docs, operating summary, and fixture-backed route
+  assertions for both empty first-run and registered-project/no-goal states.
+- Non-claims: this does not fetch GitHub status, poll GitHub from the app, call
+  providers, approve work, execute runs, commit, push, create PRs, deploy,
+  write on GET, use non-loopback network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `df -h /System/Volumes/Data`
+    -> `84Gi` available before work
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root "$tmp" app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root "$tmp" app-demo-smoke-test`
+    -> passed on a temporary root with fixture-backed route snippets matched and provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
+## 2026-06-27 Goal Phase First View
+
+- Reordered `/goals/<goal_id>` so the large `Current Phase` banner appears
+  immediately after the Goal summary, before the command bar, operator
+  workbench, daily loop, next action, workflow map, live refresh panel, and
+  long section index.
+- Updated the section index order to mirror the new first-viewport flow and
+  added a fixture-backed route-order assertion so the phase banner remains a
+  first-class Goal page signal.
+- Updated README, local app docs, and operating summary to describe the
+  phase-first Goal workbench order.
+- Non-claims: this does not fetch GitHub status, poll GitHub from the app, call
+  providers, approve work, execute runs, commit, push, create PRs, deploy,
+  write on GET, use non-loopback network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `df -h /System/Volumes/Data`
+    -> `84Gi` available before work
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state"`
+    -> passed, `1 passed, 514 deselected`
+  - `python3 -m agent_os.cli --root "$tmp" app-smoke-test`
+    -> passed on a temporary root with provider/network/external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root "$tmp" app-demo-smoke-test`
+    -> passed on a temporary root with fixture-backed Goal route snippets matched and provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Today Session Summary
+
+- Added a read-only `Today Session Summary` to `/today` so the daily cockpit
+  now has a compact return-to-work brief between live refresh and the operator
+  workbench.
+- The first-run summary reports current step/gate, same-page next surface,
+  workspace resume status, recorded CI posture, latest activity, source, and
+  zero-effect counters; the active-goal summary reports goal/project links,
+  current phase/gate, same-page current action, latest activity, latest
+  artifact, workspace resume status, recorded CI posture, source, and
+  zero-effect counters.
+- Updated the demo smoke expectations, first-run route test, fixture-backed
+  `/today` route test, README, local app docs, and operating summary.
+- Non-claims: this does not fetch GitHub status, poll GitHub from the app, call
+  providers, approve work, execute runs, commit, push, create PRs, deploy,
+  create projects or goals without confirmation, write on GET, use non-loopback
+  network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `df -h /System/Volumes/Data`
+    -> `84Gi` available before the compact verification loop
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state"`
+    -> passed, `2 passed, 513 deselected`
+  - `python3 -m agent_os.cli --root "$tmp" app-smoke-test`
+    -> passed on a temporary root, including `/today`, with provider/network/external-mutation counters at `0`
+  - `python3 -m agent_os.cli --root "$tmp" app-demo-smoke-test`
+    -> passed on a temporary root with fixture-backed `/today` expected snippets matched and provider/network/external-mutation counters at `0`
+  - `git diff --check`
+    -> passed
+- Full local suite intentionally not run for this slice; GitHub Actions remains
+  the full-suite proof path for pushed commits.
+
+## 2026-06-27 Today Workflow Map
+
+- Added a read-only `Today Workflow Map` to `/today` so the daily cockpit now
+  shows the full first-run path before a Goal exists, and the lead Goal's
+  local lifecycle gate rail once a Goal exists.
+- The first-run map reports current step/gate, same-page next surface,
+  five-gate progress, source, and zero-effect counters; the active-goal map
+  reuses the existing Goal remaining-work gate model and reports current
+  phase, current gate, next action, same-page action target, goal/project
+  links, gate counts, source, and zero-effect counters.
+- Updated the demo smoke expectations, first-run route test, fixture-backed
+  `/today` route test, README, local app docs, and operating summary.
+- Non-claims: this does not fetch GitHub status, poll GitHub from the app, call
+  providers, approve work, execute runs, commit, push, create PRs, deploy,
+  create projects or goals without confirmation, write on GET, use non-loopback
+  network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `df -h /System/Volumes/Data`
+    -> `84Gi` available before the compact verification loop
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with `/today` route marker matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed `/today` workflow-map snippets matched and zero provider/network/external-mutation counters
+
+## 2026-06-27 Today CI Handoff
+
+- Added a read-only `Today CI Handoff` to `/today` so the daily cockpit now
+  shows GitHub Actions proof posture where the operator starts work.
+- The panel reuses the existing CI evidence command state, reports the current
+  branch/commit, latest recorded CI source/status/scope/provider/run, whether
+  the latest proof matches the current checkout, links to `/verification` and
+  `/ci-evidence#record-ci-snapshot-json`, and displays exact `gh run list` /
+  `gh run view` commands for checking GitHub Actions outside the app.
+- Updated the demo smoke expectations, first-run route test, fixture-backed
+  `/today` route test, README, local app docs, and operating summary.
+- Non-claims: this does not fetch GitHub status, poll GitHub from the app, call
+  providers, approve work, execute runs, commit, push, create PRs, deploy,
+  create projects or goals without confirmation, write on GET, use non-loopback
+  network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `df -h /System/Volumes/Data`
+    -> `84Gi` available before the compact verification loop
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with `/today` and `/ci-evidence` route markers matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed `/today` CI handoff snippets matched and zero provider/network/external-mutation counters
+
+## 2026-06-27 Today Operator Workbench
+
+- Added a read-only `Today Operator Workbench` to `/today` so the daily
+  cockpit turns local state into four obvious operator moves: do the current
+  action, check timeline/evidence, clear the first blocker, and save the
+  finish-today resume point.
+- First-run `/today` points the workbench at the same-page Create Project or
+  First Run Guide targets; fixture-backed active-goal `/today` points Do at
+  the same-page `Today Current Action`, Check at the Goal timeline, Unblock at
+  approvals/incidents/recommendations/inbox as appropriate, and Finish at the
+  existing confirmed `Finish Today` form.
+- Fixed the advertised `y` keyboard shortcut so it actually opens `/today`
+  from the global key handler.
+- Updated README, local app docs, and the operating summary so `/today` is
+  documented as a practical workbench, not only a command-center readback.
+- Non-claims: this does not fetch GitHub status, call providers, approve work,
+  execute runs, commit, push, create PRs, deploy, create projects or goals
+  without confirmation, write on GET, use non-loopback network actions, or
+  mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed `/today` workbench snippets matched and zero provider/network/external-mutation counters
+
+## 2026-06-27 Home Live State Refresh
+
+- Added a read-only `Home Live State` panel to the root `/` Goal-First Home
+  board so the default operator surface now auto-refreshes local goal posture.
+- The panel reports refresh enabled, five-second interval, local page reload
+  mode, pause-while-editing, pause-while-hidden, first-run or lead-goal status,
+  phase, next action, target surface, action-form availability, goal counts,
+  waiting items, saved-goal state, local loopback scope, and zero-effect
+  counters.
+- Empty first-run Home still points live refresh at `/goals`; fixture-backed
+  saved-goal Home points it at the same-page `Home Resume Action Form` when the
+  next action is browser-available.
+- Updated README, local app docs, and the operating summary so `/` is
+  documented as a live goal board, not only a static dashboard.
+- Non-claims: this does not fetch GitHub status, call providers, approve work,
+  execute runs, commit, push, create PRs, deploy, create projects or goals
+  without confirmation, write on GET, use non-loopback network actions, or
+  mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with `/` and `/today` route markers matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched and zero provider/network/external-mutation counters
+
+## 2026-06-27 Today Live State Refresh
+
+- Added a read-only `Today Live State` panel to `/today` so the daily cockpit
+  has the same local live-refresh posture as Goal pages.
+- The panel reports refresh enabled, five-second interval, local page reload
+  mode, pause-while-editing, pause-while-hidden, first-run or lead-goal status,
+  phase, next action, target surface, action-form availability, goal counts,
+  waiting items, local loopback scope, and zero-effect counters.
+- Empty first-run `/today` points live refresh at the same-page
+  `Create Project` form; fixture-backed active-goal `/today` points it at the
+  same-page current action form when that form is browser-available.
+- Updated README, local app docs, and the operating summary so `/today` is
+  documented as a live daily cockpit, not only a static daily dashboard.
+- Non-claims: this does not fetch GitHub status, call providers, approve work,
+  execute runs, commit, push, create PRs, deploy, create projects or goals
+  without confirmation, write on GET, use non-loopback network actions, or
+  mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with `/today` route marker matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed `/today` snippets matched and zero provider/network/external-mutation counters
+
+## 2026-06-27 Today Day Plan Same-Page First Run
+
+- Updated the reused `Home Day Plan` on `/today` so first-run operators stay
+  inside the daily cockpit: an empty checkout points to the same-page
+  `Create Project` form, and a registered-project/no-goal checkout points to
+  the same-page `Create First Goal` form.
+- Kept the root Home behavior unchanged; its `Home Day Plan` still points
+  first-run operators to `/goals`, while `/today` opts into route-scoped
+  same-page anchors.
+- Added explicit readbacks for
+  `home_day_plan_first_run_form_available` and
+  `home_day_plan_first_run_form_surface` so tests and operators can tell when
+  the reused Day Plan has a same-page first-run form available.
+- Updated README, local app docs, and the operating summary to name the reused
+  Day Plan as part of the self-contained `/today` first-run path.
+- Non-claims: this does not write on GET, create projects or goals without
+  confirmation, add provider calls, fetch GitHub status, approve work,
+  execute runs, commit, push, create PRs, deploy, use the network, or mutate
+  external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with `/today` route marker matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed `/today` snippets matched and zero provider/network/external-mutation counters
+
+## 2026-06-27 Today Start Here Same-Page First Run
+
+- Updated the reused `Start Here` panel so `/today` points first-run operators
+  to the same-page `Create Project` form, and after project registration to
+  the same-page `Create First Goal` form.
+- Kept the root Home `Start Here` behavior unchanged; Home still points first
+  run toward `/goals`, while `/today` stays self-contained for daily cockpit
+  operation.
+- Added assertions for both first-run states so the command center, Today Goal
+  Queue, and Start Here panel all agree on the same-page target on `/today`.
+- Updated README, local app docs, and the operating summary to describe the
+  route-scoped Start Here behavior.
+- Non-claims: this does not write on GET, create projects or goals without
+  confirmation, add provider calls, fetch GitHub status, approve work,
+  execute runs, commit, push, create PRs, deploy, use the network, or mutate
+  external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with `/today` route marker matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched and zero provider/network/external-mutation counters
+
+## 2026-06-27 Today First-Run Same-Page Start
+
+- Updated `/today` so an empty checkout no longer sends the primary first-run
+  action to the `/goals` inventory. The command center and Today Goal Queue
+  now link directly to the same-page `Create Project` form, and after project
+  registration they link directly to the same-page `Create First Goal` form.
+- Added explicit readbacks for `today_command_first_run_form_available` and
+  `today_command_first_run_form_surface` so the daily cockpit proves when the
+  first-run form is available on the current page.
+- Added route assertions for both first-run states: no project/no goal and
+  project-registered/no goal.
+- Updated README, local app docs, and the operating summary to describe the
+  self-contained `/today` first-run path.
+- Non-claims: this does not write on GET, create projects or goals without
+  confirmation, add provider calls, fetch GitHub status, approve work,
+  execute runs, commit, push, create PRs, deploy, use the network, or mutate
+  external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with `/today` route marker matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched and zero provider/network/external-mutation counters
+
+## 2026-06-27 Today Goal Queue
+
+- Added a read-only `Today Goal Queue` immediately after the `/today`
+  command center so the daily cockpit can switch across active, paused, and
+  completed goals without opening the full `/goals` inventory.
+- The queue reports total/active/paused/completed counts, the lead goal,
+  lead bucket, phase, next action, lead surface, same-page action-form
+  availability, first switch target, per-goal phase, next action surface,
+  progress, waiting counts, approval/incident/recommendation counts, and
+  zero-effect counters.
+- Added first-run and fixture-backed `/today` assertions plus demo smoke
+  route snippets so the queue is guarded in both empty and realistic local
+  operator states.
+- Updated README, local app docs, and the operating summary to describe the
+  queue as part of the daily cockpit.
+- Non-claims: this does not write on GET, add new action authority, approve
+  work, execute runs, commit, push, create PRs, deploy, call providers, fetch
+  GitHub status, use the network, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with `/today` route marker matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed `/today` snippets matched and zero provider/network/external-mutation counters
+
+## 2026-06-27 Today Note Capture
+
+- Added a first-class `Capture Note` card and anchored form to `/today` for the
+  lead Goal. It reuses the existing confirmed `save-goal-note` action and
+  shows goal, project, note status, planned/existing operator-notes artifact,
+  confirmation-required, no-overwrite, and zero external-effect readbacks.
+- `/today` now distinguishes a new note target (`today_note_status=not_started`)
+  from an existing operator-notes artifact (`today_note_status=append_to_existing`)
+  so the daily command center can capture resume context without opening the
+  full Goal page.
+- Added focused route assertions for both states: fixture-backed `/today` before
+  notes exist, and `/today` after a confirmed operator note has been saved.
+- Updated README, local app docs, and the operating summary to describe Today
+  note capture as part of the daily cockpit.
+- Non-claims: this does not write on GET, overwrite existing notes, approve
+  work, execute runs, commit, push, create PRs, deploy, call providers, fetch
+  GitHub status, use the network, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with `/today` route marker matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed `/today` snippets matched and zero provider/network/external-mutation counters
+
+## 2026-06-27 Browser Goal Pause Action
+
+- Added a confirmed local `pause-goal` action to the browser app action catalog.
+  It accepts non-paused incomplete goals, records the previous status, sets
+  local goal status to `paused`, and refreshes `.clanker/app/workspace.json` to
+  the Goal artifact so `/resume` and the dashboard stay anchored.
+- Exposed the action from the Goal Daily Loop and `/today` command center,
+  including availability, confirmation-required, pause target, and zero
+  network/external-effect readbacks. Paused and completed goals show the pause
+  form as unavailable.
+- Added route/action tests for the confirmation page, confirmed local result,
+  workspace refresh, double-pause rejection, paused-page unavailable state, and
+  fixture-backed `/today`/Goal Daily Loop surfaces.
+- Updated README, local app docs, and the operating summary so operators can
+  discover pause/resume from the daily product path.
+- Non-claims: this does not write on GET, approve work, start delegations or
+  coder worktrees, commit, push, create PRs, deploy, call providers, fetch
+  GitHub status, use the network, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - temporary-root `/opt/homebrew/bin/python3 -m agent_os.cli --root "$scratch" app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched and zero provider/network/external-mutation counters
+
+## 2026-06-27 Today Command Center
+
+- Added `/today` as a first-class daily command-center route for spending the
+  day inside the browser app without starting from the full dashboard
+  inventory.
+- The route starts with a read-only `Today Command Center` that selects the
+  lead Goal or first-run step, names the current phase, one primary action,
+  target surface or same-page current-action form, attention routing for
+  approvals/incidents/recommendations/inbox, resume readiness, CI proof
+  posture, and a confirmed `Finish Today` workspace save form for tomorrow's
+  resume point.
+- Reused existing Home/Goal primitives below the command center: Start Here,
+  Home Day Plan, Attention Brief, Focus Queue, recent activity, inbox,
+  recommendations, incidents, and first-run guidance.
+- Added `/today` to navigation, keyboard shortcuts (`y`), the local app status
+  route list, app smoke route markers, fixture-backed demo smoke snippets,
+  README, local app docs, and the operating summary.
+- Non-claims: this does not write on GET, add provider calls, fetch GitHub
+  status, approve requests, execute coder work, commit, push, create PRs,
+  deploy, or mutate external systems. Same-page forms are existing confirmed
+  local actions only.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `git diff --check`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with `/today` marker matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed `/today` snippets matched; demo generated
+    `subagent_delegation_84f0503309f9`, `run_c2a2abf75589`, and coder
+    worktree run `run_7c0415f92cbc`
+
+## 2026-06-27 Workspace Operator Workbench
+
+- Added a `Workspace Operator Workbench` immediately after the `/workspace`
+  `Workspace Daily Brief`.
+- The workbench turns editable saved workspace state into do/check/unblock/
+  finish cards with same-page action-form routing when available, saved
+  Goal/project and last-artifact readbacks, blocker routing, resume-readiness
+  repair, and the existing confirmed `#save-workspace` finish surface.
+- Added empty-workspace and fixture-backed saved-Goal route assertions, plus
+  demo smoke snippets for the `/workspace` marker.
+- Updated README, local app docs, and the operating summary to describe
+  `/workspace` as a daily saved-state workbench rather than only a state form.
+- Non-claims: this does not write workspace state on GET, run a workspace
+  action without confirmation, call providers, fetch GitHub status, approve
+  requests, execute coder work, commit, push, create PRs, deploy, or mutate
+  external systems. The finish card points to the existing confirmed local
+  workspace save form.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `df -h /System/Volumes/Data`
+    -> `82Gi` available before smoke tests
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_67237f80a03e`, `run_b3ca42b73274`, and coder
+    worktree run `run_984cf8447f78`
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Resume Operator Workbench
+
+- Added a `Resume Operator Workbench` immediately after the `/resume`
+  `Resume Command Bar`.
+- The workbench turns saved workspace state into do/check/unblock/finish cards
+  with same-page resume action-form routing when available, saved Goal/project
+  and last-artifact readbacks, blocker routing, readiness repair, and the
+  existing `/workspace#save-workspace` finish surface.
+- Added empty-resume and first-run saved-Goal route assertions, plus demo
+  smoke snippets for the `/resume` marker.
+- Updated README, local app docs, and the operating summary to describe
+  `/resume` as a daily return-to-work workbench rather than only a read-only
+  workspace readback.
+- Non-claims: this does not write workspace state on GET, run a resume action
+  without confirmation, call providers, fetch GitHub status, approve requests,
+  execute coder work, commit, push, create PRs, deploy, or mutate external
+  systems. Finish Today links to the existing confirmed local workspace save
+  form.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `df -h /System/Volumes/Data`
+    -> `82Gi` available before smoke tests
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_b31ffc05888f`, `run_ed9daebfb223`, and coder
+    worktree run `run_1b098b102562`
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Inbox Operator Workbench
+
+- Added an `Inbox Operator Workbench` immediately after the `/inbox`
+  `Inbox Command Bar`.
+- The workbench turns the first local operator attention item into
+  do/inspect/Goal/finish cards with queue counts, Goal/delegation/run routing
+  when available, evidence artifact links, a continuation surface, no-form-on-
+  inbox posture, and a confirmed `save-workspace` form that can store the
+  inbox queue as tomorrow's resume point.
+- Added empty-inbox, first-run pending-delegation, and fixture-backed pending
+  worktree-approval route assertions, plus demo smoke coverage for the
+  `/inbox` marker.
+- Updated README, local app docs, and the operating summary to describe
+  `/inbox` as a daily operator workbench rather than only a read-only queue.
+- Non-claims: this does not expose decision forms on `/inbox`, approve
+  anything on GET, execute work, commit, push, create PRs, deploy, fetch
+  GitHub status, call providers, use the network, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `df -h /System/Volumes/Data`
+    -> `82Gi` available before smoke tests
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_9d13acd35845`, `run_f58ff05b8ade`, and coder
+    worktree run `run_0b14dfe28729`
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Approval Operator Workbench
+
+- Added an `Approval Operator Workbench` immediately after the `/approvals`
+  `Approval Queue Command Bar`.
+- The workbench turns the first pending local approval decision into
+  do/inspect/Goal/finish cards with the parent Goal when known, request and
+  evidence artifacts, typed-commit/remote context, same-page decision-form
+  anchor, confirmation posture, and a confirmed `save-workspace` form that can
+  store the approval queue as tomorrow's resume point.
+- Added empty-queue and fixture-backed route assertions for the workbench, plus
+  demo smoke coverage for the `/approvals` marker.
+- Updated README, local app docs, and the operating summary to describe
+  `/approvals` as a continuation/workbench surface rather than only a queue of
+  forms.
+- Non-claims: this does not approve anything on GET, execute work, commit,
+  push, create PRs, deploy, fetch GitHub status, call providers, use the
+  network, or mutate external systems. Existing confirmed approval forms remain
+  the only local decision path.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `df -h /System/Volumes/Data`
+    -> `82Gi` available before smoke tests
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_03eebfa18313`, `run_54adf2f7e735`, and coder
+    worktree run `run_3818ccd71603`
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Run Operator Workbench
+
+- Added a `Run Operator Workbench` immediately after the run detail `Run
+  Command Bar`.
+- The workbench turns coder worktree run gate state into do/check/unblock/
+  finish cards with the current run action, review gate, approval queue,
+  parent Goal, evidence surface, and a confirmed `save-workspace` form that
+  stores the run plus review/evidence artifact as tomorrow's resume point.
+- Added route and fixture assertions for both the reviewed run state
+  (`action_form_ready`) and missing-review state (`same_page_review`) so the
+  run page does not pretend the commit request form is available before the
+  backend review gate passes.
+- Updated README, local app docs, operating summary, demo smoke snippets, and
+  manual browser checkpoints to describe `/runs/<coder_run_id>` as a
+  continuation surface rather than only an evidence page.
+- Non-claims: this does not write workspace state on GET, create a commit
+  request without confirmation, approve requests, commit, push, create PRs,
+  deploy, fetch GitHub status, call providers, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_ca2a01299d4c`, `run_2969b0d17def`, and coder
+    worktree run `run_631ca87a4097`
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Goal Operator Workbench
+
+- Added a `Goal Operator Workbench` immediately after the Goal Command Bar on
+  `/goals/<goal_id>`.
+- The workbench turns the current Goal state into a do/check/unblock/finish
+  strip, links the in-page Goal action form when available, names the source
+  surface, current gate/progress, first unblock surface, and finish-today
+  resume save target.
+- Added machine-readable counters for form availability, confirmation posture,
+  pending approvals, open incidents/recommendations, gate progress, and
+  write/provider/network/external-effect boundaries so GitHub smoke and route
+  assertions can guard the UX surface.
+- Updated README, local app docs, and operating summary to describe the new
+  workbench as the human-first layer above the longer diagnostic panels.
+- Non-claims: this does not write workspace state on GET, run the next action
+  without confirmation, call providers, fetch GitHub status, approve requests,
+  commit, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_3437e107e635`, `run_9591d493956c`, and coder
+    worktree run `run_d44218b1ab8a`
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 First Run Command Bar
+
+- Added a read-only `First Run Command Bar` to the top of the Home and
+  `/goals` `First Run Guide`.
+- The bar names the current first-run step, one next action, target surface,
+  form surface, Goal/delegation context, confirmation posture, `/resume`, and
+  write/provider/network/external-effect counters before the detailed guided
+  path and fallback forms.
+- Once a Goal exists, the bar reuses the existing Goal next-action form inline,
+  so the operator can create the scout delegation, generate the context pack,
+  or run the first delegation directly from the guide with the same confirmed
+  local-action boundary as the Goal page.
+- Added route assertions for empty checkout, post-project registration,
+  post-goal creation, post-delegation context-pack generation, and
+  post-context-pack run-delegation states.
+- Updated README, local app docs, and the operating summary to describe the
+  first-run guide as a command surface rather than only a checklist/readback.
+- Non-claims: this does not write workspace state on GET, run first-run actions
+  without confirmation, call providers, use non-loopback network actions,
+  approve requests, create commits, push, create PRs, deploy, fetch GitHub
+  status, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_a8b578136b5f`, `run_5e981a10e697`, and coder
+    worktree run `run_17b14cf8eaa6`
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Command Palette Route Context
+
+- Added a read-only `Current Page` route-context block to the shared command
+  palette on every local app page.
+- The palette now names the current route family/path, parent surface,
+  resolved Goal/Project/run context when available, current phase, saved
+  workspace project/Goal anchors, current focus target, `/resume`, and
+  write/provider/network/external-effect counters before the goal continuation
+  action and link drawer.
+- Added route-context assertions for first-run Home and a fixture-backed Goal
+  page so the keyboard palette stays useful in both empty and populated
+  operator states.
+- Updated README, local app docs, and the operating summary to describe `/` as
+  a route-aware operator command surface instead of only a generic search/link
+  drawer.
+- Non-claims: this does not write workspace state on GET, navigate
+  automatically, run work, approve requests, create delegations, create coder
+  prep, commit, push, create PRs, deploy, fetch GitHub status, call providers,
+  use non-loopback network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_d3fda9485379`, `run_57aadbccd130`, and coder
+    worktree run `run_417fe07d72e4`
+
+## 2026-06-27 Route Context Breadcrumb Strip
+
+- Upgraded the shared app breadcrumbs into a read-only `Route Context` strip
+  on every local app page.
+- The strip now reports route family/path, parent surface, current
+  Goal/Project/run context when available, current phase for Goal/run routes,
+  saved workspace project/Goal/artifact anchors, `/resume`, the current focus
+  target, write-on-GET posture, and zero provider/network/external-effect
+  counters in a compact summary plus expandable details block before page
+  content.
+- Added route-context assertions for empty dashboard state, fixture-backed
+  Goal pages, and deep coder run pages so long operator flows keep their
+  orientation and backtracking targets.
+- Updated README, local app docs, and the operating summary to describe the
+  shared route context surface alongside Operator Focus, recent items, command
+  palette, shortcuts, and theme controls.
+- Non-claims: this does not write workspace state, navigate automatically, run
+  work, approve requests, create fixture state, call providers, fetch GitHub
+  status, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_90ef8b3ddb0b`, `run_b1ff7069384b`, and coder
+    worktree run `run_b41357ecd72f`
+  - `git diff --check` -> passed
+
+## 2026-06-27 Dogfooding Command Bar
+
+- Added a read-only `Dogfooding Command Bar` to `/dogfooding`.
+- The bar summarizes fixture status, selected project/Goal/delegation/run,
+  one recommended target surface, demo command, route-walk/CI/action/health
+  links, write-on-GET posture, and zero provider/network/external-effect/push/
+  PR/deploy counters before the longer dogfooding checklist.
+- Added stable anchors for the next-action panel, fixture refresh, browser
+  route walk, commit/publication gate walk, GitHub Actions follow-up,
+  verification handoff, and safety boundary sections.
+- Updated README, local app docs, operating summary, focused route assertions,
+  and fixture-backed demo smoke snippets to make the dogfooding surface a
+  first-class operator page instead of a checklist-only page.
+- Non-claims: this does not create fixture state from the browser, call
+  providers, fetch GitHub status, push, create PRs, deploy, approve requests,
+  execute coder runs, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_cf2048d93f2d`, `run_0c6b30c329f0`, and coder
+    worktree run `run_40bcfca17f55`
+  - `git diff --check` -> passed
+
+## 2026-06-27 Health Command Bar
+
+- Added a `Health Command Bar` to `/health`.
+- The bar summarizes local health readiness, warning count, bind scope,
+  branch/commit, dirty/untracked posture, storage and workflow-import
+  readiness, total indexed records, registered command count, the refreshed
+  local status artifact, explicit `status_artifact_write_on_get=true`, one
+  next local surface, and zero provider/network/external-effect counters before
+  the detailed diagnostics.
+- Split `/health` into scan-first command, warning, diagnostics, counts, key
+  commands, and workflow-import sections with stable anchors.
+- Updated README, local app docs, and the operating summary to describe
+  `/health` as a trust/readiness surface and to make its local status-artifact
+  write explicit.
+- Non-claims: this does not call providers, fetch GitHub status, push, create
+  PRs, deploy, run workflow actions, approve requests, execute coder runs, or
+  mutate external systems. `/health` still intentionally writes only the local
+  `.clanker/app/local_app_status.json` status artifact.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_79626d6290bc`, `run_bac16f00207c`, and coder
+    worktree run `run_3b001fef722c`
+
+## 2026-06-27 Action Catalog Command Bar
+
+- Added a read-only `Action Catalog Command Bar` to `/actions`.
+- The bar summarizes total, navigation, mutating, confirmation-required,
+  local-execution, local-git, approval, artifact/evidence, and readback action
+  counts, plus first safe action, target anchors, and zero provider/network/
+  external-effect counters before the longer safe action catalog.
+- Added stable anchors for navigation actions, dashboard refresh, current demo
+  action surfaces, local artifact/approval actions, and the execution boundary.
+- Updated README, local app docs, and the operating summary to describe
+  `/actions` as a scan-first operator surface rather than only an inventory.
+- Non-claims: this does not add new actions, bypass confirmations, write on
+  GET, run work, approve requests, create commits, push, create PRs, deploy,
+  call providers, fetch GitHub status, perform non-loopback network actions, or
+  mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_4c89e1433fa4`, `run_0820ce238543`, and coder
+    worktree run `run_e561c833b82c`
+
+## 2026-06-27 Action Confirmation Command Bar
+
+- Added a read-only `Action Confirmation Command Bar` to every local app
+  confirmation page before `confirm=yes`.
+- The bar summarizes action category, source surface, submitted field count,
+  required input, output artifact, local mutation/execution posture, and
+  no-provider/no-network/no-push/no-PR/no-deploy counters before any local
+  action is completed.
+- Updated README, local app docs, and the operating summary to describe
+  confirmation pages as first-class preflight surfaces; removed stale wording
+  that said worktree execution was CLI-first outside the demo.
+- Non-claims: this does not change action authorization, bypass confirmation,
+  loosen safe-command validation, run work on page load, approve requests,
+  push, create PRs, deploy, call providers, fetch GitHub status, or perform
+  non-loopback network actions.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or goal_runs_approved_worktree_from_browser_action" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with fixture-backed route snippets matched; demo generated
+    `subagent_delegation_2c68c54c0572`, `run_01e599a1b83a`, and coder
+    worktree run `run_d0a9d2941000`
+
+## 2026-06-27 Workflow Command Bar
+
+- Added a read-only `Workflow Command Bar` at the top of `/workflow`.
+- Empty workflow state now points at `/delegation-runs`; selected delegation
+  and selected run URLs summarize delegation/run/Goal/project context, current
+  workflow stage, exact next local action, target surface, reason, and
+  zero-effect counters before the detailed selected-state and continuation
+  sections.
+- README, local app docs, and the operating summary now describe scoped
+  workflow pages as scan-first operator maps.
+- Non-claims: this does not write state on GET, run work, approve requests,
+  create commits, push, create PRs, deploy, call providers, fetch GitHub
+  status, execute arbitrary commands, or perform non-loopback network actions.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with scoped workflow snippets matched; demo generated
+    `subagent_delegation_863a3345d55d`, `run_0d8990805a71`, and coder
+    worktree run `run_034264572bad`
+
+## 2026-06-27 Resume Command Bar
+
+- Added a read-only `Resume Command Bar` at the top of `/resume`.
+- The bar summarizes saved workspace availability, resume readiness, project/
+  Goal/artifact links, current phase, current workflow gate, one next local
+  action, target surface, action-form availability, progress, and zero-effect
+  counters before the longer resume checklist.
+- Empty resume state now gives a scan-first `Open goals` target, while a saved
+  demo Goal exposes the same `Create commit request` continuation and run
+  target that the Goal page would recommend.
+- README, local app docs, and the operating summary now describe `/resume` as
+  a scan-first return-to-work surface.
+- Non-claims: this does not write state on GET, save workspace state, run work,
+  approve gates, stage files, commit, push, create PRs, deploy, call providers,
+  fetch GitHub status, use non-loopback network actions, or mutate external
+  systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed after tightening the `/resume` smoke expectation to the
+    no-saved-workspace contract; demo generated
+    `subagent_delegation_fd26c226c725`, `run_781f815ee71c`, and coder
+    worktree run `run_133098e12352`
+
+## 2026-06-27 Demo Command Bar
+
+- Added a read-only `Demo Command Bar` at the top of `/demo`.
+- The bar reports fixture availability, the preferred
+  `python3 -m agent_os.cli demo` command, the compatibility
+  `demo-app-scenario` command, selected project/Goal/delegation/run links, one
+  next local surface, and zero-effect counters before the longer demo
+  walkthrough.
+- Empty demo state now points at the short `demo` command, while preserving
+  `demo-app-scenario` as a compatibility command in the browser and docs.
+- README, local app docs, and the operating summary now describe `/demo` as a
+  scan-first product walkthrough surface.
+- Non-claims: this does not write state on GET, create fixture state from the
+  browser, run work, approve gates, stage files, commit, push, create PRs,
+  deploy, call providers, fetch GitHub status, use non-loopback network
+  actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_cb8fc4b38416`,
+    `run_fd718371cc38`, and coder worktree run `run_c6038b9a4c29`
+
+## 2026-06-27 Goal Command Navigation Anchors
+
+- Added stable Goal Section Index jump targets for the existing read-only
+  `Goal Timeline Command Bar`, `Goal Activity Command Bar`, and
+  `Goal Git Command Bar`.
+- The Timeline, Activity, and Git command bars now have explicit DOM anchors,
+  so operators can jump to the scan-first panels on long Goal pages instead of
+  landing only on the longer detail sections.
+- README, local app docs, and the operating summary now describe the Goal
+  Section Index as a navigation surface for command bars as well as detailed
+  sections.
+- Non-claims: this does not write state on GET, create events, run work,
+  approve gates, fetch GitHub status, stage files, commit, push, create PRs,
+  deploy, call providers, use non-loopback network actions, or mutate external
+  systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_7dc8fdbc39f4`,
+    `run_fc246d01b1ff`, and coder worktree run `run_563418785cca`
+
+## 2026-06-27 Goal Overview Command Bar
+
+- Added a read-only `Goal Overview Command Bar` before the raw Goal Overview
+  metadata on `/goals/<goal_id>`.
+- The bar summarizes goal identity, status, phase, risk, progress,
+  task/delegation/run/approval counts, waiting approvals/incidents/
+  recommendations, one next local action, and zero-effect counters.
+- The Goal Section Index now links directly to the overview command surface,
+  so operators can answer "what is this goal and what do I click next?" before
+  reading the longer detail sections.
+- README, local app docs, and the operating summary now describe Goal Overview
+  as a scan-first local orientation surface.
+- Non-claims: this does not write state on GET, run work, approve gates,
+  resolve incidents, create artifacts, append notes, call providers, use
+  non-loopback network actions, fetch GitHub status, push, create PRs, deploy,
+  or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_6de3821b3cc3`,
+    `run_0b8c7fc9430e`, and coder worktree run `run_d2711ee830ca`
+
+## 2026-06-27 Goal Incident Command Bar
+
+- Added a read-only `Goal Incident Command Bar` to the Goal page before the
+  detailed Goal Incidents list.
+- The bar summarizes open/resolved incidents, open recovery recommendations,
+  the first incident's severity, run, task, evidence, one triage surface, and
+  zero-effect counters.
+- The Goal Section Index now links directly to the incident command surface,
+  so operators can tell whether a Goal needs incident attention before parsing
+  the detailed incident rows.
+- README, local app docs, and the operating summary now describe Goal
+  Incidents as a scan-first local triage posture surface.
+- Non-claims: this does not write state on GET, resolve incidents, retry work,
+  approve gates, run work, create artifacts, append notes, call providers, use
+  non-loopback network actions, fetch GitHub status, push, create PRs, deploy,
+  or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "goal_page_promotes_goal_incidents or local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `3 passed, 512 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_32e59d465bea`,
+    `run_fb03728ef9c7`, and coder worktree run `run_8f718dad0906`
+
+## 2026-06-27 Goal Progress Command Bar
+
+- Added a read-only `Goal Progress Command Bar` to the Goal page before the
+  browser progress bar and detailed task counts.
+- The bar summarizes task completion, percent complete, workflow gate
+  progress, current gate, waiting approval/incident/recommendation posture,
+  one next local action, and zero-effect counters.
+- The Goal Section Index now links directly to the progress command surface,
+  so operators can see whether a Goal is moving, blocked, waiting, or complete
+  before parsing the task progress rows.
+- README, local app docs, and the operating summary now describe Goal Progress
+  as a scan-first local progress posture surface.
+- Non-claims: this does not write state on GET, complete tasks, mark goals
+  complete, approve gates, run work, create artifacts, append notes, call
+  providers, use non-loopback network actions, fetch GitHub status, push,
+  create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_c37c9d41a5f5`,
+    `run_0686c70906fb`, and coder worktree run `run_159303ee241f`
+
+## 2026-06-27 Goal Criteria Command Bar
+
+- Added a read-only `Goal Criteria Command Bar` to the Goal page before the
+  detailed Goal Completion Criteria list.
+- The bar summarizes completion criteria source, item count, progress,
+  plan/contract posture, plan step/task completion counts, first acceptance
+  item, one next local review surface, and zero-effect counters.
+- The Goal Section Index now links directly to the criteria command surface,
+  so operators can see what proves the Goal complete before parsing the full
+  criteria list.
+- README, local app docs, and the operating summary now describe Goal
+  Completion Criteria as a scan-first local acceptance posture surface.
+- Non-claims: this does not write state on GET, mark goals complete, approve
+  gates, run work, create artifacts, append notes, call providers, use
+  non-loopback network actions, fetch GitHub status, push, create PRs, deploy,
+  or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_0ce0928d54ec`,
+    `run_55227272557a`, and coder worktree run `run_ebce34d8ff9f`
+
+## 2026-06-27 Goal Risk Command Bar
+
+- Added a read-only `Goal Risk Command Bar` to the Goal page before the
+  detailed Goal Risk task list.
+- The bar summarizes goal risk level, low/medium/high/unknown task-risk
+  counts, approval-boundary posture, first task risk/status, risk-note
+  presence, one next local surface, and zero-effect counters.
+- The Goal Section Index now links directly to the risk command surface, so
+  operators can check whether approval review is needed before parsing the
+  detailed task-risk lines.
+- README, local app docs, and the operating summary now describe Goal Risk as
+  a scan-first local safety posture surface.
+- Non-claims: this does not write state on GET, approve gates, run work,
+  create artifacts, append notes, call providers, use non-loopback network
+  actions, fetch GitHub status, push, create PRs, deploy, or mutate external
+  systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_a0fc98caaa8d`,
+    `run_a5b89fb47e10`, and coder worktree run `run_1a979a65d3be`
+
+## 2026-06-27 Goal Remaining Work Command Bar
+
+- Added a read-only `Goal Remaining Work Command Bar` to the Goal page before
+  the detailed Remaining Work checklist.
+- The bar summarizes current gate, done/pending/waiting gate counts, open
+  task, incident, recommendation, and approval posture, first open task, one
+  next local surface, and zero-effect counters.
+- The Goal Section Index now links directly to the remaining-work command
+  surface, so operators can see what is left and where to go next before
+  parsing the full gate checklist.
+- README, local app docs, and the operating summary now describe Goal
+  Remaining Work as a scan-first local gate posture surface.
+- Non-claims: this does not write state on GET, run work, approve gates,
+  create artifacts, append notes, call providers, use non-loopback network
+  actions, fetch GitHub status, push, create PRs, deploy, or mutate external
+  systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_3e898cf121a5`,
+    `run_1a0f53abf479`, and coder worktree run `run_0d217a02d599`
+
+## 2026-06-27 Goal Operator Notes Command Bar
+
+- Added a read-only `Goal Operator Notes Command Bar` to the Goal page before
+  the detailed Operator Notes readback and append form.
+- The bar summarizes whether the goal-scoped `operator-notes.md` artifact
+  exists, timestamped entry count, artifact size/update posture, planned path,
+  workspace resume-anchor status, one next review or capture target, and
+  zero-effect counters.
+- The Goal Section Index now links directly to the operator-notes command
+  surface, so operators can decide whether to capture or review resume context
+  without parsing the form and raw note lines first.
+- README, local app docs, and the operating summary now describe Goal Operator
+  Notes as a scan-first local resume-context posture surface.
+- Non-claims: this does not write state on GET, append notes without explicit
+  confirmation, overwrite previous notes, read raw filesystem paths, call
+  providers, use non-loopback network actions, fetch GitHub status, push,
+  create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_1a33b6d682c9`,
+    `run_13bd486c075f`, and coder worktree run `run_91650e21c66f`
+
+## 2026-06-27 Goal Skills Command Bar
+
+- Added a read-only `Goal Skills Command Bar` to the Goal page before the
+  detailed Skills Used readback.
+- The bar summarizes task skill tags, matching generated or available local
+  skill records, active/proposed/generated counts, usage and project counts,
+  delegation profile usage, the first local skill artifact, one next review
+  target, and zero-effect counters.
+- The Goal Section Index now links directly to the skills command surface, so
+  operators can see which capabilities a Goal is using without parsing the
+  detailed skill list first.
+- README, local app docs, and the operating summary now describe Goal Skills
+  as a scan-first local skill posture surface.
+- Non-claims: this does not write state on GET, execute skills, install
+  skills, read raw filesystem paths, call providers, use non-loopback network
+  actions, fetch GitHub status, push, create PRs, deploy, or mutate external
+  systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_728d4eebd404`,
+    `run_e5382d8c2639`, and coder worktree run `run_db3e77db42e6`
+
+## 2026-06-27 Goal Memory Command Bar
+
+- Added a read-only `Goal Memory Command Bar` to the Goal page before the
+  detailed memory readback.
+- The bar summarizes project/global memory artifacts, project/active/proposed/
+  global/generated entry counts, operator-note state, future-work count, latest
+  memory summaries, pinning posture, one next local memory action, and
+  zero-effect counters.
+- The Goal Section Index now links directly to the memory command surface, so
+  operators can see whether to capture notes, review memory, or open `/memory`
+  without parsing the full memory list first.
+- README, local app docs, and the operating summary now describe Goal Memory
+  as a scan-first local memory posture surface.
+- Non-claims: this does not write state on GET, pin memory from the Goal page,
+  append operator notes, create artifacts, read raw filesystem paths, call
+  providers, use non-loopback network actions, fetch GitHub status, push,
+  create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_5570ddead574`,
+    `run_5e1004481ef8`, and coder worktree run `run_527cb36a8c35`
+
+## 2026-06-27 Goal Artifact Command Bar
+
+- Added a read-only `Goal Artifact Command Bar` to the Goal page before the
+  detailed artifact list and typed artifact explorer.
+- The bar summarizes goal artifact records, available/missing posture,
+  Markdown/JSON/Patch/Text render-family counts, source-family counts, latest
+  artifact metadata, one bounded artifact review click, raw-filesystem
+  browsing posture, and zero-effect counters.
+- The Goal Section Index now links directly to the artifact command surface,
+  so operators can choose the newest useful artifact without parsing the full
+  artifact inventory first.
+- README, local app docs, and the operating summary now describe Goal
+  Artifacts as a scan-first local artifact posture surface.
+- Non-claims: this does not write state on GET, create artifacts, inspect raw
+  filesystem paths, generate evidence, run work, approve gates, commit, push,
+  create PRs, deploy, call providers, use non-loopback network actions, fetch
+  GitHub status, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_8cc570f3231b`,
+    `run_d76f0be41d35`, and coder worktree run `run_d10e7e6d6bda`
+
+## 2026-06-27 Goal Delegation Command Bar
+
+- Added a read-only `Goal Delegation Command Bar` to the Goal page before the
+  detailed delegation list.
+- The bar summarizes scout delegation counts, pending/running/completed/
+  failed-or-blocked posture, context-pack readiness, implementation handoff
+  readiness, coder-prep packets, worktree plans, the latest delegation and
+  workflow surfaces, one next local continuation, and zero-effect counters.
+- The Goal Section Index now links directly to the delegation command surface,
+  so operators can inspect scout/context/handoff readiness from the long Goal
+  page without parsing raw delegation rows first.
+- README, local app docs, and the operating summary now describe Goal
+  Delegations as a scan-first local workflow posture surface.
+- Non-claims: this does not write state on GET, create delegations, generate
+  context packs, run delegations, create handoffs, run coder prep, plan
+  worktrees, approve gates, run work, commit, push, create PRs, deploy, call
+  providers, use non-loopback network actions, fetch GitHub status, or mutate
+  external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_0304adb3dd7d`,
+    `run_194e70715e77`, and coder worktree run `run_5dbb01b332d6`
+
+## 2026-06-27 Goal Run Command Bar
+
+- Added a read-only `Goal Run Command Bar` to the Goal page before the
+  detailed run list.
+- The bar summarizes task-run and worktree-run counts, completed/running/
+  failed worktree run posture, reviewed and review-blocked runs, verification
+  failures, changed-file posture, outside-allowed-file posture, the latest run
+  surface, latest diff evidence, one next local run action, and zero-effect
+  counters.
+- The Goal Section Index now links directly to the run command surface, so a
+  long Goal page exposes run/review posture without requiring the operator to
+  parse dense run rows first.
+- README, local app docs, and the operating summary now describe Goal Runs as
+  a scan-first local run posture surface.
+- Non-claims: this does not write state on GET, run work, review runs, create
+  commit requests, approve gates, commit, push, create PRs, deploy, call
+  providers, use non-loopback network actions, fetch GitHub status, or mutate
+  external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_673422e6e1f3`,
+    `run_77b351f5244a`, and coder worktree run `run_0ae46dfd41e8`
+
+## 2026-06-27 Goal Approval Command Bar
+
+- Added a read-only `Goal Approval Command Bar` to the Goal page before the
+  detailed approval list.
+- The bar summarizes pending and approved worktree, commit, and publication
+  approval gates, committed commit records, ready publication handoffs, one
+  next local approval or continuation surface, and zero-effect counters.
+- The Goal Section Index now links directly to the approval command surface,
+  so a long Goal page exposes approval posture without requiring a trip to the
+  raw approval rows first.
+- README, local app docs, and the operating summary now describe Goal
+  Approvals as a scan-first local approval posture surface.
+- Non-claims: this does not write state on GET, approve gates, run work,
+  commit, push, create PRs, deploy, call providers, use non-loopback network
+  actions, fetch GitHub status, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_99bb6b42be00`,
+    `run_ffb9fc468707`, and coder worktree run `run_713e4530ee70`
+
+## 2026-06-27 Goal Evidence Command Bar
+
+- Added a read-only `Goal Evidence Command Bar` to the top of each Goal's
+  Evidence section.
+- The bar summarizes detailed evidence-line count, typed artifact record
+  count, run evidence, worktree evidence, incident evidence, recommendation
+  evidence, Markdown/JSON/Patch/Text artifact counts, the latest artifact
+  surface, one next local review action, and zero-effect counters before the
+  detailed evidence list.
+- The Goal Section Index now links directly to the Evidence command surface,
+  making long Goal pages easier to scan during daily operation.
+- README, local app docs, and the operating summary now describe Goal Evidence
+  as a scan-first local proof/evidence posture surface.
+- Non-claims: this does not write state on GET, generate evidence, run work,
+  approve gates, fetch GitHub status, commit, push, create PRs, deploy, call
+  providers, use non-loopback network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_5de6ec711bd8`,
+    `run_2394957f0a82`, and coder worktree run `run_e1297a496c60`
+
+## 2026-06-27 Goal Verification Command Bar
+
+- Added a read-only `Goal Verification Command Bar` to the top of each Goal's
+  Verification Evidence surface.
+- The bar summarizes project-scoped CI proof status, latest source/status/
+  scope, branch and commit freshness, latest run/evidence link, one next proof
+  action, target surface, and zero-fetch/zero-effect counters before the
+  detailed proof lines and recording form.
+- It distinguishes missing proof, stale proof, job-scoped early proof, current
+  full workflow success, and non-success proof records so fast-smoke evidence
+  is not presented as full-suite completion.
+- README, local app docs, and the operating summary now describe Goal
+  verification as a scan-first proof posture surface.
+- Non-claims: this does not write state on GET, fetch GitHub status, run CI,
+  approve gates, run work, commit, push, create PRs, deploy, call providers,
+  use non-loopback network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_73d44d4ad495`,
+    `run_bf79a7ba91ad`, and coder worktree run `run_5183d4da652f`
+
+## 2026-06-27 Goal Timeline Command Bar
+
+- Added a read-only `Goal Timeline Command Bar` to the top of each Goal
+  timeline.
+- The bar summarizes total timeline items, the latest linked event, event
+  family counts for artifacts, approvals, delegations, runs, tasks, and
+  operator notes, the source (`goal_timeline_items`), and zero-effect counters
+  before the full chronological event list.
+- README, local app docs, and the operating summary now describe the Goal
+  timeline as a scan-friendly event surface, not only a long chronological
+  list.
+- Non-claims: this does not write state on GET, create artifacts, create
+  events, approve gates, run work, commit, push, create PRs, deploy, call
+  providers, use non-loopback network actions, fetch GitHub status, or mutate
+  external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_56fb3fe8a5bb`,
+    `run_4a4666e264f7`, and coder worktree run `run_e09b31f4b09f`
+
+## 2026-06-27 Recent Items Command Bar
+
+- Added a read-only `Recent Items Command Bar` to the shared app sidebar on
+  every page.
+- The bar turns the sidebar into a resume-oriented decision surface by showing
+  the first reopen target, counts for workspace/goal/delegation/run shortcuts,
+  saved project/goal/artifact context, `/resume`, and zero-effect counters
+  before the longer recent-link list.
+- Fresh empty state points at the Goal cockpit with explicit `first_run`
+  status. Fixture-backed populated state points at the lead Goal when no saved
+  workspace exists.
+- README, local app docs, and the operating summary now describe recent items
+  as part of the all-day browser shell and next-session resume path.
+- Non-claims: this does not write state on GET, save workspace automatically,
+  create goals, approve gates, run work, commit, push, create PRs, deploy,
+  call providers, use non-loopback network actions, fetch GitHub status, or
+  mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_0951f7af920a`,
+    `run_267d736c886f`, and coder worktree run `run_44882af73400`
+
+## 2026-06-27 Goal Board Command Bar
+
+- Added a read-only `Goal Board Command Bar` to `/goals`.
+- The board command bar summarizes total active/paused/completed goal counts,
+  prioritizes the saved workspace Goal when present and otherwise the first
+  active/paused/completed Goal, and shows the selected Goal's project, phase,
+  one next action, target surface, reason, progress, waiting counts, resume
+  route, action availability, and zero-effect counters.
+- Empty goal state now also gets a board-level first-run pointer that links to
+  the `First Run Guide` forms instead of leaving `/goals` as only an empty
+  header plus setup panel.
+- README, local app docs, and the operating summary now describe `/goals` as a
+  board-level decision surface before the active/paused/completed lanes.
+- Non-claims: this does not write state on GET, create goals, approve gates,
+  run work, commit, push, create PRs, deploy, call providers, use non-loopback
+  network actions, fetch GitHub status, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state"`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed; `/goals` rendered with zero provider/network/external mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed; demo generated `subagent_delegation_df26d7324574`,
+    `run_f36da3f47667`, and coder worktree run `run_bf3e4451d942`
+
+## 2026-06-27 Approval Decision Brief
+
+- Added a read-only `Approval Decision Brief` immediately after the
+  `/approvals` queue command bar.
+- The brief expands the first pending local decision into the decision kind,
+  approval id, project, exact action/form target, delegation/workflow/run
+  surfaces, request artifact, evidence artifact, post-decision surface, typed
+  commit-message requirement, changed-file count, remote target where
+  relevant, and explicit no-write/no-execute/no-network/no-external-effect
+  counters.
+- Worktree approvals correctly show `run=not_created_yet` and link the
+  delegation/workflow until a coder worktree run exists. Commit and publication
+  decisions link to the existing run detail.
+- README, local app docs, and the operating summary now describe `/approvals`
+  as an operator decision surface, not only a pending-item queue.
+- Non-claims: this does not write state on GET, approve gates, run work,
+  commit, push, create PRs, deploy, call providers, use non-loopback network
+  actions, fetch GitHub status, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state"`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff -- docs/runtime-capability-matrix.md`
+    -> no diff after restoring the checked-in runtime baseline
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Home Attention Brief
+
+- Added a read-only `Home Attention Brief` near the top of `/`.
+  It prioritizes existing local incidents, pending approvals, open
+  recommendations, inbox load, first-run setup when no goal exists, missing CI
+  proof for established goal work, and then the lead goal.
+- The brief links to existing operator surfaces (`/incidents`, `/approvals`,
+  `/inbox`, `/verification`, `/goals`, or the lead goal's next surface)
+  instead of adding a second action engine.
+- README, local app docs, and the operating summary now describe Home as a
+  daily triage board, not just separate goal/inbox/proof sections.
+- Non-claims: this does not write state on GET, fetch GitHub status, approve
+  gates, resolve incidents, pin memories, run work, push, create PRs, deploy,
+  call providers, use non-loopback network actions, or mutate external
+  systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+
+## 2026-06-27 Artifact Review Brief
+
+- Added a read-only `Artifact Review Brief` to `/artifacts?path=...` between
+  the artifact command bar and inert content renderer.
+- The brief identifies goal-scoped, delegation-scoped, saved-resume-anchor,
+  and unclassified artifacts. Goal-scoped artifacts link back to their Goal
+  and Project; unclassified artifacts point toward the remember/resume
+  workspace path.
+- README, local app docs, and the operating summary now describe artifact
+  pages as workflow review surfaces rather than bounded file previews only.
+- Non-claims: this does not write state on GET, execute artifact content,
+  browse arbitrary filesystem paths, approve gates, fetch GitHub status, push,
+  create PRs, deploy, call providers, use non-loopback network actions, or
+  mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_artifact_viewer_is_read_only_and_bounded" --tb=short`
+    -> `1 passed, 514 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+
+## 2026-06-27 Workspace Daily Brief
+
+- Added a read-only `Workspace Daily Brief` near the top of `/workspace`.
+  It summarizes the saved project, saved goal, last artifact, current phase,
+  current gate, one next local action, resume readiness, waiting items, and
+  finish-today save posture before the editable workspace form.
+- Empty workspaces now point at `/goals` with an explicit
+  `no_saved_workspace` status, while saved demo workspaces show the current
+  gate and next action from the saved Goal state.
+- README, local app docs, and the operating summary now describe `/workspace`
+  as a morning/end-of-day checklist surface, not just an editable state file.
+- Non-claims: this does not write state on GET, run actions automatically,
+  approve gates, fetch GitHub status, push, create PRs, deploy, call
+  providers, use non-loopback network actions, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff -- docs/runtime-capability-matrix.md`
+    -> no diff after restoring the checked-in runtime baseline
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Goal Completion Readiness
+
+- Added a read-only `Goal Completion Readiness` section to each Goal page.
+  It combines workflow gate progress, open local blockers, pending approvals,
+  publication handoff readiness, and completion criteria into one explicit
+  finish posture.
+- The section names whether the Goal is completed, blocked by incidents,
+  waiting for operator approval, ready for manual completion, still moving
+  through workflow gates, or missing evidence review. It also links the next
+  local surface and keeps the write/network/external-effect counters visible.
+- The confirmed `complete-goal` form is now surfaced inside Completion
+  Readiness only after the manual publish handoff is ready, so the browser UI
+  makes the safe finish path visible without implying automatic publishing.
+- README, local app docs, and the operating summary now describe Completion
+  Readiness as the operator-facing answer to "can I finish this goal now?".
+- Non-claims: this does not fetch GitHub status, push, create PRs, deploy,
+  approve gates automatically, call providers, use non-loopback network
+  actions, write state on GET, or mutate external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or goal_next_action_card_exposes_commit_publication_gate_forms" --tb=short`
+    -> `3 passed, 512 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff -- docs/runtime-capability-matrix.md`
+    -> no diff after restoring the checked-in runtime baseline
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Goal Git Command Bar
+
+- Added a read-only `Goal Git Command Bar` at the top of the Goal page
+  `Git Status` section. The bar summarizes the registered project root,
+  branch, commit, clean/dirty posture, tracked and untracked counts, latest
+  goal-linked `git_status.txt` artifact when available, one next local
+  surface, and explicit no-fetch/no-write/no-network/no-external-effect
+  boundaries.
+- In the fixture-backed demo, a clean registered project now points the Git
+  command bar at `Goal Verification Evidence`, while still surfacing the
+  latest coder-run `git_status.txt` evidence artifact for review.
+- README, local app docs, and the operating summary now describe Git Status
+  as an operator posture surface rather than a thin branch/commit readback.
+- Non-claims: this does not fetch GitHub status, run git commands beyond
+  local readback, stage files, commit, push, create PRs, deploy, call
+  providers, use non-loopback network actions, write state on GET, or mutate
+  external systems.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `1 passed, 514 deselected`
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+
+## 2026-06-27 Action Result Continuation
+
+- Added an `Action Continuation` block to successful local app action result
+  pages. After a confirmed local action writes artifacts, approvals, or saved
+  workspace state, the result page now reads the refreshed saved goal and
+  shows current phase, one next action, target surface, result next-page link,
+  zero-effect counters, and the same confirmed local action form when that
+  next action is browser-available.
+- This makes result pages part of the daily browser loop instead of a
+  readback-only stop: after `delegate`, for example, the result can point
+  directly at `Generate context pack`; after `coder-commit-request`, it can
+  point directly at `Approve commit`.
+- README, local app docs, and the operating summary now describe confirmed
+  action results as continuation surfaces.
+- Non-claims: this does not add a new action engine, write state on GET,
+  auto-run follow-up work, approve gates, create delegations, create coder
+  prep, commit, push, create PRs, deploy, fetch GitHub status, call providers,
+  use non-loopback network actions, or mutate external systems. It only reads
+  saved local state after a confirmed action and renders existing confirmed
+  local forms when those forms already exist.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "first_run_browser_actions_persist_resume_workspace or goal_next_action_card_exposes_reviewed_commit_request_form" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+- GitHub CI follow-up:
+  - Run `28279087021` for commit
+    `83b00059ab972fe64d815507e04538233632e3bb` failed in
+    `Fast smoke verification` on
+    `test_local_app_demo_scenario_populates_fixture_state` because the new
+    demo assertion expected the continuation target to be the run page.
+  - The rendered product contract is more specific: after
+    `coder-commit-request`, `Approve commit` targets `/approvals`, while
+    `action_continuation_next_page` points back to the run result page with
+    the notice query preserved.
+  - Local CI-matching follow-up verification:
+    `/opt/homebrew/bin/python3 -m compileall -q agent_os tests`
+    -> passed;
+    `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "github_actions_workflow_runs_automatic_verification or github_actions_smoke_uses_temp_root_and_expected_order or ci_snapshot_evidence_from_gh_json_validates_successful_matching_run or ci_snapshot_evidence_from_gh_json_records_completed_job_while_run_in_progress or ci_snapshot_evidence_from_gh_json_rejects_pending_or_wrong_commit or local_app_records_ci_snapshot_evidence_from_pasted_gh_json or local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json or local_app_rejects_pending_ci_snapshot_status_json_without_record or ci_snapshot_handoff_prints_watch_and_record_commands_without_writes or local_app_routes_render_modern_workflow_and_health or local_app_runs_delegation_from_browser_action or goal_runs_approved_worktree_from_browser_action or local_app_artifact_viewer_is_read_only_and_bounded or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety" --tb=short`
+    -> `15 passed, 500 deselected`.
+
+## 2026-06-27 Operator Focus Action Form
+
+- Promoted the global `Operator Focus` strip from a read-only current-goal
+  readback into a compact continuation surface. When the saved or lead goal's
+  next action is browser-available, the strip now exposes an expandable
+  `Run Current Action` disclosure with the same confirmed local action form as
+  the Goal page.
+- The command palette and focus strip now share the same precomputed
+  next-action form from focus context, so their form availability and safety
+  readbacks stay aligned across Home, Goal, Resume, Workspace, and other app
+  pages.
+- README, local app docs, and the operating summary now describe the shared
+  shell as an always-visible daily-use continuation surface rather than a
+  navigation/readback layer only.
+- Non-claims: this does not add a new action engine, write state on GET, run
+  work automatically, approve gates, create delegations, create coder prep,
+  commit, push, create PRs, deploy, fetch GitHub status, call providers, use
+  non-loopback network actions, or mutate external systems. It only renders
+  existing confirmed local forms when those forms already exist for the
+  current next action.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Command Palette Action Form
+
+- Promoted the shared command palette from a read-only `Continue Current Goal`
+  readback into a small operator action surface. When the saved or lead goal's
+  next action is browser-available, the palette now renders the same confirmed
+  local action form as the Goal page so the operator can run the current
+  browser-safe next action without leaving the palette.
+- Empty and unavailable states explicitly report
+  `palette_continue_action_form_available=false`; populated states report the
+  confirmation boundary, provider/network zero counters, and
+  `confirmed_local_action_only` safety posture before exposing the form.
+- README, local app docs, and the operating summary now document the palette
+  as a daily-use continuation surface while preserving the same local-only
+  safety boundary.
+- Non-claims: this does not add a new action engine, write state on GET, run
+  work automatically, approve gates, create delegations, create coder prep,
+  commit, push, create PRs, deploy, fetch GitHub status, call providers, use
+  non-loopback network actions, or mutate external systems. It only reuses
+  existing confirmed local forms when those forms already exist for the
+  current next action.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Home Day Plan Finish
+
+- Added a confirmed `Finish Today` save surface directly to `Home Day Plan`
+  on `/`. When a lead goal exists, Home now shows whether the saved workspace
+  points at that lead goal, project, and latest artifact, then offers a
+  confirmed local `save-workspace` form with `return_to=/` and day-plan
+  filters/panels so the operator can end the day from Home instead of hunting
+  for the lower resume panel or navigating to the Goal page.
+- First-run Home keeps the finish posture visible but disables the form until
+  a goal exists. Populated Home reports `needs_workspace_save` or `ready`
+  depending on current `.clanker/app/workspace.json` state.
+- README, local app docs, and the operating summary now describe Home Day Plan
+  as a form-backed daily loop surface rather than a read-only summary only.
+- Non-claims: this does not write workspace state on GET, run work, approve
+  gates, resolve incidents, create delegations, create coder prep, commit,
+  push, create PRs, deploy, fetch GitHub status, call providers, use
+  non-loopback network actions, or mutate external systems. The finish form
+  only writes `.clanker/app/workspace.json` after explicit confirmation.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Goal Daily Loop
+
+- Added a `Goal Daily Loop` panel near the top of Goal detail pages,
+  immediately after the Goal Command Bar. It summarizes the start surface
+  (`/resume`), the current next action, first unblock surface for approvals,
+  incidents, or recommendations, and the finish/save surface for tomorrow's
+  resume anchor.
+- The panel reads the current Goal, saved workspace state, latest goal
+  artifact, approval counts, incident counts, and recommendation counts to
+  tell the operator whether the saved workspace points at the current goal and
+  latest artifact before ending a session. It now includes a confirmed local
+  `save-workspace` form that writes only `.clanker/app/workspace.json` after
+  confirmation and returns to the same Goal page.
+- README, local app docs, and the operating summary now describe the Goal page
+  as a daily loop surface rather than only a long workbench of sections.
+- Non-claims: this does not save workspace state on GET, approve gates,
+  resolve incidents, execute work, run delegations, create coder prep, commit,
+  push, create PRs, deploy, fetch GitHub status, call providers, use
+  non-loopback network actions, or mutate external systems. The finish form
+  only writes local workspace state after explicit confirmation.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Activity Command Bars
+
+- Added read-only activity command bars to Home and Goal activity sections.
+  Home now summarizes the latest human-readable event across current goals,
+  its target local surface, operator-note count, artifact count, and safety
+  boundaries before the recent activity list. Goal pages now summarize the
+  latest event for that goal with the same target, note/artifact count, and
+  no-write/no-network/no-external-effect posture before the longer Activity
+  Log.
+- README, local app docs, and the operating summary now describe activity as a
+  scan-friendly operator surface rather than only a chronological list.
+- Non-claims: this does not write activity state, approve gates, execute work,
+  run delegations, commit, push, create PRs, deploy, fetch GitHub status, call
+  providers, use non-loopback network actions, write state on GET, or mutate
+  external systems. It reads existing local timeline items and artifact links
+  only.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+
+## 2026-06-27 Workspace Workflow Map
+
+- Added a read-only `Workspace Workflow Map` to `/workspace`. It uses the same
+  Goal remaining-work gate source as the Goal and Resume workflow rails, so
+  the editable saved-state page now shows the saved goal's current phase,
+  current gate, next action, next local surface, gate progress, and
+  done/pending/waiting counts beside the saved-state form.
+- Empty or stale workspace states now have explicit map states:
+  `no_saved_goal` and `missing_goal`, each pointing back to `/goals` and the
+  anchored `#save-workspace` form while preserving no-write/no-provider/
+  no-network/no-external-effect counters.
+- README, local app docs, and the operating summary now describe `/workspace`
+  as a return-to-work control surface with saved-state editing, one next
+  action, and lifecycle gate visibility.
+- Non-claims: this does not approve gates, execute work, run delegations,
+  create coder prep, create worktrees, commit, push, create PRs, deploy, fetch
+  GitHub status, call providers, use non-loopback network actions, write state
+  on GET, or mutate external systems. It reads saved workspace state, local
+  goal state, local workflow gate state, and local action metadata only.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+
+## 2026-06-27 Resume Workflow Map
+
+- Added a read-only `Resume Workflow Map` to `/resume`. It uses the same
+  Goal remaining-work gate source as the Goal page workflow rail, so the saved
+  goal's current phase, current gate, next action, next local surface, gate
+  progress, and done/pending/waiting counts are visible before the operator
+  leaves the return-to-work page.
+- Empty or stale resume states now have explicit map states:
+  `no_saved_goal` and `missing_goal`, each pointing back to `/goals` while
+  preserving no-write/no-provider/no-network/no-external-effect counters.
+- README, local app docs, and the operating summary now describe `/resume` as
+  a return-to-work cockpit with readiness, one next action, and the lifecycle
+  gate map.
+- Non-claims: this does not approve gates, execute work, run delegations,
+  create coder prep, create worktrees, commit, push, create PRs, deploy, fetch
+  GitHub status, call providers, use non-loopback network actions, write state
+  on GET, or mutate external systems. It reads saved workspace state, local
+  goal state, local workflow gate state, and local action metadata only.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Operator Focus Strip
+
+- Added a shared read-only `Operator Focus` strip to the local app shell. It
+  appears on every page before the page body and resolves the saved workspace
+  goal first, then the current lead goal, so the operator can see the current
+  phase, one primary action, target local surface, progress, waiting counts,
+  form availability, and `/resume` without returning to `/goals`.
+- The command palette now reuses the same focus resolution as the global strip,
+  keeping `Continue Current Goal` and the always-visible focus readback aligned
+  instead of calculating two subtly different goal contexts.
+- README, local app docs, and the operating summary now describe the focus
+  strip as part of the shared operator shell.
+- Non-claims: this does not approve gates, execute work, run delegations,
+  create coder prep, commit, push, create PRs, deploy, fetch GitHub status,
+  call providers, use non-loopback network actions, write state on GET, or
+  mutate external systems. It reads saved workspace state, local goal state,
+  local approval/evidence rows, and local artifact indexes only.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Delegation Run Command Bar
+
+- Added a read-only `Delegation Run Command Bar` to `/delegation-runs`. It
+  shows total/completed/pending delegation-run counts, incident and retry
+  candidate counts, context-pack and implementation-handoff readiness, the
+  first local delegation/run/workflow surface to inspect, the result artifact,
+  and write-on-GET/provider/network/external-effect boundaries before the
+  longer execution evidence index.
+- The delegation run index now has stable anchored sections for delegation
+  runs needing attention, completed runs ready for coder prep, and recent
+  delegation runs. Incident-linked runs take priority, then pending runs, then
+  completed runs with implementation handoffs, so the page behaves more like a
+  daily operator queue.
+- README, local app docs, and the operating summary now describe
+  `/delegation-runs` as a command-bar-backed operator surface for scout
+  evidence, handoff readiness, and retry attention.
+- Non-claims: this does not start or retry delegations, generate context
+  packs, prepare coder runs, approve gates, execute work, commit, push, create
+  PRs, deploy, fetch GitHub status, use the network, call providers, write
+  state on GET, or mutate external systems. It reads local delegation rows,
+  bounded result metadata, and artifact links only.
+- Compact local verification for this slice:
+  - `/opt/homebrew/bin/python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `/opt/homebrew/bin/python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `/opt/homebrew/bin/python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+- Local testing note: the default `/Library/Frameworks/Python.framework/Versions/3.10/bin/python3`
+  is currently blocked by macOS code-signing policy while importing stdlib
+  dynamic modules such as `unicodedata` and `_posixsubprocess`, so the compact
+  local verification above used healthy Homebrew Python. GitHub Actions remains
+  the intended full-suite verifier after push.
+
+## 2026-06-27 Incident Triage Command Bar
+
+- Added a read-only `Incident Triage Command Bar` to `/incidents`. It shows
+  total/open/resolved incident counts, total/open task recommendation counts,
+  the first local triage target, project/goal/task/run context, severity or
+  source status, evidence link, and write-on-GET/resolution-on-GET/provider/
+  network/external-effect boundaries before the longer incident and
+  recommendation lists.
+- The Incidents page now has stable anchored sections for open incidents,
+  resolved incidents, and task recommendations. Open incidents take priority;
+  if there are no open incidents, the command bar points at the first open
+  recovery recommendation; otherwise it falls back to resolved/history review
+  or an empty triage state.
+- README, local app docs, and the operating summary now describe `/incidents`
+  as a daily operator triage board rather than only a flat incident list.
+- Non-claims: this does not resolve incidents, retry tasks, reset tasks,
+  replan, dispatch work, approve gates, execute work, commit, push, create
+  PRs, deploy, fetch GitHub status, use the network, call providers, write
+  state on GET, or mutate external systems. It reads local incident rows, task
+  recommendation rows, and bounded evidence links only.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "task_recommendations_surfaces_blocked_planned_task or goal_page_promotes_goal_incidents or local_app_routes_render_modern_workflow_and_health" --tb=short`
+    -> `3 passed, 512 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or task_recommendations_surfaces_blocked_planned_task or goal_page_promotes_goal_incidents" --tb=short`
+    -> `4 passed, 511 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Profiles Command Bar
+
+- Added a read-only `Profiles Command Bar` to `/profiles`. It shows whether
+  `.clanker/profiles.yml` exists, configured/storage/enabled/disabled profile
+  counts, future profile lanes, adapter-configured count, write-allowed
+  profile count, `use_for` label count, the first local profile review target,
+  and provider/model-routing/write-on-GET/network/external-effect boundaries
+  before the longer inactive routing inventory.
+- The Profiles page now has stable anchored sections for configured profiles,
+  storage profiles, and future profile lanes. It still reads local config and
+  storage state only; it does not route models, call providers, use the
+  network, or mutate external systems.
+- README, local app docs, and the operating summary now describe `/profiles`
+  as a provider-routing readiness cockpit while preserving
+  `provider_routing_active=false`.
+- Non-claims: this does not enable provider routing, select models, call
+  providers, install adapters, execute work, commit, push, create PRs, deploy,
+  fetch GitHub status, use the network, write state on GET, or mutate external
+  systems. It reads `.clanker/profiles.yml`, SQLite profile rows, and static
+  future-lane labels only.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "profiles_route_reads_storage_profiles_without_enabling_providers or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Skills Command Bar
+
+- Added a read-only `Skills Command Bar` to `/skills`. It shows total,
+  active, proposed, archived, generated, used-skill, and project-usage counts;
+  the first generated or available skill target; its bounded artifact link;
+  one next local review action; and write-on-GET/raw-filesystem/provider/
+  network/external-effect boundaries before the longer skill inventory.
+- The Skills page now has stable anchored sections for available and
+  generated skills. It still reads usage and artifact signals only; it does
+  not install, execute, approve, archive, call providers, or use the network.
+- README, local app docs, and the operating summary now describe `/skills` as
+  an operator command surface rather than only a generated-skill inventory.
+- Non-claims: this does not execute skills, install skills, approve generated
+  skills, archive skills, browse the raw filesystem, run work, commit, push,
+  create PRs, deploy, call providers, fetch GitHub status, use the network, or
+  mutate external systems. It reads local skill rows, task skill tags, saved
+  skill artifact paths, and bounded artifact links only.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Memory Command Bar
+
+- Added a read-only `Memory Command Bar` to `/memory`. It shows total,
+  project, global, generated, proposed, active, archived, operator-note, and
+  future-work counts; the first proposed memory to pin or a fallback target;
+  the saved workspace project/goal/artifact context; one next local action;
+  and write-on-GET/raw-filesystem/provider/network/external-effect boundaries
+  before the longer memory inventory.
+- The Memory page now has stable anchored sections for proposed, project,
+  global, generated, operator-note, and future-work memory lists. Proposed
+  memory pinning still uses the existing confirmed `pin-memory` POST action;
+  the command bar only points the operator to the correct local section.
+- README, local app docs, and the operating summary now describe `/memory` as
+  an operator command surface rather than only a memory inventory.
+- Non-claims: this does not pin memory on GET, browse the raw filesystem,
+  approve work, execute work, commit, push, create PRs, deploy, call
+  providers, fetch GitHub status, use the network, or mutate external systems.
+  It reads existing local memory rows, operator-note artifacts, task
+  recommendations, and saved workspace state only.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Artifact Command Bar
+
+- Added a read-only `Artifact Command Bar` to `/artifacts?path=...`. It shows
+  the bounded repo-relative path, artifact type, render family, renderer, file
+  size, rendered byte count, line count, truncation state, inferred
+  project/goal links for `.clanker/projects/<project>/goals/<goal>/...`
+  artifacts, workspace anchor status, one next action, target surface, reason,
+  and write-on-GET/raw-filesystem-browsing/content-execution/network/
+  external-effect boundaries before the inert artifact content.
+- The command bar points to `#remember-artifact` when the artifact is not the
+  saved resume anchor and switches to `/resume` after the operator confirms
+  the existing `save-workspace` form. Artifact pages now also have stable
+  `#artifact-content` and `#remember-artifact` anchors.
+- README, local app docs, and the operating summary now describe the artifact
+  viewer as a browser-first evidence inspection surface rather than only a
+  bounded file renderer.
+- Non-claims: this does not browse the raw filesystem, write state on GET,
+  execute artifact content, fetch GitHub status, run work, approve gates,
+  commit, push, create PRs, deploy, call providers, use the network, or mutate
+  external systems. It only reads a bounded allowed artifact file under the
+  repo root.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Verification Command Bars
+
+- Added read-only `Verification Command Bar` and `CI Evidence Command Bar`
+  surfaces to `/verification` and `/ci-evidence`. They summarize workflow
+  configuration, current checkout commit when available, latest local CI proof
+  source/status/scope, whether that proof covers the current commit, one next
+  recording or review action, target surface, reason, and write-on-GET/
+  GitHub-polling/network/external-effect/push/PR/deploy boundaries before the
+  longer workflow map, paste form, and evidence lists.
+- `/ci-evidence` now has stable same-page anchors for the recording guide,
+  GitHub JSON paste form, recent publication-handoff CI evidence, and recent
+  direct-snapshot CI evidence. The command bars link to these targets instead
+  of leaving the operator to scan the page after a push.
+- Defined the existing success accent variable used by command bars so the UI
+  renders with an explicit non-monochrome proof/status accent in light and dark
+  mode.
+- README, local app docs, and the operating summary now describe
+  `/verification` and `/ci-evidence` as proof cockpits rather than only
+  documentation-style evidence pages.
+- Non-claims: this does not fetch GitHub status, run CI, approve anything,
+  execute work, commit, push, create PRs, deploy, call providers, write state
+  on GET, or mutate external systems. It only reads checked-in workflow text,
+  local git state when available, and existing local CI evidence rows.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_records_ci_snapshot_evidence_from_pasted_gh_json or local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json" --tb=short`
+    -> `3 passed, 512 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Run Command Bar
+
+- Added a read-only `Run Command Bar` to coder worktree `/runs/<run_id>`
+  pages. It shows the run id, project, delegation link, worktree status,
+  review status/path, commit/publication state, changed-file count, diff
+  summary, next local action, target surface, reason, and write-on-GET/
+  network/external-effect/push/PR/deploy boundaries before the longer run
+  evidence and forms.
+- Reviewed demo runs now surface `Create commit request` as the first run
+  action and link to the existing `Run Approval Actions` section. If the
+  review artifact is missing, the same command bar switches to `Review run`
+  and links to the `Run Review Gate`, matching the backend commit-request gate
+  instead of exposing a stale action.
+- README, local app docs, and the operating summary now describe
+  `/runs/<run_id>` as a run cockpit surface rather than only an evidence and
+  form inventory.
+- Non-claims: this does not write local state, execute work, approve gates,
+  commit, push, create PRs, deploy, call providers, fetch GitHub status, use
+  the network, or mutate external systems. It reads existing local coder run,
+  review, commit approval, publication, and diff evidence state only.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Project Command Bar
+
+- Added a read-only `Project Command Bar` to `/projects/<project_id>`. It
+  shows the project branch/commit, active/paused/completed goal counts,
+  task/delegation/run counts, pending approval and publication handoff counts,
+  open incident/recommendation counts, the lead goal, the next project action,
+  the target local surface, reason, and write-on-GET/network/external-effect
+  boundaries before the longer project inventory.
+- Fixture-backed project pages now expose `request_commit_for_reviewed_run` as
+  the project-level first action and link directly to the reviewed coder run,
+  so the operator does not have to scan goals, tasks, delegations, and runs to
+  find the next project click.
+- README, local app docs, and the operating summary now describe
+  `/projects/<project_id>` as a project cockpit surface instead of only a
+  project inventory.
+- Non-claims: this does not write local state, execute work, approve gates,
+  commit, push, create PRs, deploy, call providers, fetch GitHub status, use
+  the network, or mutate external systems. It reads existing local project,
+  goal, delegation, run, approval, publication, incident, and recommendation
+  state only.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Search Command Bar
+
+- Added a read-only `Search Command Bar` to `/search`. It shows the current
+  query, total results, result counts by category, the first result to open,
+  target link, summary, and write-on-GET/network/external-effect/raw-filesystem
+  boundaries before the longer result list.
+- Empty search now has an explicit first action to enter a query. Populated
+  searches now expose a first-click target, so action or phase searches can
+  return directly to the relevant Goal without scanning every result row.
+- README, local app docs, and the operating summary now describe `/search` as
+  a browser-first command surface over indexed local state rather than only a
+  raw results page.
+- Non-claims: this does not write local state, browse the raw filesystem,
+  execute work, approve gates, commit, push, create PRs, deploy, call
+  providers, fetch GitHub status, use the network, or mutate external systems.
+  It reads existing indexed local rows and bounded artifact content only.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Inbox Command Bar
+
+- Added a read-only `Inbox Command Bar` to `/inbox`. It shows total local
+  queue size, queue-type counts, the first operator attention item, target
+  section, reason, and write-on-GET/network/external-effect boundaries before
+  the longer inbox lists.
+- Added stable same-page anchors for inbox queue sections so the command bar
+  can jump directly to incidents, steering reviews, approval requests,
+  worktree approvals, coder runs, commit approvals, publication requests,
+  publication handoffs, delegations, and local commits.
+- README, local app docs, and the operating summary now describe `/inbox` as
+  a browser-first attention queue rather than only a raw list of operator
+  records.
+- Non-claims: this does not approve anything, expose decision forms on
+  `/inbox`, execute work, commit, push, create PRs, deploy, call providers,
+  fetch GitHub status, use the network, or mutate external systems. It reads
+  existing local queue rows only.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Approval Queue Command Bar
+
+- Added a read-only `Approval Queue Command Bar` to `/approvals`. It shows
+  total pending decisions, worktree/commit/publication counts, the first
+  recommended approval decision, same-page target section, after-decision
+  guidance, and write-on-GET/network/external-effect boundaries before the
+  existing decision forms.
+- Existing worktree, commit, and publication approval forms remain the only
+  mutation path. README, local app docs, and the operating summary now describe
+  `/approvals` as a browser-first decision queue.
+- Non-claims: this does not approve anything on page load, execute work,
+  commit, push, create PRs, deploy, call providers, fetch GitHub status, use
+  the network, or mutate external systems. It reads existing pending local
+  approval rows only.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Goal Workflow Map
+
+- Added a read-only `Goal Workflow Map` near the top of `/goals/<goal_id>`.
+  It turns the same gate state used by Remaining Work into a lifecycle rail
+  from scout delegation through manual publish, highlights the current gate,
+  links the next local action, and shows done/pending/waiting counts before
+  the longer timeline and artifact sections.
+- Updated the `Goal Section Index`, README, local app docs, and operating
+  summary so the workflow map is a first-class operator surface, not just a
+  lower-page checklist.
+- Non-claims: this does not write state on GET, run work, approve gates, fetch
+  GitHub status, push, create PRs, deploy, call providers, or mutate external
+  systems. It only reads existing local goal workflow gate state and reuses
+  the same next-action target.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Goal Command Bar
+
+- Added a read-only `Goal Command Bar` near the top of `/goals/<goal_id>`.
+  It condenses the current phase, one primary action, target local surface,
+  progress, open/waiting counts, `/resume`, project-scoped CI proof state,
+  and safety boundary into one scan-friendly panel before the longer Goal
+  workbench sections.
+- Updated the `Goal Section Index` so the command bar has a stable jump
+  anchor. README, local app docs, and the operating summary now document the
+  command bar as the first quick readback for daily Goal operation.
+- Non-claims: this does not write state on GET, run work, approve gates, fetch
+  GitHub status, push, create PRs, deploy, call providers, or mutate external
+  systems. It only reads existing local goal, approval, recommendation,
+  incident, workspace, and CI evidence state.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Home Start Here Cockpit
+
+- Added a read-only `Start Here` cockpit near the top of `/` so the daily
+  Home board answers the operator's first question: what should I click now?
+  It condenses first-run or lead-goal state, current phase, one primary
+  action, target surface, resume readiness, waiting counts, and CI handoff
+  posture into one scan-friendly panel.
+- Non-claims: this does not write state on GET, run work, approve gates, fetch
+  GitHub status, push, create PRs, deploy, call providers, or mutate external
+  systems. It only reads existing local goal/workspace/CI evidence state and
+  links to existing local surfaces.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Home Verification Handoff
+
+- Added a read-only `Home Verification Handoff` section to `/` that brings
+  GitHub Actions proof guidance onto the daily Home board. It shows the
+  current branch/commit, `/verification` and `/ci-evidence` links, direct
+  snapshot `gh run view`/record command templates, and the latest
+  operator-supplied CI evidence when one exists.
+- Non-claims: this does not fetch GitHub status, run CI, push, create PRs,
+  deploy, call providers, write state on GET, or mutate external systems. CI
+  proof is still only a local operator-supplied evidence record after GitHub
+  Actions completes.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Home Focus Queue
+
+- Added a read-only `Home Focus Queue` section to `/` that lists active and
+  paused goals with each goal's phase, one next action, target local surface,
+  progress, and waiting counts for approvals/incidents/recommendations. A
+  fresh checkout shows a first-run queue item pointing to `/goals`.
+- Non-claims: this does not write local state on GET, run work, approve gates,
+  activate providers, push, create PRs, deploy, fetch GitHub status, or mutate
+  external systems. It only reads existing local goal state and reuses the
+  same next-action engine as Goal pages.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/external-mutation counters
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with expected snippets matched and zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Home Day Plan
+
+- Added a read-only `Home Day Plan` section to `/` that derives the current
+  day plan from existing goal state and saved workspace state. It shows the
+  lead goal, current phase, one next action, next local surface, progress,
+  waiting counts for approvals/incidents/recommendations, and whether the
+  saved workspace is ready for an end-of-day leave-and-return resume.
+- Non-claims: this does not write workspace state on GET, run work, approve
+  gates, activate providers, push, create PRs, deploy, fetch GitHub status, or
+  mutate external systems. It only reads existing local goal/workspace state
+  and reuses the same bounded artifact existence check as `/resume`.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state" --tb=short`
+    -> `2 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Resume Readiness Checklist
+
+- Added a read-only `Resume Readiness` section to `/resume` that checks the
+  saved project, goal, filters, expanded panels, last viewed artifact, artifact
+  existence, next local surface, and whether the saved state is ready for a
+  tomorrow-style return to work.
+- Non-claims: this does not write workspace state on GET, run work, activate
+  providers, push, create PRs, deploy, fetch GitHub status, or mutate external
+  systems. It only reads local workspace state and bounded artifact paths.
+
+## 2026-06-27 Storage-Backed Profiles Page
+
+- Made `/profiles` read both `.clanker/profiles.yml` and SQLite profile rows.
+  The page now reports configured-profile count, storage-profile count,
+  `profile_storage_ready=true`, and a first-class `Storage Profiles` list with
+  labels, modes, cost tiers, model placeholders, write posture, adapter status,
+  and `use_for` labels.
+- Non-claims: this does not create profile rows on GET, activate provider
+  routing, call providers, push, create PRs, deploy, fetch GitHub status, or
+  mutate external systems. Providers remain inactive and provider calls remain
+  zero.
+
+## 2026-06-27 GitHub-First Testing Loop
+
+- Documented the default operator loop for CI-backed iteration: make a small
+  change, run the narrowest relevant local check, push the PR branch, watch
+  `Fast smoke verification`, and let `Full pytest suite` finish in GitHub
+  Actions instead of spending the session on repeated local full-suite runs.
+- Non-claims: this does not change workflow behavior, run CI locally, deploy,
+  call providers, fetch GitHub status from the app, or mutate external systems.
+  It only clarifies the existing GitHub Actions testing posture in docs.
+
+## 2026-06-27 Visible Shortcut Help
+
+- Added a visible `Keyboard Shortcuts` block inside the command palette,
+  generated from the same shortcut map as the route and keyboard handlers. It
+  lists `/`, `Escape`, `h`, `g`, `r`, `s`, and `t`, making keyboard navigation
+  discoverable from inside the browser app rather than relying on docs or
+  hidden attributes.
+- Non-claims: this does not write local state, run work, push, create PRs,
+  deploy, call providers, fetch GitHub status, or mutate external systems. It
+  only changes shared local app HTML/CSS and tests.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+    -> `1 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Accessible Shortcut Layer
+
+- Made the shared browser shell expose first-class shortcut metadata for Home,
+  Resume, Goals, Search, palette, and theme controls. The shell now includes
+  `aria-keyshortcuts`, route `data-shortcut` attributes, hover titles, and a
+  screen-reader-only shortcut summary, while preserving the existing visible
+  compact header.
+- Fixed the palette close path so `Escape` closes the command palette even
+  when focus is inside the palette search input. Added keyboard handlers for
+  `r` -> `/resume`, `s` -> `/search`, and `t` -> theme toggle alongside the
+  existing `/`, `h`, and `g` shortcuts.
+- Non-claims: this does not write local state, run work, push, create PRs,
+  deploy, call providers, fetch GitHub status, or mutate external systems. It
+  only changes shared local app HTML/JS and tests.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+    -> `1 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Memory Pin Resume Anchors
+
+- Made confirmed browser `pin-memory` promotion refresh
+  `.clanker/app/workspace.json` with the pinned memory's project and evidence
+  artifact. If the previously open goal still belongs to that same project,
+  the action preserves it, so `/resume`, Home, and `/workspace` return to the
+  pinned memory context without requiring a separate manual `save-workspace`
+  step.
+- Non-claims: this does not pin memory from read-only Goal pages, approve
+  entries without evidence artifacts, run work, push, create PRs, deploy, call
+  providers, fetch GitHub status, or mutate external systems. It only updates
+  local memory status and local workspace state after a confirmed browser
+  action.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+    -> `1 passed, 513 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Operator Note Resume Anchors
+
+- Made confirmed browser `resume-goal` and `save-goal-note` actions refresh
+  `.clanker/app/workspace.json` with the current project, goal, and newest
+  operator-facing artifact. Resuming a paused goal now anchors workspace state
+  to the goal's `GOAL.md`; saving an operator note now anchors workspace state
+  to `operator-notes.md`, so `/resume`, Home, and `/workspace` return to the
+  exact resumed goal or note context without requiring a separate manual
+  `save-workspace` step.
+- Non-claims: this does not resume blocked tasks, approve gates, run work,
+  push, create PRs, deploy, call providers, fetch GitHub status, or mutate
+  external systems. `resume-goal` still only changes local goal status from
+  paused to active, and `save-goal-note` still only appends a local
+  goal-scoped note artifact.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+    -> `1 passed, 513 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or first_run_browser_actions_persist_resume_workspace or goal_next_action_card_exposes_post_delegation_forms"`
+    -> `3 passed, 511 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Final Gate Resume Anchors
+
+- Made confirmed browser `approve-coder-commit`, `commit-coder-worktree`,
+  `coder-publication-request`, `approve-coder-publication`,
+  `coder-publication-handoff`, and `complete-goal` actions refresh
+  `.clanker/app/workspace.json` with the current project, goal, and newest
+  final-gate artifact. The restore path now advances through commit decision
+  Markdown, local worktree commit Markdown, publication request/decision
+  Markdown, publication handoff Markdown, and the final completed-goal anchor,
+  so `/resume`, Home, and `/workspace` can return the operator to the exact
+  post-commit or manual-publish boundary without a separate manual
+  `save-workspace` step.
+- Non-claims: this does not push, create PRs, deploy, call providers, fetch
+  GitHub status, or mutate external systems. `commit-coder-worktree` still
+  creates one local commit only inside the isolated approved worktree through
+  the existing gate; publication actions write local request/decision/handoff
+  artifacts only; `complete-goal` records local goal status only after the
+  manual publish boundary.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k goal_next_action_card_exposes_commit_publication_gate_forms`
+    -> `1 passed, 513 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "goal_next_action_card_exposes_commit_publication_gate_forms or goal_next_action_card_exposes_reviewed_commit_request_form or goal_runs_approved_worktree_from_browser_action or local_app_demo_scenario_populates_fixture_state"`
+    -> `4 passed, 510 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Execution Review Commit Resume Anchors
+
+- Made confirmed browser `run-coder-worktree`, `review-run`, and
+  `coder-commit-request` actions refresh `.clanker/app/workspace.json` with
+  the current project, goal, and newest execution/review/commit-request
+  artifact. The restore path now advances to the coder run `summary.md`, local
+  `review.md`, and commit approval request Markdown, so `/resume`, Home, and
+  `/workspace` can return the operator to the current post-execution gate
+  without requiring a separate manual `save-workspace` step.
+- Non-claims: this does not commit, push, create PRs, deploy, call providers,
+  fetch GitHub status, or mutate external systems. The `run-coder-worktree`
+  action still executes only one already approved bounded local worktree
+  command through the existing safety checks; the review and commit-request
+  actions write local artifacts and approval rows only.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "goal_runs_approved_worktree_from_browser_action or goal_next_action_card_exposes_reviewed_commit_request_form or goal_next_action_card_exposes_commit_publication_gate_forms"`
+    -> `3 passed, 511 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Coder Workflow Resume Anchors
+
+- Made confirmed browser `coder-prep`, `coder-prep-from-handoff`,
+  `coder-worktree-plan`, `coder-worktree-approval`, and
+  `approve-coder-worktree` actions refresh `.clanker/app/workspace.json` with
+  the current project, goal, and newest human-readable workflow artifact. The
+  restore path now continues through coder prep packets, bounded worktree
+  plans, approval requests, and approval decisions, so `/resume`, Home, and
+  `/workspace` can return the operator to the current post-delegation gate
+  without requiring a separate manual `save-workspace` step.
+- Non-claims: this does not create worktrees, run commands, edit source files,
+  approve later gates, commit, push, create PRs, deploy, call providers, fetch
+  GitHub status, or mutate external systems. It writes local workspace state
+  only as part of explicit confirmed browser actions.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k goal_next_action_card_exposes_post_delegation_forms`
+    -> `1 passed, 513 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "goal_next_action_card_exposes_post_delegation_forms or goal_runs_approved_worktree_from_browser_action or first_run_browser_actions_persist_resume_workspace"`
+    -> `3 passed, 511 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 First Run Workflow Resume Anchors
+
+- Made confirmed browser `delegate`, `context-pack`, and `run-delegation`
+  actions refresh `.clanker/app/workspace.json` with the current project,
+  goal, and latest workflow artifact. The first-run restore path now advances
+  from the scout delegation contract to the generated context pack and then to
+  the delegation run result, so `/resume`, Home, and `/workspace` can return
+  the operator to the newest local continuation after later workflow actions
+  without requiring a separate manual `save-workspace` step.
+- Non-claims: this does not approve gates, call providers, fetch GitHub
+  status, push, create PRs, deploy, or mutate external systems. It writes
+  local workspace state only as part of explicit confirmed browser actions.
+- Compact local verification for this slice:
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_runs_delegation_from_browser_action or first_run_browser_actions_persist_resume_workspace"`
+    -> `3 passed, 511 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 First Run Workspace Auto-Resume
+
+- Made confirmed browser `register-project` and `create-goal` actions persist
+  `.clanker/app/workspace.json` automatically. Registering the first project
+  now remembers the project, and creating the first goal remembers both the
+  project and goal so `/resume`, Home, and `/workspace` can restore the
+  operator's next continuation without requiring a separate manual
+  `save-workspace` step.
+- Non-claims: this does not run delegations, approve gates, call providers,
+  fetch GitHub status, push, create PRs, deploy, or mutate external systems.
+  It writes local workspace state only as part of explicit confirmed browser
+  actions.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because confirmed `register-project` did
+    not create `.clanker/app/workspace.json`.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "first_run_browser_actions_persist_resume_workspace or local_app_routes_render_modern_workflow_and_health"`
+    -> `2 passed, 512 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 First Run Next Action Readback
+
+- Made the browser First Run Guide report one state-aware
+  `first_run_next_action`, a `first_run_next_reason`, and
+  `first_run_next_action_source: state_aware_first_run` as the operator moves
+  through project registration, first goal creation, first scout delegation,
+  context-pack generation, and the first delegation run. This makes the empty
+  and early first-run flow behave more like the Goal page's one-next-action
+  cockpit instead of relying on step-state inference.
+- Non-claims: this does not run delegations, approve gates, call providers,
+  fetch GitHub status, push, create PRs, deploy, or mutate external systems.
+  It is a local browser guidance/readback improvement only.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because the First Run Guide did not expose
+    `first_run_next_action`.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+    -> `1 passed, 512 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 First Run Dogfood Project Readback
+
+- Made the browser First Run Guide explicitly report `clankeros` as the
+  first dogfood project, the current repository path as
+  `first_run_project_path`, and the selected `first_run_default_project`.
+  A fresh checkout now makes "ClankerOS manages ClankerOS first" visible in
+  the operator readback instead of only pre-filling hidden form defaults.
+- Non-claims: this does not run delegations, approve gates, call providers,
+  fetch GitHub status, push, create PRs, deploy, or mutate external systems.
+  It is a local browser guidance/readback improvement only.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because the First Run Guide did not expose
+    `first_run_dogfood_project`.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+    -> `1 passed, 512 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 Browser-First Empty Goal Snapshot
+
+- Removed stale CLI-first language from the empty Home `Goal Snapshot`. A fresh
+  checkout now points the operator to `/goals` for browser guidance, reports
+  the first-run browser path (`register-project -> create-goal -> delegate ->
+  context-pack -> run-delegation`), and explicitly records
+  `first_run_cli_required: false`.
+- Non-claims: this does not run delegations, approve gates, call providers,
+  fetch GitHub status, push, create PRs, deploy, or mutate external systems.
+  It is a local Home guidance/readback improvement only.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because the empty Home `Goal Snapshot`
+    still said `first goal from CLI guidance`.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+    -> `1 passed, 512 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
+## 2026-06-27 First Run Context Pack Gate
+
+- Made the browser First Run Guide name `Generate context pack` as its own
+  required gate between creating the first scout delegation and running that
+  delegation. The guide now reports `first_run_context_pack_action` and
+  per-step status for the context-pack gate, so a new operator can see the
+  browser path rather than inferring why `run-delegation` is waiting.
+- Non-claims: this does not run delegations, approve gates, call providers,
+  fetch GitHub status, push, create PRs, deploy, or mutate external systems.
+  It is a local browser guidance/readback improvement only.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because the First Run Guide still showed
+    `Create project -> Create first goal -> Run first delegation` and lacked
+    the explicit context-pack gate.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+    -> `1 passed, 512 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Demo Final Goal Completion Guidance
+
+- Made the fixture-backed `/demo` flow first-class through the final local
+  completion step. Once the publication handoff is ready, `Demo Gate Actions`
+  keeps push/PR work outside ClankerOS, renders the confirmed local
+  `complete-goal` form for the fixture Goal, and then advances the demo to
+  `review_completed_goal_evidence`.
+- Updated the manual browser script and docs so the operator sees the same
+  continuation: use the copy-only publication handoff outside ClankerOS, then
+  return to the Goal or `/demo` to record local Goal completion.
+- Non-claims: this does not push, create a PR, deploy, call providers, fetch
+  GitHub status, run worktrees, run arbitrary commands, or mutate external
+  systems. It only exposes the existing confirmed local completion action at
+  the demo's final manual boundary.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because `/demo` did not render the final
+    `complete-goal` continuation, then failed because the manual browser
+    script did not name the return-to-Goal completion step.
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 512 deselected`
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with route markers matched and zero provider/network/
+    external-mutation counters.
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Browser Goal Completion Action
+
+- Added a confirmed local `complete-goal` browser action at the manual publish
+  boundary. Once a coder publication handoff is `ready_for_operator`, the Goal
+  page still recommends `Manual publish outside ClankerOS`, shows copy-only
+  publication handoff commands, and now offers `Complete Goal` for the operator
+  to record that the manual push/PR work is finished outside the app.
+- The action requires an existing ready publication handoff, calls the local
+  goal status updater, and moves the Goal into the `Completed` phase and
+  completed-goals lanes. Completed goals now recommend `Review completed goal
+  evidence` rather than continuing to show publication work as the next local
+  action.
+- Non-claims: this does not push, create a PR, deploy, call providers, fetch
+  GitHub status, use the network, run worktrees, run arbitrary commands, or
+  mutate external systems. It records local Goal status only after explicit
+  confirmation and an operator-controlled manual publish boundary.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because the Goal page lacked `Complete
+    Goal` and `/actions/complete-goal`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k goal_next_action_card_exposes_commit_publication_gate_forms`
+    -> `1 passed, 512 deselected`
+  - Adjacent Goal/local-app slice:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "goal_next_action_card_exposes_commit_publication_gate_forms or goal_runs_approved_worktree_from_browser_action or local_app_routes_render_modern_workflow_and_health"`
+    -> `3 passed, 510 deselected`
+  - Checked-in fast-smoke pytest expression with the new completion test:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "github_actions_workflow_runs_automatic_verification or github_actions_smoke_uses_temp_root_and_expected_order or ci_snapshot_evidence_from_gh_json_validates_successful_matching_run or ci_snapshot_evidence_from_gh_json_records_completed_job_while_run_in_progress or ci_snapshot_evidence_from_gh_json_rejects_pending_or_wrong_commit or local_app_records_ci_snapshot_evidence_from_pasted_gh_json or local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json or local_app_rejects_pending_ci_snapshot_status_json_without_record or ci_snapshot_handoff_prints_watch_and_record_commands_without_writes or local_app_routes_render_modern_workflow_and_health or local_app_runs_delegation_from_browser_action or goal_runs_approved_worktree_from_browser_action or goal_next_action_card_exposes_commit_publication_gate_forms or local_app_artifact_viewer_is_read_only_and_bounded or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety"`
+    -> `16 passed, 497 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Browser Run Approved Worktree Action
+
+- Added a confirmed local `run-coder-worktree` browser action for Goals whose
+  coder worktree approval is already approved. The Goal Next Action card now
+  recommends `Run approved worktree`, renders `/actions/run-coder-worktree`,
+  and keeps the exact CLI command template as fallback/readback.
+- The action calls the existing `run_approved_coder_worktree` backend path, so
+  the prior approval gate, safe-command validator, verifier, bounded-file
+  validation, evidence packet creation, and incident-on-failure behavior remain
+  the authority. Result pages link the new coder worktree run evidence and then
+  the Goal page advances to `Open review`.
+- Non-claims: this does not expose arbitrary commands, commit, push, create a
+  PR, deploy, call providers, use non-loopback network actions, or mutate
+  external systems. It executes one operator-provided command only after the
+  existing worktree approval and safe-command checks pass, and it records
+  bounded local worktree evidence only.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because the Goal page lacked
+    `/actions/run-coder-worktree`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k goal_runs_approved_worktree_from_browser_action`
+    -> `1 passed, 512 deselected`
+  - Adjacent Goal workflow slice:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "goal_next_action_card_exposes_post_delegation_forms or goal_runs_approved_worktree_from_browser_action or goal_next_action_card_exposes_reviewed_commit_request_form"`
+    -> `3 passed, 510 deselected`
+  - GitHub workflow metadata smoke:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "github_actions_workflow_runs_automatic_verification or github_actions_smoke_uses_temp_root_and_expected_order"`
+    -> `2 passed, 511 deselected`
+  - Checked-in fast-smoke pytest expression:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "github_actions_workflow_runs_automatic_verification or github_actions_smoke_uses_temp_root_and_expected_order or ci_snapshot_evidence_from_gh_json_validates_successful_matching_run or ci_snapshot_evidence_from_gh_json_records_completed_job_while_run_in_progress or ci_snapshot_evidence_from_gh_json_rejects_pending_or_wrong_commit or local_app_records_ci_snapshot_evidence_from_pasted_gh_json or local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json or local_app_rejects_pending_ci_snapshot_status_json_without_record or ci_snapshot_handoff_prints_watch_and_record_commands_without_writes or local_app_routes_render_modern_workflow_and_health or local_app_runs_delegation_from_browser_action or goal_runs_approved_worktree_from_browser_action or local_app_artifact_viewer_is_read_only_and_bounded or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety"`
+    -> `15 passed, 498 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Browser Run Delegation Action
+
+- Added a confirmed local `run-delegation` browser action. Once a Goal has a
+  scout delegation and context pack, the Goal Next Action card now recommends
+  `Run delegation`, renders `/actions/run-delegation`, and keeps the exact CLI
+  command as a fallback/readback.
+- The action calls the existing `run_delegation` backend path, so it preserves
+  read-only profile validation, unsafe adapter command rejection, evidence
+  packet creation, implementation handoff creation, and incident-on-failure
+  behavior. First-run guidance now points to the Goal page browser action
+  instead of a CLI-only handoff.
+- Non-claims: this does not expose provider calls, network actions, arbitrary
+  command entry, worktree execution, push, PR creation, deploy, or external
+  mutation. It executes only the already configured local read-only delegation
+  adapter after explicit confirmation.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because the Goal page lacked
+    `/actions/run-delegation`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_runs_delegation_from_browser_action"`
+    -> `1 passed, 511 deselected`
+  - Focused local-app slice:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "github_actions_workflow_runs_automatic_verification or local_app_routes_render_modern_workflow_and_health or local_app_runs_delegation_from_browser_action or local_app_demo_scenario_populates_fixture_state"`
+    -> `4 passed, 508 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Goal Incidents Section
+
+- Added a first-class `Goal Incidents` section to `/goals/<goal_id>`, linked
+  from the Goal Section Index. It shows open/resolved/total incident counts
+  plus each goal-owned incident's status, severity, run, task, summary, and
+  evidence artifact link.
+- Open goal incidents continue to drive the Goal Next Action card toward
+  `Inspect incident`; the new section makes that state visible without
+  leaving the Goal workbench.
+- Non-claims: this does not resolve incidents, retry work, run tasks, approve
+  gates, call providers, fetch GitHub status, push, create PRs, deploy, or
+  mutate external systems. It is read-only local rendering on GET.
+- Compact local verification for this slice:
+  - Focused red pytest first failed because the Goal page did not contain
+    `Goal Incidents`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "goal_page_promotes_goal_incidents or local_app_demo_scenario_populates_fixture_state"`
+    -> `2 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Goal-Scoped CI Proof Recording
+
+- Added `Record Goal CI Proof From GitHub JSON` to `/goals/<goal_id>` under
+  Goal Verification Evidence. The form is prefilled with the goal project,
+  current branch, and current commit, accepts pasted GitHub Actions JSON, and
+  returns to the same Goal page after the confirmed local write.
+- The form reuses `ci-snapshot-evidence-from-gh-json`, infers run id and URL
+  from `databaseId`/`url`, validates status, branch, commit, and optional job
+  status, and records project-scoped CI proof without app-side GitHub polling.
+- Non-claims: this does not fetch GitHub status, run CI, push, create PRs,
+  deploy, call providers, or mutate external systems beyond the confirmed
+  local CI evidence artifact/database record.
+- Compact local verification for this slice:
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 CI JSON Run Identity Inference
+
+- Made `ci-snapshot-evidence-from-gh-json` infer the GitHub Actions run id
+  and URL from supplied `gh run view` JSON (`databaseId` and `url`) when the
+  operator leaves `--external-run-id` or the browser form fields blank.
+- Updated `/ci-evidence`, `/verification`, dashboard, and dogfooding command
+  templates to request `databaseId` and prefer the shorter validated pipeline
+  that records from pasted JSON without manually repeating the run id.
+- The `/ci-evidence` confirmed form now labels `external_run_id` and `url` as
+  optional when the JSON contains the same identity fields, while keeping
+  `github_status_fetch=none`, `network_actions_taken_by_app=0`, and
+  `external_mutations_taken=0`.
+- Compact local verification for this slice:
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k "ci_snapshot_evidence_from_gh_json or local_app_records_ci_snapshot_evidence_from_pasted_gh_json or local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json or local_app_rejects_pending_ci_snapshot_status_json_without_record or ci_snapshot_handoff_prints_watch_and_record_commands_without_writes or local_app_routes_render_modern_workflow_and_health"`
+    -> `8 passed, 502 deselected`
+  - `python3 -m py_compile agent_os/ci_snapshot_evidence.py agent_os/cli.py agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Goal Section Index
+
+- Added a read-only `Goal Section Index` to `/goals/<goal_id>` with stable
+  in-page anchors for summary, live state, current phase, next action, next
+  recommendation, resume snapshot, overview, progress, timeline, activity,
+  risk, completion criteria, delegations, runs, approvals, evidence,
+  artifacts, memory, skills, git status, verification evidence, operator
+  notes, and remaining work.
+- This is navigation-only local rendering on GET. It does not run work,
+  approve gates, call providers, fetch GitHub status, push, create PRs,
+  deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Goal Timeline Artifact Coverage
+
+- Added generic `Artifact recorded` timeline events to `/goals/<goal_id>` from
+  the same bounded artifact registry that powers the Goal Artifact Explorer.
+  Existing workflow-specific artifact links are deduped, while additional
+  artifacts such as context-pack JSON, implementation-handoff JSON, diffs,
+  changed-file lists, and git-status logs now appear chronologically.
+- This is read-only local state rendering on GET. It does not run work,
+  approve gates, call providers, fetch GitHub status, push, create PRs,
+  deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed.
+
+## 2026-06-26 Goal Next Recommendation
+
+- Added a first-class `Next Recommendation` section to `/goals/<goal_id>`.
+  It reports whether the recommendation came from an open task recommendation
+  or was derived from current phase plus local goal records, names the action,
+  reason, target local surface, and write-on-GET/external-effect boundaries.
+- This is read-only local state rendering on GET. It does not run work,
+  approve gates, call providers, fetch GitHub status, push, create PRs,
+  deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Goal-State Search Results
+
+- Added live local goal-state signals to `/search` goal results. Goal hits now
+  include current phase, one recommended next action, and compact
+  remaining-work counts, so action or phase searches can route the operator
+  back to the relevant Goal.
+- This is read-only local search indexing on GET. It does not run work,
+  approve gates, call providers, fetch GitHub status, push, create PRs,
+  deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Goal-Aware Command Palette Continue
+
+- Added a goal-aware `Continue Current Goal` block to the shared app command
+  palette. It reads the saved workspace goal when available, otherwise the
+  current lead goal, then shows that goal's phase, one recommended next
+  action, target local surface, and form availability.
+- This is read-only local state rendering on GET. It does not run work,
+  approve gates, call providers, fetch GitHub status, push, create PRs,
+  deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Goal Row Remaining Work
+
+- Added compact remaining-work summaries to the shared goal row renderer used
+  by Home, `/goals`, and project goal rows. Rows now include open task,
+  incident, and recommendation counts beside phase, next action, and progress.
+- This is read-only local state rendering on GET. It does not write goal
+  state, call providers, fetch GitHub status, push, create PRs, deploy, or
+  mutate external systems.
+- Compact local verification for this slice:
+  - Focused red test failed first because Home did not contain
+    `remaining_work=open_tasks:1 open_incidents:0 open_recommendations:0`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Goal Live State Refresh
+
+- Made Goal page live refresh first-class and operator-safe. `/goals/<goal_id>`
+  now renders `Goal Live State` with explicit refresh posture, a five-second
+  local page reload loop, and readbacks for edit/hidden-tab pauses.
+- The refresh loop pauses while an input, textarea, select, or contenteditable
+  element has focus and while the document is hidden. It still performs no
+  provider calls, GitHub polling, push, PR creation, deploy, or external
+  mutation.
+- Compact local verification for this slice:
+  - Focused red test failed first because the demo goal page did not contain
+    `Goal Live State`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with core route markers matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Home Resume Action Form
+
+- Promoted Home's `Home Resume Workspace` from saved-goal continuation readback
+  to a direct return-to-work action surface. When saved workspace state points
+  at a goal, `Home Resume Action Form` now renders the same confirmed local
+  action form the Goal page would render for that saved goal's one recommended
+  action.
+- Home still writes nothing on GET. The action form is only a local confirmed
+  POST affordance; the page does not call providers, use the network, push,
+  create PRs, deploy, run delegations/worktrees by itself, or mutate external
+  systems.
+- Compact local verification for this slice:
+  - Focused red test failed first because restored Home did not contain
+    `home_resume_next_action_form_available`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with `/` marker matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Workspace Action Form
+
+- Promoted `/workspace` from saved-state editor plus continuation readback to a
+  direct return-to-work action surface. When workspace state points at a goal,
+  `Workspace Action Form` now renders the same confirmed local action form the
+  Goal page would render for that saved goal's one recommended action.
+- `/workspace` still writes nothing on GET. The action form is only a local
+  confirmed POST affordance; the page does not call providers, use the network,
+  push, create PRs, deploy, run delegations/worktrees by itself, or mutate
+  external systems.
+- Compact local verification for this slice:
+  - Focused red test failed first because restored `/workspace` did not contain
+    `workspace_next_action_form_available`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with `/workspace` marker matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Resume Next Action Form
+
+- Promoted `/resume` from next-action readback to a direct return-to-work
+  action surface. When the saved workspace points at a goal, `Resume Next
+  Action` now renders the same confirmed local action form the Goal page would
+  render for that goal's one recommended action.
+- `/resume` still writes nothing on GET. The form is only a local confirmed
+  POST affordance; the page does not call providers, use the network, push,
+  create PRs, deploy, run delegations/worktrees by itself, or mutate external
+  systems.
+- Compact local verification for this slice:
+  - Focused red test failed first because restored `/resume` did not contain
+    `resume_next_action_form_available`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with `/resume` marker matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Workspace Continuation Readback
+
+- Added saved-goal continuation readbacks to `/workspace`. The page now shows
+  the saved goal's current phase, one recommended next action, reason,
+  operator attention cue, and target surface beside the editable
+  `save-workspace` form.
+- `/workspace` still writes nothing on GET. The readback is reconstructed from
+  `.clanker/app/workspace.json` and existing local goal state; it does not call
+  providers, use the network, push, create PRs, deploy, run delegations/
+  worktrees, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused red test failed first because restored `/workspace` did not
+    contain `Workspace Continuation`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with `/workspace` marker matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Home Resume Continuation Readback
+
+- Added saved-goal continuation readbacks to Home's `Home Resume Workspace`
+  section. When workspace state points at a goal, Home now shows that goal's
+  current phase, one recommended next action, reason, operator attention cue,
+  and target surface before the operator opens `/resume` or the Goal page.
+- Home still writes nothing on GET. The readback is reconstructed from
+  `.clanker/app/workspace.json` and existing local goal state; it does not call
+  providers, use the network, push, create PRs, deploy, run delegations/
+  worktrees, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused red test failed first because restored Home did not contain
+    `home_resume_current_phase: Ready to commit`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with `/` and `/resume` markers matched and zero provider/
+    network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Goal-Aware Resume Next Action
+
+- Added a `Resume Next Action` section to `/resume`. When the saved workspace
+  points at a goal, the page now reads that goal's current local state and
+  shows the current phase, one recommended next action, reason, operator
+  attention cue, and target surface.
+- The resume page still writes nothing on GET. This is read-only state
+  reconstruction from `.clanker/app/workspace.json` plus existing goal state;
+  it does not call providers, use the network, push, create PRs, deploy, run
+  delegations/worktrees, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused red test failed first because `/resume` did not contain
+    `Resume Next Action`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with `/resume` marker matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Linked Project Goal Rows
+
+- Promoted `/projects/<project_id>` goal rows into direct goal workbench
+  launchers. Each row now reuses the goal cockpit renderer, links to
+  `/goals/<goal_id>`, and shows project, status, phase, next action, and task
+  progress.
+- The progress label now uses the same explicit task-completion wording on
+  compact goal rows that goal completion criteria already used, for example
+  `progress=0/1 tasks completed`.
+- This remains local read-only UI on page load. Rendering the project page
+  does not write state, call providers, use the network, push, create PRs,
+  deploy, run delegations/worktrees, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused red test first failed because the demo project page did not show
+    the same phase/next-action/progress goal row context as `/goals`.
+  - Follow-up focused red test failed on the terse progress label
+    `progress=0/1 tasks`, then passed after making the label explicit.
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Project-Scoped Goal Creation
+
+- Added a populated-state `Start Goal For This Project` section to
+  `/projects/<project_id>`. It uses the existing confirmed local
+  `create-goal` action with the current project prefilled, so operators can
+  start the next goal from a project detail launchpad without returning to
+  `/goals` or the CLI.
+- The form is local goal lifecycle UI only. Displaying it does not write
+  state, call providers, use the network, push, create PRs, deploy, run
+  delegations/worktrees, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused red test failed first because `/projects/local-app-demo` did not
+    contain `Start Goal For This Project`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Project Registration From Project Index
+
+- Added a populated-state `Register Local Project` section to `/projects`.
+  It reports confirmation and zero-effect posture, then uses the existing
+  confirmed local `register-project` action with name, path, test command, and
+  allowed write roots fields so operators can add another local repository
+  from the browser project index instead of returning to the CLI.
+- The form is local project-registry UI only. Displaying it does not write
+  state, call providers, use the network, push, create PRs, deploy, run
+  delegations/worktrees, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused red test failed first because populated `/projects` did not
+    contain `Register Local Project`.
+  - Focused green pytest:
+    `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with `/projects` marker matched and zero provider/network/
+    external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Daily Goal Creation From Cockpit
+
+- Added a populated-state `Start Another Goal` section to `/goals`. It lists
+  registered project options, pre-fills the lead goal's project when possible,
+  and uses the existing confirmed local `create-goal` action so operators can
+  start the next goal from the daily cockpit without switching to the CLI.
+- The panel is local UI over registered projects. Displaying it does not write
+  state, call providers, use the network, push, create PRs, deploy, run
+  delegations/worktrees, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused red test failed first because populated `/goals` did not contain
+    `Start Another Goal`.
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Resume Workspace Route
+
+- Added `/resume` as a first-class return-to-work surface in the local app.
+  It reads `.clanker/app/workspace.json`, shows whether saved resume state
+  exists, links the saved goal, project, and last viewed artifact, preserves
+  filter and expanded-panel readbacks, and points back to `/workspace` for
+  edits.
+- Home now links the saved workspace state to `/resume`, and the operator
+  shell recent-items rail includes `Resume workspace` when saved context
+  exists. The app smoke route list also covers `/resume`.
+- The route is read-only on GET. It does not write workspace state, browse raw
+  filesystem paths, run delegations or worktrees, call providers, fetch GitHub
+  status, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - Focused red test failed first because `/resume` returned 404.
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed, including `/resume`, with zero provider/network/external-mutation counters
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 State-Aware First Run Guide
+
+- Upgraded the Home and `/goals` first-run guide from static guidance into a
+  state-aware checklist for Create project -> Create first goal -> Run first
+  delegation. It now reports the current step, project/goal/delegation/context
+  readiness, next local surface, text empty-state illustration, zero-effect
+  counters, and the exact `run-delegation` command once the context pack is
+  ready. Later browser work promoted that handoff into a confirmed local
+  `run-delegation` action while retaining the CLI command as fallback.
+- Home keeps showing the first-run guide until the first delegation is
+  completed, so a new operator can continue from project registration through
+  the first delegation handoff without reading docs or hunting through CLI
+  commands.
+- The original guide was local UI only. The current browser action still does
+  not call providers, fetch GitHub status, push, create PRs, deploy, or mutate
+  external systems.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health`
+    -> `1 passed, 509 deselected`
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Demo Skill Inventory Seeding
+
+- The fixture-backed local app demo now writes a generated `local-files`
+  `SKILL.md` under `.clanker/skills/local-files/` and records a matching
+  active skill plus version hash in SQLite. This makes `/skills` and Goal
+  `Skills Used` populated with a concrete available/generated skill, usage
+  count, last-used readback, project usage, and artifact link instead of only
+  showing a task tag.
+- The demo skill is local fixture state only. It does not install external
+  skills, execute a skill, call providers, use the network, push, create PRs,
+  deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario_populates_fixture_state`
+    -> `1 passed, 509 deselected`
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Artifact Viewer Remember Resume Anchor
+
+- Added a confirmed `Remember Artifact` workspace form to
+  `/artifacts?path=...`. The artifact viewer now preserves existing workspace
+  project/goal context, pre-fills `last_viewed_artifact` with the bounded
+  artifact path, and returns to the same viewer after confirmation.
+- The viewer remains read-only on GET and reports
+  `remember_artifact_get_writes=false` plus
+  `remember_artifact_external_effects_created=false`. This does not browse raw
+  filesystem paths, execute artifact content, call providers, fetch GitHub
+  status, push, create PRs, deploy, or mutate external systems beyond the
+  explicit local workspace save.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k local_app_artifact_viewer_is_read_only_and_bounded`
+    -> `1 passed, 509 deselected`
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Goal Operator Notes Timeline
+
+- Saved goal operator notes now become first-class timeline and Activity Log
+  entries on `/goals/<goal_id>`. The Goal page reports the count through
+  `timeline_operator_note_artifacts`, links the `Operator note saved` event
+  to the bounded `/artifacts` viewer for `operator-notes.md`, and marks the
+  timeline readback as creating zero external effects.
+- The Activity Log now carries explicit `activity_log_format=human_readable`
+  and `activity_log_operator_notes_included` readbacks, so tomorrow's resume
+  context is chronological instead of only living in the Operator Notes and
+  Memory sections.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health"`
+    -> `2 passed, 508 deselected`
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Goal Paused Resume Action
+
+- Added a first-class paused-goal state to `/goals/<goal_id>`. Goals with
+  `status=paused` now render a `Paused` current phase, explain that the goal
+  can be resumed locally, and show `Resume paused goal` as the recommended
+  next action.
+- Added a confirmed local `resume-goal` browser action. It only accepts goals
+  whose current status is exactly `paused`, changes that local goal status to
+  `active`, and reports zero network actions and zero external mutations. It
+  does not resume blocked tasks, approve gates, run delegations or worktrees,
+  push, create PRs, deploy, call providers, or perform external mutations.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health"`
+    -> `2 passed, 508 deselected`
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Goal Verification Evidence
+
+- Added a first-class `Goal Verification Evidence` section to
+  `/goals/<goal_id>`. It links to `/verification` and `/ci-evidence`, filters
+  local operator-supplied CI records to the current goal project, compares the
+  recorded branch/commit to the current project checkout, and reports whether
+  the proof matches current local state.
+- Fresh goals now show a project-scoped missing-proof state instead of
+  borrowing CI evidence from another project. Demo/populated goals can show a
+  matching direct-snapshot record with source, provider, status source,
+  evidence scope, branch/commit match, artifact link, and zero app network/
+  external mutation counters.
+- The section is read-only over existing local state. It does not fetch GitHub
+  status, run CI locally, push, create PRs, deploy, call providers, or mutate
+  external systems.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state or local_app_routes_render_modern_workflow_and_health"`
+    -> `2 passed, 508 deselected`
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Artifact Viewer Render Modes
+
+- Upgraded `/artifacts?path=...` from a plain inert preformatted blob into a
+  type-aware artifact viewer. It now reports `artifact_render_family`,
+  `artifact_renderer`, `artifact_raw_filesystem_browsing=false`, and
+  `artifact_content_executed=false`.
+- Markdown artifacts render through escaped headings/lists/paragraphs, JSON
+  artifacts are pretty-printed, patch/diff artifacts get line classes for
+  meta/add/delete/hunk scanning, and text/log artifacts render as inert text.
+- The viewer remains bounded to repo-relative supported artifact paths and
+  still rejects absolute paths, parent traversal, symlinks resolving outside
+  the repo, and unsupported file types. It does not execute artifact content,
+  browse raw filesystem paths, call providers, fetch GitHub status, push,
+  create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_artifact_viewer_is_read_only_and_bounded or local_app_demo_scenario_populates_fixture_state"`
+    -> `2 passed, 508 deselected`
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Goal Memory Readback
+
+- Upgraded `/goals/<goal_id>` `Memory` from a thin artifact list into a
+  first-class goal-scoped memory readback. It now links to `/memory`, shows
+  project/global memory artifacts, operator-note status, project/active/
+  proposed/global/generated memory entry counts, future-work count, latest
+  memory summaries, and the true pin posture: `pin_memory_action` is
+  available on `/memory`, while `pin_memory_from_goal_page=false`.
+- The Goal page remains read-only for memory pinning. This does not pin
+  memory, approve memory, call providers, fetch GitHub status, push, create
+  PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state"`
+    -> `1 passed, 509 deselected`
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Goal Remaining Work Gates
+
+- Upgraded `/goals/<goal_id>` `Remaining Work` from a thin task/next-action
+  list into a gate-aware checklist. It now shows the local-state source,
+  current next action and surface, open task/incident/recommendation counts,
+  zero external-effect posture, and done/pending/waiting status for scout
+  delegation, context pack, implementation handoff, coder prep, worktree plan,
+  worktree approval/run, review, commit request/approval/local commit,
+  publication request/approval/handoff, and manual publish gates.
+- The readback is still local UI over existing goal state and artifacts. It
+  does not run delegations or worktrees, approve anything, call providers,
+  fetch GitHub status, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state"`
+    -> `1 passed, 509 deselected`
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Goal Current Phase Banner
+
+- Upgraded `/goals/<goal_id>` `Current Phase` from a thin phase label into a
+  large operator-state banner. The banner now shows the phase, phase reason,
+  operator attention cue, next recommended action, next action surface, latest
+  activity, and `phase_banner_external_effects_created=false`.
+- The banner is still read-only over existing local state and artifacts. It
+  does not run delegations or worktrees, approve anything, call providers,
+  fetch GitHub status, push, create PRs, deploy, or mutate external systems.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state"`
+    -> `1 passed, 509 deselected`
+  - `git diff --check`
+    -> passed
+
+## 2026-06-26 Goal Timeline Lifecycle Language
+
+- Updated `/goals/<goal_id>` timeline entries to use operator-facing lifecycle
+  language for the workflow gates: `Approval requested`, `Approval granted`,
+  `Execution completed`, `Review passed`, `Commit approved`, and
+  `Publication approved`.
+- Review artifacts are now first-class timeline events when
+  `runs/<source_run_id>/review.md` exists; if the artifact mentions the coder
+  worktree run id, the timeline renders `Review passed` and links through the
+  bounded `/artifacts` viewer.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state"`
+    -> `1 passed, 509 deselected`
+  - `git diff --check`
+    -> passed
+- Non-claims: this is read-only browser timeline/activity presentation over
+  existing local state and artifacts. It does not approve work, run
+  delegations, run worktrees, execute arbitrary commands, call providers,
+  fetch GitHub status, push, create PRs, deploy, or mutate external systems.
+
+## 2026-06-26 Goal Skills Used Readback
+
+- Upgraded `/goals/<goal_id>` `Skills Used` from raw task tags to a
+  first-class readback. The section now links to `/skills`, shows
+  `tasks.skill_tags` as the source, task skill usage counts, projects using
+  each tag, matching generated or available local skill records when present,
+  profile usage counts, and `skill_execution_from_goal_page=false`.
+- This makes the Goal page more self-contained for daily operation: an
+  operator can see which capabilities the goal needs and whether ClankerOS has
+  a matching local skill record without detouring into SQLite or the CLI.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state"`
+    -> `1 passed, 509 deselected`
+  - `git diff --check`
+    -> passed
+- Non-claims: this is read-only browser UI over local skill/task state. It
+  does not install, activate, or execute skills; call providers; fetch GitHub
+  status; run arbitrary commands; push; create PRs; deploy; or mutate external
+  systems.
+
+## 2026-06-26 Goal Workspace Restore State
+
+- Added a `Goal Workspace Restore State` readback inside
+  `/goals/<goal_id>` so the Goal page shows saved workspace filters, expanded
+  panels, last-viewed artifact, source path, and current goal/project match
+  status directly from `.clanker/app/workspace.json`.
+- The readback makes the resume loop more first-class on the page the
+  operator actually returns to, instead of requiring a detour through
+  `/workspace` to see whether filters and panel state were preserved.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario_populates_fixture_state"`
+    -> `1 passed, 509 deselected`
+  - `git diff --check`
+    -> passed
+- Non-claims: this reads saved local workspace state on GET only. It does not
+  auto-write workspace state on page load, call providers, fetch GitHub
+  status, execute worktrees or arbitrary commands, push, create PRs, deploy,
+  or mutate external systems.
+
+## 2026-06-26 Goal Approved Worktree Handoff
+
+- Added a `Run Approved Worktree Boundary` readback to the Goal Next Action
+  card. When `/goals/<goal_id>` is waiting on an approved coder worktree
+  request, the card now shows a copy-only `run-coder-worktree` command
+  template plus the approved plan artifact, plan hash, allowed-file preview,
+  verifier, expected evidence directory, workflow return link, and future run
+  detail route. Later browser work promoted this into a confirmed local
+  `run-coder-worktree` action while retaining the CLI command as fallback.
+- The handoff closes the previous blank Goal-card state at
+  `Run approved worktree from CLI`; the current Goal card now says
+  `Run approved worktree` and preserves the existing approval, safe-command,
+  verifier, and bounded-file checks.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "goal_next_action_card_exposes_post_delegation_forms or local_app_demo_scenario_populates_fixture_state"`
+    -> `2 passed, 508 deselected`
+  - `git diff --check`
+    -> passed
+- Non-claims: the original slice did not run the approved worktree from the browser.
+  The current browser action still does not expose arbitrary commands,
+  execute arbitrary commands, call providers, fetch GitHub status, push,
+  create PRs, deploy, or mutate external systems.
+
+## 2026-06-26 Goal Resume Snapshot
+
+- Added a `Goal Resume Snapshot` section to `/goals/<goal_id>`. It reads the
+  saved `.clanker/app/workspace.json` state, links the current goal/project,
+  shows whether the saved workspace already matches the current goal, and
+  suggests the latest existing goal artifact as the resume anchor.
+- The same section exposes a confirmed `save-workspace` form prefilled for the
+  current goal and returns the operator to that goal page after saving through
+  a strictly local return path.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state"`
+    -> `2 passed, 508 deselected`
+  - `git diff --check`
+    -> passed
+- Non-claims: this does not write workspace state on GET, run delegations,
+  run worktrees, execute arbitrary commands, fetch GitHub status, call
+  providers, push, create PRs, deploy, or mutate external systems.
+
+## 2026-06-26 Goal Review Gate Action
+
+- Added a confirmed local `review-run` action to the Goal Next Action card.
+  When `/goals/<goal_id>` is waiting on a completed coder worktree run whose
+  `runs/<source_run_id>/review.md` is missing or does not mention the coder
+  run id, the card now renders a browser form that writes the local review
+  artifact.
+- The action reuses the existing run-review packet writer and then returns the
+  operator to the selected coder run surface, where the backend review gate can
+  expose `coder-commit-request` once the review passes.
+- Non-claims: this does not approve commits, stage files, commit, push,
+  create PRs, deploy, call providers, run delegations, run worktrees, use the
+  network, or mutate external systems.
+
+## 2026-06-26 Goal Commit And Publication Gate Actions
+
+- Extended the Goal Next Action card beyond commit request creation. When the
+  current goal is waiting on later gates, `/goals/<goal_id>` now renders
+  confirmed local forms for `approve-coder-commit`,
+  `commit-coder-worktree`, `coder-publication-request`,
+  `approve-coder-publication`, and `coder-publication-handoff`.
+- Once the publication handoff is ready, the same card shows the manual
+  publish boundary plus copy-only suggested push and draft-PR commands through
+  the existing handoff panel.
+- Non-claims: this does not expose browser-side delegation execution,
+  browser-side worktree execution, automatic approval, push, PR creation,
+  deploy, provider calls, network actions, or external mutation. The local
+  commit form still uses the existing backend gate and creates one isolated
+  local worktree commit only after approval.
+
+## 2026-06-26 Goal Approval And Commit Request Actions
+
+- Extended the Goal Next Action card with confirmed local forms for
+  `approve-coder-worktree` and `coder-commit-request` when the current goal is
+  waiting on a pending worktree approval or a reviewed completed worktree run.
+- The approval form records a local approval decision only. The commit request
+  form creates a pending local commit approval request only after the existing
+  review gate says the completed run is reviewed.
+- Non-claims: this does not expose worktree execution, source edits, automatic
+  commits, push, PR creation, deploy, provider calls, network actions, or
+  external mutation from the Goal page.
+
+## 2026-06-26 Goal Post-Delegation Next Actions
+
+- Extended the Goal Next Action card so the post-delegation path is also
+  drivable from `/goals/<goal_id>`. When the current goal state reaches the
+  relevant phase, the card renders confirmed local forms for `coder-prep`,
+  `coder-worktree-plan`, and `coder-worktree-approval`.
+- These forms reuse the existing local app confirmation/result/error flow and
+  the same backend handlers as delegation detail pages. They move coder prep,
+  worktree plan creation, and pending approval request creation into the
+  goal-centered operator path.
+- Non-claims: this does not expose browser-side delegation execution,
+  worktree execution, automatic approval, source edits, arbitrary commands,
+  provider calls, network actions, push, PR creation, deploy, or external
+  mutation.
+
+## 2026-06-26 Goal Artifact Explorer
+
+- Added a typed `Goal Artifact Explorer` section to `/goals/<goal_id>`.
+  The section groups goal-linked artifacts into Markdown, JSON, Patch, and
+  Text buckets and links each item through the bounded inert `/artifacts`
+  viewer.
+- The explorer includes task artifacts, run summaries, incidents,
+  recommendations, delegation result metadata, context packs, implementation
+  handoffs, coder-prep/worktree-plan packets, coder run review/evidence files,
+  commit artifacts, and publication artifacts when those records exist.
+- Non-claims: this is read-only browser organization over existing local
+  artifact paths. It does not add raw filesystem browsing, execute artifacts,
+  call providers, fetch GitHub status, push, create PRs, deploy, or mutate
+  external systems.
+
+## 2026-06-26 Goal Context Pack Next Action
+
+- Updated the Goal Next Action card so a freshly created scout delegation no
+  longer leaves the operator at a vague inspection step. If the delegation has
+  no context pack, `/goals/<goal_id>` recommends `Generate context pack` and
+  renders the confirmed local `context-pack` form directly on the goal page.
+- After the context pack exists, the Goal page changes the recommendation to
+  `Run delegation`, shows a confirmed `/actions/run-delegation` form, keeps
+  the exact `python3 -m agent_os.cli run-delegation <delegation_id>` fallback,
+  and labels browser execution as `confirmed_local_only`.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health"`
+    -> `1 passed, 506 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety"`
+    -> `3 passed, 504 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with matched route markers and zero provider/network/external
+    mutation counters.
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with matched fixture route snippets and zero provider/network/
+    external mutation counters.
+  - `git diff --check`
+    -> passed
+- Non-claims: this moves one more safe artifact-producing step into the
+  browser. It does not run delegation adapters from the app, call providers,
+  fetch GitHub status, push, create PRs, deploy, or mutate external systems.
+
+## 2026-06-26 Goal Operator Notes Form
+
+- Added a confirmed `save-goal-note` browser action to `/goals/<goal_id>`.
+  Operators can append day-to-day resume context to the goal-scoped
+  `.clanker/projects/<project>/goals/<goal>/operator-notes.md` artifact
+  without leaving the app.
+- Goal pages now show whether the operator notes artifact exists, keep the
+  append form visible, and link the artifact after the first note is saved.
+  `/memory` discovers the same operator-notes artifact so daily breadcrumbs
+  remain part of the browser resume loop.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state"`
+    -> `2 passed, 505 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state or local_app_cli_commands_and_bind_safety"`
+    -> `3 passed, 504 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with matched route markers and zero provider/network/external
+    mutation counters.
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with matched fixture route snippets and zero provider/network/
+    external mutation counters.
+  - `git diff --check`
+    -> passed
+- Non-claims: this is a confirmed local artifact append only. It does not call
+  providers, fetch GitHub status from the app, run code, push, create PRs,
+  deploy, mutate external systems, or overwrite existing operator notes.
+
+## 2026-06-26 Goal Risk And Completion Criteria
+
+- Added first-class `Goal Risk` and `Goal Completion Criteria` sections to
+  `/goals/<goal_id>` so the goal workbench names risk posture and completion
+  criteria directly instead of leaving them implied by task rows or plan
+  artifacts.
+- `Goal Risk` shows the highest goal risk, task risk counts, approval
+  boundary, optional sprint-contract risk notes, and per-task risk/status
+  readbacks.
+- `Goal Completion Criteria` reads from the strongest available local source:
+  sprint-contract acceptance criteria, then plan steps, then task verification
+  plan acceptance/readable task descriptions. It also links the latest plan
+  and contract artifacts when present.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health"`
+    -> `1 passed, 506 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_cli_commands_and_bind_safety or local_app_routes_render_modern_workflow_and_health"`
+    -> `3 passed, 504 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with matched route markers and zero provider/network/external
+    mutation counters.
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with matched fixture route snippets and zero provider/network/
+    external mutation counters.
+  - `git diff --check`
+    -> passed
+- Non-claims: this is read-only browser UI over existing local state and
+  artifacts. It does not change risk policy, approve work, call providers,
+  fetch GitHub status from the app, push, create PRs from the app, deploy, or
+  enable external mutation inside ClankerOS.
+
+## 2026-06-26 Home Resume Workspace
+
+- Added `Home Resume Workspace` to the local app root `/` page. It reads the
+  saved `.clanker/app/workspace.json` state and shows direct resume links for
+  the saved open goal, project, and last viewed artifact.
+- When Home has a current lead goal, it now renders an explicit
+  `save-workspace` form prefilled with the lead goal/project plus resume
+  defaults, so an operator can remember the current context for the next
+  session without leaving the primary Home surface.
+- The implementation keeps workspace persistence behind the existing
+  confirmation flow. The Home page reads saved state on GET but does not write
+  workspace state until the operator confirms `save-workspace`.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health"`
+    -> `1 passed, 506 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_cli_commands_and_bind_safety or local_app_routes_render_modern_workflow_and_health"`
+    -> `3 passed, 504 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with matched route markers and zero provider/network/external
+    mutation counters.
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with matched fixture route snippets and zero provider/network/
+    external mutation counters.
+  - `git diff --check`
+    -> passed
+- Non-claims: this is local browser UI and confirmed local workspace artifact
+  persistence only. It does not auto-write on page load, call providers, fetch
+  GitHub status from the app, push, create PRs from the app, deploy, or enable
+  external mutation inside ClankerOS.
+
+## 2026-06-26 Goal-First Home Dashboard
+
+- Moved the local app root `/` surface from a repo/control dashboard lead-in to
+  a Goal-First Home board that starts with goal posture and operator attention
+  queues.
+- The Home board now shows active, paused, and completed goal lanes, recent
+  human-readable activity, inbox counts, open recommendations, open incidents,
+  and the existing first-run project/goal forms when no goals exist.
+- The root hero now reports `home_dashboard_goal_first`, goal counts, recent
+  activity count, next action, and lead-goal phase/next-action readbacks when
+  state exists.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+    -> passed
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health"`
+    -> `1 passed, 506 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_cli_commands_and_bind_safety or local_app_routes_render_modern_workflow_and_health"`
+    -> `3 passed, 504 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with matched route markers and zero provider/network/external
+    mutation counters.
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with matched fixture route snippets and zero provider/network/
+    external mutation counters.
+  - `git diff --check`
+    -> passed
+- Non-claims: this is browser UI and route-smoke coverage only. It does not
+  call providers, run subagents, fetch GitHub status from the app, push, create
+  PRs from the app, deploy, or enable external mutation inside ClankerOS.
+
+## 2026-06-26 Browser Shell, Clickable Timeline, And Scout Delegation Action
+
+- Added a shared browser operator shell to the local app with breadcrumbs,
+  recent local items, command palette, keyboard shortcuts, and a dark/light
+  theme toggle across routes.
+- Goal detail pages now render a browser-native progress bar and clickable
+  timeline entries that point to relevant local goal, delegation, run,
+  approval, or artifact surfaces.
+- The Goal Next Action card now exposes a confirmed `delegate` form when a
+  goal has planned tasks but no delegation yet. The action forces the
+  read-only `scout` profile, reuses an existing task delegation if present,
+  and writes a pending subagent delegation contract without starting a
+  subagent.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health"`
+    -> `1 passed, 506 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_cli_commands_and_bind_safety or local_app_routes_render_modern_workflow_and_health"`
+    -> `3 passed, 504 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> passed with matched route markers and zero provider/network/external
+    mutation counters.
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> passed with matched fixture route snippets and zero provider/network/
+    external mutation counters.
+  - `git diff --check`
+- Non-claims: these are browser UI, local navigation, and confirmed local
+  artifact/state writes only. They do not run a delegation, call providers,
+  fetch GitHub status from the app, push, create PRs, deploy, or enable
+  external mutation inside ClankerOS.
+
+## 2026-06-26 Browser Search, Workspace, Memory, Skills, And First-Run Actions
+
+- Added first-class local app routes for `/search`, `/workspace`, `/memory`,
+  `/skills`, and `/profiles`.
+- `/search` performs bounded global search across indexed goals, projects,
+  tasks, delegations, runs, approvals, incidents, recommendations, memory,
+  skills, and known artifacts without arbitrary filesystem browsing.
+- `/workspace` reads and writes `.clanker/app/workspace.json` through a
+  confirmed `save-workspace` action for open project, open goal, filters,
+  expanded panels, and last viewed artifact.
+- `/memory` shows project/global/generated memories, operator notes, future
+  work, and confirmed `pin-memory` actions. `/skills` shows skill records,
+  generated skills, usage count, last-used readback, and projects using them.
+  `/profiles` shows inactive future routing lanes and `.clanker/profiles.yml`
+  readback with provider calls still at zero.
+- `/goals` now includes confirmed browser first-run actions for
+  `register-project` and `create-goal`, using the existing project registry
+  and goal lifecycle helpers.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py agent_os/cli.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health"`
+    -> `1 passed, 506 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_cli_commands_and_bind_safety"`
+    -> `2 passed, 505 deselected`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_cli_commands_and_bind_safety or local_app_routes_render_modern_workflow_and_health"`
+    -> `3 passed, 504 deselected`
+  - `python3 -m agent_os.cli app-smoke-test`
+    -> rendered `/search`, `/workspace`, `/memory`, `/skills`, `/profiles`,
+    and the existing local app routes with matched markers and zero
+    provider/network/external-mutation counters.
+  - `python3 -m agent_os.cli app-demo-smoke-test`
+    -> rendered the populated goal/search/workspace/memory/skills/profiles
+    demo path with matched snippets and zero provider/network/external-mutation
+    counters.
+  - `git diff --check`
+- Non-claims: these are local app/readback/confirmed local artifact writes
+  only. They do not deploy, call providers, fetch GitHub status from the app,
+  push, create PRs from the app, run arbitrary commands from the app, or enable
+  external mutation inside ClankerOS.
+
+## 2026-06-26 Goal-First Local App Cockpit
+
+- Added `/goals` as the local app's daily goal cockpit. It separates active,
+  paused, and completed goals and shows phase, next action, and task progress
+  for each goal.
+- Added `/goals/<goal_id>` as the goal-centered workbench with current phase,
+  next action, overview, progress, chronological timeline, activity log,
+  delegations, runs, approvals, evidence, artifacts, memory, skills used, git
+  status, operator notes, remaining work, and local polling refresh.
+- Added a `Goal Snapshot` to the root dashboard, a top-nav `Goals` link, and a
+  short `python3 -m agent_os.cli demo` alias for the fixture-backed browser
+  walkthrough.
+- Hardened the generated demo git fixture so its synthetic commit does not
+  inherit machine-level commit signing settings.
+- Compact local verification for this slice:
+  - `python3 -m py_compile agent_os/local_app.py agent_os/cli.py tests/test_first_milestone.py`
+  - `python3 -m pytest tests/test_first_milestone.py -q -k "local_app_demo_scenario or local_app_cli_commands_and_bind_safety or local_app_routes_render_modern_workflow_and_health"`
+    -> `3 passed, 504 deselected`
+  - `git diff --check`
+- Non-claims: this is local app, CLI alias, docs, and smoke coverage only. It
+  does not deploy, call providers, create PRs from the app, fetch GitHub status
+  from the app, or enable external mutation inside ClankerOS.
+
 ## 2026-06-26 Fast Smoke GitHub CI Evidence
 
 - Added job-scoped `ci-snapshot-evidence-from-gh-json` validation. Operators
@@ -658,9 +14654,10 @@
   actions, where forms appear, required previous artifacts, output artifacts,
   confirmation requirements, local mutation posture, and
   `external_effects=none`.
-- The catalog includes the confirmed `refresh-dashboard-state` form and
-  explicitly labels `run-coder-worktree` as CLI-first outside fixture-backed
-  demo setup, while manual push/PR remains outside ClankerOS.
+- The catalog includes the confirmed `refresh-dashboard-state` form. Later
+  browser work relabeled `run-coder-worktree` as a confirmed goal action only
+  after an approved worktree request and safe local command validation, while
+  manual push/PR remains outside ClankerOS.
 - The local app status artifact and smoke route list now include `/actions`.
 - Compact local verification for this slice:
   - `python3 -m py_compile agent_os/local_app.py tests/test_first_milestone.py`
@@ -10903,3 +24900,22 @@
   or real cost tracking integration. ClankerOS records
   `provider_calls_taken_by_clankeros=0` and `external_mutations_taken=0`; adapter
   network/provider behavior is unknown unless adapter evidence proves otherwise.
+
+## 2026-07-01 Home Focus Queue Card UX
+
+- Upgraded Home Focus Queue from diagnostic text into a first-class browser
+  queue with cards for active/paused goals, a primary continue action, project
+  links, phase/progress readbacks, and waiting/approval/incident/recommendation
+  counts.
+- Preserved first-run behavior with a visible Create Project card when no
+  active or paused goals exist.
+- Added explicit read-only evidence for queue availability, primary action,
+  waiting totals, no writes on GET, zero app network actions, and no external
+  effects.
+- Verification evidence:
+  - `PYTHONPATH=. pytest tests/test_first_milestone.py -q -k "local_app_routes_render_modern_workflow_and_health or local_app_demo_scenario_populates_fixture_state"`:
+    2 passed, 515 deselected.
+  - `git diff --check`: passed.
+- Non-claims: no external systems, provider calls, GitHub mutations, CI
+  recording, deploys, automatic scheduling, or trust promotion were performed
+  by this browser-rendering change.

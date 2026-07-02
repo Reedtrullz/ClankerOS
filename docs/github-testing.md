@@ -2,24 +2,46 @@
 
 Use GitHub Actions for the slow, authoritative verification loop. The local
 machine should stay focused on quick checks while the repository workflow runs
-the full suite after a push, pull request, or manual dispatch.
+the full suite after a codex branch push, main push, pull request, or manual
+dispatch.
+
+## Default Operator Loop
+
+For normal ClankerOS app slices, do not spend the session running the whole
+suite locally. Use this loop instead:
+
+1. Make a small, reviewable change.
+2. Run the narrowest relevant local check for the touched files. For docs-only
+   changes, `git diff --check` is usually enough. For app/code changes, prefer
+   one focused pytest expression, `app-smoke-test`, or `compileall` over the
+   full suite.
+3. Commit and push the branch tied to the pull request.
+4. Watch the GitHub `Fast smoke verification` job first. If it passes, keep
+   building while `Full pytest suite` runs in GitHub.
+5. Only inspect full-suite logs when GitHub reports a failure or timeout.
+
+This keeps local iteration fast while still making the repository, not the
+chat transcript, the place where slow proof accumulates.
 
 ## Automatic Workflow
 
 The workflow lives at `.github/workflows/tests.yml` and runs on:
 
 - pushes to `main`;
+- pushes to `codex/**` branches;
 - pull requests targeting `main`;
-- manual `workflow_dispatch` runs from GitHub.
+- manual `workflow_dispatch` runs from GitHub as a fallback.
 
 The `Tests` workflow has two jobs:
 
 - `smoke` checks out the repo, sets up Python 3.10, installs `pytest`,
   compiles `agent_os` and `tests`, runs local CLI smoke checks against a
   temporary ClankerOS root, runs the generic route smoke plus the
-  fixture-backed `app-demo-smoke-test`, runs a focused pytest slice for the
-  GitHub workflow, CI snapshot handoff, local app route, artifact viewer,
-  demo scenario, and bind-safety tests, and checks whitespace with
+  fixture-backed `app-demo-smoke-test`, including `/goals`,
+  `/goals/<goal_id>`, `/search`, `/workspace`, `/memory`, `/skills`, and
+  `/profiles`, runs a focused pytest slice for the GitHub workflow, CI
+  snapshot handoff, local app route, artifact viewer, demo scenario, and
+  bind-safety tests, and checks whitespace with
   `git diff --check`.
 - `full-suite` depends on `smoke` and then runs the slow full suite with:
 
@@ -86,28 +108,27 @@ The validated direct-push proof path looks like:
 
 ```bash
 gh run view <run_id> --repo Reedtrullz/ClankerOS \
-  --json status,conclusion,headSha,headBranch,url,jobs \
+  --json status,conclusion,headSha,headBranch,databaseId,url,jobs \
 | python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json \
   --project clankeros \
   --branch main \
   --commit <commit_sha> \
-  --external-run-id <run_id> \
   --status-json -
 ```
 
-The recorder refuses pending runs, failed runs, malformed JSON, branch
-mismatches when `headBranch` is present, and commit mismatches.
+The recorder infers the run id and URL from `databaseId`/`url`, then refuses
+pending runs, failed runs, malformed JSON, branch mismatches when `headBranch`
+is present, and commit mismatches.
 
 The scoped fast-smoke proof path looks like:
 
 ```bash
 gh run view <run_id> --repo Reedtrullz/ClankerOS \
-  --json status,conclusion,headSha,headBranch,url,jobs \
+  --json status,conclusion,headSha,headBranch,databaseId,url,jobs \
 | python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json \
   --project clankeros \
   --branch main \
   --commit <commit_sha> \
-  --external-run-id <run_id> \
   --status-json - \
   --job-name "Fast smoke verification"
 ```

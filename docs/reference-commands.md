@@ -16,6 +16,7 @@ python3 -m agent_os.cli app
 python3 -m agent_os.cli app --port 8788
 python3 -m agent_os.cli local-app
 python3 -m agent_os.cli demo-app-scenario
+python3 -m agent_os.cli demo
 python3 -m agent_os.cli app-smoke-test
 python3 -m agent_os.cli app-demo-smoke-test
 python3 -m agent_os.cli projects
@@ -33,14 +34,23 @@ python3 -m agent_os.cli handoff-review
 It refuses non-local binds unless `--allow-nonlocal-bind` is supplied. The app
 wraps existing local state and artifacts; it does not replace the CLI, push,
 create PRs, deploy, call providers, execute arbitrary commands, or use the
-network beyond local browser/server loopback. `demo-app-scenario` creates a
-fixture-backed local demo under `.clanker/demo/` with project, delegation,
-handoff, coder-prep, worktree-plan, and pending approval state. `app-smoke-test`
+network beyond local browser/server loopback. `demo-app-scenario` and the
+short `demo` alias create a fixture-backed local demo under `.clanker/demo/`
+with project, goal, delegation, handoff, coder-prep, worktree-plan, and
+pending approval state. `app-smoke-test`
 renders the core routes without starting a server. `app-demo-smoke-test`
-creates the demo fixture and renders stateful demo/workflow/project/
+creates the demo fixture and renders stateful goal/demo/workflow/project/
 delegation/run/approval routes with expected snippet checks, still without
 starting a server or taking network/external actions. The app includes
-`/projects` as a project workflow index with local repo posture, goal/task/
+`/goals` as the daily goal cockpit with confirmed local first-run
+`register-project` and `create-goal` forms, `/goals/<goal_id>` as the
+goal-centered workbench with phase, next action, timeline, evidence,
+artifacts, memory, skills, git status, operator notes, and remaining work,
+`/search` for bounded indexed search, `/workspace` for persistent open
+project/goal/filter/panel/artifact state, `/memory`, `/skills`, and
+`/profiles` for local memory, skill usage, and inactive routing readbacks,
+`/projects` as a
+project workflow index with local repo posture, goal/task/
 delegation counts, next recommended operator action, and selected workflow
 links, `/projects/<project_id>` for project goals, tasks, artifacts, guidance,
 and workflow launch links, `/delegation-runs` for read-only delegation execution
@@ -482,8 +492,8 @@ python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or ci_snap
 gh repo view Reedtrullz/ClankerOS --json description,repositoryTopics,homepageUrl
 git push origin main
 python3 -m agent_os.cli ci-snapshot-handoff --project clankeros --branch main --commit <commit_sha> --external-run-id <run_id> --repo Reedtrullz/ClankerOS
-gh run view <run_id> --repo Reedtrullz/ClankerOS --json status,conclusion,headSha,headBranch,url,jobs | python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json --project clankeros --branch main --commit <commit_sha> --external-run-id <run_id> --status-json -
-gh run view <run_id> --repo Reedtrullz/ClankerOS --json status,conclusion,headSha,headBranch,url,jobs | python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json --project clankeros --branch main --commit <commit_sha> --external-run-id <run_id> --status-json - --job-name "Fast smoke verification"
+gh run view <run_id> --repo Reedtrullz/ClankerOS --json status,conclusion,headSha,headBranch,databaseId,url,jobs | python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json --project clankeros --branch main --commit <commit_sha> --status-json -
+gh run view <run_id> --repo Reedtrullz/ClankerOS --json status,conclusion,headSha,headBranch,databaseId,url,jobs | python3 -m agent_os.cli ci-snapshot-evidence-from-gh-json --project clankeros --branch main --commit <commit_sha> --status-json - --job-name "Fast smoke verification"
 python3 -m agent_os.cli ci-snapshot-evidence --project clankeros --branch main --commit <commit_sha> --provider github-actions --status success --external-run-id <run_id> --url <run_url>
 ```
 
