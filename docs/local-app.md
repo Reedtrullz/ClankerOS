@@ -661,7 +661,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   using explicit read-only shortcut metadata. The global Operator Ribbon Resume
   card keeps explicit saved resume surfaces first; without one, populated
   sessions return to the current Goal action, while first-run sessions keep the
-  `/resume` hub fallback. It also includes a visible
+  `/resume` hub fallback. The global Operator Focus Resume card follows the
+  same rule, so its visible Resume action and collapsed evidence point at the
+  exact current Goal action unless a saved surface is present. It also includes a visible
   `Finish` control and the `f` shortcut resolves to the
   route-local Finish Today form on `/today` (`#today-finish`) and
   `/goals/<goal_id>` (`#goal-finish-today`), plus route-local forms on

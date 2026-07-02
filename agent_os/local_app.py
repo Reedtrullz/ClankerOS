@@ -45577,6 +45577,17 @@ def _operator_focus_context(root: Path, current_path: str = "/") -> dict[str, An
 
     state = _load_workspace_state(root)
     saved_goal_id = str(state.get("open_goal") or "").strip()
+    saved_project_id = str(state.get("open_project") or "").strip()
+    saved_resume_surface = _safe_local_return_path(state.get("resume_surface")) or ""
+    saved_resume_label = ""
+    if saved_resume_surface:
+        saved_resume_label = _saved_workspace_surface_action_label(
+            root,
+            saved_resume_surface,
+            open_goal=saved_goal_id,
+            open_project=saved_project_id,
+            fallback=saved_resume_surface,
+        )
     goal_state: dict[str, Any] | None = None
     source = ""
     if saved_goal_id:
@@ -45647,6 +45658,8 @@ def _operator_focus_context(root: Path, current_path: str = "/") -> dict[str, An
         "open_incidents": open_incidents,
         "open_recommendations": open_recommendations,
         "waiting_items": open_incidents + open_recommendations + pending_approvals,
+        "saved_resume_surface": saved_resume_surface,
+        "saved_resume_label": saved_resume_label,
     }
 
 
@@ -46457,6 +46470,17 @@ def _operator_focus_strip(context: dict[str, Any], current_path: str = "/") -> s
     next_action = context["next_action"]
     action_form = str(context.get("action_form") or "")
     focus_href, focus_label, focus_source = _focus_context_target(context, current_path)
+    saved_resume_href = str(context.get("saved_resume_surface") or "").strip()
+    if saved_resume_href:
+        resume_href = saved_resume_href
+        resume_label = str(context.get("saved_resume_label") or resume_href)
+        resume_source = "saved_resume_surface"
+        resume_status = "saved_surface"
+    else:
+        resume_href = focus_href
+        resume_label = focus_label
+        resume_source = "current_goal_action"
+        resume_status = "current_action"
     rows = [
         ("operator_focus_status", "available"),
         ("operator_focus_source", str(context["source"])),
@@ -46487,7 +46511,14 @@ def _operator_focus_strip(context: dict[str, Any], current_path: str = "/") -> s
         ("operator_focus_action_form_available", "true" if action_form else "false"),
         ("operator_focus_confirmation_required", "true" if action_form else "false"),
         ("operator_focus_safety_boundary", "confirmed_local_action_only"),
-        ("operator_focus_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+        ("operator_focus_resume_status", resume_status),
+        (
+            "operator_focus_resume_surface",
+            SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"),
+        ),
+        ("operator_focus_resume_exact_surface", resume_href),
+        ("operator_focus_resume_surface_source", resume_source),
+        ("operator_focus_resume_hub_surface", SafeHtml("<a href='/resume'>/resume</a>")),
         ("operator_focus_write_on_get", "false"),
         ("operator_focus_provider_calls_taken", "0"),
         ("operator_focus_network_actions_taken", "0"),
@@ -46503,7 +46534,10 @@ def _operator_focus_strip(context: dict[str, Any], current_path: str = "/") -> s
             f"incidents={_e(context['open_incidents'])} "
             f"recommendations={_e(context['open_recommendations'])}"
         ),
-        "operator_focus_resume: <a href='/resume'>/resume</a>",
+        (
+            f"operator_focus_resume: status={_e(resume_status)} "
+            f"surface=<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"
+        ),
         "operator_focus_safety: read-only local navigation",
     ]
     cards = [
@@ -46538,10 +46572,10 @@ def _operator_focus_strip(context: dict[str, Any], current_path: str = "/") -> s
         ),
         _operator_focus_card(
             "Resume",
-            "/resume",
+            resume_label,
             action=SafeHtml(
                 "<a class='operator-focus-secondary' data-operator-focus-resume='true' "
-                "href='/resume'>Resume workspace</a>"
+                f"href='{_e(resume_href)}'>{_e(resume_label)}</a>"
             ),
             marker="data-operator-focus-resume-card='true'",
         ),

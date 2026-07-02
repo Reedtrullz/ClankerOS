@@ -12526,7 +12526,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-operator-focus-phase-card='true'" in dashboard.body
     assert "data-operator-focus-progress-card='true'" in dashboard.body
     assert "data-operator-focus-waiting-card='true'" in dashboard.body
-    assert "data-operator-focus-resume='true' href='/resume'>Resume workspace</a>" in dashboard.body
+    assert (
+        f"data-operator-focus-resume='true' href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in dashboard.body
     assert "data-operator-focus-details='true'" in dashboard.body
     assert "<summary>Focus evidence</summary>" in dashboard.body
     assert "data-operator-focus-summary='true'" in dashboard.body
@@ -12556,13 +12559,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "operator_focus_action_form_available</dt><dd>true" in dashboard.body
     assert "operator_focus_confirmation_required</dt><dd>true" in dashboard.body
     assert "operator_focus_safety_boundary</dt><dd>confirmed_local_action_only" in dashboard.body
-    assert "operator_focus_resume_surface</dt><dd><a href='/resume'>/resume</a>" in dashboard.body
+    assert (
+        f"operator_focus_resume_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in dashboard.body
+    assert (
+        f"operator_focus_resume_exact_surface</dt><dd>/goals/{result.goal_id}#goal-action-dock-form"
+    ) in dashboard.body
+    assert "operator_focus_resume_surface_source</dt><dd>current_goal_action" in dashboard.body
     assert "operator_focus_write_on_get</dt><dd>false" in dashboard.body
     assert "operator_focus_provider_calls_taken</dt><dd>0" in dashboard.body
     assert "operator_focus_network_actions_taken</dt><dd>0" in dashboard.body
     assert "operator_focus_external_effects_created</dt><dd>false" in dashboard.body
     assert "operator_focus_now: Act: Create commit request" in dashboard.body
     assert "operator_focus_waiting: approvals=1 incidents=0 recommendations=0" in dashboard.body
+    assert (
+        f"operator_focus_resume: status=current_action surface=<a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in dashboard.body
+    assert "operator_focus_resume: <a href='/resume'>/resume</a>" not in dashboard.body
     assert "data-operator-focus-action='true'" in dashboard.body
     assert "<summary>Create commit request</summary>" in dashboard.body
     assert f"/goals/{result.goal_id}" in dashboard.body
@@ -13788,10 +13803,23 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-operator-focus-phase-card='true'" in goal.body
     assert "data-operator-focus-progress-card='true'" in goal.body
     assert "data-operator-focus-waiting-card='true'" in goal.body
-    assert "data-operator-focus-resume='true' href='/resume'>Resume workspace</a>" in goal.body
+    assert (
+        "data-operator-focus-resume='true' href='#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in goal.body
     assert "data-operator-focus-details='true'" in goal.body
     assert "<summary>Focus evidence</summary>" in goal.body
     assert "data-operator-focus-summary='true'" in goal.body
+    assert (
+        "operator_focus_resume_surface</dt><dd><a href='#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in goal.body
+    assert "operator_focus_resume_exact_surface</dt><dd>#goal-action-dock-form" in goal.body
+    assert "operator_focus_resume_surface_source</dt><dd>current_goal_action" in goal.body
+    assert (
+        "operator_focus_resume: status=current_action surface=<a href='#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in goal.body
     assert 'data-next-action-href="#goal-action-dock-form"' in goal.body
     assert 'data-next-action-source="lead_goal_goal_action_dock_form"' in goal.body
     assert 'data-next-action-status="available"' in goal.body
@@ -21520,6 +21548,23 @@ def test_today_finish_today_saves_exact_resume_surface(tmp_path: Path) -> None:
         "<a href='/today#today-current-action'>/today#today-current-action</a>"
     ) in goal_after_save.body
     assert "goal_command_bar_resume_source</dt><dd>saved_resume_surface" in goal_after_save.body
+    assert (
+        "data-operator-focus-resume='true' href='/today#today-current-action'>"
+        "Open Today current action</a>"
+    ) in goal_after_save.body
+    assert "operator_focus_resume_status</dt><dd>saved_surface" in goal_after_save.body
+    assert (
+        "operator_focus_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>Open Today current action</a>"
+    ) in goal_after_save.body
+    assert (
+        "operator_focus_resume_exact_surface</dt><dd>/today#today-current-action"
+    ) in goal_after_save.body
+    assert "operator_focus_resume_surface_source</dt><dd>saved_resume_surface" in goal_after_save.body
+    assert (
+        "operator_focus_resume: status=saved_surface surface="
+        "<a href='/today#today-current-action'>Open Today current action</a>"
+    ) in goal_after_save.body
 
     resume = render_local_app_route(tmp_path, "/resume")
     assert resume.status == 200

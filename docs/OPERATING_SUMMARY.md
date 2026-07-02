@@ -780,7 +780,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   shared read-only `Operator Focus` strip still derives from
   the same saved workspace goal or current lead goal and opens with compact
   action cards for the primary action, phase, progress, waiting counts, and
-  `/resume`, followed by the expandable confirmed local action form when the
+  Resume. Saved resume surfaces still win; otherwise populated sessions route
+  the Focus Resume card to the current Goal action, while first-run sessions
+  keep the setup-safe resume hub fallback. The focus strip is followed by the
+  expandable confirmed local action form when the
   current next action is browser-available and collapsed `Focus evidence` for
   the full readback and no-write/no-provider/no-network/no-external-effect
   boundaries outside the Goal page. The header `Focus` control and `m`

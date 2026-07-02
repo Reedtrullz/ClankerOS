@@ -881,7 +881,9 @@ to open the same local keyboard-help dialog without opening palette evidence
 first. The shared Operator Ribbon keeps explicit saved resume surfaces as the
 strongest return point; when no saved surface exists, populated sessions route
 its Resume card to the current Goal action, while first-run sessions keep the
-`/resume` hub fallback. The `g` keyboard shortcut is Goal-aware: first-run or empty states still
+`/resume` hub fallback. The shared Operator Focus strip uses the same resume
+rule: saved surfaces win, populated sessions resume the current Goal action,
+and first-run sessions keep the setup-safe hub fallback. The `g` keyboard shortcut is Goal-aware: first-run or empty states still
 open `/goals`, while populated operator sessions open the current saved or
 lead Goal cockpit directly. The global `Proof` button and `p` shortcut are
 also Goal-aware: first-run or empty states open the manual CI evidence
