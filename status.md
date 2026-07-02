@@ -1,5 +1,34 @@
 # Status
 
+## 2026-07-02 Today Session Resume Current Action UX
+
+- The `/today` Session Summary Resume card now routes populated sessions with
+  no explicit saved resume surface to the current Goal action
+  `#today-current-action` instead of the generic `/goals` index.
+- Explicitly saved resume surfaces still win, preserving the existing
+  `saved_resume_surface` behavior for tomorrow's exact return point.
+- First-run/no-goal sessions keep the `/goals` setup fallback, so empty
+  checkouts still guide the operator toward project/goal creation.
+- TDD evidence: the populated fixture-backed scenario first proved the stale
+  `/goals` fallback; after implementation it proved `Create commit request`
+  with source `current_goal_action`, while the first-run route test continued
+  to prove `Open Goals` with source `workspace_readiness`.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed after docs/status updates.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed after docs/status updates.
+- Non-claim: this is read-only browser Today Session Summary routing only. It
+  does not write on GET, poll GitHub from the app, approve work, execute
+  tasks, call providers, use the network, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
 ## 2026-07-02 Goal Page Proof Card UX
 
 - The Goal Command Bar Proof link and collapsed command evidence now point to

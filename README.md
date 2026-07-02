@@ -215,7 +215,9 @@ Continue, Latest, Proof, and Resume cards before the detailed readback. The
 cards point at the current goal or first-run step, latest activity, the
 current Goal's CI handoff or first-run CI proof recorder, and workspace resume
 posture so the operator can act from the brief without reading the whole
-evidence table. A read-only `Today Activity Digest`
+evidence table. Saved resume surfaces still win; otherwise populated sessions
+resume to the current Goal action, while first-run sessions keep the Goals
+setup fallback. A read-only `Today Activity Digest`
 follows with Now, Window, Artifacts, Notes, and Safety cards plus a compact
 recent timeline list for the lead Goal or current first-run step, so the daily
 cockpit carries enough context to regain the thread without opening the full

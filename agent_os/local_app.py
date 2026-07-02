@@ -2740,17 +2740,30 @@ def _today_session_summary(
     )
     proof_surface = SafeHtml(f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>")
     explicit_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
-    resume_next_surface = explicit_resume_surface or str(resume["next_surface"])
-    resume_surface_source = (
-        "saved_resume_surface" if explicit_resume_surface else "workspace_readiness"
-    )
-    resume_label = _saved_workspace_surface_action_label(
-        root,
-        resume_next_surface,
-        open_goal=open_goal,
-        open_project=open_project,
-        fallback="Open resume point",
-    )
+    if explicit_resume_surface:
+        resume_next_surface = explicit_resume_surface
+        resume_surface_source = "saved_resume_surface"
+        resume_label = _saved_workspace_surface_action_label(
+            root,
+            resume_next_surface,
+            open_goal=open_goal,
+            open_project=open_project,
+            fallback="Open resume point",
+        )
+    elif lead_goal is not None:
+        resume_next_surface = target_href
+        resume_surface_source = "current_goal_action"
+        resume_label = target_label
+    else:
+        resume_next_surface = str(resume["next_surface"])
+        resume_surface_source = "workspace_readiness"
+        resume_label = _saved_workspace_surface_action_label(
+            root,
+            resume_next_surface,
+            open_goal=open_goal,
+            open_project=open_project,
+            fallback="Open resume point",
+        )
     resume_surface = SafeHtml(
         f"<a href='{_e(resume_next_surface)}'>{_e(resume_next_surface)}</a>"
     )

@@ -12771,10 +12771,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "Goal CI handoff</a>"
         in today.body
     )
-    assert "today_session_resume_card_surface</dt><dd><a href='/goals'>Open Goals</a>" in today.body
-    assert "today_session_resume_card_label</dt><dd>Open Goals" in today.body
-    assert "today_session_resume_surface_source</dt><dd>workspace_readiness" in today.body
-    assert "today_session_resume_surface</dt><dd><a href='/goals'>/goals</a>" in today.body
+    assert "today_session_resume_card_surface</dt><dd><a href='#today-current-action'>Create commit request</a>" in today.body
+    assert "today_session_resume_card_label</dt><dd>Create commit request" in today.body
+    assert "today_session_resume_surface_source</dt><dd>current_goal_action" in today.body
+    assert "today_session_resume_surface</dt><dd><a href='#today-current-action'>#today-current-action</a>" in today.body
     assert "today_session_workspace_status</dt><dd>not_started" in today.body
     assert "today_session_resume_ready</dt><dd>false" in today.body
     assert "today_session_ci_status</dt><dd>success" in today.body
@@ -12787,6 +12787,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_session_external_effects_created</dt><dd>false" in today.body
     assert "today_session_now: Create commit request" in today.body
     assert "today_session_click: <a href='#today-current-action'>Create commit request</a>" in today.body
+    assert "today_session_resume: not_started -> <a href='#today-current-action'>Create commit request</a>" in today.body
     assert (
         f"today_session_latest: <a href='/runs/{result.coder_worktree_run_id}'>"
         f"Execution completed: {result.coder_worktree_run_id}.</a>"
