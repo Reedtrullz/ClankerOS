@@ -4693,6 +4693,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "home_operator_board_attention_reason</dt><dd>create_project" in root.body
     assert "home_operator_board_action_form_available</dt><dd>true" in root.body
     assert "home_operator_board_resume_status</dt><dd>not_started" in root.body
+    assert "home_operator_board_resume_surface</dt><dd><a href='/resume'>/resume</a>" in root.body
+    assert "home_operator_board_resume_href</dt><dd><a href='/resume'>/resume</a>" in root.body
+    assert "home_operator_board_resume_source</dt><dd>resume_page" in root.body
     assert "home_operator_board_ci_status</dt><dd>success" in root.body
     assert "home_operator_board_ci_source</dt><dd>publication_handoff" in root.body
     assert "home_operator_board_ci_surface</dt><dd><a href='/verification'>/verification</a>" in root.body
@@ -12161,7 +12164,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"home_operator_board_attention_surface</dt><dd><a href='/approvals?goal_id={result.goal_id}'>Review approvals</a>" in dashboard.body
     assert "home_operator_board_attention_reason</dt><dd>pending_approvals" in dashboard.body
     assert "home_operator_board_resume_status</dt><dd>not_started" in dashboard.body
-    assert "home_operator_board_resume_surface</dt><dd><a href='#home-finish-today'>Save resume point</a>" in dashboard.body
+    assert (
+        f"home_operator_board_resume_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+        in dashboard.body
+    )
+    assert (
+        f"home_operator_board_resume_href</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        f"/goals/{result.goal_id}#goal-action-dock-form</a>"
+        in dashboard.body
+    )
+    assert "home_operator_board_resume_source</dt><dd>current_goal_action" in dashboard.body
     assert "home_operator_board_ci_status</dt><dd>success" in dashboard.body
     assert "home_operator_board_ci_source</dt><dd>direct_public_snapshot" in dashboard.body
     assert (
@@ -12174,6 +12187,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_operator_board_write_on_get</dt><dd>false" in dashboard.body
     assert "home_operator_board_network_actions_taken</dt><dd>0" in dashboard.body
     assert "home_operator_board_external_effects_created</dt><dd>false" in dashboard.body
+    assert (
+        f"home_operator_board_resume: not_started -> <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+        in dashboard.body
+    )
     assert "id='home-finish-today'" in dashboard.body
     assert "Home Resume Workspace" in dashboard.body
     assert "workspace_status: no_saved_workspace" in dashboard.body
@@ -17491,10 +17509,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_operator_board_action_form_available</dt><dd>true" in restored_home.body
     assert f"home_operator_board_attention_surface</dt><dd><a href='/approvals?goal_id={result.goal_id}'>Review approvals</a>" in restored_home.body
     assert "home_operator_board_resume_status</dt><dd>ready" in restored_home.body
-    assert "home_operator_board_resume_surface</dt><dd><a href='/resume'>/resume</a>" in restored_home.body
+    assert (
+        f"home_operator_board_resume_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+        in restored_home.body
+    )
+    assert (
+        f"home_operator_board_resume_href</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        f"/goals/{result.goal_id}#goal-action-dock-form</a>"
+        in restored_home.body
+    )
+    assert "home_operator_board_resume_source</dt><dd>saved_resume_surface" in restored_home.body
     assert "home_operator_board_ci_status</dt><dd>success" in restored_home.body
     assert "home_operator_board_waiting_items</dt><dd>1" in restored_home.body
     assert "home_operator_board_click: <a href='#home-resume-action-form'>Create commit request</a>" in restored_home.body
+    assert (
+        f"home_operator_board_resume: ready -> <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+        in restored_home.body
+    )
     assert "Home Resume Workspace" in restored_home.body
     assert (
         f"resume_goal: <a href='/goals/{result.goal_id}'>"

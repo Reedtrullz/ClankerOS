@@ -5263,6 +5263,7 @@ def _home_operator_board(
     filters = str(workspace.get("filters") or "").strip()
     expanded = str(workspace.get("expanded_panels") or "").strip()
     last_artifact = str(workspace.get("last_viewed_artifact") or "").strip()
+    saved_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
     readiness = _workspace_resume_readiness(
         root,
         open_project=open_project,
@@ -5300,6 +5301,7 @@ def _home_operator_board(
         resume_action = "Open resume"
         resume_href = "/resume"
         resume_label = "/resume"
+        resume_source = "resume_page"
     else:
         goal_id = str(lead_goal["id"])
         state = _goal_state(root, storage, goal_id)
@@ -5366,14 +5368,22 @@ def _home_operator_board(
             attention_href = primary_href
             attention_label = primary_label
             attention_reason = "clear_to_continue_goal"
-        if bool(readiness["ready"]):
-            resume_action = "Resume saved workspace"
-            resume_href = "/resume"
-            resume_label = "/resume"
+        if saved_resume_surface:
+            resume_action = "Resume saved surface"
+            resume_href = saved_resume_surface
+            resume_label = _saved_workspace_surface_action_label(
+                root,
+                saved_resume_surface,
+                open_goal=open_goal,
+                open_project=open_project,
+                fallback=saved_resume_surface,
+            )
+            resume_source = "saved_resume_surface"
         else:
-            resume_action = "Finish today"
-            resume_href = "#home-finish-today"
-            resume_label = "Save resume point"
+            resume_action = "Resume current action"
+            resume_href = primary_href
+            resume_label = primary_label
+            resume_source = "current_goal_action"
 
     proof_href, proof_label, proof_source = _goal_ci_handoff_target(
         lead_goal,
@@ -5388,6 +5398,9 @@ def _home_operator_board(
     )
     resume_surface = SafeHtml(
         f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"
+    )
+    resume_href_surface = SafeHtml(
+        f"<a href='{_e(resume_href)}'>{_e(resume_href)}</a>"
     )
     proof_surface = SafeHtml(
         f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>"
@@ -5447,6 +5460,8 @@ def _home_operator_board(
                     ("home_operator_board_resume_status", str(readiness["status"])),
                     ("home_operator_board_resume_ready", str(readiness["ready"]).lower()),
                     ("home_operator_board_resume_surface", resume_surface),
+                    ("home_operator_board_resume_href", resume_href_surface),
+                    ("home_operator_board_resume_source", resume_source),
                     ("home_operator_board_ci_status", ci_status),
                     ("home_operator_board_ci_source", ci_source),
                     ("home_operator_board_ci_surface", proof_surface),

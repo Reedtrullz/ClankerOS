@@ -1,5 +1,38 @@
 # Status
 
+## 2026-07-02 Home Operator Board Resume Current Action UX
+
+- The Home Operator Board Resume card now routes populated sessions with no
+  explicit saved resume surface to the current Goal action instead of the Home
+  Finish Today save anchor or the generic `/resume` hub.
+- Explicitly saved resume surfaces still win, so a saved
+  `/goals/<goal_id>#goal-action-dock-form` surface becomes the Home board
+  Resume target with the current action label.
+- First-run/no-goal sessions keep the `/resume` fallback, preserving the
+  empty-checkout setup path.
+- The board evidence now records `home_operator_board_resume_source` as
+  `resume_page`, `current_goal_action`, or `saved_resume_surface`, plus the
+  resolved href.
+- TDD evidence: the populated fixture-backed Home page failed first because
+  the post-save board still rendered `/resume`; after implementation it proved
+  saved-surface routing, while the pre-save populated Home board proved
+  current-action routing and the first-run route test preserved `/resume`.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    failed first, then 1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed after docs/status updates.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed after docs/status updates.
+- Non-claim: this is read-only browser Home Operator Board routing only. It
+  does not write on GET, poll GitHub from the app, approve work, execute
+  tasks, call providers, use the network, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
 ## 2026-07-02 Goal Command Bar Resume Current Action UX
 
 - The Goal Command Bar Resume card now routes Goal pages with no explicit

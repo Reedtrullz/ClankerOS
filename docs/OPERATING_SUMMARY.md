@@ -1222,8 +1222,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   while Home state and board evidence remain available in collapsed details.
   It starts with a read-only `Home Operator Board` that condenses the lead
   goal or first-run step into visible Do Now, Attention, Resume, and Proof
-  cards with action-form routing, scoped approval links, resume readiness,
-  waiting counts, and CI proof posture. Home also includes active, paused, and
+  cards with action-form routing, scoped approval links, Resume routing to an
+  explicit saved workspace surface first and otherwise the current Goal action,
+  resume readiness, waiting counts, and CI proof posture. Finish Today remains
+  the explicit save path for creating tomorrow's resume surface. Home also
+  includes active, paused, and
   completed goal lanes through a scan-first `Home Goal Board` with a
   browser-local Find box, lane mode buttons, live match count, first-match
   jump, no-match empty state, visible View status, reload persistence in

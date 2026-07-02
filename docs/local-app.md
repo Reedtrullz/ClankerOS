@@ -42,9 +42,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   evidence collapsed by default, and starts with a read-only
   `Home Operator Board` that turns the lead Goal or first-run step into
   visible Do Now, Attention, Resume, and Proof cards with scoped approval
-  links, direct action-form targets, Finish Today resume routing, and local CI
-  proof surfaces, with populated sessions routing the visible Proof card to the
-  current Goal's CI handoff. It also includes a scan-first `Home Goal Board`
+  links, direct action-form targets, Resume routing to saved workspace surfaces
+  first and otherwise the current Goal action, and local CI proof surfaces,
+  with populated sessions routing the visible Proof card to the current Goal's
+  CI handoff. Finish Today remains the explicit save path for creating
+  tomorrow's resume surface. It also includes a scan-first `Home Goal Board`
   with active, paused, and completed lanes, a browser-local Find box, lane mode
   buttons, live match count, first-match jump, no-match empty state, visible View
   status, reload persistence in
