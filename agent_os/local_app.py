@@ -18141,6 +18141,7 @@ def _goal_return_brief(
     saved_project = str(workspace.get("open_project") or "").strip()
     saved_goal = str(workspace.get("open_goal") or "").strip()
     saved_artifact = str(workspace.get("last_viewed_artifact") or "").strip()
+    saved_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
     readiness = _workspace_resume_readiness(
         root,
         open_project=saved_project,
@@ -18225,8 +18226,26 @@ def _goal_return_brief(
     blocker_raw_surface = SafeHtml(
         f"<a href='{_e(blocker_href)}'>{_e(blocker_href)}</a>"
     )
-    resume_action_surface = SafeHtml("<a href='/resume'>Open resume</a>")
-    resume_raw_surface = SafeHtml("<a href='/resume'>/resume</a>")
+    if saved_resume_surface:
+        resume_href = saved_resume_surface
+        resume_label = _saved_workspace_surface_action_label(
+            root,
+            saved_resume_surface,
+            open_goal=saved_goal,
+            open_project=saved_project,
+            fallback=saved_resume_surface,
+        )
+        resume_source = "saved_resume_surface"
+    else:
+        resume_href = primary_href
+        resume_label = primary_label
+        resume_source = "current_goal_action"
+    resume_action_surface = SafeHtml(
+        f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"
+    )
+    resume_raw_surface = SafeHtml(
+        f"<a href='{_e(resume_href)}'>{_e(resume_href)}</a>"
+    )
     workspace_matches_goal = saved_goal == goal.id
     workspace_matches_project = saved_project == goal.project_id
     done = counts.get("done", 0)
@@ -18261,7 +18280,7 @@ def _goal_return_brief(
             "<div class='goal-return-card'>",
             "<h3>Resume</h3>",
             f"<p>{_e(str(readiness['status']).replace('_', ' '))}</p>",
-            "<a class='goal-return-link' data-goal-return-resume='true' href='/resume'>Open resume</a>",
+            f"<a class='goal-return-link' data-goal-return-resume='true' href='{_e(resume_href)}'>{_e(resume_label)}</a>",
             "</div>",
         ]
     )
@@ -18316,6 +18335,7 @@ def _goal_return_brief(
                     ("goal_return_finish_surface", SafeHtml("<a href='#goal-finish-today'>Finish Today</a>")),
                     ("goal_return_resume_surface", resume_action_surface),
                     ("goal_return_resume_href", resume_raw_surface),
+                    ("goal_return_resume_source", resume_source),
                     ("goal_return_source", "goal_workspace_timeline_ci_and_gate_state"),
                     ("goal_return_write_on_get", "false"),
                     ("goal_return_provider_calls_taken", "0"),
@@ -18334,8 +18354,8 @@ def _goal_return_brief(
                     f"goal_return_unblock: {_e(blocker_status)} -> {blocker_action_surface}",
                     f"goal_return_unblock_href: {blocker_raw_surface}",
                     "goal_return_finish: <a href='#goal-finish-today'>Finish Today</a>",
-                    "goal_return_resume: <a href='/resume'>Open resume</a>",
-                    "goal_return_resume_href: <a href='/resume'>/resume</a>",
+                    f"goal_return_resume: <a href='{_e(resume_href)}'>{_e(resume_label)}</a>",
+                    f"goal_return_resume_href: <a href='{_e(resume_href)}'>{_e(resume_href)}</a>",
                     (
                         "goal_return_ci: "
                         f"status={_e(str(ci_state['latest_status']))} "

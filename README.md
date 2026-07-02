@@ -508,9 +508,12 @@ through proof rows. `pause-goal` moves any non-paused incomplete goal into
 paused lanes without approving work, running providers, using the network, or
 mutating external systems. Goal Return Brief now follows as its own six-card
 return board for Continue, Latest, Proof, Blocker, Finish, and Resume, with
-Proof pointing to the same-page Goal CI handoff and the same gate, activity,
-artifact, CI, resume-readiness, blocker, and zero-effect state preserved in
-collapsed return evidence instead of leading the operator through proof rows.
+Proof pointing to the same-page Goal CI handoff. Its Resume card keeps an
+explicit saved resume surface when one exists; otherwise it routes to the
+current Goal action, so the return board stays actionable without opening the
+resume hub. The same gate, activity, artifact, CI, resume-readiness, blocker,
+and zero-effect state stays preserved in collapsed return evidence instead of
+leading the operator through proof rows.
 The read-only `Goal Session Digest` follows the return brief and condenses the
 current continuation into Continue, Since Save, Latest Artifact, Waiting, and
 Finish Today cards. It uses existing Goal state, saved workspace timestamp,

@@ -688,11 +688,13 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   network, push, create PRs, deploy, or mutate external systems.
   A read-only `Goal Return Brief` follows the daily loop near the top of the
   Goal page as visible Continue, Latest, Proof, Blocker, Finish, and Resume
-  cards, with Proof pointing to the same-page Goal CI handoff. It then keeps
+  cards, with Proof pointing to the same-page Goal CI handoff. Its Resume card
+  keeps an explicit saved resume surface when one exists; otherwise it routes
+  to the current Goal action instead of the generic resume hub. It then keeps
   current gate, next action, resume readiness, latest activity, latest activity
   label, latest raw surface, latest artifact, CI proof posture, blocker
-  routing, `/resume`, finish surface, and zero-effect counters in collapsed
-  return evidence without writing on GET.
+  routing, resolved resume source, finish surface, and zero-effect counters in
+  collapsed return evidence without writing on GET.
   A read-only `Goal Session Digest` follows it as visible Continue, Since
   Save, Latest Artifact, Waiting, and Finish Today cards. The digest is sourced
   from existing Goal state, saved workspace timestamp, latest local timeline

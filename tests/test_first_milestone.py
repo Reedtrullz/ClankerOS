@@ -14730,7 +14730,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in goal.body
     assert "href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "data-goal-return-finish='true' data-open-details='true' href='#goal-finish-today'" in goal.body
-    assert "data-goal-return-resume='true' href='/resume'" in goal.body
+    assert (
+        "data-goal-return-resume='true' href='#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in goal.body
     assert f"goal_return_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_return_goal_label</dt><dd>{goal_title}" in goal.body
     assert "goal_return_goal_label_source</dt><dd>title" in goal.body
@@ -14770,8 +14773,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_return_blocker_surface</dt><dd><a href='/approvals'>Review approvals</a>" in goal.body
     assert "goal_return_blocker_href</dt><dd><a href='/approvals'>/approvals</a>" in goal.body
     assert "goal_return_finish_surface</dt><dd><a href='#goal-finish-today'>Finish Today</a>" in goal.body
-    assert "goal_return_resume_surface</dt><dd><a href='/resume'>Open resume</a>" in goal.body
-    assert "goal_return_resume_href</dt><dd><a href='/resume'>/resume</a>" in goal.body
+    assert "goal_return_resume_surface</dt><dd><a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
+    assert "goal_return_resume_href</dt><dd><a href='#goal-action-dock-form'>#goal-action-dock-form</a>" in goal.body
+    assert "goal_return_resume_source</dt><dd>current_goal_action" in goal.body
     assert "goal_return_write_on_get</dt><dd>false" in goal.body
     assert "goal_return_provider_calls_taken</dt><dd>0" in goal.body
     assert "goal_return_network_actions_taken</dt><dd>0" in goal.body
@@ -14791,8 +14795,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in goal.body
     assert "goal_return_unblock: pending_approvals -> <a href='/approvals'>Review approvals</a>" in goal.body
     assert "goal_return_unblock_href: <a href='/approvals'>/approvals</a>" in goal.body
-    assert "goal_return_resume: <a href='/resume'>Open resume</a>" in goal.body
-    assert "goal_return_resume_href: <a href='/resume'>/resume</a>" in goal.body
+    assert "goal_return_resume: <a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
+    assert "goal_return_resume_href: <a href='#goal-action-dock-form'>#goal-action-dock-form</a>" in goal.body
     assert "goal_return_ci: status=success source=direct_public_snapshot surface=<a href='#goal-ci-handoff'>Goal CI handoff</a>" in goal.body
     assert "goal_return_safety: read-only return-to-work brief" in goal.body
     assert "Goal Session Digest" in goal.body
@@ -21437,6 +21441,26 @@ def test_today_finish_today_saves_exact_resume_surface(tmp_path: Path) -> None:
         "<a href='/today#today-current-action'>Open Today current action</a>"
     ) in today_after_save.body
     assert "Open resume point" not in today_after_save.body
+
+    goal_after_save = render_local_app_route(tmp_path, f"/goals/{result.goal_id}")
+    assert goal_after_save.status == 200
+    assert (
+        "data-goal-return-resume='true' href='/today#today-current-action'>"
+        "Open Today current action</a>"
+    ) in goal_after_save.body
+    assert (
+        "goal_return_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>Open Today current action</a>"
+    ) in goal_after_save.body
+    assert (
+        "goal_return_resume_href</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in goal_after_save.body
+    assert "goal_return_resume_source</dt><dd>saved_resume_surface" in goal_after_save.body
+    assert (
+        "goal_return_resume: <a href='/today#today-current-action'>"
+        "Open Today current action</a>"
+    ) in goal_after_save.body
 
     resume = render_local_app_route(tmp_path, "/resume")
     assert resume.status == 200

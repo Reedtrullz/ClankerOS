@@ -444,10 +444,13 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   call providers, use the network, push, create PRs, deploy, or mutate external
   systems. A read-only `Goal Return Brief` follows the daily loop as a
   six-card Continue, Latest, Proof, Blocker, Finish, and Resume board, with
-  Proof pointing to the same-page Goal CI handoff. It then keeps the current
-  gate, next local action, resume readiness, latest activity, latest artifact,
-  CI proof posture, blocker route, `/resume`, finish surface, and zero-effect
-  counters in collapsed return evidence without writing on GET.
+  Proof pointing to the same-page Goal CI handoff. Its Resume card keeps an
+  explicit saved resume surface when one exists; otherwise it routes to the
+  current Goal action instead of the generic resume hub. It then keeps the
+  current gate, next local action, resume readiness, latest activity, latest
+  artifact, CI proof posture, blocker route, resolved resume source, finish
+  surface, and zero-effect counters in collapsed return evidence without
+  writing on GET.
   A read-only `Goal Session Digest` follows it as a five-card Continue, Since
   Save, Latest Artifact, Waiting, and Finish Today digest. It is sourced from
   existing Goal state, saved workspace timestamp, latest local timeline item,
