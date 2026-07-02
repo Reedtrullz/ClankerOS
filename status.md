@@ -1,5 +1,44 @@
 # Status
 
+## 2026-07-02 Verification Goal CI Handoff UX
+
+- `/verification` now treats a saved or lead Goal as the primary proof owner
+  when the GitHub Actions workflow is configured.
+- The Verification Operator Workbench routes Now and Proof to
+  `/goals/<goal_id>#goal-ci-handoff`, records `verification_workbench_goal_id`
+  plus `verification_workbench_goal_source`, and keeps the global
+  `/ci-evidence#record-ci-snapshot-json` recorder visible as a fallback
+  evidence row.
+- The Verification Proof Map and Verification Command Bar now record the same
+  Goal id/source and target surface, so the proof page agrees with Home,
+  Today, Guide, Goal, and `/resume` proof routing.
+- Missing workflow configuration still points first to the GitHub Actions
+  workflow repair section, and no-Goal states keep the global CI evidence
+  recorder.
+- TDD evidence: the fixture-backed populated `/verification` assertion failed
+  first because no `verification_workbench_goal_id` row existed; after
+  implementation it proved lead-goal source routing. The broader local app
+  route test then failed on the stale generic recorder expectation and passed
+  after updating saved-Goal proof expectations.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    failed first, then 1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    failed first on stale generic expectations, then 1 passed after updates.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed after docs/status updates.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed after docs/status updates.
+  - `python3 -m agent_os.cli app-smoke-test`:
+    passed with `/verification` route marker matched and zero provider,
+    network, or external mutation counters.
+- Non-claim: this is read-only browser proof routing only. It does not write
+  on GET, poll GitHub from the app, approve work, execute tasks, call
+  providers, use the network, push, create PRs, deploy, or mutate external
+  systems from ClankerOS.
+
 ## 2026-07-02 Resume Lead Goal Current Action UX
 
 - `/resume` now promotes the lead Goal into the return-to-work surface when

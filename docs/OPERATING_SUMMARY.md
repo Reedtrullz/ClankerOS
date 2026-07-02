@@ -259,7 +259,10 @@ Core layers for the bootstrap:
   GitHub polling, provider, push, PR, deploy, or external-mutation effects;
   `/verification` includes a read-only `Verification Operator Workbench` that
   opens the page with Now, Check GitHub, Proof, and Finish Today cards before
-  shared diagnostics or command readbacks. It routes missing or stale proof to
+  shared diagnostics or command readbacks. When a saved or lead Goal exists,
+  it routes the primary proof action to that Goal's `#goal-ci-handoff` and
+  records the Goal source in workbench, proof-map, and command evidence. It
+  routes no-Goal missing or stale proof to
   `/ci-evidence#record-ci-snapshot-json`, follows with a visible
   `Verification Proof Map` for Current, Fast Smoke, Full Suite, Record, and
   Boundary, keeps workbench evidence, proof-map evidence, command evidence,

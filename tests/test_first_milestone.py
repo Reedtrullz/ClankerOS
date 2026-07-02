@@ -8892,17 +8892,30 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-verification-proof-card='full-suite'" in verification.body
     assert "data-verification-proof-card='record'" in verification.body
     assert "data-verification-proof-card='boundary'" in verification.body
-    assert "verification_workbench_status</dt><dd>waiting_for_github_actions_proof" in verification.body
+    assert "verification_workbench_status</dt><dd>goal_ci_handoff_ready" in verification.body
     assert "verification_workbench_workflow_status</dt><dd>configured" in verification.body
     assert "verification_workbench_current_proof</dt><dd>current_commit_unknown" in verification.body
     assert "verification_workbench_latest_ci_source</dt><dd>publication_handoff" in verification.body
     assert "verification_workbench_latest_ci_status</dt><dd>success" in verification.body
     assert "verification_workbench_latest_ci_commit</dt><dd>abc123" in verification.body
     assert "verification_workbench_latest_ci_run_id</dt><dd>123" in verification.body
-    assert "verification_workbench_next_action</dt><dd>Confirm checkout then record CI proof" in verification.body
-    assert "verification_workbench_primary_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>/ci-evidence#record-ci-snapshot-json</a>" in verification.body
-    assert "verification_workbench_record_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>Record CI proof</a>" in verification.body
-    assert "verification_workbench_reason</dt><dd>current_checkout_commit_unknown" in verification.body
+    assert f"verification_workbench_goal_id</dt><dd>{created_goal_id}" in verification.body
+    assert "verification_workbench_goal_project</dt><dd>first-target" in verification.body
+    assert "verification_workbench_goal_source</dt><dd>saved_goal_state" in verification.body
+    assert "verification_workbench_next_action</dt><dd>Open Goal CI handoff" in verification.body
+    assert (
+        "verification_workbench_primary_surface</dt><dd>"
+        f"<a href='/goals/{created_goal_id}#goal-ci-handoff'>Goal CI handoff</a>"
+    ) in verification.body
+    assert (
+        "verification_workbench_record_surface</dt><dd>"
+        f"<a href='/goals/{created_goal_id}#goal-ci-handoff'>Goal CI handoff</a>"
+    ) in verification.body
+    assert (
+        "verification_workbench_global_record_surface</dt><dd>"
+        "<a href='/ci-evidence#record-ci-snapshot-json'>Record global CI proof</a>"
+    ) in verification.body
+    assert "verification_workbench_reason</dt><dd>saved_goal_ci_handoff" in verification.body
     assert "verification_workbench_status_command</dt><dd>gh run view" in verification.body
     assert "verification_workbench_action_form_available</dt><dd>false" in verification.body
     assert "verification_workbench_record_form_surface</dt><dd>/ci-evidence#record-ci-snapshot-json" in verification.body
@@ -8915,9 +8928,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "verification_workbench_push_created</dt><dd>false" in verification.body
     assert "verification_workbench_pr_created</dt><dd>false" in verification.body
     assert "verification_workbench_deploy_created</dt><dd>false" in verification.body
-    assert "verification_workbench_now: Confirm checkout then record CI proof" in verification.body
-    assert "verification_workbench_click: <a href='/ci-evidence#record-ci-snapshot-json'>/ci-evidence#record-ci-snapshot-json</a>" in verification.body
-    assert "verification_workbench_record: <a href='/ci-evidence#record-ci-snapshot-json'>Record CI proof</a>" in verification.body
+    assert "verification_workbench_now: Open Goal CI handoff" in verification.body
+    assert (
+        "verification_workbench_click: "
+        f"<a href='/goals/{created_goal_id}#goal-ci-handoff'>Goal CI handoff</a>"
+    ) in verification.body
+    assert (
+        "verification_workbench_record: "
+        f"<a href='/goals/{created_goal_id}#goal-ci-handoff'>Goal CI handoff</a>"
+    ) in verification.body
     assert "verification_workbench_finish: <a href='#verification-finish-today'>Finish Today</a>" in verification.body
     assert "verification_workbench_safety: read-only proof routing" in verification.body
     assert 'data-finish-today-href="#verification-finish-today"' in verification.body
@@ -8935,16 +8954,19 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "palette_quick_switch_finish_source</dt><dd>verification_finish_form" in verification.body
     assert "palette_quick_switch_finish_route_surface</dt><dd>route_local_form" in verification.body
     assert "Verification Proof Map" in verification.body
-    assert "verification_proof_map_status</dt><dd>stale_or_unknown_proof" in verification.body
+    assert "verification_proof_map_status</dt><dd>goal_ci_handoff_ready" in verification.body
     assert "verification_proof_map_workflow_status</dt><dd>configured" in verification.body
     assert "verification_proof_map_current_proof</dt><dd>current_commit_unknown" in verification.body
     assert "verification_proof_map_latest_source</dt><dd>publication_handoff" in verification.body
     assert "verification_proof_map_latest_status</dt><dd>success" in verification.body
     assert "verification_proof_map_latest_commit</dt><dd>abc123" in verification.body
     assert "verification_proof_map_latest_run_id</dt><dd>123" in verification.body
+    assert f"verification_proof_map_goal_id</dt><dd>{created_goal_id}" in verification.body
+    assert "verification_proof_map_goal_project</dt><dd>first-target" in verification.body
+    assert "verification_proof_map_goal_source</dt><dd>saved_goal_state" in verification.body
     assert (
         "verification_proof_map_primary_surface</dt><dd>"
-        "<a href='/ci-evidence#record-ci-snapshot-json'>Record current proof</a>"
+        f"<a href='/goals/{created_goal_id}#goal-ci-handoff'>Goal CI handoff</a>"
     ) in verification.body
     assert "verification_proof_map_latest_surface</dt><dd><a href='#recent-ci-evidence'>#recent-ci-evidence</a>" in verification.body
     assert (
@@ -8971,7 +8993,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "verification_proof_map_external_effects_created</dt><dd>false" in verification.body
     assert (
         "verification_proof_map_card: current surface="
-        "<a href='/ci-evidence#record-ci-snapshot-json'>Record current proof</a>"
+        f"<a href='/goals/{created_goal_id}#goal-ci-handoff'>Goal CI handoff</a>"
     ) in verification.body
     assert (
         "verification_proof_map_card: full-suite surface="
@@ -8981,16 +9003,22 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "id='verification-finish-today'" in verification.body
     assert "name='updated_by' value='verification-operator-workbench'" in verification.body
     assert "data-verification-command-bar='true'" in verification.body
-    assert "verification_command_status</dt><dd>waiting_for_github_actions_proof" in verification.body
+    assert "verification_command_status</dt><dd>goal_ci_handoff_ready" in verification.body
     assert "verification_command_workflow_status</dt><dd>configured" in verification.body
     assert "verification_command_current_proof</dt><dd>current_commit_unknown" in verification.body
     assert "verification_command_latest_ci_source</dt><dd>publication_handoff" in verification.body
     assert "verification_command_latest_ci_status</dt><dd>success" in verification.body
     assert "verification_command_latest_ci_commit</dt><dd>abc123" in verification.body
     assert "verification_command_latest_ci_run_id</dt><dd>123" in verification.body
-    assert "verification_command_next_action</dt><dd>Confirm checkout then record CI proof" in verification.body
-    assert "verification_command_target_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>/ci-evidence#record-ci-snapshot-json</a>" in verification.body
-    assert "verification_command_reason</dt><dd>current_checkout_commit_unknown" in verification.body
+    assert f"verification_command_goal_id</dt><dd>{created_goal_id}" in verification.body
+    assert "verification_command_goal_project</dt><dd>first-target" in verification.body
+    assert "verification_command_goal_source</dt><dd>saved_goal_state" in verification.body
+    assert "verification_command_next_action</dt><dd>Open Goal CI handoff" in verification.body
+    assert (
+        "verification_command_target_surface</dt><dd>"
+        f"<a href='/goals/{created_goal_id}#goal-ci-handoff'>Goal CI handoff</a>"
+    ) in verification.body
+    assert "verification_command_reason</dt><dd>saved_goal_ci_handoff" in verification.body
     assert "verification_command_write_on_get</dt><dd>false" in verification.body
     assert "verification_command_github_status_fetch</dt><dd>none" in verification.body
     assert "verification_command_network_actions_taken</dt><dd>0" in verification.body
@@ -12321,6 +12349,52 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_ci_github_status_fetch</dt><dd>none" in dashboard.body
     assert "home_ci_app_network_actions_taken</dt><dd>0" in dashboard.body
     assert "home_ci_external_mutations_taken</dt><dd>0" in dashboard.body
+    workflow_file = tmp_path / ".github" / "workflows" / "tests.yml"
+    workflow_file.parent.mkdir(parents=True, exist_ok=True)
+    workflow_file.write_text(
+        (Path(__file__).resolve().parents[1] / ".github" / "workflows" / "tests.yml").read_text(
+            encoding="utf-8"
+        ),
+        encoding="utf-8",
+    )
+    verification_goal = render_local_app_route(tmp_path, "/verification")
+    assert verification_goal.status == 200
+    assert "Verification Handoff" in verification_goal.body
+    assert "Verification Operator Workbench" in verification_goal.body
+    assert "Verification Proof Map" in verification_goal.body
+    assert "Verification Command Bar" in verification_goal.body
+    assert "verification_workbench_goal_id</dt><dd>" + result.goal_id in verification_goal.body
+    assert "verification_workbench_goal_source</dt><dd>lead_goal_state" in verification_goal.body
+    assert (
+        "verification_workbench_primary_surface</dt><dd>"
+        f"<a href='/goals/{result.goal_id}#goal-ci-handoff'>Goal CI handoff</a>"
+    ) in verification_goal.body
+    assert (
+        "verification_workbench_record_surface</dt><dd>"
+        f"<a href='/goals/{result.goal_id}#goal-ci-handoff'>Goal CI handoff</a>"
+    ) in verification_goal.body
+    assert "verification_workbench_next_action</dt><dd>Open Goal CI handoff" in verification_goal.body
+    assert "verification_workbench_reason</dt><dd>lead_goal_ci_handoff" in verification_goal.body
+    assert (
+        "verification_workbench_global_record_surface</dt><dd>"
+        "<a href='/ci-evidence#record-ci-snapshot-json'>Record global CI proof</a>"
+    ) in verification_goal.body
+    assert "verification_workbench_write_on_get</dt><dd>false" in verification_goal.body
+    assert "verification_workbench_network_actions_taken</dt><dd>0" in verification_goal.body
+    assert "verification_workbench_external_effects_created</dt><dd>false" in verification_goal.body
+    assert (
+        "verification_proof_map_primary_surface</dt><dd>"
+        f"<a href='/goals/{result.goal_id}#goal-ci-handoff'>Goal CI handoff</a>"
+    ) in verification_goal.body
+    assert "verification_proof_map_goal_id</dt><dd>" + result.goal_id in verification_goal.body
+    assert "verification_proof_map_goal_source</dt><dd>lead_goal_state" in verification_goal.body
+    assert (
+        "verification_command_target_surface</dt><dd>"
+        f"<a href='/goals/{result.goal_id}#goal-ci-handoff'>Goal CI handoff</a>"
+    ) in verification_goal.body
+    assert "verification_command_goal_id</dt><dd>" + result.goal_id in verification_goal.body
+    assert "verification_command_goal_source</dt><dd>lead_goal_state" in verification_goal.body
+    assert "verification_command_reason</dt><dd>lead_goal_ci_handoff" in verification_goal.body
     resume_unsaved = render_local_app_route(tmp_path, "/resume")
     assert resume_unsaved.status == 200
     assert "Browser Resume" in resume_unsaved.body

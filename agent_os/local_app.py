@@ -28980,6 +28980,43 @@ def _verification_workflow_status(workflow_lines: list[tuple[str, str]]) -> str:
     return "configured" if not missing else "incomplete"
 
 
+def _verification_goal_context(root: Path) -> dict[str, str]:
+    workspace = _load_workspace_state(root)
+    open_goal = str(workspace.get("open_goal") or "").strip()
+    storage = _storage(root)
+    goal_id, goal_state, goal_source = _resume_goal_state(root, storage, open_goal)
+    goal = goal_state.get("goal") if goal_state is not None else None
+    if not goal_id or goal is None:
+        return {
+            "available": "false",
+            "goal_id": "none",
+            "project_id": "none",
+            "source": goal_source,
+            "reason": "no_goal_context",
+            "target_href": "/ci-evidence#record-ci-snapshot-json",
+            "target_label": "Record CI proof",
+            "global_record_href": "/ci-evidence#record-ci-snapshot-json",
+            "global_record_label": "Record global CI proof",
+        }
+
+    reason = (
+        "saved_goal_ci_handoff"
+        if goal_source == "saved_goal_state"
+        else "lead_goal_ci_handoff"
+    )
+    return {
+        "available": "true",
+        "goal_id": goal_id,
+        "project_id": str(goal.project_id),
+        "source": goal_source,
+        "reason": reason,
+        "target_href": f"/goals/{quote(goal_id)}#goal-ci-handoff",
+        "target_label": "Goal CI handoff",
+        "global_record_href": "/ci-evidence#record-ci-snapshot-json",
+        "global_record_label": "Record global CI proof",
+    }
+
+
 def _ci_evidence_command_state(root: Path) -> dict[str, str]:
     repo_state = _repo_state(root)
     branch = repo_state["branch"] if repo_state["branch"] != "unknown" else "unknown"
@@ -29065,12 +29102,19 @@ def _ci_evidence_command_state(root: Path) -> dict[str, str]:
 
 def _verification_operator_context(root: Path, workflow_status: str) -> dict[str, Any]:
     state = _ci_evidence_command_state(root)
+    goal_context = _verification_goal_context(root)
     if workflow_status != "configured":
         command_status = "workflow_incomplete"
         next_action = "Fix GitHub Actions workflow"
         target_surface = "GitHub Actions Workflow"
         target_href = "#github-actions-workflow"
         reason = "workflow_file_missing_or_incomplete"
+    elif goal_context["available"] == "true":
+        command_status = "goal_ci_handoff_ready"
+        next_action = "Open Goal CI handoff"
+        target_surface = goal_context["target_label"]
+        target_href = goal_context["target_href"]
+        reason = goal_context["reason"]
     elif state["current_proof"] == "current_workflow_run_success":
         command_status = "ci_proof_recorded"
         next_action = "Use recorded CI evidence"
@@ -29091,11 +29135,13 @@ def _verification_operator_context(root: Path, workflow_status: str) -> dict[str
         "target_surface": target_surface,
         "target_href": target_href,
         "reason": reason,
+        "goal": goal_context,
     }
 
 
 def _verification_operator_workbench(root: Path, context: dict[str, Any]) -> str:
     state = context["state"]
+    goal_context = context["goal"]
     commands = _ci_snapshot_command_context(root)
     target_href = str(context["target_href"])
     target_surface = str(context["target_surface"])
@@ -29106,20 +29152,38 @@ def _verification_operator_workbench(root: Path, context: dict[str, Any]) -> str
     status_command = commands["status_command"]
     proof_href = "/ci-evidence#record-ci-snapshot-json"
     proof_label = "Record CI proof"
-    if state["current_proof"] == "current_workflow_run_success":
+    if goal_context["available"] == "true":
+        proof_href = goal_context["target_href"]
+        proof_label = goal_context["target_label"]
+    elif state["current_proof"] == "current_workflow_run_success":
         proof_href = str(state["latest_target"])
         proof_label = "Review proof"
+    finish_resume_surface = (
+        goal_context["target_href"]
+        if goal_context["available"] == "true"
+        else "/verification"
+    )
+    finish_filters = (
+        f"goal:{goal_context['goal_id']},verification:{state['current_proof']}"
+        if goal_context["available"] == "true"
+        else f"verification:{state['current_proof']}"
+    )
     finish_form = _input_form(
         "save-workspace",
         {
-            "open_project": "",
-            "open_goal": "",
+            "open_project": ""
+            if goal_context["project_id"] == "none"
+            else goal_context["project_id"],
+            "open_goal": ""
+            if goal_context["goal_id"] == "none"
+            else goal_context["goal_id"],
             "return_to": "/verification",
         },
         {
-            "filters": f"verification:{state['current_proof']}",
+            "filters": finish_filters,
             "expanded_panels": "verification-workbench,ci-handoff,ci-evidence",
             "last_viewed_artifact": "",
+            "resume_surface": finish_resume_surface,
             "updated_by": "verification-operator-workbench",
         },
     )
@@ -29170,6 +29234,9 @@ def _verification_operator_workbench(root: Path, context: dict[str, Any]) -> str
                     ("verification_workbench_latest_ci_scope", state["latest_scope"]),
                     ("verification_workbench_latest_ci_commit", state["latest_commit"]),
                     ("verification_workbench_latest_ci_run_id", state["latest_external_run_id"]),
+                    ("verification_workbench_goal_id", goal_context["goal_id"]),
+                    ("verification_workbench_goal_project", goal_context["project_id"]),
+                    ("verification_workbench_goal_source", goal_context["source"]),
                     ("verification_workbench_next_action", next_action),
                     (
                         "verification_workbench_primary_surface",
@@ -29180,6 +29247,13 @@ def _verification_operator_workbench(root: Path, context: dict[str, Any]) -> str
                     (
                         "verification_workbench_record_surface",
                         SafeHtml(f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>"),
+                    ),
+                    (
+                        "verification_workbench_global_record_surface",
+                        SafeHtml(
+                            f"<a href='{_e(goal_context['global_record_href'])}'>"
+                            f"{_e(goal_context['global_record_label'])}</a>"
+                        ),
                     ),
                     ("verification_workbench_reason", reason),
                     ("verification_workbench_status_command", status_command),
@@ -29212,6 +29286,7 @@ def _verification_operator_workbench(root: Path, context: dict[str, Any]) -> str
 
 def _verification_proof_map(root: Path, context: dict[str, Any]) -> str:
     state = context["state"]
+    goal_context = context["goal"]
     commands = _ci_snapshot_command_context(root)
     current_proof = str(state["current_proof"])
     latest_status = str(state["latest_status"])
@@ -29224,7 +29299,11 @@ def _verification_proof_map(root: Path, context: dict[str, Any]) -> str:
     else:
         latest_href = "/ci-evidence"
     latest_label = latest_target if latest_target != "none" else "/ci-evidence"
-    if current_proof == "current_workflow_run_success":
+    if goal_context["available"] == "true":
+        status = "goal_ci_handoff_ready"
+        primary_href = goal_context["target_href"]
+        primary_label = goal_context["target_label"]
+    elif current_proof == "current_workflow_run_success":
         status = "full_suite_recorded"
         primary_href = latest_href
         primary_label = "Review proof"
@@ -29324,6 +29403,9 @@ def _verification_proof_map(root: Path, context: dict[str, Any]) -> str:
                     ("verification_proof_map_latest_scope", latest_scope),
                     ("verification_proof_map_latest_commit", state["latest_commit"]),
                     ("verification_proof_map_latest_run_id", state["latest_external_run_id"]),
+                    ("verification_proof_map_goal_id", goal_context["goal_id"]),
+                    ("verification_proof_map_goal_project", goal_context["project_id"]),
+                    ("verification_proof_map_goal_source", goal_context["source"]),
                     (
                         "verification_proof_map_primary_surface",
                         SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
@@ -29370,6 +29452,7 @@ def _verification_proof_map(root: Path, context: dict[str, Any]) -> str:
 
 def _verification_command_bar(context: dict[str, Any]) -> str:
     state = context["state"]
+    goal_context = context["goal"]
     command_status = str(context["command_status"])
     workflow_status = str(context["workflow_status"])
     next_action = str(context["next_action"])
@@ -29393,6 +29476,9 @@ def _verification_command_bar(context: dict[str, Any]) -> str:
                     ("verification_command_latest_ci_scope", state["latest_scope"]),
                     ("verification_command_latest_ci_commit", state["latest_commit"]),
                     ("verification_command_latest_ci_run_id", state["latest_external_run_id"]),
+                    ("verification_command_goal_id", goal_context["goal_id"]),
+                    ("verification_command_goal_project", goal_context["project_id"]),
+                    ("verification_command_goal_source", goal_context["source"]),
                     ("verification_command_next_action", next_action),
                     (
                         "verification_command_target_surface",

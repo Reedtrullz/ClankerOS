@@ -1246,15 +1246,20 @@ copyable `ci-snapshot-handoff` template for the current checkout so you can
 watch a direct pushed-snapshot run and then record it after success. The page
 itself does not contact GitHub. A `Verification Operator Workbench` now leads
 the page with Now, Check GitHub, Proof, and Finish Today cards so the next
-operator action is visible before the workflow inventory. Detailed workbench
-evidence and the save form stay collapsed by default while still preserving
-the current proof posture, target action, and zero-effect readbacks in the
-DOM. A visible read-only `Verification Proof Map` follows with Current, Fast
-Smoke, Full Suite, Record, and Boundary cards, making the early-smoke versus
-full-workflow proof split explicit before the command details. The read-only
-`Verification Command Bar` follows as evidence and usually points to
-`/ci-evidence#record-ci-snapshot-json` when proof is missing, stale, or only
-job-scoped.
+operator action is visible before the workflow inventory. When a saved or lead
+Goal exists, the Now and Proof cards route to that Goal's
+`#goal-ci-handoff` surface and the collapsed evidence records whether the
+source was saved Goal state or lead Goal state. If no Goal exists, or if the
+workflow itself is incomplete, the page keeps the setup-safe global CI evidence
+recorder or workflow repair target. Detailed workbench evidence and the save
+form stay collapsed by default while still preserving the current proof
+posture, target action, and zero-effect readbacks in the DOM. A visible
+read-only `Verification Proof Map` follows with Current, Fast Smoke, Full
+Suite, Record, and Boundary cards, making the early-smoke versus full-workflow
+proof split explicit before the command details while still making the current
+Goal CI handoff the primary surface when a Goal exists. The read-only
+`Verification Command Bar` follows as evidence and records the same
+Goal-aware target or the `/ci-evidence#record-ci-snapshot-json` fallback.
 
 The root dashboard includes the same proof boundary as a compact
 `Verification Snapshot`, with links to `/verification` and `/ci-evidence`, so
