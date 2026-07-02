@@ -200,7 +200,9 @@ state/command/workbench evidence stays collapsed until explicitly opened. The
 command center chooses the lead Goal or first-run step, shows the current
 phase, one primary action, the exact target or same-page action form,
 attention routing for approvals/incidents/recommendations/inbox, resume
-readiness, and CI proof posture. When the current Goal action has a confirmed
+readiness, and CI proof posture. Saved resume surfaces still win; otherwise
+populated sessions route the Resume card to the current Goal action, while
+first-run sessions keep the resume hub fallback. When the current Goal action has a confirmed
 browser form, `/today` renders it visibly as `#today-current-action` before
 command evidence, so the daily cockpit can be used without opening a
 collapsed details panel. Note capture, pause, and `Finish Today`

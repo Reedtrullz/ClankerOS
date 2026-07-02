@@ -1,5 +1,35 @@
 # Status
 
+## 2026-07-02 Today Command Resume Current Action UX
+
+- The `/today` Command Center Resume card now routes populated sessions with
+  no explicit saved resume surface to the current Goal action
+  `#today-current-action` instead of the generic `/resume` hub.
+- Explicitly saved resume surfaces still win, preserving the exact
+  `saved_resume_surface` return point after Finish Today.
+- First-run/no-goal sessions keep the `/resume` hub fallback, preserving the
+  empty-checkout setup path.
+- TDD evidence: the populated fixture-backed scenario failed first because
+  `today_command_resume` still rendered `/resume`; after implementation it
+  proved `Create commit request` with source `current_goal_action`, while the
+  first-run route test continued to prove `Open resume` with source
+  `resume_page`.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed after docs/status updates.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    2 passed after docs/status updates.
+- Non-claim: this is read-only browser Today Command Center routing only. It
+  does not write on GET, poll GitHub from the app, approve work, execute
+  tasks, call providers, use the network, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
 ## 2026-07-02 Today Session Resume Current Action UX
 
 - The `/today` Session Summary Resume card now routes populated sessions with

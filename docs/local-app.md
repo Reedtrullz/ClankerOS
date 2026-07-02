@@ -120,6 +120,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   the current phase, one primary action, target surface or same-page
   current-action form, attention routing for approvals, incidents,
   recommendations, and inbox items, resume readiness, and CI proof posture.
+  Saved resume surfaces still win; otherwise populated sessions route the
+  Resume card to the current Goal action, while first-run sessions keep the
+  resume hub fallback.
   When the current Goal action has a confirmed browser form, that form is
   rendered visibly as `#today-current-action` before command evidence, while
   the same confirmation route remains responsible for local writes.

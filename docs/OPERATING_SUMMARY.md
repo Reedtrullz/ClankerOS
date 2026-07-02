@@ -105,7 +105,9 @@ Core layers for the bootstrap:
   first-run step, names current phase, one primary action, target surface or
   same-page action form, attention routing for
   approvals/incidents/recommendations/inbox, resume readiness, and CI proof
-  posture. When the lead Goal's current action has a confirmed browser form,
+  posture. Saved resume surfaces still win; otherwise populated sessions route
+  the Resume card to the current Goal action, while first-run sessions keep
+  the resume hub fallback. When the lead Goal's current action has a confirmed browser form,
   the command center renders it visibly as `#today-current-action` before
   command evidence, so the daily cockpit can be used without opening a
   collapsed details panel. Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`

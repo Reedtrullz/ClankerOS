@@ -4784,19 +4784,24 @@ def _today_command_center(
     source_surface = SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")
     attention_surface = SafeHtml(f"<a href='{_e(attention_href)}'>{_e(attention_href)}</a>")
     saved_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
-    resume_card_href = saved_resume_surface or "/resume"
-    resume_card_label = (
-        _saved_workspace_surface_action_label(
+    if saved_resume_surface:
+        resume_card_href = saved_resume_surface
+        resume_card_label = _saved_workspace_surface_action_label(
             root,
             saved_resume_surface,
             open_goal=open_goal,
             open_project=open_project,
             fallback="Open resume",
         )
-        if saved_resume_surface
-        else "Open resume"
-    )
-    resume_card_source = "saved_resume_surface" if saved_resume_surface else "resume_page"
+        resume_card_source = "saved_resume_surface"
+    elif lead_goal is not None:
+        resume_card_href = target_href
+        resume_card_label = target_label
+        resume_card_source = "current_goal_action"
+    else:
+        resume_card_href = "/resume"
+        resume_card_label = "Open resume"
+        resume_card_source = "resume_page"
     resume_card_surface = SafeHtml(
         f"<a href='{_e(resume_card_href)}'>{_e(resume_card_label)}</a>"
     )

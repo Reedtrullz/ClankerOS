@@ -12646,11 +12646,15 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_command_resume_status</dt><dd>not_started" in today.body
     assert "data-today-command-resume='true'" in today.body
     assert (
-        "data-today-command-resume-link='true' href='/resume'>Open resume</a>"
+        "data-today-command-resume-link='true' href='#today-current-action'>"
+        "Create commit request</a>"
     ) in today.body
-    assert "today_command_resume_surface</dt><dd><a href='/resume'>Open resume</a>" in today.body
-    assert "today_command_resume_exact_surface</dt><dd>/resume" in today.body
-    assert "today_command_resume_surface_source</dt><dd>resume_page" in today.body
+    assert (
+        "today_command_resume_surface</dt><dd>"
+        "<a href='#today-current-action'>Create commit request</a>"
+    ) in today.body
+    assert "today_command_resume_exact_surface</dt><dd>#today-current-action" in today.body
+    assert "today_command_resume_surface_source</dt><dd>current_goal_action" in today.body
     assert "today_command_ci_status</dt><dd>success" in today.body
     assert "today_command_ci_source</dt><dd>direct_public_snapshot" in today.body
     assert "today_command_action_form_available</dt><dd>true" in today.body
@@ -12699,6 +12703,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_command_external_effects_created</dt><dd>false" in today.body
     assert "today_command_now: Create commit request" in today.body
     assert "today_command_click: <a href='#today-current-action'>Create commit request</a>" in today.body
+    assert (
+        "today_command_resume: readiness=not_started surface="
+        "<a href='#today-current-action'>Create commit request</a>"
+    ) in today.body
     assert "today_command_attention: needs_approval_review -> <a href='/approvals'>/approvals</a>" in today.body
     assert "Today Live State" in today.body
     assert "data-live-refresh='today'" in today.body
