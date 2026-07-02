@@ -31,6 +31,15 @@
     passed after docs/status updates.
   - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface --tb=short`:
     3 passed after docs/status updates.
+  - GitHub Actions push run `28579477566` initially failed in
+    `app-demo-smoke-test` because the fixture smoke expectation still required
+    `/resume` to report `no_saved_workspace`; the smoke contract was updated
+    to require `lead_goal_state`, `action_form_ready`, and the commit-request
+    action form instead.
+  - `python3 -m agent_os.cli --root /tmp/clankeros-ci-root-local-resume-fix app-demo-smoke-test`:
+    passed after the smoke expectation update.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed after the smoke expectation update.
 - Non-claim: this is read-only browser resume routing only. It does not write
   on GET, poll GitHub from the app, approve work, execute tasks, call
   providers, use the network, push, create PRs, deploy, or mutate external
