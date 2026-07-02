@@ -1040,6 +1040,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   per Goal in `localStorage:clankeros-goal-artifact-reader:<goal_id>`, and
   exposes Reset reader without writing Goal state, executing content,
   contacting providers, using the network, or browsing raw filesystem paths.
+  Opening those artifacts through `/artifacts?path=...` keeps Goal ownership
+  visible. Direct Goal artifacts and run-backed review artifacts such as
+  `runs/<source_run_id>/review.md` resolve to the owning Goal when local
+  run/coder-run state can prove it, and the artifact workbench, relationship
+  map, review brief, command bar, and confirmed `Remember Artifact` form all
+  carry that Goal/project context forward without writing on GET.
   The Goal timeline backfills
   generic `Artifact recorded` entries
   from the same bounded artifact registry after workflow-specific timeline

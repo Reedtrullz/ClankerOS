@@ -38226,7 +38226,7 @@ def _artifact_index_record(root: Path, relative_path: str) -> dict[str, str] | N
             updated_at = _artifact_time(root, path_value) or ""
         elif path.exists():
             status = "rejected"
-    context = _artifact_context_from_path(path_value)
+    context = _artifact_context_from_path(path_value, root=root)
     source_details = _artifact_source_details(path_value)
     return {
         "label": _artifact_index_label(path_value),
@@ -38433,7 +38433,7 @@ def _artifact_relationship_map(
     renderer: str,
     workspace: dict[str, str],
 ) -> str:
-    context = _artifact_context_from_path(relative_path)
+    context = _artifact_context_from_path(relative_path, root=root)
     source = _artifact_source_details(relative_path)
     project_id = context["project_id"]
     goal_id = context["goal_id"]
@@ -38453,7 +38453,7 @@ def _artifact_relationship_map(
         project_label = f"/projects/{project_id}"
         source_href = f"/runs/{quote(run_id)}" if run_id != "unknown" else workflow_href
         source_label = _artifact_source_label(source, fallback=workflow_label)
-        relationship_reason = "artifact_path_identifies_goal_context"
+        relationship_reason = _artifact_goal_context_reason(context)
     elif delegation_id != "unknown":
         workflow_status = "delegation_artifact"
         workflow_label = "Delegation artifacts"
@@ -38677,7 +38677,7 @@ def _artifact_operator_workbench(
     truncated: bool,
     workspace: dict[str, str],
 ) -> str:
-    context = _artifact_context_from_path(relative_path)
+    context = _artifact_context_from_path(relative_path, root=root)
     project_id = context["project_id"]
     goal_id = context["goal_id"]
     remembered = workspace.get("last_viewed_artifact") == relative_path
@@ -38688,7 +38688,7 @@ def _artifact_operator_workbench(
         context_href = str(goal_display["href"])
         context_surface = str(goal_display["route_label"])
         context_surface_value = goal_display["route_surface"]
-        context_reason = "artifact_path_identifies_goal_context"
+        context_reason = _artifact_goal_context_reason(context)
     elif context["source"] == "delegation_path":
         context_label = "Delegation artifact"
         context_action = "Review delegation runs"
@@ -38793,7 +38793,7 @@ def _artifact_review_brief(
     truncated: bool,
     workspace: dict[str, str],
 ) -> str:
-    context = _artifact_context_from_path(relative_path)
+    context = _artifact_context_from_path(relative_path, root=root)
     project_id = context["project_id"]
     goal_id = context["goal_id"]
     remembered = workspace.get("last_viewed_artifact") == relative_path
@@ -38806,7 +38806,7 @@ def _artifact_review_brief(
         primary_surface = goal_display["route_surface"]
         secondary_href = f"/projects/{quote(project_id)}"
         secondary_label = f"/projects/{project_id}"
-        reason = "artifact_path_identifies_goal_context"
+        reason = _artifact_goal_context_reason(context)
     elif remembered:
         review_status = "saved_resume_anchor"
         primary_action = "Resume from artifact"
@@ -38908,7 +38908,7 @@ def _artifact_command_bar(
     truncated: bool,
     workspace: dict[str, str],
 ) -> str:
-    context = _artifact_context_from_path(relative_path)
+    context = _artifact_context_from_path(relative_path, root=root)
     remembered = workspace.get("last_viewed_artifact") == relative_path
     goal_id = context["goal_id"]
     goal_display = _goal_artifact_display(root, goal_id)
@@ -38983,7 +38983,7 @@ def _artifact_command_bar(
     )
 
 
-def _artifact_context_from_path(relative_path: str) -> dict[str, str]:
+def _artifact_context_from_path(relative_path: str, *, root: Path | None = None) -> dict[str, str]:
     parts = Path(relative_path).parts
     for index, part in enumerate(parts):
         if (
@@ -38996,6 +38996,12 @@ def _artifact_context_from_path(relative_path: str) -> dict[str, str]:
                 "goal_id": parts[index + 3],
                 "source": "project_goal_path",
             }
+    source = _artifact_source_details(relative_path)
+    run_id = source["run_id"]
+    if root is not None and run_id != "unknown":
+        run_context = _artifact_goal_context_from_run(root, run_id)
+        if run_context is not None:
+            return run_context
     if len(parts) >= 3 and parts[0] == ".clanker" and parts[1] == "delegations":
         return {
             "project_id": "unknown",
@@ -39007,6 +39013,41 @@ def _artifact_context_from_path(relative_path: str) -> dict[str, str]:
         "goal_id": "unknown",
         "source": "path_unclassified",
     }
+
+
+def _artifact_goal_context_from_run(root: Path, run_id: str) -> dict[str, str] | None:
+    try:
+        run = _storage(root).get_run(run_id)
+    except Exception:
+        run = None
+    if run is not None and getattr(run, "goal_id", ""):
+        return {
+            "project_id": str(getattr(run, "project_id", "") or "unknown"),
+            "goal_id": str(getattr(run, "goal_id", "") or "unknown"),
+            "source": "goal_run_path",
+        }
+    try:
+        worktree_runs = list_coder_worktree_runs(root, limit=500)
+    except Exception:
+        worktree_runs = []
+    for worktree_run in worktree_runs:
+        if run_id not in {str(worktree_run.id), str(worktree_run.source_run_id)}:
+            continue
+        goal_id = _goal_id_for_coder_run(_storage(root), worktree_run.id)
+        if not goal_id:
+            continue
+        return {
+            "project_id": str(worktree_run.project_id or "unknown"),
+            "goal_id": str(goal_id),
+            "source": "goal_run_path",
+        }
+    return None
+
+
+def _artifact_goal_context_reason(context: dict[str, str]) -> str:
+    if context.get("source") == "goal_run_path":
+        return "artifact_run_id_identifies_goal_context"
+    return "artifact_path_identifies_goal_context"
 
 
 def _artifact_source_details(relative_path: str) -> dict[str, str]:
@@ -39048,6 +39089,23 @@ def _artifact_source_label(source: dict[str, str], *, fallback: str) -> str:
 
 def _remember_artifact_section(root: Path, relative_path: str, current_path: str) -> str:
     workspace = _load_workspace_state(root)
+    context = _artifact_context_from_path(relative_path, root=root)
+    goal_id = context["goal_id"]
+    project_id = context["project_id"]
+    artifact_surface = f"/artifacts?path={quote(relative_path)}"
+    return_to = current_path
+    open_project = workspace.get("open_project", "")
+    open_goal = workspace.get("open_goal", "")
+    filters = f"artifact:{relative_path}"
+    expanded_panels = workspace.get("expanded_panels", "") or "artifacts"
+    resume_surface = workspace.get("resume_surface", "") or artifact_surface
+    if goal_id != "unknown":
+        open_project = project_id if project_id != "unknown" else open_project
+        open_goal = goal_id
+        filters = f"goal:{goal_id} artifact:{relative_path}"
+        expanded_panels = "goal-artifact-command-bar"
+        return_to = f"/goals/{quote(goal_id)}#goal-artifact-command-bar"
+        resume_surface = artifact_surface
     return "".join(
         [
             "<section id='remember-artifact'><h2>Remember Artifact</h2>",
@@ -39056,19 +39114,31 @@ def _remember_artifact_section(root: Path, relative_path: str, current_path: str
                 [
                     ("remember_artifact_form_available", "true"),
                     ("remember_artifact_path", relative_path),
+                    ("remember_artifact_context_source", context["source"]),
+                    ("remember_artifact_project", project_id),
+                    ("remember_artifact_goal", goal_id),
+                    (
+                        "remember_artifact_return_surface",
+                        SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
+                    ),
+                    (
+                        "remember_artifact_resume_surface",
+                        SafeHtml(f"<a href='{_e(resume_surface)}'>{_e(resume_surface)}</a>"),
+                    ),
                     ("remember_artifact_get_writes", "false"),
                     ("remember_artifact_external_effects_created", "false"),
                 ]
             ),
             _input_form(
                 "save-workspace",
-                {"return_to": current_path},
+                {"return_to": return_to},
                 {
-                    "open_project": workspace.get("open_project", ""),
-                    "open_goal": workspace.get("open_goal", ""),
-                    "filters": f"artifact:{relative_path}",
-                    "expanded_panels": workspace.get("expanded_panels", "") or "artifacts",
+                    "open_project": open_project,
+                    "open_goal": open_goal,
+                    "filters": filters,
+                    "expanded_panels": expanded_panels,
                     "last_viewed_artifact": relative_path,
+                    "resume_surface": resume_surface,
                     "updated_by": "operator-artifact",
                 },
             ),

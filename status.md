@@ -1,5 +1,47 @@
 # Status
 
+## 2026-07-02 Run Artifact Goal Ownership UX
+
+- `/artifacts?path=runs/<source_run_id>/review.md` now resolves owning Goal
+  context from local run/coder-run state when available, instead of treating
+  run review artifacts as orphan local files.
+- The Artifact Operator Workbench, Artifact Relationship Map, Artifact Review
+  Brief, Artifact Command Bar, artifact index classification, and confirmed
+  `Remember Artifact` form all consume the same Goal-aware artifact context.
+- Goal-owned run artifacts now record `goal_run_path`,
+  `artifact_run_id_identifies_goal_context`, Goal/project ids, source run id,
+  and title-first Goal labels in collapsed evidence. The visible workflow
+  route points back to `/goals/<goal_id>#goal-artifact-command-bar`.
+- The `Remember Artifact` form now defaults `open_project`, `open_goal`,
+  `filters`, `last_viewed_artifact`, `resume_surface`, and `return_to` from
+  the inferred Goal when proof exists, so saving a run review artifact creates
+  a usable Goal return point instead of only a file breadcrumb.
+- TDD evidence: the focused artifact viewer test failed first because the demo
+  run review artifact still rendered `path_unclassified`; after implementation
+  it proved Goal ownership, Goal return routing, and Goal-filled workspace
+  defaults for `runs/<source_run_id>/review.md`.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_artifact_viewer_is_read_only_and_bounded -q --tb=short`:
+    failed first, then 1 passed after implementation.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_artifact_viewer_is_read_only_and_bounded tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health --tb=short`:
+    3 passed in 93.59s.
+  - `python3 -m agent_os.cli app-demo-smoke-test`:
+    passed with demo route markers matched and zero provider, network, or
+    external mutation counters.
+  - `python3 -m agent_os.cli app-smoke-test`:
+    passed with `/artifacts?path=.clanker/app/smoke-artifacts/sample.md` plus
+    bounded rejection routes matched and zero provider, network, or external
+    mutation counters.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+- Non-claim: this is read-only browser artifact context and confirmed
+  workspace-save defaulting only. It does not write on GET, broaden artifact
+  path access, execute artifact content, approve work, execute tasks, poll
+  GitHub, call providers, use the network from ClankerOS, push, create PRs,
+  deploy, or mutate external systems.
+
 ## 2026-07-02 Verification Goal CI Handoff UX
 
 - `/verification` now treats a saved or lead Goal as the primary proof owner

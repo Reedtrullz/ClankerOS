@@ -735,8 +735,13 @@ structure, byte counts, and inert-renderer boundaries visible before the
 content body. A visible `Artifact Relationship Map` follows it with Workflow,
 Goal, Source, Resume, and Boundary cards so Goal/project/delegation/run return
 paths are visible before dense evidence. When the artifact path resolves to a
-stored Goal, those artifact context links are title-first while preserving raw
-Goal ids and label-source evidence for automation. The detailed `Artifact
+stored Goal, or when a run-backed artifact such as `runs/<source_run_id>/review.md`
+can be traced through local run/coder-run state to an owning Goal, those
+artifact context links are title-first while preserving raw Goal ids,
+source-run ids, and label-source evidence for automation. The confirmed
+`Remember Artifact` form also defaults its project, Goal, filters,
+resume-surface, and return target to that owning Goal instead of saving only a
+loose file breadcrumb. The detailed `Artifact
 Command Bar`, `Artifact Review Brief`, format evidence, and relationship
 evidence stay collapsed by default while preserving path, type, renderer,
 size, line count, truncation state, inferred project/goal/delegation/run context,

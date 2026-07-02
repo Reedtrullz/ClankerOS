@@ -11373,6 +11373,47 @@ def test_local_app_artifact_viewer_is_read_only_and_bounded(
     assert "artifact_relationship_source_label</dt><dd>Open run run_demo" in delegation_artifact_response.body
     assert "artifact_relationship_reason</dt><dd>artifact_path_identifies_delegation_context" in delegation_artifact_response.body
 
+    demo_result = run_demo_app_scenario(tmp_path)
+    demo_review_path = demo_result.review_path.relative_to(tmp_path).as_posix()
+    demo_run_artifact = render_local_app_route(
+        tmp_path,
+        f"/artifacts?path={demo_review_path}",
+    )
+    assert demo_run_artifact.status == 200
+    assert "artifact_workbench_context_source</dt><dd>goal_run_path" in demo_run_artifact.body
+    assert f"artifact_workbench_project</dt><dd>{demo_result.project_id}" in demo_run_artifact.body
+    assert f"artifact_workbench_goal</dt><dd>{demo_result.goal_id}" in demo_run_artifact.body
+    assert "artifact_workbench_context_action</dt><dd>Return to goal" in demo_run_artifact.body
+    assert (
+        f"artifact_workbench_context_surface</dt><dd><a href='/goals/{demo_result.goal_id}'>"
+        "Demo the ClankerOS local operator app with fixture-backed state</a>"
+        in demo_run_artifact.body
+    )
+    assert "artifact_relationship_status</dt><dd>goal_artifact" in demo_run_artifact.body
+    assert "artifact_relationship_source_family</dt><dd>goal_run_evidence" in demo_run_artifact.body
+    assert f"artifact_relationship_project</dt><dd>{demo_result.project_id}" in demo_run_artifact.body
+    assert f"artifact_relationship_goal</dt><dd>{demo_result.goal_id}" in demo_run_artifact.body
+    assert f"artifact_relationship_run</dt><dd>{demo_result.run_id}" in demo_run_artifact.body
+    assert (
+        f"artifact_relationship_workflow_surface</dt><dd><a href='/goals/{demo_result.goal_id}#goal-artifact-command-bar'>"
+        f"/goals/{demo_result.goal_id}#goal-artifact-command-bar</a>"
+        in demo_run_artifact.body
+    )
+    assert (
+        f"artifact_relationship_source_surface</dt><dd><a href='/runs/{demo_result.run_id}'>"
+        f"Open run {demo_result.run_id}</a>"
+        in demo_run_artifact.body
+    )
+    assert "artifact_relationship_reason</dt><dd>artifact_run_id_identifies_goal_context" in demo_run_artifact.body
+    assert "artifact_review_status</dt><dd>goal_scoped" in demo_run_artifact.body
+    assert "artifact_review_context_source</dt><dd>goal_run_path" in demo_run_artifact.body
+    assert f"name='open_project' value='{demo_result.project_id}'" in demo_run_artifact.body
+    assert f"name='open_goal' value='{demo_result.goal_id}'" in demo_run_artifact.body
+    assert f"name='return_to' value='/goals/{demo_result.goal_id}#goal-artifact-command-bar'" in demo_run_artifact.body
+    assert f"name='resume_surface' value='/artifacts?path={demo_review_path}'" in demo_run_artifact.body
+    assert f"artifact:{demo_review_path}" in demo_run_artifact.body
+    assert f"goal:{demo_result.goal_id}" in demo_run_artifact.body
+
     absolute = render_local_app_route(
         tmp_path,
         f"/artifacts?path={tmp_path / 'docs' / 'sample.md'}",

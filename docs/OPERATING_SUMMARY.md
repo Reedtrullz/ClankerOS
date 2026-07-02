@@ -361,7 +361,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   primary read/review action, structure summary, review target, and safety
   boundary. A visible `Artifact Relationship Map` then connects the artifact
   back to inferred Goal, project, delegation, run, saved workspace, and safety
-  return paths before dense evidence. Detailed `Artifact Command Bar`,
+  return paths before dense evidence. Run-backed artifacts such as
+  `runs/<source_run_id>/review.md` now resolve through local run/coder-run
+  state to the owning Goal when that proof exists, and the confirmed
+  `Remember Artifact` form defaults project, Goal, filters, resume surface,
+  and return target to that Goal context instead of saving only an orphan file
+  breadcrumb. Detailed `Artifact Command Bar`,
   `Artifact Review Brief`, format evidence, and relationship evidence stay
   collapsed by default while preserving bounded artifact
   path, render type/family/renderer, size, rendered bytes, line count,
@@ -1059,7 +1064,8 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   `Artifact Relationship Map` for Goal/project/delegation/run/workspace
   return paths before dense command evidence. Stored Goal artifact links render
   title-first while keeping raw Goal ids and label-source evidence in collapsed
-  proof. Patch/diff artifacts render with
+  proof, and run-backed review artifacts inherit the same Goal treatment when
+  local run/coder-run state proves the owner. Patch/diff artifacts render with
   scan-friendly line classes, and text/log artifacts as inert text while
   keeping content execution disabled. It also exposes a confirmed local
   `save-workspace` form so the operator can remember the current artifact as
