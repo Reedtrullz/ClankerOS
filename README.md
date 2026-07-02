@@ -944,7 +944,10 @@ text such as `commit` finds the live Goal action instead of only older route
 shortcuts. The Artifact card also hydrates after load from browser-local
 `localStorage:clankeros-last-artifact`, so the most recently opened artifact
 is available from every shell route before the operator explicitly promotes it
-with `/workspace#save-workspace`. It also includes a browser-local
+with `/workspace#save-workspace`. The compact Recent Items Resume shortcut now
+uses the same return rule as the broader shell: exact saved resume surfaces
+win, otherwise populated sessions resume the current Goal action, and first-run
+sessions keep the setup-safe `/resume` hub. It also includes a browser-local
 `Viewed Pages` panel backed by
 `localStorage:clankeros-route-history`, which records the local app pages
 visited in this browser, dedupes them by route, caps the list at 12 entries,

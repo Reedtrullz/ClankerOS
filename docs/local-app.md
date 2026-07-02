@@ -702,7 +702,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   action label or dock route can reopen the live Goal action from the list too.
   Its Artifact card hydrates after load
   from `localStorage:clankeros-last-artifact`, while durable resume promotion
-  still requires the confirmed Workspace save flow.
+  still requires the confirmed Workspace save flow. Its compact Resume
+  shortcut keeps exact saved resume surfaces first; otherwise populated
+  sessions point at the live Goal action and first-run sessions keep the
+  `/resume` hub fallback.
   A browser-local `Viewed Pages` panel records local app routes in
   `localStorage:clankeros-route-history`, dedupes by href, keeps the 12 most
   recent entries, surfaces them in the sidebar, and exposes a clear button

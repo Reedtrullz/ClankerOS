@@ -45432,6 +45432,27 @@ def _recent_items_command_bar(
         action_action = (
             _action_form_copy(last_action)["title"] if last_action_href else "Open actions"
         )
+    if resume_surface:
+        resume_href = resume_surface
+        resume_label = _saved_workspace_surface_action_label(
+            root,
+            resume_surface,
+            open_goal=open_goal,
+            open_project=open_project,
+            fallback=_local_surface_action_label(resume_surface),
+        )
+        resume_source = "saved_resume_surface"
+        resume_status = "saved_surface"
+    elif current_action_href:
+        resume_href = current_action_href
+        resume_label = current_action
+        resume_source = "current_goal_action"
+        resume_status = "current_action"
+    else:
+        resume_href = "/resume"
+        resume_label = "Resume workspace"
+        resume_source = "resume_page"
+        resume_status = "resume_page"
     artifact_label = Path(last_artifact).name if last_artifact else "No saved artifact"
     artifact_href = f"/artifacts?path={quote(last_artifact)}" if last_artifact else "/workspace"
     artifact_action = _artifact_action_label(last_artifact) if last_artifact else "Open workspace"
@@ -45447,7 +45468,10 @@ def _recent_items_command_bar(
         f"recent_items_last_action_click: <a href='{_e(action_href)}'>{_e(action_action)}</a>",
         f"recent_items_last_artifact_click: <a href='{_e(artifact_href)}'>{_e(artifact_action)}</a>",
         "recent_items_browser_last_artifact: read browser-local last artifact after load",
-        "recent_items_resume: <a href='/resume'>/resume</a>",
+        (
+            f"recent_items_resume: status={_e(resume_status)} "
+            f"surface=<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"
+        ),
         "recent_items_safety: read-only local navigation",
     ]
     return "".join(
@@ -45457,7 +45481,10 @@ def _recent_items_command_bar(
             "<span class='recent-items-label'>Reopen</span>",
             f"<strong>{_e(primary_label)}</strong>",
             f"<a class='recent-items-primary' data-recent-items-primary='true' href='{_e(primary_href)}'>{_e(primary_action)}</a>",
-            "<a class='recent-items-resume' data-recent-items-resume='true' href='/resume'>Resume workspace</a>",
+            (
+                "<a class='recent-items-resume' data-recent-items-resume='true' "
+                f"href='{_e(resume_href)}'>{_e(resume_label)}</a>"
+            ),
             "</div>",
             "<div class='recent-items-cards' data-recent-items-cards='true'>",
             "<article class='recent-items-card recent-items-card-primary'><h4>Recent</h4>",
@@ -45551,7 +45578,14 @@ def _recent_items_command_bar(
                     ),
                     ("recent_items_cards_available", "true"),
                     ("recent_items_card_count", "4"),
-                    ("recent_items_resume_surface", SafeHtml("<a href='/resume'>/resume</a>")),
+                    ("recent_items_resume_status", resume_status),
+                    (
+                        "recent_items_resume_surface",
+                        SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"),
+                    ),
+                    ("recent_items_resume_exact_surface", resume_href),
+                    ("recent_items_resume_surface_source", resume_source),
+                    ("recent_items_resume_hub_surface", SafeHtml("<a href='/resume'>/resume</a>")),
                     ("recent_items_write_on_get", "false"),
                     ("recent_items_provider_calls_taken", "0"),
                     ("recent_items_network_actions_taken", "0"),

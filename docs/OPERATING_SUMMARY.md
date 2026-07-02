@@ -1088,6 +1088,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   instead of detouring through the generic `/actions` catalog, and the longer
   Recent shortcuts list prepends the same live Goal action as
   `current-action` so filter/search behavior matches the visible Action card.
+  Its compact Resume shortcut keeps exact saved resume surfaces first; without
+  one, populated sessions point at the live Goal action and first-run sessions
+  keep the `/resume` hub fallback.
   The Artifact card also hydrates after load from
   browser-local `localStorage:clankeros-last-artifact`, so the last opened
   artifact can be reopened globally before the operator explicitly saves it to

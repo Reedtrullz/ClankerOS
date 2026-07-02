@@ -1,5 +1,39 @@
 # Status
 
+## 2026-07-02 Recent Items Resume Current Action UX
+
+- The shared Recent Items command bar Resume shortcut now routes populated
+  sessions with no explicit saved resume surface to the current Goal action
+  instead of the generic `/resume` hub.
+- Explicitly saved resume surfaces still win, so a saved
+  `/today#today-current-action` return point remains the Recent Items Resume
+  target even when a live Goal action is available.
+- First-run/no-goal sessions keep the setup-safe `/resume` fallback.
+- Recent Items evidence now records `recent_items_resume_status`,
+  `recent_items_resume_exact_surface`, and
+  `recent_items_resume_surface_source`, plus the visible Resume link.
+- TDD evidence: the populated fixture-backed Goal page failed first because
+  `data-recent-items-resume` still rendered `/resume`; after implementation it
+  proved `Create commit request` with source `current_goal_action`. The saved
+  Finish Today test proved `saved_resume_surface` still wins.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    failed first, then 1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed after implementation.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed after docs/status updates.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface --tb=short`:
+    3 passed after docs/status updates.
+- Non-claim: this is read-only shared browser Recent Items routing only. It
+  does not write on GET, poll GitHub from the app, approve work, execute
+  tasks, call providers, use the network, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
 ## 2026-07-02 Operator Focus Resume Current Action UX
 
 - The shared Operator Focus Resume card now routes populated sessions with no

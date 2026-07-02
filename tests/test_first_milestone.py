@@ -6107,7 +6107,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "recent_items_workspace_surface</dt><dd><a href='/resume'>/resume</a>" in root.body
     assert "recent_items_cards_available</dt><dd>true" in root.body
     assert "recent_items_card_count</dt><dd>4" in root.body
-    assert "recent_items_resume_surface</dt><dd><a href='/resume'>/resume</a>" in root.body
+    assert "recent_items_resume_status</dt><dd>resume_page" in root.body
+    assert "recent_items_resume_surface</dt><dd><a href='/resume'>Resume workspace</a>" in root.body
+    assert "recent_items_resume_exact_surface</dt><dd>/resume" in root.body
+    assert "recent_items_resume_surface_source</dt><dd>resume_page" in root.body
+    assert "recent_items_resume_hub_surface</dt><dd><a href='/resume'>/resume</a>" in root.body
     assert "recent_items_write_on_get</dt><dd>false" in root.body
     assert "recent_items_provider_calls_taken</dt><dd>0" in root.body
     assert "recent_items_network_actions_taken</dt><dd>0" in root.body
@@ -13862,7 +13866,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"data-recent-items-primary='true' href='/goals/{result.goal_id}'>"
         f"{recent_goal_action}</a>"
     ) in goal.body
-    assert "data-recent-items-resume='true' href='/resume'>Resume workspace</a>" in goal.body
+    assert (
+        f"data-recent-items-resume='true' href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in goal.body
     assert "data-recent-items-cards='true'" in goal.body
     assert (
         f"data-recent-items-card-primary='true' href='/goals/{result.goal_id}'>"
@@ -13967,7 +13974,20 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "Create commit request</a>"
     ) in goal.body
     assert "recent_items_last_artifact_click: <a href='/workspace'>Open workspace</a>" in goal.body
-    assert "recent_items_resume: <a href='/resume'>/resume</a>" in goal.body
+    assert "recent_items_resume_status</dt><dd>current_action" in goal.body
+    assert (
+        f"recent_items_resume_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in goal.body
+    assert (
+        f"recent_items_resume_exact_surface</dt><dd>/goals/{result.goal_id}#goal-action-dock-form"
+    ) in goal.body
+    assert "recent_items_resume_surface_source</dt><dd>current_goal_action" in goal.body
+    assert (
+        f"recent_items_resume: status=current_action surface=<a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in goal.body
+    assert "recent_items_resume: <a href='/resume'>/resume</a>" not in goal.body
     assert "data-breadcrumbs='true'" in goal.body
     assert "data-route-context='true'" in goal.body
     assert "data-route-context-focus='true'" in goal.body
@@ -21579,6 +21599,21 @@ def test_today_finish_today_saves_exact_resume_surface(tmp_path: Path) -> None:
     assert (
         "recent_items_workspace_click: <a href='/today#today-current-action'>"
         "Open Today current action</a>"
+    ) in resume.body
+    assert (
+        "data-recent-items-resume='true' href='/today#today-current-action'>"
+        "Open Today current action</a>"
+    ) in resume.body
+    assert "recent_items_resume_status</dt><dd>saved_surface" in resume.body
+    assert (
+        "recent_items_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>Open Today current action</a>"
+    ) in resume.body
+    assert "recent_items_resume_exact_surface</dt><dd>/today#today-current-action" in resume.body
+    assert "recent_items_resume_surface_source</dt><dd>saved_resume_surface" in resume.body
+    assert (
+        "recent_items_resume: status=saved_surface surface="
+        "<a href='/today#today-current-action'>Open Today current action</a>"
     ) in resume.body
     assert (
         "palette_quick_switch_workspace: <a href='/today#today-current-action'>"
