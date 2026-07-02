@@ -17759,6 +17759,9 @@ def _goal_command_bar(
         form_available=form_available,
     )
     primary_label = _goal_action_cta_label(next_action, form_available)
+    ci_href = "#goal-ci-handoff"
+    ci_label = "Goal CI handoff"
+    ci_surface = SafeHtml(f"<a href='{ci_href}'>{ci_label}</a>")
     command_cards = "".join(
         [
             "<div class='goal-command-card goal-command-card-primary'>",
@@ -17779,7 +17782,7 @@ def _goal_command_bar(
             "<div class='goal-command-card'>",
             "<span class='goal-command-label'>Proof</span>",
             f"<strong>{_e(ci_status)}</strong>",
-            "<a class='goal-command-link' data-goal-command-proof='true' href='#goal-ci-handoff'>CI handoff</a>",
+            f"<a class='goal-command-link' data-goal-command-proof='true' href='{ci_href}'>{ci_label}</a>",
             "</div>",
             "<div class='goal-command-card'>",
             "<span class='goal-command-label'>Resume</span>",
@@ -17821,7 +17824,7 @@ def _goal_command_bar(
                     ("goal_command_bar_ci_source", ci_source),
                     (
                         "goal_command_bar_ci_surface",
-                        SafeHtml("<a href='/verification'>/verification</a>"),
+                        ci_surface,
                     ),
                     ("goal_command_bar_write_on_get", "false"),
                     ("goal_command_bar_network_actions_taken", "0"),
@@ -17843,7 +17846,7 @@ def _goal_command_bar(
                     (
                         "goal_command_ci: "
                         f"status={_e(ci_status)} source={_e(ci_source)} "
-                        "surface=<a href='/verification'>/verification</a>"
+                        f"surface=<a href='{ci_href}'>{ci_label}</a>"
                     ),
                 ]
             ),
@@ -18184,6 +18187,9 @@ def _goal_return_brief(
         blocker_action = "Review remaining work"
         blocker_surface = SafeHtml("<a href='#goal-remaining-work'>Goal Remaining Work</a>")
     ci_state = _ci_evidence_command_state(root)
+    ci_href = "#goal-ci-handoff"
+    ci_label = "Goal CI handoff"
+    ci_surface = SafeHtml(f"<a href='{ci_href}'>{ci_label}</a>")
     action_form_available = bool(_goal_next_action_form(state, next_action))
     primary_href = _goal_primary_action_href(
         state,
@@ -18218,6 +18224,11 @@ def _goal_return_brief(
             "<h3>Latest</h3>",
             f"<p>{_e(latest_message)}</p>",
             f"<a class='goal-return-link' data-goal-return-latest='true' href='{_e(latest_surface)}'>{_e(latest_action_label)}</a>",
+            "</div>",
+            "<div class='goal-return-card'>",
+            "<h3>Proof</h3>",
+            f"<p>{_e(str(ci_state['latest_status']))}</p>",
+            f"<a class='goal-return-link' data-goal-return-proof='true' href='{ci_href}'>{ci_label}</a>",
             "</div>",
             "<div class='goal-return-card'>",
             "<h3>Blocker</h3>",
@@ -18280,7 +18291,7 @@ def _goal_return_brief(
                     ("goal_return_ci_status", ci_state["latest_status"]),
                     ("goal_return_ci_source", ci_state["latest_source"]),
                     ("goal_return_ci_current_proof", ci_state["current_proof"]),
-                    ("goal_return_ci_surface", SafeHtml("<a href='/verification'>/verification</a>")),
+                    ("goal_return_ci_surface", ci_surface),
                     ("goal_return_blocker_status", blocker_status),
                     ("goal_return_blocker_surface", blocker_action_surface),
                     ("goal_return_blocker_href", blocker_raw_surface),
@@ -18307,6 +18318,12 @@ def _goal_return_brief(
                     "goal_return_finish: <a href='#goal-finish-today'>Finish Today</a>",
                     "goal_return_resume: <a href='/resume'>Open resume</a>",
                     "goal_return_resume_href: <a href='/resume'>/resume</a>",
+                    (
+                        "goal_return_ci: "
+                        f"status={_e(str(ci_state['latest_status']))} "
+                        f"source={_e(str(ci_state['latest_source']))} "
+                        f"surface=<a href='{ci_href}'>{ci_label}</a>"
+                    ),
                     "goal_return_safety: read-only return-to-work brief",
                 ]
             ),

@@ -1,5 +1,31 @@
 # Status
 
+## 2026-07-02 Goal Page Proof Card UX
+
+- The Goal Command Bar Proof link and collapsed command evidence now point to
+  the same-page `#goal-ci-handoff` target with the operator-facing `Goal CI
+  handoff` label instead of reporting `/verification`.
+- The Goal Return Brief now includes a visible Proof card, making the top
+  return board Continue, Latest, Proof, Blocker, Finish, and Resume.
+- Goal Return Brief CI evidence now names the same-page `#goal-ci-handoff`
+  surface, keeping the Goal page self-contained before the operator opens
+  global proof pages.
+- TDD evidence: the populated fixture-backed scenario failed first because
+  `goal_command_bar_ci_surface` still rendered `/verification`; after
+  implementation it proved the same-page Goal CI handoff link in the Goal
+  Command Bar and Goal Return Brief.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed after implementation.
+- Non-claim: this is read-only browser Goal-page routing and card polish only.
+  It does not write on GET, poll GitHub from the app, approve work, execute
+  tasks, call providers, use the network, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
 ## 2026-07-02 Goal-Aware Home Proof Start UX
 
 - The Home Operator Board Proof card and Home `Start Here` CI readback now

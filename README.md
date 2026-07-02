@@ -483,8 +483,9 @@ auto-refreshes by local polling, pauses while the operator is editing a form or
 the tab is hidden, and stays local-only. The Goal Command Bar near the top now
 opens with visible Now, Phase, Progress, Proof, and Resume cards, while its
 full current phase, primary action, target local surface, progress, waiting
-counts, resume route, latest project-scoped CI proof state, and zero-effect
-boundary stay available in collapsed command evidence. Goal
+counts, resume route, latest project-scoped CI proof state, same-page Goal CI
+handoff target, and zero-effect boundary stay available in collapsed command
+evidence. Goal
 Operator Workbench follows it with a human-readable do/check/unblock/finish
 strip: its primary action points directly at the in-page Goal action form when
 one is available, links
@@ -501,11 +502,11 @@ local state stays in collapsed daily-loop evidence, while the confirmed
 Today details so ending or shelving a goal is a direct click, not a hunt
 through proof rows. `pause-goal` moves any non-paused incomplete goal into
 paused lanes without approving work, running providers, using the network, or
-mutating external systems. Goal Return Brief now follows as its own five-card
-return board for Continue, Latest, Blocker, Finish, and Resume, with the
-same gate, activity, artifact, CI, resume-readiness, blocker, and zero-effect
-state preserved in collapsed return evidence instead of leading the operator
-through proof rows.
+mutating external systems. Goal Return Brief now follows as its own six-card
+return board for Continue, Latest, Proof, Blocker, Finish, and Resume, with
+Proof pointing to the same-page Goal CI handoff and the same gate, activity,
+artifact, CI, resume-readiness, blocker, and zero-effect state preserved in
+collapsed return evidence instead of leading the operator through proof rows.
 The read-only `Goal Session Digest` follows the return brief and condenses the
 current continuation into Continue, Since Save, Latest Artifact, Waiting, and
 Finish Today cards. It uses existing Goal state, saved workspace timestamp,

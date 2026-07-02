@@ -648,8 +648,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   read-only `Goal Command Bar` near the top that opens with visible Now,
   Phase, Progress, Proof, and Resume cards while keeping phase, one primary
   action, target local surface, progress, waiting counts, `/resume`, latest
-  project-scoped CI proof status, and write-on-GET/network/external-effect
-  boundaries in collapsed command evidence. A `Goal Operator Workbench` follows it
+  project-scoped CI proof status, same-page Goal CI handoff target, and
+  write-on-GET/network/external-effect boundaries in collapsed command
+  evidence. A `Goal Operator Workbench` follows it
   with a human-readable do/check/unblock/finish strip, pointing its primary
   action directly at the in-page Goal action form when available, the source
   surface, current gate/progress, first unblock surface, and confirmed
@@ -682,11 +683,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   artifact, and does not approve work, run work, call providers, use the
   network, push, create PRs, deploy, or mutate external systems.
   A read-only `Goal Return Brief` follows the daily loop near the top of the
-  Goal page as visible Continue, Latest, Blocker, Finish, and Resume cards,
-  then keeps current gate, next action, resume readiness, latest activity,
-  latest activity label, latest raw surface, latest artifact, CI proof
-  posture, blocker routing, `/resume`, finish surface, and zero-effect
-  counters in collapsed return evidence without writing on GET.
+  Goal page as visible Continue, Latest, Proof, Blocker, Finish, and Resume
+  cards, with Proof pointing to the same-page Goal CI handoff. It then keeps
+  current gate, next action, resume readiness, latest activity, latest activity
+  label, latest raw surface, latest artifact, CI proof posture, blocker
+  routing, `/resume`, finish surface, and zero-effect counters in collapsed
+  return evidence without writing on GET.
   A read-only `Goal Session Digest` follows it as visible Continue, Since
   Save, Latest Artifact, Waiting, and Finish Today cards. The digest is sourced
   from existing Goal state, saved workspace timestamp, latest local timeline

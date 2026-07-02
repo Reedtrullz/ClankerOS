@@ -14544,6 +14544,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-command-strip='true'" in goal.body
     assert "data-goal-command-evidence='true'" in goal.body
     assert "data-goal-command-primary='true'" in goal.body
+    assert "<a class='goal-command-link' data-goal-command-proof='true' href='#goal-ci-handoff'>Goal CI handoff</a>" in goal.body
     assert "goal_command_bar_attention</dt><dd>Act: Create commit request" in goal.body
     assert "goal_command_bar_primary_action</dt><dd>Create commit request" in goal.body
     assert "goal_command_bar_primary_surface</dt><dd><a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
@@ -14557,7 +14558,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_command_bar_resume_surface</dt><dd><a href='/resume'>/resume</a>" in goal.body
     assert "goal_command_bar_ci_status</dt><dd>success" in goal.body
     assert "goal_command_bar_ci_source</dt><dd>direct_public_snapshot" in goal.body
-    assert "goal_command_bar_ci_surface</dt><dd><a href='/verification'>/verification</a>" in goal.body
+    assert "goal_command_bar_ci_surface</dt><dd><a href='#goal-ci-handoff'>Goal CI handoff</a>" in goal.body
     assert "goal_command_bar_write_on_get</dt><dd>false" in goal.body
     assert "goal_command_bar_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_command_bar_external_effects_created</dt><dd>false" in goal.body
@@ -14566,7 +14567,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_command_progress: 0/1 tasks completed" in goal.body
     assert "goal_command_waiting: approvals=1 incidents=0 recommendations=0" in goal.body
     assert "goal_command_resume: <a href='/resume'>/resume</a>" in goal.body
-    assert "goal_command_ci: status=success source=direct_public_snapshot surface=<a href='/verification'>/verification</a>" in goal.body
+    assert "goal_command_ci: status=success source=direct_public_snapshot surface=<a href='#goal-ci-handoff'>Goal CI handoff</a>" in goal.body
     assert "Goal Operator Workbench" in goal.body
     assert "data-goal-operator-workbench='true'" in goal.body
     assert "data-goal-workbench-actions='true'" in goal.body
@@ -14741,8 +14742,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"/runs/{result.coder_worktree_run_id}</a>"
     ) in goal.body
     assert "goal_return_latest_artifact</dt><dd><a href='/artifacts?path=" in goal.body
+    assert "data-goal-return-proof='true'" in goal.body
+    assert "<a class='goal-return-link' data-goal-return-proof='true' href='#goal-ci-handoff'>Goal CI handoff</a>" in goal.body
     assert "goal_return_ci_status</dt><dd>success" in goal.body
     assert "goal_return_ci_source</dt><dd>direct_public_snapshot" in goal.body
+    assert "goal_return_ci_surface</dt><dd><a href='#goal-ci-handoff'>Goal CI handoff</a>" in goal.body
     assert "goal_return_blocker_status</dt><dd>pending_approvals" in goal.body
     assert "goal_return_blocker_surface</dt><dd><a href='/approvals'>Review approvals</a>" in goal.body
     assert "goal_return_blocker_href</dt><dd><a href='/approvals'>/approvals</a>" in goal.body
@@ -14770,6 +14774,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_return_unblock_href: <a href='/approvals'>/approvals</a>" in goal.body
     assert "goal_return_resume: <a href='/resume'>Open resume</a>" in goal.body
     assert "goal_return_resume_href: <a href='/resume'>/resume</a>" in goal.body
+    assert "goal_return_ci: status=success source=direct_public_snapshot surface=<a href='#goal-ci-handoff'>Goal CI handoff</a>" in goal.body
     assert "goal_return_safety: read-only return-to-work brief" in goal.body
     assert "Goal Session Digest" in goal.body
     assert "data-goal-session-digest='true'" in goal.body

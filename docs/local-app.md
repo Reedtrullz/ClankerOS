@@ -370,8 +370,8 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   above the detailed cards with visible Now, Phase, Progress, Proof, and Resume
   cards, while the current phase, one primary action, target local surface,
   progress, open/waiting counts, resume route, project-scoped CI proof state,
-  and write-on-GET/network/external-effect boundaries remain in collapsed
-  command evidence. A
+  same-page Goal CI handoff target, and write-on-GET/network/external-effect
+  boundaries remain in collapsed command evidence. A
   `Goal Operator Workbench` follows with a human-readable do/check/unblock/
   finish strip, with its primary action jumping directly to the in-page
   action-form target when available, the
@@ -437,10 +437,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   changes local goal status to `paused`; it does not approve work, run work,
   call providers, use the network, push, create PRs, deploy, or mutate external
   systems. A read-only `Goal Return Brief` follows the daily loop as a
-  five-card Continue, Latest, Blocker, Finish, and Resume board, then keeps
-  the current gate, next local action, resume readiness, latest activity,
-  latest artifact, CI proof posture, blocker route, `/resume`, finish surface,
-  and zero-effect counters in collapsed return evidence without writing on GET.
+  six-card Continue, Latest, Proof, Blocker, Finish, and Resume board, with
+  Proof pointing to the same-page Goal CI handoff. It then keeps the current
+  gate, next local action, resume readiness, latest activity, latest artifact,
+  CI proof posture, blocker route, `/resume`, finish surface, and zero-effect
+  counters in collapsed return evidence without writing on GET.
   A read-only `Goal Session Digest` follows it as a five-card Continue, Since
   Save, Latest Artifact, Waiting, and Finish Today digest. It is sourced from
   existing Goal state, saved workspace timestamp, latest local timeline item,
