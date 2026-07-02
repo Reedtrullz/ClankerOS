@@ -768,8 +768,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   goal, or first-run state and opens with compact Now, Goal, Attention,
   Finish, Resume, and Search cards plus collapsed ribbon evidence for the
   current route, phase, primary action, waiting counts, saved workspace
-  context, Finish Today confirmation surface, command palette availability,
-  and no-write/no-provider/no-network/no-external-effect boundaries. The
+  context, exact resume source, Finish Today confirmation surface, command
+  palette availability, and no-write/no-provider/no-network/no-external-effect
+  boundaries. Saved resume surfaces still win; otherwise populated sessions
+  route the ribbon Resume card to the current Goal action, while first-run
+  sessions keep the `/resume` hub fallback. The
   shared read-only `Operator Focus` strip still derives from
   the same saved workspace goal or current lead goal and opens with compact
   action cards for the primary action, phase, progress, waiting counts, and

@@ -12042,10 +12042,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "operator_ribbon_open_recommendations</dt><dd>0" in dashboard.body
     assert "operator_ribbon_action_form_available</dt><dd>true" in dashboard.body
     assert "operator_ribbon_confirmation_required</dt><dd>true" in dashboard.body
-    assert "operator_ribbon_resume_status</dt><dd>not_started" in dashboard.body
-    assert "operator_ribbon_resume_surface</dt><dd><a href='/resume'>Open resume</a>" in dashboard.body
-    assert "operator_ribbon_resume_exact_surface</dt><dd>/resume" in dashboard.body
-    assert "operator_ribbon_resume_surface_source</dt><dd>resume_page" in dashboard.body
+    assert "operator_ribbon_resume_status</dt><dd>current_action" in dashboard.body
+    assert (
+        f"operator_ribbon_resume_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in dashboard.body
+    assert (
+        f"operator_ribbon_resume_exact_surface</dt><dd>/goals/{result.goal_id}#goal-action-dock-form"
+        in dashboard.body
+    )
+    assert "operator_ribbon_resume_surface_source</dt><dd>current_goal_action" in dashboard.body
     assert 'data-finish-today-href="#home-finish-today"' in dashboard.body
     assert 'data-finish-today-source="home_finish_form"' in dashboard.body
     assert 'data-finish-today-surface="route_local_form"' in dashboard.body
@@ -12063,6 +12069,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "operator_ribbon_now: Create commit request" in dashboard.body
     assert (
         f"operator_ribbon_click: <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in dashboard.body
+    assert (
+        f"operator_ribbon_resume: status=current_action surface=<a href='/goals/{result.goal_id}#goal-action-dock-form'>"
         "Create commit request</a>"
     ) in dashboard.body
     assert "operator_ribbon_safety: read-only global operator orientation" in dashboard.body

@@ -872,7 +872,10 @@ toggle on every page. The header keeps the daily routes visible
 moves advanced routes under `More`, which opens automatically on secondary
 pages. The header also exposes a visible `Keys` control and the `?` shortcut
 to open the same local keyboard-help dialog without opening palette evidence
-first. The `g` keyboard shortcut is Goal-aware: first-run or empty states still
+first. The shared Operator Ribbon keeps explicit saved resume surfaces as the
+strongest return point; when no saved surface exists, populated sessions route
+its Resume card to the current Goal action, while first-run sessions keep the
+`/resume` hub fallback. The `g` keyboard shortcut is Goal-aware: first-run or empty states still
 open `/goals`, while populated operator sessions open the current saved or
 lead Goal cockpit directly. The global `Proof` button and `p` shortcut are
 also Goal-aware: first-run or empty states open the manual CI evidence

@@ -651,7 +651,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   route. The `a` artifact shortcut is Goal-aware too: first-run and no-goal
   sessions keep the bounded `/artifacts` index fallback, while populated
   sessions open the current Goal's `#goal-artifact-command-bar` from any route
-  using explicit read-only shortcut metadata. It also includes a visible
+  using explicit read-only shortcut metadata. The global Operator Ribbon Resume
+  card keeps explicit saved resume surfaces first; without one, populated
+  sessions return to the current Goal action, while first-run sessions keep the
+  `/resume` hub fallback. It also includes a visible
   `Finish` control and the `f` shortcut resolves to the
   route-local Finish Today form on `/today` (`#today-finish`) and
   `/goals/<goal_id>` (`#goal-finish-today`), plus route-local forms on

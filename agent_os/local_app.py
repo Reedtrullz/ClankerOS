@@ -46092,19 +46092,27 @@ def _operator_status_ribbon(
         attention_action = "Open goals"
         attention_href = "/goals"
 
-    resume_href = saved_resume_surface or "/resume"
-    resume_label = (
-        _saved_workspace_surface_action_label(
+    if saved_resume_surface:
+        resume_href = saved_resume_surface
+        resume_label = _saved_workspace_surface_action_label(
             root,
             saved_resume_surface,
             open_goal=saved_goal,
             open_project=saved_project,
             fallback="Open resume",
         )
-        if saved_resume_surface
-        else "Open resume"
-    )
-    resume_source = "saved_resume_surface" if saved_resume_surface else "resume_page"
+        resume_source = "saved_resume_surface"
+    elif status == "available" and isinstance(
+        focus_context.get("next_action"), GoalNextAction
+    ):
+        resume_href = primary_href
+        resume_label = primary_label
+        resume_source = "current_goal_action"
+        resume_status = "current_action"
+    else:
+        resume_href = "/resume"
+        resume_label = "Open resume"
+        resume_source = "resume_page"
     finish_target = _finish_today_shortcut_context(current_path, focus_context)
     finish_href = finish_target["href"]
     finish_label = finish_target["label"]
