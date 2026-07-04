@@ -223,6 +223,11 @@ confirmation requirement, and zero provider/network/external-effect counters.
   while preserving the current action form and safety boundary. A `Proof To
   Resume` rail makes the post-action loop explicit with cards for the current
   action, proof review, proof recording, workspace save, and `/resume` return.
+  A read-only `Milestone Checklist` follows with the product DoD as browser
+  cards: Launch App, Create Project, Create Goal, Do Current Action, Check
+  Proof, Finish Today, and Resume Exactly. The checklist marks the current
+  step from local state and reports whether an exact resume surface has been
+  saved, without adding new write authority.
   The route is read-only on GET and
   only reuses existing local surfaces and confirmed forms; it does not call
   providers, perform network actions, push, create PRs, deploy, or mutate

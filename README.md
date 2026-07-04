@@ -305,8 +305,12 @@ handoff or first-run fallback while naming the current proof and workspace
 posture. The `Proof To Resume` rail then turns the post-action ritual into five
 visible browser steps: take the current action, review proof, record missing or
 stale CI proof, save the workspace, and reopen `/resume` from the saved context.
-It
-is read-only on GET and only reuses existing local surfaces and confirmed
+The guide also includes a read-only `Milestone Checklist` that translates the
+product Definition of Done into browser cards: launch app, create project,
+create Goal, do the current action, check proof, Finish Today, and resume
+exactly. It marks which step is current from local state, so a new operator can
+see the whole clone-to-resume path without reading external docs.
+It is read-only on GET and only reuses existing local surfaces and confirmed
 forms; it does not call providers, perform network actions, push, create PRs,
 deploy, or mutate external systems.
 

@@ -214,8 +214,12 @@ Core layers for the bootstrap:
   Do The Next Thing, Unblock Work, Check Proof, Finish Today, and Resume
   Tomorrow intent cards. These cards route Proof to the current Goal CI
   handoff or first-run fallback, reflect the current action/proof/resume
-  posture, and add no new write
-  authority. It remains read-only on GET with no
+  posture, and add no new write authority. A read-only `Proof To Resume` rail
+  makes the post-action ritual explicit, and a read-only `Milestone Checklist`
+  maps the product Definition of Done into browser cards for launch app,
+  create project, create Goal, current action, proof, Finish Today, and exact
+  resume readiness. It highlights the current missing step from local state
+  without adding write authority. It remains read-only on GET with no
   provider calls, network actions, push, PR, deploy, or external mutation.
   The local app also exposes `/resume` as a
   read-only return-to-work surface over saved `.clanker/app/workspace.json`

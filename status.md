@@ -1,5 +1,35 @@
 # Status
 
+## 2026-07-04 Guide Milestone Checklist UX
+
+- `/guide` now includes a read-only `Milestone Checklist` after the
+  `Proof To Resume` rail.
+- The checklist turns the product Definition of Done into seven browser cards:
+  Launch App, Create Project, Create Goal, Do Current Action, Check Proof,
+  Finish Today, and Resume Exactly.
+- Empty first-run sessions mark Project as current, Goal/Action/Finish/Resume
+  as waiting, and keep proof routed to `/verification`.
+- Registered-project/no-goal sessions mark Project as done and Goal as
+  current, so the next browser step is clearly Goal creation.
+- Populated Goal sessions mark Project and Goal as done, Action and Finish as
+  current until an exact resume surface is saved, and Proof as done when
+  current CI proof exists.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed in 44.88s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed in 51.08s.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+- Non-claim: this is read-only browser guidance over existing local state. It
+  does not write on GET, call providers, poll GitHub from the app, execute
+  tasks, approve work, push, create PRs, deploy, or mutate external systems
+  from ClankerOS.
+- Testing posture: broad/full regression coverage should run in GitHub Actions
+  after push rather than being repeated locally for this UX slice.
+
 ## 2026-07-04 Global Tomorrow Readiness UX
 
 - Every local app route now includes a read-only `Tomorrow` readiness strip

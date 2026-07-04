@@ -2067,6 +2067,25 @@ def _guide_page(root: Path) -> str:
                 proof_label=proof_label,
                 proof_source=proof_source,
             ),
+            _guide_milestone_checklist(
+                mode=mode,
+                phase=phase,
+                primary_href=primary_href,
+                primary_label=primary_label,
+                primary_action=primary_action,
+                action_form_available=action_form_available == "true",
+                project_count=len(projects),
+                goal_count=len(rows),
+                active_goal_count=len(active),
+                first_run=first_run,
+                workspace_surface=workspace_surface,
+                latest_ci_label=latest_ci_label,
+                proof_href=proof_href,
+                proof_label=proof_label,
+                proof_source=proof_source,
+                goal_id=goal_id,
+                project_value=project_value,
+            ),
             "<section id='guide-daily-loop' class='panel guide-daily-loop' data-guide-daily-loop='true'><h2>Daily Loop</h2>",
             "<p class='muted'>Use these in order when you want ClankerOS to feel like the main operator surface.</p>",
             "<div class='guide-grid' data-guide-daily-loop-cards='true'>",
@@ -2434,6 +2453,200 @@ def _guide_proof_resume_bridge(
             ),
             "</div>",
             "<details class='guide-proof-resume-evidence' data-guide-proof-resume-evidence='true'><summary>Proof to resume evidence</summary>",
+            _kv(rows),
+            _ul(lines),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _guide_milestone_checklist(
+    *,
+    mode: str,
+    phase: str,
+    primary_href: str,
+    primary_label: str,
+    primary_action: str,
+    action_form_available: bool,
+    project_count: int,
+    goal_count: int,
+    active_goal_count: int,
+    first_run: dict[str, Any],
+    workspace_surface: str,
+    latest_ci_label: str,
+    proof_href: str,
+    proof_label: str,
+    proof_source: str,
+    goal_id: str,
+    project_value: str,
+) -> str:
+    has_project = project_count > 0
+    has_goal = goal_count > 0
+    has_resume_surface = workspace_surface not in {"", "none"}
+    has_proof = latest_ci_label not in {"", "none", "unknown"}
+    first_run_step = str(first_run.get("current_step") or "unknown")
+
+    project_status = "done" if has_project else "current"
+    goal_status = "done" if has_goal else ("current" if has_project else "waiting")
+    action_status = "current" if has_goal else "waiting"
+    proof_status = "done" if has_proof else "waiting"
+    finish_status = "done" if has_resume_surface else ("current" if has_goal else "waiting")
+    resume_status = "ready" if has_resume_surface else "waiting"
+
+    project_href = "/projects" if has_project else "#guide-command-panel"
+    project_label = "Open Projects" if has_project else primary_action
+    goal_href = (
+        f"/goals/{quote(goal_id)}"
+        if goal_id
+        else ("#guide-command-panel" if has_project and action_form_available else "/goals")
+    )
+    goal_label = "Open Goal" if goal_id else (primary_action if has_project else "Open Goals")
+    action_href = "#guide-command-panel" if action_form_available and has_goal else primary_href
+    action_label = primary_action if has_goal else "Waiting for Goal"
+    finish_href = "/workspace#save-workspace"
+    finish_label = "Finish Today"
+    resume_href = "/resume"
+    resume_label = "Open Resume"
+
+    milestone_cards = [
+        (
+            "app",
+            "Launch App",
+            "Local browser shell is open.",
+            "ready",
+            "/health",
+            "Health",
+        ),
+        (
+            "project",
+            "Create Project",
+            f"{project_count} project{'s' if project_count != 1 else ''} registered.",
+            project_status,
+            project_href,
+            project_label,
+        ),
+        (
+            "goal",
+            "Create Goal",
+            f"{goal_count} goal{'s' if goal_count != 1 else ''} in local state.",
+            goal_status,
+            goal_href,
+            goal_label,
+        ),
+        (
+            "action",
+            "Do Current Action",
+            f"{phase}: {primary_action}" if has_goal else "Create a Goal first.",
+            action_status,
+            action_href,
+            action_label,
+        ),
+        (
+            "proof",
+            "Check Proof",
+            f"Latest CI proof: {latest_ci_label}.",
+            proof_status,
+            proof_href,
+            proof_label,
+        ),
+        (
+            "finish",
+            "Finish Today",
+            "Save the exact return point before leaving.",
+            finish_status,
+            finish_href,
+            finish_label,
+        ),
+        (
+            "resume",
+            "Resume Exactly",
+            f"Saved surface: {workspace_surface}.",
+            resume_status,
+            resume_href,
+            resume_label,
+        ),
+    ]
+    current_step = next(
+        (key for key, _, _, status, _, _ in milestone_cards if status == "current"),
+        next(
+            (key for key, _, _, status, _, _ in milestone_cards if status == "waiting"),
+            "resume",
+        ),
+    )
+    cards_html = "".join(
+        [
+            (
+                "<article class='guide-card guide-milestone-card"
+                + (" guide-primary" if status == "current" else "")
+                + f"' data-guide-milestone-card='true' data-guide-milestone-card-key='{_e(key)}' "
+                + f"data-guide-milestone-card-status='{_e(status)}'>"
+            )
+            + f"<span class='guide-card-kicker'>{_e(key)}</span>"
+            + f"<h3>{_e(title)}</h3>"
+            + f"<p>{_e(body)}</p>"
+            + f"<p class='guide-status'>{_e(status.replace('_', ' '))}</p>"
+            + f"<a class='guide-link' href='{_e(href)}'>{_e(label)}</a>"
+            + "</article>"
+            for key, title, body, status, href, label in milestone_cards
+        ]
+    )
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("guide_milestone_status", "available"),
+        ("guide_milestone_mode", mode),
+        ("guide_milestone_phase", phase),
+        ("guide_milestone_project", project_value),
+        ("guide_milestone_goal", goal_id or "none"),
+        ("guide_milestone_project_count", str(project_count)),
+        ("guide_milestone_goal_count", str(goal_count)),
+        ("guide_milestone_active_goal_count", str(active_goal_count)),
+        ("guide_milestone_first_run_step", first_run_step),
+        ("guide_milestone_primary_action", primary_action),
+        (
+            "guide_milestone_primary_surface",
+            SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+        ),
+        ("guide_milestone_action_form_available", str(action_form_available).lower()),
+        ("guide_milestone_latest_ci_status", latest_ci_label),
+        (
+            "guide_milestone_proof_surface",
+            SafeHtml(f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>"),
+        ),
+        ("guide_milestone_proof_source", proof_source),
+        (
+            "guide_milestone_finish_surface",
+            SafeHtml(f"<a href='{_e(finish_href)}'>{_e(finish_label)}</a>"),
+        ),
+        ("guide_milestone_resume_surface", workspace_surface),
+        ("guide_milestone_ready_to_resume", str(has_resume_surface).lower()),
+        ("guide_milestone_current_step", current_step),
+        ("guide_milestone_step_count", str(len(milestone_cards))),
+        ("guide_milestone_write_on_get", "false"),
+        ("guide_milestone_provider_calls_taken", "0"),
+        ("guide_milestone_network_actions_taken", "0"),
+        ("guide_milestone_external_effects_created", "false"),
+    ]
+    lines = [
+        "guide_milestone_path: launch_app -> create_project -> create_goal -> current_action -> proof -> finish_today -> resume_exactly",
+        f"guide_milestone_current: {current_step}",
+        f"guide_milestone_action: <a href='{_e(action_href)}'>{_e(action_label)}</a>",
+        f"guide_milestone_proof: <a href='{_e(proof_href)}'>{_e(proof_label)}</a>",
+        f"guide_milestone_finish: <a href='{_e(finish_href)}'>{_e(finish_label)}</a>",
+        f"guide_milestone_resume: <a href='{_e(resume_href)}'>{_e(resume_label)}</a>",
+        "guide_milestone_safety: read-only milestone checklist; existing confirmed forms own writes",
+    ]
+    return "".join(
+        [
+            "<section id='guide-milestone-checklist' class='panel guide-milestone' "
+            "data-guide-milestone-checklist='true'><h2>Milestone Checklist</h2>",
+            "<p class='muted'>A no-docs checklist for the product milestone: "
+            "create work, take one action, prove it, save it, and return to the "
+            "same place tomorrow.</p>",
+            "<div class='guide-milestone-grid' data-guide-milestone-actions='true'>",
+            cards_html,
+            "</div>",
+            "<details class='guide-milestone-evidence' data-guide-milestone-evidence='true'>"
+            "<summary>Milestone checklist evidence</summary>",
             _kv(rows),
             _ul(lines),
             "</details>",
@@ -50454,8 +50667,8 @@ def _html_page(
     .workspace-panel-restore li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--panel); overflow-wrap:anywhere; }}
     .guide-hero {{ border-left:4px solid var(--accent); }}
     .guide-loop-art {{ margin:12px 0 0; padding:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); white-space:pre-wrap; overflow-wrap:anywhere; text-align:center; font-size:15px; line-height:1.55; }}
-    .guide-command-panel, .guide-recipes, .guide-proof-resume, .guide-daily-loop, .guide-first-run-path, .guide-safety-boundary {{ border-left:4px solid var(--accent); }}
-    .guide-grid, .guide-command-grid, .guide-recipes-grid, .guide-proof-resume-grid, .guide-first-run-grid, .guide-safety-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:12px 0; align-items:stretch; }}
+    .guide-command-panel, .guide-recipes, .guide-proof-resume, .guide-milestone, .guide-daily-loop, .guide-first-run-path, .guide-safety-boundary {{ border-left:4px solid var(--accent); }}
+    .guide-grid, .guide-command-grid, .guide-recipes-grid, .guide-proof-resume-grid, .guide-milestone-grid, .guide-first-run-grid, .guide-safety-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:12px 0; align-items:stretch; }}
     .guide-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; display:grid; gap:8px; align-content:start; }}
     .guide-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .guide-card-kicker {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
@@ -50465,12 +50678,12 @@ def _html_page(
     .guide-action, .guide-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; width:100%; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
     .guide-action {{ background:var(--accent); color:#fff; }}
     .guide-link {{ background:var(--surface); color:var(--accent); }}
-    .guide-evidence, .guide-recipes-evidence, .guide-proof-resume-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .guide-evidence summary, .guide-recipes-evidence summary, .guide-proof-resume-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .guide-evidence:not([open]) > :not(summary), .guide-recipes-evidence:not([open]) > :not(summary), .guide-proof-resume-evidence:not([open]) > :not(summary) {{ display:none; }}
-    .guide-evidence dl, .guide-recipes-evidence dl, .guide-proof-resume-evidence dl {{ grid-template-columns:minmax(190px, 260px) 1fr; }}
-    .guide-evidence ul, .guide-recipes-evidence ul, .guide-proof-resume-evidence ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
-    .guide-evidence li, .guide-recipes-evidence li, .guide-proof-resume-evidence li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .guide-evidence, .guide-recipes-evidence, .guide-proof-resume-evidence, .guide-milestone-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .guide-evidence summary, .guide-recipes-evidence summary, .guide-proof-resume-evidence summary, .guide-milestone-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .guide-evidence:not([open]) > :not(summary), .guide-recipes-evidence:not([open]) > :not(summary), .guide-proof-resume-evidence:not([open]) > :not(summary), .guide-milestone-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .guide-evidence dl, .guide-recipes-evidence dl, .guide-proof-resume-evidence dl, .guide-milestone-evidence dl {{ grid-template-columns:minmax(190px, 260px) 1fr; }}
+    .guide-evidence ul, .guide-recipes-evidence ul, .guide-proof-resume-evidence ul, .guide-milestone-evidence ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .guide-evidence li, .guide-recipes-evidence li, .guide-proof-resume-evidence li, .guide-milestone-evidence li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .guide-command-form {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:12px; }}
     .guide-command-panel form {{ margin-top:0; }}
     .guide-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}

@@ -4787,6 +4787,47 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "guide_proof_resume_finish: <a href='/workspace#save-workspace'>Save workspace</a>" in guide.body
     assert "guide_proof_resume_resume: <a href='/resume'>Open Resume</a>" in guide.body
     assert "guide_proof_resume_safety: read-only proof-to-resume bridge; existing confirmed forms own writes" in guide.body
+    assert "Milestone Checklist" in guide.body
+    assert "id='guide-milestone-checklist'" in guide.body
+    assert "data-guide-milestone-checklist='true'" in guide.body
+    assert "data-guide-milestone-actions='true'" in guide.body
+    assert guide.body.count("data-guide-milestone-card='true'") == 7
+    assert "data-guide-milestone-card-key='app' data-guide-milestone-card-status='ready'" in guide.body
+    assert "data-guide-milestone-card-key='project' data-guide-milestone-card-status='current'" in guide.body
+    assert "data-guide-milestone-card-key='goal' data-guide-milestone-card-status='waiting'" in guide.body
+    assert "data-guide-milestone-card-key='action' data-guide-milestone-card-status='waiting'" in guide.body
+    assert "data-guide-milestone-card-key='proof' data-guide-milestone-card-status='done'" in guide.body
+    assert "data-guide-milestone-card-key='finish' data-guide-milestone-card-status='waiting'" in guide.body
+    assert "data-guide-milestone-card-key='resume' data-guide-milestone-card-status='waiting'" in guide.body
+    assert "data-guide-milestone-evidence='true'" in guide.body
+    assert "guide_milestone_status</dt><dd>available" in guide.body
+    assert "guide_milestone_mode</dt><dd>first_run" in guide.body
+    assert "guide_milestone_project</dt><dd>clankeros" in guide.body
+    assert "guide_milestone_goal</dt><dd>none" in guide.body
+    assert "guide_milestone_project_count</dt><dd>0" in guide.body
+    assert "guide_milestone_goal_count</dt><dd>0" in guide.body
+    assert "guide_milestone_first_run_step</dt><dd>create_project" in guide.body
+    assert "guide_milestone_primary_action</dt><dd>Register ClankerOS project" in guide.body
+    assert "guide_milestone_action_form_available</dt><dd>true" in guide.body
+    assert "guide_milestone_latest_ci_status</dt><dd>success" in guide.body
+    assert "guide_milestone_proof_surface</dt><dd><a href='/verification'>Open Proof</a>" in guide.body
+    assert "guide_milestone_proof_source</dt><dd>verification_fallback" in guide.body
+    assert "guide_milestone_finish_surface</dt><dd><a href='/workspace#save-workspace'>Finish Today</a>" in guide.body
+    assert "guide_milestone_resume_surface</dt><dd>none" in guide.body
+    assert "guide_milestone_ready_to_resume</dt><dd>false" in guide.body
+    assert "guide_milestone_current_step</dt><dd>project" in guide.body
+    assert "guide_milestone_step_count</dt><dd>7" in guide.body
+    assert "guide_milestone_write_on_get</dt><dd>false" in guide.body
+    assert "guide_milestone_provider_calls_taken</dt><dd>0" in guide.body
+    assert "guide_milestone_network_actions_taken</dt><dd>0" in guide.body
+    assert "guide_milestone_external_effects_created</dt><dd>false" in guide.body
+    assert "guide_milestone_path: launch_app -> create_project -> create_goal -> current_action -> proof -> finish_today -> resume_exactly" in guide.body
+    assert "guide_milestone_current: project" in guide.body
+    assert "guide_milestone_action: <a href='/today#first-run-create-project'>Waiting for Goal</a>" in guide.body
+    assert "guide_milestone_proof: <a href='/verification'>Open Proof</a>" in guide.body
+    assert "guide_milestone_finish: <a href='/workspace#save-workspace'>Finish Today</a>" in guide.body
+    assert "guide_milestone_resume: <a href='/resume'>Open Resume</a>" in guide.body
+    assert "guide_milestone_safety: read-only milestone checklist; existing confirmed forms own writes" in guide.body
     assert "data-guide-daily-loop='true'" in guide.body
     assert "data-guide-daily-loop-cards='true'" in guide.body
     assert guide.body.count("data-guide-step='true'") == 6
@@ -4838,6 +4879,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "data-guide-proof-resume-bridge='true'"
     )
     assert guide.body.index("data-guide-proof-resume-bridge='true'") < guide.body.index(
+        "data-guide-milestone-checklist='true'"
+    )
+    assert guide.body.index("data-guide-milestone-checklist='true'") < guide.body.index(
         "data-guide-daily-loop='true'"
     )
     assert guide.body.index("data-guide-daily-loop='true'") < guide.body.index(
@@ -8052,6 +8096,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-action-draft-action='create-goal'" in registered_guide.body
     assert "guide_command_form_available</dt><dd>true" in registered_guide.body
     assert "guide_command_confirmation_required</dt><dd>true" in registered_guide.body
+    assert "data-guide-milestone-checklist='true'" in registered_guide.body
+    assert "data-guide-milestone-card-key='project' data-guide-milestone-card-status='done'" in registered_guide.body
+    assert "data-guide-milestone-card-key='goal' data-guide-milestone-card-status='current'" in registered_guide.body
+    assert "guide_milestone_project_count</dt><dd>1" in registered_guide.body
+    assert "guide_milestone_goal_count</dt><dd>0" in registered_guide.body
+    assert "guide_milestone_first_run_step</dt><dd>create_first_goal" in registered_guide.body
+    assert "guide_milestone_current_step</dt><dd>goal" in registered_guide.body
     registered_goals = render_local_app_route(tmp_path, "/goals")
     assert "first_run_current_step</dt><dd>create_first_goal" in registered_goals.body
     assert "first_run_project_registered</dt><dd>true" in registered_goals.body
@@ -13734,6 +13785,47 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "Record Goal CI proof</a>"
         in guide.body
     )
+    assert "data-guide-milestone-checklist='true'" in guide.body
+    assert "data-guide-milestone-actions='true'" in guide.body
+    assert guide.body.count("data-guide-milestone-card='true'") == 7
+    assert "data-guide-milestone-card-key='project' data-guide-milestone-card-status='done'" in guide.body
+    assert "data-guide-milestone-card-key='goal' data-guide-milestone-card-status='done'" in guide.body
+    assert "data-guide-milestone-card-key='action' data-guide-milestone-card-status='current'" in guide.body
+    assert "data-guide-milestone-card-key='proof' data-guide-milestone-card-status='done'" in guide.body
+    assert "data-guide-milestone-card-key='finish' data-guide-milestone-card-status='current'" in guide.body
+    assert "data-guide-milestone-card-key='resume' data-guide-milestone-card-status='waiting'" in guide.body
+    assert "guide_milestone_mode</dt><dd>goal" in guide.body
+    assert "guide_milestone_project</dt><dd>local-app-demo" in guide.body
+    assert f"guide_milestone_goal</dt><dd>{result.goal_id}" in guide.body
+    assert "guide_milestone_project_count</dt><dd>1" in guide.body
+    assert "guide_milestone_goal_count</dt><dd>1" in guide.body
+    assert "guide_milestone_active_goal_count</dt><dd>1" in guide.body
+    assert "guide_milestone_primary_action</dt><dd>Create commit request" in guide.body
+    assert (
+        f"guide_milestone_primary_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Open Goal action form</a>"
+        in guide.body
+    )
+    assert "guide_milestone_action_form_available</dt><dd>true" in guide.body
+    assert "guide_milestone_latest_ci_status</dt><dd>success" in guide.body
+    assert (
+        f"guide_milestone_proof_surface</dt><dd><a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in guide.body
+    )
+    assert "guide_milestone_proof_source</dt><dd>guide_goal_ci_handoff" in guide.body
+    assert "guide_milestone_resume_surface</dt><dd>none" in guide.body
+    assert "guide_milestone_ready_to_resume</dt><dd>false" in guide.body
+    assert "guide_milestone_current_step</dt><dd>action" in guide.body
+    assert "guide_milestone_step_count</dt><dd>7" in guide.body
+    assert "guide_milestone_action: <a href='#guide-command-panel'>Create commit request</a>" in guide.body
+    assert (
+        f"guide_milestone_proof: <a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in guide.body
+    )
+    assert "guide_milestone_finish: <a href='/workspace#save-workspace'>Finish Today</a>" in guide.body
+    assert "guide_milestone_safety: read-only milestone checklist; existing confirmed forms own writes" in guide.body
     assert "Today Activity Digest" in today.body
     assert "data-today-activity-digest='true'" in today.body
     assert "data-today-activity-actions='true'" in today.body
