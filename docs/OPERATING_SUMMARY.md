@@ -401,8 +401,8 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   breadcrumb, open panels, scroll position, search lanes, timeline lanes, Goal
   section searches, Today Goal Queue view, artifact filters, the global
   Artifact Index filter, Today and Goal decision filters, notes filters, note
-  drafts, setup and workflow form drafts, Memory Bank filters, Skills Inventory
-  filters, First Run Checklist checks/notes,
+  drafts, setup and workflow form drafts, Goal action prep checks, Memory Bank
+  filters, Skills Inventory filters, First Run Checklist checks/notes,
   Approval Queue filters, Inbox Queue filters, and Profile Routing filters, and
   can clear those browser-local
   values after explicit operator clicks without writing
@@ -610,7 +610,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   rendering a top-of-page `Current Action Form` when the existing confirmed
   Goal action form is available. This duplicates the rendered form for
   usability, not the backend action authority; the same confirmation route
-  still owns writes and local execution. A read-only `Goal Progress
+  still owns writes and local execution. A browser-local `Goal Action Prep`
+  checklist follows with five visible checks for current action, source gate,
+  proof, latest artifact, and Finish Today return point. It persists only in
+  `localStorage:clankeros-goal-action-prep:<goal_id>`, resets from the Goal
+  page or Workspace View Memory, and does not write Goal state, call providers,
+  use the network, or approve/run/push/PR/deploy work on GET. A read-only `Goal Progress
   Meter` follows with task and workflow progress bars, waiting operator work,
   latest proof posture, and the next confirmed browser action. The dock and
   meter precede the Goal

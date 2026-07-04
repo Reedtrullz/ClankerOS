@@ -1,5 +1,32 @@
 # Status
 
+## 2026-07-04 Goal Action Prep UX
+
+- Goal pages now show `Goal Action Prep` immediately after the action dock, so
+  the operator can check the current action, source gate, proof, latest
+  artifact, and Finish Today return point before acting.
+- The checklist is browser-local and per Goal:
+  `localStorage:clankeros-goal-action-prep:<goal_id>`.
+- Workspace View Memory now inventories and can clear the
+  `clankeros-goal-action-prep:` prefix alongside other browser-local view
+  state.
+- TDD evidence: the focused route test failed first on the Workspace View
+  Memory card count (`27` vs expected `28`); after implementation it proved
+  the Goal Action Prep panel, five checklist rows, localStorage persistence,
+  Workspace View Memory reset coverage, and section-index routing.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    failed first, then 1 passed in 35.26s after implementation/docs updates.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed after docs/status updates.
+- Non-claim: this is a browser-local checklist only. It does not write
+  `.clanker` state on GET, call providers, use the network, approve work,
+  execute tasks, push, create PRs, deploy, or mutate external systems.
+- Testing posture: the heavy/full suite should run in GitHub Actions after
+  push instead of being repeated locally for this small UX slice.
+
 ## 2026-07-04 Profile Routing Plan UX
 
 - `/profiles` now has a visible `Profile Routing Plan` panel for future

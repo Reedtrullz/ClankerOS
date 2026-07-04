@@ -339,7 +339,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Current Action Form` when the existing confirmed Goal action form is
   available. The deeper Next Action section remains as the detailed readback
   copy, so the operator can act immediately or inspect the full action
-  evidence later. A read-only
+  evidence later. A browser-local `Goal Action Prep` checklist follows the dock
+  with five visible checks for current action, source gate, proof, latest
+  artifact, and Finish Today return point. It persists only in
+  `localStorage:clankeros-goal-action-prep:<goal_id>`, resets from the Goal
+  page or Workspace View Memory, and does not write Goal state, call providers,
+  use the network, or approve/run/push/PR/deploy work on GET. A read-only
   `Goal Progress Meter` follows with task and workflow progress bars, waiting
   operator work, latest proof state, and the next confirmed browser action. A
   read-only `Goal Attention Digest` follows with Now, Approvals, Incidents,
@@ -836,9 +841,9 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   focus mode, Goal board view, route history, the last opened artifact
   breadcrumb, open panels, scroll position, search lanes, timeline lanes, Goal
   section searches, Today Goal Queue view, Today and Goal decision filters,
-  artifact filters, notes filters, note drafts, setup form drafts, Memory Bank
-  filters, Skills Inventory filters, and First Run Checklist checks/notes with
-  Refresh plus reset controls. It only clears
+  artifact filters, notes filters, note drafts, setup form drafts, Goal action
+  prep checks, Memory Bank filters, Skills Inventory filters, and First Run
+  Checklist checks/notes with Refresh plus reset controls. It only clears
   browser-local view memory after explicit clicks and does not write
   `.clanker/app/workspace.json`. The read-only `Workspace Daily Brief` and `Workspace Workflow Map`
   follow with the saved goal's current gate, lifecycle progress, next surface,

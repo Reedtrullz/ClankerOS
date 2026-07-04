@@ -350,9 +350,9 @@ inspect and clear browser-local view state such as theme, focus mode, Goal
 board filters, route history, the last opened artifact breadcrumb, open panels,
 scroll position, search lanes, timeline lanes, Goal section searches, Today
 Goal Queue view, Today and Goal decision filters, artifact filters, notes
-filters, note drafts, setup and workflow form drafts, Memory Bank filters,
-Skills Inventory filters, and the First Run Checklist from `localStorage`
-without changing `.clanker/app/workspace.json`.
+filters, note drafts, setup and workflow form drafts, Goal action prep checks,
+Memory Bank filters, Skills Inventory filters, and the First Run Checklist
+from `localStorage` without changing `.clanker/app/workspace.json`.
 The read-only
 `Workspace Daily Brief` and `Workspace Workflow Map` then follow with the
 saved goal's current gate, gate counts, and finish posture, while saved-state
@@ -465,6 +465,12 @@ target, and resume route near the top of the workbench while rendering a
 top-of-page `Current Action Form` when the existing confirmed Goal action form
 is available. The deeper Next Action section remains as the detailed readback
 copy, but the operator can use the current action without hunting down-page.
+An adjacent browser-local `Goal Action Prep` panel turns that next click into
+five visible checks for current action, source gate, proof, latest artifact,
+and Finish Today return point. It persists only in
+`localStorage:clankeros-goal-action-prep:<goal_id>` and can be reset from the
+Goal page or Workspace View Memory; it does not write Goal state, call
+providers, use the network, or approve/run/push/PR/deploy work on GET.
 Those form-backed primary controls now use the actual operator verb, such as
 `Create commit request` or `Approve commit`, instead of generic labels like
 `Use current action`, while raw action ids stay in evidence and form actions.

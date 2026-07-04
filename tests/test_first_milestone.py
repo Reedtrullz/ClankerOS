@@ -7251,7 +7251,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 27
+    assert workspace.body.count("class='workspace-view-memory-card") == 28
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
     assert "data-workspace-view-memory-card='first-run'" in workspace.body
@@ -7265,6 +7265,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-card='scroll-position'" in workspace.body
     assert "data-workspace-view-memory-card='search'" in workspace.body
     assert "data-workspace-view-memory-card='timeline'" in workspace.body
+    assert "data-workspace-view-memory-card='goal-action-prep'" in workspace.body
     assert "data-workspace-view-memory-card='goal-sections'" in workspace.body
     assert "data-workspace-view-memory-card='artifacts'" in workspace.body
     assert "data-workspace-view-memory-card='artifact-index'" in workspace.body
@@ -7299,6 +7300,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-profile-routing-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-search-result-lane:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-timeline-lane:'" in workspace.body
+    assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-action-prep:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-section-finder:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-decision-filter:'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-goal-artifact-filter:'" in workspace.body
@@ -7310,9 +7312,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>27" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>28" in workspace.body
     assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-first-run-checklist, clankeros-goal-board-view, clankeros-home-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-last-artifact, clankeros-today-goal-queue-view, clankeros-today-decision-filter, clankeros-artifact-index-filter, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
-    assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-section-finder:, clankeros-goal-decision-filter:, clankeros-goal-artifact-filter:, clankeros-goal-artifact-reader:, clankeros-goal-notes-filter:, clankeros-goal-note-draft:, clankeros-action-form-draft:" in workspace.body
+    assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-action-prep:, clankeros-goal-section-finder:, clankeros-goal-decision-filter:, clankeros-goal-artifact-filter:, clankeros-goal-artifact-reader:, clankeros-goal-notes-filter:, clankeros-goal-note-draft:, clankeros-action-form-draft:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
     assert "workspace_view_memory_workspace_json_write</dt><dd>false" in workspace.body
@@ -7332,6 +7334,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: open-panels mode=prefix key=clankeros-open-panels:" in workspace.body
     assert "workspace_view_memory_card: scroll-position mode=prefix key=clankeros-scroll-position:" in workspace.body
     assert "workspace_view_memory_card: search mode=prefix key=clankeros-search-result-lane:" in workspace.body
+    assert "workspace_view_memory_card: goal-action-prep mode=prefix key=clankeros-goal-action-prep:" in workspace.body
     assert "workspace_view_memory_card: goal-sections mode=prefix key=clankeros-goal-section-finder:" in workspace.body
     assert "workspace_view_memory_card: decisions mode=prefix key=clankeros-goal-decision-filter:" in workspace.body
     assert "workspace_view_memory_card: artifact-index mode=exact key=clankeros-artifact-index-filter" in workspace.body
@@ -7342,7 +7345,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: approvals mode=exact key=clankeros-approval-queue-filter" in workspace.body
     assert "workspace_view_memory_card: inbox mode=exact key=clankeros-inbox-queue-filter" in workspace.body
     assert "workspace_view_memory_card: profiles mode=exact key=clankeros-profile-routing-filter" in workspace.body
-    assert "workspace_view_memory_reset_scope: theme focus first-run board home-goal-board recent route-history last-artifact today-goals today-decisions open-panels scroll-position search timeline goal-sections decisions goal-artifacts artifact-index notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
+    assert "workspace_view_memory_reset_scope: theme focus first-run board home-goal-board recent route-history last-artifact today-goals today-decisions open-panels scroll-position search timeline action-prep goal-sections decisions goal-artifacts artifact-index notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
     assert "window.localStorage.removeItem(key)" in workspace.body
     assert "candidate.indexOf(key) === 0" in workspace.body
     assert "delete document.documentElement.dataset.theme" in workspace.body
@@ -7956,6 +7959,33 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "profile" in first_goal_page.body
     assert "scout" in first_goal_page.body
     assert f"name='return_to' value='{goal_action_dock}'" in first_goal_page.body
+    assert "Goal Action Prep" in first_goal_page.body
+    assert "data-goal-action-prep='true'" in first_goal_page.body
+    assert (
+        f"data-goal-action-prep-storage-key='clankeros-goal-action-prep:{created_goal_id}'"
+        in first_goal_page.body
+    )
+    assert first_goal_page.body.count("data-goal-action-prep-item='true'") == 5
+    assert "goal_action_prep_status</dt><dd>available" in first_goal_page.body
+    assert f"goal_action_prep_goal</dt><dd>{created_goal_id}" in first_goal_page.body
+    assert "goal_action_prep_project</dt><dd>first-target" in first_goal_page.body
+    assert "goal_action_prep_next_action</dt><dd>Create scout delegation" in first_goal_page.body
+    assert "goal_action_prep_action_form_available</dt><dd>true" in first_goal_page.body
+    assert "goal_action_prep_current_gate</dt><dd>scout_delegation" in first_goal_page.body
+    assert "goal_action_prep_items</dt><dd>5" in first_goal_page.body
+    assert (
+        f"goal_action_prep_memory_storage</dt><dd>localStorage:clankeros-goal-action-prep:{created_goal_id}"
+        in first_goal_page.body
+    )
+    assert "goal_action_prep_memory_fields</dt><dd>checked, updatedAt" in first_goal_page.body
+    assert "goal_action_prep_write_on_get</dt><dd>false" in first_goal_page.body
+    assert "goal_action_prep_provider_calls_taken</dt><dd>0" in first_goal_page.body
+    assert "goal_action_prep_network_actions_taken</dt><dd>0" in first_goal_page.body
+    assert "goal_action_prep_external_effects_created</dt><dd>false" in first_goal_page.body
+    assert "goal_action_prep_check: action" in first_goal_page.body
+    assert "goal_action_prep_safety: browser-local checklist only" in first_goal_page.body
+    assert "function updateGoalActionPrep" in first_goal_page.body
+    assert "window.localStorage.setItem(goalActionPrepStorageKey(root)" in first_goal_page.body
     assert "Goal Resume Snapshot" in first_goal_page.body
     assert "goal_resume_current_goal" in first_goal_page.body
     assert "Remember This Goal" in first_goal_page.body
@@ -14702,7 +14732,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in goal.body
     )
     assert "data-goal-section-finder-input='true'" in goal.body
-    assert "data-goal-section-finder-count='true'>64 sections" in goal.body
+    assert "data-goal-section-finder-count='true'>65 sections" in goal.body
     assert "data-goal-section-finder-first='true' href='#goal-summary'>Summary</a>" in goal.body
     assert "data-goal-section-finder-memory='true'" in goal.body
     assert "data-goal-section-finder-view-status='true'>View: default</span>" in goal.body
@@ -14711,6 +14741,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-section-result='true' data-goal-section-label='approval command'" in goal.body
     assert "data-goal-section-result='true' data-goal-section-label='artifact reader'" in goal.body
     assert "data-goal-section-result='true' data-goal-section-label='control strip'" in goal.body
+    assert "data-goal-section-result='true' data-goal-section-label='action prep'" in goal.body
     assert "data-goal-section-result='true' data-goal-section-label='review strip'" in goal.body
     assert "data-goal-section-result='true' data-goal-section-label='path rail'" in goal.body
     assert "data-goal-section-anchor='goal-git-status'" in goal.body
@@ -14726,7 +14757,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     )
     assert "goal_section_switchboard_status</dt><dd>available" in goal.body
     assert "goal_section_finder_status</dt><dd>available" in goal.body
-    assert "goal_section_finder_result_count</dt><dd>64" in goal.body
+    assert "goal_section_finder_result_count</dt><dd>65" in goal.body
     assert "goal_section_finder_default_first</dt><dd>goal-summary" in goal.body
     assert "goal_section_finder_persistence</dt><dd>browser_local_view_memory" in goal.body
     assert (
@@ -14777,6 +14808,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='#goal-path-rail'" in goal.body
     assert "href='#goal-current-phase'" in goal.body
     assert "href='#goal-action-dock'" in goal.body
+    assert "href='#goal-action-prep'" in goal.body
     assert "href='#goal-review-strip'" in goal.body
     assert "href='#goal-progress-meter'" in goal.body
     assert "href='#goal-attention-digest'" in goal.body
@@ -14816,6 +14848,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "id='goal-summary'" in goal.body
     assert "id='goal-control-strip'" in goal.body
     assert "id='goal-path-rail'" in goal.body
+    assert "id='goal-action-prep'" in goal.body
     assert "id='goal-attention-digest'" in goal.body
     assert "id='goal-decision-queue'" in goal.body
     assert "id='goal-first-run-rail'" not in goal.body
@@ -14851,7 +14884,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Goal Command Bar" in goal.body
     assert "data-goal-command-bar='true'" in goal.body
     assert "href='#goal-daily-loop'" in goal.body
-    assert "goal_section_count</dt><dd>64" in goal.body
+    assert "goal_section_count</dt><dd>65" in goal.body
     assert "data-goal-section-index-evidence='true'" in goal.body
     assert "goal_command_bar_phase</dt><dd>Ready to commit" in goal.body
     assert "data-goal-command-strip='true'" in goal.body
