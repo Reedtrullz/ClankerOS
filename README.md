@@ -1115,23 +1115,20 @@ the display-only manual publication commands. The app shows
 `suggested_push_command`, `suggested_draft_pr_command`, and `pr_body_path`, but
 it does not run them.
 
-Use `/dogfooding` when you want one checklist for the first browser route walk:
-refresh the fixture, inspect demo/workflow/project/delegation/run surfaces,
-walk the local commit and publication gates, then hand verification to GitHub
-Actions after a push. The page starts with `Dogfooding Operator Workbench`
-before shared diagnostics, with Do Now, ClankerOS, Workflow, and
-Proof cards, plus a confirmation-gated `demo-app-scenario` form that creates or
-refreshes the local fixture and returns to `/dogfooding`. The confirmed action
-result and saved workspace resume surface honor that dogfooding return target
-instead of switching the operator back to `/demo`. It keeps dogfooding workbench
-evidence, fixture action evidence, fixture evidence, and the lower
-`Dogfooding Command Bar` evidence collapsed by default. The existing
-`Dogfooding Next Action` panel still expands the fixture-backed next action and
-links the project, delegation, workflow, run, approval queue, inbox, action
-catalog, and verification surfaces. It also shows a copy-only `GitHub Actions
-Follow-up` section with the direct snapshot handoff, `gh run view`, and
-record-after-success command templates for the current checkout. GET remains
-read-only, and the page does not fetch GitHub status.
+Use `/dogfooding` when you want one checklist for a browser route walk or a
+return-after-push pass: refresh the fixture, inspect
+demo/workflow/project/delegation/run surfaces, walk the local commit and
+publication gates, then hand verification to GitHub Actions. The page starts
+with `Dogfooding Operator Workbench`, then a `Dogfooding Return Brief` that
+summarizes current checkout CI proof, latest recorded GitHub evidence, exact
+`gh run view` and record-after-success command templates, the current product
+action, and Finish Today. A browser-local `Dogfooding Session Checklist` stores
+fixture/action/route/proof/finish checks in
+`localStorage:clankeros-dogfooding-session`; Workspace View Memory can inspect
+or reset it. The confirmed `demo-app-scenario` action still creates or refreshes
+the local fixture and returns to `/dogfooding`, while evidence panels stay
+collapsed by default. GET remains read-only, and the page does not fetch GitHub
+status.
 
 Use `/delegation-runs` when you want a compact read-only index of scout
 execution evidence, context packs, implementation handoffs, zero-effect

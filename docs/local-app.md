@@ -1334,30 +1334,33 @@ create PRs, deploy, call providers, or mutate external systems.
 
 ## Manual Dogfooding Checklist
 
-`/dogfooding` is the first-stop browser checklist for a compact local pass
-before pushing. It shows whether the fixture-backed `local-app-demo` state is
-available, points to `/demo`, `/workflow`, `/projects`, `/delegation-runs`,
-`/inbox`, `/approvals`, `/actions`, and `/verification`, and names the local
-commit/publication gate sequence to walk from the selected `/runs/<run_id>`
-page.
+`/dogfooding` is the first-stop browser checklist for a compact local pass or a
+return-after-push review. It shows whether the fixture-backed `local-app-demo`
+state is available, points to `/demo`, `/workflow`, `/projects`,
+`/delegation-runs`, `/inbox`, `/approvals`, `/actions`, and `/verification`,
+and names the local commit/publication gate sequence to walk from the selected
+`/runs/<run_id>` page.
 
 The page starts with `Dogfooding Operator Workbench` before shared diagnostics,
-a scan surface with Do Now, ClankerOS, Workflow, and Proof cards for
-continuing the fixture-backed local pass. It now includes a confirmation-gated
-`demo-app-scenario` form that creates or refreshes deterministic local fixture
-state and returns to `/dogfooding`, so the route walk can start from the
-checklist without hopping through `/demo`. The confirmed action result also
-honors that submitted return target, and the saved workspace resume surface
-stays `/dogfooding` for dogfooding-origin refreshes instead of silently
-switching back to `/demo`. Dogfooding workbench evidence, fixture action
-evidence, fixture evidence, and the lower `Dogfooding Command Bar` evidence stay
-collapsed by default while preserving fixture status, selected
-project/Goal/delegation/run, one recommended target surface, demo command,
-route-walk/CI/action/health links, and zero-effect counters in the DOM. It also
-includes `Dogfooding Next Action`, a read-only state panel that names the
-current fixture-backed next action and links the selected project, delegation,
-scoped workflow, coder run, approval queue, inbox, action catalog, and
-verification surfaces. The page reports zero app network actions, zero external
+a scan surface with Do Now, ClankerOS, Workflow, and Proof cards for continuing
+the fixture-backed local pass. A new `Dogfooding Return Brief` follows it with
+current branch/commit proof posture, latest recorded CI source/status/scope/run
+id, exact `gh run view` and record-after-success command templates, the current
+product action, and a Finish Today target. A browser-local `Dogfooding Session
+Checklist` then stores fixture, action, route walk, proof, and finish checks in
+`localStorage:clankeros-dogfooding-session`; Workspace View Memory can inspect
+or reset that value without changing saved project data. The page still includes
+a confirmation-gated `demo-app-scenario` form that creates or refreshes
+deterministic local fixture state and returns to `/dogfooding`, so the route
+walk can start from the checklist without hopping through `/demo`. The confirmed
+action result also honors that submitted return target, and the saved workspace
+resume surface stays `/dogfooding` for dogfooding-origin refreshes instead of
+silently switching back to `/demo`. Dogfooding workbench evidence, return
+evidence, session evidence, fixture action evidence, fixture evidence, and the
+lower `Dogfooding Command Bar` evidence stay collapsed by default while
+preserving fixture status, selected project/Goal/delegation/run, one recommended
+target surface, demo command, route-walk/CI/action/health links, and zero-effect
+counters in the DOM. The page reports zero app network actions, zero external
 mutations, zero provider calls, no GitHub status fetch, no write-on-GET for the
 fixture form, and the manual push/PR boundary outside ClankerOS.
 

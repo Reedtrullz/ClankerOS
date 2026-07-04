@@ -25091,3 +25091,32 @@
 - Non-claims: no external systems, provider calls, GitHub mutations, CI
   recording, deploys, automatic scheduling, or trust promotion were performed
   by this browser-rendering change.
+
+## 2026-07-04 Dogfooding Return UX
+
+- Upgraded `/dogfooding` from a pre-push checklist into a return-after-push
+  operator surface.
+- Added `Dogfooding Return Brief` with current branch/commit proof posture,
+  latest recorded CI source/status/scope/run id, copy-only GitHub Actions
+  command templates, the current product action, and Finish Today routing.
+- Added browser-local `Dogfooding Session Checklist` for fixture, action, route
+  walk, proof, and finish checks, stored in
+  `localStorage:clankeros-dogfooding-session`.
+- Added Workspace View Memory visibility/reset support for that dogfooding
+  session state.
+- Updated README and local-app docs for the new dogfooding return loop.
+- Verification evidence:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    2 passed in 101.83s.
+  - `python3 -m agent_os.cli app-demo-smoke-test`: passed; `/dogfooding`
+    marker and expected snippets matched.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md`:
+    passed.
+- GitHub Actions note: previous pushed commit `e1954cdb...` still had full
+  pytest jobs in progress when this entry was written; local proof remains
+  focused proof only until this new commit is pushed and Actions completes.
+- Non-claims: no GitHub status fetch, push, PR, deploy, provider call, external
+  mutation, CI recording, trust promotion, scheduling, or real cost tracking was
+  performed by the browser-rendering change.

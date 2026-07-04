@@ -7251,10 +7251,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 28
+    assert workspace.body.count("class='workspace-view-memory-card") == 29
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
     assert "data-workspace-view-memory-card='first-run'" in workspace.body
+    assert "data-workspace-view-memory-card='dogfooding-session'" in workspace.body
     assert "data-workspace-view-memory-card='goal-board'" in workspace.body
     assert "data-workspace-view-memory-card='home-goal-board'" in workspace.body
     assert "data-workspace-view-memory-card='recent-items'" in workspace.body
@@ -7283,6 +7284,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-theme'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-focus-mode'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-first-run-checklist'" in workspace.body
+    assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-dogfooding-session'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-goal-board-view'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-home-goal-board-view'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-recent-items-filter'" in workspace.body
@@ -7312,8 +7314,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>28" in workspace.body
-    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-first-run-checklist, clankeros-goal-board-view, clankeros-home-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-last-artifact, clankeros-today-goal-queue-view, clankeros-today-decision-filter, clankeros-artifact-index-filter, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>29" in workspace.body
+    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-first-run-checklist, clankeros-dogfooding-session, clankeros-goal-board-view, clankeros-home-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-last-artifact, clankeros-today-goal-queue-view, clankeros-today-decision-filter, clankeros-artifact-index-filter, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
     assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-action-prep:, clankeros-goal-section-finder:, clankeros-goal-decision-filter:, clankeros-goal-artifact-filter:, clankeros-goal-artifact-reader:, clankeros-goal-notes-filter:, clankeros-goal-note-draft:, clankeros-action-form-draft:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
@@ -7325,6 +7327,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_raw_filesystem_browsing</dt><dd>false" in workspace.body
     assert "workspace_view_memory_card: theme mode=exact key=clankeros-theme" in workspace.body
     assert "workspace_view_memory_card: first-run mode=exact key=clankeros-first-run-checklist" in workspace.body
+    assert "workspace_view_memory_card: dogfooding-session mode=exact key=clankeros-dogfooding-session" in workspace.body
     assert "workspace_view_memory_card: home-goal-board mode=exact key=clankeros-home-goal-board-view" in workspace.body
     assert "workspace_view_memory_card: recent-items mode=exact key=clankeros-recent-items-filter" in workspace.body
     assert "workspace_view_memory_card: route-history mode=exact key=clankeros-route-history" in workspace.body
@@ -9276,6 +9279,34 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-dogfooding-operator-workbench='true'" in dogfooding.body
     assert "data-dogfooding-workbench-primary='true'" in dogfooding.body
     assert "data-dogfooding-workbench-evidence='true'" in dogfooding.body
+    assert "Dogfooding Return Brief" in dogfooding.body
+    assert "data-dogfooding-return-brief='true'" in dogfooding.body
+    assert "data-dogfooding-return-actions='true'" in dogfooding.body
+    assert "data-dogfooding-return-evidence='true'" in dogfooding.body
+    assert "data-dogfooding-return-card='proof'" in dogfooding.body
+    assert "dogfooding_return_latest_ci_source</dt><dd>publication_handoff" in dogfooding.body
+    assert "dogfooding_return_latest_ci_status</dt><dd>success" in dogfooding.body
+    assert "dogfooding_return_latest_ci_run_id</dt><dd>123" in dogfooding.body
+    assert "dogfooding_return_next_action</dt><dd>Confirm checkout then record CI proof" in dogfooding.body
+    assert (
+        "dogfooding_return_record_surface</dt><dd>"
+        "<a href='/ci-evidence#record-ci-snapshot-json'>Record CI proof</a>"
+    ) in dogfooding.body
+    assert "dogfooding_return_status_command</dt><dd>gh run view" in dogfooding.body
+    assert "dogfooding_return_write_on_get</dt><dd>false" in dogfooding.body
+    assert "dogfooding_return_github_status_fetch</dt><dd>none" in dogfooding.body
+    assert "dogfooding_return_network_actions_taken</dt><dd>0" in dogfooding.body
+    assert "Dogfooding Session Checklist" in dogfooding.body
+    assert "data-dogfooding-session-checklist='true'" in dogfooding.body
+    assert "data-dogfooding-session-checklist-storage-key='clankeros-dogfooding-session'" in dogfooding.body
+    assert "data-dogfooding-session-checklist-items='true'" in dogfooding.body
+    assert dogfooding.body.count("data-dogfooding-session-checklist-item='true'") == 5
+    assert "data-dogfooding-session-checklist-checkbox='true'" in dogfooding.body
+    assert "data-dogfooding-session-checklist-reset='true'>Reset session</button>" in dogfooding.body
+    assert "dogfooding_session_checklist_next_action</dt><dd>run_demo_app_scenario" in dogfooding.body
+    assert "dogfooding_session_checklist_memory_storage</dt><dd>localStorage:clankeros-dogfooding-session" in dogfooding.body
+    assert "dogfooding_session_checklist_write_on_get</dt><dd>false" in dogfooding.body
+    assert "dogfooding_session_checklist_external_effects_created</dt><dd>false" in dogfooding.body
     assert "data-dogfooding-fixture-evidence='true'" in dogfooding.body
     assert "data-dogfooding-workbench-actions='true'" in dogfooding.body
     assert "data-dogfooding-fixture-action='true'" in dogfooding.body
@@ -9308,6 +9339,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "dogfooding_workbench_click: <a href='/demo'>/demo</a>" in dogfooding.body
     assert "dogfooding_workbench_safety: no provider, network, push, PR, deploy" in dogfooding.body
     assert dogfooding.body.index("Dogfooding Operator Workbench") < dogfooding.body.index(
+        "Dogfooding Return Brief"
+    )
+    assert dogfooding.body.index("Dogfooding Return Brief") < dogfooding.body.index(
+        "Dogfooding Session Checklist"
+    )
+    assert dogfooding.body.index("Dogfooding Session Checklist") < dogfooding.body.index(
         "Dogfooding Command Bar"
     )
     assert dogfooding.body.index("Dogfooding Operator Workbench") < dogfooding.body.index(
@@ -12057,6 +12094,25 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-dogfooding-operator-workbench='true'" in dogfooding_with_demo.body
     assert "data-dogfooding-workbench-primary='true'" in dogfooding_with_demo.body
     assert "data-dogfooding-workbench-evidence='true'" in dogfooding_with_demo.body
+    assert "Dogfooding Return Brief" in dogfooding_with_demo.body
+    assert "data-dogfooding-return-brief='true'" in dogfooding_with_demo.body
+    assert "data-dogfooding-return-actions='true'" in dogfooding_with_demo.body
+    assert "data-dogfooding-return-evidence='true'" in dogfooding_with_demo.body
+    assert "dogfooding_return_product_action</dt><dd>request_commit_for_reviewed_run" in dogfooding_with_demo.body
+    assert (
+        f"dogfooding_return_product_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>Open run</a>"
+        in dogfooding_with_demo.body
+    )
+    assert "dogfooding_return_record_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>Record CI proof</a>" in dogfooding_with_demo.body
+    assert "dogfooding_return_status_command</dt><dd>gh run view" in dogfooding_with_demo.body
+    assert "dogfooding_return_write_on_get</dt><dd>false" in dogfooding_with_demo.body
+    assert "Dogfooding Session Checklist" in dogfooding_with_demo.body
+    assert "data-dogfooding-session-checklist='true'" in dogfooding_with_demo.body
+    assert "data-dogfooding-session-checklist-storage-key='clankeros-dogfooding-session'" in dogfooding_with_demo.body
+    assert dogfooding_with_demo.body.count("data-dogfooding-session-checklist-item='true'") == 5
+    assert "dogfooding_session_checklist_fixture_status</dt><dd>available" in dogfooding_with_demo.body
+    assert "dogfooding_session_checklist_next_action</dt><dd>request_commit_for_reviewed_run" in dogfooding_with_demo.body
+    assert "dogfooding_session_checklist_memory_storage</dt><dd>localStorage:clankeros-dogfooding-session" in dogfooding_with_demo.body
     assert "data-dogfooding-fixture-evidence='true'" in dogfooding_with_demo.body
     assert "data-dogfooding-fixture-action='true'" in dogfooding_with_demo.body
     assert "data-dogfooding-fixture-action-form='true'" in dogfooding_with_demo.body
@@ -12124,6 +12180,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in dogfooding_with_demo.body
     )
     assert dogfooding_with_demo.body.index("Dogfooding Operator Workbench") < dogfooding_with_demo.body.index(
+        "Dogfooding Return Brief"
+    )
+    assert dogfooding_with_demo.body.index("Dogfooding Return Brief") < dogfooding_with_demo.body.index(
+        "Dogfooding Session Checklist"
+    )
+    assert dogfooding_with_demo.body.index("Dogfooding Session Checklist") < dogfooding_with_demo.body.index(
         "Dogfooding Command Bar"
     )
     assert dogfooding_with_demo.body.index("Dogfooding Operator Workbench") < dogfooding_with_demo.body.index(
