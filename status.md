@@ -1,5 +1,36 @@
 # Status
 
+## 2026-07-04 Resume Today Brief UX
+
+- `/resume` now opens with a first-class `Resume Today Brief` after the hero and
+  before browser-local resume memory.
+- The brief gives the returning operator one compact strip for Continue, Proof,
+  Blockers, Artifact, and Finish Today, so tomorrow's first screen names the
+  current action, proof path, waiting work, saved artifact posture, and save
+  target without reading deeper evidence panels.
+- First-run/no-goal sessions route Continue to the setup form, Proof to
+  `/verification`, and proof recording to
+  `/ci-evidence#record-ci-snapshot-json`. Populated Goal sessions route Continue
+  to the same Resume action form, Proof to
+  `/goals/<goal_id>#goal-ci-handoff`, and recording to
+  `/goals/<goal_id>#record-goal-ci-proof`.
+- The section emits explicit evidence for mode/source, project, Goal, phase,
+  current gate, progress, primary surface, proof surface/source, record
+  surface/source, CI proof posture, waiting counts, readiness, artifact status,
+  and zero-effect GET boundaries.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md status.md`:
+    passed after docs/status updates.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    2 passed in 104.66s.
+- Non-claim: this is read-only browser resume routing. It does not write on GET,
+  poll GitHub from the app, call providers, execute tasks, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+- Testing posture: the broad/full suite should run in GitHub Actions after push
+  rather than being repeated locally for this small UX slice.
+
 ## 2026-07-04 Guide Proof To Resume UX
 
 - `/guide` now has a first-class `Proof To Resume` rail between Operator

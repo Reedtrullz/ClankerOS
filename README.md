@@ -285,10 +285,13 @@ forms; it does not call providers, perform network actions, push, create PRs,
 deploy, or mutate external systems.
 
 Use `/resume` when returning to ClankerOS after a break. It now opens with a
-primary return link, a browser-local `Browser Resume` panel, and a
-`Resume Operator Workbench` before shared route/focus diagnostics or the
-command readback, so the first screen is the current return path instead of a
-report. `Browser Resume` reads this browser's
+primary return link, a `Resume Today Brief`, a browser-local `Browser Resume`
+panel, and a `Resume Operator Workbench` before shared route/focus diagnostics
+or the command readback, so the first screen is the current return path instead
+of a report. The brief gives one compact strip for Continue, Proof, Blockers,
+Artifact, and Finish Today, routing first-run sessions to setup/proof fallback
+surfaces and populated sessions to the current Goal action, Goal CI handoff,
+and Goal proof recorder. `Browser Resume` reads this browser's
 `localStorage:clankeros-route-history`, ignores `/resume` itself, and offers
 the most recent non-resume route with route-scoped scroll/open-panel memory
 when available. It also reads `localStorage:clankeros-last-artifact` and shows

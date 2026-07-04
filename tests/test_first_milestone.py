@@ -5856,6 +5856,54 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "operator_focus_safety: read-only local first-run routing" in root.body
     resume_empty = render_local_app_route(tmp_path, "/resume")
     assert resume_empty.status == 200
+    assert "Resume Today Brief" in resume_empty.body
+    assert "id='resume-return-brief'" in resume_empty.body
+    assert "data-resume-return-brief='true'" in resume_empty.body
+    assert "data-resume-return-brief-actions='true'" in resume_empty.body
+    assert resume_empty.body.count("data-resume-return-card='true'") == 5
+    assert "data-resume-return-card-key='continue'" in resume_empty.body
+    assert "data-resume-return-card-key='proof'" in resume_empty.body
+    assert "data-resume-return-card-key='blockers'" in resume_empty.body
+    assert "data-resume-return-card-key='artifact'" in resume_empty.body
+    assert "data-resume-return-card-key='finish'" in resume_empty.body
+    assert "data-resume-return-brief-evidence='true'" in resume_empty.body
+    assert "resume_return_brief_status</dt><dd>available" in resume_empty.body
+    assert "resume_return_brief_mode</dt><dd>first_run" in resume_empty.body
+    assert "resume_return_brief_source</dt><dd>first_run_progress" in resume_empty.body
+    assert "resume_return_brief_phase</dt><dd>First run" in resume_empty.body
+    assert "resume_return_brief_current_gate</dt><dd>create_project" in resume_empty.body
+    assert "resume_return_brief_next_action</dt><dd>Register ClankerOS project" in resume_empty.body
+    assert (
+        "resume_return_brief_primary_surface</dt><dd>"
+        "<a href='#resume-first-run-action-form'>Register ClankerOS project</a>"
+    ) in resume_empty.body
+    assert (
+        "resume_return_brief_proof_surface</dt><dd><a href='/verification'>Verification</a>"
+        in resume_empty.body
+    )
+    assert "resume_return_brief_proof_source</dt><dd>verification_fallback" in resume_empty.body
+    assert (
+        "resume_return_brief_record_surface</dt><dd>"
+        "<a href='/ci-evidence#record-ci-snapshot-json'>Record CI proof</a>"
+    ) in resume_empty.body
+    assert "resume_return_brief_record_source</dt><dd>ci_evidence_fallback" in resume_empty.body
+    assert "resume_return_brief_waiting_items</dt><dd>0" in resume_empty.body
+    assert "resume_return_brief_readiness_status</dt><dd>not_started" in resume_empty.body
+    assert "resume_return_brief_ready</dt><dd>false" in resume_empty.body
+    assert "resume_return_brief_last_artifact_status</dt><dd>missing" in resume_empty.body
+    assert "resume_return_brief_first_run_form_available</dt><dd>true" in resume_empty.body
+    assert "resume_return_brief_write_on_get</dt><dd>false" in resume_empty.body
+    assert "resume_return_brief_provider_calls_taken</dt><dd>0" in resume_empty.body
+    assert "resume_return_brief_network_actions_taken</dt><dd>0" in resume_empty.body
+    assert "resume_return_brief_external_effects_created</dt><dd>false" in resume_empty.body
+    assert "resume_return_brief_path: continue -> proof -> blockers -> artifact -> finish" in resume_empty.body
+    assert (
+        "resume_return_brief_continue: "
+        "<a href='#resume-first-run-action-form'>Register ClankerOS project</a>"
+    ) in resume_empty.body
+    assert "resume_return_brief_record: <a href='/ci-evidence#record-ci-snapshot-json'>Record CI proof</a>" in resume_empty.body
+    assert "resume_return_brief_finish: <a href='/workspace#save-workspace'>Save workspace</a>" in resume_empty.body
+    assert "resume_return_brief_safety: read-only return brief; existing confirmed forms own writes" in resume_empty.body
     assert "Browser Resume" in resume_empty.body
     assert "data-browser-resume='true'" in resume_empty.body
     assert "data-browser-resume-storage-key='clankeros-route-history'" in resume_empty.body
@@ -5883,6 +5931,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert resume_empty.body.index("Browser Resume") < resume_empty.body.index(
         "Resume Operator Workbench"
     )
+    assert resume_empty.body.index("Resume Today Brief") < resume_empty.body.index(
+        "Browser Resume"
+    )
+    assert ".resume-return-brief-grid" in resume_empty.body
     assert "Resume Command Bar" in resume_empty.body
     assert "data-resume-command-bar='true'" in resume_empty.body
     assert "resume_command_status</dt><dd>first_run" in resume_empty.body
@@ -12655,6 +12707,50 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "verification_command_reason</dt><dd>lead_goal_ci_handoff" in verification_goal.body
     resume_unsaved = render_local_app_route(tmp_path, "/resume")
     assert resume_unsaved.status == 200
+    assert "Resume Today Brief" in resume_unsaved.body
+    assert "data-resume-return-brief='true'" in resume_unsaved.body
+    assert "data-resume-return-brief-actions='true'" in resume_unsaved.body
+    assert "resume_return_brief_mode</dt><dd>goal" in resume_unsaved.body
+    assert "resume_return_brief_source</dt><dd>lead_goal_state" in resume_unsaved.body
+    assert f"resume_return_brief_goal_id</dt><dd>{result.goal_id}" in resume_unsaved.body
+    assert "resume_return_brief_goal_label_source</dt><dd>title" in resume_unsaved.body
+    assert "resume_return_brief_phase</dt><dd>Ready to commit" in resume_unsaved.body
+    assert "resume_return_brief_next_action</dt><dd>Create commit request" in resume_unsaved.body
+    assert (
+        "resume_return_brief_primary_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Create commit request</a>"
+    ) in resume_unsaved.body
+    assert (
+        f"resume_return_brief_proof_surface</dt><dd><a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in resume_unsaved.body
+    )
+    assert "resume_return_brief_proof_source</dt><dd>goal_ci_handoff" in resume_unsaved.body
+    assert (
+        f"resume_return_brief_record_surface</dt><dd><a href='/goals/{result.goal_id}#record-goal-ci-proof'>"
+        "Record Goal CI proof</a>"
+        in resume_unsaved.body
+    )
+    assert "resume_return_brief_record_source</dt><dd>goal_ci_handoff" in resume_unsaved.body
+    assert "resume_return_brief_latest_ci_status</dt><dd>success" in resume_unsaved.body
+    assert "resume_return_brief_current_proof</dt><dd>" in resume_unsaved.body
+    assert "resume_return_brief_readiness_status</dt><dd>not_started" in resume_unsaved.body
+    assert "resume_return_brief_ready</dt><dd>false" in resume_unsaved.body
+    assert "resume_return_brief_action_form_available</dt><dd>true" in resume_unsaved.body
+    assert "resume_return_brief_first_run_form_available</dt><dd>false" in resume_unsaved.body
+    assert "resume_return_brief_write_on_get</dt><dd>false" in resume_unsaved.body
+    assert "resume_return_brief_network_actions_taken</dt><dd>0" in resume_unsaved.body
+    assert "resume_return_brief_external_effects_created</dt><dd>false" in resume_unsaved.body
+    assert (
+        f"resume_return_brief_proof: <a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in resume_unsaved.body
+    )
+    assert (
+        f"resume_return_brief_record: <a href='/goals/{result.goal_id}#record-goal-ci-proof'>"
+        "Record Goal CI proof</a>"
+        in resume_unsaved.body
+    )
     assert "Browser Resume" in resume_unsaved.body
     assert "Resume Operator Workbench" in resume_unsaved.body
     assert "Resume Command Bar" in resume_unsaved.body

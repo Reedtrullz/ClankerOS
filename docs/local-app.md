@@ -203,9 +203,12 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   external systems.
 - `/resume` - read-only return-to-work surface for the saved
   `.clanker/app/workspace.json` state and this browser's local route memory.
-  It opens with a primary return link, a `Browser Resume` panel, and
-  `Resume Operator Workbench` before shared route/focus diagnostics or command
-  readback. `Browser Resume` reads
+  It opens with a primary return link, a `Resume Today Brief`,
+  `Browser Resume`, and `Resume Operator Workbench` before shared route/focus
+  diagnostics or command readback. The brief keeps Continue, Proof, Blockers,
+  Artifact, and Finish Today visible in one strip, using the current Goal's CI
+  handoff and proof recorder when a Goal exists and first-run proof fallbacks
+  before one exists. `Browser Resume` reads
   `localStorage:clankeros-route-history`, ignores `/resume` itself, and offers
   the most recent non-resume route plus route-scoped scroll/open-panel memory
   when this browser has it. It also reads
