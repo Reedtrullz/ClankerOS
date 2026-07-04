@@ -114,6 +114,13 @@ It is read-only orientation; confirmed forms still own every local write, and
 the app still does not poll GitHub, call providers, push, open PRs, deploy, or
 mutate external systems on page render.
 
+The ribbon also includes a `Tomorrow` readiness strip. It tells the operator
+whether an exact saved return point exists, whether only a Goal or project is
+saved, or whether the current action still needs `Finish Today` before the
+workspace is ready to leave and resume tomorrow. The strip links only to the
+existing Finish Today and Resume surfaces, keeps its evidence collapsed, and
+writes nothing on GET.
+
 Saved workspace panels are also treated as return-to-work context. When
 `.clanker/app/workspace.json` contains `expanded_panels`, `/resume`,
 `/workspace`, and the saved Goal page show a `Workspace Panel Restore` strip

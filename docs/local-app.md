@@ -45,6 +45,14 @@ shortcuts. The rail is navigation and orientation only: it writes nothing on
 GET, calls no providers, performs no network action, creates no external
 effect, and leaves all writes behind existing confirmed local forms.
 
+The same ribbon now includes a read-only `Tomorrow` readiness strip below the
+path rail. It distinguishes exact saved resume surfaces from partial Goal or
+project saves, and from unsaved current actions that still need the existing
+`Finish Today` flow. Its primary link always opens the route-aware Finish
+Today save surface, its secondary link opens the best current Resume target,
+and collapsed evidence reports the status, source, saved workspace anchors,
+confirmation requirement, and zero provider/network/external-effect counters.
+
 ## Pages
 
 - `/` - Goal-First Home dashboard. It renders the Home operating surface

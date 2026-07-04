@@ -48258,6 +48258,124 @@ def _operator_path_card(
     )
 
 
+def _operator_tomorrow_status(
+    status: str,
+    *,
+    saved_resume_surface: str,
+    saved_goal: str,
+    saved_project: str,
+    resume_source: str,
+) -> tuple[str, str, str, str]:
+    if saved_resume_surface:
+        return (
+            "ready_exact",
+            "Exact return point saved",
+            "true",
+            "saved_resume_surface",
+        )
+    if saved_goal:
+        return (
+            "saved_goal_needs_exact_surface",
+            "Goal saved; exact surface not saved",
+            "partial",
+            "saved_goal_without_resume_surface",
+        )
+    if saved_project:
+        return (
+            "saved_project_needs_goal",
+            "Project saved; Goal resume missing",
+            "partial",
+            "saved_project_without_goal",
+        )
+    if status == "available" and resume_source == "current_goal_action":
+        return (
+            "suggested_current_action_not_saved",
+            "Current action found; save it for tomorrow",
+            "false",
+            "current_goal_action_suggestion",
+        )
+    if status == "first_run":
+        return (
+            "first_run_not_saved",
+            "First-run progress visible; save after creating a Goal",
+            "false",
+            "first_run_progress",
+        )
+    return (
+        "not_ready",
+        "No saved return point yet",
+        "false",
+        "workspace_missing",
+    )
+
+
+def _operator_tomorrow_strip(
+    *,
+    status: str,
+    source: str,
+    ready: str,
+    message: str,
+    resume_href: str,
+    resume_label: str,
+    finish_href: str,
+    finish_label: str,
+    saved_goal: str,
+    saved_project: str,
+    saved_artifact: str,
+) -> str:
+    return "".join(
+        [
+            "<section class='operator-tomorrow-strip' data-operator-tomorrow-strip='true' "
+            f"data-operator-tomorrow-status='{_e(status)}' "
+            f"data-operator-tomorrow-ready='{_e(ready)}' "
+            f"data-operator-tomorrow-source='{_e(source)}'>",
+            "<div class='operator-tomorrow-copy'>",
+            "<span class='operator-ribbon-label'>Tomorrow</span>",
+            f"<strong>{_e(message)}</strong>",
+            "</div>",
+            "<div class='operator-tomorrow-actions' data-operator-tomorrow-actions='true'>",
+            f"<a class='operator-tomorrow-action' data-operator-tomorrow-finish='true' href='{_e(finish_href)}'>{_e(finish_label)}</a>",
+            f"<a class='operator-tomorrow-link' data-operator-tomorrow-resume='true' href='{_e(resume_href)}'>{_e(resume_label)}</a>",
+            "</div>",
+            "<details class='operator-tomorrow-evidence' data-operator-tomorrow-evidence='true'>",
+            "<summary>Tomorrow readiness evidence</summary>",
+            _kv(
+                [
+                    ("operator_tomorrow_status", status),
+                    ("operator_tomorrow_source", source),
+                    ("operator_tomorrow_ready", ready),
+                    ("operator_tomorrow_message", message),
+                    (
+                        "operator_tomorrow_finish_surface",
+                        SafeHtml(f"<a href='{_e(finish_href)}'>{_e(finish_label)}</a>"),
+                    ),
+                    (
+                        "operator_tomorrow_resume_surface",
+                        SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"),
+                    ),
+                    ("operator_tomorrow_saved_goal", saved_goal or "none"),
+                    ("operator_tomorrow_saved_project", saved_project or "none"),
+                    ("operator_tomorrow_saved_artifact", saved_artifact or "none"),
+                    ("operator_tomorrow_confirmation_required", "true"),
+                    ("operator_tomorrow_write_on_get", "false"),
+                    ("operator_tomorrow_provider_calls_taken", "0"),
+                    ("operator_tomorrow_network_actions_taken", "0"),
+                    ("operator_tomorrow_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"operator_tomorrow_finish: <a href='{_e(finish_href)}'>{_e(finish_label)}</a>",
+                    f"operator_tomorrow_resume: <a href='{_e(resume_href)}'>{_e(resume_label)}</a>",
+                    "operator_tomorrow_safety: read-only readiness over existing saved workspace state",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
 def _operator_status_ribbon(
     root: Path,
     focus_context: dict[str, Any],
@@ -48412,6 +48530,15 @@ def _operator_status_ribbon(
     proof_target = _proof_shortcut_context(focus_context, current_path)
     proof_href = proof_target["href"]
     proof_label = proof_target["label"]
+    tomorrow_status, tomorrow_message, tomorrow_ready, tomorrow_source = (
+        _operator_tomorrow_status(
+            status,
+            saved_resume_surface=saved_resume_surface,
+            saved_goal=saved_goal,
+            saved_project=saved_project,
+            resume_source=resume_source,
+        )
+    )
     search_href = "/search"
     route_label = title or route_path
     current_step = _operator_path_current_step(route_path, status)
@@ -48485,6 +48612,10 @@ def _operator_status_ribbon(
         ("operator_path_provider_calls_taken", "0"),
         ("operator_path_network_actions_taken", "0"),
         ("operator_path_external_effects_created", "false"),
+        ("operator_tomorrow_status", tomorrow_status),
+        ("operator_tomorrow_source", tomorrow_source),
+        ("operator_tomorrow_ready", tomorrow_ready),
+        ("operator_tomorrow_message", tomorrow_message),
         ("operator_ribbon_command_palette_available", "true"),
         ("operator_ribbon_write_on_get", "false"),
         ("operator_ribbon_provider_calls_taken", "0"),
@@ -48506,6 +48637,7 @@ def _operator_status_ribbon(
             f"<a href='{_e(finish_href)}'>Finish</a> -> "
             f"<a href='{_e(resume_href)}'>Resume</a>"
         ),
+        f"operator_tomorrow_ready: {_e(tomorrow_status)}",
         "operator_ribbon_palette: <a href='#command-palette'>Command Palette</a>",
         "operator_path_safety: read-only global daily path; confirmed forms own writes",
         "operator_ribbon_safety: read-only global operator orientation",
@@ -48563,6 +48695,19 @@ def _operator_status_ribbon(
         _operator_path_card("finish", "Finish", finish_href, finish_label, current_step),
         _operator_path_card("resume", "Resume", resume_href, resume_label, current_step),
     ]
+    tomorrow_strip = _operator_tomorrow_strip(
+        status=tomorrow_status,
+        source=tomorrow_source,
+        ready=tomorrow_ready,
+        message=tomorrow_message,
+        resume_href=resume_href,
+        resume_label=resume_label,
+        finish_href=finish_href,
+        finish_label=finish_label,
+        saved_goal=saved_goal,
+        saved_project=saved_project,
+        saved_artifact=saved_artifact,
+    )
     return "".join(
         [
             "<section class='operator-ribbon panel' data-operator-ribbon='true' "
@@ -48578,6 +48723,7 @@ def _operator_status_ribbon(
             "".join(path_cards),
             "</div>",
             "</nav>",
+            tomorrow_strip,
             "<details class='operator-ribbon-evidence' data-operator-ribbon-evidence='true'>",
             "<summary>Operator ribbon evidence</summary>",
             _kv(rows),
@@ -50272,14 +50418,27 @@ def _html_page(
     .operator-path-current {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); background:var(--surface); }}
     .operator-path-label {{ color:var(--muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
     .operator-path-step strong {{ font-size:13px; line-height:1.25; overflow-wrap:anywhere; }}
+    .operator-tomorrow-strip {{ margin:8px 0 0; padding:9px 10px; border:1px solid var(--line); background:var(--surface); display:grid; grid-template-columns:minmax(220px, 1fr) auto; gap:10px; align-items:center; }}
+    .operator-tomorrow-strip[data-operator-tomorrow-ready='true'] {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
+    .operator-tomorrow-strip[data-operator-tomorrow-ready='partial'] {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
+    .operator-tomorrow-strip[data-operator-tomorrow-ready='false'] {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
+    .operator-tomorrow-copy {{ min-width:0; display:grid; gap:3px; }}
+    .operator-tomorrow-copy strong {{ overflow-wrap:anywhere; }}
+    .operator-tomorrow-actions {{ display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end; min-width:0; }}
+    .operator-tomorrow-action, .operator-tomorrow-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
+    .operator-tomorrow-action {{ background:var(--accent); color:#fff; }}
+    .operator-tomorrow-link {{ background:var(--surface); color:var(--accent); }}
+    .operator-tomorrow-evidence {{ grid-column:1 / -1; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .operator-tomorrow-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .operator-tomorrow-evidence:not([open]) > :not(summary) {{ display:none; }}
     .operator-ribbon-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .operator-ribbon-evidence summary {{ cursor:pointer; font-weight:700; }}
     .operator-ribbon-evidence:not([open]) > :not(summary) {{ display:none; }}
     .operator-ribbon dl {{ grid-template-columns:minmax(170px, 230px) 1fr; }}
     .operator-ribbon ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
     .operator-ribbon li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
-    @media (max-width: 980px) {{ .operator-path-grid {{ grid-template-columns:repeat(3, minmax(0, 1fr)); }} }}
-    @media (max-width: 640px) {{ .operator-path-grid {{ grid-template-columns:1fr 1fr; }} body[data-goal-detail-page="true"] header {{ padding:8px 10px; gap:6px; }} body[data-goal-detail-page="true"] header strong {{ font-size:13px; }} body[data-goal-detail-page="true"] .shell-nav, body[data-goal-detail-page="true"] .shell-nav-primary, body[data-goal-detail-page="true"] .header-actions {{ width:100%; flex-wrap:nowrap; overflow-x:auto; gap:6px; padding-bottom:2px; }} body[data-goal-detail-page="true"] .shell-nav a, body[data-goal-detail-page="true"] .shell-nav-more summary, body[data-goal-detail-page="true"] .icon-button {{ white-space:nowrap; }} body[data-goal-detail-page="true"] .shell-nav a {{ font-size:13px; }} body[data-goal-detail-page="true"] .icon-button {{ flex:0 0 auto; padding:6px 8px; font-size:13px; max-width:150px; overflow:hidden; text-overflow:ellipsis; }} body[data-goal-detail-page="true"] main {{ padding:10px 12px 14px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] {{ padding:8px; margin-bottom:10px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-grid {{ grid-template-columns:1fr 1fr; gap:6px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-card {{ padding:7px 8px; gap:4px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-card strong {{ font-size:13px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-action, .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-link {{ min-height:30px; padding:5px 7px; font-size:13px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-goal='true'], .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-attention='true'], .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-resume='true'], .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-search='true'] {{ display:none; }} }}
+    @media (max-width: 980px) {{ .operator-path-grid {{ grid-template-columns:repeat(3, minmax(0, 1fr)); }} .operator-tomorrow-strip {{ grid-template-columns:1fr; }} .operator-tomorrow-actions {{ justify-content:flex-start; }} }}
+    @media (max-width: 640px) {{ .operator-path-grid {{ grid-template-columns:1fr 1fr; }} .operator-tomorrow-action, .operator-tomorrow-link {{ width:100%; }} body[data-goal-detail-page="true"] header {{ padding:8px 10px; gap:6px; }} body[data-goal-detail-page="true"] header strong {{ font-size:13px; }} body[data-goal-detail-page="true"] .shell-nav, body[data-goal-detail-page="true"] .shell-nav-primary, body[data-goal-detail-page="true"] .header-actions {{ width:100%; flex-wrap:nowrap; overflow-x:auto; gap:6px; padding-bottom:2px; }} body[data-goal-detail-page="true"] .shell-nav a, body[data-goal-detail-page="true"] .shell-nav-more summary, body[data-goal-detail-page="true"] .icon-button {{ white-space:nowrap; }} body[data-goal-detail-page="true"] .shell-nav a {{ font-size:13px; }} body[data-goal-detail-page="true"] .icon-button {{ flex:0 0 auto; padding:6px 8px; font-size:13px; max-width:150px; overflow:hidden; text-overflow:ellipsis; }} body[data-goal-detail-page="true"] main {{ padding:10px 12px 14px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] {{ padding:8px; margin-bottom:10px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-grid {{ grid-template-columns:1fr 1fr; gap:6px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-card {{ padding:7px 8px; gap:4px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-card strong {{ font-size:13px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-action, .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-link {{ min-height:30px; padding:5px 7px; font-size:13px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-goal='true'], .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-attention='true'], .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-resume='true'], .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-search='true'] {{ display:none; }} }}
     .workspace-panel-restore {{ border-left:4px solid var(--accent); margin:0 0 16px; padding:12px; background:var(--panel); }}
     .workspace-panel-restore h2 {{ font-size:15px; margin-top:0; }}
     .workspace-panel-restore-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(155px, 1fr)); gap:8px; align-items:stretch; margin:10px 0; }}

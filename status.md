@@ -1,5 +1,31 @@
 # Status
 
+## 2026-07-04 Global Tomorrow Readiness UX
+
+- Every local app route now includes a read-only `Tomorrow` readiness strip
+  inside the global operator ribbon, directly under the `Operator Path Rail`.
+- The strip tells the operator whether the workspace has an exact saved return
+  point, only a partial Goal/project anchor, or an unsaved current action that
+  should be captured with the existing `Finish Today` flow before leaving.
+- First-run sessions show `first_run_not_saved`, link Finish to
+  `/workspace#save-workspace`, and keep Resume on `/resume`.
+- Populated Goal sessions without a saved workspace surface show
+  `suggested_current_action_not_saved`, link Finish to the route-local
+  Finish Today form, and link Resume to the current Goal action form.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    2 passed in 109.43s.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+- Non-claim: this is read-only orientation over existing saved workspace state.
+  It does not write on GET, call providers, poll GitHub from the app, execute
+  tasks, approve work, push, create PRs, deploy, or mutate external systems
+  from ClankerOS.
+- Testing posture: broad/full regression coverage should run in GitHub Actions
+  after push rather than being repeated locally for this UX slice.
+
 ## 2026-07-04 Global Operator Path Rail UX
 
 - Every local app route now includes a read-only `Operator Path Rail` inside

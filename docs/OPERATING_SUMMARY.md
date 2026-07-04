@@ -192,7 +192,13 @@ Core layers for the bootstrap:
   finish, and resume targets as the header shortcuts. The rail is orientation
   only: it writes nothing on GET, calls no providers, performs no network
   action, creates no external effect, and leaves all writes behind existing
-  confirmed local forms. The
+  confirmed local forms. The same ribbon also includes a read-only `Tomorrow`
+  readiness strip that names whether the operator has an exact saved resume
+  surface, only a partial Goal/project anchor, or an unsaved current action
+  that still needs the existing Finish Today save flow before leaving work for
+  the next session. It links only to the route-aware Finish Today and Resume
+  surfaces and reports zero provider/network/external-effect counters in
+  collapsed evidence. The
   local app also exposes `/guide` as an in-app `Suggested Use Guide` that maps
   `Today -> Goal -> Action -> Proof -> Finish -> Resume`, links first-run
   operators to Home/Today/Goals project/goal setup forms, links current-goal

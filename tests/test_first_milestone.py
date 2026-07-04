@@ -4546,11 +4546,25 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-operator-path-step='proof' data-operator-path-current='false'" in root.body
     assert "data-operator-path-step='finish' data-operator-path-current='false'" in root.body
     assert "data-operator-path-step='resume' data-operator-path-current='false'" in root.body
+    assert "data-operator-tomorrow-strip='true'" in root.body
+    assert "data-operator-tomorrow-status='first_run_not_saved'" in root.body
+    assert "data-operator-tomorrow-ready='false'" in root.body
+    assert "data-operator-tomorrow-source='first_run_progress'" in root.body
+    assert "data-operator-tomorrow-actions='true'" in root.body
+    assert "data-operator-tomorrow-finish='true' href='/workspace#save-workspace'>Finish Today</a>" in root.body
+    assert "data-operator-tomorrow-resume='true' href='/resume'>Open resume</a>" in root.body
+    assert "data-operator-tomorrow-evidence='true'" in root.body
     assert root.body.index("data-operator-ribbon='true'") < root.body.index(
         'data-operator-shell="true"'
     )
     assert root.body.index("data-operator-ribbon-cards='true'") < root.body.index(
         "data-operator-path-rail='true'"
+    )
+    assert root.body.index("data-operator-path-rail='true'") < root.body.index(
+        "data-operator-tomorrow-strip='true'"
+    )
+    assert root.body.index("data-operator-tomorrow-strip='true'") < root.body.index(
+        "data-operator-ribbon-evidence='true'"
     )
     assert root.body.index("data-operator-path-rail='true'") < root.body.index(
         "data-operator-ribbon-evidence='true'"
@@ -4609,6 +4623,26 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "operator_path_provider_calls_taken</dt><dd>0" in root.body
     assert "operator_path_network_actions_taken</dt><dd>0" in root.body
     assert "operator_path_external_effects_created</dt><dd>false" in root.body
+    assert "operator_tomorrow_status</dt><dd>first_run_not_saved" in root.body
+    assert "operator_tomorrow_source</dt><dd>first_run_progress" in root.body
+    assert "operator_tomorrow_ready</dt><dd>false" in root.body
+    assert (
+        "operator_tomorrow_message</dt><dd>First-run progress visible; save after creating a Goal"
+        in root.body
+    )
+    assert (
+        "operator_tomorrow_finish_surface</dt><dd><a href='/workspace#save-workspace'>"
+        "Finish Today</a>"
+    ) in root.body
+    assert "operator_tomorrow_resume_surface</dt><dd><a href='/resume'>Open resume</a>" in root.body
+    assert "operator_tomorrow_saved_goal</dt><dd>none" in root.body
+    assert "operator_tomorrow_saved_project</dt><dd>none" in root.body
+    assert "operator_tomorrow_saved_artifact</dt><dd>none" in root.body
+    assert "operator_tomorrow_confirmation_required</dt><dd>true" in root.body
+    assert "operator_tomorrow_write_on_get</dt><dd>false" in root.body
+    assert "operator_tomorrow_provider_calls_taken</dt><dd>0" in root.body
+    assert "operator_tomorrow_network_actions_taken</dt><dd>0" in root.body
+    assert "operator_tomorrow_external_effects_created</dt><dd>false" in root.body
     assert "operator_ribbon_command_palette_available</dt><dd>true" in root.body
     assert "operator_ribbon_write_on_get</dt><dd>false" in root.body
     assert "operator_ribbon_provider_calls_taken</dt><dd>0" in root.body
@@ -4629,6 +4663,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "<a href='/ci-evidence#record-ci-snapshot-json'>Proof</a> -> "
         "<a href='/workspace#save-workspace'>Finish</a> -> <a href='/resume'>Resume</a>"
     ) in root.body
+    assert "operator_tomorrow_ready: first_run_not_saved" in root.body
+    assert (
+        "operator_tomorrow_safety: read-only readiness over existing saved workspace state"
+        in root.body
+    )
     assert "operator_path_safety: read-only global daily path; confirmed forms own writes" in root.body
     assert "operator_ribbon_safety: read-only global operator orientation" in root.body
     assert ".operator-main { order:1; } .operator-side { order:2; }" in root.body
@@ -6612,12 +6651,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert ".goal-control-evidence:not([open]) > :not(summary)" in root.body
     assert ".goal-summary-grid, .goal-phase-grid { display:grid;" in root.body
     assert ".goal-summary-evidence:not([open]) > :not(summary)" in root.body
+    assert ".operator-tomorrow-strip[data-operator-tomorrow-ready='partial']" in root.body
     assert (
         "@media (max-width: 980px) { .operator-path-grid { "
-        "grid-template-columns:repeat(3, minmax(0, 1fr)); } }"
+        "grid-template-columns:repeat(3, minmax(0, 1fr)); } "
+        ".operator-tomorrow-strip { grid-template-columns:1fr; }"
     ) in root.body
     assert (
         '@media (max-width: 640px) { .operator-path-grid { grid-template-columns:1fr 1fr; } '
+        ".operator-tomorrow-action, .operator-tomorrow-link { width:100%; } "
         'body[data-goal-detail-page="true"] header '
         "{ padding:8px 10px; gap:6px; }"
     ) in root.body
@@ -12503,6 +12545,20 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-operator-path-step='proof' data-operator-path-current='false'" in dashboard.body
     assert "data-operator-path-step='finish' data-operator-path-current='false'" in dashboard.body
     assert "data-operator-path-step='resume' data-operator-path-current='false'" in dashboard.body
+    assert "data-operator-tomorrow-strip='true'" in dashboard.body
+    assert "data-operator-tomorrow-status='suggested_current_action_not_saved'" in dashboard.body
+    assert "data-operator-tomorrow-ready='false'" in dashboard.body
+    assert "data-operator-tomorrow-source='current_goal_action_suggestion'" in dashboard.body
+    assert "data-operator-tomorrow-actions='true'" in dashboard.body
+    assert (
+        "data-operator-tomorrow-finish='true' href='#home-finish-today'>"
+        "Finish Today</a>"
+    ) in dashboard.body
+    assert (
+        f"data-operator-tomorrow-resume='true' href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in dashboard.body
+    assert "data-operator-tomorrow-evidence='true'" in dashboard.body
     assert dashboard.body.index("data-operator-ribbon='true'") < dashboard.body.index(
         'data-operator-shell="true"'
     )
@@ -12510,6 +12566,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "data-operator-path-rail='true'"
     )
     assert dashboard.body.index("data-operator-path-rail='true'") < dashboard.body.index(
+        "data-operator-tomorrow-strip='true'"
+    )
+    assert dashboard.body.index("data-operator-tomorrow-strip='true'") < dashboard.body.index(
         "data-operator-ribbon-evidence='true'"
     )
     assert (
@@ -12586,6 +12645,29 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "operator_path_provider_calls_taken</dt><dd>0" in dashboard.body
     assert "operator_path_network_actions_taken</dt><dd>0" in dashboard.body
     assert "operator_path_external_effects_created</dt><dd>false" in dashboard.body
+    assert "operator_tomorrow_status</dt><dd>suggested_current_action_not_saved" in dashboard.body
+    assert "operator_tomorrow_source</dt><dd>current_goal_action_suggestion" in dashboard.body
+    assert "operator_tomorrow_ready</dt><dd>false" in dashboard.body
+    assert (
+        "operator_tomorrow_message</dt><dd>Current action found; save it for tomorrow"
+        in dashboard.body
+    )
+    assert (
+        "operator_tomorrow_finish_surface</dt><dd><a href='#home-finish-today'>"
+        "Finish Today</a>"
+    ) in dashboard.body
+    assert (
+        f"operator_tomorrow_resume_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in dashboard.body
+    assert "operator_tomorrow_saved_goal</dt><dd>none" in dashboard.body
+    assert "operator_tomorrow_saved_project</dt><dd>none" in dashboard.body
+    assert "operator_tomorrow_saved_artifact</dt><dd>none" in dashboard.body
+    assert "operator_tomorrow_confirmation_required</dt><dd>true" in dashboard.body
+    assert "operator_tomorrow_write_on_get</dt><dd>false" in dashboard.body
+    assert "operator_tomorrow_provider_calls_taken</dt><dd>0" in dashboard.body
+    assert "operator_tomorrow_network_actions_taken</dt><dd>0" in dashboard.body
+    assert "operator_tomorrow_external_effects_created</dt><dd>false" in dashboard.body
     assert "operator_ribbon_command_palette_available</dt><dd>true" in dashboard.body
     assert "operator_ribbon_write_on_get</dt><dd>false" in dashboard.body
     assert "operator_ribbon_provider_calls_taken</dt><dd>0" in dashboard.body
@@ -12609,6 +12691,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in dashboard.body
     assert (
         "operator_path_safety: read-only global daily path; confirmed forms own writes"
+        in dashboard.body
+    )
+    assert "operator_tomorrow_ready: suggested_current_action_not_saved" in dashboard.body
+    assert (
+        "operator_tomorrow_safety: read-only readiness over existing saved workspace state"
         in dashboard.body
     )
     assert "operator_ribbon_safety: read-only global operator orientation" in dashboard.body
