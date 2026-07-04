@@ -1,5 +1,41 @@
 # Status
 
+## 2026-07-04 Memory Lead Goal Context UX
+
+- `/memory` now derives the saved or lead Goal when no explicit memory records
+  exist, matching the Goal-owned Memory model instead of sending populated
+  sessions back to the generic `/goals` setup index.
+- The Memory Operator Workbench now routes an empty populated session to
+  `Capture goal note` at `/goals/<goal_id>#goal-operator-notes`, and its
+  Resume card points to `/goals/<goal_id>#goal-memory`.
+- The Memory Pinboard and Memory Command Bar consume the same Goal context and
+  record the source (`saved_goal_state` or `lead_goal_state`), Goal id,
+  project id, title-first label, and label source in collapsed evidence.
+- First-run/no-Goal sessions still keep the existing `/goals` setup fallback;
+  proposed-memory pins, operator-note review, future-work review, and existing
+  memory-record priorities still win over the empty-Goal fallback.
+- TDD evidence: the populated demo scenario test failed first because
+  `/memory` still rendered `memory_workbench_status=empty` and
+  `Create goal context`; after implementation it proved `goal_context_ready`,
+  `Capture goal note`, Goal Memory resume routing, and lead-Goal evidence.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    failed first, then 1 passed after implementation.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health --tb=short`:
+    2 passed in 97.61s.
+  - `python3 -m agent_os.cli app-demo-smoke-test`:
+    passed with `/memory` route marker matched and zero provider, network, or
+    external mutation counters.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+- Non-claim: this is read-only browser Memory routing and evidence only. It
+  does not write memory records on GET, pin memories automatically, broaden
+  artifact access, approve work, execute tasks, call providers, use the
+  network from ClankerOS, push, create PRs, deploy, or mutate external
+  systems.
+
 ## 2026-07-02 Run Artifact Goal Ownership UX
 
 - `/artifacts?path=runs/<source_run_id>/review.md` now resolves owning Goal

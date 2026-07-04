@@ -17119,9 +17119,27 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert memory.body.index("data-memory-pinboard='true'") < memory.body.index("data-memory-inventory-filter='true'")
     assert memory.body.index("data-memory-inventory-filter='true'") < memory.body.index("data-memory-command-bar")
     assert memory.body.index("data-memory-operator-workbench") < memory.body.index("data-memory-command-bar")
-    assert "memory_workbench_status</dt><dd>empty" in memory.body
-    assert "memory_workbench_next_action</dt><dd>Create goal context" in memory.body
-    assert "memory_workbench_target_surface</dt><dd><a href='/goals'>/goals</a>" in memory.body
+    assert "memory_workbench_status</dt><dd>goal_context_ready" in memory.body
+    assert "memory_workbench_goal_source</dt><dd>lead_goal_state" in memory.body
+    assert f"memory_workbench_goal</dt><dd>{result.goal_id}" in memory.body
+    assert f"memory_workbench_project</dt><dd>{result.project_id}" in memory.body
+    assert (
+        "memory_workbench_goal_label</dt><dd>"
+        "Demo the ClankerOS local operator app with fixture-backed state"
+        in memory.body
+    )
+    assert "memory_workbench_goal_label_source</dt><dd>title" in memory.body
+    assert "memory_workbench_next_action</dt><dd>Capture goal note" in memory.body
+    assert (
+        f"memory_workbench_target_surface</dt><dd><a href='/goals/{result.goal_id}#goal-operator-notes'>"
+        "Goal Operator Notes</a>"
+        in memory.body
+    )
+    assert (
+        f"memory_workbench_resume_surface</dt><dd><a href='/goals/{result.goal_id}#goal-memory'>"
+        "Goal Memory</a>"
+        in memory.body
+    )
     assert "memory_workbench_pin_memory_available</dt><dd>false" in memory.body
     assert "memory_workbench_pin_form_available</dt><dd>false" in memory.body
     assert "memory_workbench_pin_memory_id</dt><dd>none" in memory.body
@@ -17132,12 +17150,19 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "memory_workbench_provider_calls_taken</dt><dd>0" in memory.body
     assert "memory_workbench_network_actions_taken</dt><dd>0" in memory.body
     assert "memory_workbench_external_effects_created</dt><dd>false" in memory.body
-    assert "memory_pinboard_status</dt><dd>empty" in memory.body
+    assert "memory_pinboard_status</dt><dd>goal_context_ready" in memory.body
     assert "memory_pinboard_total_entries</dt><dd>0" in memory.body
     assert "memory_pinboard_active_items</dt><dd>0" in memory.body
     assert "memory_pinboard_proposed_items</dt><dd>0" in memory.body
     assert "memory_pinboard_primary_lane</dt><dd>goal_context" in memory.body
-    assert "memory_pinboard_primary_surface</dt><dd><a href='/goals'>Create goal context</a>" in memory.body
+    assert (
+        f"memory_pinboard_primary_surface</dt><dd><a href='/goals/{result.goal_id}#goal-operator-notes'>"
+        "Capture goal note</a>"
+        in memory.body
+    )
+    assert "memory_pinboard_goal_source</dt><dd>lead_goal_state" in memory.body
+    assert f"memory_pinboard_goal</dt><dd>{result.goal_id}" in memory.body
+    assert f"memory_pinboard_project</dt><dd>{result.project_id}" in memory.body
     assert "memory_pinboard_pin_memory_available</dt><dd>false" in memory.body
     assert "memory_pinboard_write_on_get</dt><dd>false" in memory.body
     assert "memory_pinboard_network_actions_taken</dt><dd>0" in memory.body
@@ -17146,8 +17171,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-memory-command-bar='true'" in memory.body
     assert "memory_command_total_entries</dt><dd>0" in memory.body
     assert "memory_command_proposed_entries</dt><dd>0" in memory.body
-    assert "memory_command_next_action</dt><dd>Create goal context" in memory.body
-    assert "memory_command_target_surface</dt><dd><a href='/goals'>/goals</a>" in memory.body
+    assert f"memory_command_first_target</dt><dd>{result.goal_id}" in memory.body
+    assert "memory_command_goal_source</dt><dd>lead_goal_state" in memory.body
+    assert f"memory_command_goal</dt><dd>{result.goal_id}" in memory.body
+    assert f"memory_command_project</dt><dd>{result.project_id}" in memory.body
+    assert "memory_command_next_action</dt><dd>Capture goal note" in memory.body
+    assert (
+        f"memory_command_target_surface</dt><dd><a href='/goals/{result.goal_id}#goal-operator-notes'>"
+        "Goal Operator Notes</a>"
+        in memory.body
+    )
+    assert "memory_command_reason</dt><dd>current_goal_memory_empty" in memory.body
     assert "memory_command_pin_memory_available</dt><dd>false" in memory.body
     assert "memory_command_write_on_get</dt><dd>false" in memory.body
     assert "memory_command_provider_calls_taken</dt><dd>0" in memory.body

@@ -836,7 +836,10 @@ diagnostics and command readback, turning the next memory action, proposed
 pins, operator notes, and resume target into four browser cards. It now follows
 with a visible read-only `Memory Pinboard` for Active Pins, Proposed Pins,
 Project, Global, Generated, Operator Notes, and Future Work before the dense
-memory inventory. Memory state, pinboard, workbench evidence, and command
+memory inventory. When no memory records exist but a saved or lead Goal does,
+the workbench, pinboard, and command bar route the first action to that Goal's
+operator-notes surface and the resume card to Goal Memory instead of falling
+back to the generic `/goals` index. Memory state, pinboard, workbench evidence, and command
 evidence stay collapsed by default while preserving entry counts,
 proposed-memory pin posture, saved workspace context, and
 no-write/provider/network/external-effect boundaries in the DOM. `/skills`

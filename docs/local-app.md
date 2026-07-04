@@ -855,7 +855,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   before shared route/focus diagnostics and command readback, with cards for
   the next memory action, proposed pins, operator notes, and `/resume` or goal
   context, then a `Memory Pinboard` and browser-local
-  `Memory Inventory Filter`. The filter narrows already-rendered rows by lane
+  `Memory Inventory Filter`. If the bank is empty but a saved or lead Goal
+  exists, the Memory workbench, pinboard, and command bar point to that Goal's
+  operator-notes surface and Goal Memory surface before falling back to generic
+  setup. The filter narrows already-rendered rows by lane
   or text, remembers lane/query in
   `localStorage:clankeros-memory-inventory-filter`, and resets without
   changing memory records. Memory state, workbench, pinboard, filter, and

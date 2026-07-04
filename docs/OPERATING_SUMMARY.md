@@ -425,7 +425,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   actions. It is action-first and opens with a visible
   `Memory Operator Workbench` before shared route/focus diagnostics and
   command readback, with cards for the next memory action, proposed pins,
-  operator notes, and `/resume` or goal context. When proposed memories exist,
+  operator notes, and `/resume` or goal context. When the bank is empty but a
+  saved or lead Goal exists, the Memory workbench, pinboard, and command bar
+  route to that Goal's operator-notes and Goal Memory surfaces instead of the
+  generic `/goals` setup index. When proposed memories exist,
   the workbench also opens a same-page `pin-memory` form for the first
   proposed memory before collapsed evidence; the write still happens only
   through the confirmed POST action. A visible read-only `Memory Pinboard`
@@ -935,8 +938,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   counters as visible Now, Notes, Memory Bank, Pin, and Safety cards before
   collapsed command evidence and the detailed memory readback. The `/memory` surface now starts with a read-only
   `Memory Operator Workbench` so proposed-memory pins, operator-note review,
-  future work, saved workspace resume, and empty-bank starts have one visible
-  next click before shared diagnostics or inventory. Proposed memories also
+  future work, saved or lead Goal memory, and empty-bank starts have one visible
+  next click before shared diagnostics or inventory. Empty populated sessions
+  point to the current Goal's operator-note capture surface, while first-run
+  sessions still fall back to `/goals`. Proposed memories also
   expose the first confirmed pin form directly in that top workbench so the
   operator does not have to scroll to the dense memory list. Confirmed
   `/memory` pinning promotes only entries

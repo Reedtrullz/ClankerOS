@@ -10554,6 +10554,7 @@ def _memory_page(root: Path) -> str:
     proposed = [entry for entry in entries if entry.status == "proposed"]
     operator_notes = _operator_note_paths(root)
     future_work = storage.list_recent_task_recommendations(limit=20)
+    memory_goal = _memory_goal_context(root)
     inventory_item_count = (
         len(proposed)
         + len(project_memories)
@@ -10588,6 +10589,7 @@ def _memory_page(root: Path) -> str:
                 proposed=proposed,
                 operator_notes=operator_notes,
                 future_work=future_work,
+                memory_goal=memory_goal,
             ),
             _memory_pinboard(
                 root,
@@ -10598,6 +10600,7 @@ def _memory_page(root: Path) -> str:
                 proposed=proposed,
                 operator_notes=operator_notes,
                 future_work=future_work,
+                memory_goal=memory_goal,
             ),
             _memory_inventory_filter(inventory_item_count),
             _memory_command_bar(
@@ -10609,6 +10612,7 @@ def _memory_page(root: Path) -> str:
                 proposed=proposed,
                 operator_notes=operator_notes,
                 future_work=future_work,
+                memory_goal=memory_goal,
             ),
             _list_section(
                 "Proposed Memories",
@@ -10645,6 +10649,40 @@ def _memory_page(root: Path) -> str:
     )
 
 
+def _memory_goal_context(root: Path) -> dict[str, str]:
+    workspace = _load_workspace_state(root)
+    goal_id, state, source = _resume_goal_state(
+        root,
+        _storage(root),
+        str(workspace.get("open_goal") or ""),
+    )
+    goal = state.get("goal") if state else None
+    if not goal_id or goal is None:
+        return {
+            "source": "none",
+            "goal_id": "",
+            "project_id": "",
+            "label": "",
+            "label_source": "none",
+            "memory_href": "/goals",
+            "memory_label": "/goals",
+            "notes_href": "/goals",
+            "notes_label": "/goals",
+        }
+    label, label_source = _goal_display_label(root, goal_id)
+    return {
+        "source": source,
+        "goal_id": goal_id,
+        "project_id": str(getattr(goal, "project_id", "") or ""),
+        "label": label or goal_id,
+        "label_source": label_source,
+        "memory_href": f"/goals/{quote(goal_id)}#goal-memory",
+        "memory_label": "Goal Memory",
+        "notes_href": f"/goals/{quote(goal_id)}#goal-operator-notes",
+        "notes_label": "Goal Operator Notes",
+    }
+
+
 def _memory_operator_workbench(
     root: Path,
     *,
@@ -10655,8 +10693,10 @@ def _memory_operator_workbench(
     proposed: list[Any],
     operator_notes: list[str],
     future_work: list[Any],
+    memory_goal: dict[str, str],
 ) -> str:
     workspace = _load_workspace_state(root)
+    has_goal_context = bool(memory_goal["goal_id"])
     if proposed:
         next_action = "Pin first proposed memory"
         target_href = "#memory-proposed"
@@ -10681,23 +10721,23 @@ def _memory_operator_workbench(
         target_label = "Project Memories"
         status = "records_ready"
         primary_summary = f"{len(entries)} local memory entr{'y' if len(entries) == 1 else 'ies'}"
-    elif workspace.get("open_goal"):
-        next_action = "Resume saved goal"
-        target_href = "/resume"
-        target_label = "/resume"
-        status = "resume_ready"
-        primary_summary = f"Saved goal {workspace.get('open_goal', '')}"
+    elif has_goal_context:
+        next_action = "Capture goal note"
+        target_href = memory_goal["notes_href"]
+        target_label = memory_goal["notes_label"]
+        status = "goal_context_ready"
+        primary_summary = f"Current Goal: {memory_goal['label']}"
     else:
         next_action = "Create goal context"
         target_href = "/goals"
         target_label = "/goals"
         status = "empty"
         primary_summary = "No memory records yet"
-    resume_href = "/resume" if workspace.get("open_goal") else "/goals"
-    resume_label = "/resume" if workspace.get("open_goal") else "/goals"
+    resume_href = memory_goal["memory_href"] if has_goal_context else "/goals"
+    resume_label = memory_goal["memory_label"] if has_goal_context else "/goals"
     resume_summary = (
-        f"Saved goal {workspace.get('open_goal')}"
-        if workspace.get("open_goal")
+        f"Goal memory for {memory_goal['label']}"
+        if has_goal_context
         else "Start from goal context first"
     )
     first_proposed = proposed[0] if proposed else None
@@ -10732,6 +10772,11 @@ def _memory_operator_workbench(
         ("memory_workbench_next_action", next_action),
         ("memory_workbench_target_surface", SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")),
         ("memory_workbench_resume_surface", SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>")),
+        ("memory_workbench_goal_source", memory_goal["source"]),
+        ("memory_workbench_goal", memory_goal["goal_id"] or "none"),
+        ("memory_workbench_project", memory_goal["project_id"] or "none"),
+        ("memory_workbench_goal_label", memory_goal["label"] or "none"),
+        ("memory_workbench_goal_label_source", memory_goal["label_source"]),
         ("memory_workbench_workspace_project", workspace.get("open_project", "")),
         ("memory_workbench_workspace_goal", workspace.get("open_goal", "")),
         ("memory_workbench_workspace_artifact", workspace.get("last_viewed_artifact", "")),
@@ -10789,9 +10834,10 @@ def _memory_pinboard(
     proposed: list[Any],
     operator_notes: list[str],
     future_work: list[Any],
+    memory_goal: dict[str, str],
 ) -> str:
-    del root
     active = [entry for entry in entries if entry.status == "active"]
+    has_goal_context = bool(memory_goal["goal_id"])
     lanes: list[dict[str, str | int | bool]] = [
         {
             "key": "active",
@@ -10858,9 +10904,9 @@ def _memory_pinboard(
         },
     ]
     primary_lane = "goal_context"
-    primary_href = "/goals"
-    primary_label = "Create goal context"
-    primary_reason = "no_memory_records_yet"
+    primary_href = memory_goal["notes_href"] if has_goal_context else "/goals"
+    primary_label = "Capture goal note" if has_goal_context else "Create goal context"
+    primary_reason = "current_goal_memory_empty" if has_goal_context else "no_memory_records_yet"
     for candidate in ("proposed", "active", "project", "global", "generated", "notes", "future"):
         lane = next(item for item in lanes if item["key"] == candidate)
         if lane["ready"]:
@@ -10889,12 +10935,22 @@ def _memory_pinboard(
             ]
         )
     rows: list[tuple[str, str | SafeHtml]] = [
-        ("memory_pinboard_status", "ready" if any(lane["ready"] for lane in lanes) else "empty"),
+        (
+            "memory_pinboard_status",
+            "ready"
+            if any(lane["ready"] for lane in lanes)
+            else ("goal_context_ready" if has_goal_context else "empty"),
+        ),
         ("memory_pinboard_total_entries", str(len(entries))),
         *[(f"memory_pinboard_{lane['key']}_items", str(lane["count"])) for lane in lanes],
         ("memory_pinboard_primary_lane", primary_lane),
         ("memory_pinboard_primary_surface", SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")),
         ("memory_pinboard_primary_reason", primary_reason),
+        ("memory_pinboard_goal_source", memory_goal["source"]),
+        ("memory_pinboard_goal", memory_goal["goal_id"] or "none"),
+        ("memory_pinboard_project", memory_goal["project_id"] or "none"),
+        ("memory_pinboard_goal_label", memory_goal["label"] or "none"),
+        ("memory_pinboard_goal_label_source", memory_goal["label_source"]),
         ("memory_pinboard_pin_memory_available", str(bool(proposed)).lower()),
         ("memory_pinboard_write_on_get", "false"),
         ("memory_pinboard_raw_filesystem_browsing", "false"),
@@ -11027,8 +11083,10 @@ def _memory_command_bar(
     proposed: list[Any],
     operator_notes: list[str],
     future_work: list[Any],
+    memory_goal: dict[str, str],
 ) -> str:
     workspace = _load_workspace_state(root)
+    has_goal_context = bool(memory_goal["goal_id"])
     active_count = len([entry for entry in entries if entry.status == "active"])
     archived_count = len([entry for entry in entries if entry.status == "archived"])
     first_target = "none"
@@ -11068,12 +11126,12 @@ def _memory_command_bar(
         reason = "generated_memory_records_available"
     elif project_memories:
         first_target = project_memories[0].id
-    elif workspace.get("open_goal"):
-        first_target = workspace["open_goal"]
-        next_action = "Resume saved goal"
-        target_href = "/resume"
-        target_label = "/resume"
-        reason = "saved_workspace_available"
+    elif has_goal_context:
+        first_target = memory_goal["goal_id"]
+        next_action = "Capture goal note"
+        target_href = memory_goal["notes_href"]
+        target_label = memory_goal["notes_label"]
+        reason = "current_goal_memory_empty"
     else:
         next_action = "Create goal context"
         target_href = "/goals"
@@ -11101,6 +11159,11 @@ def _memory_command_bar(
                     ("memory_command_next_action", next_action),
                     ("memory_command_target_surface", target_surface),
                     ("memory_command_reason", reason),
+                    ("memory_command_goal_source", memory_goal["source"]),
+                    ("memory_command_goal", memory_goal["goal_id"] or "none"),
+                    ("memory_command_project", memory_goal["project_id"] or "none"),
+                    ("memory_command_goal_label", memory_goal["label"] or "none"),
+                    ("memory_command_goal_label_source", memory_goal["label_source"]),
                     ("memory_command_workspace_project", workspace.get("open_project", "")),
                     ("memory_command_workspace_goal", workspace.get("open_goal", "")),
                     ("memory_command_workspace_artifact", workspace.get("last_viewed_artifact", "")),
