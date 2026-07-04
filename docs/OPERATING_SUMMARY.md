@@ -185,7 +185,14 @@ Core layers for the bootstrap:
   Goal-aware: first-run/no-goal sessions keep the bounded `/artifacts` index
   fallback, while populated sessions open the current saved or lead Goal's
   `#goal-artifact-command-bar` surface using explicit read-only artifact
-  shortcut metadata. The
+  shortcut metadata. The global operator ribbon now also includes a read-only
+  `Operator Path Rail` on every route, mapping
+  `Today -> Goal -> Action -> Proof -> Finish -> Resume`, highlighting the
+  current route posture, and reusing the same Goal-aware action, proof,
+  finish, and resume targets as the header shortcuts. The rail is orientation
+  only: it writes nothing on GET, calls no providers, performs no network
+  action, creates no external effect, and leaves all writes behind existing
+  confirmed local forms. The
   local app also exposes `/guide` as an in-app `Suggested Use Guide` that maps
   `Today -> Goal -> Action -> Proof -> Finish -> Resume`, links first-run
   operators to Home/Today/Goals project/goal setup forms, links current-goal

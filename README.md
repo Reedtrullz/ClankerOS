@@ -106,6 +106,14 @@ incidents, and demo state:
 python3 -m agent_os.cli app
 ```
 
+Every app route now keeps the daily loop visible in the global operator
+ribbon. The `Operator Path Rail` maps `Today -> Goal -> Action -> Proof ->
+Finish -> Resume`, highlights the current route posture, and uses the same
+Goal-aware action, proof, finish, and resume targets as the header shortcuts.
+It is read-only orientation; confirmed forms still own every local write, and
+the app still does not poll GitHub, call providers, push, open PRs, deploy, or
+mutate external systems on page render.
+
 Saved workspace panels are also treated as return-to-work context. When
 `.clanker/app/workspace.json` contains `expanded_panels`, `/resume`,
 `/workspace`, and the saved Goal page show a `Workspace Panel Restore` strip

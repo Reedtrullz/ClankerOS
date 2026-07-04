@@ -1,5 +1,36 @@
 # Status
 
+## 2026-07-04 Global Operator Path Rail UX
+
+- Every local app route now includes a read-only `Operator Path Rail` inside
+  the global operator ribbon.
+- The rail keeps the core product loop visible as `Today -> Goal -> Action ->
+  Proof -> Finish -> Resume`, highlights the current route posture, and reuses
+  the same Goal-aware action, proof, finish, and resume targets as the header
+  shortcuts.
+- First-run sessions highlight Today and route Action to the same-page
+  `Create Project` form, Proof to the manual CI recorder, Finish to the
+  Workspace save form, and Resume to `/resume`.
+- Populated Goal sessions highlight the current action when the operator is on
+  the Home dashboard and route Action/Resume to the current Goal action form,
+  Proof to the Goal CI handoff, and Finish to the route-local Finish Today
+  form.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed in 70.80s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed in 51.79s after updating the stale CSS assertion for the new
+    responsive path rail.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    2 passed in 95.57s.
+- Non-claim: this is read-only global orientation/navigation. It does not
+  write on GET, call providers, poll GitHub, execute tasks, approve work, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+- Testing posture: the broad/full suite should run in GitHub Actions after
+  push rather than being repeated locally for this UX slice.
+
 ## 2026-07-04 Today Quick Capture UX
 
 - `/today` now includes a read-only `Today Quick Capture` strip after the

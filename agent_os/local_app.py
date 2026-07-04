@@ -48214,6 +48214,50 @@ def _operator_ribbon_card(
     )
 
 
+def _operator_path_current_step(route_path: str, status: str) -> str:
+    if route_path == "/today":
+        return "today"
+    if route_path == "/resume":
+        return "resume"
+    if route_path in {"/verification", "/ci-evidence"}:
+        return "proof"
+    if route_path == "/workspace":
+        return "finish"
+    if route_path == "/goals" or route_path.startswith("/goals/"):
+        return "goal"
+    if route_path in {"/actions", "/workflow", "/approvals", "/inbox", "/incidents"}:
+        return "action"
+    if route_path.startswith("/runs/") or route_path.startswith("/delegations/"):
+        return "action"
+    if status == "available":
+        return "action"
+    return "today"
+
+
+def _operator_path_card(
+    step: str,
+    label: str,
+    href: str,
+    action_label: str,
+    current_step: str,
+) -> str:
+    is_current = step == current_step
+    classes = "operator-path-step"
+    if is_current:
+        classes += " operator-path-current"
+    aria = " aria-current='step'" if is_current else ""
+    current = "true" if is_current else "false"
+    return "".join(
+        [
+            f"<a class='{classes}' href='{_e(href)}' data-operator-path-step='{_e(step)}' "
+            f"data-operator-path-current='{current}'{aria}>",
+            f"<span class='operator-path-label'>{_e(label)}</span>",
+            f"<strong>{_e(_compact_label(action_label, 54))}</strong>",
+            "</a>",
+        ]
+    )
+
+
 def _operator_status_ribbon(
     root: Path,
     focus_context: dict[str, Any],
@@ -48365,8 +48409,12 @@ def _operator_status_ribbon(
     finish_target = _finish_today_shortcut_context(current_path, focus_context)
     finish_href = finish_target["href"]
     finish_label = finish_target["label"]
+    proof_target = _proof_shortcut_context(focus_context, current_path)
+    proof_href = proof_target["href"]
+    proof_label = proof_target["label"]
     search_href = "/search"
     route_label = title or route_path
+    current_step = _operator_path_current_step(route_path, status)
     rows: list[tuple[str, str | SafeHtml]] = [
         ("operator_ribbon_status", status),
         ("operator_ribbon_compact_mobile", compact_mobile),
@@ -48423,6 +48471,20 @@ def _operator_status_ribbon(
         ("operator_ribbon_finish_action", "save workspace for tomorrow"),
         ("operator_ribbon_finish_confirmation_required", "true"),
         ("operator_ribbon_search_surface", SafeHtml("<a href='/search'>/search</a>")),
+        ("operator_path_status", status),
+        ("operator_path_source", source),
+        ("operator_path_current_step", current_step),
+        ("operator_path_step_count", "6"),
+        ("operator_path_today_surface", SafeHtml("<a href='/today'>Today</a>")),
+        ("operator_path_goal_surface", SafeHtml(f"<a href='{_e(goal_href)}'>{_e(goal_label)}</a>")),
+        ("operator_path_action_surface", SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")),
+        ("operator_path_proof_surface", SafeHtml(f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>")),
+        ("operator_path_finish_surface", SafeHtml(f"<a href='{_e(finish_href)}'>{_e(finish_label)}</a>")),
+        ("operator_path_resume_surface", SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>")),
+        ("operator_path_write_on_get", "false"),
+        ("operator_path_provider_calls_taken", "0"),
+        ("operator_path_network_actions_taken", "0"),
+        ("operator_path_external_effects_created", "false"),
         ("operator_ribbon_command_palette_available", "true"),
         ("operator_ribbon_write_on_get", "false"),
         ("operator_ribbon_provider_calls_taken", "0"),
@@ -48435,7 +48497,17 @@ def _operator_status_ribbon(
         f"operator_ribbon_attention: {_e(attention_status)} -> <a href='{_e(attention_href)}'>{_e(attention_href)}</a>",
         f"operator_ribbon_resume: status={_e(resume_status)} surface=<a href='{_e(resume_href)}'>{_e(resume_label)}</a>",
         f"operator_ribbon_finish: <a href='{_e(finish_href)}'>{_e(finish_label)}</a>",
+        (
+            "operator_path_loop: "
+            "<a href='/today'>Today</a> -> "
+            f"<a href='{_e(goal_href)}'>Goal</a> -> "
+            f"<a href='{_e(primary_href)}'>Action</a> -> "
+            f"<a href='{_e(proof_href)}'>Proof</a> -> "
+            f"<a href='{_e(finish_href)}'>Finish</a> -> "
+            f"<a href='{_e(resume_href)}'>Resume</a>"
+        ),
         "operator_ribbon_palette: <a href='#command-palette'>Command Palette</a>",
+        "operator_path_safety: read-only global daily path; confirmed forms own writes",
         "operator_ribbon_safety: read-only global operator orientation",
     ]
     cards = [
@@ -48483,6 +48555,14 @@ def _operator_status_ribbon(
             marker="data-operator-ribbon-search='true'",
         ),
     ]
+    path_cards = [
+        _operator_path_card("today", "Today", "/today", "Start day", current_step),
+        _operator_path_card("goal", "Goal", goal_href, goal_label, current_step),
+        _operator_path_card("action", "Action", primary_href, primary_label, current_step),
+        _operator_path_card("proof", "Proof", proof_href, proof_label, current_step),
+        _operator_path_card("finish", "Finish", finish_href, finish_label, current_step),
+        _operator_path_card("resume", "Resume", resume_href, resume_label, current_step),
+    ]
     return "".join(
         [
             "<section class='operator-ribbon panel' data-operator-ribbon='true' "
@@ -48491,6 +48571,13 @@ def _operator_status_ribbon(
             "<div class='operator-ribbon-grid' data-operator-ribbon-cards='true'>",
             "".join(cards),
             "</div>",
+            "<nav class='operator-path-rail' data-operator-path-rail='true' "
+            f"data-operator-path-current-step='{_e(current_step)}' "
+            "aria-label='Daily operator path'>",
+            "<div class='operator-path-grid' data-operator-path-steps='true'>",
+            "".join(path_cards),
+            "</div>",
+            "</nav>",
             "<details class='operator-ribbon-evidence' data-operator-ribbon-evidence='true'>",
             "<summary>Operator ribbon evidence</summary>",
             _kv(rows),
@@ -50179,13 +50266,20 @@ def _html_page(
     .operator-ribbon-action, .operator-ribbon-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
     .operator-ribbon-action {{ background:var(--accent); color:#fff; }}
     .operator-ribbon-link {{ background:var(--surface); color:var(--accent); }}
+    .operator-path-rail {{ margin:10px 0 0; padding:8px; border:1px solid var(--line); background:var(--panel); }}
+    .operator-path-grid {{ display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:6px; }}
+    .operator-path-step {{ min-width:0; display:grid; gap:4px; padding:8px 9px; border:1px solid var(--line); background:var(--surface); color:var(--ink); text-decoration:none; overflow-wrap:anywhere; }}
+    .operator-path-current {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); background:var(--surface); }}
+    .operator-path-label {{ color:var(--muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .operator-path-step strong {{ font-size:13px; line-height:1.25; overflow-wrap:anywhere; }}
     .operator-ribbon-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .operator-ribbon-evidence summary {{ cursor:pointer; font-weight:700; }}
     .operator-ribbon-evidence:not([open]) > :not(summary) {{ display:none; }}
     .operator-ribbon dl {{ grid-template-columns:minmax(170px, 230px) 1fr; }}
     .operator-ribbon ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; }}
     .operator-ribbon li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
-    @media (max-width: 640px) {{ body[data-goal-detail-page="true"] header {{ padding:8px 10px; gap:6px; }} body[data-goal-detail-page="true"] header strong {{ font-size:13px; }} body[data-goal-detail-page="true"] .shell-nav, body[data-goal-detail-page="true"] .shell-nav-primary, body[data-goal-detail-page="true"] .header-actions {{ width:100%; flex-wrap:nowrap; overflow-x:auto; gap:6px; padding-bottom:2px; }} body[data-goal-detail-page="true"] .shell-nav a, body[data-goal-detail-page="true"] .shell-nav-more summary, body[data-goal-detail-page="true"] .icon-button {{ white-space:nowrap; }} body[data-goal-detail-page="true"] .shell-nav a {{ font-size:13px; }} body[data-goal-detail-page="true"] .icon-button {{ flex:0 0 auto; padding:6px 8px; font-size:13px; max-width:150px; overflow:hidden; text-overflow:ellipsis; }} body[data-goal-detail-page="true"] main {{ padding:10px 12px 14px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] {{ padding:8px; margin-bottom:10px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-grid {{ grid-template-columns:1fr 1fr; gap:6px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-card {{ padding:7px 8px; gap:4px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-card strong {{ font-size:13px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-action, .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-link {{ min-height:30px; padding:5px 7px; font-size:13px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-goal='true'], .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-attention='true'], .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-resume='true'], .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-search='true'] {{ display:none; }} }}
+    @media (max-width: 980px) {{ .operator-path-grid {{ grid-template-columns:repeat(3, minmax(0, 1fr)); }} }}
+    @media (max-width: 640px) {{ .operator-path-grid {{ grid-template-columns:1fr 1fr; }} body[data-goal-detail-page="true"] header {{ padding:8px 10px; gap:6px; }} body[data-goal-detail-page="true"] header strong {{ font-size:13px; }} body[data-goal-detail-page="true"] .shell-nav, body[data-goal-detail-page="true"] .shell-nav-primary, body[data-goal-detail-page="true"] .header-actions {{ width:100%; flex-wrap:nowrap; overflow-x:auto; gap:6px; padding-bottom:2px; }} body[data-goal-detail-page="true"] .shell-nav a, body[data-goal-detail-page="true"] .shell-nav-more summary, body[data-goal-detail-page="true"] .icon-button {{ white-space:nowrap; }} body[data-goal-detail-page="true"] .shell-nav a {{ font-size:13px; }} body[data-goal-detail-page="true"] .icon-button {{ flex:0 0 auto; padding:6px 8px; font-size:13px; max-width:150px; overflow:hidden; text-overflow:ellipsis; }} body[data-goal-detail-page="true"] main {{ padding:10px 12px 14px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] {{ padding:8px; margin-bottom:10px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-grid {{ grid-template-columns:1fr 1fr; gap:6px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-card {{ padding:7px 8px; gap:4px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-card strong {{ font-size:13px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-action, .operator-ribbon[data-operator-ribbon-compact-mobile="true"] .operator-ribbon-link {{ min-height:30px; padding:5px 7px; font-size:13px; }} .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-goal='true'], .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-attention='true'], .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-resume='true'], .operator-ribbon[data-operator-ribbon-compact-mobile="true"] [data-operator-ribbon-search='true'] {{ display:none; }} }}
     .workspace-panel-restore {{ border-left:4px solid var(--accent); margin:0 0 16px; padding:12px; background:var(--panel); }}
     .workspace-panel-restore h2 {{ font-size:15px; margin-top:0; }}
     .workspace-panel-restore-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(155px, 1fr)); gap:8px; align-items:stretch; margin:10px 0; }}

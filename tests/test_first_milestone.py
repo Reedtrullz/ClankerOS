@@ -4534,8 +4534,26 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-operator-ribbon-finish='true'" in root.body
     assert "data-operator-ribbon-search='true'" in root.body
     assert "data-operator-ribbon-evidence='true'" in root.body
+    assert "data-operator-path-rail='true'" in root.body
+    assert "data-operator-path-current-step='today'" in root.body
+    assert root.body.count("data-operator-path-step=") == 6
+    assert (
+        "data-operator-path-step='today' data-operator-path-current='true' "
+        "aria-current='step'"
+    ) in root.body
+    assert "data-operator-path-step='goal' data-operator-path-current='false'" in root.body
+    assert "data-operator-path-step='action' data-operator-path-current='false'" in root.body
+    assert "data-operator-path-step='proof' data-operator-path-current='false'" in root.body
+    assert "data-operator-path-step='finish' data-operator-path-current='false'" in root.body
+    assert "data-operator-path-step='resume' data-operator-path-current='false'" in root.body
     assert root.body.index("data-operator-ribbon='true'") < root.body.index(
         'data-operator-shell="true"'
+    )
+    assert root.body.index("data-operator-ribbon-cards='true'") < root.body.index(
+        "data-operator-path-rail='true'"
+    )
+    assert root.body.index("data-operator-path-rail='true'") < root.body.index(
+        "data-operator-ribbon-evidence='true'"
     )
     assert (
         "<a class='operator-ribbon-action' href='#first-run-create-project'>"
@@ -4568,6 +4586,29 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "Finish Today</a>"
     ) in root.body
     assert "operator_ribbon_finish_confirmation_required</dt><dd>true" in root.body
+    assert "operator_path_status</dt><dd>first_run" in root.body
+    assert "operator_path_source</dt><dd>first_run_progress" in root.body
+    assert "operator_path_current_step</dt><dd>today" in root.body
+    assert "operator_path_step_count</dt><dd>6" in root.body
+    assert "operator_path_today_surface</dt><dd><a href='/today'>Today</a>" in root.body
+    assert "operator_path_goal_surface</dt><dd><a href='/goals'>No goal yet</a>" in root.body
+    assert (
+        "operator_path_action_surface</dt><dd><a href='#first-run-create-project'>"
+        "Create Project</a>"
+    ) in root.body
+    assert (
+        "operator_path_proof_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>"
+        "Record CI proof</a>"
+    ) in root.body
+    assert (
+        "operator_path_finish_surface</dt><dd><a href='/workspace#save-workspace'>"
+        "Finish Today</a>"
+    ) in root.body
+    assert "operator_path_resume_surface</dt><dd><a href='/resume'>Open resume</a>" in root.body
+    assert "operator_path_write_on_get</dt><dd>false" in root.body
+    assert "operator_path_provider_calls_taken</dt><dd>0" in root.body
+    assert "operator_path_network_actions_taken</dt><dd>0" in root.body
+    assert "operator_path_external_effects_created</dt><dd>false" in root.body
     assert "operator_ribbon_command_palette_available</dt><dd>true" in root.body
     assert "operator_ribbon_write_on_get</dt><dd>false" in root.body
     assert "operator_ribbon_provider_calls_taken</dt><dd>0" in root.body
@@ -4582,6 +4623,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "operator_ribbon_finish: <a href='/workspace#save-workspace'>Finish Today</a>"
         in root.body
     )
+    assert (
+        "operator_path_loop: <a href='/today'>Today</a> -> <a href='/goals'>Goal</a> -> "
+        "<a href='#first-run-create-project'>Action</a> -> "
+        "<a href='/ci-evidence#record-ci-snapshot-json'>Proof</a> -> "
+        "<a href='/workspace#save-workspace'>Finish</a> -> <a href='/resume'>Resume</a>"
+    ) in root.body
+    assert "operator_path_safety: read-only global daily path; confirmed forms own writes" in root.body
     assert "operator_ribbon_safety: read-only global operator orientation" in root.body
     assert ".operator-main { order:1; } .operator-side { order:2; }" in root.body
     assert ".action-form-brief dl { grid-template-columns:1fr; gap:4px; }" in root.body
@@ -6565,7 +6613,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert ".goal-summary-grid, .goal-phase-grid { display:grid;" in root.body
     assert ".goal-summary-evidence:not([open]) > :not(summary)" in root.body
     assert (
-        '@media (max-width: 640px) { body[data-goal-detail-page="true"] header '
+        "@media (max-width: 980px) { .operator-path-grid { "
+        "grid-template-columns:repeat(3, minmax(0, 1fr)); } }"
+    ) in root.body
+    assert (
+        '@media (max-width: 640px) { .operator-path-grid { grid-template-columns:1fr 1fr; } '
+        'body[data-goal-detail-page="true"] header '
         "{ padding:8px 10px; gap:6px; }"
     ) in root.body
     assert (
@@ -12438,8 +12491,26 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-operator-ribbon-finish='true'" in dashboard.body
     assert "data-operator-ribbon-search='true'" in dashboard.body
     assert "data-operator-ribbon-evidence='true'" in dashboard.body
+    assert "data-operator-path-rail='true'" in dashboard.body
+    assert "data-operator-path-current-step='action'" in dashboard.body
+    assert dashboard.body.count("data-operator-path-step=") == 6
+    assert "data-operator-path-step='today' data-operator-path-current='false'" in dashboard.body
+    assert "data-operator-path-step='goal' data-operator-path-current='false'" in dashboard.body
+    assert (
+        "data-operator-path-step='action' data-operator-path-current='true' "
+        "aria-current='step'"
+    ) in dashboard.body
+    assert "data-operator-path-step='proof' data-operator-path-current='false'" in dashboard.body
+    assert "data-operator-path-step='finish' data-operator-path-current='false'" in dashboard.body
+    assert "data-operator-path-step='resume' data-operator-path-current='false'" in dashboard.body
     assert dashboard.body.index("data-operator-ribbon='true'") < dashboard.body.index(
         'data-operator-shell="true"'
+    )
+    assert dashboard.body.index("data-operator-ribbon-cards='true'") < dashboard.body.index(
+        "data-operator-path-rail='true'"
+    )
+    assert dashboard.body.index("data-operator-path-rail='true'") < dashboard.body.index(
+        "data-operator-ribbon-evidence='true'"
     )
     assert (
         f"<a class='operator-ribbon-action' href='/goals/{result.goal_id}#goal-action-dock-form'>"
@@ -12489,6 +12560,32 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in dashboard.body
     assert "operator_ribbon_finish_source</dt><dd>home_finish_form" in dashboard.body
     assert "operator_ribbon_finish_confirmation_required</dt><dd>true" in dashboard.body
+    assert "operator_path_status</dt><dd>available" in dashboard.body
+    assert "operator_path_source</dt><dd>lead_goal" in dashboard.body
+    assert "operator_path_current_step</dt><dd>action" in dashboard.body
+    assert "operator_path_step_count</dt><dd>6" in dashboard.body
+    assert "operator_path_today_surface</dt><dd><a href='/today'>Today</a>" in dashboard.body
+    assert f"operator_path_goal_surface</dt><dd><a href='/goals/{result.goal_id}'" in dashboard.body
+    assert (
+        f"operator_path_action_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in dashboard.body
+    assert (
+        f"operator_path_proof_surface</dt><dd><a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+    ) in dashboard.body
+    assert (
+        "operator_path_finish_surface</dt><dd><a href='#home-finish-today'>"
+        "Finish Today</a>"
+    ) in dashboard.body
+    assert (
+        f"operator_path_resume_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in dashboard.body
+    assert "operator_path_write_on_get</dt><dd>false" in dashboard.body
+    assert "operator_path_provider_calls_taken</dt><dd>0" in dashboard.body
+    assert "operator_path_network_actions_taken</dt><dd>0" in dashboard.body
+    assert "operator_path_external_effects_created</dt><dd>false" in dashboard.body
     assert "operator_ribbon_command_palette_available</dt><dd>true" in dashboard.body
     assert "operator_ribbon_write_on_get</dt><dd>false" in dashboard.body
     assert "operator_ribbon_provider_calls_taken</dt><dd>0" in dashboard.body
@@ -12503,6 +12600,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"operator_ribbon_resume: status=current_action surface=<a href='/goals/{result.goal_id}#goal-action-dock-form'>"
         "Create commit request</a>"
     ) in dashboard.body
+    assert (
+        f"operator_path_loop: <a href='/today'>Today</a> -> <a href='/goals/{result.goal_id}'>Goal</a> -> "
+        f"<a href='/goals/{result.goal_id}#goal-action-dock-form'>Action</a> -> "
+        f"<a href='/goals/{result.goal_id}#goal-ci-handoff'>Proof</a> -> "
+        "<a href='#home-finish-today'>Finish</a> -> "
+        f"<a href='/goals/{result.goal_id}#goal-action-dock-form'>Resume</a>"
+    ) in dashboard.body
+    assert (
+        "operator_path_safety: read-only global daily path; confirmed forms own writes"
+        in dashboard.body
+    )
     assert "operator_ribbon_safety: read-only global operator orientation" in dashboard.body
     assert "Goal-First Home" in dashboard.body
     assert "home_dashboard_goal_first</dt><dd>true" in dashboard.body

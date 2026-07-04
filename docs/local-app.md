@@ -35,6 +35,16 @@ Non-local binds are refused unless explicitly opted in:
 python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
 ```
 
+## Global Daily Path
+
+Every route includes a read-only `Operator Path Rail` inside the global
+operator ribbon. It keeps the product loop visible as `Today -> Goal -> Action
+-> Proof -> Finish -> Resume`, highlights the current route posture, and reuses
+the same Goal-aware action, proof, finish, and resume targets as the header
+shortcuts. The rail is navigation and orientation only: it writes nothing on
+GET, calls no providers, performs no network action, creates no external
+effect, and leaves all writes behind existing confirmed local forms.
+
 ## Pages
 
 - `/` - Goal-First Home dashboard. It renders the Home operating surface
