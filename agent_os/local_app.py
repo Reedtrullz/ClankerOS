@@ -2050,6 +2050,21 @@ def _guide_page(root: Path) -> str:
                 proof_label=proof_label,
                 proof_source=proof_source,
             ),
+            _guide_proof_resume_bridge(
+                root,
+                mode=mode,
+                phase=phase,
+                primary_href=primary_href,
+                primary_label=primary_label,
+                primary_action=primary_action,
+                action_form_available=action_form_available == "true",
+                latest_ci_label=latest_ci_label,
+                workspace_surface=workspace_surface,
+                goal_id=goal_id,
+                proof_href=proof_href,
+                proof_label=proof_label,
+                proof_source=proof_source,
+            ),
             "<section id='guide-daily-loop' class='panel guide-daily-loop' data-guide-daily-loop='true'><h2>Daily Loop</h2>",
             "<p class='muted'>Use these in order when you want ClankerOS to feel like the main operator surface.</p>",
             "<div class='guide-grid' data-guide-daily-loop-cards='true'>",
@@ -2261,6 +2276,162 @@ def _guide_operator_recipes(
             ),
             "</div>",
             "<details class='guide-recipes-evidence' data-guide-recipes-evidence='true'><summary>Operator recipe evidence</summary>",
+            _kv(rows),
+            _ul(lines),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _guide_proof_resume_bridge(
+    root: Path,
+    *,
+    mode: str,
+    phase: str,
+    primary_href: str,
+    primary_label: str,
+    primary_action: str,
+    action_form_available: bool,
+    latest_ci_label: str,
+    workspace_surface: str,
+    goal_id: str,
+    proof_href: str,
+    proof_label: str,
+    proof_source: str,
+) -> str:
+    ci_state = _ci_evidence_command_state(root)
+    action_href = "#guide-command-panel" if action_form_available else primary_href
+    action_label = primary_action if action_form_available else primary_label
+    if goal_id:
+        record_href = f"/goals/{quote(goal_id)}#record-goal-ci-proof"
+        record_label = "Record Goal CI proof"
+        record_mode = "goal_ci_handoff"
+        goal_surface: str | SafeHtml = SafeHtml(
+            f"<a href='/goals/{quote(goal_id)}'>{_e(goal_id)}</a>"
+        )
+    else:
+        record_href = "/ci-evidence#record-ci-snapshot-json"
+        record_label = "Record CI proof"
+        record_mode = "ci_evidence_fallback"
+        goal_surface = "none"
+
+    finish_href = "/workspace#save-workspace"
+    finish_label = "Save workspace"
+    resume_href = "/resume"
+    resume_label = "Open Resume"
+    cards = [
+        (
+            "action",
+            "Take Action",
+            f"{phase}: {primary_action}",
+            action_href,
+            action_label,
+            True,
+        ),
+        (
+            "proof",
+            "Review Proof",
+            f"Current proof posture: {ci_state['current_proof']}.",
+            proof_href,
+            proof_label,
+            False,
+        ),
+        (
+            "record",
+            "Record Proof",
+            "Capture GitHub Actions evidence when proof is missing, stale, or only partial.",
+            record_href,
+            record_label,
+            False,
+        ),
+        (
+            "finish",
+            "Finish Today",
+            "Save the browser return point after the action and proof are handled.",
+            finish_href,
+            finish_label,
+            False,
+        ),
+        (
+            "resume",
+            "Resume Tomorrow",
+            f"Current saved surface: {workspace_surface}.",
+            resume_href,
+            resume_label,
+            False,
+        ),
+    ]
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("guide_proof_resume_status", "available"),
+        ("guide_proof_resume_mode", mode),
+        ("guide_proof_resume_phase", phase),
+        ("guide_proof_resume_goal", goal_surface),
+        ("guide_proof_resume_primary_action", primary_action),
+        (
+            "guide_proof_resume_action_surface",
+            SafeHtml(f"<a href='{_e(action_href)}'>{_e(action_label)}</a>"),
+        ),
+        (
+            "guide_proof_resume_proof_surface",
+            SafeHtml(f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>"),
+        ),
+        ("guide_proof_resume_proof_source", proof_source),
+        (
+            "guide_proof_resume_record_surface",
+            SafeHtml(f"<a href='{_e(record_href)}'>{_e(record_label)}</a>"),
+        ),
+        ("guide_proof_resume_record_mode", record_mode),
+        (
+            "guide_proof_resume_finish_surface",
+            SafeHtml(f"<a href='{_e(finish_href)}'>{_e(finish_label)}</a>"),
+        ),
+        (
+            "guide_proof_resume_resume_surface",
+            SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"),
+        ),
+        ("guide_proof_resume_latest_ci_status", latest_ci_label),
+        ("guide_proof_resume_current_proof", ci_state["current_proof"]),
+        ("guide_proof_resume_ci_command_status", ci_state["command_status"]),
+        ("guide_proof_resume_ci_next_action", ci_state["next_action"]),
+        ("guide_proof_resume_workspace_surface", workspace_surface),
+        ("guide_proof_resume_action_form_available", str(action_form_available).lower()),
+        ("guide_proof_resume_write_on_get", "false"),
+        ("guide_proof_resume_provider_calls_taken", "0"),
+        ("guide_proof_resume_network_actions_taken", "0"),
+        ("guide_proof_resume_external_effects_created", "false"),
+    ]
+    lines = [
+        "guide_proof_resume_path: action -> proof -> record -> finish -> resume",
+        f"guide_proof_resume_action: <a href='{_e(action_href)}'>{_e(action_label)}</a>",
+        f"guide_proof_resume_proof: <a href='{_e(proof_href)}'>{_e(proof_label)}</a>",
+        f"guide_proof_resume_record: <a href='{_e(record_href)}'>{_e(record_label)}</a>",
+        f"guide_proof_resume_finish: <a href='{_e(finish_href)}'>{_e(finish_label)}</a>",
+        f"guide_proof_resume_resume: <a href='{_e(resume_href)}'>{_e(resume_label)}</a>",
+        "guide_proof_resume_safety: read-only proof-to-resume bridge; existing confirmed forms own writes",
+    ]
+    return "".join(
+        [
+            "<section id='guide-proof-resume-bridge' class='panel guide-proof-resume' data-guide-proof-resume-bridge='true'><h2>Proof To Resume</h2>",
+            "<p class='muted'>Use this rail after the current action: check evidence, record missing CI proof, save the browser return point, then resume from the same context tomorrow.</p>",
+            "<div class='guide-proof-resume-grid' data-guide-proof-resume-actions='true'>",
+            "".join(
+                _guide_card(
+                    key,
+                    title,
+                    body,
+                    href,
+                    label,
+                    primary=primary,
+                    data_attr="data-guide-proof-resume-card",
+                    key_attr="data-guide-proof-resume-card-key",
+                    card_class="guide-card guide-proof-resume-card",
+                    action_class="guide-action" if primary else "guide-link",
+                )
+                for key, title, body, href, label, primary in cards
+            ),
+            "</div>",
+            "<details class='guide-proof-resume-evidence' data-guide-proof-resume-evidence='true'><summary>Proof to resume evidence</summary>",
             _kv(rows),
             _ul(lines),
             "</details>",
@@ -49247,8 +49418,8 @@ def _html_page(
     .workspace-panel-restore li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--panel); overflow-wrap:anywhere; }}
     .guide-hero {{ border-left:4px solid var(--accent); }}
     .guide-loop-art {{ margin:12px 0 0; padding:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); white-space:pre-wrap; overflow-wrap:anywhere; text-align:center; font-size:15px; line-height:1.55; }}
-    .guide-command-panel, .guide-recipes, .guide-daily-loop, .guide-first-run-path, .guide-safety-boundary {{ border-left:4px solid var(--accent); }}
-    .guide-grid, .guide-command-grid, .guide-recipes-grid, .guide-first-run-grid, .guide-safety-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:12px 0; align-items:stretch; }}
+    .guide-command-panel, .guide-recipes, .guide-proof-resume, .guide-daily-loop, .guide-first-run-path, .guide-safety-boundary {{ border-left:4px solid var(--accent); }}
+    .guide-grid, .guide-command-grid, .guide-recipes-grid, .guide-proof-resume-grid, .guide-first-run-grid, .guide-safety-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:12px 0; align-items:stretch; }}
     .guide-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; display:grid; gap:8px; align-content:start; }}
     .guide-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .guide-card-kicker {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
@@ -49258,12 +49429,12 @@ def _html_page(
     .guide-action, .guide-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; width:100%; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
     .guide-action {{ background:var(--accent); color:#fff; }}
     .guide-link {{ background:var(--surface); color:var(--accent); }}
-    .guide-evidence, .guide-recipes-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .guide-evidence summary, .guide-recipes-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .guide-evidence:not([open]) > :not(summary), .guide-recipes-evidence:not([open]) > :not(summary) {{ display:none; }}
-    .guide-evidence dl, .guide-recipes-evidence dl {{ grid-template-columns:minmax(190px, 260px) 1fr; }}
-    .guide-evidence ul, .guide-recipes-evidence ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
-    .guide-evidence li, .guide-recipes-evidence li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .guide-evidence, .guide-recipes-evidence, .guide-proof-resume-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .guide-evidence summary, .guide-recipes-evidence summary, .guide-proof-resume-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .guide-evidence:not([open]) > :not(summary), .guide-recipes-evidence:not([open]) > :not(summary), .guide-proof-resume-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .guide-evidence dl, .guide-recipes-evidence dl, .guide-proof-resume-evidence dl {{ grid-template-columns:minmax(190px, 260px) 1fr; }}
+    .guide-evidence ul, .guide-recipes-evidence ul, .guide-proof-resume-evidence ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .guide-evidence li, .guide-recipes-evidence li, .guide-proof-resume-evidence li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .guide-command-form {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:12px; }}
     .guide-command-panel form {{ margin-top:0; }}
     .guide-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}

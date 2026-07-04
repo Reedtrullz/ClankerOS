@@ -194,7 +194,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   panel follows with intent cards for Start The Day, Set Up Or Select Goal,
   Do The Next Thing, Unblock Work, Check Proof, Finish Today, and Resume
   Tomorrow, linking Proof to the current Goal CI handoff or first-run fallback
-  while preserving the current action form and safety boundary. The route is read-only on GET and
+  while preserving the current action form and safety boundary. A `Proof To
+  Resume` rail makes the post-action loop explicit with cards for the current
+  action, proof review, proof recording, workspace save, and `/resume` return.
+  The route is read-only on GET and
   only reuses existing local surfaces and confirmed forms; it does not call
   providers, perform network actions, push, create PRs, deploy, or mutate
   external systems.

@@ -1,5 +1,32 @@
 # Status
 
+## 2026-07-04 Guide Proof To Resume UX
+
+- `/guide` now has a first-class `Proof To Resume` rail between Operator
+  Recipes and the Daily Loop.
+- The rail gives the operator five visible browser steps after the current
+  action: take the action, review proof, record missing or stale CI proof, save
+  the workspace, and reopen `/resume`.
+- First-run/no-goal sessions route proof review to `/verification` and proof
+  recording to `/ci-evidence#record-ci-snapshot-json`. Goal sessions route
+  review to `/goals/<goal_id>#goal-ci-handoff` and recording to
+  `/goals/<goal_id>#record-goal-ci-proof`.
+- The section emits explicit evidence for mode, Goal, action surface, proof
+  surface/source, record surface/mode, latest CI status, CI proof posture,
+  workspace surface, and zero-effect GET boundaries.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    2 passed in 101.14s.
+- Non-claim: this is read-only browser guide routing. It does not write on GET,
+  poll GitHub from the app, call providers, execute tasks, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+- Testing posture: the broad/full suite should run in GitHub Actions after push
+  rather than being repeated locally for this small UX slice.
+
 ## 2026-07-04 Goal Section Finder CI Fix
 
 - GitHub Actions runs `28695909805` and `28695910642` failed in Fast smoke

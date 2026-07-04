@@ -276,7 +276,10 @@ read-only `Operator Recipes` panel follows it with seven intent cards for
 Start The Day, Set Up Or Select Goal, Do The Next Thing, Unblock Work, Check
 Proof, Finish Today, and Resume Tomorrow, routing Proof to the current Goal CI
 handoff or first-run fallback while naming the current proof and workspace
-posture. It
+posture. The `Proof To Resume` rail then turns the post-action ritual into five
+visible browser steps: take the current action, review proof, record missing or
+stale CI proof, save the workspace, and reopen `/resume` from the saved context.
+It
 is read-only on GET and only reuses existing local surfaces and confirmed
 forms; it does not call providers, perform network actions, push, create PRs,
 deploy, or mutate external systems.

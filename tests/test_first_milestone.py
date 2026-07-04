@@ -4661,6 +4661,45 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "guide_recipe_next_action: <a href='#guide-command-panel'>Register ClankerOS project</a>" in guide.body
     assert "guide_recipe_proof: <a href='/verification'>Open Proof</a>" in guide.body
     assert "guide_recipe_safety: read-only intent recipes; existing confirmed forms own writes" in guide.body
+    assert "Proof To Resume" in guide.body
+    assert "id='guide-proof-resume-bridge'" in guide.body
+    assert "data-guide-proof-resume-bridge='true'" in guide.body
+    assert "data-guide-proof-resume-actions='true'" in guide.body
+    assert guide.body.count("data-guide-proof-resume-card='true'") == 5
+    assert "data-guide-proof-resume-card-key='action'" in guide.body
+    assert "data-guide-proof-resume-card-key='proof'" in guide.body
+    assert "data-guide-proof-resume-card-key='record'" in guide.body
+    assert "data-guide-proof-resume-card-key='finish'" in guide.body
+    assert "data-guide-proof-resume-card-key='resume'" in guide.body
+    assert "data-guide-proof-resume-evidence='true'" in guide.body
+    assert "guide_proof_resume_status</dt><dd>available" in guide.body
+    assert "guide_proof_resume_mode</dt><dd>first_run" in guide.body
+    assert "guide_proof_resume_phase</dt><dd>First run" in guide.body
+    assert "guide_proof_resume_goal</dt><dd>none" in guide.body
+    assert "guide_proof_resume_primary_action</dt><dd>Register ClankerOS project" in guide.body
+    assert "guide_proof_resume_action_surface</dt><dd><a href='#guide-command-panel'>Register ClankerOS project</a>" in guide.body
+    assert "guide_proof_resume_proof_surface</dt><dd><a href='/verification'>Open Proof</a>" in guide.body
+    assert "guide_proof_resume_proof_source</dt><dd>verification_fallback" in guide.body
+    assert "guide_proof_resume_record_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>Record CI proof</a>" in guide.body
+    assert "guide_proof_resume_record_mode</dt><dd>ci_evidence_fallback" in guide.body
+    assert "guide_proof_resume_finish_surface</dt><dd><a href='/workspace#save-workspace'>Save workspace</a>" in guide.body
+    assert "guide_proof_resume_resume_surface</dt><dd><a href='/resume'>Open Resume</a>" in guide.body
+    assert "guide_proof_resume_latest_ci_status</dt><dd>success" in guide.body
+    assert "guide_proof_resume_current_proof</dt><dd>" in guide.body
+    assert "guide_proof_resume_ci_command_status</dt><dd>" in guide.body
+    assert "guide_proof_resume_workspace_surface</dt><dd>none" in guide.body
+    assert "guide_proof_resume_action_form_available</dt><dd>true" in guide.body
+    assert "guide_proof_resume_write_on_get</dt><dd>false" in guide.body
+    assert "guide_proof_resume_provider_calls_taken</dt><dd>0" in guide.body
+    assert "guide_proof_resume_network_actions_taken</dt><dd>0" in guide.body
+    assert "guide_proof_resume_external_effects_created</dt><dd>false" in guide.body
+    assert "guide_proof_resume_path: action -> proof -> record -> finish -> resume" in guide.body
+    assert "guide_proof_resume_action: <a href='#guide-command-panel'>Register ClankerOS project</a>" in guide.body
+    assert "guide_proof_resume_proof: <a href='/verification'>Open Proof</a>" in guide.body
+    assert "guide_proof_resume_record: <a href='/ci-evidence#record-ci-snapshot-json'>Record CI proof</a>" in guide.body
+    assert "guide_proof_resume_finish: <a href='/workspace#save-workspace'>Save workspace</a>" in guide.body
+    assert "guide_proof_resume_resume: <a href='/resume'>Open Resume</a>" in guide.body
+    assert "guide_proof_resume_safety: read-only proof-to-resume bridge; existing confirmed forms own writes" in guide.body
     assert "data-guide-daily-loop='true'" in guide.body
     assert "data-guide-daily-loop-cards='true'" in guide.body
     assert guide.body.count("data-guide-step='true'") == 6
@@ -4700,6 +4739,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "guide_safety: read-only browser guide; existing confirmed forms own writes" in guide.body
     assert ".guide-grid" in guide.body
     assert ".guide-recipes-grid" in guide.body
+    assert ".guide-proof-resume-grid" in guide.body
     assert ".guide-action" in guide.body
     assert guide.body.index("data-guide-page='true'") < guide.body.index(
         "data-route-context='true'"
@@ -4708,6 +4748,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "data-guide-recipes='true'"
     )
     assert guide.body.index("data-guide-recipes='true'") < guide.body.index(
+        "data-guide-proof-resume-bridge='true'"
+    )
+    assert guide.body.index("data-guide-proof-resume-bridge='true'") < guide.body.index(
         "data-guide-daily-loop='true'"
     )
     assert guide.body.index("data-guide-daily-loop='true'") < guide.body.index(
@@ -13206,6 +13249,33 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert (
         f"guide_loop_proof: <a href='/goals/{result.goal_id}#goal-ci-handoff'>"
         "Goal CI handoff</a>"
+        in guide.body
+    )
+    assert "data-guide-proof-resume-bridge='true'" in guide.body
+    assert "data-guide-proof-resume-actions='true'" in guide.body
+    assert "guide_proof_resume_mode</dt><dd>goal" in guide.body
+    assert f"guide_proof_resume_goal</dt><dd><a href='/goals/{result.goal_id}'" in guide.body
+    assert (
+        f"guide_proof_resume_proof_surface</dt><dd><a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in guide.body
+    )
+    assert "guide_proof_resume_proof_source</dt><dd>guide_goal_ci_handoff" in guide.body
+    assert (
+        f"guide_proof_resume_record_surface</dt><dd><a href='/goals/{result.goal_id}#record-goal-ci-proof'>"
+        "Record Goal CI proof</a>"
+        in guide.body
+    )
+    assert "guide_proof_resume_record_mode</dt><dd>goal_ci_handoff" in guide.body
+    assert "guide_proof_resume_latest_ci_status</dt><dd>success" in guide.body
+    assert (
+        f"guide_proof_resume_proof: <a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in guide.body
+    )
+    assert (
+        f"guide_proof_resume_record: <a href='/goals/{result.goal_id}#record-goal-ci-proof'>"
+        "Record Goal CI proof</a>"
         in guide.body
     )
     assert "Today Activity Digest" in today.body
