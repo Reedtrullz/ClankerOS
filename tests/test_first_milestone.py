@@ -5094,6 +5094,49 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_session_now: Register ClankerOS project" in today.body
     assert "today_session_click: <a href='#first-run-create-project'>Create Project</a>" in today.body
     assert "today_session_safety: read-only local summary" in today.body
+    assert "Today Loop Checklist" in today.body
+    assert "data-today-loop-checklist='true'" in today.body
+    assert "data-today-loop-checklist-storage-key='clankeros-today-loop-checklist'" in today.body
+    assert "data-today-loop-checklist-toolbar='true'" in today.body
+    assert "data-today-loop-checklist-status='true'>Day loop: default</span>" in today.body
+    assert "data-today-loop-checklist-reset='true'>Reset day loop</button>" in today.body
+    assert "data-today-loop-checklist-items='true'" in today.body
+    assert today.body.count("data-today-loop-checklist-item='true'") == 5
+    assert "data-today-loop-checklist-key='resume'" in today.body
+    assert "data-today-loop-checklist-key='goal'" in today.body
+    assert "data-today-loop-checklist-key='action'" in today.body
+    assert "data-today-loop-checklist-key='proof'" in today.body
+    assert "data-today-loop-checklist-key='finish'" in today.body
+    assert "data-today-loop-checklist-checkbox='true'" in today.body
+    assert "data-today-loop-checklist-evidence='true'" in today.body
+    assert "today_loop_checklist_status</dt><dd>first_run" in today.body
+    assert "today_loop_checklist_source</dt><dd>first_run_progress" in today.body
+    assert "today_loop_checklist_goal</dt><dd>none" in today.body
+    assert "today_loop_checklist_project</dt><dd>clankeros" in today.body
+    assert "today_loop_checklist_phase</dt><dd>First run" in today.body
+    assert "today_loop_checklist_current_gate</dt><dd>create_project" in today.body
+    assert "today_loop_checklist_next_action</dt><dd>Register ClankerOS project" in today.body
+    assert "today_loop_checklist_action_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_loop_checklist_proof_surface</dt><dd><a href='/verification'>Review proof</a>" in today.body
+    assert "today_loop_checklist_finish_surface</dt><dd><a href='#first-run-guide'>First Run Guide</a>" in today.body
+    assert "today_loop_checklist_action_form_available</dt><dd>true" in today.body
+    assert "today_loop_checklist_finish_form_available</dt><dd>false" in today.body
+    assert "today_loop_checklist_resume_status</dt><dd>not_started" in today.body
+    assert "today_loop_checklist_resume_ready</dt><dd>false" in today.body
+    assert "today_loop_checklist_item_count</dt><dd>5" in today.body
+    assert "today_loop_checklist_memory_storage</dt><dd>localStorage:clankeros-today-loop-checklist" in today.body
+    assert "today_loop_checklist_memory_fields</dt><dd>checked updatedAt" in today.body
+    assert "today_loop_checklist_reset</dt><dd>available" in today.body
+    assert "today_loop_checklist_write_on_get</dt><dd>false" in today.body
+    assert "today_loop_checklist_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_loop_checklist_network_actions_taken</dt><dd>0" in today.body
+    assert "today_loop_checklist_external_effects_created</dt><dd>false" in today.body
+    assert "today_loop_checklist_item: resume summary=not_started / ready=false surface=<a href='/resume'>Open resume</a>" in today.body
+    assert "today_loop_checklist_item: action summary=Register ClankerOS project surface=<a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_loop_checklist_safety: browser-local checklist only" in today.body
+    assert "function updateTodayLoopChecklist(options)" in today.body
+    assert "window.localStorage.setItem(todayLoopChecklistStorageKey(root)" in today.body
+    assert "window.localStorage.removeItem(todayLoopChecklistStorageKey(root))" in today.body
     assert "Today Activity Digest" in today.body
     assert "data-today-activity-digest='true'" in today.body
     assert "data-today-activity-actions='true'" in today.body
@@ -5105,6 +5148,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-today-activity-list='true'" in today.body
     assert "data-today-activity-evidence='true'" in today.body
     assert today.body.index("data-today-session-summary='true'") < today.body.index(
+        "data-today-loop-checklist='true'"
+    )
+    assert today.body.index("data-today-loop-checklist='true'") < today.body.index(
         "data-today-activity-digest='true'"
     )
     assert today.body.index("data-today-activity-digest='true'") < today.body.index(
@@ -5143,7 +5189,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_activity_safety: read-only goal timeline on daily cockpit" in today.body
     assert "Today Operator Workbench" in today.body
     assert "data-today-operator-workbench='true'" in today.body
-    assert ".today-session-grid, .today-workbench-grid, .today-activity-grid" in today.body
+    assert ".today-session-grid, .today-loop-checklist-grid, .today-workbench-grid, .today-activity-grid" in today.body
     assert "data-today-workbench-evidence='true'" in today.body
     assert "today_workbench_status</dt><dd>first_run" in today.body
     assert "today_workbench_source</dt><dd>goal_state_workspace_attention" in today.body
@@ -7346,7 +7392,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-refresh='true'>Refresh" in workspace.body
     assert "data-workspace-view-memory-reset-all='true'>Reset all view memory" in workspace.body
     assert "data-workspace-view-memory-grid='true'" in workspace.body
-    assert workspace.body.count("class='workspace-view-memory-card") == 29
+    assert workspace.body.count("class='workspace-view-memory-card") == 30
     assert "data-workspace-view-memory-card='theme'" in workspace.body
     assert "data-workspace-view-memory-card='focus'" in workspace.body
     assert "data-workspace-view-memory-card='first-run'" in workspace.body
@@ -7357,6 +7403,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-card='route-history'" in workspace.body
     assert "data-workspace-view-memory-card='last-artifact'" in workspace.body
     assert "data-workspace-view-memory-card='today-goals'" in workspace.body
+    assert "data-workspace-view-memory-card='today-loop'" in workspace.body
     assert "data-workspace-view-memory-card='open-panels'" in workspace.body
     assert "data-workspace-view-memory-card='scroll-position'" in workspace.body
     assert "data-workspace-view-memory-card='search'" in workspace.body
@@ -7386,6 +7433,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-route-history'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-last-artifact'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-today-goal-queue-view'" in workspace.body
+    assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-today-loop-checklist'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-today-decision-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='exact' data-workspace-view-memory-key='clankeros-artifact-index-filter'" in workspace.body
     assert "data-workspace-view-memory-mode='prefix' data-workspace-view-memory-key='clankeros-open-panels:'" in workspace.body
@@ -7409,8 +7457,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-workspace-view-memory-evidence='true'" in workspace.body
     assert "workspace_view_memory_status</dt><dd>available" in workspace.body
     assert "workspace_view_memory_source</dt><dd>browser localStorage" in workspace.body
-    assert "workspace_view_memory_card_count</dt><dd>29" in workspace.body
-    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-first-run-checklist, clankeros-dogfooding-session, clankeros-goal-board-view, clankeros-home-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-last-artifact, clankeros-today-goal-queue-view, clankeros-today-decision-filter, clankeros-artifact-index-filter, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
+    assert "workspace_view_memory_card_count</dt><dd>30" in workspace.body
+    assert "workspace_view_memory_exact_keys</dt><dd>clankeros-theme, clankeros-focus-mode, clankeros-first-run-checklist, clankeros-dogfooding-session, clankeros-goal-board-view, clankeros-home-goal-board-view, clankeros-recent-items-filter, clankeros-route-history, clankeros-last-artifact, clankeros-today-goal-queue-view, clankeros-today-loop-checklist, clankeros-today-decision-filter, clankeros-artifact-index-filter, clankeros-memory-inventory-filter, clankeros-skills-inventory-filter, clankeros-approval-queue-filter, clankeros-inbox-queue-filter, clankeros-profile-routing-filter" in workspace.body
     assert "workspace_view_memory_prefix_keys</dt><dd>clankeros-open-panels:, clankeros-scroll-position:, clankeros-search-result-lane:, clankeros-goal-timeline-lane:, clankeros-goal-action-prep:, clankeros-goal-section-finder:, clankeros-goal-decision-filter:, clankeros-goal-artifact-filter:, clankeros-goal-artifact-reader:, clankeros-goal-notes-filter:, clankeros-goal-note-draft:, clankeros-action-form-draft:" in workspace.body
     assert "workspace_view_memory_reset_all_supported</dt><dd>true" in workspace.body
     assert "workspace_view_memory_reset_requires_click</dt><dd>true" in workspace.body
@@ -7428,6 +7476,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: route-history mode=exact key=clankeros-route-history" in workspace.body
     assert "workspace_view_memory_card: last-artifact mode=exact key=clankeros-last-artifact" in workspace.body
     assert "workspace_view_memory_card: today-goals mode=exact key=clankeros-today-goal-queue-view" in workspace.body
+    assert "workspace_view_memory_card: today-loop mode=exact key=clankeros-today-loop-checklist" in workspace.body
     assert "workspace_view_memory_card: today-decisions mode=exact key=clankeros-today-decision-filter" in workspace.body
     assert "workspace_view_memory_card: open-panels mode=prefix key=clankeros-open-panels:" in workspace.body
     assert "workspace_view_memory_card: scroll-position mode=prefix key=clankeros-scroll-position:" in workspace.body
@@ -7443,7 +7492,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_view_memory_card: approvals mode=exact key=clankeros-approval-queue-filter" in workspace.body
     assert "workspace_view_memory_card: inbox mode=exact key=clankeros-inbox-queue-filter" in workspace.body
     assert "workspace_view_memory_card: profiles mode=exact key=clankeros-profile-routing-filter" in workspace.body
-    assert "workspace_view_memory_reset_scope: theme focus first-run board home-goal-board recent route-history last-artifact today-goals today-decisions open-panels scroll-position search timeline action-prep goal-sections decisions goal-artifacts artifact-index notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
+    assert "workspace_view_memory_reset_scope: theme focus first-run board home-goal-board recent route-history last-artifact today-goals today-loop today-decisions open-panels scroll-position search timeline action-prep goal-sections decisions goal-artifacts artifact-index notes note-drafts form-drafts memory skills approvals inbox profiles" in workspace.body
     assert "window.localStorage.removeItem(key)" in workspace.body
     assert "candidate.indexOf(key) === 0" in workspace.body
     assert "delete document.documentElement.dataset.theme" in workspace.body
@@ -13314,6 +13363,51 @@ def test_local_app_demo_scenario_populates_fixture_state(
     )
     assert "today_session_ci: direct_public_snapshot/success" in today.body
     assert "today_session_safety: read-only local summary" in today.body
+    assert "Today Loop Checklist" in today.body
+    assert "data-today-loop-checklist='true'" in today.body
+    assert "data-today-loop-checklist-storage-key='clankeros-today-loop-checklist'" in today.body
+    assert "data-today-loop-checklist-toolbar='true'" in today.body
+    assert "data-today-loop-checklist-status='true'>Day loop: default</span>" in today.body
+    assert "data-today-loop-checklist-reset='true'>Reset day loop</button>" in today.body
+    assert "data-today-loop-checklist-items='true'" in today.body
+    assert today.body.count("data-today-loop-checklist-item='true'") == 5
+    assert "data-today-loop-checklist-key='resume'" in today.body
+    assert "data-today-loop-checklist-key='goal'" in today.body
+    assert "data-today-loop-checklist-key='action'" in today.body
+    assert "data-today-loop-checklist-key='proof'" in today.body
+    assert "data-today-loop-checklist-key='finish'" in today.body
+    assert "data-today-loop-checklist-evidence='true'" in today.body
+    assert "today_loop_checklist_status</dt><dd>goal_ready" in today.body
+    assert "today_loop_checklist_source</dt><dd>lead_goal_state" in today.body
+    assert f"today_loop_checklist_goal</dt><dd><a href='/goals/{result.goal_id}'" in today.body
+    assert f"today_loop_checklist_project</dt><dd><a href='/projects/{result.project_id}'" in today.body
+    assert "today_loop_checklist_phase</dt><dd>Ready to commit" in today.body
+    assert "today_loop_checklist_current_gate</dt><dd>commit_request" in today.body
+    assert "today_loop_checklist_next_action</dt><dd>Create commit request" in today.body
+    assert "today_loop_checklist_action_surface</dt><dd><a href='#today-current-action'>Create commit request</a>" in today.body
+    assert (
+        f"today_loop_checklist_proof_surface</dt><dd><a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in today.body
+    )
+    assert "today_loop_checklist_finish_surface</dt><dd><a href='#today-finish'>Finish Today</a>" in today.body
+    assert "today_loop_checklist_action_form_available</dt><dd>true" in today.body
+    assert "today_loop_checklist_finish_form_available</dt><dd>true" in today.body
+    assert "today_loop_checklist_latest_ci_status</dt><dd>success" in today.body
+    assert "today_loop_checklist_current_proof</dt><dd>current_workflow_run_success" in today.body
+    assert "today_loop_checklist_resume_status</dt><dd>not_started" in today.body
+    assert "today_loop_checklist_resume_ready</dt><dd>false" in today.body
+    assert "today_loop_checklist_item_count</dt><dd>5" in today.body
+    assert "today_loop_checklist_memory_storage</dt><dd>localStorage:clankeros-today-loop-checklist" in today.body
+    assert "today_loop_checklist_memory_fields</dt><dd>checked updatedAt" in today.body
+    assert "today_loop_checklist_write_on_get</dt><dd>false" in today.body
+    assert "today_loop_checklist_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_loop_checklist_network_actions_taken</dt><dd>0" in today.body
+    assert "today_loop_checklist_external_effects_created</dt><dd>false" in today.body
+    assert "today_loop_checklist_item: resume summary=not_started / ready=false surface=<a href='/resume'>Open resume</a>" in today.body
+    assert "today_loop_checklist_item: action summary=Create commit request surface=<a href='#today-current-action'>Create commit request</a>" in today.body
+    assert "today_loop_checklist_safety: browser-local checklist only" in today.body
+    assert "function updateTodayLoopChecklist(options)" in today.body
     guide = render_local_app_route(tmp_path, "/guide")
     assert guide.status == 200
     assert "guide_command_mode</dt><dd>goal" in guide.body
@@ -13385,6 +13479,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-today-activity-list='true'" in today.body
     assert "data-today-activity-evidence='true'" in today.body
     assert today.body.index("data-today-session-summary='true'") < today.body.index(
+        "data-today-loop-checklist='true'"
+    )
+    assert today.body.index("data-today-loop-checklist='true'") < today.body.index(
         "data-today-activity-digest='true'"
     )
     assert today.body.index("data-today-activity-digest='true'") < today.body.index(
@@ -13486,6 +13583,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Today Goal queue" in today.body
     assert "Today Live state" in today.body
     assert "Today Session summary" in today.body
+    assert "Today Day checklist" in today.body
     assert "Today Activity digest" in today.body
     assert "Today Operator workbench" in today.body
     assert "Today Decision queue" in today.body
@@ -13497,6 +13595,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='/today#today-goal-queue'" in today.body
     assert "href='/today#today-live-state'" in today.body
     assert "href='/today#today-session-summary'" in today.body
+    assert "href='/today#today-loop-checklist'" in today.body
     assert "href='/today#today-activity-digest'" in today.body
     assert "href='/today#today-operator-workbench'" in today.body
     assert "href='/today#today-decision-queue'" in today.body
@@ -13505,10 +13604,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='/today#today-ci-handoff'" in today.body
     assert "href='/today#today-finish'" in today.body
     assert "today section current next action command form" in today.body
+    assert "today section resume goal action proof finish" in today.body
     assert "today section ci github actions verification proof handoff" in today.body
-    assert "palette_filter_today_section_count</dt><dd>11" in today.body
+    assert "palette_filter_today_section_count</dt><dd>12" in today.body
     assert "palette_filter_today_section_source</dt><dd>current_route" in today.body
     assert "palette_today_section_commands: route=/today source=current_route" in today.body
+    assert "palette_today_section_command: Day checklist surface=<a href='/today#today-loop-checklist'>today-loop-checklist</a>" in today.body
     assert "palette_today_section_command: Decision filter surface=<a href='/today#today-decision-filter'>today-decision-filter</a>" in today.body
     assert "palette_today_section_command: CI handoff surface=<a href='/today#today-ci-handoff'>today-ci-handoff</a>" in today.body
     assert (

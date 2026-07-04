@@ -124,6 +124,11 @@ Core layers for the bootstrap:
   evidence table. Saved resume surfaces still win; otherwise populated
   sessions route Resume to the current Goal action, while first-run sessions
   keep the Goals setup fallback.
+  A browser-local `Today Loop Checklist` follows with Resume, Goal, Action,
+  Proof, and Finish checkboxes backed by
+  `localStorage:clankeros-today-loop-checklist`; active Goal proof uses
+  project-scoped Goal CI evidence and reset coverage lives in
+  `/workspace#workspace-view-memory`.
   A read-only `Today Activity Digest` follows with Now, Window, Artifacts,
   Notes, and Safety cards plus a compact recent timeline list for the lead Goal
   or current first-run step, preserving source, item-count, latest-event,
@@ -399,7 +404,7 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   `localStorage` view state for theme, focus mode, Goal board, Home Goal
   Board, Recent Items filters, route history, the last opened artifact
   breadcrumb, open panels, scroll position, search lanes, timeline lanes, Goal
-  section searches, Today Goal Queue view, artifact filters, the global
+  section searches, Today Goal Queue view, Today Loop Checklist, artifact filters, the global
   Artifact Index filter, Today and Goal decision filters, notes filters, note
   drafts, setup and workflow form drafts, Goal action prep checks, Memory Bank
   filters, Skills Inventory filters, First Run Checklist checks/notes,

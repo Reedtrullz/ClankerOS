@@ -181,6 +181,7 @@ COMMAND_PALETTE_TODAY_SECTIONS = [
     ("Goal queue", "today-goal-queue", "active paused completed goals switch goal"),
     ("Live state", "today-live-state", "reload polling local state"),
     ("Session summary", "today-session-summary", "return brief continue proof resume"),
+    ("Day checklist", "today-loop-checklist", "resume goal action proof finish"),
     ("Activity digest", "today-activity-digest", "recent timeline artifacts notes"),
     ("Operator workbench", "today-operator-workbench", "do check unblock finish"),
     ("Decision queue", "today-decision-queue", "waiting decisions approval blockers"),
@@ -2705,6 +2706,7 @@ def _today_page(root: Path) -> str:
             lead_goal=lead_goal,
         ),
         _today_session_summary(root, storage, lead_goal),
+        _today_loop_checklist(root, storage, lead_goal),
         _today_activity_digest(root, storage, lead_goal),
         _today_operator_workbench(root, storage, lead_goal),
         _today_decision_queue(root, storage, lead_goal),
@@ -3049,6 +3051,354 @@ def _goal_ci_handoff_target(
         f"/goals/{quote(goal_id)}#goal-ci-handoff",
         "Goal CI handoff",
         "lead_goal_ci_handoff",
+    )
+
+
+def _project_ci_evidence_command_state(root: Path, project_id: str) -> dict[str, str]:
+    storage = _storage(root)
+    project = storage.get_registered_project(project_id)
+    project_root = Path(project.root_path) if project else root
+    repo_state = _repo_state(project_root)
+    branch = repo_state["branch"] if repo_state["branch"] != "unknown" else "unknown"
+    full_commit = _git(project_root, ["rev-parse", "HEAD"])
+    current_commit = full_commit or repo_state["commit"]
+    current_commit_known = bool(current_commit and current_commit != "unknown")
+    current_commit_label = current_commit if current_commit_known else "unknown"
+    latest = _latest_ci_evidence_record(root, project_id=project_id)
+    if latest is None:
+        return {
+            "branch": branch,
+            "current_commit": current_commit_label,
+            "latest_source": "none",
+            "latest_status": "missing",
+            "latest_scope": "none",
+            "latest_commit": "none",
+            "latest_external_run_id": "none",
+            "current_proof": "missing_current_commit_proof",
+            "command_status": "no_project_scoped_records",
+            "next_action": "Record Goal CI proof",
+            "target_surface": "#record-goal-ci-proof",
+            "reason": "no_project_scoped_local_ci_evidence_records",
+        }
+
+    source_kind, record = latest
+    result = getattr(record, "result_json", {}) or {}
+    latest_scope = str(result.get("evidence_scope", "unknown"))
+    latest_status = str(getattr(record, "status", "unknown"))
+    latest_commit = str(getattr(record, "commit_sha", "unknown"))
+
+    branch_matches = str(getattr(record, "branch_name", "")) == branch
+    commit_matches = current_commit_known and _commit_refs_match(
+        latest_commit,
+        current_commit,
+        repo_state["commit"],
+    )
+    matches_current = branch_matches and commit_matches
+    if not current_commit_known:
+        current_proof = "current_commit_unknown"
+        command_status = "project_records_available_current_commit_unknown"
+        next_action = "Confirm checkout then record Goal CI proof"
+        target_surface = "#record-goal-ci-proof"
+        reason = "project_checkout_commit_unknown"
+    elif not matches_current:
+        current_proof = "stale_or_different_commit"
+        command_status = "project_latest_record_for_different_checkout"
+        next_action = "Record current Goal CI proof"
+        target_surface = "#record-goal-ci-proof"
+        reason = "latest_project_record_does_not_match_current_checkout"
+    elif latest_status == "success" and latest_scope == "workflow_run":
+        current_proof = "current_workflow_run_success"
+        command_status = "project_current_full_ci_recorded"
+        next_action = "Review Goal CI evidence"
+        target_surface = "#goal-verification-evidence"
+        reason = "current_project_checkout_has_workflow_run_success"
+    elif latest_status == "success" and (
+        latest_scope == "job" or latest_scope.startswith("workflow_job:")
+    ):
+        current_proof = "current_job_scope_only"
+        command_status = "project_current_fast_smoke_recorded"
+        next_action = "Record full-suite Goal CI proof"
+        target_surface = "#record-goal-ci-proof"
+        reason = "latest_project_record_is_job_scoped_early_proof"
+    else:
+        current_proof = "current_ci_record_not_full_success"
+        command_status = "project_current_ci_record_needs_review"
+        next_action = "Inspect recorded Goal CI proof"
+        target_surface = "#goal-verification-evidence"
+        reason = "latest_project_record_is_not_full_workflow_success"
+
+    return {
+        "branch": branch,
+        "current_commit": current_commit_label,
+        "latest_source": source_kind,
+        "latest_status": latest_status,
+        "latest_scope": latest_scope,
+        "latest_commit": latest_commit,
+        "latest_external_run_id": str(getattr(record, "external_run_id", "unknown")),
+        "current_proof": current_proof,
+        "command_status": command_status,
+        "next_action": next_action,
+        "target_surface": target_surface,
+        "reason": reason,
+    }
+
+
+def _today_loop_checklist(
+    root: Path,
+    storage: Storage,
+    lead_goal: sqlite3.Row | None,
+) -> str:
+    storage_key = "clankeros-today-loop-checklist"
+    workspace = _load_workspace_state(root)
+    resume_ready = _workspace_resume_readiness(
+        root,
+        open_project=str(workspace.get("open_project") or "").strip(),
+        open_goal=str(workspace.get("open_goal") or "").strip(),
+        filters=str(workspace.get("filters") or "").strip(),
+        expanded=str(workspace.get("expanded_panels") or "").strip(),
+        last_artifact=str(workspace.get("last_viewed_artifact") or "").strip(),
+    )
+    ci_state = _ci_evidence_command_state(root)
+    record_base = "/ci-evidence"
+
+    if lead_goal is None:
+        progress = _first_run_progress(root, storage)
+        action_href, action_label = _today_first_run_target(progress)
+        status = "first_run"
+        source = "first_run_progress"
+        goal_value: str | SafeHtml = "none"
+        project_value: str | SafeHtml = str(progress["default_project"])
+        phase = "First run"
+        next_action = str(progress["next_action"])
+        current_gate = str(progress["current_step"])
+        goal_href = action_href
+        goal_label = action_label
+        proof_href = "/verification"
+        proof_label = "Review proof"
+        finish_href = "#first-run-guide"
+        finish_label = "First Run Guide"
+        action_form_available = str(action_href.startswith("#first-run-")).lower()
+        finish_form_available = "false"
+    else:
+        goal_id = str(lead_goal["id"])
+        state = _goal_state(root, storage, goal_id)
+        action = _goal_next_action(root, state)
+        form_available = bool(_goal_next_action_form(state, action))
+        goal = state["goal"]
+        label = str(lead_goal["title"] or lead_goal["description"] or goal_id)
+        status = "goal_ready"
+        source = "lead_goal_state"
+        goal_value = SafeHtml(
+            f"<a href='/goals/{quote(goal_id)}'>{_e(_compact_label(label, 72))}</a>"
+        )
+        project_value = SafeHtml(
+            f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a>"
+        )
+        phase = _goal_current_phase(state)
+        next_action = action.action
+        _, _, current_gate = _goal_workflow_gate_summary(root, state, action)
+        action_href = "#today-current-action" if form_available else action.href
+        action_label = action.action if form_available else action.href
+        goal_href = f"/goals/{quote(goal_id)}"
+        goal_label = _compact_label(label, 72)
+        proof_href = f"/goals/{quote(goal_id)}#goal-ci-handoff"
+        proof_label = "Goal CI handoff"
+        finish_href = "#today-finish"
+        finish_label = "Finish Today"
+        action_form_available = str(form_available).lower()
+        finish_form_available = "true"
+        ci_state = _project_ci_evidence_command_state(root, goal.project_id)
+        record_base = f"/goals/{quote(goal_id)}"
+
+    if str(ci_state["target_surface"]).startswith("#"):
+        record_href = f"{record_base}{ci_state['target_surface']}"
+    else:
+        record_href = str(ci_state["target_surface"])
+
+    items = [
+        (
+            "resume",
+            "Resume",
+            f"{resume_ready['status']} / ready={str(resume_ready['ready']).lower()}",
+            "/resume",
+            "Open resume",
+        ),
+        ("goal", "Goal", f"{phase} / {current_gate}", goal_href, goal_label),
+        ("action", "Action", next_action, action_href, action_label),
+        (
+            "proof",
+            "Proof",
+            f"{ci_state['latest_status']} / {ci_state['current_proof']}",
+            proof_href,
+            proof_label,
+        ),
+        ("finish", "Finish", "Save tomorrow's return point.", finish_href, finish_label),
+    ]
+    item_html: list[str] = []
+    evidence_lines: list[str] = []
+    for key, title, summary, href, label in items:
+        item_html.append(
+            "".join(
+                [
+                    "<label class='today-loop-checklist-item' "
+                    "data-today-loop-checklist-item='true' ",
+                    f"data-today-loop-checklist-key='{_e(key)}'>",
+                    f"<input type='checkbox' value='{_e(key)}' "
+                    "data-today-loop-checklist-checkbox='true'>",
+                    "<span>",
+                    f"<strong>{_e(title)}</strong>",
+                    f"<small>{_e(summary)}</small>",
+                    f"<a href='{_e(href)}'>{_e(label)}</a>",
+                    "</span>",
+                    "</label>",
+                ]
+            )
+        )
+        evidence_lines.append(
+            f"today_loop_checklist_item: {_e(key)} summary={_e(summary)} surface=<a href='{_e(href)}'>{_e(label)}</a>"
+        )
+    return "".join(
+        [
+            "<section id='today-loop-checklist' class='panel today-loop-checklist' "
+            "data-today-loop-checklist='true' "
+            f"data-today-loop-checklist-storage-key='{_e(storage_key)}' "
+            f"data-today-loop-checklist-total='{len(items)}'>",
+            "<h2>Today Loop Checklist</h2>",
+            "<p class='muted'>A browser-local day tracker for resume, Goal selection, the next action, proof, and Finish Today.</p>",
+            "<div class='today-loop-checklist-toolbar' data-today-loop-checklist-toolbar='true'>",
+            "<span data-today-loop-checklist-status='true'>Day loop: default</span>",
+            "<button type='button' class='today-loop-checklist-reset' data-today-loop-checklist-reset='true'>Reset day loop</button>",
+            "</div>",
+            "<div class='today-loop-checklist-grid' data-today-loop-checklist-items='true'>",
+            "".join(item_html),
+            "</div>",
+            "<details class='today-loop-checklist-evidence' data-today-loop-checklist-evidence='true'><summary>Today loop checklist evidence</summary>",
+            _kv(
+                [
+                    ("today_loop_checklist_status", status),
+                    ("today_loop_checklist_source", source),
+                    ("today_loop_checklist_goal", goal_value),
+                    ("today_loop_checklist_project", project_value),
+                    ("today_loop_checklist_phase", phase),
+                    ("today_loop_checklist_current_gate", current_gate),
+                    ("today_loop_checklist_next_action", next_action),
+                    (
+                        "today_loop_checklist_action_surface",
+                        SafeHtml(f"<a href='{_e(action_href)}'>{_e(action_label)}</a>"),
+                    ),
+                    (
+                        "today_loop_checklist_proof_surface",
+                        SafeHtml(f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>"),
+                    ),
+                    (
+                        "today_loop_checklist_record_surface",
+                        SafeHtml(f"<a href='{_e(record_href)}'>{_e(record_href)}</a>"),
+                    ),
+                    (
+                        "today_loop_checklist_finish_surface",
+                        SafeHtml(f"<a href='{_e(finish_href)}'>{_e(finish_label)}</a>"),
+                    ),
+                    ("today_loop_checklist_action_form_available", action_form_available),
+                    ("today_loop_checklist_finish_form_available", finish_form_available),
+                    ("today_loop_checklist_ci_source", ci_state["latest_source"]),
+                    ("today_loop_checklist_ci_scope", ci_state["latest_scope"]),
+                    (
+                        "today_loop_checklist_ci_run_id",
+                        ci_state["latest_external_run_id"],
+                    ),
+                    ("today_loop_checklist_latest_ci_status", ci_state["latest_status"]),
+                    ("today_loop_checklist_current_proof", ci_state["current_proof"]),
+                    ("today_loop_checklist_ci_reason", ci_state["reason"]),
+                    ("today_loop_checklist_resume_status", str(resume_ready["status"])),
+                    ("today_loop_checklist_resume_ready", str(resume_ready["ready"]).lower()),
+                    ("today_loop_checklist_item_count", str(len(items))),
+                    ("today_loop_checklist_memory_storage", f"localStorage:{storage_key}"),
+                    ("today_loop_checklist_memory_fields", "checked updatedAt"),
+                    ("today_loop_checklist_reset", "available"),
+                    ("today_loop_checklist_write_on_get", "false"),
+                    ("today_loop_checklist_provider_calls_taken", "0"),
+                    ("today_loop_checklist_network_actions_taken", "0"),
+                    ("today_loop_checklist_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                evidence_lines
+                + [
+                    "today_loop_checklist_safety: browser-local checklist only; existing confirmed forms own writes",
+                ]
+            ),
+            "</details>",
+            """<script>
+(function () {
+  var root = document.querySelector("[data-today-loop-checklist='true']");
+  if (!root) return;
+  var status = root.querySelector("[data-today-loop-checklist-status='true']");
+  var reset = root.querySelector("[data-today-loop-checklist-reset='true']");
+  var boxes = Array.prototype.slice.call(root.querySelectorAll("[data-today-loop-checklist-checkbox='true']"));
+  function todayLoopChecklistStorageKey(rootNode) {
+    var key = rootNode ? rootNode.getAttribute("data-today-loop-checklist-storage-key") : "";
+    return key || "clankeros-today-loop-checklist";
+  }
+  function setTodayLoopChecklistStatus(message) {
+    if (status) status.textContent = message;
+  }
+  function checkedValues() {
+    return boxes.filter(function (box) { return box.checked; }).map(function (box) { return box.value; });
+  }
+  function updateTodayLoopChecklist(options) {
+    options = options || {};
+    var checked = checkedValues();
+    setTodayLoopChecklistStatus("Day loop: " + checked.length + " of " + boxes.length + " checked");
+    if (options.save === false || !window.localStorage) return;
+    try {
+      window.localStorage.setItem(todayLoopChecklistStorageKey(root), JSON.stringify({
+        checked: checked,
+        updatedAt: new Date().toISOString()
+      }));
+      setTodayLoopChecklistStatus("Day loop: saved " + checked.length + " of " + boxes.length);
+    } catch (error) {
+      setTodayLoopChecklistStatus("Day loop: local only");
+    }
+  }
+  function restoreTodayLoopChecklist() {
+    if (!window.localStorage) return false;
+    try {
+      var raw = window.localStorage.getItem(todayLoopChecklistStorageKey(root));
+      if (!raw) return false;
+      var saved = JSON.parse(raw);
+      var checked = Array.isArray(saved.checked) ? saved.checked : [];
+      boxes.forEach(function (box) {
+        box.checked = checked.indexOf(box.value) !== -1;
+      });
+      setTodayLoopChecklistStatus("Day loop: restored");
+      return true;
+    } catch (error) {
+      setTodayLoopChecklistStatus("Day loop: default");
+      return false;
+    }
+  }
+  function clearTodayLoopChecklist() {
+    boxes.forEach(function (box) { box.checked = false; });
+    if (window.localStorage) {
+      try { window.localStorage.removeItem(todayLoopChecklistStorageKey(root)); } catch (error) {}
+    }
+    updateTodayLoopChecklist({ save: false });
+  }
+  boxes.forEach(function (box) {
+    box.addEventListener("change", function () { updateTodayLoopChecklist({}); });
+  });
+  if (reset) {
+    reset.addEventListener("click", function (event) {
+      event.preventDefault();
+      clearTodayLoopChecklist();
+    });
+  }
+  restoreTodayLoopChecklist();
+  updateTodayLoopChecklist({ save: false });
+})();
+</script>""",
+            "</section>",
+        ]
     )
 
 
@@ -9739,6 +10089,13 @@ def _workspace_view_memory_panel() -> str:
             "Daily goal queue query and lane",
         ),
         (
+            "today-loop",
+            "Today Loop Checklist",
+            "exact",
+            "clankeros-today-loop-checklist",
+            "Daily resume, action, proof, and finish checkmarks",
+        ),
+        (
             "today-decisions",
             "Today Decision Filter",
             "exact",
@@ -9936,7 +10293,7 @@ def _workspace_view_memory_panel() -> str:
                 evidence_lines
                 + [
                     "workspace_view_memory_safety: browser-local view state only",
-                    "workspace_view_memory_reset_scope: theme focus first-run board home-goal-board recent route-history last-artifact today-goals today-decisions open-panels scroll-position search timeline action-prep goal-sections decisions goal-artifacts artifact-index notes note-drafts form-drafts memory skills approvals inbox profiles",
+                    "workspace_view_memory_reset_scope: theme focus first-run board home-goal-board recent route-history last-artifact today-goals today-loop today-decisions open-panels scroll-position search timeline action-prep goal-sections decisions goal-artifacts artifact-index notes note-drafts form-drafts memory skills approvals inbox profiles",
                 ]
             ),
             "</details>",
@@ -50831,6 +51188,20 @@ def _html_page(
     .today-current-action summary, .today-finish summary, .today-note summary, .today-pause summary {{ cursor:pointer; font-weight:700; }}
     details.today-current-action:not([open]) > :not(summary), .today-finish:not([open]) > :not(summary), .today-note:not([open]) > :not(summary), .today-pause:not([open]) > :not(summary) {{ display:none; }}
     .today-current-action form, .today-finish form, .today-note form, .today-pause form, .goal-pause form, .goal-finish-details form {{ margin-top:10px; }}
+    .today-loop-checklist {{ border-left:4px solid var(--accent); }}
+    .today-loop-checklist-toolbar {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0; }}
+    .today-loop-checklist-toolbar span {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
+    .today-loop-checklist-reset {{ min-height:32px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 10px; }}
+    .today-loop-checklist-grid {{ display:grid; grid-template-columns:minmax(230px, 1.2fr) repeat(4, minmax(150px, 1fr)); gap:8px; margin:10px 0 12px; align-items:stretch; }}
+    .today-loop-checklist-item {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:10px; display:grid; grid-template-columns:auto minmax(0, 1fr); gap:9px; align-items:start; }}
+    .today-loop-checklist-item input {{ width:auto; margin-top:3px; }}
+    .today-loop-checklist-item span {{ min-width:0; display:grid; gap:5px; }}
+    .today-loop-checklist-item strong, .today-loop-checklist-item small {{ overflow-wrap:anywhere; }}
+    .today-loop-checklist-item small {{ color:var(--muted); }}
+    .today-loop-checklist-item a {{ display:inline-flex; align-items:center; min-height:30px; width:max-content; max-width:100%; padding:5px 8px; border:1px solid var(--accent); border-radius:6px; text-decoration:none; overflow-wrap:anywhere; }}
+    .today-loop-checklist-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .today-loop-checklist-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .today-loop-checklist-evidence:not([open]) > :not(summary) {{ display:none; }}
     .home-state-details {{ margin-top:10px; }}
     .home-state-details summary {{ cursor:pointer; font-weight:700; }}
     .home-state-details:not([open]) > :not(summary) {{ display:none; }}
@@ -51820,7 +52191,7 @@ def _html_page(
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
     @media (max-width: 860px) {{ #run-readiness-strip {{ scroll-margin-top:260px; }} .run-readiness-grid, .run-readiness-strip dl {{ grid-template-columns:1fr; }} }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-action-prep, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #profile-routing-plan, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-goal-continuation, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map, #artifact-view-memory {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-action-prep-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-return-brief-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profile-plan-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .dogfooding-return-grid, .dogfooding-session-checklist-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .artifact-view-memory-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-action-prep, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #profile-routing-plan, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-goal-continuation, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map, #artifact-view-memory {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-action-prep-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-return-brief-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-loop-checklist-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profile-plan-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .dogfooding-return-grid, .dogfooding-session-checklist-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .artifact-view-memory-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #ci-evidence-readiness-strip {{ scroll-margin-top:260px; }} .ci-evidence-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #health-readiness-strip {{ scroll-margin-top:260px; }} .health-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}

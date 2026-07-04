@@ -226,6 +226,11 @@ follows with Now, Window, Artifacts, Notes, and Safety cards plus a compact
 recent timeline list for the lead Goal or current first-run step, so the daily
 cockpit carries enough context to regain the thread without opening the full
 Goal timeline.
+A browser-local `Today Loop Checklist` sits between the return brief and the
+activity digest with Resume, Goal, Action, Proof, and Finish checkboxes. It
+persists only in `localStorage:clankeros-today-loop-checklist`, routes active
+Goal proof through the Goal CI handoff, and can be reset from
+`/workspace#workspace-view-memory` without server writes.
 A read-only `Today Operator Workbench` follows with four obvious moves for the
 day: do the current action, check timeline/evidence, clear the first blocker,
 and save the resume point. A read-only `Today Decision Queue` then turns the

@@ -140,7 +140,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   or the first-run CI proof recorder in a single return-to-work brief. Saved
   resume surfaces still win; without one, populated sessions route Resume to
   the current Goal action while first-run sessions keep the Goals setup
-  fallback. A
+  fallback. A browser-local `Today Loop Checklist` follows with Resume, Goal,
+  Action, Proof, and Finish checkboxes backed by
+  `localStorage:clankeros-today-loop-checklist`; active Goal proof uses
+  project-scoped Goal CI evidence and the key resets from
+  `/workspace#workspace-view-memory`. A
   read-only `Today Activity Digest` then exposes Now, Window, Artifacts, Notes,
   and Safety cards plus a compact chronological list from the lead Goal timeline
   or first-run progress, giving the operator enough recent context to continue
