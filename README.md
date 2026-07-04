@@ -140,8 +140,12 @@ lead-goal approval attention to `/approvals?goal_id=<goal_id>`, Resume to an
 explicit saved workspace surface first and otherwise the current Goal action,
 and proof review to the current Goal's CI handoff when a lead Goal exists,
 falling back to the local CI evidence surfaces during first run. Finish Today
-remains the explicit save path for creating tomorrow's resume surface. Home
-also includes a scan-first
+remains the explicit save path for creating tomorrow's resume surface. Directly
+after that board, Home now shows a read-only `Home Milestone Checklist` for the
+no-docs path through Launch App, Create Project, Create Goal, Do Current
+Action, Check Proof, Finish Today, and Resume Exactly, with the current
+milestone highlighted from local project, goal, CI, and saved-resume state.
+Home also includes a scan-first
 `Home Goal Board` with active, paused, and completed lanes, a browser-local
 Find box, lane buttons, live match count, first-match jump, no-match empty state, visible View status,
 reload persistence in `localStorage:clankeros-home-goal-board-view`, and reset

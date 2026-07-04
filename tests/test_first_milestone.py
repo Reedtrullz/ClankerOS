@@ -4959,6 +4959,60 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "home_operator_board_network_actions_taken</dt><dd>0" in root.body
     assert "home_operator_board_external_effects_created</dt><dd>false" in root.body
     assert "home_operator_board_click: <a href='#first-run-create-project'>Create Project</a>" in root.body
+    assert "Home Milestone Checklist" in root.body
+    assert "id='home-milestone-checklist'" in root.body
+    assert "data-home-milestone-checklist='true'" in root.body
+    assert "data-home-milestone-actions='true'" in root.body
+    assert root.body.count("data-home-milestone-card='true'") == 7
+    assert "data-home-milestone-card-key='app' data-home-milestone-card-status='ready'" in root.body
+    assert "data-home-milestone-card-key='project' data-home-milestone-card-status='current'" in root.body
+    assert "data-home-milestone-card-key='goal' data-home-milestone-card-status='waiting'" in root.body
+    assert "data-home-milestone-card-key='action' data-home-milestone-card-status='waiting'" in root.body
+    assert "data-home-milestone-card-key='proof' data-home-milestone-card-status='done'" in root.body
+    assert "data-home-milestone-card-key='finish' data-home-milestone-card-status='waiting'" in root.body
+    assert "data-home-milestone-card-key='resume' data-home-milestone-card-status='waiting'" in root.body
+    assert "data-home-milestone-evidence='true'" in root.body
+    assert "home_milestone_status</dt><dd>available" in root.body
+    assert "home_milestone_mode</dt><dd>first_run" in root.body
+    assert "home_milestone_phase</dt><dd>First run" in root.body
+    assert "home_milestone_project</dt><dd>clankeros" in root.body
+    assert "home_milestone_goal</dt><dd>none" in root.body
+    assert "home_milestone_project_count</dt><dd>0" in root.body
+    assert "home_milestone_goal_count</dt><dd>0" in root.body
+    assert "home_milestone_active_goal_count</dt><dd>0" in root.body
+    assert "home_milestone_paused_goal_count</dt><dd>0" in root.body
+    assert "home_milestone_completed_goal_count</dt><dd>0" in root.body
+    assert "home_milestone_first_run_step</dt><dd>create_project" in root.body
+    assert "home_milestone_primary_action</dt><dd>Register ClankerOS project" in root.body
+    assert "home_milestone_primary_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in root.body
+    assert "home_milestone_action_form_available</dt><dd>true" in root.body
+    assert "home_milestone_latest_ci_status</dt><dd>success" in root.body
+    assert "home_milestone_latest_ci_source</dt><dd>publication_handoff" in root.body
+    assert "home_milestone_proof_surface</dt><dd><a href='/verification'>/verification</a>" in root.body
+    assert "home_milestone_proof_source</dt><dd>ci_evidence_fallback" in root.body
+    assert "home_milestone_finish_surface</dt><dd><a href='/workspace#save-workspace'>Finish Today</a>" in root.body
+    assert "home_milestone_resume_surface</dt><dd>none" in root.body
+    assert "home_milestone_resume_link</dt><dd><a href='/resume'>Open Resume</a>" in root.body
+    assert "home_milestone_ready_to_resume</dt><dd>false" in root.body
+    assert "home_milestone_current_step</dt><dd>project" in root.body
+    assert "home_milestone_step_count</dt><dd>7" in root.body
+    assert "home_milestone_write_on_get</dt><dd>false" in root.body
+    assert "home_milestone_provider_calls_taken</dt><dd>0" in root.body
+    assert "home_milestone_network_actions_taken</dt><dd>0" in root.body
+    assert "home_milestone_external_effects_created</dt><dd>false" in root.body
+    assert "home_milestone_path: launch_app -> create_project -> create_goal -> current_action -> proof -> finish_today -> resume_exactly" in root.body
+    assert "home_milestone_current: project" in root.body
+    assert "home_milestone_action: <a href='#first-run-create-project'>Waiting for Goal</a>" in root.body
+    assert "home_milestone_proof: <a href='/verification'>/verification</a>" in root.body
+    assert "home_milestone_finish: <a href='/workspace#save-workspace'>Finish Today</a>" in root.body
+    assert "home_milestone_resume: <a href='/resume'>Open Resume</a>" in root.body
+    assert "home_milestone_safety: read-only Home checklist; existing confirmed forms own writes" in root.body
+    assert root.body.index("data-home-operator-board='true'") < root.body.index(
+        "data-home-milestone-checklist='true'"
+    )
+    assert root.body.index("data-home-milestone-checklist='true'") < root.body.index(
+        "data-live-refresh='home'"
+    )
     assert "Start Here" in root.body
     assert "data-home-start-here='true'" in root.body
     assert "start_here_mode</dt><dd>first_run" in root.body
@@ -12862,6 +12916,74 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"home_operator_board_resume: not_started -> <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
         "Create commit request</a>"
         in dashboard.body
+    )
+    assert "Home Milestone Checklist" in dashboard.body
+    assert "id='home-milestone-checklist'" in dashboard.body
+    assert "data-home-milestone-checklist='true'" in dashboard.body
+    assert "data-home-milestone-actions='true'" in dashboard.body
+    assert dashboard.body.count("data-home-milestone-card='true'") == 7
+    assert "data-home-milestone-card-key='app' data-home-milestone-card-status='ready'" in dashboard.body
+    assert "data-home-milestone-card-key='project' data-home-milestone-card-status='done'" in dashboard.body
+    assert "data-home-milestone-card-key='goal' data-home-milestone-card-status='done'" in dashboard.body
+    assert "data-home-milestone-card-key='action' data-home-milestone-card-status='current'" in dashboard.body
+    assert "data-home-milestone-card-key='proof' data-home-milestone-card-status='done'" in dashboard.body
+    assert "data-home-milestone-card-key='finish' data-home-milestone-card-status='current'" in dashboard.body
+    assert "data-home-milestone-card-key='resume' data-home-milestone-card-status='waiting'" in dashboard.body
+    assert "data-home-milestone-evidence='true'" in dashboard.body
+    assert "home_milestone_status</dt><dd>available" in dashboard.body
+    assert "home_milestone_mode</dt><dd>goal" in dashboard.body
+    assert "home_milestone_phase</dt><dd>Ready to commit" in dashboard.body
+    assert f"home_milestone_project</dt><dd>{result.project_id}" in dashboard.body
+    assert f"home_milestone_goal</dt><dd>{result.goal_id}" in dashboard.body
+    assert "home_milestone_project_count</dt><dd>1" in dashboard.body
+    assert "home_milestone_goal_count</dt><dd>1" in dashboard.body
+    assert "home_milestone_active_goal_count</dt><dd>1" in dashboard.body
+    assert "home_milestone_paused_goal_count</dt><dd>0" in dashboard.body
+    assert "home_milestone_completed_goal_count</dt><dd>0" in dashboard.body
+    assert "home_milestone_primary_action</dt><dd>Create commit request" in dashboard.body
+    assert (
+        f"home_milestone_primary_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+        in dashboard.body
+    )
+    assert "home_milestone_action_form_available</dt><dd>true" in dashboard.body
+    assert "home_milestone_latest_ci_status</dt><dd>success" in dashboard.body
+    assert "home_milestone_latest_ci_source</dt><dd>direct_public_snapshot" in dashboard.body
+    assert (
+        f"home_milestone_proof_surface</dt><dd><a href='/goals/{result.goal_id}#goal-ci-handoff'>"
+        "Goal CI handoff</a>"
+        in dashboard.body
+    )
+    assert "home_milestone_proof_source</dt><dd>lead_goal_ci_handoff" in dashboard.body
+    assert "home_milestone_finish_surface</dt><dd><a href='#home-finish-today'>Finish Today</a>" in dashboard.body
+    assert "home_milestone_resume_surface</dt><dd>none" in dashboard.body
+    assert "home_milestone_resume_link</dt><dd><a href='/resume'>Open Resume</a>" in dashboard.body
+    assert "home_milestone_ready_to_resume</dt><dd>false" in dashboard.body
+    assert "home_milestone_current_step</dt><dd>action" in dashboard.body
+    assert "home_milestone_step_count</dt><dd>7" in dashboard.body
+    assert "home_milestone_write_on_get</dt><dd>false" in dashboard.body
+    assert "home_milestone_provider_calls_taken</dt><dd>0" in dashboard.body
+    assert "home_milestone_network_actions_taken</dt><dd>0" in dashboard.body
+    assert "home_milestone_external_effects_created</dt><dd>false" in dashboard.body
+    assert "home_milestone_path: launch_app -> create_project -> create_goal -> current_action -> proof -> finish_today -> resume_exactly" in dashboard.body
+    assert "home_milestone_current: action" in dashboard.body
+    assert (
+        f"home_milestone_action: <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        "Create commit request</a>"
+        in dashboard.body
+    )
+    assert (
+        f"home_milestone_proof: <a href='/goals/{result.goal_id}#goal-ci-handoff'>Goal CI handoff</a>"
+        in dashboard.body
+    )
+    assert "home_milestone_finish: <a href='#home-finish-today'>Finish Today</a>" in dashboard.body
+    assert "home_milestone_resume: <a href='/resume'>Open Resume</a>" in dashboard.body
+    assert "home_milestone_safety: read-only Home checklist; existing confirmed forms own writes" in dashboard.body
+    assert dashboard.body.index("data-home-operator-board='true'") < dashboard.body.index(
+        "data-home-milestone-checklist='true'"
+    )
+    assert dashboard.body.index("data-home-milestone-checklist='true'") < dashboard.body.index(
+        "data-live-refresh='home'"
     )
     assert "id='home-finish-today'" in dashboard.body
     assert "Home Resume Workspace" in dashboard.body

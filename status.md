@@ -1,5 +1,34 @@
 # Status
 
+## 2026-07-04 Home Milestone Checklist UX
+
+- `/` now includes a read-only `Home Milestone Checklist` immediately after the
+  `Home Operator Board`, so the primary daily surface shows the same
+  no-docs product path as `/guide`.
+- The checklist renders seven browser cards: Launch App, Create Project,
+  Create Goal, Do Current Action, Check Proof, Finish Today, and Resume
+  Exactly.
+- Empty first-run sessions mark Project as current, Goal/Action/Finish/Resume
+  as waiting, and Proof as done when local CI evidence exists.
+- Populated Goal sessions mark Project and Goal as done, Action and Finish as
+  current until an exact resume surface is saved, and Proof as done when
+  current CI proof exists.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed in 35.11s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed in 53.55s.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+- Non-claim: this is read-only Home guidance over existing local state. It does
+  not write on GET, call providers, poll GitHub from the app, execute tasks,
+  approve work, push, create PRs, deploy, or mutate external systems from
+  ClankerOS.
+- Testing posture: broad/full regression coverage should run in GitHub Actions
+  after push rather than being repeated locally for this UX slice.
+
 ## 2026-07-04 Guide Milestone Checklist UX
 
 - `/guide` now includes a read-only `Milestone Checklist` after the

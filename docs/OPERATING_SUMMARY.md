@@ -1287,7 +1287,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   cards with action-form routing, scoped approval links, Resume routing to an
   explicit saved workspace surface first and otherwise the current Goal action,
   resume readiness, waiting counts, and CI proof posture. Finish Today remains
-  the explicit save path for creating tomorrow's resume surface. Home also
+  the explicit save path for creating tomorrow's resume surface. Directly
+  after that board, a read-only `Home Milestone Checklist` turns the product
+  Definition of Done into seven scan cards: Launch App, Create Project, Create
+  Goal, Do Current Action, Check Proof, Finish Today, and Resume Exactly. It
+  highlights the current browser step from local project, goal, CI, and saved
+  resume state while keeping all writes on existing confirmed forms. Home also
   includes active, paused, and
   completed goal lanes through a scan-first `Home Goal Board` with a
   browser-local Find box, lane mode buttons, live match count, first-match

@@ -64,7 +64,11 @@ confirmation requirement, and zero provider/network/external-effect counters.
   first and otherwise the current Goal action, and local CI proof surfaces,
   with populated sessions routing the visible Proof card to the current Goal's
   CI handoff. Finish Today remains the explicit save path for creating
-  tomorrow's resume surface. It also includes a scan-first `Home Goal Board`
+  tomorrow's resume surface. Directly after the board, a read-only
+  `Home Milestone Checklist` shows Launch App, Create Project, Create Goal,
+  Do Current Action, Check Proof, Finish Today, and Resume Exactly, marking
+  the current browser step from local project, goal, CI, and saved-resume
+  state. It also includes a scan-first `Home Goal Board`
   with active, paused, and completed lanes, a browser-local Find box, lane mode
   buttons, live match count, first-match jump, no-match empty state, visible View
   status, reload persistence in
