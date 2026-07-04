@@ -17156,7 +17156,7 @@ def _goal_section_index(
     ]
     finder_lines = [
         f"goal_section_finder_target: {_e(label)} -> #{_e(anchor)}"
-        for label, anchor in sections[:8]
+        for label, anchor in sections[:9]
     ]
     switchboard_cards = [
         (

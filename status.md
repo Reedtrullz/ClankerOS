@@ -1,5 +1,28 @@
 # Status
 
+## 2026-07-04 Goal Section Finder CI Fix
+
+- GitHub Actions runs `28695909805` and `28695910642` failed in Fast smoke
+  verification after the Goal Action Prep slice.
+- Failure: `test_local_app_demo_scenario_populates_fixture_state` expected
+  `goal_section_finder_target: Attention digest -> #goal-attention-digest`,
+  but adding Action Prep moved Attention Digest just outside the section
+  finder evidence preview.
+- Fix: Goal section finder evidence now emits the first nine section targets,
+  preserving both the new Action Prep anchor and the existing Attention Digest
+  anchor for demo and route smoke coverage.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed in 55.15s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed in 36.17s.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py`:
+    passed.
+- Non-claim: full GitHub Actions verification is pending until this repair is
+  pushed and the remote workflow completes.
+
 ## 2026-07-04 Goal Action Prep UX
 
 - Goal pages now show `Goal Action Prep` immediately after the action dock, so
