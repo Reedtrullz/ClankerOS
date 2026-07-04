@@ -246,6 +246,7 @@ ACTION_CATALOG = [
     ("save-goal-note", "local artifact", "goal detail", "yes", "yes", "goal id plus operator note text", ".clanker/projects/<project>/goals/<goal>/operator-notes.md"),
     ("complete-goal-task", "local state", "goal detail", "yes", "yes", "goal id, task id, and ready local publication evidence", "task status=completed, linked plan step when present, plus refreshed TASKS.md/PLAN.md"),
     ("save-workspace", "local state", "workspace", "yes", "yes", "open project/goal, filters, panels, last artifact", ".clanker/app/workspace.json"),
+    ("save-profile-plan", "local state", "profiles", "yes", "yes", "inactive future routing lane preferences", ".clanker/app/profile-routing-plan.json"),
     ("pin-memory", "local state", "memory", "yes", "yes", "proposed memory entry", "memory status=active when evidence exists"),
 ]
 
@@ -11751,6 +11752,7 @@ def _skill_inventory_line(root: Path, skill: Any, usage: dict[str, dict[str, Any
 def _profiles_page(root: Path) -> str:
     storage = _storage(root)
     profile_path = root / ".clanker" / "profiles.yml"
+    profile_plan = _load_profile_routing_plan(root)
     profile_lines = profile_path.read_text(encoding="utf-8").splitlines() if profile_path.exists() else []
     configured_profiles = _profile_names(profile_lines)
     storage_profiles = storage.list_profiles(enabled_only=False)
@@ -11829,6 +11831,8 @@ def _profiles_page(root: Path) -> str:
                     ("configured_profile_count", str(len(configured_profiles))),
                     ("storage_profile_count", str(len(storage_profiles))),
                     ("profile_storage_ready", "true"),
+                    ("profile_plan_path", ".clanker/app/profile-routing-plan.json"),
+                    ("profile_plan_saved", str(bool(profile_plan)).lower()),
                     ("provider_routing_active", "false"),
                     ("provider_calls_taken", "0"),
                 ]
@@ -11841,6 +11845,13 @@ def _profiles_page(root: Path) -> str:
                 storage_profiles=storage_profiles,
                 future_lanes=prepared,
                 profile_path_exists=profile_path.exists(),
+            ),
+            _profile_routing_plan_panel(
+                root,
+                configured_profiles=configured_profiles,
+                storage_profiles=storage_profiles,
+                lane_specs=lane_specs,
+                profile_plan=profile_plan,
             ),
             _profiles_readiness_strip(
                 configured_profiles=configured_profiles,
@@ -11880,6 +11891,231 @@ def _profiles_page(root: Path) -> str:
             _non_claim_banner(),
         ]
     )
+
+
+def _profile_plan_relative_path() -> Path:
+    return Path(".clanker") / "app" / "profile-routing-plan.json"
+
+
+def _profile_plan_path(root: Path) -> Path:
+    return root / _profile_plan_relative_path()
+
+
+def _load_profile_routing_plan(root: Path) -> dict[str, Any]:
+    path = _profile_plan_path(root)
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {"status": "invalid_json"}
+    if not isinstance(payload, dict):
+        return {"status": "invalid_shape"}
+    return payload
+
+
+def _profile_plan_field_name(lane_key: str) -> str:
+    return f"{lane_key.replace('-', '_')}_profile"
+
+
+def _profile_plan_lane_profile(profile_plan: dict[str, Any], lane_key: str) -> str:
+    lanes = profile_plan.get("lanes")
+    if not isinstance(lanes, dict):
+        return ""
+    lane = lanes.get(lane_key)
+    if not isinstance(lane, dict):
+        return ""
+    return str(lane.get("profile") or "")
+
+
+def _profile_plan_candidate_profiles(
+    configured_profiles: list[str],
+    storage_profiles: list[Any],
+    lane_specs: list[dict[str, Any]],
+) -> list[str]:
+    candidates: list[str] = []
+
+    def add(value: object) -> None:
+        name = str(value or "").strip()
+        if name and name not in candidates:
+            candidates.append(name)
+
+    for profile in storage_profiles:
+        add(getattr(profile, "name", ""))
+    for name in configured_profiles:
+        add(name)
+    for spec in lane_specs:
+        for name in spec["profiles"]:
+            add(name)
+    return candidates
+
+
+def _profile_routing_plan_panel(
+    root: Path,
+    *,
+    configured_profiles: list[str],
+    storage_profiles: list[Any],
+    lane_specs: list[dict[str, Any]],
+    profile_plan: dict[str, Any],
+) -> str:
+    saved = bool(profile_plan) and str(profile_plan.get("status") or "saved") not in {
+        "invalid_json",
+        "invalid_shape",
+    }
+    status = "saved" if saved else str(profile_plan.get("status") or "missing")
+    candidates = _profile_plan_candidate_profiles(configured_profiles, storage_profiles, lane_specs)
+    candidate_text = ", ".join(candidates) if candidates else "planner, coder, scout, tester, evaluator"
+    lane_rows: list[tuple[str, str]] = []
+    cards: list[str] = []
+    text_fields: dict[str, str] = {}
+    lane_lines: list[str] = []
+    for spec in lane_specs:
+        lane_key = str(spec["key"])
+        field = _profile_plan_field_name(lane_key)
+        saved_profile = _profile_plan_lane_profile(profile_plan, lane_key)
+        default_profile = saved_profile or str(spec["profiles"][0])
+        text_fields[field] = default_profile
+        evidence_key = f"profile_plan_lane_{lane_key.replace('-', '_')}"
+        lane_rows.append((evidence_key, saved_profile or "not_saved"))
+        lane_lines.append(
+            f"profile_plan_lane: {_e(lane_key)} profile={_e(saved_profile or 'not_saved')} "
+            f"default={_e(default_profile)} provider_routing_active=false"
+        )
+        cards.append(
+            "".join(
+                [
+                    "<article class='profile-plan-card' "
+                    f"data-profile-plan-lane='{_e(lane_key)}' "
+                    f"data-profile-plan-saved='{str(bool(saved_profile)).lower()}'>",
+                    f"<h3>{_e(str(spec['label']))}</h3>",
+                    f"<p>{_e(str(spec['summary']))}</p>",
+                    f"<strong>{_e(saved_profile or default_profile)}</strong>",
+                    "<span class='muted'> inactive</span>",
+                    "</article>",
+                ]
+            )
+        )
+    text_fields["updated_by"] = str(profile_plan.get("updated_by") or "operator")
+    text_fields["note"] = str(profile_plan.get("note") or "Provider routing stays inactive; this is planning metadata only.")
+    form = _input_form(
+        "save-profile-plan",
+        {"return_to": "/profiles#profile-routing-plan"},
+        text_fields,
+    )
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("profile_plan_status", status),
+        ("profile_plan_path", _profile_plan_relative_path().as_posix()),
+        ("profile_plan_saved", str(saved).lower()),
+        ("profile_plan_updated_at", str(profile_plan.get("updated_at") or "none")),
+        ("profile_plan_updated_by", str(profile_plan.get("updated_by") or "none")),
+        ("profile_plan_lane_count", str(len(lane_specs))),
+        *lane_rows,
+        ("profile_plan_candidates", candidate_text),
+        ("profile_plan_note", str(profile_plan.get("note") or "none")),
+        ("profile_plan_provider_routing_active", "false"),
+        ("profile_plan_model_routing_enabled", "false"),
+        ("profile_plan_form_confirmation_required", "true"),
+        ("profile_plan_write_on_get", "false"),
+        ("profile_plan_provider_calls_taken", "0"),
+        ("profile_plan_network_actions_taken", "0"),
+        ("profile_plan_external_effects_created", "false"),
+        ("profile_plan_push_created", "false"),
+        ("profile_plan_pr_created", "false"),
+        ("profile_plan_deploy_created", "false"),
+    ]
+    return "".join(
+        [
+            "<section id='profile-routing-plan' class='panel profile-routing-plan' data-profile-routing-plan='true'><h2>Profile Routing Plan</h2>",
+            "<p class='muted'>Persist inactive future provider-routing preferences locally without changing dispatch behavior.</p>",
+            "<div class='profile-plan-grid' data-profile-plan-cards='true'>",
+            "".join(cards),
+            "</div>",
+            "<div class='profile-plan-form' data-profile-routing-plan-form='true'>",
+            "<h3>Save inactive plan</h3>",
+            f"<p class='muted'>Known local profile labels: {_e(candidate_text)}.</p>",
+            form,
+            "</div>",
+            "<details class='profile-plan-evidence' data-profile-routing-plan-evidence='true'><summary>Profile routing plan evidence</summary>",
+            _kv(rows),
+            _ul(
+                lane_lines
+                + [
+                    "profile_plan_storage: confirmed action writes .clanker/app/profile-routing-plan.json only",
+                    "profile_plan_safety: provider routing and model routing remain inactive",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _clean_profile_plan_value(value: str, field: str) -> str:
+    cleaned = str(value or "").strip()
+    if not cleaned:
+        raise ValueError(f"{field} is required")
+    if len(cleaned) > 80 or not re.fullmatch(r"[A-Za-z0-9_.-]+", cleaned):
+        raise ValueError(f"{field} must be a local profile label")
+    return cleaned
+
+
+def _save_profile_routing_plan(root: Path, form: dict[str, list[str]]) -> dict[str, Any]:
+    lane_specs = _profile_future_lane_specs()
+    lanes: dict[str, dict[str, Any]] = {}
+    for spec in lane_specs:
+        lane_key = str(spec["key"])
+        field = _profile_plan_field_name(lane_key)
+        profile = _clean_profile_plan_value(_required(form, field), field)
+        lanes[lane_key] = {
+            "label": str(spec["label"]),
+            "profile": profile,
+            "cost": str(spec["cost"]),
+            "use_for": [str(item) for item in spec["use_for"]],
+            "provider_routing_active": False,
+            "model_routing_enabled": False,
+        }
+    updated_by = _clean_profile_plan_value(_one(form, "updated_by") or "operator", "updated_by")
+    note = (_one(form, "note") or "").strip()
+    if len(note) > 2000:
+        raise ValueError("note must be 2000 characters or fewer")
+    payload = {
+        "schema_version": 1,
+        "updated_at": utc_now(),
+        "updated_by": updated_by,
+        "note": note,
+        "lanes": lanes,
+        "provider_routing_active": False,
+        "model_routing_enabled": False,
+        "provider_calls_taken": 0,
+        "network_actions_taken": 0,
+        "external_effects_created": False,
+        "push_created": False,
+        "pr_created": False,
+        "deploy_created": False,
+    }
+    path = _profile_plan_path(root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return {
+        "status": "profile_plan_saved",
+        "path": _profile_plan_relative_path().as_posix(),
+        "updated_by": updated_by,
+        "lane_count": len(lanes),
+        "planning_profile": lanes["planning"]["profile"],
+        "coding_profile": lanes["coding"]["profile"],
+        "review_profile": lanes["review"]["profile"],
+        "docs_profile": lanes["docs"]["profile"],
+        "cheap_model_profile": lanes["cheap-model"]["profile"],
+        "frontier_model_profile": lanes["frontier-model"]["profile"],
+        "provider_routing_active": False,
+        "model_routing_enabled": False,
+        "provider_calls_taken": 0,
+        "network_actions_taken": 0,
+        "external_effects_created": False,
+        "push_created": False,
+        "pr_created": False,
+        "deploy_created": False,
+    }
 
 
 def _profile_future_lane_specs() -> list[dict[str, Any]]:
@@ -41243,6 +41479,10 @@ def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppR
             )
             message = "workspace_saved: .clanker/app/workspace.json"
             location = _safe_local_return_path(_one(form, "return_to")) or "/workspace"
+        elif action == "save-profile-plan":
+            result = _save_profile_routing_plan(root, form)
+            message = "profile_plan_saved: .clanker/app/profile-routing-plan.json"
+            location = _safe_local_return_path(_one(form, "return_to")) or "/profiles#profile-routing-plan"
         elif action == "pin-memory":
             memory_id = _required(form, "memory_id")
             result = storage.update_memory_entry_status(
@@ -43977,6 +44217,16 @@ ACTION_FORM_COPY: dict[str, dict[str, str]] = {
         "result_title": "Return point saved",
         "result_body": "ClankerOS saved the browser resume point for tomorrow's operator surface.",
     },
+    "save-profile-plan": {
+        "title": "Save inactive profile plan",
+        "body": "Store future provider-routing lane preferences as local planning metadata. This does not activate providers or model routing.",
+        "button": "Save profile plan",
+        "confirm_title": "Confirm profile plan",
+        "confirm_body": "Review the future lane preferences before ClankerOS writes the inactive local profile-routing plan.",
+        "confirm_button": "Confirm profile plan",
+        "result_title": "Profile plan saved",
+        "result_body": "ClankerOS saved the inactive profile-routing plan for future review without enabling provider routing.",
+    },
     "save-goal-note": {
         "title": "Capture operator note",
         "body": "Append a local note to this Goal so future you can recover context from the browser.",
@@ -44003,12 +44253,16 @@ ACTION_FORM_COPY: dict[str, dict[str, str]] = {
 ACTION_FORM_FIELD_LABELS = {
     "approval_id": "Approval",
     "allowed_write_roots": "Allowed write roots",
+    "cheap_model_profile": "Cheap model profile",
     "committed_by": "Committed by",
+    "coding_profile": "Coding profile",
     "created_by_profile": "Profile",
     "delegation_id": "Delegation",
     "decided_by": "Decided by",
+    "docs_profile": "Docs profile",
     "expanded_panels": "Expanded panels",
     "filters": "Saved filters",
+    "frontier_model_profile": "Frontier model profile",
     "last_viewed_artifact": "Last viewed artifact",
     "message": "Message",
     "name": "Project name",
@@ -44017,12 +44271,14 @@ ACTION_FORM_FIELD_LABELS = {
     "open_project": "Open project",
     "operator_id": "Operator",
     "path": "Project path",
+    "planning_profile": "Planning profile",
     "profile": "Profile",
     "project_id": "Project",
     "prompt": "Goal intent",
     "publication_id": "Publication request",
     "requested_by": "Requested by",
     "remote": "Remote",
+    "review_profile": "Review profile",
     "resume_surface": "Resume surface",
     "run_id": "Run",
     "task_id": "Task",
@@ -44035,12 +44291,16 @@ ACTION_FORM_FIELD_LABELS = {
 ACTION_FORM_FIELD_HELP = {
     "approval_id": "Existing local approval request to decide.",
     "allowed_write_roots": "Comma-separated local roots this project is allowed to write inside.",
+    "cheap_model_profile": "Local profile label to prefer for future low-cost repeatable work. Stored only; not activated.",
     "committed_by": "Operator label stored with the local commit evidence.",
+    "coding_profile": "Local profile label to prefer for future coding work. Stored only; not activated.",
     "created_by_profile": "Planning profile label for the first Goal. No provider routing is activated.",
     "delegation_id": "Existing local delegation contract to continue.",
     "decided_by": "Operator label stored with this local decision.",
+    "docs_profile": "Local profile label to prefer for future docs/context work. Stored only; not activated.",
     "expanded_panels": "Panel ids to reopen when the workspace is restored.",
     "filters": "Human-readable filter context to remember for resume.",
+    "frontier_model_profile": "Local profile label to reserve for future hard reasoning lanes. Stored only; not activated.",
     "last_viewed_artifact": "Repo-relative artifact path to reopen from the resume surface.",
     "message": "Short local message for the action evidence.",
     "name": "Short project id shown throughout ClankerOS.",
@@ -44049,12 +44309,14 @@ ACTION_FORM_FIELD_HELP = {
     "open_project": "Project id to restore as the active project.",
     "operator_id": "Local operator label to record in the run evidence.",
     "path": "Absolute path to the local git checkout ClankerOS should manage.",
+    "planning_profile": "Local profile label to prefer for future planning work. Stored only; not activated.",
     "profile": "Read-only routing profile for this delegation. The first-run scout profile does not call providers.",
     "project_id": "Existing local project that owns this Goal.",
     "prompt": "Plain-language Goal ClankerOS should work toward.",
     "publication_id": "Existing local publication request to decide.",
     "requested_by": "Operator label stored with the local action evidence.",
     "remote": "Git remote name to include in the local publication handoff.",
+    "review_profile": "Local profile label to prefer for future review work. Stored only; not activated.",
     "resume_surface": "Browser route to open when resuming work.",
     "run_id": "Existing local run that owns this action.",
     "task_id": "Planned Goal task that this local action advances.",
@@ -50126,6 +50388,14 @@ def _html_page(
     .profiles-workbench-action, .profiles-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--warn); overflow-wrap:anywhere; text-decoration:none; }}
     .profiles-workbench-action {{ background:var(--warn); color:#211400; }}
     .profiles-workbench-link {{ background:var(--surface); color:var(--ink); }}
+    .profile-routing-plan {{ border-left:4px solid var(--warn); }}
+    .profile-plan-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:10px; margin:12px 0; }}
+    .profile-plan-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .profile-plan-card h3 {{ margin-top:0; }}
+    .profile-plan-card p {{ margin:0 0 10px; color:var(--muted); }}
+    .profile-plan-card[data-profile-plan-saved="true"] {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
+    .profile-plan-form {{ margin:12px 0; padding:12px; border:1px solid var(--line); background:var(--panel); }}
+    .profile-plan-form h3 {{ margin-top:0; }}
     .profiles-readiness-strip {{ border-left:4px solid var(--warn); }}
     .profiles-readiness-grid {{ display:grid; grid-template-columns:minmax(240px, 1.15fr) repeat(3, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
     .profiles-readiness-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
@@ -50150,9 +50420,9 @@ def _html_page(
     .profile-filter-search {{ display:inline-flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:min(100%, 280px); }}
     .profile-filter-search input {{ min-width:min(100%, 230px); }}
     .profile-filter-memory-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
-    .profiles-state-details, .profiles-workbench-evidence, .profiles-readiness-evidence, .profiles-command-evidence, .profiles-matrix-evidence, .profile-filter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .profiles-state-details summary, .profiles-workbench-evidence summary, .profiles-readiness-evidence summary, .profiles-command-evidence summary, .profiles-matrix-evidence summary, .profile-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .profiles-state-details:not([open]) > :not(summary), .profiles-workbench-evidence:not([open]) > :not(summary), .profiles-readiness-evidence:not([open]) > :not(summary), .profiles-command-evidence:not([open]) > :not(summary), .profiles-matrix-evidence:not([open]) > :not(summary), .profile-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .profiles-state-details, .profiles-workbench-evidence, .profile-plan-evidence, .profiles-readiness-evidence, .profiles-command-evidence, .profiles-matrix-evidence, .profile-filter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .profiles-state-details summary, .profiles-workbench-evidence summary, .profile-plan-evidence summary, .profiles-readiness-evidence summary, .profiles-command-evidence summary, .profiles-matrix-evidence summary, .profile-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .profiles-state-details:not([open]) > :not(summary), .profiles-workbench-evidence:not([open]) > :not(summary), .profile-plan-evidence:not([open]) > :not(summary), .profiles-readiness-evidence:not([open]) > :not(summary), .profiles-command-evidence:not([open]) > :not(summary), .profiles-matrix-evidence:not([open]) > :not(summary), .profile-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
     .profiles-command-bar {{ border-left:4px solid var(--warn); }}
     .profiles-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .profiles-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -50379,7 +50649,7 @@ def _html_page(
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
     @media (max-width: 860px) {{ #run-readiness-strip {{ scroll-margin-top:260px; }} .run-readiness-grid, .run-readiness-strip dl {{ grid-template-columns:1fr; }} }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-goal-continuation, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map, #artifact-view-memory {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .artifact-view-memory-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #profile-routing-plan, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-goal-continuation, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map, #artifact-view-memory {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profile-plan-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-workbench-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .artifact-view-memory-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #ci-evidence-readiness-strip {{ scroll-margin-top:260px; }} .ci-evidence-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #health-readiness-strip {{ scroll-margin-top:260px; }} .health-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}

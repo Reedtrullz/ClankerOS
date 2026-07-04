@@ -487,14 +487,19 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   storage, and `/resume` or Goal context. The read-only `Profile Routing
   Matrix` maps Planning, Coding, Review, Docs, Cheap Model, and Frontier Model
   lanes to stored local profiles, cost posture, `use_for` labels, and inactive
-  provider/model routing status. A browser-local `Profile Routing Filter`
+  provider/model routing status. A visible `Profile Routing Plan` panel lets
+  the operator save inactive lane preferences to
+  `.clanker/app/profile-routing-plan.json` through the confirmed
+  `save-profile-plan` action, then reads them back without changing dispatch,
+  providers, or model routing. A browser-local `Profile Routing Filter`
   narrows already-rendered matrix cards and profile rows by routing lane,
   storage/configured posture, or text, remembers lane/query in
   `localStorage:clankeros-profile-routing-filter`, and resets without enabling
-  providers or model routing. Profiles state, matrix evidence, filter evidence,
-  workbench evidence, and command evidence stay collapsed by default while preserving
-  configured, storage, enabled, disabled, future-lane, adapter, write-posture,
-  use-for, provider, model-routing, and zero-effect readbacks in the DOM.
+  providers or model routing. Profiles state, matrix evidence, plan evidence,
+  filter evidence, workbench evidence, and command evidence stay collapsed by
+  default while preserving configured, storage, enabled, disabled, future-lane,
+  saved inactive lane preferences, adapter, write-posture, use-for, provider,
+  model-routing, and zero-effect readbacks in the DOM.
   The `/goals` and Home first-run panel now exposes a state-aware
   Create project -> Create first goal -> Create first delegation -> Generate
   context pack -> Run first delegation checklist, visible five-card progress

@@ -3168,6 +3168,21 @@ def test_profiles_route_reads_storage_profiles_without_enabling_providers(
     assert "profiles_command_write_on_get</dt><dd>false" in profiles.body
     assert "profiles_command_network_actions_taken</dt><dd>0" in profiles.body
     assert "profiles_command_external_effects_created</dt><dd>false" in profiles.body
+    assert "Profile Routing Plan" in profiles.body
+    assert "data-profile-routing-plan='true'" in profiles.body
+    assert "data-profile-routing-plan-form='true'" in profiles.body
+    assert "action='/actions/save-profile-plan'" in profiles.body
+    assert "profile_plan_status</dt><dd>missing" in profiles.body
+    assert "profile_plan_path</dt><dd>.clanker/app/profile-routing-plan.json" in profiles.body
+    assert "profile_plan_saved</dt><dd>false" in profiles.body
+    assert "profile_plan_provider_routing_active</dt><dd>false" in profiles.body
+    assert "profile_plan_model_routing_enabled</dt><dd>false" in profiles.body
+    assert "profile_plan_write_on_get</dt><dd>false" in profiles.body
+    assert "profile_plan_provider_calls_taken</dt><dd>0" in profiles.body
+    assert "profile_plan_network_actions_taken</dt><dd>0" in profiles.body
+    assert "profile_plan_external_effects_created</dt><dd>false" in profiles.body
+    assert "profile_plan_form_confirmation_required</dt><dd>true" in profiles.body
+    assert not (tmp_path / ".clanker" / "app" / "profile-routing-plan.json").exists()
     assert "profile_storage_ready</dt><dd>true" in profiles.body
     assert "configured_profile_count</dt><dd>5" in profiles.body
     assert "storage_profile_count</dt><dd>5" in profiles.body
@@ -3178,6 +3193,73 @@ def test_profiles_route_reads_storage_profiles_without_enabling_providers(
     assert "provider=inactive" in profiles.body
     assert "provider_routing_active</dt><dd>false" in profiles.body
     assert "provider_calls_taken</dt><dd>0" in profiles.body
+
+    confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/save-profile-plan",
+        method="POST",
+        form={
+            "planning_profile": ["planner"],
+            "coding_profile": ["coder"],
+            "review_profile": ["evaluator"],
+            "docs_profile": ["scout"],
+            "cheap_model_profile": ["tester"],
+            "frontier_model_profile": ["planner"],
+            "updated_by": ["operator"],
+            "note": ["Prefer fast scout/tester lanes unless work is risky."],
+            "return_to": ["/profiles#profile-routing-plan"],
+        },
+    )
+    assert confirmation.status == 409
+    assert "Confirm profile plan" in confirmation.body
+    assert not (tmp_path / ".clanker" / "app" / "profile-routing-plan.json").exists()
+
+    save_plan = render_local_app_route(
+        tmp_path,
+        "/actions/save-profile-plan",
+        method="POST",
+        form={
+            "planning_profile": ["planner"],
+            "coding_profile": ["coder"],
+            "review_profile": ["evaluator"],
+            "docs_profile": ["scout"],
+            "cheap_model_profile": ["tester"],
+            "frontier_model_profile": ["planner"],
+            "updated_by": ["operator"],
+            "note": ["Prefer fast scout/tester lanes unless work is risky."],
+            "return_to": ["/profiles#profile-routing-plan"],
+            "confirm": ["yes"],
+        },
+    )
+    assert save_plan.status == 200
+    assert "profile_plan_saved: .clanker/app/profile-routing-plan.json" in save_plan.body
+    plan_path = tmp_path / ".clanker" / "app" / "profile-routing-plan.json"
+    assert plan_path.exists()
+    plan_payload = json.loads(plan_path.read_text(encoding="utf-8"))
+    assert plan_payload["provider_routing_active"] is False
+    assert plan_payload["model_routing_enabled"] is False
+    assert plan_payload["lanes"]["coding"]["profile"] == "coder"
+    assert plan_payload["lanes"]["cheap-model"]["profile"] == "tester"
+    assert plan_payload["lanes"]["frontier-model"]["profile"] == "planner"
+    assert plan_payload["provider_calls_taken"] == 0
+    assert plan_payload["network_actions_taken"] == 0
+    assert plan_payload["external_effects_created"] is False
+
+    saved_profiles = render_local_app_route(tmp_path, "/profiles")
+    assert saved_profiles.status == 200
+    assert "profile_plan_status</dt><dd>saved" in saved_profiles.body
+    assert "profile_plan_saved</dt><dd>true" in saved_profiles.body
+    assert "profile_plan_updated_by</dt><dd>operator" in saved_profiles.body
+    assert "profile_plan_lane_count</dt><dd>6" in saved_profiles.body
+    assert "profile_plan_lane_coding</dt><dd>coder" in saved_profiles.body
+    assert "profile_plan_lane_cheap_model</dt><dd>tester" in saved_profiles.body
+    assert "profile_plan_lane_frontier_model</dt><dd>planner" in saved_profiles.body
+    assert "profile_plan_note</dt><dd>Prefer fast scout/tester lanes unless work is risky." in saved_profiles.body
+    assert "profile_plan_provider_routing_active</dt><dd>false" in saved_profiles.body
+    assert "profile_plan_model_routing_enabled</dt><dd>false" in saved_profiles.body
+    assert "profile_plan_provider_calls_taken</dt><dd>0" in saved_profiles.body
+    assert "profile_plan_network_actions_taken</dt><dd>0" in saved_profiles.body
+    assert "profile_plan_external_effects_created</dt><dd>false" in saved_profiles.body
 
 
 def test_route_category_records_scout_decision_and_dashboard(
@@ -8754,10 +8836,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "data-operator-focus-strip='true'"
     )
     assert "action_catalog_status</dt><dd>available" in actions.body
-    assert "action_catalog_total_actions</dt><dd>29" in actions.body
+    assert "action_catalog_total_actions</dt><dd>30" in actions.body
     assert "action_catalog_navigation_actions</dt><dd>8" in actions.body
-    assert "action_catalog_mutating_actions</dt><dd>28" in actions.body
-    assert "action_catalog_confirmation_required</dt><dd>28" in actions.body
+    assert "action_catalog_mutating_actions</dt><dd>29" in actions.body
+    assert "action_catalog_confirmation_required</dt><dd>29" in actions.body
     assert "action_catalog_local_execution_actions</dt><dd>2" in actions.body
     assert "action_catalog_local_git_actions</dt><dd>1" in actions.body
     assert "action_catalog_approval_actions</dt><dd>6" in actions.body

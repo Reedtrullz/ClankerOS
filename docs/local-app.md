@@ -782,6 +782,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   configured, storage, enabled, disabled, future-lane, adapter, write-posture,
   and `use_for` counts, points at the first storage/configured/future profile
   review target, and keeps provider/model routing disabled. A browser-local
+  `Profile Routing Plan` panel writes inactive lane preferences to
+  `.clanker/app/profile-routing-plan.json` only after the confirmed
+  `save-profile-plan` action, reads the saved plan back on `/profiles`, and
+  keeps dispatch behavior, providers, and model routing inactive. A browser-local
   `Profile Routing Filter` narrows the already-rendered matrix cards and
   profile rows by routing lane, storage/configured posture, or text, remembers
   lane/query in `localStorage:clankeros-profile-routing-filter`, and resets
@@ -883,9 +887,10 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   `Profiles Operator Workbench` before shared route/focus diagnostics or
   command readback, with cards for the next profile review, future lanes,
   storage, and `/resume` or Goal context. Profiles state, workbench evidence,
-  and command evidence stay collapsed by default while preserving configured,
-  storage, enabled, disabled, future-lane, adapter, write-posture, use-for,
-  provider, model-routing, and zero-effect readbacks in the DOM.
+  profile-plan evidence, and command evidence stay collapsed by default while
+  preserving configured, storage, enabled, disabled, future-lane, saved
+  inactive lane preferences, adapter, write-posture, use-for, provider,
+  model-routing, and zero-effect readbacks in the DOM.
 - `/workflow` - modern handoff/worktree/commit/publication workflow stepper,
   including `coder-prep-from-handoff` as the artifact-first prep route. Add
   `?delegation_id=<id>` or `?run_id=<coder_worktree_run_id>` to show selected

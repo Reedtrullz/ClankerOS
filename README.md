@@ -862,12 +862,16 @@ context into browser cards while provider/model routing remains inactive.
 It now follows with a read-only `Profile Routing Matrix` that maps Planning,
 Coding, Review, Docs, Cheap Model, and Frontier Model lanes to stored local
 profile rows, cost posture, `use_for` labels, and inactive provider/model
-routing status. A browser-local `Profile Routing Filter` then narrows the
+routing status. A visible `Profile Routing Plan` panel lets the operator save
+inactive lane preferences to `.clanker/app/profile-routing-plan.json` through
+the confirmed `save-profile-plan` action; the saved plan is read back on
+`/profiles` but does not affect dispatch, providers, or model routing. A
+browser-local `Profile Routing Filter` then narrows the
 already-rendered matrix cards and profile rows by lane, storage/configured
 posture, or text, remembers lane/query in
 `localStorage:clankeros-profile-routing-filter`, and resets without enabling
 providers or model routing. Profiles state, matrix evidence, filter evidence,
-workbench evidence, and command evidence stay collapsed by default while preserving
+plan evidence, workbench evidence, and command evidence stay collapsed by default while preserving
 configured/storage profile counts, future-lane readiness, adapter/write
 posture, `use_for` posture, and provider/model routing disabled proof in the
 DOM.

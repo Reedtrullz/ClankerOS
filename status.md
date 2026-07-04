@@ -1,5 +1,49 @@
 # Status
 
+## 2026-07-04 Profile Routing Plan UX
+
+- `/profiles` now has a visible `Profile Routing Plan` panel for future
+  provider-routing preferences, moving the Profiles page from readback-only
+  toward the objective's requested UI plus storage.
+- The confirmed `save-profile-plan` browser action writes only
+  `.clanker/app/profile-routing-plan.json` with six inactive lanes: Planning,
+  Coding, Review, Docs, Cheap Model, and Frontier Model.
+- The Profiles page reads the saved plan back with lane profiles, updated-by,
+  note, path, and zero-effect evidence while keeping
+  `provider_routing_active=false` and `model_routing_enabled=false`.
+- The action catalog now includes `save-profile-plan` as a confirmation-gated
+  local state action, so the action inventory reflects the new browser write.
+- TDD evidence: the focused Profiles route test failed first because
+  `/profiles` had no `Profile Routing Plan` section; after implementation it
+  proved the visible form, confirmation boundary, JSON payload, saved readback,
+  inactive provider/model flags, and zero provider/network/external effects.
+- Local verification:
+  - `python3 -m pytest tests/test_first_milestone.py::test_profiles_route_reads_storage_profiles_without_enabling_providers -q --tb=short`:
+    failed first, then 1 passed after implementation.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    failed first on the stale action-catalog count, then 1 passed after
+    updating the expected total/mutating/confirmation counts.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_profiles_route_reads_storage_profiles_without_enabling_providers tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state --tb=short`:
+    3 passed in 87.51s.
+  - `python3 -m agent_os.cli app-smoke-test`:
+    passed with `/profiles` route marker matched, bounded artifact rejections
+    matched, and zero provider, network, or external mutation counters.
+  - `python3 -m agent_os.cli app-demo-smoke-test`:
+    passed with fixture-backed `/profiles` snippets matched and zero provider,
+    network, or external mutation counters.
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed after docs/status updates.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed after docs/status updates.
+- Non-claim: this is an inactive local profile preference plan only. It does
+  not change runtime profile routing, dispatch tasks, call providers, select
+  models, use the network, push, create PRs, deploy, or mutate external
+  systems.
+
 ## 2026-07-04 Memory Lead Goal Context UX
 
 - `/memory` now derives the saved or lead Goal when no explicit memory records
