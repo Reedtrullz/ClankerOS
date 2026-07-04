@@ -1,5 +1,37 @@
 # Status
 
+## 2026-07-04 Today Quick Capture UX
+
+- `/today` now includes a read-only `Today Quick Capture` strip after the
+  browser-local day checklist and before the activity digest.
+- The strip gives the operator four daily note-context cards: Capture, Draft,
+  Review, and Resume.
+- Populated Goal sessions route Capture/Open draft to the existing confirmed
+  `#today-note` / `save-goal-note` form, show
+  `localStorage:clankeros-goal-note-draft:<goal_id>`, link Review to the Goal
+  notes browser, and route Resume to `#today-finish`.
+- First-run/no-goal sessions keep Capture on same-page setup, Review/Resume on
+  the first-run guide, and mark note capture unavailable until a Goal exists.
+- The Today command palette now includes `Quick capture` for direct jumping to
+  `/today#today-quick-capture`.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    passed in 47.12s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    passed in 64.18s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    2 passed in 91.72s.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+- Non-claim: this is read-only daily note routing plus an existing confirmed
+  local note form. It does not write on GET, poll GitHub from the app, call
+  providers, execute tasks, push, create PRs, deploy, or mutate external
+  systems from ClankerOS.
+- Testing posture: the broad/full suite should run in GitHub Actions after push
+  rather than being repeated locally for this UX slice.
+
 ## 2026-07-04 Today Loop Checklist UX
 
 - `/today` now includes a browser-local `Today Loop Checklist` between the

@@ -129,6 +129,11 @@ Core layers for the bootstrap:
   `localStorage:clankeros-today-loop-checklist`; active Goal proof uses
   project-scoped Goal CI evidence and reset coverage lives in
   `/workspace#workspace-view-memory`.
+  A read-only `Today Quick Capture` strip follows with Capture, Draft, Review,
+  and Resume cards; populated sessions open the existing confirmed
+  `save-goal-note` form at `#today-note`, expose the per-Goal browser-local
+  draft key, and link to the Goal notes browser, while first-run sessions stay
+  on guided setup until a Goal exists.
   A read-only `Today Activity Digest` follows with Now, Window, Artifacts,
   Notes, and Safety cards plus a compact recent timeline list for the lead Goal
   or current first-run step, preserving source, item-count, latest-event,

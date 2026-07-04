@@ -231,6 +231,12 @@ activity digest with Resume, Goal, Action, Proof, and Finish checkboxes. It
 persists only in `localStorage:clankeros-today-loop-checklist`, routes active
 Goal proof through the Goal CI handoff, and can be reset from
 `/workspace#workspace-view-memory` without server writes.
+A read-only `Today Quick Capture` strip follows the checklist with Capture,
+Draft, Review, and Resume cards. When a Goal exists it opens the existing
+confirmed `save-goal-note` form at `#today-note`, shows the
+`localStorage:clankeros-goal-note-draft:<goal_id>` draft key, links back to the
+Goal notes browser, and keeps first-run sessions on the setup guide until a
+Goal exists.
 A read-only `Today Operator Workbench` follows with four obvious moves for the
 day: do the current action, check timeline/evidence, clear the first blocker,
 and save the resume point. A read-only `Today Decision Queue` then turns the

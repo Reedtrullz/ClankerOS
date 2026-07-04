@@ -144,7 +144,11 @@ python3 -m agent_os.cli app --host 0.0.0.0 --allow-nonlocal-bind
   Action, Proof, and Finish checkboxes backed by
   `localStorage:clankeros-today-loop-checklist`; active Goal proof uses
   project-scoped Goal CI evidence and the key resets from
-  `/workspace#workspace-view-memory`. A
+  `/workspace#workspace-view-memory`. A read-only `Today Quick Capture` strip
+  follows with Capture, Draft, Review, and Resume cards; populated sessions
+  open the existing confirmed `save-goal-note` form at `#today-note`, expose
+  the per-Goal browser-local draft key, and link to the Goal notes browser,
+  while first-run sessions stay on guided setup until a Goal exists. A
   read-only `Today Activity Digest` then exposes Now, Window, Artifacts, Notes,
   and Safety cards plus a compact chronological list from the lead Goal timeline
   or first-run progress, giving the operator enough recent context to continue

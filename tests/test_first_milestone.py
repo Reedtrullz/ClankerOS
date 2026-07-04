@@ -5137,6 +5137,37 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "function updateTodayLoopChecklist(options)" in today.body
     assert "window.localStorage.setItem(todayLoopChecklistStorageKey(root)" in today.body
     assert "window.localStorage.removeItem(todayLoopChecklistStorageKey(root))" in today.body
+    assert "Today Quick Capture" in today.body
+    assert "data-today-quick-capture='true'" in today.body
+    assert "data-today-quick-capture-actions='true'" in today.body
+    assert "data-today-quick-capture-capture='true'" in today.body
+    assert "data-today-quick-capture-draft='true'" in today.body
+    assert "data-today-quick-capture-review='true'" in today.body
+    assert "data-today-quick-capture-finish='true'" in today.body
+    assert "data-today-quick-capture-evidence='true'" in today.body
+    assert "today_quick_capture_status</dt><dd>first_run" in today.body
+    assert "today_quick_capture_source</dt><dd>first_run_progress" in today.body
+    assert "today_quick_capture_goal</dt><dd>none" in today.body
+    assert "today_quick_capture_project</dt><dd>clankeros" in today.body
+    assert "today_quick_capture_note_status</dt><dd>unavailable_until_goal_exists" in today.body
+    assert "today_quick_capture_note_count</dt><dd>0" in today.body
+    assert "today_quick_capture_latest_note</dt><dd>none" in today.body
+    assert "today_quick_capture_note_artifact</dt><dd>none" in today.body
+    assert "today_quick_capture_draft_storage</dt><dd>none" in today.body
+    assert "today_quick_capture_memory_fields</dt><dd>none" in today.body
+    assert "today_quick_capture_capture_surface</dt><dd><a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_quick_capture_review_surface</dt><dd><a href='#first-run-guide'>First Run Guide</a>" in today.body
+    assert "today_quick_capture_finish_surface</dt><dd><a href='#first-run-guide'>First Run Guide</a>" in today.body
+    assert "today_quick_capture_form_available</dt><dd>false" in today.body
+    assert "today_quick_capture_confirmation_required</dt><dd>false" in today.body
+    assert "today_quick_capture_write_on_get</dt><dd>false" in today.body
+    assert "today_quick_capture_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_quick_capture_network_actions_taken</dt><dd>0" in today.body
+    assert "today_quick_capture_external_effects_created</dt><dd>false" in today.body
+    assert "today_quick_capture_capture: <a href='#first-run-create-project'>Create Project</a>" in today.body
+    assert "today_quick_capture_review: <a href='#first-run-guide'>First Run Guide</a>" in today.body
+    assert "today_quick_capture_finish: <a href='#first-run-guide'>First Run Guide</a>" in today.body
+    assert "today_quick_capture_safety: read-only bridge to existing confirmed save-goal-note form" in today.body
     assert "Today Activity Digest" in today.body
     assert "data-today-activity-digest='true'" in today.body
     assert "data-today-activity-actions='true'" in today.body
@@ -5151,6 +5182,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "data-today-loop-checklist='true'"
     )
     assert today.body.index("data-today-loop-checklist='true'") < today.body.index(
+        "data-today-quick-capture='true'"
+    )
+    assert today.body.index("data-today-quick-capture='true'") < today.body.index(
         "data-today-activity-digest='true'"
     )
     assert today.body.index("data-today-activity-digest='true'") < today.body.index(
@@ -5189,7 +5223,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_activity_safety: read-only goal timeline on daily cockpit" in today.body
     assert "Today Operator Workbench" in today.body
     assert "data-today-operator-workbench='true'" in today.body
-    assert ".today-session-grid, .today-loop-checklist-grid, .today-workbench-grid, .today-activity-grid" in today.body
+    assert ".today-session-grid, .today-loop-checklist-grid, .today-quick-capture-grid, .today-workbench-grid, .today-activity-grid" in today.body
     assert "data-today-workbench-evidence='true'" in today.body
     assert "today_workbench_status</dt><dd>first_run" in today.body
     assert "today_workbench_source</dt><dd>goal_state_workspace_attention" in today.body
@@ -13408,6 +13442,43 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_loop_checklist_item: action summary=Create commit request surface=<a href='#today-current-action'>Create commit request</a>" in today.body
     assert "today_loop_checklist_safety: browser-local checklist only" in today.body
     assert "function updateTodayLoopChecklist(options)" in today.body
+    assert "Today Quick Capture" in today.body
+    assert "data-today-quick-capture='true'" in today.body
+    assert "data-today-quick-capture-actions='true'" in today.body
+    assert "data-today-quick-capture-capture='true'" in today.body
+    assert "data-today-quick-capture-draft='true'" in today.body
+    assert "data-today-quick-capture-review='true'" in today.body
+    assert "data-today-quick-capture-finish='true'" in today.body
+    assert "data-today-quick-capture-evidence='true'" in today.body
+    assert "today_quick_capture_status</dt><dd>goal_ready" in today.body
+    assert "today_quick_capture_source</dt><dd>lead_goal_operator_notes" in today.body
+    assert f"today_quick_capture_goal</dt><dd><a href='/goals/{result.goal_id}'" in today.body
+    assert f"today_quick_capture_project</dt><dd><a href='/projects/{result.project_id}'" in today.body
+    assert "today_quick_capture_note_status</dt><dd>not_started" in today.body
+    assert "today_quick_capture_note_count</dt><dd>0" in today.body
+    assert "today_quick_capture_latest_note</dt><dd>none" in today.body
+    assert "today_quick_capture_note_artifact</dt><dd>not_started" in today.body
+    assert f"today_quick_capture_draft_storage</dt><dd>localStorage:clankeros-goal-note-draft:{result.goal_id}" in today.body
+    assert "today_quick_capture_memory_fields</dt><dd>note, updatedAt, submittedAt" in today.body
+    assert "today_quick_capture_capture_surface</dt><dd><a href='#today-note'>Capture Note</a>" in today.body
+    assert (
+        f"today_quick_capture_review_surface</dt><dd><a href='/goals/{result.goal_id}#goal-operator-notes-browser'>"
+        "Review notes</a>"
+    ) in today.body
+    assert "today_quick_capture_finish_surface</dt><dd><a href='#today-finish'>Finish Today</a>" in today.body
+    assert "today_quick_capture_form_available</dt><dd>true" in today.body
+    assert "today_quick_capture_confirmation_required</dt><dd>true" in today.body
+    assert "today_quick_capture_write_on_get</dt><dd>false" in today.body
+    assert "today_quick_capture_provider_calls_taken</dt><dd>0" in today.body
+    assert "today_quick_capture_network_actions_taken</dt><dd>0" in today.body
+    assert "today_quick_capture_external_effects_created</dt><dd>false" in today.body
+    assert "today_quick_capture_capture: <a href='#today-note'>Capture Note</a>" in today.body
+    assert (
+        f"today_quick_capture_review: <a href='/goals/{result.goal_id}#goal-operator-notes-browser'>"
+        "Review notes</a>"
+    ) in today.body
+    assert "today_quick_capture_finish: <a href='#today-finish'>Finish Today</a>" in today.body
+    assert "today_quick_capture_safety: read-only bridge to existing confirmed save-goal-note form" in today.body
     guide = render_local_app_route(tmp_path, "/guide")
     assert guide.status == 200
     assert "guide_command_mode</dt><dd>goal" in guide.body
@@ -13482,6 +13553,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "data-today-loop-checklist='true'"
     )
     assert today.body.index("data-today-loop-checklist='true'") < today.body.index(
+        "data-today-quick-capture='true'"
+    )
+    assert today.body.index("data-today-quick-capture='true'") < today.body.index(
         "data-today-activity-digest='true'"
     )
     assert today.body.index("data-today-activity-digest='true'") < today.body.index(
@@ -13584,6 +13658,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Today Live state" in today.body
     assert "Today Session summary" in today.body
     assert "Today Day checklist" in today.body
+    assert "Today Quick capture" in today.body
     assert "Today Activity digest" in today.body
     assert "Today Operator workbench" in today.body
     assert "Today Decision queue" in today.body
@@ -13596,6 +13671,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='/today#today-live-state'" in today.body
     assert "href='/today#today-session-summary'" in today.body
     assert "href='/today#today-loop-checklist'" in today.body
+    assert "href='/today#today-quick-capture'" in today.body
     assert "href='/today#today-activity-digest'" in today.body
     assert "href='/today#today-operator-workbench'" in today.body
     assert "href='/today#today-decision-queue'" in today.body
@@ -13605,11 +13681,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='/today#today-finish'" in today.body
     assert "today section current next action command form" in today.body
     assert "today section resume goal action proof finish" in today.body
+    assert "today section operator note draft review resume" in today.body
     assert "today section ci github actions verification proof handoff" in today.body
-    assert "palette_filter_today_section_count</dt><dd>12" in today.body
+    assert "palette_filter_today_section_count</dt><dd>13" in today.body
     assert "palette_filter_today_section_source</dt><dd>current_route" in today.body
     assert "palette_today_section_commands: route=/today source=current_route" in today.body
     assert "palette_today_section_command: Day checklist surface=<a href='/today#today-loop-checklist'>today-loop-checklist</a>" in today.body
+    assert "palette_today_section_command: Quick capture surface=<a href='/today#today-quick-capture'>today-quick-capture</a>" in today.body
     assert "palette_today_section_command: Decision filter surface=<a href='/today#today-decision-filter'>today-decision-filter</a>" in today.body
     assert "palette_today_section_command: CI handoff surface=<a href='/today#today-ci-handoff'>today-ci-handoff</a>" in today.body
     assert (
