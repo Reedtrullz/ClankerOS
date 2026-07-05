@@ -18234,6 +18234,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-artifact-index='true'" in artifacts_index.body
     assert "data-artifact-index-cards='true'" in artifacts_index.body
     assert "data-artifact-index-primary='true'" in artifacts_index.body
+    assert "data-artifact-index-goal='true'" in artifacts_index.body
     assert "data-artifact-index-filter='true'" in artifacts_index.body
     assert "data-goal-artifact-filter='true'" in artifacts_index.body
     assert "data-artifact-index-list='true'" in artifacts_index.body
@@ -18241,7 +18242,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "artifact_index_total_records</dt><dd>" in artifacts_index.body
     assert "artifact_index_available_records</dt><dd>" in artifacts_index.body
     assert "artifact_index_latest_surface</dt><dd><a href='/artifacts?path=" in artifacts_index.body
-    assert "artifact_index_source</dt><dd>known_artifact_paths" in artifacts_index.body
+    assert "artifact_index_goal_records</dt><dd>" in artifacts_index.body
+    assert "artifact_index_known_path_records</dt><dd>" in artifacts_index.body
+    assert "artifact_index_source</dt><dd>goal_artifact_records_and_known_artifact_paths" in artifacts_index.body
     assert "artifact_index_filter_memory_storage</dt><dd>localStorage:clankeros-artifact-index-filter" in artifacts_index.body
     assert "artifact_index_raw_filesystem_browsing</dt><dd>false" in artifacts_index.body
     assert "artifact_index_content_executed</dt><dd>false" in artifacts_index.body
@@ -23038,6 +23041,70 @@ def test_today_and_home_prefer_clankeros_goal_over_demo_fixture(
     assert "profiles_workbench_resume_source</dt><dd>clankeros_project_goal" in profiles.body
     assert f"profiles_workbench_resume_goal</dt><dd>{clankeros_goal_id}" in profiles.body
     assert "profiles_workbench_resume_project</dt><dd>clankeros" in profiles.body
+
+
+def test_artifact_index_prefers_real_goal_artifacts_over_demo_noise(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / ".agent").mkdir(parents=True, exist_ok=True)
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.initialize()
+    clankeros_goal_id = storage.create_goal(
+        "clankeros",
+        "Dogfood ClankerOS artifact index",
+    )
+    artifact_path = (
+        Path(".clanker")
+        / "projects"
+        / "clankeros"
+        / "goals"
+        / clankeros_goal_id
+        / "runs"
+        / "run_real_goal"
+        / "evidence"
+        / "summary.md"
+    )
+    absolute_artifact = tmp_path / artifact_path
+    absolute_artifact.parent.mkdir(parents=True, exist_ok=True)
+    absolute_artifact.write_text(
+        "# Real Goal Evidence\n\nThis artifact belongs to the ClankerOS dogfooding Goal.\n",
+        encoding="utf-8",
+    )
+    storage.create_task(
+        goal_id=clankeros_goal_id,
+        project_id="clankeros",
+        task_type="planned_step",
+        description="Keep the artifact index centered on the real Goal.",
+        verification_plan={"command": "python3 -m pytest -q"},
+        artifacts=[artifact_path.as_posix()],
+    )
+    for index in range(225):
+        storage.create_goal(
+            "local-app-demo",
+            f"Demo fixture noise {index}",
+        )
+
+    artifacts = render_local_app_route(tmp_path, "/artifacts")
+    assert artifacts.status == 200
+    assert "Artifact Index" in artifacts.body
+    assert "data-artifact-index-goal='true'" in artifacts.body
+    assert "artifact_index_available_records</dt><dd>1" in artifacts.body
+    assert "artifact_index_goal_records</dt><dd>1" in artifacts.body
+    assert "artifact_index_lead_goal_source</dt><dd>clankeros_project_goal" in artifacts.body
+    assert f"artifact_index_lead_goal</dt><dd>{clankeros_goal_id}" in artifacts.body
+    assert "artifact_index_lead_project</dt><dd>clankeros" in artifacts.body
+    assert f"artifact_index_latest_path</dt><dd>{artifact_path.as_posix()}" in artifacts.body
+    assert (
+        f"data-artifact-index-origin='goal_artifact_records' "
+        f"data-artifact-index-project='clankeros' "
+        f"data-artifact-index-goal='{clankeros_goal_id}'"
+    ) in artifacts.body
+    assert f"href='/goals/{clankeros_goal_id}#goal-artifact-command-bar'>Goal artifacts</a>" in artifacts.body
+    assert "artifact_index_source</dt><dd>goal_artifact_records_and_known_artifact_paths" in artifacts.body
+    assert "artifact_index_raw_filesystem_browsing</dt><dd>false" in artifacts.body
+    assert "artifact_index_write_on_get</dt><dd>false" in artifacts.body
+    assert "artifact_index_network_actions_taken</dt><dd>0" in artifacts.body
+    assert "artifact_index_external_effects_created</dt><dd>false" in artifacts.body
 
 
 def test_today_finish_today_saves_exact_resume_surface(tmp_path: Path) -> None:

@@ -1,5 +1,39 @@
 # Status
 
+## 2026-07-05 Goal-Aware Artifact Index
+
+- Bare `/artifacts` now builds its global Artifact Index from bounded
+  Goal-owned artifact records before appending the older known-path inventory.
+- This keeps the global artifact workbench centered on the current real
+  `clankeros` Goal even when many newer `local-app-demo` fixture Goals exist
+  in local SQLite state.
+- The Artifact Index now shows a visible Goal card linking back to the current
+  Goal artifact command bar and exposes evidence rows for
+  `artifact_index_goal_records`, `artifact_index_goal_available_records`,
+  `artifact_index_known_path_records`, `artifact_index_lead_goal_source`, and
+  `artifact_index_source`.
+- Local verification:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_artifact_index_prefers_real_goal_artifacts_over_demo_noise -q --tb=short`:
+    1 passed in 14.82s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_and_home_prefer_clankeros_goal_over_demo_fixture -q --tb=short`:
+    1 passed in 10.78s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed in 57.76s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed in 89.63s.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - Render-marker check on `/artifacts`: selected
+    `goal_1fa51c15f846` from `clankeros_project_goal`, found `200`
+    Goal-owned available artifact records, and opened a bounded
+    `/artifacts?path=...` latest surface.
+- Non-claim: this is read-only artifact index ordering and surfacing over
+  already-known local artifact records. It does not browse arbitrary filesystem
+  paths, write on GET, fetch GitHub, call providers, use the network, approve
+  work, push, create PRs, deploy, or mutate external systems from ClankerOS.
+
 ## 2026-07-05 Secondary Surfaces Real Goal Context
 
 - `/memory`, `/skills`, and `/profiles` now use the same dogfooding-aware Goal

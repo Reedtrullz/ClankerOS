@@ -41765,13 +41765,39 @@ def _artifact_index_page(root: Path) -> str:
     counts = {kind: 0 for kind in ["markdown", "json", "patch", "text"]}
     status_counts: dict[str, int] = {}
     source_counts: dict[str, int] = {}
+    index_source_counts: dict[str, int] = {}
     for record in records:
         counts[record["kind"]] = counts.get(record["kind"], 0) + 1
         status_counts[record["status"]] = status_counts.get(record["status"], 0) + 1
         source_counts[record["source"]] = source_counts.get(record["source"], 0) + 1
+        index_source = record.get("index_source", "unknown")
+        index_source_counts[index_source] = index_source_counts.get(index_source, 0) + 1
     available = status_counts.get("available", 0)
     missing = status_counts.get("missing", 0)
     rejected = status_counts.get("rejected", 0)
+    goal_records = index_source_counts.get("goal_artifact_records", 0)
+    known_path_records = index_source_counts.get("known_artifact_paths", 0)
+    goal_available = sum(
+        1
+        for record in records
+        if record.get("index_source") == "goal_artifact_records"
+        and record["status"] == "available"
+    )
+    rows_for_lead = _goal_rows(storage, limit=100)
+    active = [row for row in rows_for_lead if _goal_bucket(row) == "active"]
+    paused = [row for row in rows_for_lead if _goal_bucket(row) == "paused"]
+    completed = [row for row in rows_for_lead if _goal_bucket(row) == "completed"]
+    lead_goal, lead_goal_source = _operator_lead_goal(root, storage, active, paused, completed)
+    lead_goal_id = str(lead_goal["id"]) if lead_goal is not None else "none"
+    lead_project_id = str(lead_goal["project_id"] or "") if lead_goal is not None else "none"
+    if lead_goal is not None:
+        lead_goal_label, _lead_label_source = _goal_display_label(root, lead_goal_id)
+        lead_goal_href = f"/goals/{quote(lead_goal_id)}#goal-artifact-command-bar"
+        lead_goal_action = "Goal artifacts"
+    else:
+        lead_goal_label = "No current Goal"
+        lead_goal_href = "/goals"
+        lead_goal_action = "Open Goals"
     latest_record = next((record for record in records if record["status"] == "available"), None)
     if latest_record is not None:
         latest_href = _artifact_href(root, latest_record["path"])
@@ -41794,6 +41820,7 @@ def _artifact_index_page(root: Path) -> str:
         status = "partial"
     source_summary = _count_summary(source_counts)
     status_summary = _count_summary(status_counts)
+    index_source_summary = _count_summary(index_source_counts)
     type_buttons = [
         (
             "<button type='button' class='goal-artifact-filter-button' "
@@ -41824,12 +41851,16 @@ def _artifact_index_page(root: Path) -> str:
             f"data-goal-artifact-type='{_e(record['kind'])}' "
             f"data-goal-artifact-source='{_e(record['source'])}' "
             f"data-goal-artifact-status='{_e(record['status'])}' "
-            f"data-goal-artifact-text='{_e(' '.join([record['label'], record['path'], record['kind'], record['status'], record['source']]).lower())}' "
+            f"data-artifact-index-origin='{_e(record.get('index_source', 'unknown'))}' "
+            f"data-artifact-index-project='{_e(record.get('project_id', 'unknown'))}' "
+            f"data-artifact-index-goal='{_e(record.get('goal_id', 'unknown'))}' "
+            f"data-goal-artifact-text='{_e(' '.join([record['label'], record['path'], record['kind'], record['status'], record['source'], record.get('project_id', 'unknown'), record.get('goal_id', 'unknown')]).lower())}' "
             f"data-artifact-index-path='{_e(record['path'])}'>"
             f"<strong>{_e(record['label'])}</strong>: "
             f"<a href='{_e(_artifact_href(root, record['path']))}'>{_e(record['path'])}</a> "
             f"kind={_e(record['kind'])} status={_e(record['status'])} "
-            f"source={_e(record['source'])} updated={_e(record['updated_at'] or 'unknown')}</span>"
+            f"source={_e(record['source'])} goal={_e(record.get('goal_id', 'unknown'))} "
+            f"updated={_e(record['updated_at'] or 'unknown')}</span>"
         )
         for record in records
     ]
@@ -41844,6 +41875,9 @@ def _artifact_index_page(root: Path) -> str:
             f"<p>{_e(primary_reason)}.</p><a class='artifact-workbench-action' href='{_e(primary_href)}'>{_e(primary_action)}</a></article>",
             "<article class='artifact-workbench-card' data-artifact-index-latest='true'><h3>Latest</h3>",
             f"<p>{_e(latest_label)}.</p>{latest_surface}</article>",
+            "<article class='artifact-workbench-card' data-artifact-index-goal='true'><h3>Goal</h3>",
+            f"<p>{_e(_compact_label(lead_goal_label, 72))} · {goal_available}/{goal_records} available.</p>",
+            f"<a class='artifact-workbench-link' href='{_e(lead_goal_href)}'>{_e(lead_goal_action)}</a></article>",
             "<article class='artifact-workbench-card' data-artifact-index-inventory='true'><h3>Inventory</h3>",
             f"<p>{available} available / {missing} missing / {rejected} rejected.</p><a class='artifact-workbench-link' href='#artifact-index-list'>Artifact rows</a></article>",
             "<article class='artifact-workbench-card' data-artifact-index-types='true'><h3>Types</h3>",
@@ -41865,10 +41899,17 @@ def _artifact_index_page(root: Path) -> str:
                     ("artifact_index_text_artifacts", str(counts["text"])),
                     ("artifact_index_sources", source_summary),
                     ("artifact_index_status_counts", status_summary),
+                    ("artifact_index_index_sources", index_source_summary),
+                    ("artifact_index_goal_records", str(goal_records)),
+                    ("artifact_index_goal_available_records", str(goal_available)),
+                    ("artifact_index_known_path_records", str(known_path_records)),
+                    ("artifact_index_lead_goal_source", lead_goal_source),
+                    ("artifact_index_lead_goal", lead_goal_id),
+                    ("artifact_index_lead_project", lead_project_id),
                     ("artifact_index_latest_label", latest_label),
                     ("artifact_index_latest_path", latest_record["path"] if latest_record else "none"),
                     ("artifact_index_latest_surface", latest_surface),
-                    ("artifact_index_source", "known_artifact_paths"),
+                    ("artifact_index_source", "goal_artifact_records_and_known_artifact_paths"),
                     ("artifact_index_viewer_route", "/artifacts?path=<repo-relative-artifact>"),
                     ("artifact_index_raw_filesystem_browsing", "false"),
                     ("artifact_index_content_executed", "false"),
@@ -41883,6 +41924,7 @@ def _artifact_index_page(root: Path) -> str:
                     f"artifact_index_now: {_e(primary_action)}",
                     f"artifact_index_click: <a href='{_e(primary_href)}'>{_e(primary_action)}</a>",
                     f"artifact_index_latest: {latest_surface}",
+                    f"artifact_index_goal_records: {goal_records} goal-owned / {goal_available} available",
                     "artifact_index_safety: known artifact links only; full reads stay bounded in /artifacts?path=...",
                 ]
             ),
@@ -41909,9 +41951,10 @@ def _artifact_index_page(root: Path) -> str:
             _kv(
                 [
                     ("artifact_index_filter_status", "available" if records else "empty"),
-                    ("artifact_index_filter_scope", "browser_local_rendered_known_artifacts"),
+                    ("artifact_index_filter_scope", "browser_local_rendered_artifact_index_records"),
                     ("artifact_index_filter_total_records", str(len(records))),
                     ("artifact_index_filter_sources", source_summary),
+                    ("artifact_index_filter_index_sources", index_source_summary),
                     ("artifact_index_filter_memory_storage", "localStorage:clankeros-artifact-index-filter"),
                     ("artifact_index_filter_memory_fields", "type source query"),
                     ("artifact_index_filter_reset", "available"),
@@ -41941,11 +41984,67 @@ def _artifact_index_page(root: Path) -> str:
 
 def _artifact_index_records(root: Path, storage: Storage) -> list[dict[str, str]]:
     records: list[dict[str, str]] = []
+    seen_paths: set[str] = set()
+
+    def add_record(record: dict[str, str] | None) -> None:
+        if record is None:
+            return
+        path = record.get("path", "")
+        if not path or path in seen_paths:
+            return
+        seen_paths.add(path)
+        records.append(record)
+
+    for row in _artifact_index_goal_rows(root, storage):
+        goal_id = str(row["id"])
+        project_id = str(row["project_id"] or "")
+        try:
+            state = _goal_state(root, storage, goal_id)
+        except Exception:
+            continue
+        for goal_record in _goal_artifact_records(root, state):
+            record = _artifact_index_record(root, goal_record["path"])
+            if record is None:
+                continue
+            record["label"] = goal_record.get("label") or record["label"]
+            record["source"] = goal_record.get("source") or record["source"]
+            record["goal_id"] = goal_id
+            record["project_id"] = project_id
+            record["index_source"] = "goal_artifact_records"
+            add_record(record)
+
     for relative_path in _known_artifact_paths(root, storage):
-        record = _artifact_index_record(root, relative_path)
-        if record is not None:
-            records.append(record)
-    return sorted(records, key=lambda record: _artifact_index_sort_key(root, record), reverse=True)
+        add_record(_artifact_index_record(root, relative_path))
+    return sorted(records, key=lambda record: _artifact_index_sort_key(root, record), reverse=True)[:200]
+
+
+def _artifact_index_goal_rows(root: Path, storage: Storage) -> list[sqlite3.Row]:
+    rows = _goal_rows(storage, limit=300)
+    active = [row for row in rows if _goal_bucket(row) == "active"]
+    paused = [row for row in rows if _goal_bucket(row) == "paused"]
+    completed = [row for row in rows if _goal_bucket(row) == "completed"]
+    lead_goal, _lead_source = _operator_lead_goal(root, storage, active, paused, completed)
+    ordered: list[sqlite3.Row] = []
+    seen: set[str] = set()
+
+    def add(row: sqlite3.Row | None) -> None:
+        if row is None:
+            return
+        goal_id = str(row["id"])
+        if goal_id in seen:
+            return
+        seen.add(goal_id)
+        ordered.append(row)
+
+    add(lead_goal)
+    for row in rows:
+        if str(row["project_id"] or "") != "local-app-demo":
+            add(row)
+    for row in rows:
+        add(row)
+        if len(ordered) >= 40:
+            break
+    return ordered[:40]
 
 
 def _artifact_index_record(root: Path, relative_path: str) -> dict[str, str] | None:
@@ -41977,6 +42076,9 @@ def _artifact_index_record(root: Path, relative_path: str) -> dict[str, str] | N
         "kind": kind,
         "status": status,
         "source": _artifact_index_source(path_value, context, source_details),
+        "index_source": "known_artifact_paths",
+        "project_id": context["project_id"],
+        "goal_id": context["goal_id"],
         "size_bytes": size_bytes,
         "updated_at": updated_at,
     }
@@ -41994,6 +42096,8 @@ def _artifact_index_record_rank(record: dict[str, str]) -> int:
     source = record.get("source", "")
     if source in {"publication", "commit"}:
         return 120
+    if source in {"ci_deploy_evidence", "ci_snapshot_evidence"}:
+        return 115
     if "review" in label:
         return 100
     if "implementation handoff" in label:

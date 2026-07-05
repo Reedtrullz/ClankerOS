@@ -1124,6 +1124,12 @@ confirmation requirement, and zero provider/network/external-effect counters.
   per Goal in `localStorage:clankeros-goal-artifact-reader:<goal_id>`, and
   exposes Reset reader without writing Goal state, executing content,
   contacting providers, using the network, or browsing raw filesystem paths.
+  The bare `/artifacts` index now reuses those Goal-owned artifact records
+  before appending older known-path entries, adds a visible Goal card back to
+  the current Goal Artifact Command Bar, and records its Goal/known-path source
+  counts in collapsed evidence. This keeps the global artifact workbench useful
+  for the real `clankeros` Goal even when fixture Goals are newer, while the
+  actual file read still goes through the bounded `/artifacts?path=...` viewer.
   Opening those artifacts through `/artifacts?path=...` keeps Goal ownership
   visible. Direct Goal artifacts and run-backed review artifacts such as
   `runs/<source_run_id>/review.md` resolve to the owning Goal when local

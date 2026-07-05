@@ -1122,6 +1122,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   selected preview per Goal in
   `localStorage:clankeros-goal-artifact-reader:<goal_id>`, and exposes Reset
   reader while preserving the same zero-effect boundaries.
+  The bare `/artifacts` index now starts from the same bounded Goal-owned
+  artifact records before appending older known-path entries. It shows a
+  visible Goal card back to the current Goal Artifact Command Bar and records
+  Goal/known-path source counts, so fixture-heavy local state does not hide the
+  real `clankeros` Goal artifacts while the single-artifact read remains
+  constrained to `/artifacts?path=...`.
   The artifact
   viewer now opens with an `Artifact Operator Workbench`, reports render
   family/renderer posture, and renders Markdown as escaped headings/lists/

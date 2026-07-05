@@ -792,7 +792,13 @@ browser-local `Goal Artifact Reader` follows the filter so the operator can
 preview one already-registered artifact inline, switch between bounded
 Markdown/JSON/Patch/Text renderers, keep the selected artifact per Goal in
 `localStorage:clankeros-goal-artifact-reader:<goal_id>`, and reset that reader
-view without executing content, writing state, or browsing raw paths. Each
+view without executing content, writing state, or browsing raw paths. The bare
+`/artifacts` index now uses those same Goal-owned artifact records first,
+then appends older known-path entries, so the global artifact workbench opens
+on the current real Goal instead of being dominated by stale demo inventory.
+It shows a visible Goal card back to the Goal Artifact Command Bar while
+preserving the bounded `/artifacts?path=...` viewer and no raw filesystem
+browsing boundary. Each
 artifact page starts with
 a visible `Artifact Operator Workbench` for opening the inert content,
 returning to the owning Goal/delegation context, remembering or resuming from
