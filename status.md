@@ -1,5 +1,36 @@
 # Status
 
+## 2026-07-05 Goal Milestone Checklist UX
+
+- Goal detail pages now include a read-only `Goal Milestone Checklist` after
+  the `Goal Path Rail`, so the Goal cockpit itself carries the same no-docs
+  path that Home and `/guide` expose.
+- The checklist renders seven Goal-local cards: Launch App, Create Project,
+  Create Goal, Do Current Action, Check Proof, Finish Today, and Resume
+  Exactly.
+- Populated Goal sessions mark Project and Goal as done, the current browser
+  action as current until the Goal is complete, Proof as done when local CI
+  evidence exists, Finish as current until an exact saved resume surface exists,
+  and Resume as waiting until `.clanker/app/workspace.json` points back to the
+  same Goal.
+- The section keeps collapsed evidence for Goal/project identity, phase,
+  primary action/form availability, latest CI proof source/status, finish and
+  resume surfaces, saved workspace state, current checklist step, and
+  zero-effect GET boundaries.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed in 85.38s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed in 51.73s.
+- Non-claim: this is read-only Goal guidance over existing local state. It does
+  not write on GET, call providers, poll GitHub from the app, execute tasks,
+  approve work, push, create PRs, deploy, or mutate external systems from
+  ClankerOS.
+- Testing posture: broad/full regression coverage should run in GitHub Actions
+  after push rather than being repeated locally for this UX slice.
+
 ## 2026-07-04 Home Milestone Checklist UX
 
 - `/` now includes a read-only `Home Milestone Checklist` immediately after the

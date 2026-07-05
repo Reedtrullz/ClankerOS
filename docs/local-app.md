@@ -114,6 +114,17 @@ confirmation requirement, and zero provider/network/external-effect counters.
   between Attention and the Goal Command Bar, keeping Project, Goal,
   Delegation, Context, and Run visible on the Goal page and routing the
   current gate to the existing confirmed Goal action form.
+  Populated Goal pages also show a read-only `Goal Milestone Checklist` near
+  the top of the page after the Goal Path Rail. It translates the product
+  no-docs path into seven Goal-local browser cards: Launch App, Create Project,
+  Create Goal, Do Current Action, Check Proof, Finish Today, and Resume
+  Exactly. The checklist uses local Goal, project, CI-evidence, and saved
+  workspace state to mark each step as ready, done, current, waiting, or ready
+  to resume, routes proof to the same-page CI handoff, routes Finish to the
+  existing confirmed save-workspace form, and routes Resume to the exact saved
+  surface only when it belongs to the same Goal. It is read-only on GET and
+  records zero provider calls, network actions, pushes, PRs, deploys, or
+  external effects.
   Confirmed
   `register-project` and `create-goal` browser actions also update
   `.clanker/app/workspace.json`, so `/resume` can restore the new project or

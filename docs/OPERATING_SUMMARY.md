@@ -221,6 +221,13 @@ Core layers for the bootstrap:
   resume readiness. It highlights the current missing step from local state
   without adding write authority. It remains read-only on GET with no
   provider calls, network actions, push, PR, deploy, or external mutation.
+  Goal detail pages now carry that same no-docs path directly in a read-only
+  `Goal Milestone Checklist` after the Goal Path Rail: Launch App, Create
+  Project, Create Goal, Do Current Action, Check Proof, Finish Today, and
+  Resume Exactly are rendered as Goal-local cards sourced from local project,
+  goal, CI-evidence, and saved workspace state. Proof opens the same-page Goal
+  CI handoff, Finish opens the existing save-workspace form, and Resume uses
+  the exact saved resume surface only when it matches the current Goal.
   The local app also exposes `/resume` as a
   read-only return-to-work surface over saved `.clanker/app/workspace.json`
   state and browser-local route memory. It opens with a primary return link, a

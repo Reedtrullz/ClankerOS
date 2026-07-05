@@ -15333,10 +15333,63 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_path_progress: 8/15 gates done; pending=1 waiting=6" in goal.body
     assert "goal_path_gate: commit_request status=pending marker=current href=#goal-action-dock-form" in goal.body
     assert "goal_path_safety: read-only local lifecycle rail; existing confirmed forms own writes" in goal.body
+    assert "Goal Milestone Checklist" in goal.body
+    assert "id='goal-milestone-checklist'" in goal.body
+    assert "data-goal-milestone-checklist='true'" in goal.body
+    assert "data-goal-milestone-actions='true'" in goal.body
+    assert goal.body.count("data-goal-milestone-card='true'") == 7
+    assert "data-goal-milestone-card-key='app' data-goal-milestone-card-status='ready'" in goal.body
+    assert "data-goal-milestone-card-key='project' data-goal-milestone-card-status='done'" in goal.body
+    assert "data-goal-milestone-card-key='goal' data-goal-milestone-card-status='done'" in goal.body
+    assert "data-goal-milestone-card-key='action' data-goal-milestone-card-status='current'" in goal.body
+    assert "data-goal-milestone-card-key='proof' data-goal-milestone-card-status='done'" in goal.body
+    assert "data-goal-milestone-card-key='finish' data-goal-milestone-card-status='current'" in goal.body
+    assert "data-goal-milestone-card-key='resume' data-goal-milestone-card-status='waiting'" in goal.body
+    assert "data-goal-milestone-evidence='true'" in goal.body
+    assert "goal_milestone_status</dt><dd>available" in goal.body
+    assert f"goal_milestone_goal</dt><dd>{result.goal_id}" in goal.body
+    assert f"goal_milestone_goal_label</dt><dd>{goal_title}" in goal.body
+    assert "goal_milestone_goal_label_source</dt><dd>title" in goal.body
+    assert (
+        f"goal_milestone_goal_surface</dt><dd><a href='/goals/{result.goal_id}'>"
+        f"{goal_title}</a>"
+        in goal.body
+    )
+    assert f"goal_milestone_project</dt><dd>{result.project_id}" in goal.body
+    assert "goal_milestone_phase</dt><dd>Ready to commit" in goal.body
+    assert "goal_milestone_goal_status</dt><dd>accepted" in goal.body
+    assert "goal_milestone_primary_action</dt><dd>Create commit request" in goal.body
+    assert "goal_milestone_primary_surface</dt><dd><a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
+    assert "goal_milestone_action_form_available</dt><dd>true" in goal.body
+    assert "goal_milestone_latest_ci_status</dt><dd>success" in goal.body
+    assert "goal_milestone_latest_ci_source</dt><dd>direct_public_snapshot" in goal.body
+    assert "goal_milestone_proof_surface</dt><dd><a href='#goal-ci-handoff'>CI handoff</a>" in goal.body
+    assert "goal_milestone_finish_surface</dt><dd><a href='#goal-finish-today'>Finish Today</a>" in goal.body
+    assert "goal_milestone_saved_project</dt><dd>none" in goal.body
+    assert "goal_milestone_saved_goal</dt><dd>none" in goal.body
+    assert "goal_milestone_resume_surface</dt><dd>none" in goal.body
+    assert "goal_milestone_resume_link</dt><dd><a href='/resume'>Open Resume</a>" in goal.body
+    assert "goal_milestone_ready_to_resume</dt><dd>false" in goal.body
+    assert "goal_milestone_current_step</dt><dd>action" in goal.body
+    assert "goal_milestone_step_count</dt><dd>7" in goal.body
+    assert "goal_milestone_write_on_get</dt><dd>false" in goal.body
+    assert "goal_milestone_provider_calls_taken</dt><dd>0" in goal.body
+    assert "goal_milestone_network_actions_taken</dt><dd>0" in goal.body
+    assert "goal_milestone_external_effects_created</dt><dd>false" in goal.body
+    assert "goal_milestone_path: launch_app -> create_project -> create_goal -> current_action -> proof -> finish_today -> resume_exactly" in goal.body
+    assert "goal_milestone_current: action" in goal.body
+    assert "goal_milestone_action: <a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
+    assert "goal_milestone_proof: <a href='#goal-ci-handoff'>CI handoff</a>" in goal.body
+    assert "goal_milestone_finish: <a href='#goal-finish-today'>Finish Today</a>" in goal.body
+    assert "goal_milestone_resume: <a href='/resume'>Open Resume</a>" in goal.body
+    assert "goal_milestone_safety: read-only Goal checklist; existing confirmed forms own writes" in goal.body
     assert goal.body.index("id='goal-control-strip'") < goal.body.index(
         "id='goal-path-rail'"
     )
     assert goal.body.index("id='goal-path-rail'") < goal.body.index(
+        "id='goal-milestone-checklist'"
+    )
+    assert goal.body.index("id='goal-milestone-checklist'") < goal.body.index(
         "id='goal-review-strip'"
     )
     assert goal.body.index("id='goal-review-strip'") < goal.body.index(

@@ -550,7 +550,14 @@ one is available, links
 the source surface and first unblock surface, names the current gate/progress,
 and keeps confirmation/write/provider/network/external-effect counters
 available in collapsed workbench evidence before the deeper diagnostic
-sections. The Goal Next Action section now starts
+sections. A read-only `Goal Milestone Checklist` now sits near the top of the
+Goal page after the Goal Path Rail, mapping Launch App, Create Project, Create
+Goal, Do Current Action, Check Proof, Finish Today, and Resume Exactly to the
+current Goal's local state. It highlights the active or waiting step, routes
+proof to the same-page CI handoff, Finish to the existing save-workspace form,
+and Resume to the saved exact surface when one exists, while keeping write,
+provider, network, PR, push, deploy, and external-effect counters at zero on
+GET. The Goal Next Action section now starts
 with a human-first focus strip for Now, Gate, Target, and Boundary, with one
 primary link to the existing confirmed form or source surface, then renders the
 confirmed form before collapsed action evidence. Goal Daily Loop now opens as a

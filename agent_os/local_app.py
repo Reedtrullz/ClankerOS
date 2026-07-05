@@ -16575,6 +16575,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             f"<p class='muted' data-goal-summary-id='true'>Goal {_e(goal.id)}</p>",
             _goal_control_strip(root, state, phase, next_action),
             _goal_path_rail(root, state, next_action),
+            _goal_milestone_checklist(root, state, phase, next_action),
             _goal_review_strip(root, state, next_action),
             "<div class='goal-summary-grid' data-goal-summary-grid='true'>",
             "<article class='goal-summary-card goal-summary-card-primary' data-goal-summary-next-card='true'><h3>Next</h3>",
@@ -17073,6 +17074,197 @@ def _goal_path_rail(
                     "goal_path_safety: read-only local lifecycle rail; existing confirmed forms own writes",
                 ]
             ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _goal_milestone_checklist(
+    root: Path,
+    state: dict[str, Any],
+    phase: str,
+    next_action: GoalNextAction,
+) -> str:
+    goal = state["goal"]
+    workspace = _load_workspace_state(root)
+    saved_goal = str(workspace.get("open_goal") or "").strip()
+    saved_project = str(workspace.get("open_project") or "").strip()
+    saved_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
+    resume_matches_goal = bool(saved_resume_surface and saved_goal == goal.id)
+    form_available = bool(_goal_next_action_form(state, next_action))
+    primary_href = _goal_primary_action_href(
+        state,
+        next_action,
+        form_available=form_available,
+    )
+    primary_label = _goal_action_cta_label(next_action, form_available)
+    latest_ci = _latest_ci_evidence_record(root, project_id=goal.project_id)
+    if latest_ci is None:
+        ci_source = "none"
+        ci_status = "missing"
+    else:
+        ci_source, ci_record = latest_ci
+        ci_status = str(ci_record.status)
+    has_proof = ci_status not in {"", "none", "unknown", "missing"}
+    goal_href, goal_label, goal_label_source, goal_surface = _goal_display_link(
+        root,
+        goal.id,
+    )
+
+    action_status = "done" if goal.status == "completed" else "current"
+    proof_status = "done" if has_proof else "waiting"
+    finish_status = "done" if resume_matches_goal else action_status
+    resume_status = "ready" if resume_matches_goal else "waiting"
+    resume_href = saved_resume_surface if resume_matches_goal else "/resume"
+    resume_label = (
+        _saved_workspace_surface_action_label(
+            root,
+            saved_resume_surface,
+            open_goal=saved_goal,
+            open_project=saved_project,
+            fallback=saved_resume_surface,
+        )
+        if resume_matches_goal
+        else "Open Resume"
+    )
+
+    milestone_cards = [
+        ("app", "Launch App", "Local browser shell is open.", "ready", "/health", "Health"),
+        (
+            "project",
+            "Create Project",
+            f"Project {goal.project_id} is registered.",
+            "done",
+            f"/projects/{quote(goal.project_id)}",
+            "Open Project",
+        ),
+        (
+            "goal",
+            "Create Goal",
+            f"Goal {goal.id} is the active work object.",
+            "done",
+            goal_href,
+            "Open Goal",
+        ),
+        (
+            "action",
+            "Do Current Action",
+            f"{phase}: {next_action.action}",
+            action_status,
+            primary_href,
+            primary_label,
+        ),
+        (
+            "proof",
+            "Check Proof",
+            f"Latest CI proof: {ci_status}.",
+            proof_status,
+            "#goal-ci-handoff",
+            "CI handoff",
+        ),
+        (
+            "finish",
+            "Finish Today",
+            "Save the exact return point before leaving.",
+            finish_status,
+            "#goal-finish-today",
+            "Finish Today",
+        ),
+        (
+            "resume",
+            "Resume Exactly",
+            f"Saved surface: {saved_resume_surface if resume_matches_goal else 'none'}.",
+            resume_status,
+            resume_href,
+            resume_label,
+        ),
+    ]
+    current_step = next(
+        (key for key, _, _, status, _, _ in milestone_cards if status == "current"),
+        next(
+            (key for key, _, _, status, _, _ in milestone_cards if status == "waiting"),
+            "resume",
+        ),
+    )
+    cards_html = "".join(
+        [
+            (
+                "<article class='goal-milestone-card"
+                + (" goal-milestone-current" if status == "current" else "")
+                + f"' data-goal-milestone-card='true' data-goal-milestone-card-key='{_e(key)}' "
+                + f"data-goal-milestone-card-status='{_e(status)}'>"
+            )
+            + f"<span class='goal-milestone-kicker'>{_e(key)}</span>"
+            + f"<h3>{_e(title)}</h3>"
+            + f"<p>{_e(body)}</p>"
+            + f"<p class='goal-milestone-status'>{_e(status.replace('_', ' '))}</p>"
+            + f"<a class='goal-milestone-link' href='{_e(href)}'>{_e(label)}</a>"
+            + "</article>"
+            for key, title, body, status, href, label in milestone_cards
+        ]
+    )
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("goal_milestone_status", "available"),
+        ("goal_milestone_goal", goal.id),
+        ("goal_milestone_goal_label", goal_label),
+        ("goal_milestone_goal_label_source", goal_label_source),
+        ("goal_milestone_goal_surface", goal_surface),
+        ("goal_milestone_project", goal.project_id),
+        ("goal_milestone_phase", phase),
+        ("goal_milestone_goal_status", goal.status),
+        ("goal_milestone_primary_action", next_action.action),
+        (
+            "goal_milestone_primary_surface",
+            SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+        ),
+        ("goal_milestone_action_form_available", str(form_available).lower()),
+        ("goal_milestone_latest_ci_status", ci_status),
+        ("goal_milestone_latest_ci_source", ci_source),
+        (
+            "goal_milestone_proof_surface",
+            SafeHtml("<a href='#goal-ci-handoff'>CI handoff</a>"),
+        ),
+        (
+            "goal_milestone_finish_surface",
+            SafeHtml("<a href='#goal-finish-today'>Finish Today</a>"),
+        ),
+        ("goal_milestone_saved_project", saved_project or "none"),
+        ("goal_milestone_saved_goal", saved_goal or "none"),
+        ("goal_milestone_resume_surface", saved_resume_surface if resume_matches_goal else "none"),
+        (
+            "goal_milestone_resume_link",
+            SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"),
+        ),
+        ("goal_milestone_ready_to_resume", str(resume_matches_goal).lower()),
+        ("goal_milestone_current_step", current_step),
+        ("goal_milestone_step_count", str(len(milestone_cards))),
+        ("goal_milestone_write_on_get", "false"),
+        ("goal_milestone_provider_calls_taken", "0"),
+        ("goal_milestone_network_actions_taken", "0"),
+        ("goal_milestone_external_effects_created", "false"),
+    ]
+    lines = [
+        "goal_milestone_path: launch_app -> create_project -> create_goal -> current_action -> proof -> finish_today -> resume_exactly",
+        f"goal_milestone_current: {current_step}",
+        f"goal_milestone_action: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+        "goal_milestone_proof: <a href='#goal-ci-handoff'>CI handoff</a>",
+        "goal_milestone_finish: <a href='#goal-finish-today'>Finish Today</a>",
+        f"goal_milestone_resume: <a href='{_e(resume_href)}'>{_e(resume_label)}</a>",
+        "goal_milestone_safety: read-only Goal checklist; existing confirmed forms own writes",
+    ]
+    return "".join(
+        [
+            "<section id='goal-milestone-checklist' class='panel goal-milestone' "
+            "data-goal-milestone-checklist='true'><h2>Goal Milestone Checklist</h2>",
+            "<p class='muted'>The no-docs product path for this Goal: act, prove, finish, and resume exactly from the same browser object.</p>",
+            "<div class='goal-milestone-grid' data-goal-milestone-actions='true'>",
+            cards_html,
+            "</div>",
+            "<details class='goal-milestone-evidence' data-goal-milestone-evidence='true'>"
+            "<summary>Goal milestone evidence</summary>",
+            _kv(rows),
+            _ul(lines),
             "</details>",
             "</section>",
         ]
@@ -51197,6 +51389,21 @@ def _html_page(
     .goal-control-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-control-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-control-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .goal-milestone {{ border-left:4px solid var(--accent); margin:0 0 12px; }}
+    .goal-milestone-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px; margin:10px 0 12px; align-items:stretch; }}
+    .goal-milestone-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:9px 10px; display:grid; gap:5px; align-content:start; overflow-wrap:anywhere; }}
+    .goal-milestone-current {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); background:var(--panel); }}
+    .goal-milestone-kicker {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .goal-milestone-card h3, .goal-milestone-card p {{ margin:0; overflow-wrap:anywhere; }}
+    .goal-milestone-card p {{ color:var(--muted); }}
+    .goal-milestone-status {{ font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .goal-milestone-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; width:100%; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); text-decoration:none; overflow-wrap:anywhere; }}
+    .goal-milestone-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-milestone-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-milestone-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .goal-milestone-evidence dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .goal-milestone-evidence ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
+    .goal-milestone-evidence li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .goal-summary-grid, .goal-phase-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(155px, 1fr)); gap:8px; margin:10px 0; align-items:stretch; }}
     .goal-summary-card, .goal-phase-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:9px 10px; display:grid; gap:4px; align-content:start; }}
     .goal-summary-card h3, .goal-phase-card h3 {{ margin:0; color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
