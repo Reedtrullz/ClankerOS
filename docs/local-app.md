@@ -112,7 +112,11 @@ confirmation requirement, and zero provider/network/external-effect counters.
   `First Run Checklist` follows the map so an
   operator can mark setup checks and keep a short return note in
   `localStorage:clankeros-first-run-checklist`, while real progress remains
-  derived from ClankerOS state and GET rendering stays read-only.
+  derived from ClankerOS state and GET rendering stays read-only. The
+  `First Run Progress` strip uses the same concrete step labels and targets:
+  completed Project/Goal/delegation steps open their local surfaces, current
+  steps use the confirmed same-page action, and waiting steps name the missing
+  prerequisite instead of showing generic `Waiting` copy.
   Active first-run Goal pages also show a read-only `Goal First Run Rail`
   between Attention and the Goal Command Bar, keeping Project, Goal,
   Delegation, Context, and Run visible on the Goal page and routing the

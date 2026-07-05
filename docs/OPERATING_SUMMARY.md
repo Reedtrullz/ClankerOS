@@ -1398,9 +1398,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   `First Run Progress` strip with a progress bar and five step cards for
   Project, Goal, Delegation, Context, and Run, keeping detailed status evidence
   collapsed and preserving no-write/provider/network/external-effect
-  counters; after a Goal exists, it can render the same confirmed local
-  next-action form inline for scout delegation, context-pack generation, and
-  first delegation execution. The progress, checklist, and empty-state links
+  counters. Its cards now use action-specific labels and concrete targets:
+  done steps open Project/Goal/delegation surfaces, current steps use the
+  confirmed same-page action, and waiting steps name the missing prerequisite
+  instead of generic waiting copy. After a Goal exists, it can render the same
+  confirmed local next-action form inline for scout delegation, context-pack
+  generation, and first delegation execution. The progress, checklist, and empty-state links
   for the current post-Goal first-run gate now target that inline command form
   directly instead of only opening the generic Goal page. Those three forms,
   confirmation pages, and

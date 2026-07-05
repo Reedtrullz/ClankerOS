@@ -5784,6 +5784,10 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-first-run-step='create_project' data-first-run-step-status='current'" in root.body
     assert "data-first-run-step='create_first_goal' data-first-run-step-status='waiting_for_project'" in root.body
     assert "data-first-run-step='create_first_delegation' data-first-run-step-status='waiting_for_goal'" in root.body
+    assert "data-first-run-step-action='register-project'" in root.body
+    assert "data-first-run-step-link-label='Register ClankerOS project'" in root.body
+    assert "data-first-run-step-link-label='Needs project'" in root.body
+    assert "data-first-run-step-link-label='Needs Goal'" in root.body
     assert "first_run_progress_status</dt><dd>in_progress" in root.body
     assert "first_run_progress_current_step</dt><dd>create_project" in root.body
     assert "first_run_progress_next_action</dt><dd>Register ClankerOS project" in root.body
@@ -5793,7 +5797,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_progress_total_steps</dt><dd>5" in root.body
     assert "first_run_progress_write_on_get</dt><dd>false" in root.body
     assert "first_run_progress_external_effects_created</dt><dd>false" in root.body
-    assert "first_run_progress_step: create_project status=current action=Register ClankerOS project" in root.body
+    assert (
+        "first_run_progress_step: create_project status=current "
+        "surface=<a href='#first-run-create-project'>Register ClankerOS project</a> "
+        "action=register-project link=Register ClankerOS project href=#first-run-create-project"
+        in root.body
+    )
     assert "first_run_command_status</dt><dd>available" in root.body
     assert "first_run_command_current_step</dt><dd>create_project" in root.body
     assert "first_run_command_next_action</dt><dd>Register ClankerOS project" in root.body
@@ -11424,11 +11433,27 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     assert "data-first-run-progress-strip='true'" in register_home.body
     assert "data-first-run-step='create_project' data-first-run-step-status='done'" in register_home.body
     assert "data-first-run-step='create_first_goal' data-first-run-step-status='current'" in register_home.body
+    assert "data-first-run-step-link-label='Open Project'" in register_home.body
+    assert "href='/projects/clankeros'>Open Project</a>" in register_home.body
+    assert "data-first-run-step-link-label='Create first goal'" in register_home.body
+    assert "data-first-run-step-link-label='Needs Goal'" in register_home.body
     assert "first_run_progress_current_step</dt><dd>create_first_goal" in register_home.body
     assert "first_run_progress_done_count</dt><dd>1" in register_home.body
     assert "first_run_progress_current_count</dt><dd>1" in register_home.body
     assert "first_run_progress_waiting_count</dt><dd>3" in register_home.body
     assert "first_run_progress_next_action</dt><dd>Create first goal" in register_home.body
+    assert (
+        "first_run_progress_step: create_project status=done "
+        "surface=<a href='/projects/clankeros'>Open Project</a> "
+        "action=register-project link=Open Project href=/projects/clankeros"
+        in register_home.body
+    )
+    assert (
+        "first_run_progress_step: create_first_goal status=current "
+        "surface=<a href='#first-run-create-goal'>Create first goal</a> "
+        "action=create-goal link=Create first goal href=#first-run-create-goal"
+        in register_home.body
+    )
     assert "data-first-run-next-step='true'" in register_home.body
     assert "first_run_next_step_current_step</dt><dd>create_first_goal" in register_home.body
     assert "first_run_next_step_action</dt><dd>Create first goal" in register_home.body

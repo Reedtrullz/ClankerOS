@@ -196,10 +196,12 @@ browser-local `First Run Checklist` then lets the operator mark setup checks
 and keep a short return note in `localStorage:clankeros-first-run-checklist`;
 the real step state still comes from ClankerOS progress and GET rendering
 stays read-only. A visible `First Run Progress` strip follows with a progress
-bar and five step
-cards for Project, Goal, Delegation, Context, and Run, while detailed status
-evidence stays collapsed and read-only. Active first-run Goal pages also show
-a read-only `Goal First Run Rail` between Attention and the Goal Command Bar,
+bar and five step cards for Project, Goal, Delegation, Context, and Run. Its
+cards use action-specific labels such as `Register ClankerOS project`, `Open
+Project`, and `Needs Goal`, link completed steps to their concrete local
+surfaces, and keep detailed status evidence collapsed and read-only. Active
+first-run Goal pages also show a read-only `Goal First Run Rail` between
+Attention and the Goal Command Bar,
 so the same Project -> Goal -> Delegation -> Context -> Run path stays visible
 and routes the current step to the existing confirmed Goal action form. Done
 steps open their concrete local surfaces, such as the project page, Goal page,
