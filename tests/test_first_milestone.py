@@ -11774,6 +11774,138 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
 
     today_after_prep = render_local_app_route(tmp_path, "/today")
     assert "today_command_primary_action</dt><dd>Create worktree plan" in today_after_prep.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Create worktree plan</a>"
+    ) in today_after_prep.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Create worktree plan</a>"
+    ) in today_after_prep.body
+    assert "today_command_reason</dt><dd>coder_prep_available" in today_after_prep.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_prep.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_prep.body
+    assert "Create Worktree Plan" in today_after_prep.body
+    assert "action='/actions/coder-worktree-plan'" in today_after_prep.body
+    assert f"name='delegation_id' value='{delegation.id}'" in today_after_prep.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_prep.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_prep.body
+
+    plan_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-plan",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert plan_confirmation.status == 409
+    assert "Confirm worktree plan" in plan_confirmation.body
+    assert "action_confirmation_label</dt><dd>Create worktree plan" in plan_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in plan_confirmation.body
+
+    plan_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-plan",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert plan_result.status == 200
+    assert "coder_worktree_plan:" in plan_result.body
+    assert "action_result_command_label</dt><dd>Create worktree plan" in plan_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=coder_worktree_plan%3A%20"
+    ) in plan_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in plan_result.body
+    coder_worktree_plan_md = coder_prep_md.with_name("coder_worktree_plan.md")
+    assert coder_worktree_plan_md.exists()
+    plan_workspace = json.loads((tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8"))
+    assert plan_workspace["open_project"] == "first-target"
+    assert plan_workspace["open_goal"] == created_goal_id
+    assert plan_workspace["last_viewed_artifact"] == str(
+        coder_worktree_plan_md.relative_to(tmp_path)
+    )
+    assert plan_workspace["resume_surface"] == "/today#today-current-action"
+    assert plan_workspace["updated_by"] == "coder-worktree-plan"
+
+    today_after_plan = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Request worktree approval" in today_after_plan.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Request worktree approval</a>"
+    ) in today_after_plan.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Request worktree approval</a>"
+    ) in today_after_plan.body
+    assert "today_command_reason</dt><dd>coder_worktree_plan_available" in today_after_plan.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_plan.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_plan.body
+    assert "Request Worktree Approval" in today_after_plan.body
+    assert "action='/actions/coder-worktree-approval'" in today_after_plan.body
+    assert f"name='delegation_id' value='{delegation.id}'" in today_after_plan.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_plan.body
+
+    approval_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-approval",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "requested_by": ["operator"],
+            "note": ["Approve bounded worktree execution from Today"],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert approval_confirmation.status == 409
+    assert "Confirm worktree approval request" in approval_confirmation.body
+    assert "action_confirmation_label</dt><dd>Request worktree approval" in approval_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in approval_confirmation.body
+
+    approval_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-approval",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "requested_by": ["operator"],
+            "note": ["Approve bounded worktree execution from Today"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert approval_result.status == 200
+    assert "coder_worktree_approval:" in approval_result.body
+    assert "action_result_command_label</dt><dd>Request worktree approval" in approval_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=coder_worktree_approval%3A%20"
+    ) in approval_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in approval_result.body
+    approval_request_md = coder_worktree_plan_md.with_name("coder_worktree_approval_request.md")
+    assert approval_request_md.exists()
+    approval_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert approval_workspace["open_project"] == "first-target"
+    assert approval_workspace["open_goal"] == created_goal_id
+    assert approval_workspace["last_viewed_artifact"] == str(
+        approval_request_md.relative_to(tmp_path)
+    )
+    assert approval_workspace["resume_surface"] == "/today#today-current-action"
+    assert approval_workspace["updated_by"] == "coder-worktree-approval"
+
+    today_after_approval_request = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Approve worktree" in today_after_approval_request.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:

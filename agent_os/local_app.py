@@ -22892,9 +22892,15 @@ def _goal_next_action_form(
             return_to_override=return_to_override,
         )
     if next_action.action == "Create worktree plan":
-        return _goal_worktree_plan_form(state)
+        return _goal_worktree_plan_form(
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Request worktree approval":
-        return _goal_worktree_approval_form(state)
+        return _goal_worktree_approval_form(
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Approve worktree":
         return _goal_approve_worktree_form(state)
     if next_action.action == "Run approved worktree":
@@ -23641,11 +23647,15 @@ def _goal_coder_prep_form(
     )
 
 
-def _goal_worktree_plan_form(state: dict[str, Any]) -> str:
+def _goal_worktree_plan_form(
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     delegation_id = _goal_packet_delegation_id(state.get("prep_packets", []))
     if not delegation_id:
         return "<p class='muted'>coder_worktree_plan_form_status: unavailable_until_coder_prep_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Create Worktree Plan</h3>",
@@ -23658,11 +23668,15 @@ def _goal_worktree_plan_form(state: dict[str, Any]) -> str:
     )
 
 
-def _goal_worktree_approval_form(state: dict[str, Any]) -> str:
+def _goal_worktree_approval_form(
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     delegation_id = _goal_packet_delegation_id(state.get("worktree_plans", []))
     if not delegation_id:
         return "<p class='muted'>coder_worktree_approval_form_status: unavailable_until_worktree_plan_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Request Worktree Approval</h3>",

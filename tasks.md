@@ -48,7 +48,13 @@
 - [x] Make post-run `/today` expose `Run coder prep` as the primary same-page
   first-run action with confirmation and finish-today resume proof.
   <!-- score=10 complexity=4 -->
-- [ ] Make post-coder-prep `/today` expose `Create worktree plan` as the
+- [x] Make post-coder-prep `/today` expose `Create worktree plan` as the
+  primary same-page first-run action with confirmation and finish-today resume
+  proof. <!-- score=10 complexity=4 -->
+- [x] Make post-worktree-plan `/today` expose `Request worktree approval` as
+  the primary same-page first-run action with confirmation and finish-today
+  resume proof. <!-- score=10 complexity=4 -->
+- [ ] Make post-approval-request `/today` expose `Approve worktree` as the
   primary same-page first-run action with confirmation and finish-today resume
   proof. <!-- score=10 complexity=4 -->
 - [x] Extend the static dashboard with incident summaries once incidents exist.
