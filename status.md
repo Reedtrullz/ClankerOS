@@ -1,5 +1,31 @@
 # Status
 
+## 2026-07-05 Dogfooding Fast Smoke CI Fix
+
+- GitHub Actions fast smoke failed on PR `#1` head
+  `cf6b57b429d7740bd3b4d3a7f795620600158489` because
+  `test_local_app_routes_render_modern_workflow_and_health` still expected
+  `/dogfooding` session checklist evidence to route to the demo fixture
+  `run_demo_app_scenario`.
+- The product behavior is now intentionally Goal-first: once a real non-demo
+  Goal exists, the dogfooding checklist Action step routes to that Goal's
+  current browser action and records `action_source=real_goal`.
+- The broad local-app route smoke now asserts the real-Goal path, selected
+  Goal id, same-page Goal action dock surface, selector source, current phase,
+  and form availability. The dedicated demo-fixture regression still covers
+  `action_source=demo_fixture`.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed in 54.87s.
+  - GitHub fast-smoke selector equivalent:
+    15 passed, 502 deselected in 215.94s.
+- Non-claim: this is a test expectation fix for the already-intended
+  read-only real-Goal dogfooding route. It does not change app runtime
+  behavior, write on GET, run providers, fetch GitHub, use the network, push,
+  create PRs, deploy, or mutate external systems from ClankerOS.
+
 ## 2026-07-05 Dogfooding Session Checklist Real Goal Action
 
 - `/dogfooding` keeps the existing `Dogfooding Real Goal Continuation` panel,

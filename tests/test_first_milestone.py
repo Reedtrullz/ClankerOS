@@ -9705,7 +9705,26 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert dogfooding.body.count("data-dogfooding-session-checklist-item='true'") == 5
     assert "data-dogfooding-session-checklist-checkbox='true'" in dogfooding.body
     assert "data-dogfooding-session-checklist-reset='true'>Reset session</button>" in dogfooding.body
-    assert "dogfooding_session_checklist_next_action</dt><dd>run_demo_app_scenario" in dogfooding.body
+    assert "dogfooding_session_checklist_next_action</dt><dd>Run delegation" in dogfooding.body
+    assert "dogfooding_session_checklist_action_source</dt><dd>real_goal" in dogfooding.body
+    assert (
+        f"dogfooding_session_checklist_goal</dt><dd>{created_goal_id}"
+        in dogfooding.body
+    )
+    assert (
+        f"dogfooding_session_checklist_action_surface</dt><dd><a href='/goals/{created_goal_id}#goal-action-dock-form'>"
+        "Run delegation</a>"
+    ) in dogfooding.body
+    assert (
+        f"dogfooding_session_checklist_real_goal</dt><dd><a href='/goals/{created_goal_id}'>{created_goal_id}</a>"
+        in dogfooding.body
+    )
+    assert (
+        "dogfooding_session_checklist_real_goal_source</dt><dd>non_demo_lead_goal"
+        in dogfooding.body
+    )
+    assert "dogfooding_session_checklist_real_goal_phase</dt><dd>Running" in dogfooding.body
+    assert "dogfooding_session_checklist_real_goal_form_available</dt><dd>true" in dogfooding.body
     assert "dogfooding_session_checklist_memory_storage</dt><dd>localStorage:clankeros-dogfooding-session" in dogfooding.body
     assert "dogfooding_session_checklist_write_on_get</dt><dd>false" in dogfooding.body
     assert "dogfooding_session_checklist_external_effects_created</dt><dd>false" in dogfooding.body
