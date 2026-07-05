@@ -2180,9 +2180,9 @@ def _guide_operator_recipes(
         setup_label = "Open Goals"
         setup_body = "First run is complete; use Goals as the operating object."
     else:
-        setup_href = primary_href
-        setup_label = primary_label
-        setup_body = f"Continue first-run setup at {first_run_step.replace('_', ' ')}."
+        setup_href = "#guide-command-panel" if action_form_available else primary_href
+        setup_label = primary_action if action_form_available else primary_label
+        setup_body = f"Next setup action: {primary_action}."
 
     next_href = "#guide-command-panel" if action_form_available else primary_href
     next_label = primary_action if action_form_available else primary_label
@@ -2255,6 +2255,10 @@ def _guide_operator_recipes(
             "guide_recipes_primary_surface",
             SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
         ),
+        (
+            "guide_recipes_setup_surface",
+            SafeHtml(f"<a href='{_e(setup_href)}'>{_e(setup_label)}</a>"),
+        ),
         ("guide_recipes_action_form_available", str(action_form_available).lower()),
         ("guide_recipes_waiting_items", str(waiting_items)),
         ("guide_recipes_pending_approvals", str(pending_approvals)),
@@ -2280,6 +2284,7 @@ def _guide_operator_recipes(
     ]
     lines = [
         "guide_recipe_path: start_today -> setup -> next_action -> unblock -> proof -> finish -> resume",
+        f"guide_recipe_setup: <a href='{_e(setup_href)}'>{_e(setup_label)}</a>",
         f"guide_recipe_next_action: <a href='{_e(next_href)}'>{_e(next_label)}</a>",
         f"guide_recipe_unblock: <a href='{_e(unblock_href)}'>{_e(unblock_label)}</a>",
         f"guide_recipe_proof: <a href='{_e(proof_href)}'>{_e(proof_label)}</a>",
@@ -2508,8 +2513,13 @@ def _guide_milestone_checklist(
         else ("#guide-command-panel" if has_project and action_form_available else "/goals")
     )
     goal_label = "Open Goal" if goal_id else (primary_action if has_project else "Open Goals")
-    action_href = "#guide-command-panel" if action_form_available and has_goal else primary_href
-    action_label = primary_action if has_goal else "Waiting for Goal"
+    action_href = "#guide-command-panel" if action_form_available else primary_href
+    action_label = primary_action if action_form_available else primary_label
+    action_body = (
+        f"{phase}: {primary_action}"
+        if has_goal
+        else f"First-run setup: {primary_action}."
+    )
     finish_href = "/workspace#save-workspace"
     finish_label = "Finish Today"
     resume_href = "/resume"
@@ -2543,7 +2553,7 @@ def _guide_milestone_checklist(
         (
             "action",
             "Do Current Action",
-            f"{phase}: {primary_action}" if has_goal else "Create a Goal first.",
+            action_body,
             action_status,
             action_href,
             action_label,
@@ -6278,7 +6288,8 @@ def _home_milestone_checklist(
         primary_action = str(first_run["next_action"])
         action_form_available = primary_href.startswith("#first-run-")
         action_href = primary_href
-        action_label = primary_action if has_goal else "Waiting for Goal"
+        action_label = primary_action
+        action_body = f"First-run setup: {primary_action}."
     else:
         mode = "goal"
         goal_id = str(lead_goal["id"])
@@ -6304,6 +6315,7 @@ def _home_milestone_checklist(
             primary_label = next_action.href
         action_href = primary_href
         action_label = primary_label
+        action_body = f"{phase}: {primary_action}"
 
     proof_href, proof_label, proof_source = _goal_ci_handoff_target(
         lead_goal,
@@ -6359,7 +6371,7 @@ def _home_milestone_checklist(
         (
             "action",
             "Do Current Action",
-            f"{phase}: {primary_action}" if has_goal else "Create a Goal first.",
+            action_body,
             action_status,
             action_href,
             action_label,

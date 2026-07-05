@@ -145,6 +145,8 @@ after that board, Home now shows a read-only `Home Milestone Checklist` for the
 no-docs path through Launch App, Create Project, Create Goal, Do Current
 Action, Check Proof, Finish Today, and Resume Exactly, with the current
 milestone highlighted from local project, goal, CI, and saved-resume state.
+During first run, the action row names the concrete browser action, such as
+`Register ClankerOS project`, instead of a generic waiting label.
 Home also includes a scan-first
 `Home Goal Board` with active, paused, and completed lanes, a browser-local
 Find box, lane buttons, live match count, first-match jump, no-match empty state, visible View status,
@@ -333,7 +335,10 @@ The guide also includes a read-only `Milestone Checklist` that translates the
 product Definition of Done into browser cards: launch app, create project,
 create Goal, do the current action, check proof, Finish Today, and resume
 exactly. It marks which step is current from local state, so a new operator can
-see the whole clone-to-resume path without reading external docs.
+see the whole clone-to-resume path without reading external docs. During first
+run, both the checklist action row and `Operator Recipes` setup card point at
+the confirmed guide command panel with the concrete next action instead of
+generic continue or waiting copy.
 It is read-only on GET and only reuses existing local surfaces and confirmed
 forms; it does not call providers, perform network actions, push, create PRs,
 deploy, or mutate external systems.

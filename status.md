@@ -1,5 +1,22 @@
 # Status
 
+## 2026-07-05 First Run Milestone Concrete Actions
+
+- `/guide` `Operator Recipes` now routes the first-run setup card to the
+  confirmed Guide Command Panel when a form is available and labels it with
+  the actual next setup action, such as `Register ClankerOS project` or
+  `Create first goal`.
+- `/guide` and `/` milestone checklist action rows no longer say `Waiting for
+  Goal` in empty-checkout first-run states. They now point at the existing
+  confirmed browser action and name the concrete setup action.
+- The Guide recipe evidence now records `guide_recipes_setup_surface` plus
+  `guide_recipe_setup` so review surfaces can prove where the setup card
+  points without relying only on visible card copy.
+- Non-claim: this is read-only first-run navigation and evidence
+  presentation. It does not add action authority, write on GET, call
+  providers, use the network, approve work, push, create PRs, deploy, or
+  mutate external systems from ClankerOS.
+
 ## 2026-07-05 First Run Guide Shared Concrete Targets
 
 - The `First Run Action Ladder`, `First Run Empty State Map`, and

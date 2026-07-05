@@ -4875,6 +4875,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "guide_recipes_first_run_step</dt><dd>create_project" in guide.body
     assert "guide_recipes_primary_action</dt><dd>Register ClankerOS project" in guide.body
     assert "guide_recipes_primary_surface</dt><dd><a href='/today#first-run-create-project'>Create Project</a>" in guide.body
+    assert "guide_recipes_setup_surface</dt><dd><a href='#guide-command-panel'>Register ClankerOS project</a>" in guide.body
     assert "guide_recipes_action_form_available</dt><dd>true" in guide.body
     assert "guide_recipes_waiting_items</dt><dd>0" in guide.body
     assert "guide_recipes_unblock_reason</dt><dd>no_blockers" in guide.body
@@ -4887,6 +4888,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "guide_recipes_network_actions_taken</dt><dd>0" in guide.body
     assert "guide_recipes_external_effects_created</dt><dd>false" in guide.body
     assert "guide_recipe_path: start_today -> setup -> next_action -> unblock -> proof -> finish -> resume" in guide.body
+    assert "guide_recipe_setup: <a href='#guide-command-panel'>Register ClankerOS project</a>" in guide.body
     assert "guide_recipe_next_action: <a href='#guide-command-panel'>Register ClankerOS project</a>" in guide.body
     assert "guide_recipe_proof: <a href='/verification'>Open Proof</a>" in guide.body
     assert "guide_recipe_safety: read-only intent recipes; existing confirmed forms own writes" in guide.body
@@ -4965,7 +4967,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "guide_milestone_external_effects_created</dt><dd>false" in guide.body
     assert "guide_milestone_path: launch_app -> create_project -> create_goal -> current_action -> proof -> finish_today -> resume_exactly" in guide.body
     assert "guide_milestone_current: project" in guide.body
-    assert "guide_milestone_action: <a href='/today#first-run-create-project'>Waiting for Goal</a>" in guide.body
+    assert "guide_milestone_action: <a href='#guide-command-panel'>Register ClankerOS project</a>" in guide.body
     assert "guide_milestone_proof: <a href='/verification'>Open Proof</a>" in guide.body
     assert "guide_milestone_finish: <a href='/workspace#save-workspace'>Finish Today</a>" in guide.body
     assert "guide_milestone_resume: <a href='/resume'>Open Resume</a>" in guide.body
@@ -5158,7 +5160,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "home_milestone_external_effects_created</dt><dd>false" in root.body
     assert "home_milestone_path: launch_app -> create_project -> create_goal -> current_action -> proof -> finish_today -> resume_exactly" in root.body
     assert "home_milestone_current: project" in root.body
-    assert "home_milestone_action: <a href='#first-run-create-project'>Waiting for Goal</a>" in root.body
+    assert "home_milestone_action: <a href='#first-run-create-project'>Register ClankerOS project</a>" in root.body
     assert "home_milestone_proof: <a href='/verification'>/verification</a>" in root.body
     assert "home_milestone_finish: <a href='/workspace#save-workspace'>Finish Today</a>" in root.body
     assert "home_milestone_resume: <a href='/resume'>Open Resume</a>" in root.body

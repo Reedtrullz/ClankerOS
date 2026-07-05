@@ -220,12 +220,15 @@ Core layers for the bootstrap:
   Do The Next Thing, Unblock Work, Check Proof, Finish Today, and Resume
   Tomorrow intent cards. These cards route Proof to the current Goal CI
   handoff or first-run fallback, reflect the current action/proof/resume
-  posture, and add no new write authority. A read-only `Proof To Resume` rail
+  posture, and during first run route setup to the confirmed guide command
+  panel with a concrete action label instead of generic continue copy. They
+  add no new write authority. A read-only `Proof To Resume` rail
   makes the post-action ritual explicit, and a read-only `Milestone Checklist`
   maps the product Definition of Done into browser cards for launch app,
   create project, create Goal, current action, proof, Finish Today, and exact
   resume readiness. It highlights the current missing step from local state
-  without adding write authority. It remains read-only on GET with no
+  and uses concrete first-run action labels on the action row without adding
+  write authority. It remains read-only on GET with no
   provider calls, network actions, push, PR, deploy, or external mutation.
   Goal detail pages now carry that same no-docs path directly in a read-only
   `Goal Milestone Checklist` after the Goal Path Rail: Launch App, Create
@@ -1331,7 +1334,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   Definition of Done into seven scan cards: Launch App, Create Project, Create
   Goal, Do Current Action, Check Proof, Finish Today, and Resume Exactly. It
   highlights the current browser step from local project, goal, CI, and saved
-  resume state while keeping all writes on existing confirmed forms. Home also
+  resume state while keeping all writes on existing confirmed forms. During
+  first run, its action row names the actual setup action instead of a generic
+  waiting label. Home also
   includes active, paused, and
   completed goal lanes through a scan-first `Home Goal Board` with a
   browser-local Find box, lane mode buttons, live match count, first-match

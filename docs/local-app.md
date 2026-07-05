@@ -68,7 +68,8 @@ confirmation requirement, and zero provider/network/external-effect counters.
   `Home Milestone Checklist` shows Launch App, Create Project, Create Goal,
   Do Current Action, Check Proof, Finish Today, and Resume Exactly, marking
   the current browser step from local project, goal, CI, and saved-resume
-  state. It also includes a scan-first `Home Goal Board`
+  state. During first run, its action row names the concrete browser action
+  instead of a generic waiting label. It also includes a scan-first `Home Goal Board`
   with active, paused, and completed lanes, a browser-local Find box, lane mode
   buttons, live match count, first-match jump, no-match empty state, visible View
   status, reload persistence in
@@ -262,7 +263,9 @@ confirmation requirement, and zero provider/network/external-effect counters.
   cards: Launch App, Create Project, Create Goal, Do Current Action, Check
   Proof, Finish Today, and Resume Exactly. The checklist marks the current
   step from local state and reports whether an exact resume surface has been
-  saved, without adding new write authority.
+  saved, without adding new write authority. First-run checklist and recipe
+  setup actions reuse the guide command panel with concrete labels such as
+  `Register ClankerOS project` or `Create first goal`.
   The route is read-only on GET and
   only reuses existing local surfaces and confirmed forms; it does not call
   providers, perform network actions, push, create PRs, deploy, or mutate
