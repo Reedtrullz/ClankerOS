@@ -22882,7 +22882,10 @@ def _goal_next_action_form(
             return_to_override=return_to_override,
         )
     if next_action.action == "Run delegation":
-        return _goal_run_delegation_handoff(state)
+        return _goal_run_delegation_handoff(
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Run coder prep":
         return _goal_coder_prep_form(state)
     if next_action.action == "Create worktree plan":
@@ -23744,11 +23747,15 @@ def _goal_context_pack_form(
     )
 
 
-def _goal_run_delegation_handoff(state: dict[str, Any]) -> str:
+def _goal_run_delegation_handoff(
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     delegation = _goal_context_pack_target_delegation(state, require_missing=False)
     if delegation is None:
         return ""
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     command = f"python3 -m agent_os.cli run-delegation {delegation.id}"
     return "".join(
         [

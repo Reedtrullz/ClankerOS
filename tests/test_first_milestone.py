@@ -11416,7 +11416,10 @@ def test_local_app_runs_delegation_from_browser_action(
     )
 
 
-def test_today_post_goal_scout_delegation_stays_on_daily_surface(tmp_path: Path) -> None:
+def test_today_post_goal_scout_delegation_stays_on_daily_surface(
+    tmp_path: Path,
+    capsys,
+) -> None:
     AgentSystem(tmp_path).initialize()
     target_repo = tmp_path / "clankeros"
     target_repo.mkdir()
@@ -11634,6 +11637,77 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(tmp_path: Path)
         "today_command_primary_surface</dt><dd>"
         "<a href='#today-current-action'>Run delegation</a>"
     ) in today_after_context_pack.body
+    adapter_path = _write_fake_scout_adapter(tmp_path)
+    _configure_scout_adapter(tmp_path, capsys, adapter_path)
+
+    today_ready_to_run = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Run delegation" in today_ready_to_run.body
+    assert "today_command_action_form_available</dt><dd>true" in today_ready_to_run.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_ready_to_run.body
+    assert "Run Delegation" in today_ready_to_run.body
+    assert "action='/actions/run-delegation'" in today_ready_to_run.body
+    assert f"name='delegation_id' value='{delegation.id}'" in today_ready_to_run.body
+    assert "name='operator_id' value='operator'" in today_ready_to_run.body
+    assert "name='return_to' value='/today#today-current-action'" in today_ready_to_run.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_ready_to_run.body
+
+    run_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/run-delegation",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "operator_id": ["operator"],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert run_confirmation.status == 409
+    assert "Confirm scout run" in run_confirmation.body
+    assert "action_confirmation_label</dt><dd>Run scout delegation" in run_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in run_confirmation.body
+
+    run_result = render_local_app_route(
+        tmp_path,
+        "/actions/run-delegation",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "operator_id": ["operator"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert run_result.status == 200
+    assert "run_delegation:" in run_result.body
+    assert "Scout run finished" in run_result.body
+    assert "action_result_command_label</dt><dd>Run scout delegation" in run_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=run_delegation%3A%20"
+    ) in run_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in run_result.body
+    assert "status</dt><dd>completed" in run_result.body
+    assert "network_actions_taken</dt><dd>0" in run_result.body
+    assert "external_mutations_taken</dt><dd>0" in run_result.body
+    refreshed = Storage(tmp_path / ".agent" / "state.db")
+    completed_delegation = refreshed.get_subagent_delegation(delegation.id)
+    assert completed_delegation is not None
+    assert completed_delegation.status == "completed"
+    assert completed_delegation.result_artifact_path
+    run_workspace = json.loads((tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8"))
+    assert run_workspace["open_project"] == "first-target"
+    assert run_workspace["open_goal"] == created_goal_id
+    assert run_workspace["last_viewed_artifact"] == str(
+        Path(completed_delegation.result_artifact_path).relative_to(tmp_path)
+    )
+    assert run_workspace["resume_surface"] == "/today#today-current-action"
+    assert run_workspace["updated_by"] == "run-delegation"
+
+    today_after_run = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Run coder prep" in today_after_run.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
@@ -28747,7 +28821,8 @@ def _write_fake_scout_adapter(tmp_path: Path) -> Path:
                 "  'structured_output': {",
                 "    'files': ['agent_os/cli.py'],",
                 "    'findings': ['CLI command parser lives in agent_os/cli.py.'],",
-                "    'relevant_files': ['agent_os/cli.py']",
+                "    'relevant_files': ['agent_os/cli.py'],",
+                "    'options': [{'label': 'Inspect CLI parser', 'files': ['agent_os/cli.py']}]",
                 "  }",
                 "}))",
             ]

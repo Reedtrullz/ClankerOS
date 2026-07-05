@@ -1,5 +1,50 @@
 # Status
 
+## 2026-07-05 Post-Context-Pack Today Run Delegation
+
+- Completed the selected next-iteration slice for post-context-pack `/today`
+  run-delegation continuation.
+- `/today` now embeds the lead Goal's `Run delegation` form with a Today-local
+  return target, so a confirmed scout run launched from the daily cockpit saves
+  `resume_surface=/today#today-current-action` instead of returning the
+  operator to the Goal action dock.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, configured local fake scout adapter execution,
+  completed delegation evidence, workspace resume persistence, and the next
+  visible Today action becoming `Run coder prep`.
+- The shared fake scout adapter test helper now emits both file-relevance
+  fields and an `implementation_options.options` entry, so it remains compatible
+  with older file-mapping tests while supporting first-run implementation scout
+  delegations.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-run `/today` should expose `Run coder prep` as the primary same-page
+  first-run action with confirmation and finish-today resume proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered run-delegation
+    form still emitted the Goal action-dock `return_to`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 32.09s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_run_delegation_shell_adapter_completes_valid_scout_output -q --tb=short`:
+    1 passed in 1.06s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 6.04s.
+  - `python3 -m agent_os.cli iterate`: selected the post-run `/today`
+    coder-prep slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+- CI note: GitHub Actions run `28753091590` for the previous pushed commit has
+  Fast smoke verification green; the Full pytest suite is still running at the
+  latest check.
+- Non-claim: this Today run-delegation slice executes only a confirmed local
+  read-only adapter in the browser action path. It does not call model
+  providers, push, deploy, create PRs, or mutate external systems from
+  ClankerOS.
+
 ## 2026-07-05 Post-Delegation Today Context Pack
 
 - Completed the selected next-iteration slice for post-delegation `/today`

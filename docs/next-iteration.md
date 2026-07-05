@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_848cda2defcf
+- Packet ID: iteration_9adf6cbc9bfd
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Make post-context-pack `/today` expose `Run delegation` as the primary same-page first-run action with confirmation and finish-today resume proof.
+Advance the Agent System north-star goal by completing: Make post-run `/today` expose `Run coder prep` as the primary same-page first-run action with confirmation and finish-today resume proof.
 
 ## Definition Of Done
 
