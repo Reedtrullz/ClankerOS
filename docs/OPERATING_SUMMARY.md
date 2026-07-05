@@ -110,7 +110,10 @@ Core layers for the bootstrap:
   the resume hub fallback. When the lead Goal's current action has a confirmed browser form,
   the command center renders it visibly as `#today-current-action` before
   command evidence, so the daily cockpit can be used without opening a
-  collapsed details panel. Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
+  collapsed details panel. Approved worktree runs launched from that Today
+  current-action form keep the confirmed command, verifier, and bounded-file
+  checks intact while returning the action result and workspace resume surface
+  to `/today#today-current-action`. Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only
   `Today Live State` panel follows with five-second local

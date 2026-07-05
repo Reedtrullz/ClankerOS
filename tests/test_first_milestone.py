@@ -11422,8 +11422,16 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
 ) -> None:
     AgentSystem(tmp_path).initialize()
     target_repo = tmp_path / "clankeros"
-    target_repo.mkdir()
-    subprocess.run(["git", "init"], cwd=target_repo, check=True, capture_output=True)
+    _init_git_repo(target_repo)
+    (target_repo / "scripts").mkdir()
+    (target_repo / "scripts" / "noop.py").write_text("pass\n", encoding="utf-8")
+    subprocess.run(["git", "add", "scripts/noop.py"], cwd=target_repo, check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "add no-op script"],
+        cwd=target_repo,
+        check=True,
+        capture_output=True,
+    )
 
     register_result = render_local_app_route(
         tmp_path,
@@ -11977,6 +11985,88 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
 
     today_after_approval_decision = render_local_app_route(tmp_path, "/today")
     assert "today_command_primary_action</dt><dd>Run approved worktree" in today_after_approval_decision.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Run approved worktree</a>"
+    ) in today_after_approval_decision.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Run approved worktree</a>"
+    ) in today_after_approval_decision.body
+    assert f"today_command_reason</dt><dd>approval={approval_id}" in today_after_approval_decision.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_approval_decision.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_approval_decision.body
+    assert "Run Approved Worktree" in today_after_approval_decision.body
+    assert "action='/actions/run-coder-worktree'" in today_after_approval_decision.body
+    assert f"name='delegation_id' value='{delegation.id}'" in today_after_approval_decision.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_approval_decision.body
+    assert "return_to_after_command</dt><dd><a href='/today#today-current-action'>/today#today-current-action</a>" in today_after_approval_decision.body
+
+    worktree_command = "python3 scripts/noop.py"
+    run_worktree_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/run-coder-worktree",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "command": [worktree_command],
+            "verify": ["yes"],
+            "verify_command": [worktree_command],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert run_worktree_confirmation.status == 409
+    assert "Confirm run-coder-worktree" in run_worktree_confirmation.body
+    assert "action_confirmation_label</dt><dd>Run Approved Worktree" in run_worktree_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in run_worktree_confirmation.body
+
+    run_worktree_result = render_local_app_route(
+        tmp_path,
+        "/actions/run-coder-worktree",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "command": [worktree_command],
+            "verify": ["yes"],
+            "verify_command": [worktree_command],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert run_worktree_result.status == 200
+    assert "run_coder_worktree: completed" in run_worktree_result.body
+    assert "action_result_command_label</dt><dd>Run Approved Worktree" in run_worktree_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=run_coder_worktree%3A%20completed"
+    ) in run_worktree_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in run_worktree_result.body
+    assert "status</dt><dd>completed" in run_worktree_result.body
+    assert "changed_files_within_allowed_files</dt><dd>true" in run_worktree_result.body
+    assert "evidence_path</dt><dd><a href='/artifacts?path=.clanker/delegations/" in run_worktree_result.body
+    coder_worktree_summary = sorted(
+        (tmp_path / ".clanker" / "delegations" / delegation.id / "runs").glob(
+            "*/coder_worktree/summary.md"
+        )
+    )[-1]
+    run_worktree_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert run_worktree_workspace["open_project"] == "first-target"
+    assert run_worktree_workspace["open_goal"] == created_goal_id
+    assert run_worktree_workspace["last_viewed_artifact"] == str(
+        coder_worktree_summary.relative_to(tmp_path)
+    )
+    assert run_worktree_workspace["resume_surface"] == "/today#today-current-action"
+    assert run_worktree_workspace["updated_by"] == "run-coder-worktree"
+
+    today_after_worktree_run = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Open review" in today_after_worktree_run.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Open review</a>"
+    ) in today_after_worktree_run.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_worktree_run.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:

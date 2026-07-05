@@ -1,5 +1,53 @@
 # Status
 
+## 2026-07-05 Post-Approval-Decision Today Worktree Run
+
+- Completed the selected slice for post-approval-decision `/today`
+  approved-worktree execution continuation.
+- `/today` now embeds the lead Goal's `Run approved worktree` form with a
+  Today-local return target, so a confirmed approved worktree command launched
+  from the daily cockpit saves `resume_surface=/today#today-current-action`
+  instead of making the newly created run page the browser return point.
+- The run form now exposes explicit `Run Approved Worktree` copy, preserves the
+  existing approved-plan, safe-command, verifier, and bounded-file checks, and
+  records both the actual run surface and the selected return surface in the
+  action result.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, confirmed local scout run, Today-local coder-prep
+  creation, Today-local worktree-plan creation, Today-local approval request
+  creation, Today-local approval decision confirmation, Today-local approved
+  worktree run confirmation, generated `coder_worktree/summary.md`, workspace
+  resume persistence, and the next visible Today action becoming `Open review`.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-worktree-run `/today` should expose `Open review` as the primary
+  same-page first-run action with confirmation and finish-today resume proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered approved
+    worktree form did not emit `return_to=/today#today-current-action`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 42.45s.
+  - Repeat focused run with pytest last-failed:
+    1 passed in 31.67s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_runs_approved_worktree_from_browser_action -q --tb=short`:
+    1 passed in 10.22s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms -q --tb=short`:
+    1 passed in 17.77s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 9.79s.
+  - `python3 -m agent_os.cli iterate`: selected the post-worktree-run
+    `/today` Open review slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+- Non-claim: this Today approved-worktree slice runs only an explicitly
+  confirmed, approved, safe local command in an isolated local worktree. It
+  does not commit, push, deploy, create PRs, call providers, or create external
+  mutations from ClankerOS.
+
 ## 2026-07-05 Post-Approval-Request Today Worktree Decision
 
 - Completed the selected slice for post-approval-request `/today` worktree

@@ -22907,7 +22907,11 @@ def _goal_next_action_form(
             return_to_override=return_to_override,
         )
     if next_action.action == "Run approved worktree":
-        return _goal_run_worktree_handoff(state["root"], state)
+        return _goal_run_worktree_handoff(
+            state["root"],
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Create commit request":
         return _goal_commit_request_form(state["root"], state)
     if next_action.action == "Open review":
@@ -23294,7 +23298,12 @@ def _goal_approve_worktree_form(
     )
 
 
-def _goal_run_worktree_handoff(root: Path, state: dict[str, Any]) -> str:
+def _goal_run_worktree_handoff(
+    root: Path,
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     approval = _goal_approved_worktree_approval(state)
     if approval is None:
         return "<p class='muted'>run_worktree_handoff_status: unavailable_until_worktree_approval_is_approved</p>"
@@ -23323,6 +23332,7 @@ def _goal_run_worktree_handoff(root: Path, state: dict[str, Any]) -> str:
     default_browser_command = ""
     run_surface = f"/workflow?delegation_id={quote(approval.delegation_id)}"
     expected_run_surface = f"/runs/<new_coder_worktree_run_id>"
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     plan_path = approval.source_plan_path or str(plan_payload.get("_path") or "missing")
     return "".join(
         [
@@ -23345,6 +23355,7 @@ def _goal_run_worktree_handoff(root: Path, state: dict[str, Any]) -> str:
                     ("expected_evidence_dir", f".clanker/delegations/{approval.delegation_id}/runs/<new_run_id>/coder_worktree/"),
                     ("return_to_workflow", SafeHtml(f"<a href='{_e(run_surface)}'>{_e(run_surface)}</a>")),
                     ("return_to_run_after_command", expected_run_surface),
+                    ("return_to_after_command", SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>")),
                     ("browser_execution_exposed", "confirmed_local_only"),
                     ("copy_only", "false"),
                     ("provider_calls_taken_by_clankeros", "0"),
@@ -23354,7 +23365,11 @@ def _goal_run_worktree_handoff(root: Path, state: dict[str, Any]) -> str:
             ),
             _input_form(
                 "run-coder-worktree",
-                {"delegation_id": approval.delegation_id, "verify": "yes"},
+                {
+                    "delegation_id": approval.delegation_id,
+                    "verify": "yes",
+                    "return_to": return_to,
+                },
                 {
                     "command": default_browser_command,
                     "verify_command": verifier,
@@ -46253,7 +46268,8 @@ def _handle_post(
                 if run_result.already_recorded
                 else f"run_coder_worktree: {coder_run.status}"
             )
-            location = f"/runs/{quote(coder_run.id)}"
+            run_location = f"/runs/{quote(coder_run.id)}"
+            location = _safe_local_return_path(_one(form, "return_to")) or run_location
             result = {
                 "run_id": coder_run.id,
                 "delegation_id": coder_run.delegation_id,
@@ -46264,6 +46280,8 @@ def _handle_post(
                 "failure_class": coder_run.failure_class or "none",
                 "worktree_path": coder_run.worktree_path,
                 "branch_name": coder_run.branch_name,
+                "run_surface": run_location,
+                "return_to_after_command": location,
                 "command_exit_code": coder_run.command_exit_code,
                 "verification_exit_code": coder_run.verification_exit_code,
                 "changed_files": coder_run.changed_files,
@@ -48715,6 +48733,16 @@ ACTION_FORM_COPY: dict[str, dict[str, str]] = {
         "confirm_button": "Approve worktree",
         "result_title": "Worktree approved",
         "result_body": "ClankerOS recorded the worktree approval and saved the next return point for bounded execution.",
+    },
+    "run-coder-worktree": {
+        "title": "Run Approved Worktree",
+        "body": "Run one safe local command in the approved isolated worktree and record bounded evidence.",
+        "button": "Run approved worktree",
+        "confirm_title": "Confirm run-coder-worktree",
+        "confirm_body": "Review the approved delegation, command, verifier, and return surface before ClankerOS runs the local worktree command.",
+        "confirm_button": "Run approved worktree",
+        "result_title": "Worktree run finished",
+        "result_body": "ClankerOS ran the approved local worktree command, recorded evidence, and saved the next return point.",
     },
     "coder-commit-request": {
         "title": "Create commit request",

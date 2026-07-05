@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_52d17d798ffd
+- Packet ID: iteration_e3ff8fc37f48
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Make post-approval-decision `/today` expose `Run approved worktree` as the primary same-page first-run action with confirmation and finish-today resume proof.
+Advance the Agent System north-star goal by completing: Make post-worktree-run `/today` expose `Open review` as the primary same-page first-run action with confirmation and finish-today resume proof.
 
 ## Definition Of Done
 
@@ -130,9 +130,9 @@ Advance the Agent System north-star goal by completing: Make post-approval-decis
 ## Simplicity Guardrail
 
 - selection_policy: highest-score-then-lowest-complexity
-- selection_reason: selected only actionable item with score 10 and complexity 5; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
+- selection_reason: selected only actionable item with score 10 and complexity 4; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
 - selected_score: 10
-- selected_complexity: 5
+- selected_complexity: 4
 
 ## Guardrails And Non-Claims
 
