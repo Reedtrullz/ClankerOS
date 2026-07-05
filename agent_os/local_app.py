@@ -21937,16 +21937,8 @@ def _goal_state(root: Path, storage: Storage, goal_id: str) -> dict[str, Any]:
         (goal_id,),
     )
     steering_reviews = storage.list_recent_steering_reviews(limit=20, goal_id=goal_id)
-    prep_packets = [
-        item
-        for item in list_coder_prep_packets(root)
-        if item.get("source", {}).get("delegation_id") in delegation_ids
-    ]
-    worktree_plans = [
-        item
-        for item in list_coder_worktree_plan_packets(root)
-        if item.get("source", {}).get("delegation_id") in delegation_ids
-    ]
+    prep_packets = list_coder_prep_packets(root, delegation_ids=delegation_ids)
+    worktree_plans = list_coder_worktree_plan_packets(root, delegation_ids=delegation_ids)
     risks = [task.risk_level for task in tasks]
     skill_tags = sorted({tag for task in tasks for tag in task.skill_tags})
     plans = storage.list_plans(goal_id)
@@ -29635,16 +29627,8 @@ def _workflow_operator_context(
         }
 
     summary = summarize_implementation_handoff(root, delegation)
-    prep_packets = [
-        item
-        for item in list_coder_prep_packets(root)
-        if item.get("source", {}).get("delegation_id") == delegation.id
-    ]
-    plan_packets = [
-        item
-        for item in list_coder_worktree_plan_packets(root)
-        if item.get("source", {}).get("delegation_id") == delegation.id
-    ]
+    prep_packets = list_coder_prep_packets(root, delegation_ids=[delegation.id])
+    plan_packets = list_coder_worktree_plan_packets(root, delegation_ids=[delegation.id])
     worktree_approvals = list_coder_worktree_approvals(
         root,
         delegation_id=delegation.id,
@@ -30641,16 +30625,8 @@ def _workflow_command_bar(
         )
 
     summary = summarize_implementation_handoff(root, delegation)
-    prep_packets = [
-        item
-        for item in list_coder_prep_packets(root)
-        if item.get("source", {}).get("delegation_id") == delegation.id
-    ]
-    plan_packets = [
-        item
-        for item in list_coder_worktree_plan_packets(root)
-        if item.get("source", {}).get("delegation_id") == delegation.id
-    ]
+    prep_packets = list_coder_prep_packets(root, delegation_ids=[delegation.id])
+    plan_packets = list_coder_worktree_plan_packets(root, delegation_ids=[delegation.id])
     worktree_approvals = list_coder_worktree_approvals(
         root,
         delegation_id=delegation.id,
@@ -38449,8 +38425,14 @@ def _project_detail(root: Path, project_id: str) -> str:
             _list_section(
                 "Coder Prep / Worktree / Publication Artifacts",
                 _artifact_links(
-                    list_coder_prep_packets(root)
-                    + list_coder_worktree_plan_packets(root)
+                    list_coder_prep_packets(
+                        root,
+                        delegation_ids=[delegation.id for delegation in delegations],
+                    )
+                    + list_coder_worktree_plan_packets(
+                        root,
+                        delegation_ids=[delegation.id for delegation in delegations],
+                    )
                     + [
                         {"_path": publication.request_artifact_path, "kind": "coder_publication", "id": publication.id}
                         for publication in list_coder_publications(root, limit=20)
@@ -39611,8 +39593,20 @@ def _delegation_detail(root: Path, delegation_id: str) -> str:
         "</section>",
         _handoff_block(summary),
         _delegation_workflow_readiness(root, delegation, summary),
-        _list_section("Coder Prep", _artifact_links(list_coder_prep_packets(root), delegation_id=delegation_id)),
-        _list_section("Coder Worktree Plan", _artifact_links(list_coder_worktree_plan_packets(root), delegation_id=delegation_id)),
+        _list_section(
+            "Coder Prep",
+            _artifact_links(
+                list_coder_prep_packets(root, delegation_ids=[delegation_id]),
+                delegation_id=delegation_id,
+            ),
+        ),
+        _list_section(
+            "Coder Worktree Plan",
+            _artifact_links(
+                list_coder_worktree_plan_packets(root, delegation_ids=[delegation_id]),
+                delegation_id=delegation_id,
+            ),
+        ),
         _list_section("Worktree Approvals", [_approval_line(item) for item in list_coder_worktree_approvals(root, delegation_id=delegation_id, limit=20)]),
         _list_section(
             "Worktree Runs",
@@ -39791,8 +39785,23 @@ def _delegation_execution_run_detail(
                     ("implementation_handoff_status", implementation_handoff_status),
                     ("implementation_handoff", _artifact_link(str(metadata.get("implementation_handoff_md") or metadata.get("implementation_handoff_json") or "none"))),
                     ("implementation_handoff_readback", str(summary["status"])),
-                    ("coder_prep_status", _delegation_packet_status(list_coder_prep_packets(root), delegation.id)),
-                    ("coder_worktree_plan_status", _delegation_packet_status(list_coder_worktree_plan_packets(root), delegation.id)),
+                    (
+                        "coder_prep_status",
+                        _delegation_packet_status(
+                            list_coder_prep_packets(root, delegation_ids=[delegation.id]),
+                            delegation.id,
+                        ),
+                    ),
+                    (
+                        "coder_worktree_plan_status",
+                        _delegation_packet_status(
+                            list_coder_worktree_plan_packets(
+                                root,
+                                delegation_ids=[delegation.id],
+                            ),
+                            delegation.id,
+                        ),
+                    ),
                     ("next_recommended_action", next_action),
                 ]
             ),
@@ -41412,16 +41421,8 @@ def _run_workflow_state(root: Path, coder_run: Any) -> str:
         ) + "</section>"
 
     summary = summarize_implementation_handoff(root, delegation)
-    prep_packets = [
-        item
-        for item in list_coder_prep_packets(root)
-        if item.get("source", {}).get("delegation_id") == delegation.id
-    ]
-    plan_packets = [
-        item
-        for item in list_coder_worktree_plan_packets(root)
-        if item.get("source", {}).get("delegation_id") == delegation.id
-    ]
+    prep_packets = list_coder_prep_packets(root, delegation_ids=[delegation.id])
+    plan_packets = list_coder_worktree_plan_packets(root, delegation_ids=[delegation.id])
     worktree_approvals = list_coder_worktree_approvals(
         root,
         delegation_id=delegation.id,
@@ -44296,16 +44297,11 @@ def _demo_dogfooding_state(root: Path) -> str:
                 f"context_pack: {_artifact_link(str(summary['context_pack_json']))}",
             ]
         )
-        prep_packets = [
-            item
-            for item in list_coder_prep_packets(root)
-            if item.get("source", {}).get("delegation_id") == selected_delegation.id
-        ]
-        plan_packets = [
-            item
-            for item in list_coder_worktree_plan_packets(root)
-            if item.get("source", {}).get("delegation_id") == selected_delegation.id
-        ]
+        prep_packets = list_coder_prep_packets(root, delegation_ids=[selected_delegation.id])
+        plan_packets = list_coder_worktree_plan_packets(
+            root,
+            delegation_ids=[selected_delegation.id],
+        )
         artifact_lines.extend(_artifact_links(prep_packets, delegation_id=selected_delegation.id))
         artifact_lines.extend(_artifact_links(plan_packets, delegation_id=selected_delegation.id))
         approval_lines.extend(
@@ -58155,18 +58151,8 @@ def _delegation_workflow_readiness(
     summary: dict[str, Any],
 ) -> str:
     delegation_id = delegation.id
-    prep_packets = list_coder_prep_packets(root)
-    delegation_prep = [
-        item
-        for item in prep_packets
-        if item.get("source", {}).get("delegation_id") == delegation_id
-    ]
-    plan_packets = list_coder_worktree_plan_packets(root)
-    delegation_plans = [
-        item
-        for item in plan_packets
-        if item.get("source", {}).get("delegation_id") == delegation_id
-    ]
+    delegation_prep = list_coder_prep_packets(root, delegation_ids=[delegation_id])
+    delegation_plans = list_coder_worktree_plan_packets(root, delegation_ids=[delegation_id])
     worktree_approvals = list_coder_worktree_approvals(
         root,
         delegation_id=delegation_id,
@@ -58305,16 +58291,8 @@ def _selected_workflow_state(
         ) + "</section>"
 
     summary = summarize_implementation_handoff(root, delegation)
-    prep_packets = [
-        item
-        for item in list_coder_prep_packets(root)
-        if item.get("source", {}).get("delegation_id") == delegation.id
-    ]
-    plan_packets = [
-        item
-        for item in list_coder_worktree_plan_packets(root)
-        if item.get("source", {}).get("delegation_id") == delegation.id
-    ]
+    prep_packets = list_coder_prep_packets(root, delegation_ids=[delegation.id])
+    plan_packets = list_coder_worktree_plan_packets(root, delegation_ids=[delegation.id])
     worktree_approvals = list_coder_worktree_approvals(
         root,
         delegation_id=delegation.id,
@@ -58438,16 +58416,8 @@ def _selected_workflow_continuation(
         )
 
     summary = summarize_implementation_handoff(root, delegation)
-    prep_packets = [
-        item
-        for item in list_coder_prep_packets(root)
-        if item.get("source", {}).get("delegation_id") == delegation.id
-    ]
-    plan_packets = [
-        item
-        for item in list_coder_worktree_plan_packets(root)
-        if item.get("source", {}).get("delegation_id") == delegation.id
-    ]
+    prep_packets = list_coder_prep_packets(root, delegation_ids=[delegation.id])
+    plan_packets = list_coder_worktree_plan_packets(root, delegation_ids=[delegation.id])
     worktree_approvals = list_coder_worktree_approvals(
         root,
         delegation_id=delegation.id,
@@ -58533,16 +58503,8 @@ def _workflow_step_statuses(
         return {"Delegate scout": "delegation_not_found"}
 
     summary = summarize_implementation_handoff(root, delegation)
-    prep_packets = [
-        item
-        for item in list_coder_prep_packets(root)
-        if item.get("source", {}).get("delegation_id") == delegation.id
-    ]
-    plan_packets = [
-        item
-        for item in list_coder_worktree_plan_packets(root)
-        if item.get("source", {}).get("delegation_id") == delegation.id
-    ]
+    prep_packets = list_coder_prep_packets(root, delegation_ids=[delegation.id])
+    plan_packets = list_coder_worktree_plan_packets(root, delegation_ids=[delegation.id])
     worktree_approvals = list_coder_worktree_approvals(
         root,
         delegation_id=delegation.id,

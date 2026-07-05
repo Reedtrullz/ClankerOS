@@ -643,6 +643,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   title/intent as both the page heading and browser title, while retaining the
   Goal id as metadata with project, status, phase, current proof posture,
   Finish Today readiness, resume target, and local refresh posture.
+  Goal and workflow route rendering scopes coder-prep and worktree-plan packet
+  reads to the selected Goal or delegation when that context is already known,
+  so populated dogfood/demo workspaces do not scan unrelated handoff artifacts
+  before showing the primary operator surfaces.
   The shared breadcrumb/Route Context/command-palette route evidence layer now
   uses the same human Goal title for visible Goal links, while preserving
   explicit Goal id evidence fields so review and automation do not lose the

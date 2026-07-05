@@ -1,5 +1,33 @@
 # Status
 
+## 2026-07-05 Scoped Coder Packet Route Reads
+
+- Goal, workflow, delegation, run, project, and demo dogfooding route helpers
+  now use delegation-scoped coder-prep and worktree-plan packet readers when a
+  selected Goal or delegation is already known.
+- The broad packet readers remain available for aggregate dashboard/reporting
+  surfaces, but primary operator pages no longer need to scan unrelated
+  handoff packets before rendering their selected workflow state.
+- The scoped packet readers reject traversal-looking delegation ids rather than
+  resolving outside `.clanker/delegations`.
+- Local verification:
+  - `python3 -m compileall -q agent_os/coder_prep.py agent_os/coder_worktree_plan.py agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_prep_and_worktree_plan_packet_lists_can_scope_by_delegation -q --tb=short`:
+    1 passed in 24.12s.
+  - Render smoke over the populated dogfood state: `/guide` rendered 573035
+    bytes in 1.145s with `Suggested Use Guide`; `/goals/goal_1fa51c15f846`
+    rendered 1164248 bytes in 6.190s with `Current Phase` and
+    `Goal Artifact Explorer`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed in 51.14s.
+  - `git diff --check -- agent_os/coder_prep.py agent_os/coder_worktree_plan.py agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+- Non-claim: this is a local read-path and route-rendering performance
+  improvement only. It does not change workflow state, write on GET, run
+  coder prep, create worktrees, call providers, use the network, approve work,
+  push, create PRs, deploy, or mutate external systems from ClankerOS.
+
 ## 2026-07-05 Health CI Boundary
 
 - `/health` now includes a read-only `Health CI Boundary` between the

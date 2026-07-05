@@ -7,6 +7,8 @@ from pathlib import Path
 from agent_os.dashboard import generate_static_dashboard
 from agent_os.cli import build_parser, main
 from agent_os.coder_publication import list_coder_publications
+from agent_os.coder_prep import list_coder_prep_packets
+from agent_os.coder_worktree_plan import list_coder_worktree_plan_packets
 from agent_os.coder_worktree_execution import (
     get_coder_worktree_run,
     list_coder_worktree_approvals,
@@ -4359,6 +4361,78 @@ def test_implementation_handoff_reports_missing_for_unrun_delegation(
     )
     output = capsys.readouterr().out
     assert "coder_worktree_approval_failed: coder worktree plan is not readable" in output
+
+
+def test_coder_prep_and_worktree_plan_packet_lists_can_scope_by_delegation(
+    tmp_path: Path,
+) -> None:
+    def write_packet(delegation_id: str, run_id: str, filename: str) -> Path:
+        path = (
+            tmp_path
+            / ".clanker"
+            / "delegations"
+            / delegation_id
+            / "runs"
+            / run_id
+            / "coder_prep"
+            / filename
+        )
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(
+                {
+                    "kind": filename.removesuffix(".json"),
+                    "source": {"delegation_id": delegation_id, "run_id": run_id},
+                }
+            ),
+            encoding="utf-8",
+        )
+        return path
+
+    write_packet("subagent_delegation_a", "run_a", "coder_prep.json")
+    write_packet("subagent_delegation_b", "run_b", "coder_prep.json")
+    write_packet("subagent_delegation_a", "run_a", "coder_worktree_plan.json")
+    write_packet("subagent_delegation_b", "run_b", "coder_worktree_plan.json")
+
+    all_prep = list_coder_prep_packets(tmp_path)
+    all_plans = list_coder_worktree_plan_packets(tmp_path)
+    scoped_prep = list_coder_prep_packets(
+        tmp_path,
+        delegation_ids=["subagent_delegation_a"],
+    )
+    scoped_plans = list_coder_worktree_plan_packets(
+        tmp_path,
+        delegation_ids=["subagent_delegation_a"],
+    )
+
+    assert {item["source"]["delegation_id"] for item in all_prep} == {
+        "subagent_delegation_a",
+        "subagent_delegation_b",
+    }
+    assert {item["source"]["delegation_id"] for item in all_plans} == {
+        "subagent_delegation_a",
+        "subagent_delegation_b",
+    }
+    assert [item["source"]["delegation_id"] for item in scoped_prep] == [
+        "subagent_delegation_a"
+    ]
+    assert [item["source"]["delegation_id"] for item in scoped_plans] == [
+        "subagent_delegation_a"
+    ]
+    assert scoped_prep[0]["_path"].endswith(
+        "subagent_delegation_a/runs/run_a/coder_prep/coder_prep.json"
+    )
+    assert scoped_plans[0]["_path"].endswith(
+        "subagent_delegation_a/runs/run_a/coder_prep/coder_worktree_plan.json"
+    )
+    assert list_coder_prep_packets(
+        tmp_path,
+        delegation_ids=["../subagent_delegation_a"],
+    ) == []
+    assert list_coder_worktree_plan_packets(
+        tmp_path,
+        delegation_ids=["../subagent_delegation_a"],
+    ) == []
 
 
 def test_default_cli_help_prioritizes_handoff_workflow_and_demotes_ladder() -> None:

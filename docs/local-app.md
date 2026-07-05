@@ -443,7 +443,10 @@ confirmation requirement, and zero provider/network/external-effect counters.
   with Reset lane without writing Goal state. It uses local polling
   refresh, pauses refresh while the
   operator is editing a form or the tab is hidden, and does not contact GitHub
-  or providers. The Current Phase banner is the primary operator state readback:
+  or providers. Goal and workflow routes scope coder-prep and worktree-plan
+  packet reads to the selected Goal/delegation before rendering, keeping
+  fixture-heavy dogfood workspaces from scanning unrelated handoff artifacts
+  on the primary operator surfaces. The Current Phase banner is the primary operator state readback:
   it shows the large phase label, reason, operator attention cue, next surface,
   latest activity, and zero-effect boundary so the operator knows what is
   happening without opening the CLI. A read-only `Goal Command Bar` appears

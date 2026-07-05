@@ -547,7 +547,10 @@ criteria, completion readiness, evidence, delegations, runs, approvals,
 artifacts, a typed Goal Artifact Explorer, memory, skills used, git status,
 operator notes, a goal-scoped resume snapshot, and remaining work. The page
 auto-refreshes by local polling, pauses while the operator is editing a form or
-the tab is hidden, and stays local-only. The Goal Command Bar near the top now
+the tab is hidden, and stays local-only. Goal and workflow routes scope
+coder-prep and worktree-plan packet reads to the current Goal or selected
+delegation, so populated dogfood/demo workspaces do not make the primary
+operator pages scan unrelated handoff artifacts before rendering. The Goal Command Bar near the top now
 opens with visible Now, Phase, Progress, Proof, and Resume cards, while its
 Resume card keeps any explicitly saved workspace surface first and otherwise
 routes to the current Goal action. The full current phase, primary action,
