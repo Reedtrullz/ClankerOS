@@ -1334,7 +1334,12 @@ posture, target action, and zero-effect readbacks in the DOM. A visible
 read-only `Verification Proof Map` follows with Current, Fast Smoke, Full
 Suite, Record, and Boundary cards, making the early-smoke versus full-workflow
 proof split explicit before the command details while still making the current
-Goal CI handoff the primary surface when a Goal exists. The read-only
+Goal CI handoff the primary surface when a Goal exists. A read-only
+`Milestone Proof Map` then translates the product Definition of Done into
+proof cards for Launch App, Create Project, Create Goal, Walk Workflow,
+Check Proof, Leave Work, and Resume Exactly. It shows the local evidence
+source, current status, next browser surface, saved resume surface, and
+zero-effect boundaries without contacting GitHub or writing on GET. The read-only
 `Verification Command Bar` follows as evidence and records the same
 Goal-aware target or the `/ci-evidence#record-ci-snapshot-json` fallback.
 

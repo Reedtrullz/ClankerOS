@@ -1359,6 +1359,13 @@ Snapshot` with fixture availability, the next dogfooding action, selected
 workflow/run links when available, and the `/demo` manual browser script
 surface.
 
+`/verification` also includes a read-only `Milestone Proof Map` after the
+proof map. It turns the product Definition of Done into Launch App, Create
+Project, Create Goal, Walk Workflow, Check Proof, Leave Work, and Resume
+Exactly cards, each with its current local status, evidence source, next
+browser surface, saved resume readback, and no-GitHub-polling/no-write-on-GET
+boundary.
+
 `/ci-evidence` is the read-only companion for proof that has already been
 recorded locally with `ci-deploy-evidence` or `ci-snapshot-evidence`. It shows
 the provider, status, external run id, external URL, commit, recorded-by field,

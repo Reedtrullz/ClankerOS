@@ -9505,20 +9505,34 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-verification-proof-map='true'" in verification.body
     assert "data-verification-proof-map-actions='true'" in verification.body
     assert "data-verification-proof-map-evidence='true'" in verification.body
+    assert "data-verification-milestone-proof-map='true'" in verification.body
+    assert "data-verification-milestone-proof-actions='true'" in verification.body
+    assert "data-verification-milestone-proof-evidence='true'" in verification.body
     assert "data-verification-command-evidence='true'" in verification.body
     assert "data-verification-finish-details='true'" in verification.body
     assert verification.body.index("data-verification-operator-workbench") < verification.body.index(
         "data-verification-proof-map='true'"
     )
     assert verification.body.index("data-verification-proof-map='true'") < verification.body.index(
+        "data-verification-milestone-proof-map='true'"
+    )
+    assert verification.body.index("data-verification-milestone-proof-map='true'") < verification.body.index(
         "data-verification-command-bar='true'"
     )
     assert verification.body.count("class='verification-proof-card") == 5
+    assert verification.body.count("class='verification-milestone-card") == 7
     assert "data-verification-proof-card='current'" in verification.body
     assert "data-verification-proof-card='fast-smoke'" in verification.body
     assert "data-verification-proof-card='full-suite'" in verification.body
     assert "data-verification-proof-card='record'" in verification.body
     assert "data-verification-proof-card='boundary'" in verification.body
+    assert "data-verification-milestone-card='app' data-verification-milestone-card-status='ready'" in verification.body
+    assert "data-verification-milestone-card='project' data-verification-milestone-card-status='done'" in verification.body
+    assert "data-verification-milestone-card='goal' data-verification-milestone-card-status='done'" in verification.body
+    assert "data-verification-milestone-card='workflow' data-verification-milestone-card-status='current'" in verification.body
+    assert "data-verification-milestone-card='proof' data-verification-milestone-card-status='needs_current_commit'" in verification.body
+    assert "data-verification-milestone-card='finish'" in verification.body
+    assert "data-verification-milestone-card='resume'" in verification.body
     assert "verification_workbench_status</dt><dd>goal_ci_handoff_ready" in verification.body
     assert "verification_workbench_workflow_status</dt><dd>configured" in verification.body
     assert "verification_workbench_current_proof</dt><dd>current_commit_unknown" in verification.body
@@ -9627,6 +9641,41 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "<a href='#verification-ci-handoff'>Copy full-suite command</a>"
     ) in verification.body
     assert "verification_proof_map_safety: read-only proof guidance" in verification.body
+    assert "Milestone Proof Map" in verification.body
+    assert "verification_milestone_proof_status</dt><dd>needs_workflow" in verification.body
+    assert "verification_milestone_proof_complete</dt><dd>false" in verification.body
+    assert "verification_milestone_proof_current_step</dt><dd>workflow" in verification.body
+    assert "verification_milestone_proof_project_count</dt><dd>1" in verification.body
+    assert "verification_milestone_proof_goal_count</dt><dd>1" in verification.body
+    assert f"verification_milestone_proof_goal_id</dt><dd>{created_goal_id}" in verification.body
+    assert "verification_milestone_proof_goal_source</dt><dd>saved_goal_state" in verification.body
+    assert "verification_milestone_proof_phase</dt><dd>" in verification.body
+    assert "verification_milestone_proof_workflow_action</dt><dd>Run delegation" in verification.body
+    assert "verification_milestone_proof_current_proof</dt><dd>current_commit_unknown" in verification.body
+    assert "verification_milestone_proof_latest_ci_status</dt><dd>success" in verification.body
+    assert "verification_milestone_proof_saved_project</dt><dd>first-target" in verification.body
+    assert f"verification_milestone_proof_saved_goal</dt><dd>{created_goal_id}" in verification.body
+    assert "verification_milestone_proof_saved_resume_surface</dt><dd>" in verification.body
+    assert (
+        "verification_milestone_proof_workflow_surface</dt><dd>"
+        f"<a href='/goals/{created_goal_id}#goal-action-dock-form'>Run delegation</a>"
+    ) in verification.body
+    assert (
+        "verification_milestone_proof_proof_surface</dt><dd>"
+        f"<a href='/goals/{created_goal_id}#goal-ci-handoff'>Goal CI handoff</a>"
+    ) in verification.body
+    assert (
+        "verification_milestone_proof_finish_surface</dt><dd>"
+        "<a href='/workspace#save-workspace'>Finish Today</a>"
+    ) in verification.body
+    assert "verification_milestone_proof_step_count</dt><dd>7" in verification.body
+    assert "verification_milestone_proof_write_on_get</dt><dd>false" in verification.body
+    assert "verification_milestone_proof_github_status_fetch</dt><dd>none" in verification.body
+    assert "verification_milestone_proof_provider_calls_taken</dt><dd>0" in verification.body
+    assert "verification_milestone_proof_network_actions_taken</dt><dd>0" in verification.body
+    assert "verification_milestone_proof_external_effects_created</dt><dd>false" in verification.body
+    assert "verification_milestone_proof_path: launch_app -> create_project -> create_goal -> walk_workflow -> check_proof -> leave_work -> resume_exactly" in verification.body
+    assert "verification_milestone_proof_safety: read-only DoD evidence map" in verification.body
     assert "id='verification-finish-today'" in verification.body
     assert "name='updated_by' value='verification-operator-workbench'" in verification.body
     assert "data-verification-command-bar='true'" in verification.body

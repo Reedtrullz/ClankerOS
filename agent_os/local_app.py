@@ -31300,6 +31300,7 @@ def _verification_page(root: Path) -> str:
             "</section>",
             _verification_operator_workbench(root, verification_context),
             _verification_proof_map(root, verification_context),
+            _verification_milestone_proof_map(root, verification_context),
             _verification_command_bar(verification_context),
             "<section id='github-actions-workflow'><h2>GitHub Actions Workflow</h2>",
             _kv(workflow_lines),
@@ -31824,6 +31825,241 @@ def _verification_proof_map(root: Path, context: dict[str, Any]) -> str:
                 ]
             ),
             _ul(lines + ["verification_proof_map_safety: read-only proof guidance; GitHub inspection and local recording remain operator-confirmed"]),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _verification_milestone_proof_map(root: Path, context: dict[str, Any]) -> str:
+    storage = _storage(root)
+    projects = storage.list_registered_projects()
+    goals = _goal_rows(storage, limit=100)
+    workspace = _load_workspace_state(root)
+    saved_goal = str(workspace.get("open_goal") or "").strip()
+    saved_project = str(workspace.get("open_project") or "").strip()
+    saved_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
+    first_run = _first_run_progress(root, storage)
+    state = context["state"]
+    goal_context = context["goal"]
+    project_count = len(projects)
+    goal_count = len(goals)
+    has_project = project_count > 0
+    has_goal = goal_count > 0
+    goal_id = ""
+    phase = "First run"
+    workflow_href, workflow_label = _first_run_same_page_target(first_run)
+    workflow_action = str(first_run["next_action"])
+    workflow_status = "waiting"
+    if goal_context["available"] == "true":
+        goal_id = str(goal_context["goal_id"])
+    elif saved_goal:
+        goal_id = saved_goal
+    elif goals:
+        goal_id = str(goals[0]["id"])
+
+    if goal_id:
+        goal_state = _goal_state(root, storage, goal_id)
+        next_action = _goal_next_action(root, goal_state)
+        form_available = bool(_goal_next_action_form(goal_state, next_action))
+        phase = _goal_current_phase(goal_state)
+        workflow_action = next_action.action
+        workflow_href = _goal_primary_action_href(
+            goal_state,
+            next_action,
+            form_available=form_available,
+            absolute=True,
+        )
+        workflow_label = next_action.action
+        workflow_status = "done" if phase == "Completed" else "current"
+
+    current_proof = str(state["current_proof"])
+    latest_status = str(state["latest_status"])
+    if current_proof == "current_workflow_run_success":
+        proof_status = "done"
+        proof_body = "Current checkout has recorded full workflow proof."
+    elif current_proof == "current_job_scope_only":
+        proof_status = "partial"
+        proof_body = "Fast smoke proof is recorded; full suite is still needed."
+    elif latest_status == "success":
+        proof_status = "needs_current_commit"
+        proof_body = "A success record exists, but not for the current checkout proof state."
+    else:
+        proof_status = "waiting"
+        proof_body = "Record GitHub Actions proof after the run succeeds."
+
+    project_status = "done" if has_project else "current"
+    goal_status = "done" if has_goal else ("current" if has_project else "waiting")
+    finish_status = "done" if saved_resume_surface else ("current" if has_goal else "waiting")
+    resume_status = "ready" if saved_resume_surface else "waiting"
+    project_href = "/projects" if has_project else "/#first-run-create-project"
+    project_label = "Open Projects" if has_project else "Create Project"
+    goal_href = f"/goals/{quote(goal_id)}" if goal_id else "/goals"
+    goal_label = "Open Goal" if goal_id else "Create Goal"
+    proof_href = (
+        str(goal_context["target_href"])
+        if goal_context["available"] == "true"
+        else "/ci-evidence#record-ci-snapshot-json"
+    )
+    proof_label = (
+        str(goal_context["target_label"])
+        if goal_context["available"] == "true"
+        else "Record CI proof"
+    )
+    finish_href = "/workspace#save-workspace"
+    finish_label = "Finish Today"
+    resume_href = saved_resume_surface or "/resume"
+    resume_label = (
+        _saved_workspace_surface_action_label(
+            root,
+            saved_resume_surface,
+            open_goal=saved_goal,
+            open_project=saved_project,
+            fallback=saved_resume_surface,
+        )
+        if saved_resume_surface
+        else "Open Resume"
+    )
+
+    cards = [
+        ("app", "Launch App", "Local browser shell is open.", "ready", "/health", "Health"),
+        (
+            "project",
+            "Create Project",
+            f"{project_count} project{'s' if project_count != 1 else ''} registered.",
+            project_status,
+            project_href,
+            project_label,
+        ),
+        (
+            "goal",
+            "Create Goal",
+            f"{goal_count} goal{'s' if goal_count != 1 else ''} in local state.",
+            goal_status,
+            goal_href,
+            goal_label,
+        ),
+        (
+            "workflow",
+            "Walk Workflow",
+            f"{phase}: {workflow_action}",
+            workflow_status,
+            workflow_href,
+            workflow_label,
+        ),
+        ("proof", "Check Proof", proof_body, proof_status, proof_href, proof_label),
+        (
+            "finish",
+            "Leave Work",
+            "Save the exact return point before leaving.",
+            finish_status,
+            finish_href,
+            finish_label,
+        ),
+        (
+            "resume",
+            "Resume Exactly",
+            f"Saved surface: {saved_resume_surface or 'none'}.",
+            resume_status,
+            resume_href,
+            resume_label,
+        ),
+    ]
+    current_step = next(
+        (
+            key
+            for key, _, _, status, _, _ in cards
+            if status in {"current", "partial", "needs_current_commit"}
+        ),
+        next(
+            (key for key, _, _, status, _, _ in cards if status == "waiting"),
+            "resume",
+        ),
+    )
+    complete = all(status in {"done", "ready"} for _, _, _, status, _, _ in cards)
+    status = "complete" if complete else f"needs_{current_step}"
+    card_html = []
+    lines = []
+    for key, title, body, card_status, href, label in cards:
+        card_html.append(
+            (
+                "<article class='verification-milestone-card"
+                + (" verification-milestone-primary" if key == current_step else "")
+                + f"' data-verification-milestone-card='{_e(key)}' "
+                + f"data-verification-milestone-card-status='{_e(card_status)}'>"
+            )
+            + f"<h3>{_e(title)}</h3>"
+            + f"<p>{_e(body)}</p>"
+            + f"<p class='verification-milestone-status'>{_e(card_status.replace('_', ' '))}</p>"
+            + f"<a class='verification-milestone-link' href='{_e(href)}'>{_e(label)}</a>"
+            + "</article>"
+        )
+        lines.append(
+            f"verification_milestone_proof_card: {key} status={card_status} surface=<a href='{_e(href)}'>{_e(label)}</a>"
+        )
+
+    return "".join(
+        [
+            "<section id='verification-milestone-proof-map' class='panel verification-milestone-proof-map' "
+            "data-verification-milestone-proof-map='true'><h2>Milestone Proof Map</h2>",
+            "<p class='muted'>A proof-oriented readback of the product Definition of Done: launch, create project, create Goal, walk workflow, prove it, leave, and resume exactly.</p>",
+            "<div class='verification-milestone-grid' data-verification-milestone-proof-actions='true'>",
+            "".join(card_html),
+            "</div>",
+            "<details class='verification-milestone-evidence' data-verification-milestone-proof-evidence='true'>"
+            "<summary>Milestone proof evidence</summary>",
+            _kv(
+                [
+                    ("verification_milestone_proof_status", status),
+                    ("verification_milestone_proof_complete", str(complete).lower()),
+                    ("verification_milestone_proof_current_step", current_step),
+                    ("verification_milestone_proof_project_count", str(project_count)),
+                    ("verification_milestone_proof_goal_count", str(goal_count)),
+                    ("verification_milestone_proof_goal_id", goal_id or "none"),
+                    ("verification_milestone_proof_goal_source", str(goal_context["source"])),
+                    ("verification_milestone_proof_phase", phase),
+                    ("verification_milestone_proof_workflow_action", workflow_action),
+                    ("verification_milestone_proof_current_proof", current_proof),
+                    ("verification_milestone_proof_latest_ci_status", latest_status),
+                    ("verification_milestone_proof_latest_ci_scope", str(state["latest_scope"])),
+                    ("verification_milestone_proof_latest_ci_commit", str(state["latest_commit"])),
+                    ("verification_milestone_proof_saved_project", saved_project or "none"),
+                    ("verification_milestone_proof_saved_goal", saved_goal or "none"),
+                    ("verification_milestone_proof_saved_resume_surface", saved_resume_surface or "none"),
+                    (
+                        "verification_milestone_proof_workflow_surface",
+                        SafeHtml(f"<a href='{_e(workflow_href)}'>{_e(workflow_label)}</a>"),
+                    ),
+                    (
+                        "verification_milestone_proof_proof_surface",
+                        SafeHtml(f"<a href='{_e(proof_href)}'>{_e(proof_label)}</a>"),
+                    ),
+                    (
+                        "verification_milestone_proof_finish_surface",
+                        SafeHtml(f"<a href='{_e(finish_href)}'>{_e(finish_label)}</a>"),
+                    ),
+                    (
+                        "verification_milestone_proof_resume_surface",
+                        SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>"),
+                    ),
+                    ("verification_milestone_proof_step_count", str(len(cards))),
+                    ("verification_milestone_proof_write_on_get", "false"),
+                    ("verification_milestone_proof_github_status_fetch", "none"),
+                    ("verification_milestone_proof_provider_calls_taken", "0"),
+                    ("verification_milestone_proof_network_actions_taken", "0"),
+                    ("verification_milestone_proof_external_effects_created", "false"),
+                    ("verification_milestone_proof_push_created", "false"),
+                    ("verification_milestone_proof_pr_created", "false"),
+                    ("verification_milestone_proof_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                lines
+                + [
+                    "verification_milestone_proof_path: launch_app -> create_project -> create_goal -> walk_workflow -> check_proof -> leave_work -> resume_exactly",
+                    "verification_milestone_proof_safety: read-only DoD evidence map; existing confirmed forms own writes and GitHub proof remains operator-supplied",
+                ]
+            ),
             "</details>",
             "</section>",
         ]
@@ -53440,9 +53676,9 @@ def _html_page(
     .verification-workbench-action, .verification-workbench-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .verification-workbench-action {{ background:var(--accent); color:#fff; }}
     .verification-workbench-link {{ background:var(--surface); color:var(--accent); }}
-    .verification-workbench-evidence, .verification-proof-evidence, .verification-command-evidence, .verification-finish-details {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .verification-workbench-evidence summary, .verification-proof-evidence summary, .verification-command-evidence summary, .verification-finish-details summary {{ cursor:pointer; font-weight:700; }}
-    .verification-workbench-evidence:not([open]) > :not(summary), .verification-proof-evidence:not([open]) > :not(summary), .verification-command-evidence:not([open]) > :not(summary), .verification-finish-details:not([open]) > :not(summary) {{ display:none; }}
+    .verification-workbench-evidence, .verification-proof-evidence, .verification-milestone-evidence, .verification-command-evidence, .verification-finish-details {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .verification-workbench-evidence summary, .verification-proof-evidence summary, .verification-milestone-evidence summary, .verification-command-evidence summary, .verification-finish-details summary {{ cursor:pointer; font-weight:700; }}
+    .verification-workbench-evidence:not([open]) > :not(summary), .verification-proof-evidence:not([open]) > :not(summary), .verification-milestone-evidence:not([open]) > :not(summary), .verification-command-evidence:not([open]) > :not(summary), .verification-finish-details:not([open]) > :not(summary) {{ display:none; }}
     .verification-proof-map {{ border-left:4px solid var(--accent); }}
     .verification-proof-grid {{ display:grid; grid-template-columns:minmax(240px, 1.2fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
     .verification-proof-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
@@ -53450,6 +53686,14 @@ def _html_page(
     .verification-proof-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
     .verification-proof-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .verification-proof-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .verification-milestone-proof-map {{ border-left:4px solid var(--ok); }}
+    .verification-milestone-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(165px, 1fr)); gap:10px; margin:12px 0; }}
+    .verification-milestone-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; display:grid; gap:7px; align-content:start; overflow-wrap:anywhere; }}
+    .verification-milestone-card h3, .verification-milestone-card p {{ margin:0; overflow-wrap:anywhere; }}
+    .verification-milestone-card p {{ color:var(--muted); }}
+    .verification-milestone-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); background:var(--panel); }}
+    .verification-milestone-status {{ font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .verification-milestone-link {{ display:inline-flex; align-items:center; justify-content:center; min-height:34px; width:100%; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .verification-command-bar {{ border-left:4px solid var(--accent); }}
     .verification-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .verification-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -53926,7 +54170,7 @@ def _html_page(
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
     @media (max-width: 860px) {{ #run-readiness-strip {{ scroll-margin-top:260px; }} .run-readiness-grid, .run-readiness-strip dl {{ grid-template-columns:1fr; }} }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-action-prep, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #profile-routing-plan, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-goal-continuation, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map, #artifact-view-memory {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-action-prep-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-return-brief-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-loop-checklist-grid, .today-quick-capture-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-domain-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profile-plan-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-real-grid, .dogfooding-workbench-grid, .dogfooding-return-grid, .dogfooding-session-checklist-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .artifact-view-memory-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-action-prep, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #profile-routing-plan, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-goal-continuation, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map, #artifact-view-memory, #verification-milestone-proof-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-action-prep-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-return-brief-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-loop-checklist-grid, .today-quick-capture-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-domain-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profile-plan-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-real-grid, .dogfooding-workbench-grid, .dogfooding-return-grid, .dogfooding-session-checklist-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .artifact-view-memory-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .verification-milestone-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #ci-evidence-readiness-strip, #ci-merge-readiness-map {{ scroll-margin-top:260px; }} .ci-evidence-readiness-grid, .ci-merge-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #health-readiness-strip {{ scroll-margin-top:260px; }} .health-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}

@@ -1,5 +1,30 @@
 # Status
 
+## 2026-07-05 Verification Milestone Proof Map
+
+- `/verification` now includes a read-only `Milestone Proof Map` after the
+  existing `Verification Proof Map` and before command evidence.
+- The map translates the product Definition of Done into seven proof cards:
+  Launch App, Create Project, Create Goal, Walk Workflow, Check Proof, Leave
+  Work, and Resume Exactly.
+- Each card shows current local status, a browser surface, and collapsed
+  evidence for project/Goal counts, current workflow action, current CI proof
+  posture, saved workspace resume surface, and no-effect boundaries.
+- Fast-smoke-only proof remains partial; only current full workflow success
+  counts as full proof. The map does not fetch GitHub and does not write on
+  GET.
+- Local verification:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed in 52.86s.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+- Non-claim: this is read-only milestone evidence over existing local state and
+  operator-supplied CI records. It does not call providers, poll GitHub, use
+  the network, approve work, push, create PRs, deploy, or mutate external
+  systems from ClankerOS.
+
 ## 2026-07-05 Search Domain Coverage
 
 - `/search` now includes a visible read-only `Search Domain Coverage` panel

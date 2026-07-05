@@ -1439,7 +1439,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   boundary without contacting GitHub; the page also shows a display-only
   direct `ci-snapshot-handoff`, `gh run view`, JSON-validated
   `ci-snapshot-evidence-from-gh-json`, and manual record-after-success
-  templates from current branch/commit state; a
+  templates from current branch/commit state; `/verification` also includes a
+  read-only `Milestone Proof Map` that turns the product Definition of Done
+  into Launch App, Create Project, Create Goal, Walk Workflow, Check Proof,
+  Leave Work, and Resume Exactly proof cards with local evidence source,
+  current status, saved resume readback, next browser surface, and no-fetch/
+  no-write-on-GET boundaries; a
   read-only `/ci-evidence` page for operator-supplied CI/deploy proof records
   already stored in local ClankerOS state, plus a `CI Evidence Recording Guide`
   with the latest local GitHub handoff id, branch, commit, handoff evidence,
