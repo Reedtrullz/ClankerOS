@@ -13,10 +13,13 @@ from agent_os.coder_worktree_execution import (
     get_coder_worktree_run,
     list_coder_worktree_approvals,
     list_coder_worktree_commit_approvals,
+    list_coder_worktree_runs,
 )
 from agent_os.engine import AgentSystem
 from agent_os.eval import run_first_milestone_eval
 from agent_os.local_app import (
+    LOCAL_APP_CSRF_FIELD,
+    LOCAL_APP_CSRF_TOKEN,
     _goal_approve_commit_form,
     _goal_approve_publication_form,
     _goal_coder_prep_form,
@@ -10910,6 +10913,64 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "demo_workbench_fixture_status</dt><dd>available" in demo_seeded.body
     assert "Refresh demo fixture" in demo_seeded.body
     assert "data-demo-walkthrough-map='true'" in demo_seeded.body
+
+
+def test_local_app_http_post_requires_csrf_token_and_same_origin(tmp_path: Path) -> None:
+    home = render_local_app_route(tmp_path, "/")
+    assert home.status == 200
+    assert f"name='{LOCAL_APP_CSRF_FIELD}' value='{LOCAL_APP_CSRF_TOKEN}'" in home.body
+
+    status_path = tmp_path / ".clanker" / "app" / "local_app_status.json"
+    if status_path.exists():
+        status_path.unlink()
+
+    missing_token = render_local_app_route(
+        tmp_path,
+        "/actions/refresh-dashboard-state",
+        method="POST",
+        form={"confirm": ["yes"]},
+        request_headers={"Origin": "http://127.0.0.1:8787"},
+    )
+    assert missing_token.status == 403
+    assert "local_app_post_trust_reason</dt><dd>missing_or_invalid_csrf_token" in missing_token.body
+    assert not status_path.exists()
+
+    cross_origin = render_local_app_route(
+        tmp_path,
+        "/actions/refresh-dashboard-state",
+        method="POST",
+        form={LOCAL_APP_CSRF_FIELD: [LOCAL_APP_CSRF_TOKEN], "confirm": ["yes"]},
+        request_headers={"Origin": "https://example.invalid"},
+    )
+    assert cross_origin.status == 403
+    assert "local_app_post_trust_reason</dt><dd>cross_origin_origin" in cross_origin.body
+    assert not status_path.exists()
+
+    confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/refresh-dashboard-state",
+        method="POST",
+        form={LOCAL_APP_CSRF_FIELD: [LOCAL_APP_CSRF_TOKEN]},
+        request_headers={"Origin": "http://127.0.0.1:8787"},
+    )
+    assert confirmation.status == 409
+    assert "Confirm refresh-dashboard-state" in confirmation.body
+    assert f"name='{LOCAL_APP_CSRF_FIELD}' value='{LOCAL_APP_CSRF_TOKEN}'" in confirmation.body
+    assert "csrf_token</dt>" not in confirmation.body
+
+    accepted = render_local_app_route(
+        tmp_path,
+        "/actions/refresh-dashboard-state",
+        method="POST",
+        form={LOCAL_APP_CSRF_FIELD: [LOCAL_APP_CSRF_TOKEN], "confirm": ["yes"]},
+        request_headers={
+            "Origin": "http://127.0.0.1:8787",
+            "Referer": "http://127.0.0.1:8787/",
+        },
+    )
+    assert accepted.status == 200
+    assert "local_app_status:" in accepted.body
+    assert status_path.exists()
 
 
 def test_local_app_runs_delegation_from_browser_action(
@@ -22516,6 +22577,25 @@ def test_goal_runs_approved_worktree_from_browser_action(
     assert "python3 scripts/change_allowed.py" in confirmation.body
     assert "Safety boundary" in confirmation.body
 
+    rejected_run = render_local_app_route(
+        tmp_path,
+        "/actions/run-coder-worktree",
+        method="POST",
+        form={
+            "delegation_id": [delegation_id],
+            "command": [
+                "python3 scripts/change_allowed.py; python3 scripts/change_outside.py"
+            ],
+            "verify": ["yes"],
+            "confirm": ["yes"],
+        },
+    )
+    assert rejected_run.status == 400
+    assert "Action Error" in rejected_run.body
+    assert "unsafe command token: shell metacharacter" in rejected_run.body
+    assert "run_coder_worktree: completed" not in rejected_run.body
+    assert list_coder_worktree_runs(tmp_path, delegation_id=delegation_id) == []
+
     run_response = render_local_app_route(
         tmp_path,
         "/actions/run-coder-worktree",
@@ -26087,6 +26167,52 @@ def test_run_coder_worktree_blocks_hash_mismatch_unsafe_commands_and_file_violat
     )
     unsafe_output = capsys.readouterr().out
     assert "run_coder_worktree_failed: unsafe command token: curl" in unsafe_output
+    assert list_coder_worktree_runs(tmp_path, delegation_id=delegation_id) == []
+    incidents = Storage(tmp_path / ".agent" / "state.db").list_recent_incidents(limit=1)
+    assert incidents[0].failure_class == "unsafe_command"
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-coder-worktree",
+                delegation_id,
+                "--command",
+                "python3 scripts/change_allowed.py; python3 scripts/change_outside.py",
+                "--verify",
+            ]
+        )
+        == 1
+    )
+    shell_output = capsys.readouterr().out
+    assert "run_coder_worktree_failed: unsafe command token: shell metacharacter" in shell_output
+    assert list_coder_worktree_runs(tmp_path, delegation_id=delegation_id) == []
+    incidents = Storage(tmp_path / ".agent" / "state.db").list_recent_incidents(limit=1)
+    assert incidents[0].failure_class == "unsafe_command"
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "run-coder-worktree",
+                delegation_id,
+                "--command",
+                "python3 scripts/change_allowed.py",
+                "--verify-command",
+                "python3 scripts/fail_verify.py; python3 scripts/change_outside.py",
+                "--verify",
+            ]
+        )
+        == 1
+    )
+    unsafe_verify_output = capsys.readouterr().out
+    assert (
+        "run_coder_worktree_failed: unsafe command token: shell metacharacter"
+        in unsafe_verify_output
+    )
+    assert list_coder_worktree_runs(tmp_path, delegation_id=delegation_id) == []
 
     assert (
         main(

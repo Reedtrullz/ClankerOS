@@ -944,7 +944,8 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   worktree request is approved, the Goal card exposes a confirmed
   `run-coder-worktree` form for one operator-provided safe local command in
   the isolated worktree, while showing the approved plan, allowed-file
-  preview, verifier, expected evidence path, return route, and exact CLI
+  preview, verifier, expected evidence path, return route, parsed-argv
+  safe-command posture, shell-disabled execution boundary, and exact CLI
   fallback. It then exposes confirmed
   `review-run` when a completed coder worktree run is waiting on the review
   gate, then `coder-commit-request` once the local review exists and mentions
@@ -1608,7 +1609,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   a read-only `Action Preflight` first, with visible Confirm, Returns, Local
   Write, Context, and Boundary cards plus collapsed preflight evidence for the
   submitted return route, project/Goal context, artifact, field count, and
-  zero-effect counters. The existing read-only `Action Confirmation Review`,
+  zero-effect counters. Served browser POSTs also require the process-local
+  hidden token and reject non-loopback `Origin`/`Referer` values before
+  storage opens or `confirm=yes` is evaluated. The existing read-only
+  `Action Confirmation Review`,
   `Action Confirmation Command Bar`, submitted action payload, and safety
   boundary remain available before a confirmed local write, local approval
   decision, or bounded local execution; confirmed action result pages

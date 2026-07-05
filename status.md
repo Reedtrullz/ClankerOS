@@ -1,5 +1,40 @@
 # Status
 
+## 2026-07-05 Browser Execution Trust Hardening
+
+- Approved coder worktree execution now parses operator-provided commands into
+  allowed argv shapes and runs them with the shell disabled instead of passing
+  command strings through `shell=True`.
+- The safe-command validator now rejects shell metacharacters, shell expansion
+  fragments, traversal-looking `scripts/` paths, unsupported command shapes,
+  and the existing blocked network/deploy/publish/open tokens before any
+  coder worktree is created.
+- Commit-time verification reuses the same parsed safe-command path, so stored
+  verification commands cannot reopen a shell execution path during local
+  commit promotion.
+- Served local-app POSTs now require a process-local hidden token. When
+  `Origin` or `Referer` is present, it must match the same loopback app origin
+  and port before storage opens or the `confirm=yes` gate is evaluated.
+- Action confirmation payload/evidence filters out the CSRF token while
+  retaining operator-submitted fields.
+- Local verification so far:
+  - `python3 -m compileall -q agent_os/coder_worktree_execution.py agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_http_post_requires_csrf_token_and_same_origin -q --tb=short`:
+    1 passed in 28.18s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_run_coder_worktree_blocks_hash_mismatch_unsafe_commands_and_file_violations -q --tb=short`:
+    1 passed in 29.10s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_runs_approved_worktree_from_browser_action -q --tb=short`:
+    1 passed in 33.10s.
+  - Local reproduction of the GitHub Actions Fast smoke verification workflow
+    with a temp `CLANKEROS_CI_ROOT`, including compileall, app smoke,
+    demo-app scenario, app demo smoke, app help, dashboard, iterate, the
+    workflow pytest selector, and scoped diff check: 15 passed, 506 deselected
+    in 205.16s.
+- Non-claim: this hardens local browser and approved worktree execution
+  boundaries only. It does not add provider calls, GitHub polling, network
+  mutation, push, PR creation, deploy, or external mutation from ClankerOS.
+
 ## 2026-07-05 First Run Milestone Concrete Actions
 
 - `/guide` `Operator Recipes` now routes the first-run setup card to the

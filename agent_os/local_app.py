@@ -4,6 +4,7 @@ import hashlib
 import html
 import json
 import re
+import secrets
 import shlex
 import sqlite3
 import subprocess
@@ -88,6 +89,8 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8787
 MAX_ARTIFACT_BYTES = 64_000
 GOAL_ARTIFACT_READER_BYTES = 8_000
+LOCAL_APP_CSRF_FIELD = "csrf_token"
+LOCAL_APP_CSRF_TOKEN = secrets.token_urlsafe(32)
 NO_EXTERNAL_EFFECT_CLAIMS = [
     "no provider calls",
     "no network actions except local browser/server loopback",
@@ -326,6 +329,7 @@ def serve_local_app(
                 self.path,
                 method="POST",
                 form=parse_qs(body),
+                request_headers=dict(self.headers.items()),
                 host=host,
                 port=port,
             )
@@ -355,6 +359,7 @@ def render_local_app_route(
     *,
     method: str = "GET",
     form: dict[str, list[str]] | None = None,
+    request_headers: dict[str, str] | None = None,
     host: str = DEFAULT_HOST,
     port: int = DEFAULT_PORT,
 ) -> LocalAppResponse:
@@ -384,7 +389,14 @@ def render_local_app_route(
 
     try:
         if method == "POST":
-            return _handle_post(root, path, form or {})
+            return _handle_post(
+                root,
+                path,
+                form or {},
+                request_headers=request_headers,
+                host=host,
+                port=port,
+            )
         if path == "/":
             return page("Dashboard", _dashboard(root, host=host, port=port))
         if path == "/today":
@@ -22792,7 +22804,8 @@ def _goal_run_worktree_handoff(root: Path, state: dict[str, Any]) -> str:
                     ("allowed_files_preview", ", ".join(allowed_files[:5]) or "none"),
                     ("verification_command_with_verify_flag", verifier),
                     ("safe_command_validator", "enabled"),
-                    ("allowed_command_prefixes", "python3 -m pytest, python3 -m py_compile, python3 scripts/, npm test"),
+                    ("safe_command_execution", "parsed_argv_shell_disabled"),
+                    ("allowed_command_shapes", "python3 -m pytest, python3 -m py_compile, python3 scripts/<relative>, npm test"),
                     ("expected_evidence_dir", f".clanker/delegations/{approval.delegation_id}/runs/<new_run_id>/coder_worktree/"),
                     ("return_to_workflow", SafeHtml(f"<a href='{_e(run_surface)}'>{_e(run_surface)}</a>")),
                     ("return_to_run_after_command", expected_run_surface),
@@ -45069,8 +45082,89 @@ def _manual_browser_checkpoints(state: dict[str, str] | None) -> str:
     )
 
 
-def _handle_post(root: Path, path: str, form: dict[str, list[str]]) -> LocalAppResponse:
+def _local_app_post_trust_failure(
+    root: Path,
+    form: dict[str, list[str]],
+    *,
+    request_headers: dict[str, str] | None,
+    host: str,
+    port: int,
+) -> LocalAppResponse | None:
+    if request_headers is None:
+        return None
+    headers = {key.lower(): value for key, value in request_headers.items()}
+    submitted_token = _one(form, LOCAL_APP_CSRF_FIELD)
+    if not secrets.compare_digest(submitted_token or "", LOCAL_APP_CSRF_TOKEN):
+        return _local_app_post_forbidden(root, "missing_or_invalid_csrf_token")
+    for header_name in ("origin", "referer"):
+        value = headers.get(header_name)
+        if value and not _is_local_app_origin(value, host=host, port=port):
+            return _local_app_post_forbidden(root, f"cross_origin_{header_name}")
+    return None
+
+
+def _is_local_app_origin(value: str, *, host: str, port: int) -> bool:
+    try:
+        parsed = urlparse(value)
+    except ValueError:
+        return False
+    if parsed.scheme != "http":
+        return False
+    try:
+        parsed_port = parsed.port or 80
+    except ValueError:
+        return False
+    allowed_hosts = {host, *LOCAL_HOSTS}
+    return (parsed.hostname or "") in allowed_hosts and parsed_port == port
+
+
+def _local_app_post_forbidden(root: Path, reason: str) -> LocalAppResponse:
+    return _html_page(
+        root,
+        "Blocked Local App POST",
+        "".join(
+            [
+                "<section class='warning' data-local-app-post-trust='blocked'>",
+                "<h1>Blocked Local App POST</h1>",
+                "<p>The local app rejected this POST before any local action ran.</p>",
+                _kv(
+                    [
+                        ("local_app_post_trust_status", "blocked"),
+                        ("local_app_post_trust_reason", reason),
+                        ("local_app_post_csrf_required", "true"),
+                        ("local_app_post_origin_check", "same_local_origin_when_present"),
+                        ("provider_calls_taken_by_clankeros", "0"),
+                        ("network_actions_taken", "0"),
+                        ("external_mutations_taken", "0"),
+                    ]
+                ),
+                _non_claim_banner(),
+                "</section>",
+            ]
+        ),
+        status=403,
+    )
+
+
+def _handle_post(
+    root: Path,
+    path: str,
+    form: dict[str, list[str]],
+    *,
+    request_headers: dict[str, str] | None = None,
+    host: str = DEFAULT_HOST,
+    port: int = DEFAULT_PORT,
+) -> LocalAppResponse:
     action = path.removeprefix("/actions/")
+    trust_failure = _local_app_post_trust_failure(
+        root,
+        form,
+        request_headers=request_headers,
+        host=host,
+        port=port,
+    )
+    if trust_failure is not None:
+        return trust_failure
     mutating = action not in {"implementation-handoff"}
     if mutating and _one(form, "confirm") != "yes":
         return _html_page(
@@ -48436,7 +48530,9 @@ def _action_confirmation_preflight(action: str, form: dict[str, list[str]]) -> s
     field_names = [
         key
         for key, values in form.items()
-        if key != "confirm" and not key.startswith("_action_draft_") and values
+        if key not in {"confirm", LOCAL_APP_CSRF_FIELD}
+        and not key.startswith("_action_draft_")
+        and values
     ]
     return_value: str | SafeHtml = (
         SafeHtml(f"<a href='{_e(return_surface)}'>{_e(return_surface)}</a>")
@@ -48523,7 +48619,8 @@ def _action_confirmation_context(action: str, form: dict[str, list[str]]) -> dic
     submitted_fields = sum(
         len(values)
         for key, values in form.items()
-        if key != "confirm" and not key.startswith("_action_draft_")
+        if key not in {"confirm", LOCAL_APP_CSRF_FIELD}
+        and not key.startswith("_action_draft_")
     )
     executes_local_command = (
         "true"
@@ -48671,7 +48768,8 @@ def _submitted_form_rows(form: dict[str, list[str]]) -> list[tuple[str, str]]:
     rows = [
         (key, ", ".join(values) if values else "")
         for key, values in form.items()
-        if key != "confirm" and not key.startswith("_action_draft_")
+        if key not in {"confirm", LOCAL_APP_CSRF_FIELD}
+        and not key.startswith("_action_draft_")
     ]
     return rows or [("submitted_fields", "none")]
 
@@ -57856,7 +57954,20 @@ def _html_page(
   </script>
 </body>
 </html>"""
+    body = _inject_post_form_csrf_tokens(body)
     return LocalAppResponse(status, body)
+
+
+def _inject_post_form_csrf_tokens(body: str) -> str:
+    csrf_input = (
+        f"<input type='hidden' name='{LOCAL_APP_CSRF_FIELD}' "
+        f"value='{_e(LOCAL_APP_CSRF_TOKEN)}'>"
+    )
+    post_form = re.compile(
+        r"(<form\b(?=[^>]*\bmethod=['\"]post['\"])[^>]*>)",
+        re.IGNORECASE,
+    )
+    return post_form.sub(lambda match: match.group(1) + csrf_input, body)
 
 
 def _send_response(handler: BaseHTTPRequestHandler, response: LocalAppResponse) -> None:

@@ -693,7 +693,10 @@ confirmation requirement, and zero provider/network/external-effect counters.
   then a confirmed `run-coder-worktree` action once the worktree request is
   approved. The action names the approved plan, allowed-file preview,
   verifier, expected evidence path, return route, and safe-command validator
-  before running one operator-provided local command after confirmation. The
+  before running one operator-provided local command after confirmation. That
+  validator parses the command into an allowed argv shape, rejects shell
+  metacharacters and traversal-looking `scripts/` paths, and executes with the
+  shell disabled. The
   Goal card exposes `review-run` when the
   completed coder worktree run is blocked on the review gate, then
   `coder-commit-request` once the review exists and mentions the coder run.
@@ -1626,6 +1629,14 @@ Failed actions render `Action Error Details` with the
 attempted action, error, submitted payload, and a clear no-action-completed
 message so operators can fix inputs without guessing what happened.
 
+Served browser POSTs are also gated before the confirmation flow: each
+rendered POST form carries a process-local hidden token, and actual HTTP POSTs
+must submit that token. If `Origin` or `Referer` is present, it must match the
+same loopback app origin and port. Missing tokens, invalid tokens, or
+cross-origin POSTs return `403` before storage is opened or local action state
+is mutated. Direct test/helper route calls without request headers remain a
+local harness shortcut rather than the served-browser trust boundary.
+
 Run pages for completed coder worktree runs link the local review, `run.json`,
 `diff.patch`, `changed_files.json`, `bounded_file_validation.json`,
 `git_status.txt`, stdout/stderr, and verification output before showing
@@ -1656,8 +1667,9 @@ requests, retrying tasks, committing, pushing, creating PRs, deploying,
 calling providers, or using external network actions.
 
 Worktree execution is exposed only as the confirmed `run-coder-worktree`
-Goal action after an approved plan and safe-command validation. Push and PR
-creation are never executed by the app.
+Goal action after an approved plan and parsed safe-command validation. The
+approved command and verifier run without `shell=True`; push and PR creation
+are never executed by the app.
 
 ## Health Artifact
 

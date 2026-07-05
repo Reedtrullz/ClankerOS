@@ -872,7 +872,10 @@ browser forms. It can then approve the pending worktree request. After
 approval, the Goal card exposes a confirmed `run-coder-worktree` form for one
 operator-provided safe local command in the isolated worktree. The existing
 approval, safe-command, verifier, and bounded-file checks still apply, and
-the exact CLI fallback remains visible. Once the bounded run completes, the
+the exact CLI fallback remains visible. Safe-command validation parses the
+submitted command into an argv shape, rejects shell metacharacters and
+traversal-looking script paths, and runs the approved command with the shell
+disabled. Once the bounded run completes, the
 Goal card can create the local review artifact for the completed coder
 worktree run. Once that review gate passes, it can create the review-gated
 commit request.
@@ -1430,7 +1433,10 @@ The app is local-only by default, binds to `127.0.0.1`, and refuses non-local
 binds unless `--allow-nonlocal-bind` is explicitly supplied. It does not push,
 create PRs, deploy, call providers, or perform network actions beyond local
 browser/server loopback. Confirmation pages show submitted payloads before
-local writes. They now start with a read-only `Action Preflight` that shows the
+local writes. Served browser POSTs include a process-local hidden token and
+reject missing/invalid tokens; when `Origin` or `Referer` is present, the app
+requires the same loopback app origin before any action or confirmation check
+runs. Confirmation pages now start with a read-only `Action Preflight` that shows the
 local action, return route, expected local write, submitted project/Goal
 context, field count, and safety boundary before the existing read-only
 `Action Confirmation Review` cards and payload. The existing `Action

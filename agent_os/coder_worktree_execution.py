@@ -4,10 +4,11 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import sqlite3
 import subprocess
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from agent_os.coder_worktree_plan import CODER_WORKTREE_PLAN_KIND
@@ -372,9 +373,10 @@ def run_approved_coder_worktree(
         )
         raise
     try:
-        _validate_safe_command(command)
+        command_argv = _validate_safe_command(command)
+        verify_command_argv = None
         if verify and verify_command:
-            _validate_safe_command(verify_command)
+            verify_command_argv = _validate_safe_command(verify_command)
     except CoderWorktreeRunError as error:
         _record_coder_worktree_incident(
             storage,
@@ -483,11 +485,10 @@ def run_approved_coder_worktree(
     _write_text(evidence_dir / "command.txt", command + "\n")
     command_env = {"PYTHONDONTWRITEBYTECODE": "1"}
     command_result = subprocess.run(
-        command,
+        command_argv,
         cwd=worktree_path,
         capture_output=True,
         text=True,
-        shell=True,
         env={**os.environ, **command_env},
     )
     _write_text(evidence_dir / "stdout.txt", command_result.stdout)
@@ -497,13 +498,14 @@ def run_approved_coder_worktree(
     verification_result = None
     if verify:
         resolved_verify_command = verify_command or project.default_test_command
-        _validate_safe_command(resolved_verify_command)
+        verification_argv = verify_command_argv or _validate_safe_command(
+            resolved_verify_command
+        )
         verification_result = subprocess.run(
-            resolved_verify_command,
+            verification_argv,
             cwd=worktree_path,
             capture_output=True,
             text=True,
-            shell=True,
             env={**os.environ, **command_env},
         )
     _write_text(evidence_dir / "verification_command.txt", (resolved_verify_command or "") + "\n")
@@ -1080,7 +1082,7 @@ def promote_coder_worktree_commit(
         )
         raise CoderWorktreeCommitError("coder worktree run has no verification command")
     try:
-        _validate_safe_command(verification_command)
+        verification_argv = _validate_safe_command(verification_command)
     except CoderWorktreeRunError as error:
         _block_commit_approval(
             root,
@@ -1098,11 +1100,10 @@ def promote_coder_worktree_commit(
     _write_text(coder_commit_dir / "pre_commit_status.txt", pre_status)
     command_env = {"PYTHONDONTWRITEBYTECODE": "1"}
     verification_result = subprocess.run(
-        verification_command,
+        verification_argv,
         cwd=worktree_path,
         capture_output=True,
         text=True,
-        shell=True,
         env={**os.environ, **command_env},
     )
     _write_text(evidence_dir / "commit_verification_command.txt", verification_command + "\n")
@@ -2165,11 +2166,13 @@ def _validate_source_chain(root: Path, plan_path: Path, payload: dict[str, Any])
         raise CoderWorktreeRunError("implementation handoff is not readable") from error
 
 
-def _validate_safe_command(command: str) -> None:
+def _validate_safe_command(command: str) -> list[str]:
     stripped = command.strip()
     if not stripped:
         raise CoderWorktreeRunError("command is required")
     lowered = stripped.lower()
+    if re.search(r"[;&|<>`\n\r]", stripped) or "$(" in stripped or "${" in stripped:
+        raise CoderWorktreeRunError("unsafe command token: shell metacharacter")
     unsafe_fragments = [
         "git push",
         "gh pr create",
@@ -2191,19 +2194,35 @@ def _validate_safe_command(command: str) -> None:
     for fragment in unsafe_fragments:
         if fragment in lowered:
             raise CoderWorktreeRunError(f"unsafe command token: {fragment}")
-    if re.search(r"(^|[\s;&|])open($|[\s;&|])", lowered):
+    try:
+        argv = shlex.split(stripped)
+    except ValueError as error:
+        raise CoderWorktreeRunError("unsafe command: invalid shell quoting") from error
+    if not argv:
+        raise CoderWorktreeRunError("command is required")
+    lowered_argv = [item.lower() for item in argv]
+    if "open" in lowered_argv:
         raise CoderWorktreeRunError("unsafe command token: open")
-    allowed_prefixes = (
-        "python3 -m pytest",
-        "python -m pytest",
-        "python3 -m py_compile",
-        "python -m py_compile",
-        "python3 scripts/",
-        "python scripts/",
-        "npm test",
-    )
-    if not lowered.startswith(allowed_prefixes):
+    allowed = False
+    if len(lowered_argv) >= 3 and lowered_argv[:3] in (
+        ["python3", "-m", "pytest"],
+        ["python", "-m", "pytest"],
+        ["python3", "-m", "py_compile"],
+        ["python", "-m", "py_compile"],
+    ):
+        allowed = True
+    elif len(lowered_argv) >= 2 and lowered_argv[0] in {"python3", "python"}:
+        script = PurePosixPath(argv[1])
+        allowed = (
+            script.parts[:1] == ("scripts",)
+            and not script.is_absolute()
+            and ".." not in script.parts
+        )
+    elif lowered_argv[:2] == ["npm", "test"]:
+        allowed = True
+    if not allowed:
         raise CoderWorktreeRunError("unsafe command: unsupported local command shape")
+    return argv
 
 
 def _ensure_tables(storage: Storage) -> None:
