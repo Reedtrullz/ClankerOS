@@ -1,5 +1,26 @@
 # Status
 
+## 2026-07-05 Skills Last Used Usage Map Card
+
+- `/skills` now makes the objective's `Last used` requirement first-class in
+  the visible `Skills Usage Map` rather than leaving it only in row text and
+  collapsed evidence.
+- The map now has seven scan cards: Now, Available, Generated, Usage,
+  Last Used, Projects, and Safety. Empty states say no last-use timestamp is
+  available yet, while populated states show the primary skill's last-used or
+  updated timestamp.
+- Local verification:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    2 passed in 119.09s.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+- Non-claim: this is read-only Skills page presentation over existing local
+  skill and usage records. It does not install skills, execute skills, write
+  on GET, call providers, use the network, approve work, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+
 ## 2026-07-05 Goal-Aware Artifact Index
 
 - Bare `/artifacts` now builds its global Artifact Index from bounded

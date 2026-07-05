@@ -8175,7 +8175,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Skills Usage Map" in skills_empty.body
     assert "data-skills-usage-map='true'" in skills_empty.body
     assert "data-skills-usage-cards='true'" in skills_empty.body
-    assert skills_empty.body.count("class='skills-usage-card") == 6
+    assert skills_empty.body.count("class='skills-usage-card") == 7
     assert "data-skills-usage-card='primary'" in skills_empty.body
     assert "data-skills-usage-primary='true' href='/goals'>Create goal context</a>" in skills_empty.body
     assert "data-skills-usage-evidence='true'" in skills_empty.body
@@ -8214,7 +8214,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "data-skills-command-bar"
     )
     assert "skills_usage_map_status</dt><dd>empty" in skills_empty.body
-    assert "skills_usage_map_card_count</dt><dd>6" in skills_empty.body
+    assert "skills_usage_map_card_count</dt><dd>7" in skills_empty.body
+    assert "data-skills-usage-card='last-used'><h3>Last Used</h3>" in skills_empty.body
+    assert "No last-use timestamp yet" in skills_empty.body
     assert "skills_usage_map_total_records</dt><dd>0" in skills_empty.body
     assert "skills_usage_map_generated_records</dt><dd>0" in skills_empty.body
     assert "skills_usage_map_used_skill_names</dt><dd>0" in skills_empty.body
@@ -18574,11 +18576,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Skills Usage Map" in skills.body
     assert "data-skills-usage-map='true'" in skills.body
     assert "data-skills-usage-cards='true'" in skills.body
-    assert skills.body.count("class='skills-usage-card") == 6
+    assert skills.body.count("class='skills-usage-card") == 7
     assert "data-skills-usage-card='primary'" in skills.body
     assert "data-skills-usage-card='available'" in skills.body
     assert "data-skills-usage-card='generated'" in skills.body
     assert "data-skills-usage-card='usage'" in skills.body
+    assert "data-skills-usage-card='last-used'><h3>Last Used</h3>" in skills.body
     assert "data-skills-usage-card='projects'" in skills.body
     assert "data-skills-usage-card='safety'" in skills.body
     assert (
@@ -18650,7 +18653,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "skills_workbench_network_actions_taken</dt><dd>0" in skills.body
     assert "skills_workbench_external_effects_created</dt><dd>false" in skills.body
     assert "skills_usage_map_status</dt><dd>ready" in skills.body
-    assert "skills_usage_map_card_count</dt><dd>6" in skills.body
+    assert "skills_usage_map_card_count</dt><dd>7" in skills.body
     assert "skills_usage_map_total_records</dt><dd>1" in skills.body
     assert "skills_usage_map_active_records</dt><dd>1" in skills.body
     assert "skills_usage_map_generated_records</dt><dd>1" in skills.body

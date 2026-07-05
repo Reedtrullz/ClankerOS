@@ -13197,7 +13197,7 @@ def _skills_usage_map(
     project_summary = ", ".join(sorted(projects)[:3]) if projects else "none yet"
     rows = [
         ("skills_usage_map_status", status),
-        ("skills_usage_map_card_count", "6"),
+        ("skills_usage_map_card_count", "7"),
         ("skills_usage_map_total_records", str(len(skills))),
         ("skills_usage_map_active_records", str(len(active))),
         ("skills_usage_map_proposed_records", str(len(proposed))),
@@ -13236,6 +13236,8 @@ def _skills_usage_map(
             f"<p>{len(generated)} generated record{'s' if len(generated) != 1 else ''}.</p><a class='skills-usage-link' href='#skills-generated'>Generated Skills</a></article>",
             "<article class='skills-usage-card' data-skills-usage-card='usage'><h3>Usage</h3>",
             f"<p>{len(used_names)} used skill name{'s' if len(used_names) != 1 else ''}; primary usage {primary_usage_count}.</p><a class='skills-usage-link' href='#skills-available'>Review usage</a></article>",
+            "<article class='skills-usage-card' data-skills-usage-card='last-used'><h3>Last Used</h3>",
+            f"<p>{_e(primary_last_used if primary_last_used != 'none' else 'No last-use timestamp yet')}.</p><a class='skills-usage-link' href='#skills-available'>Review last used</a></article>",
             "<article class='skills-usage-card' data-skills-usage-card='projects'><h3>Projects</h3>",
             f"<p>{len(projects)} project{'s' if len(projects) != 1 else ''}: {_e(project_summary)}.</p><a class='skills-usage-link' href='#skills-available'>Project usage</a></article>",
             "<article class='skills-usage-card' data-skills-usage-card='safety'><h3>Safety</h3>",

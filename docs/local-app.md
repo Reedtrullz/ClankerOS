@@ -947,13 +947,14 @@ confirmation requirement, and zero provider/network/external-effect counters.
   readback, and projects using them. It now opens with a visible
   `Skills Operator Workbench` before shared route/focus diagnostics or
   command readback, with cards for the next skill review, generated skills,
-  usage, and `/resume` or real Goal context, then a `Skills Usage Map` and
-  browser-local `Skills Inventory Filter`. The filter narrows already-rendered
+  usage, and `/resume` or real Goal context, then a `Skills Usage Map` with
+  first-class Available, Generated, Usage, Last Used, Projects, and Safety cards
+  before the browser-local `Skills Inventory Filter`. The filter narrows already-rendered
   rows by lane or text, remembers lane/query in
   `localStorage:clankeros-skills-inventory-filter`, and resets without
   installing or executing skills. Skills state, workbench, usage-map, filter,
   and command evidence stay collapsed by default while preserving total,
-  active, proposed, archived, generated, used-skill, project-usage,
+  active, proposed, archived, generated, used-skill, project-usage, last-used,
   first-artifact, view-memory, and zero-effect readbacks in the DOM.
 - `/profiles` - inactive future provider-routing surface. It reads
   `.clanker/profiles.yml` when present and opens with a visible
