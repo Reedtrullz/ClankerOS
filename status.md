@@ -13,12 +13,13 @@
   - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
     passed.
   - `python3 -m pytest tests/test_first_milestone.py::test_today_and_home_prefer_clankeros_goal_over_demo_fixture -q --tb=short`:
-    1 passed in 22.83s.
+    1 passed in 8.75s.
   - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
     1 passed in 41.23s.
   - Render-marker check on `/` and `/today`: Home and Today both selected
-    `goal_1fa51c15f846` from `clankeros_project_goal`; Today surfaced
-    `review_ready_fast_smoke_only` for GitHub Actions run `28735028534`.
+    `goal_1fa51c15f846` from `clankeros_project_goal`; after committing the
+    fix, Today correctly downgraded the older GitHub Actions proof to
+    `stale_or_different_commit` / `not_merge_ready` for the current local head.
 - Non-claim: this is local browser lead-goal selection and evidence surfacing.
   It does not fetch GitHub, mark PRs ready, merge, push, create PRs, deploy,
   call providers, write on GET, or mutate external systems from ClankerOS.
