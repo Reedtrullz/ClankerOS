@@ -1,5 +1,30 @@
 # Status
 
+## 2026-07-05 Guide First Run Action Labels
+
+- `/guide` First Run Path cards now use action-specific link labels instead
+  of generic `Continue`, `Open`, or `Waiting` copy.
+- Empty-checkout guide cards now show labels such as `Register ClankerOS
+  project`, `Needs project`, and `Needs Goal`, while each card exposes the
+  machine action id and visible link label in `data-guide-first-run-*`
+  attributes and collapsed guide evidence.
+- This keeps the suggested-use guide closer to a no-docs first-run path:
+  operators can see which step is actionable and what prerequisite is missing
+  before a project, Goal, delegation, context pack, or run exists.
+- Local verification:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed in 58.74s.
+  - Clean-root `/guide` render smoke: status 200, 532992 bytes, and markers
+    for `Register ClankerOS project`, `Needs project`, `Needs Goal`,
+    guide action evidence, `guide_write_on_get=false`, and
+    `guide_network_actions_taken=0` all present.
+- Non-claim: this is read-only guide presentation over existing first-run
+  state. It does not add new action authority, write on GET, call providers,
+  use the network, approve work, push, create PRs, deploy, or mutate external
+  systems from ClankerOS.
+
 ## 2026-07-05 Scoped Coder Packet Route Reads
 
 - Goal, workflow, delegation, run, project, and demo dogfooding route helpers

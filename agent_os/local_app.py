@@ -1907,7 +1907,12 @@ def _guide_page(root: Path) -> str:
         status = _first_run_step_status(first_run, step)
         raw_href = _first_run_step_href(first_run, step)
         href = f"/goals{raw_href}" if raw_href.startswith("#") else raw_href
-        first_run_lines.append(f"guide_first_run_step: {step} status={status}")
+        action_name = _action_name_for_first_run_step(step)
+        link_label = _first_run_step_link_label(step, status, action)
+        first_run_lines.append(
+            f"guide_first_run_step: {step} status={status} "
+            f"action={action_name} link={link_label}"
+        )
         first_run_cards.append(
             "".join(
                 [
@@ -1915,13 +1920,15 @@ def _guide_page(root: Path) -> str:
                         "<article class='guide-card guide-first-run-card' "
                         "data-guide-first-run-step='true' "
                         f"data-guide-first-run-step-key='{_e(step)}' "
-                        f"data-guide-first-run-step-status='{_e(status)}'>"
+                        f"data-guide-first-run-step-status='{_e(status)}' "
+                        f"data-guide-first-run-step-action='{_e(action_name)}' "
+                        f"data-guide-first-run-step-link-label='{_e(link_label)}'>"
                     ),
                     f"<span class='guide-card-kicker'>{index}</span>",
                     f"<h3>{_e(label)}</h3>",
                     f"<p>{_e(action)}</p>",
                     f"<p class='guide-status'>{_e(status.replace('_', ' '))}</p>",
-                    f"<a class='guide-link' href='{_e(href)}'>{_e('Continue' if status == 'current' else ('Open' if status == 'done' else 'Waiting'))}</a>",
+                    f"<a class='guide-link' href='{_e(href)}'>{_e(link_label)}</a>",
                     "</article>",
                 ]
             )
@@ -14521,6 +14528,25 @@ _FIRST_RUN_STEPS: tuple[tuple[str, str, str], ...] = (
     ("generate_context_pack", "Context", "Generate context pack"),
     ("run_first_delegation", "Run", "Run first delegation"),
 )
+
+
+def _first_run_step_link_label(step: str, status: str, action: str) -> str:
+    if status == "current":
+        return action
+    if status == "done":
+        return {
+            "create_project": "Open Project",
+            "create_first_goal": "Open Goal",
+            "create_first_delegation": "Open Delegation",
+            "generate_context_pack": "Open Context",
+            "run_first_delegation": "Open Run",
+        }.get(step, "Open Step")
+    return {
+        "waiting_for_project": "Needs project",
+        "waiting_for_goal": "Needs Goal",
+        "waiting_for_delegation": "Needs delegation",
+        "waiting_for_context_pack": "Needs context pack",
+    }.get(status, "Inspect step")
 
 
 def _first_run_step_href(progress: dict[str, Any], step: str) -> str:

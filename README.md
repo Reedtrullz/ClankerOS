@@ -306,6 +306,10 @@ the day with the route-local Finish Today form or
 `Guide Command Panel` now embeds the existing confirmed first-run or current
 Goal action form when available, so an empty checkout can register a project
 and then create the first Goal from the guide without hunting through docs.
+Its First Run Path cards use concrete action labels such as `Register
+ClankerOS project`, `Needs project`, and `Needs Goal` instead of generic
+continue/waiting text, and the guide evidence records the action id plus the
+visible link label for each step.
 Its Proof card also follows the current Goal's CI handoff when a Goal is in
 focus, falling back to `/verification` during first run. A
 read-only `Operator Recipes` panel follows it with seven intent cards for

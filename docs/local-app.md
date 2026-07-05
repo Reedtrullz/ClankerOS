@@ -237,6 +237,9 @@ confirmation requirement, and zero provider/network/external-effect counters.
   is available, so project registration, first Goal creation, and the current
   Goal action can be started from the guide. Its Proof card uses the current
   Goal's CI handoff when a Goal exists and `/verification` during first run.
+  The First Run Path cards use action-specific labels such as `Register
+  ClankerOS project`, `Needs project`, and `Needs Goal`, and collapsed guide
+  evidence records each step's action id plus visible link label.
   A read-only `Operator Recipes`
   panel follows with intent cards for Start The Day, Set Up Or Select Goal,
   Do The Next Thing, Unblock Work, Check Proof, Finish Today, and Resume

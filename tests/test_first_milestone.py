@@ -4985,7 +4985,20 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert guide.body.count("data-guide-first-run-step='true'") == 5
     assert "data-guide-first-run-step-key='create_project'" in guide.body
     assert "data-guide-first-run-step-status='current'" in guide.body
+    assert "data-guide-first-run-step-action='register-project'" in guide.body
+    assert (
+        "data-guide-first-run-step-link-label='Register ClankerOS project'"
+        in guide.body
+    )
+    assert (
+        "guide_first_run_step: create_project status=current "
+        "action=register-project link=Register ClankerOS project"
+        in guide.body
+    )
+    assert "data-guide-first-run-step-key='create_first_goal'" in guide.body
+    assert "data-guide-first-run-step-link-label='Needs project'" in guide.body
     assert "data-guide-first-run-step-key='run_first_delegation'" in guide.body
+    assert "data-guide-first-run-step-link-label='Needs Goal'" in guide.body
     assert "data-guide-safety-boundary='true'" in guide.body
     assert guide.body.count("data-guide-safety-card='true'") == 4
     assert "data-guide-evidence='true'" in guide.body

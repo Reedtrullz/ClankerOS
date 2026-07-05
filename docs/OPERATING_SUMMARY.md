@@ -209,6 +209,9 @@ Core layers for the bootstrap:
   available, letting operators register the project, create the first Goal, or
   continue the current Goal from the guide. Its Proof card uses the current
   Goal's CI handoff when a Goal exists and `/verification` during first run.
+  The First Run Path cards use action-specific labels such as `Register
+  ClankerOS project`, `Needs project`, and `Needs Goal`; collapsed guide
+  evidence records each step's action id and visible link label.
   A read-only `Operator Recipes`
   panel follows the command panel with Start The Day, Set Up Or Select Goal,
   Do The Next Thing, Unblock Work, Check Proof, Finish Today, and Resume
