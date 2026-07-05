@@ -1398,9 +1398,13 @@ state is available, points to `/demo`, `/workflow`, `/projects`,
 and names the local commit/publication gate sequence to walk from the selected
 `/runs/<run_id>` page.
 
-The page starts with `Dogfooding Operator Workbench` before shared diagnostics,
-a scan surface with Do Now, ClankerOS, Workflow, and Proof cards for continuing
-the fixture-backed local pass. A new `Dogfooding Return Brief` follows it with
+The page starts with `Dogfooding Real Goal Continuation` before the fixture
+workbench. That panel prefers the real non-demo ClankerOS Goal when one exists,
+names its phase, current workflow gate, next action, form availability, and
+exact Goal action surface, and links back to the owning Goal rather than
+embedding duplicate Goal forms. The fixture-backed `Dogfooding Operator
+Workbench` follows with Do Now, ClankerOS, Workflow, and Proof cards for the
+deterministic demo route walk. A `Dogfooding Return Brief` follows it with
 current branch/commit proof posture, latest recorded CI source/status/scope/run
 id, exact `gh run view` and record-after-success command templates, the current
 product action, and a Finish Today target. A browser-local `Dogfooding Session
@@ -1412,14 +1416,15 @@ deterministic local fixture state and returns to `/dogfooding`, so the route
 walk can start from the checklist without hopping through `/demo`. The confirmed
 action result also honors that submitted return target, and the saved workspace
 resume surface stays `/dogfooding` for dogfooding-origin refreshes instead of
-silently switching back to `/demo`. Dogfooding workbench evidence, return
-evidence, session evidence, fixture action evidence, fixture evidence, and the
-lower `Dogfooding Command Bar` evidence stay collapsed by default while
-preserving fixture status, selected project/Goal/delegation/run, one recommended
-target surface, demo command, route-walk/CI/action/health links, and zero-effect
-counters in the DOM. The page reports zero app network actions, zero external
-mutations, zero provider calls, no GitHub status fetch, no write-on-GET for the
-fixture form, and the manual push/PR boundary outside ClankerOS.
+silently switching back to `/demo`. Real-Goal continuation evidence, dogfooding
+workbench evidence, return evidence, session evidence, fixture action evidence,
+fixture evidence, and the lower `Dogfooding Command Bar` evidence stay collapsed
+by default while preserving real Goal/project/phase/gate state, fixture status,
+selected project/Goal/delegation/run, one recommended target surface, demo
+command, route-walk/CI/action/health links, and zero-effect counters in the
+DOM. The page reports zero app network actions, zero external mutations, zero
+provider calls, no GitHub status fetch, no write-on-GET for the fixture form,
+and the manual push/PR boundary outside ClankerOS.
 
 ## Artifact Viewer
 

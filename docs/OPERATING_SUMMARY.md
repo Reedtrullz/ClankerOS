@@ -1456,10 +1456,15 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   contacting GitHub; a read-only root dashboard
   `Dashboard Dogfooding Snapshot` for fixture availability, next dogfooding
   action, selected workflow/run links, and the `/demo` manual browser script
-  surface; a read-only `/dogfooding` operator workbench that now opens the
-  page before shared diagnostics with Do Now, ClankerOS, Workflow, and Proof
-  cards before the longer checklist, while keeping dogfooding workbench and
-  fixture/command evidence collapsed by default; a read-only `/dogfooding` GitHub
+  surface; a read-only `/dogfooding` real Goal continuation panel that now
+  opens the page before the fixture workbench, prefers the real non-demo
+  ClankerOS Goal, names its phase, workflow gate, next action, form
+  availability, exact Goal action surface, and zero-effect counters, and links
+  back to `/goals/<goal_id>#goal-action-dock-form` instead of embedding
+  duplicate Goal forms; a read-only `/dogfooding` operator workbench with Do
+  Now, ClankerOS, Workflow, and Proof cards before the longer checklist, while
+  keeping real-Goal, dogfooding workbench, and fixture/command evidence
+  collapsed by default; a read-only `/dogfooding` GitHub
   Actions follow-up section with direct pushed-snapshot `ci-snapshot-handoff`,
   `gh run view`, JSON-validated record, and manual record-after-success
   templates for the current checkout; a

@@ -10603,6 +10603,50 @@ def test_local_app_runs_delegation_from_browser_action(
     assert "Scout delegated" in goal_after_run.body
     assert "Execution completed" in goal_after_run.body
 
+    dogfooding_after_run = render_local_app_route(tmp_path, "/dogfooding")
+    assert dogfooding_after_run.status == 200
+    assert "Dogfooding Real Goal Continuation" in dogfooding_after_run.body
+    assert "data-dogfooding-real-continuation='true'" in dogfooding_after_run.body
+    assert "data-dogfooding-real-actions='true'" in dogfooding_after_run.body
+    assert "data-dogfooding-real-evidence='true'" in dogfooding_after_run.body
+    assert (
+        "dogfooding_real_continuation_status</dt><dd>real_goal_ready"
+        in dogfooding_after_run.body
+    )
+    assert "dogfooding_real_continuation_source</dt><dd>non_demo_lead_goal" in dogfooding_after_run.body
+    assert (
+        "dogfooding_real_continuation_project</dt><dd><a href='/projects/subject'>subject</a>"
+        in dogfooding_after_run.body
+    )
+    assert (
+        f"dogfooding_real_continuation_goal</dt><dd><a href='/goals/{goal_id}'>{goal_id}</a>"
+        in dogfooding_after_run.body
+    )
+    assert "dogfooding_real_continuation_phase</dt><dd>Coder prep" in dogfooding_after_run.body
+    assert "dogfooding_real_continuation_next_action</dt><dd>Run coder prep" in dogfooding_after_run.body
+    assert (
+        f"dogfooding_real_continuation_action_surface</dt><dd><a href='/goals/{goal_id}#goal-action-dock-form'>Run coder prep</a>"
+        in dogfooding_after_run.body
+    )
+    assert "dogfooding_real_continuation_form_available</dt><dd>true" in dogfooding_after_run.body
+    assert "dogfooding_real_continuation_current_gate</dt><dd>coder_prep" in dogfooding_after_run.body
+    assert "dogfooding_real_continuation_first_run_step</dt><dd>first_delegation_complete" in dogfooding_after_run.body
+    assert "dogfooding_real_continuation_first_run_complete</dt><dd>true" in dogfooding_after_run.body
+    assert "dogfooding_real_continuation_fixture_status</dt><dd>missing" in dogfooding_after_run.body
+    assert "dogfooding_real_continuation_write_on_get</dt><dd>false" in dogfooding_after_run.body
+    assert (
+        "dogfooding_real_continuation_external_effects_created</dt><dd>false"
+        in dogfooding_after_run.body
+    )
+    assert "dogfooding_real_continuation_now: Run coder prep" in dogfooding_after_run.body
+    assert (
+        f"dogfooding_real_continuation_click: <a href='/goals/{goal_id}#goal-action-dock-form'>Run coder prep</a>"
+        in dogfooding_after_run.body
+    )
+    assert dogfooding_after_run.body.index("Dogfooding Real Goal Continuation") < dogfooding_after_run.body.index(
+        "Dogfooding Operator Workbench"
+    )
+
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
     AgentSystem(tmp_path).initialize()

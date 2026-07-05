@@ -1,5 +1,31 @@
 # Status
 
+## 2026-07-05 Dogfooding Real Goal Continuation
+
+- `/dogfooding` now starts with a read-only `Dogfooding Real Goal Continuation`
+  panel before the fixture-backed workbench.
+- The panel prefers a real non-demo Goal, using `clankeros` first when present,
+  then a root-registered project Goal, then the active non-demo lead Goal.
+- In the post-first-delegation state it keeps the operator on the real Goal by
+  showing phase, current workflow gate, next action, form availability, and the
+  exact `/goals/<goal_id>#goal-action-dock-form` surface for `Run coder prep`.
+- The deterministic `local-app-demo` fixture workbench remains available below
+  the real Goal panel for route walks, demo refreshes, return briefs, and
+  browser-local dogfooding checklist state.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_runs_delegation_from_browser_action -q --tb=short`:
+    1 passed in 22.26s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_runs_delegation_from_browser_action tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    2 passed in 65.02s.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+- Non-claim: this is read-only browser routing over existing Goal, first-run,
+  and demo-fixture state. It does not write on GET, run providers, fetch
+  GitHub, use the network, approve work, push, create PRs, deploy, or mutate
+  external systems.
+
 ## 2026-07-05 First-Run Direct Action Links
 
 - First-run progress, checklist, and empty-state cards now route the current

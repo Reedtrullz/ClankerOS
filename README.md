@@ -1168,19 +1168,18 @@ the display-only manual publication commands. The app shows
 it does not run them.
 
 Use `/dogfooding` when you want one checklist for a browser route walk or a
-return-after-push pass: refresh the fixture, inspect
-demo/workflow/project/delegation/run surfaces, walk the local commit and
-publication gates, then hand verification to GitHub Actions. The page starts
-with `Dogfooding Operator Workbench`, then a `Dogfooding Return Brief` that
-summarizes current checkout CI proof, latest recorded GitHub evidence, exact
-`gh run view` and record-after-success command templates, the current product
-action, and Finish Today. A browser-local `Dogfooding Session Checklist` stores
-fixture/action/route/proof/finish checks in
-`localStorage:clankeros-dogfooding-session`; Workspace View Memory can inspect
-or reset it. The confirmed `demo-app-scenario` action still creates or refreshes
-the local fixture and returns to `/dogfooding`, while evidence panels stay
-collapsed by default. GET remains read-only, and the page does not fetch GitHub
-status.
+return-after-push pass. The page now starts with `Dogfooding Real Goal
+Continuation`, which prefers the real non-demo ClankerOS Goal, names its phase,
+current gate, next action, and exact `/goals/<goal_id>#goal-action-dock-form`
+surface, then keeps the fixture-backed demo workbench as a secondary route
+walk. After that, `Dogfooding Operator Workbench`, `Dogfooding Return Brief`,
+and the browser-local `Dogfooding Session Checklist` still cover fixture
+refresh, demo/workflow/project/delegation/run surfaces, current checkout CI
+proof, `gh run view` and record-after-success command templates, Finish Today,
+and `localStorage:clankeros-dogfooding-session`. The confirmed
+`demo-app-scenario` action still creates or refreshes the local fixture and
+returns to `/dogfooding`, while evidence panels stay collapsed by default. GET
+remains read-only, and the page does not fetch GitHub status.
 
 Use `/delegation-runs` when you want a compact read-only index of scout
 execution evidence, context packs, implementation handoffs, zero-effect
