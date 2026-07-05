@@ -16554,6 +16554,35 @@ def _goal_detail(root: Path, goal_id: str) -> str:
         next_action,
         summary_form_available,
     )
+    workspace = _load_workspace_state(root)
+    saved_goal = str(workspace.get("open_goal") or "").strip()
+    saved_project = str(workspace.get("open_project") or "").strip()
+    saved_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
+    saved_resume_matches_goal = saved_goal == goal.id and bool(saved_resume_surface)
+    latest_ci = _latest_ci_evidence_record(root, project_id=goal.project_id)
+    if latest_ci is None:
+        summary_ci_source = "none"
+        summary_ci_status = "missing"
+    else:
+        summary_ci_source, summary_ci_record = latest_ci
+        summary_ci_status = str(summary_ci_record.status)
+    if saved_resume_matches_goal:
+        summary_resume_href = saved_resume_surface
+        summary_resume_label = _saved_workspace_surface_action_label(
+            root,
+            saved_resume_surface,
+            open_goal=saved_goal,
+            open_project=saved_project,
+            fallback=saved_resume_surface,
+        )
+        summary_resume_source = "saved_resume_surface"
+        summary_resume_status = "ready"
+    else:
+        summary_resume_href = summary_action_href
+        summary_resume_label = summary_action_label
+        summary_resume_source = "current_goal_action"
+        summary_resume_status = "needs_finish_today"
+    summary_finish_status = "saved" if saved_resume_matches_goal else "needs_save"
     summary_title, summary_intent, summary_title_source = _goal_summary_parts(goal)
     summary_rows: list[tuple[str, str | SafeHtml]] = [
         ("goal_id", goal.id),
@@ -16581,8 +16610,32 @@ def _goal_detail(root: Path, goal_id: str) -> str:
         ),
         ("status", goal.status),
         ("current_phase", phase),
+        ("goal_summary_ci_status", summary_ci_status),
+        ("goal_summary_ci_source", summary_ci_source),
+        (
+            "goal_summary_proof_surface",
+            SafeHtml("<a href='#goal-ci-handoff'>Goal CI handoff</a>"),
+        ),
+        ("goal_summary_finish_status", summary_finish_status),
+        (
+            "goal_summary_finish_surface",
+            SafeHtml("<a href='#goal-finish-today'>Finish Today</a>"),
+        ),
+        ("goal_summary_resume_status", summary_resume_status),
+        (
+            "goal_summary_resume_surface",
+            SafeHtml(
+                f"<a href='{_e(summary_resume_href)}'>{_e(summary_resume_label)}</a>"
+            ),
+        ),
+        ("goal_summary_resume_source", summary_resume_source),
+        (
+            "goal_summary_saved_goal_matches_current",
+            str(saved_goal == goal.id).lower(),
+        ),
         ("goal_live_refresh_interval_seconds", "5"),
         ("goal_summary_write_on_get", "false"),
+        ("goal_summary_github_status_fetch", "none"),
         ("goal_summary_provider_calls_taken", "0"),
         ("goal_summary_network_actions_taken", "0"),
         ("goal_summary_external_effects_created", "false"),
@@ -16609,6 +16662,16 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             f"<strong>{_e(goal.status)}</strong></article>",
             "<article class='goal-summary-card' data-goal-summary-phase-card='true'><h3>Phase</h3>",
             f"<strong>{_e(phase)}</strong></article>",
+            "<article class='goal-summary-card' data-goal-summary-proof-card='true'><h3>Proof</h3>",
+            f"<strong>{_e(summary_ci_status)}</strong>",
+            f"<p>{_e(summary_ci_source)}</p>",
+            "<a class='goal-summary-link' data-goal-summary-proof='true' href='#goal-ci-handoff'>CI handoff</a></article>",
+            "<article class='goal-summary-card' data-goal-summary-finish-card='true'><h3>Finish</h3>",
+            f"<strong>{_e(summary_finish_status.replace('_', ' '))}</strong>",
+            "<a class='goal-summary-link' data-goal-summary-finish='true' data-open-details='true' href='#goal-finish-today'>Save return point</a></article>",
+            "<article class='goal-summary-card' data-goal-summary-resume-card='true'><h3>Resume</h3>",
+            f"<strong>{_e(summary_resume_status.replace('_', ' '))}</strong>",
+            f"<a class='goal-summary-link' data-goal-summary-resume='true' href='{_e(summary_resume_href)}'>{_e(summary_resume_label)}</a></article>",
             "<article class='goal-summary-card' data-goal-summary-refresh-card='true'><h3>Live</h3>",
             "<strong>5s refresh</strong></article>",
             "</div>",

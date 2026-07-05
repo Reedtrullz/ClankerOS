@@ -1,5 +1,28 @@
 # Status
 
+## 2026-07-05 Goal Summary Proof/Finish/Resume UX
+
+- Goal detail pages now bring Proof, Finish, and Resume into the first
+  viewport Goal Summary cards, alongside Next, Project, Status, Phase, and
+  Live.
+- The Proof card links to the same-page Goal CI handoff and reports the latest
+  local CI evidence status/source without fetching GitHub from the app.
+- The Finish card opens the existing confirmed `Finish Today` save form, while
+  the Resume card uses an exact saved resume surface for the same Goal when
+  one exists or falls back to the current Goal action.
+- Summary evidence now records CI source/status, finish status, resume
+  status/source/surface, saved-Goal match, `github_status_fetch=none`, and
+  zero provider/network/external-effect counters.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed in 67.75s.
+- Non-claim: this is read-only Goal summary routing over existing Goal,
+  workspace, and CI evidence state. It does not write on GET, poll GitHub,
+  call providers, use the network, approve work, push, create PRs, deploy, or
+  mutate external systems from ClankerOS.
+
 ## 2026-07-05 Dogfooding Fast Smoke CI Fix
 
 - GitHub Actions fast smoke failed on PR `#1` head

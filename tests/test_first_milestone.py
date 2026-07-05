@@ -14712,6 +14712,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-summary-project='true'" in goal.body
     assert "data-goal-summary-status-card='true'" in goal.body
     assert "data-goal-summary-phase-card='true'" in goal.body
+    assert "data-goal-summary-proof-card='true'" in goal.body
+    assert "data-goal-summary-proof='true' href='#goal-ci-handoff'>CI handoff</a>" in goal.body
+    assert "data-goal-summary-finish-card='true'" in goal.body
+    assert (
+        "data-goal-summary-finish='true' data-open-details='true' "
+        "href='#goal-finish-today'>Save return point</a>"
+    ) in goal.body
+    assert "data-goal-summary-resume-card='true'" in goal.body
+    assert (
+        "data-goal-summary-resume='true' href='#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in goal.body
     assert "data-goal-summary-refresh-card='true'" in goal.body
     assert "data-goal-summary-evidence='true'" in goal.body
     assert "<summary>Goal summary evidence</summary>" in goal.body
@@ -14720,7 +14732,20 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"goal_summary_next_source_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'" in goal.body
     assert "goal_summary_action_form_available</dt><dd>true" in goal.body
     assert "goal_summary_confirmation_required</dt><dd>true" in goal.body
+    assert "goal_summary_ci_status</dt><dd>success" in goal.body
+    assert "goal_summary_ci_source</dt><dd>direct_public_snapshot" in goal.body
+    assert "goal_summary_proof_surface</dt><dd><a href='#goal-ci-handoff'>Goal CI handoff</a>" in goal.body
+    assert "goal_summary_finish_status</dt><dd>needs_save" in goal.body
+    assert "goal_summary_finish_surface</dt><dd><a href='#goal-finish-today'>Finish Today</a>" in goal.body
+    assert "goal_summary_resume_status</dt><dd>needs_finish_today" in goal.body
+    assert (
+        "goal_summary_resume_surface</dt><dd><a href='#goal-action-dock-form'>"
+        "Create commit request</a>"
+    ) in goal.body
+    assert "goal_summary_resume_source</dt><dd>current_goal_action" in goal.body
+    assert "goal_summary_saved_goal_matches_current</dt><dd>false" in goal.body
     assert "goal_summary_write_on_get</dt><dd>false" in goal.body
+    assert "goal_summary_github_status_fetch</dt><dd>none" in goal.body
     assert "goal_summary_external_effects_created</dt><dd>false" in goal.body
     assert goal.body.index("data-goal-summary-next-card='true'") < goal.body.index(
         "data-goal-summary-project='true'"

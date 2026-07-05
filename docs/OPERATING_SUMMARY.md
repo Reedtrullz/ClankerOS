@@ -632,7 +632,8 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   Phase banner, jump bar, action dock, and progress meter render before shared
   route/focus diagnostics. The summary is title-first and uses the human Goal
   title/intent as both the page heading and browser title, while retaining the
-  Goal id as metadata with project, status, phase, and local refresh posture.
+  Goal id as metadata with project, status, phase, current proof posture,
+  Finish Today readiness, resume target, and local refresh posture.
   The shared breadcrumb/Route Context/command-palette route evidence layer now
   uses the same human Goal title for visible Goal links, while preserving
   explicit Goal id evidence fields so review and automation do not lose the
