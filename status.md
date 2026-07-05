@@ -1,5 +1,31 @@
 # Status
 
+## 2026-07-05 Today And Goal Merge Proof Handoff
+
+- Today CI Handoff now includes a visible Merge Proof card that classifies the
+  current local CI proof as `not_merge_ready`, `review_ready_fast_smoke_only`,
+  or `merge_ready_from_local_full_suite_proof`.
+- Goal CI Handoff now includes the same Merge Proof card and evidence rows,
+  sourced from project-scoped Goal CI evidence, so the Goal cockpit itself
+  shows whether the local full workflow proof boundary is satisfied before an
+  operator checks PR review/merge state outside ClankerOS.
+- `/ci-evidence`, `/today`, and Goal pages now use the same local
+  merge-readiness classifier while preserving separate PR-state non-claims.
+- Local verification:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json tests/test_first_milestone.py::test_local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json -q --tb=short`:
+    2 passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed in 104.66s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed in 83.52s.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+- Non-claim: this is read-only browser surfacing over operator-supplied local
+  CI evidence. It does not fetch GitHub, mark PRs ready, merge, push, create
+  PRs, deploy, call providers, or mutate external systems from ClankerOS.
+
 ## 2026-07-05 Goal CI Proof Artifact Timeline
 
 - Goal detail pages now treat project-scoped CI deploy evidence and direct CI

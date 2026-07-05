@@ -275,7 +275,10 @@ A read-only `Today CI Handoff` follows so the daily cockpit shows the latest
 operator-recorded GitHub Actions proof, whether it matches the current checkout,
 the exact `gh run list` / `gh run view` commands to inspect current CI, and
 links to `/verification` and `/ci-evidence` for recording proof after Actions
-completes; the app still does not poll GitHub or write on GET. It also includes
+completes. It now includes a visible Merge Proof card that labels local full
+workflow success as merge-ready proof, fast-smoke proof as review-only, and PR
+draft/review/merge state as operator-checked outside ClankerOS; the app still
+does not poll GitHub, merge, or write on GET. It also includes
 a `Today Goal Queue` that lists active, paused, and completed goals with phase,
 next action, switch links, same-page action availability for the lead goal,
 progress, and waiting counts so daily goal switching does not require opening
@@ -1379,7 +1382,10 @@ the exact `gh run view` / validated recorder commands in the DOM. A visible
 fast-smoke-only review proof from merge-ready full-suite proof for the current
 checkout. It also exposes a copy-only `gh pr view --json
 isDraft,mergeable,mergeStateStatus,statusCheckRollup,url` command template so
-PR state can be checked outside ClankerOS without the app fetching GitHub. A
+PR state can be checked outside ClankerOS without the app fetching GitHub. The
+same merge-proof status now appears in Today and Goal CI handoffs, so the
+operator does not have to leave the cockpit to see whether the local proof
+boundary is satisfied. A
 browser-local `CI JSON Assistant` follows with copy buttons for the current
 `gh run view` JSON command, optional clipboard paste into the recorder
 textarea, and quick job-name fill buttons for fast-smoke or full-suite proof.

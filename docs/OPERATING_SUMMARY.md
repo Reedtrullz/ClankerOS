@@ -311,7 +311,9 @@ Core layers for the bootstrap:
   operator-supplied GitHub JSON, confirmed local recording, and the no-fetch
   safety boundary, followed by a visible `CI Merge Readiness Map` that keeps
   fast-smoke-only review proof separate from merge-ready full-suite proof and
-  exposes copy-only `gh pr view` PR-state commands, before the browser-local
+  exposes copy-only `gh pr view` PR-state commands. The same local merge-proof
+  status is surfaced in Today and Goal CI handoffs so the operator can see the
+  proof boundary without leaving the cockpit, before the browser-local
   `CI JSON Assistant` for copying
   the current `gh run view` JSON command,
   optionally pasting clipboard JSON into the recorder textarea, and filling
@@ -801,11 +803,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   delegation, context-pack, implementation-handoff, coder-prep/worktree,
   commit, and publication posture. A read-only `Goal CI Handoff`
   follows that with visible Check GitHub, Record Proof, Current Proof, Full
-  Suite, and Finish Today cards, project-scoped proof status, latest
+  Suite, Merge Proof, and Finish Today cards, project-scoped proof status, latest
   operator-recorded GitHub Actions evidence, exact `gh run list` /
-  `gh run view` command templates, and a same-page proof-recording target
-  before the operator reaches the long timeline and artifact sections. The
-  detailed ledger remains collapsed, and the app still does no GitHub polling
+  `gh run view` command templates, local merge-proof readiness, and a same-page
+  proof-recording target before the operator reaches the long timeline and
+  artifact sections. The detailed ledger remains collapsed, and the app still does no GitHub polling
   or external mutations on GET. Goal
   Remaining Work itself opens with visible Now, Gate Progress, Waiting, Open
   Work, and Finish cards, while the command proof and full remaining-work

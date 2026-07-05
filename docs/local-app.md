@@ -204,7 +204,10 @@ confirmation requirement, and zero provider/network/external-effect counters.
   latest operator-recorded GitHub Actions proof, current-checkout match status,
   exact `gh run list` / `gh run view` commands for current CI, and links to
   `/verification` plus `/ci-evidence` for recording proof once Actions
-  completes; it reports that the app does not poll GitHub or write on GET. A
+  completes. It now includes a Merge Proof card that labels full workflow
+  success as local merge-ready proof, fast-smoke proof as review-only, and PR
+  state as operator-checked outside ClankerOS; it reports that the app does not
+  poll GitHub, merge, or write on GET. A
   read-only `Today Goal Queue` follows with active/paused/completed counts,
   lead-goal phase and next action, switch links, lead same-page action-form
   availability, progress, and waiting counts across the day's goals. Its
@@ -548,11 +551,11 @@ confirmation requirement, and zero provider/network/external-effect counters.
   implementation handoff, coder prep/worktree plan, worktree run/review,
   commit approval, and publication handoff posture. A read-only
   `Goal CI Handoff` follows it with visible Check GitHub, Record Proof,
-  Current Proof, Full Suite, and Finish Today cards. The cards show project-scoped proof status,
+  Current Proof, Full Suite, Merge Proof, and Finish Today cards. The cards show project-scoped proof status,
   latest operator-recorded GitHub Actions evidence, exact `gh run list` /
   `gh run view` command templates, and a same-page JSON paste target for
-  recording proof while the detailed ledger stays collapsed and app-side GitHub
-  polling remains disabled. Goal Live State now opens with visible Now, Phase,
+  recording proof while also surfacing local merge-proof readiness without
+  app-side GitHub polling, merge, push, or PR mutation. Goal Live State now opens with visible Now, Phase,
   Refresh, Pause Rules, and Safety cards, including a local `Refresh now`
   control, while detailed refresh posture stays collapsed and the five-second
   reload loop still pauses during edits or hidden tabs. Remaining Work now

@@ -2926,7 +2926,7 @@ def _today_page(root: Path) -> str:
         _today_operator_workbench(root, storage, lead_goal),
         _today_decision_queue(root, storage, lead_goal),
         _today_workflow_map(root, storage, lead_goal),
-        _today_ci_handoff(root),
+        _today_ci_handoff(root, lead_goal),
         _today_goal_queue(
             root,
             storage,
@@ -3356,6 +3356,53 @@ def _project_ci_evidence_command_state(root: Path, project_id: str) -> dict[str,
         "next_action": next_action,
         "target_surface": target_surface,
         "reason": reason,
+    }
+
+
+def _ci_merge_readiness_state(
+    state: dict[str, str],
+    *,
+    full_proof_href: str,
+    record_href: str,
+) -> dict[str, str]:
+    current_proof = state.get("current_proof", "missing_current_commit_proof")
+    fast_smoke_recorded = current_proof in {
+        "current_job_scope_only",
+        "current_workflow_run_success",
+    }
+    full_suite_recorded = current_proof == "current_workflow_run_success"
+    if full_suite_recorded:
+        return {
+            "gate_status": "merge_ready_from_local_full_suite_proof",
+            "primary_label": "Review full proof",
+            "primary_href": full_proof_href,
+            "review_status": "review_ready",
+            "fast_smoke_status": "recorded_success",
+            "full_suite_status": "recorded_success",
+            "local_merge_proof_claim": "current_full_workflow_success_recorded",
+            "next_step": "Confirm PR review state outside ClankerOS, then merge outside ClankerOS.",
+        }
+    if fast_smoke_recorded:
+        return {
+            "gate_status": "review_ready_fast_smoke_only",
+            "primary_label": "Record full suite",
+            "primary_href": record_href,
+            "review_status": "review_ready_with_fast_smoke",
+            "fast_smoke_status": "recorded_success",
+            "full_suite_status": "missing_full_suite_success",
+            "local_merge_proof_claim": "requires_current_full_workflow_success_record",
+            "next_step": "Wait for Full pytest suite to complete, then paste completed workflow JSON.",
+        }
+    primary_href = state.get("target_surface") or record_href
+    return {
+        "gate_status": "not_merge_ready",
+        "primary_label": state.get("next_action", "Record CI proof"),
+        "primary_href": primary_href,
+        "review_status": "needs_ci_proof",
+        "fast_smoke_status": "missing_or_stale",
+        "full_suite_status": "missing_full_suite_success",
+        "local_merge_proof_claim": "requires_current_full_workflow_success_record",
+        "next_step": "Paste GitHub Actions JSON after the relevant run or job succeeds.",
     }
 
 
@@ -4662,25 +4709,61 @@ def _today_workflow_map(
     )
 
 
-def _today_ci_handoff(root: Path) -> str:
-    state = _ci_evidence_command_state(root)
-    latest_record = _latest_ci_evidence_record(root)
-    repo = _repo_state(root)
-    repo_slug = _github_repo_slug(root)
+def _today_ci_handoff(root: Path, lead_goal: sqlite3.Row | None) -> str:
+    if lead_goal is None:
+        state = _ci_evidence_command_state(root)
+        latest_record = _latest_ci_evidence_record(root)
+        repo = _repo_state(root)
+        repo_slug = _github_repo_slug(root)
+        source = "global_ci_evidence_records"
+        goal_id = "none"
+        project_id = "none"
+        goal_href_prefix = ""
+        record_href = "/ci-evidence#record-ci-snapshot-json"
+        full_proof_href = state.get("latest_target", state["target_surface"])
+    else:
+        goal_id = str(lead_goal["id"])
+        project_id = str(lead_goal["project_id"])
+        storage = _storage(root)
+        project = storage.get_registered_project(project_id)
+        project_root = Path(project.root_path) if project else root
+        state = _project_ci_evidence_command_state(root, project_id)
+        latest_record = _latest_ci_evidence_record(root, project_id=project_id)
+        repo = _repo_state(project_root)
+        repo_slug = _github_repo_slug(project_root)
+        source = "lead_goal_project_ci_evidence_records"
+        goal_href_prefix = f"/goals/{quote(goal_id)}"
+        record_href = f"{goal_href_prefix}#record-goal-ci-proof"
+        full_proof_href = f"{goal_href_prefix}#goal-verification-evidence"
     target_surface = state["target_surface"]
     target_href = (
-        f"/ci-evidence{target_surface}"
+        f"{goal_href_prefix}{target_surface}"
+        if goal_href_prefix and target_surface.startswith("#")
+        else f"/ci-evidence{target_surface}"
         if target_surface.startswith("#")
         else target_surface
     )
     target_label = target_href if target_href.startswith("/") else target_surface
-    record_href = "/ci-evidence#record-ci-snapshot-json"
     latest_available = latest_record is not None
     latest_source = state["latest_source"]
     latest_status = state["latest_status"]
     latest_scope = state["latest_scope"]
     latest_commit = state["latest_commit"]
     latest_run_id = state["latest_external_run_id"]
+    merge_state = _ci_merge_readiness_state(
+        state,
+        full_proof_href=full_proof_href,
+        record_href=record_href,
+    )
+    merge_primary_href = merge_state["primary_href"]
+    if merge_primary_href.startswith("#"):
+        merge_primary_href = (
+            f"{goal_href_prefix}{merge_primary_href}"
+            if goal_href_prefix
+            else f"/ci-evidence{merge_primary_href}"
+        )
+    elif not merge_primary_href.startswith("/"):
+        merge_primary_href = goal_href_prefix or "/ci-evidence"
     latest_provider = "none"
     latest_url: str | SafeHtml = "none"
     latest_evidence: str | SafeHtml = "none"
@@ -4725,6 +4808,26 @@ def _today_ci_handoff(root: Path) -> str:
         [
             "<section id='today-ci-handoff' class='panel today-ci-handoff' data-today-ci-handoff='true'><h2>Today CI Handoff</h2>",
             "<p class='muted'>Use GitHub Actions as the longer verification loop, then record operator-supplied proof back into the local evidence ledger.</p>",
+            "<div class='today-ci-merge-grid' data-today-ci-merge-readiness='true'>",
+            "<article class='today-ci-merge-card today-ci-merge-primary' data-today-ci-merge-card='gate'>",
+            "<h3>Merge Proof</h3>",
+            f"<strong>{_e(merge_state['gate_status'])}</strong>",
+            f"<p>{_e(merge_state['next_step'])}</p>",
+            f"<a class='today-ci-merge-action' href='{_e(merge_primary_href)}'>{_e(merge_state['primary_label'])}</a>",
+            "</article>",
+            "<article class='today-ci-merge-card' data-today-ci-merge-card='full-suite'>",
+            "<h3>Full Suite</h3>",
+            f"<strong>{_e(merge_state['full_suite_status'])}</strong>",
+            "<p>Full workflow success is the local merge proof boundary.</p>",
+            f"<a class='today-ci-merge-link' href='{_e(record_href)}'>Record proof</a>",
+            "</article>",
+            "<article class='today-ci-merge-card' data-today-ci-merge-card='pr-state'>",
+            "<h3>PR State</h3>",
+            "<strong>operator checked outside ClankerOS</strong>",
+            "<p>Use GitHub for draft, review, and merge-state decisions.</p>",
+            "<a class='today-ci-merge-link' href='/ci-evidence#ci-merge-readiness-evidence'>PR command</a>",
+            "</article>",
+            "</div>",
             _kv(
                 [
                     (
@@ -4732,6 +4835,9 @@ def _today_ci_handoff(root: Path) -> str:
                         "available" if latest_available else "missing",
                     ),
                     ("today_ci_handoff_command_status", state["command_status"]),
+                    ("today_ci_handoff_source", source),
+                    ("today_ci_handoff_goal", goal_id),
+                    ("today_ci_handoff_project", project_id),
                     ("today_ci_handoff_branch", state["branch"]),
                     ("today_ci_handoff_current_commit", state["current_commit"]),
                     ("today_ci_handoff_current_proof", state["current_proof"]),
@@ -4756,6 +4862,41 @@ def _today_ci_handoff(root: Path) -> str:
                         "today_ci_handoff_matches_current_checkout",
                         matches_current,
                     ),
+                    (
+                        "today_ci_handoff_merge_readiness_status",
+                        merge_state["gate_status"],
+                    ),
+                    (
+                        "today_ci_handoff_merge_readiness_review_status",
+                        merge_state["review_status"],
+                    ),
+                    (
+                        "today_ci_handoff_merge_readiness_fast_smoke_status",
+                        merge_state["fast_smoke_status"],
+                    ),
+                    (
+                        "today_ci_handoff_merge_readiness_full_suite_status",
+                        merge_state["full_suite_status"],
+                    ),
+                    (
+                        "today_ci_handoff_local_merge_proof_claim",
+                        merge_state["local_merge_proof_claim"],
+                    ),
+                    (
+                        "today_ci_handoff_merge_readiness_next_step",
+                        merge_state["next_step"],
+                    ),
+                    (
+                        "today_ci_handoff_merge_readiness_primary_surface",
+                        SafeHtml(
+                            f"<a href='{_e(merge_primary_href)}'>{_e(merge_state['primary_label'])}</a>"
+                        ),
+                    ),
+                    (
+                        "today_ci_handoff_pr_state_claim",
+                        "operator_checked_outside_clankeros",
+                    ),
+                    ("today_ci_handoff_app_merge_action_taken", "false"),
                     ("today_ci_handoff_next_action", state["next_action"]),
                     (
                         "today_ci_handoff_target_surface",
@@ -4771,6 +4912,13 @@ def _today_ci_handoff(root: Path) -> str:
                         "today_ci_handoff_record_surface",
                         SafeHtml(f"<a href='{record_href}'>{record_href}</a>"),
                     ),
+                    (
+                        "today_ci_handoff_global_record_surface",
+                        SafeHtml(
+                            "<a href='/ci-evidence#record-ci-snapshot-json'>"
+                            "/ci-evidence#record-ci-snapshot-json</a>"
+                        ),
+                    ),
                     ("today_ci_handoff_github_status_fetch", "none"),
                     ("today_ci_handoff_app_github_polling", "false"),
                     ("today_ci_handoff_write_on_get", "false"),
@@ -4782,6 +4930,7 @@ def _today_ci_handoff(root: Path) -> str:
             _ul(
                 [
                     f"today_ci_handoff_now: {_e(state['next_action'])}",
+                    f"today_ci_handoff_merge_readiness: {_e(merge_state['gate_status'])} next={_e(merge_state['next_step'])}",
                     f"today_ci_handoff_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
                     f"today_ci_handoff_github_check: {_e(gh_list_command)}",
                     f"today_ci_handoff_status_json: {_e(gh_view_command)}",
@@ -19960,6 +20109,15 @@ def _goal_ci_handoff(root: Path, state: dict[str, Any]) -> str:
     full_commit = _git(project_root, ["rev-parse", "HEAD"]) or repo["commit"]
     repo_slug = _github_repo_slug(project_root)
     latest_record = _latest_ci_evidence_record(root, project_id=goal.project_id)
+    project_ci_state = _project_ci_evidence_command_state(root, goal.project_id)
+    merge_state = _ci_merge_readiness_state(
+        project_ci_state,
+        full_proof_href="#goal-verification-evidence",
+        record_href="#record-goal-ci-proof",
+    )
+    merge_primary_href = merge_state["primary_href"]
+    if not merge_primary_href.startswith("#") and not merge_primary_href.startswith("/"):
+        merge_primary_href = "#goal-ci-handoff"
 
     source_kind = "none"
     latest_status = "missing"
@@ -20081,6 +20239,12 @@ def _goal_ci_handoff(root: Path, state: dict[str, Any]) -> str:
             "<p>Fast smoke is early proof; full workflow success is the product proof.</p>",
             f"<code class='goal-ci-command'>{_e(gh_view_command)}</code>",
             "</div>",
+            "<div class='goal-ci-handoff-card' data-goal-ci-handoff-merge='true'>",
+            "<h3>Merge Proof</h3>",
+            f"<strong>{_e(merge_state['gate_status'])}</strong>",
+            f"<p>{_e(merge_state['next_step'])}</p>",
+            f"<a class='goal-ci-handoff-link' href='{_e(merge_primary_href)}'>{_e(merge_state['primary_label'])}</a>",
+            "</div>",
             "<div class='goal-ci-handoff-card' data-goal-ci-handoff-finish='true'>",
             "<h3>Finish Today</h3>",
             "<strong>Save the resume point</strong>",
@@ -20096,7 +20260,7 @@ def _goal_ci_handoff(root: Path, state: dict[str, Any]) -> str:
             "<div class='goal-ci-handoff-grid' data-goal-ci-handoff-actions='true'>",
             ci_cards,
             "</div>",
-            "<details class='goal-ci-handoff-evidence' data-goal-ci-handoff-evidence='true'><summary>Goal CI handoff evidence</summary>",
+            "<details id='goal-ci-handoff-evidence' class='goal-ci-handoff-evidence' data-goal-ci-handoff-evidence='true'><summary>Goal CI handoff evidence</summary>",
             _kv(
                 [
                     ("goal_ci_handoff_status", handoff_status),
@@ -20116,6 +20280,41 @@ def _goal_ci_handoff(root: Path, state: dict[str, Any]) -> str:
                     ("goal_ci_handoff_branch_matches_current", branch_matches_current),
                     ("goal_ci_handoff_commit_matches_current", commit_matches_current),
                     ("goal_ci_handoff_matches_current_checkout", str(matches_current).lower()),
+                    (
+                        "goal_ci_handoff_merge_readiness_status",
+                        merge_state["gate_status"],
+                    ),
+                    (
+                        "goal_ci_handoff_merge_readiness_review_status",
+                        merge_state["review_status"],
+                    ),
+                    (
+                        "goal_ci_handoff_merge_readiness_fast_smoke_status",
+                        merge_state["fast_smoke_status"],
+                    ),
+                    (
+                        "goal_ci_handoff_merge_readiness_full_suite_status",
+                        merge_state["full_suite_status"],
+                    ),
+                    (
+                        "goal_ci_handoff_local_merge_proof_claim",
+                        merge_state["local_merge_proof_claim"],
+                    ),
+                    (
+                        "goal_ci_handoff_merge_readiness_next_step",
+                        merge_state["next_step"],
+                    ),
+                    (
+                        "goal_ci_handoff_merge_readiness_primary_surface",
+                        SafeHtml(
+                            f"<a href='{_e(merge_primary_href)}'>{_e(merge_state['primary_label'])}</a>"
+                        ),
+                    ),
+                    (
+                        "goal_ci_handoff_pr_state_claim",
+                        "operator_checked_outside_clankeros",
+                    ),
+                    ("goal_ci_handoff_app_merge_action_taken", "false"),
                     ("goal_ci_handoff_next_action", next_action),
                     (
                         "goal_ci_handoff_target_surface",
@@ -20148,6 +20347,7 @@ def _goal_ci_handoff(root: Path, state: dict[str, Any]) -> str:
             _ul(
                 [
                     f"goal_ci_handoff_now: {_e(next_action)}",
+                    f"goal_ci_handoff_merge_readiness: {_e(merge_state['gate_status'])} next={_e(merge_state['next_step'])}",
                     f"goal_ci_handoff_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
                     f"goal_ci_handoff_github_check: {_e(gh_list_command)}",
                     f"goal_ci_handoff_status_json: {_e(gh_view_command)}",
@@ -32516,39 +32716,24 @@ def _ci_merge_readiness_map(
     current_commit = state["current_commit"]
     branch = state["branch"]
     repo = commands["repo"]
+    merge_state = _ci_merge_readiness_state(
+        state,
+        full_proof_href=state["latest_target"],
+        record_href="#record-ci-snapshot-json",
+    )
     pr_command = (
         f"gh pr view --repo {repo} --json "
         "isDraft,mergeable,mergeStateStatus,statusCheckRollup,url"
     )
-    fast_smoke_recorded = current_proof in {
-        "current_job_scope_only",
-        "current_workflow_run_success",
-    }
-    full_suite_recorded = current_proof == "current_workflow_run_success"
-    if full_suite_recorded:
-        gate_status = "merge_ready_from_local_full_suite_proof"
-        primary_label = "Review full proof"
-        primary_href = state["latest_target"]
-        review_status = "review_ready"
-        full_suite_status = "recorded_success"
-        next_step = "Confirm PR review state outside ClankerOS, then merge outside ClankerOS."
-    elif fast_smoke_recorded:
-        gate_status = "review_ready_fast_smoke_only"
-        primary_label = "Record full suite"
-        primary_href = "#record-ci-snapshot-json"
-        review_status = "review_ready_with_fast_smoke"
-        full_suite_status = "missing_full_suite_success"
-        next_step = "Wait for Full pytest suite to complete, then paste completed workflow JSON."
-    else:
-        gate_status = "not_merge_ready"
-        primary_label = state["next_action"]
-        primary_href = state["target_surface"]
-        review_status = "needs_ci_proof"
-        full_suite_status = "missing_full_suite_success"
-        next_step = "Paste GitHub Actions JSON after the relevant run or job succeeds."
+    gate_status = merge_state["gate_status"]
+    primary_label = merge_state["primary_label"]
+    primary_href = merge_state["primary_href"]
+    review_status = merge_state["review_status"]
+    full_suite_status = merge_state["full_suite_status"]
+    next_step = merge_state["next_step"]
     if not primary_href.startswith("#") and not primary_href.startswith("/"):
         primary_href = "/ci-evidence"
-    fast_smoke_status = "recorded_success" if fast_smoke_recorded else "missing_or_stale"
+    fast_smoke_status = merge_state["fast_smoke_status"]
     latest_label = (
         f"{latest_status} / {latest_scope}"
         if latest_status != "missing"
@@ -32631,6 +32816,10 @@ def _ci_merge_readiness_map(
                     ),
                     ("ci_merge_readiness_review_ready_claim", "local_fast_smoke_or_full_suite_proof_only"),
                     ("ci_merge_readiness_merge_ready_claim", "requires_current_full_workflow_success_record"),
+                    (
+                        "ci_merge_readiness_local_merge_proof_claim",
+                        merge_state["local_merge_proof_claim"],
+                    ),
                     ("ci_merge_readiness_pr_state_claim", "operator_checked_outside_clankeros"),
                     ("ci_merge_readiness_source", "operator_supplied_ci_evidence_records"),
                     ("ci_merge_readiness_write_on_get", "false"),
@@ -52971,7 +53160,7 @@ def _html_page(
     .goal-coder-handoff-evidence:not([open]) > :not(summary) {{ display:none; }}
     .goal-ci-handoff {{ border-left:4px solid var(--ok); }}
     .goal-ci-handoff dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
-    .goal-ci-handoff-grid {{ display:grid; grid-template-columns:minmax(230px, 1.25fr) repeat(4, minmax(160px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-ci-handoff-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:12px 0; }}
     .goal-ci-handoff-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
     .goal-ci-handoff-card h3 {{ margin-top:0; }}
     .goal-ci-handoff-card p {{ margin:0 0 10px; color:var(--muted); }}
@@ -53125,6 +53314,14 @@ def _html_page(
     .today-workflow-map dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
     .today-ci-handoff {{ border-left:4px solid var(--ok); }}
     .today-ci-handoff dl {{ grid-template-columns:minmax(180px, 250px) 1fr; }}
+    .today-ci-merge-grid {{ display:grid; grid-template-columns:minmax(240px, 1.2fr) repeat(2, minmax(170px, 1fr)); gap:10px; margin:12px 0; }}
+    .today-ci-merge-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .today-ci-merge-card h3 {{ margin-top:0; }}
+    .today-ci-merge-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .today-ci-merge-primary {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
+    .today-ci-merge-action, .today-ci-merge-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .today-ci-merge-action {{ background:var(--accent); color:#fff; }}
+    .today-ci-merge-link {{ background:var(--surface); color:var(--accent); }}
     .today-ci-handoff ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .today-ci-handoff li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
     .ci-proof-workbench {{ border-left:4px solid var(--accent); }}
@@ -54229,7 +54426,7 @@ def _html_page(
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
     @media (max-width: 860px) {{ #run-readiness-strip {{ scroll-margin-top:260px; }} .run-readiness-grid, .run-readiness-strip dl {{ grid-template-columns:1fr; }} }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-action-prep, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #profile-routing-plan, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-goal-continuation, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map, #artifact-view-memory, #verification-milestone-proof-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-action-prep-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-return-brief-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-loop-checklist-grid, .today-quick-capture-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-domain-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profile-plan-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-real-grid, .dogfooding-workbench-grid, .dogfooding-return-grid, .dogfooding-session-checklist-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .artifact-view-memory-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .verification-milestone-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-action-prep, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #profile-routing-plan, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-goal-continuation, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map, #artifact-view-memory, #verification-milestone-proof-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-action-prep-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-return-brief-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-loop-checklist-grid, .today-quick-capture-grid, .today-ci-merge-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-domain-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profile-plan-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-real-grid, .dogfooding-workbench-grid, .dogfooding-return-grid, .dogfooding-session-checklist-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .artifact-view-memory-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .verification-milestone-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #ci-evidence-readiness-strip, #ci-merge-readiness-map {{ scroll-margin-top:260px; }} .ci-evidence-readiness-grid, .ci-merge-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #health-readiness-strip {{ scroll-margin-top:260px; }} .health-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}

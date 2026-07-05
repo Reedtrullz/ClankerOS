@@ -2719,6 +2719,7 @@ def test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json(
     assert "ci_merge_readiness_full_suite_status</dt><dd>missing_full_suite_success" in ci_evidence.body
     assert "ci_merge_readiness_pr_state_command</dt><dd><code>gh pr view --repo &lt;owner/repo&gt;" in ci_evidence.body
     assert "ci_merge_readiness_merge_ready_claim</dt><dd>requires_current_full_workflow_success_record" in ci_evidence.body
+    assert "ci_merge_readiness_local_merge_proof_claim</dt><dd>requires_current_full_workflow_success_record" in ci_evidence.body
     assert "ci_merge_readiness_github_status_fetch</dt><dd>none" in ci_evidence.body
     assert "ci_merge_readiness_network_actions_taken</dt><dd>0" in ci_evidence.body
     assert "CI JSON Assistant" in ci_evidence.body
@@ -2939,6 +2940,7 @@ def test_local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json(
     assert "ci_merge_readiness_review_status</dt><dd>review_ready_with_fast_smoke" in ci_evidence_after.body
     assert "ci_merge_readiness_fast_smoke_status</dt><dd>recorded_success" in ci_evidence_after.body
     assert "ci_merge_readiness_full_suite_status</dt><dd>missing_full_suite_success" in ci_evidence_after.body
+    assert "ci_merge_readiness_local_merge_proof_claim</dt><dd>requires_current_full_workflow_success_record" in ci_evidence_after.body
     assert "ci_merge_readiness_primary_surface</dt><dd><a href='#record-ci-snapshot-json'>Record full suite</a>" in ci_evidence_after.body
     assert "ci_merge_readiness_next_step</dt><dd>Wait for Full pytest suite to complete, then paste completed workflow JSON." in ci_evidence_after.body
     assert "status_source=github_status_json_job" in ci_evidence_after.body
@@ -5474,7 +5476,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "today_activity_safety: read-only goal timeline on daily cockpit" in today.body
     assert "Today Operator Workbench" in today.body
     assert "data-today-operator-workbench='true'" in today.body
-    assert ".today-session-grid, .today-loop-checklist-grid, .today-quick-capture-grid, .today-workbench-grid, .today-activity-grid" in today.body
+    assert ".today-session-grid, .today-loop-checklist-grid, .today-quick-capture-grid, .today-ci-merge-grid, .today-workbench-grid, .today-activity-grid" in today.body
     assert "data-today-workbench-evidence='true'" in today.body
     assert "today_workbench_status</dt><dd>first_run" in today.body
     assert "today_workbench_source</dt><dd>goal_state_workspace_attention" in today.body
@@ -14529,13 +14531,26 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Today CI Handoff" in today.body
     assert "data-today-ci-handoff='true'" in today.body
     assert "today_ci_handoff_status</dt><dd>available" in today.body
+    assert "today_ci_handoff_source</dt><dd>lead_goal_project_ci_evidence_records" in today.body
+    assert f"today_ci_handoff_goal</dt><dd>{result.goal_id}" in today.body
+    assert "today_ci_handoff_project</dt><dd>local-app-demo" in today.body
     assert "today_ci_handoff_latest_source</dt><dd>direct_public_snapshot" in today.body
     assert "today_ci_handoff_latest_status</dt><dd>success" in today.body
     assert "today_ci_handoff_latest_provider</dt><dd>github-actions" in today.body
     assert "today_ci_handoff_latest_run_id</dt><dd>demo-goal-ci" in today.body
-    assert "today_ci_handoff_target_surface</dt><dd><a href='/ci-evidence" in today.body
+    assert "data-today-ci-merge-readiness='true'" in today.body
+    assert "data-today-ci-merge-card='gate'" in today.body
+    assert "today_ci_handoff_merge_readiness_status</dt><dd>merge_ready_from_local_full_suite_proof" in today.body
+    assert "today_ci_handoff_merge_readiness_review_status</dt><dd>review_ready" in today.body
+    assert "today_ci_handoff_merge_readiness_full_suite_status</dt><dd>recorded_success" in today.body
+    assert "today_ci_handoff_local_merge_proof_claim</dt><dd>current_full_workflow_success_recorded" in today.body
+    assert f"today_ci_handoff_merge_readiness_primary_surface</dt><dd><a href='/goals/{result.goal_id}#goal-verification-evidence'>Review full proof</a>" in today.body
+    assert "today_ci_handoff_pr_state_claim</dt><dd>operator_checked_outside_clankeros" in today.body
+    assert "today_ci_handoff_app_merge_action_taken</dt><dd>false" in today.body
+    assert f"today_ci_handoff_target_surface</dt><dd><a href='/goals/{result.goal_id}#goal-verification-evidence'>/goals/{result.goal_id}#goal-verification-evidence</a>" in today.body
     assert "today_ci_handoff_verification_surface</dt><dd><a href='/verification'>/verification</a>" in today.body
-    assert "today_ci_handoff_record_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>/ci-evidence#record-ci-snapshot-json</a>" in today.body
+    assert f"today_ci_handoff_record_surface</dt><dd><a href='/goals/{result.goal_id}#record-goal-ci-proof'>/goals/{result.goal_id}#record-goal-ci-proof</a>" in today.body
+    assert "today_ci_handoff_global_record_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>/ci-evidence#record-ci-snapshot-json</a>" in today.body
     assert "today_ci_handoff_github_status_fetch</dt><dd>none" in today.body
     assert "today_ci_handoff_app_github_polling</dt><dd>false" in today.body
     assert "today_ci_handoff_write_on_get</dt><dd>false" in today.body
@@ -14544,6 +14559,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_ci_handoff_external_effects_created</dt><dd>false" in today.body
     assert "today_ci_handoff_github_check: gh run list" in today.body
     assert "today_ci_handoff_status_json: gh run view" in today.body
+    assert "today_ci_handoff_merge_readiness: merge_ready_from_local_full_suite_proof" in today.body
     assert "today_ci_handoff_safety: read-only local handoff" in today.body
     assert "data-today-current-action='true'" in today.body
     assert "data-today-current-action-form='true'" in today.body
@@ -16618,7 +16634,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "Record Proof" in goal.body
     assert "Current Proof" in goal.body
     assert "Full Suite" in goal.body
+    assert "Merge Proof" in goal.body
     assert "Finish Today" in goal.body
+    assert "data-goal-ci-handoff-merge='true'" in goal.body
     assert f"goal_ci_handoff_goal</dt><dd>{result.goal_id}" in goal.body
     assert "goal_ci_handoff_project</dt><dd>local-app-demo" in goal.body
     assert "goal_ci_handoff_status</dt><dd>current_success" in goal.body
@@ -16627,6 +16645,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_ci_handoff_latest_scope</dt><dd>workflow_run" in goal.body
     assert "goal_ci_handoff_latest_run_id</dt><dd>demo-goal-ci" in goal.body
     assert "goal_ci_handoff_matches_current_checkout</dt><dd>true" in goal.body
+    assert "goal_ci_handoff_merge_readiness_status</dt><dd>merge_ready_from_local_full_suite_proof" in goal.body
+    assert "goal_ci_handoff_merge_readiness_review_status</dt><dd>review_ready" in goal.body
+    assert "goal_ci_handoff_merge_readiness_full_suite_status</dt><dd>recorded_success" in goal.body
+    assert "goal_ci_handoff_local_merge_proof_claim</dt><dd>current_full_workflow_success_recorded" in goal.body
+    assert "goal_ci_handoff_merge_readiness_primary_surface</dt><dd><a href='#goal-verification-evidence'>Review full proof</a>" in goal.body
+    assert "goal_ci_handoff_pr_state_claim</dt><dd>operator_checked_outside_clankeros" in goal.body
+    assert "goal_ci_handoff_app_merge_action_taken</dt><dd>false" in goal.body
     assert "goal_ci_handoff_target_surface</dt><dd><a href='#goal-verification-evidence'>Goal Verification Evidence</a>" in goal.body
     assert "goal_ci_handoff_record_surface</dt><dd><a href='#record-goal-ci-proof'>Record Goal CI Proof From GitHub JSON</a>" in goal.body
     assert "goal_ci_handoff_global_record_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>/ci-evidence#record-ci-snapshot-json</a>" in goal.body
@@ -16638,6 +16663,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_ci_handoff_external_effects_created</dt><dd>false" in goal.body
     assert "goal_ci_handoff_github_check: gh run list" in goal.body
     assert "goal_ci_handoff_status_json: gh run view" in goal.body
+    assert "goal_ci_handoff_merge_readiness: merge_ready_from_local_full_suite_proof" in goal.body
     assert "goal_ci_handoff_safety: read-only local GitHub Actions handoff" in goal.body
     assert "Current Phase" in goal.body
     assert "Ready to commit" in goal.body
