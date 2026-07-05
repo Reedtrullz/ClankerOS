@@ -2885,13 +2885,45 @@ def _guide_card(
     )
 
 
+def _lead_goal_from_buckets(
+    active: list[sqlite3.Row],
+    paused: list[sqlite3.Row],
+    completed: list[sqlite3.Row],
+) -> sqlite3.Row | None:
+    if active:
+        return active[0]
+    if paused:
+        return paused[0]
+    if completed:
+        return completed[0]
+    return None
+
+
+def _operator_lead_goal(
+    root: Path,
+    storage: Storage,
+    active: list[sqlite3.Row],
+    paused: list[sqlite3.Row],
+    completed: list[sqlite3.Row],
+) -> tuple[sqlite3.Row | None, str]:
+    real_goal, source = _dogfooding_real_goal_row(root, storage)
+    if real_goal is not None:
+        return real_goal, source
+    default_goal = _lead_goal_from_buckets(active, paused, completed)
+    if default_goal is not None:
+        return default_goal, "default_goal_bucket_order"
+    return None, "no_goals"
+
+
 def _today_page(root: Path) -> str:
     storage = _storage(root)
     rows = _goal_rows(storage, limit=100)
     active = [row for row in rows if _goal_bucket(row) == "active"]
     paused = [row for row in rows if _goal_bucket(row) == "paused"]
     completed = [row for row in rows if _goal_bucket(row) == "completed"]
-    lead_goal = active[0] if active else (paused[0] if paused else (completed[0] if completed else None))
+    lead_goal, lead_goal_source = _operator_lead_goal(root, storage, active, paused, completed)
+    lead_goal_id = str(lead_goal["id"]) if lead_goal is not None else "none"
+    lead_project_id = str(lead_goal["project_id"] or "") if lead_goal is not None else "none"
     sections = [
         "<section class='hero'><h1>Today</h1>",
         "<p>Daily command center for the current goal, attention queue, resume state, and finish-today handoff.</p>",
@@ -2902,6 +2934,9 @@ def _today_page(root: Path) -> str:
                 ("today_active_goals", str(len(active))),
                 ("today_paused_goals", str(len(paused))),
                 ("today_completed_goals", str(len(completed))),
+                ("today_lead_goal_source", lead_goal_source),
+                ("today_lead_goal", lead_goal_id),
+                ("today_lead_goal_project", lead_project_id),
                 ("today_write_on_get", "false"),
                 ("today_provider_calls_taken", "0"),
                 ("today_network_actions_taken", "0"),
@@ -6124,7 +6159,7 @@ def _home_dashboard(
     active = [row for row in rows if _goal_bucket(row) == "active"]
     paused = [row for row in rows if _goal_bucket(row) == "paused"]
     completed = [row for row in rows if _goal_bucket(row) == "completed"]
-    lead_goal = active[0] if active else (paused[0] if paused else (completed[0] if completed else None))
+    lead_goal, lead_goal_source = _operator_lead_goal(root, storage, active, paused, completed)
     lead_lines: list[tuple[str, str | SafeHtml]] = [
         ("home_active_goals", str(len(active))),
         ("home_paused_goals", str(len(paused))),
@@ -6132,6 +6167,7 @@ def _home_dashboard(
         ("home_recent_activity_items", str(len(_home_recent_activity_items(root, storage)))),
         ("home_next_action", next_action.action),
         ("home_dashboard_goal_first", "true"),
+        ("home_lead_goal_source", lead_goal_source),
     ]
     if lead_goal is not None:
         lead_state = _goal_state(root, storage, str(lead_goal["id"]))
@@ -33305,7 +33341,7 @@ def _dogfooding_real_goal_row(
     root: Path,
     storage: Storage,
 ) -> tuple[sqlite3.Row | None, str]:
-    rows = [row for row in _goal_rows(storage, limit=100) if str(row["project_id"] or "") != "local-app-demo"]
+    rows = [row for row in _goal_rows(storage, limit=1000) if str(row["project_id"] or "") != "local-app-demo"]
     if not rows:
         return None, "no_real_goal"
 

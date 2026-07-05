@@ -22970,6 +22970,39 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert f"href='/goals/{goal_id}'" in home_after_completion.body
 
 
+def test_today_and_home_prefer_clankeros_goal_over_demo_fixture(
+    tmp_path: Path,
+) -> None:
+    run_demo_app_scenario(tmp_path)
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    clankeros_goal_id = storage.create_goal(
+        "clankeros",
+        "Dogfood ClankerOS browser cockpit",
+    )
+    for index in range(125):
+        storage.create_goal(
+            "local-app-demo",
+            f"Demo fixture noise {index}",
+        )
+
+    home = render_local_app_route(tmp_path, "/")
+    assert home.status == 200
+    assert "home_lead_goal_source</dt><dd>clankeros_project_goal" in home.body
+    assert f"lead_goal</dt><dd><a href='/goals/{clankeros_goal_id}'" in home.body
+
+    today = render_local_app_route(tmp_path, "/today")
+    assert today.status == 200
+    assert "today_lead_goal_source</dt><dd>clankeros_project_goal" in today.body
+    assert f"today_lead_goal</dt><dd>{clankeros_goal_id}" in today.body
+    assert "today_lead_goal_project</dt><dd>clankeros" in today.body
+    assert f"today_goal_queue_lead_goal</dt><dd><a href='/goals/{clankeros_goal_id}'" in today.body
+    assert "today_ci_handoff_project</dt><dd>clankeros" in today.body
+    assert "today_ci_handoff_source</dt><dd>lead_goal_project_ci_evidence_records" in today.body
+    assert "today_write_on_get</dt><dd>false" in today.body
+    assert "today_network_actions_taken</dt><dd>0" in today.body
+    assert "today_external_effects_created</dt><dd>false" in today.body
+
+
 def test_today_finish_today_saves_exact_resume_surface(tmp_path: Path) -> None:
     result = run_demo_app_scenario(tmp_path)
     resume_artifact = result.review_path.relative_to(tmp_path).as_posix()
