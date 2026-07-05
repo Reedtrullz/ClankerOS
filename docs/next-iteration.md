@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_39ef27dab3ed
+- Packet ID: iteration_f03a8c19f7ec
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add a one-command next-day self-hosting check that verifies local fetch, saved resume, current `main` proof, and the browser next action before work resumes.
+Advance the Agent System north-star goal by completing: Add browser-first Goal creation from the first-run and `/today` surfaces so a new operator can create the first ClankerOS Goal without using the CLI.
 
 ## Definition Of Done
 
@@ -130,9 +130,9 @@ Advance the Agent System north-star goal by completing: Add a one-command next-d
 ## Simplicity Guardrail
 
 - selection_policy: highest-score-then-lowest-complexity
-- selection_reason: selected lower complexity 3 among 2 candidates with equal score 9
-- selected_score: 9
-- selected_complexity: 3
+- selection_reason: selected only actionable item with score 10 and complexity 5; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
+- selected_score: 10
+- selected_complexity: 5
 
 ## Guardrails And Non-Claims
 

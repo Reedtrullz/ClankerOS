@@ -33,6 +33,9 @@
 - [x] Add a one-command next-day self-hosting check that verifies local fetch,
   saved resume, current `main` proof, and the browser next action before work
   resumes. <!-- score=9 complexity=3 -->
+- [ ] Add browser-first Goal creation from the first-run and `/today` surfaces
+  so a new operator can create the first ClankerOS Goal without using the CLI.
+  <!-- score=10 complexity=5 -->
 - [x] Extend the static dashboard with incident summaries once incidents exist.
 - [x] Add a compact incident resolution path after more failure modes exist.
 - [x] Add queue-health checks for repeated blocked or failed work.

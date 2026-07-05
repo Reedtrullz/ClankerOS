@@ -74,6 +74,15 @@ REPORT_ONLY_PROOF_LADDER_MARKERS = (
     "sourced",
     "decision ledger",
 )
+RECURSIVE_GENERATED_TAIL_MARKERS = (
+    "downstream follow-up",
+    "accepted blocked",
+    "followup result",
+    "follow-up result",
+)
+DAILY_USE_QUEUE_REFRESH_FALLBACK = (
+    "Refresh the daily-use product queue with the next browser-first ClankerOS task."
+)
 VERIFICATION_COMMANDS = [
     "python3 -m pytest -q",
     "python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800",
@@ -370,18 +379,29 @@ def _choose_queue_item(
         for order, raw_text in enumerate(raw_items)
     ]
     scored_candidates = candidates
-    demoted_report_only_count = 0
-    if daily_use_product_goal_exists and any(
-        _is_daily_use_product_queue_item(candidate.text) for candidate in candidates
-    ):
+    demoted_tail_count = 0
+    if daily_use_product_goal_exists:
         non_report_only = [
             candidate
             for candidate in candidates
-            if not _is_report_only_proof_ladder_tail(candidate.text)
+            if not _is_non_product_proof_ladder_tail(candidate.text)
         ]
         if non_report_only:
-            demoted_report_only_count = len(candidates) - len(non_report_only)
+            demoted_tail_count = len(candidates) - len(non_report_only)
             scored_candidates = non_report_only
+        elif candidates:
+            return QueueItem(
+                section="fallback",
+                text=DAILY_USE_QUEUE_REFRESH_FALLBACK,
+                score=0,
+                complexity=0,
+                order=0,
+                selection_reason=(
+                    "selected product-queue refresh fallback because only "
+                    f"recursive/report-only proof-ladder tail(s) remained in "
+                    f"{section} and a daily-use product Goal exists"
+                ),
+            )
 
     max_score = max(candidate.score for candidate in scored_candidates)
     score_matched = [
@@ -417,9 +437,9 @@ def _choose_queue_item(
             f"selected only actionable item with score {selected.score} "
             f"and complexity {selected.complexity}"
         )
-    if demoted_report_only_count:
+    if demoted_tail_count:
         reason = (
-            f"{reason}; demoted {demoted_report_only_count} report-only "
+            f"{reason}; demoted {demoted_tail_count} report-only/generated "
             "proof-ladder tail(s) because a daily-use product Goal exists"
         )
 
@@ -467,9 +487,26 @@ def _is_report_only_proof_ladder_tail(text: str) -> bool:
     )
 
 
-def _is_daily_use_product_queue_item(text: str) -> bool:
+def _is_recursive_generated_proof_ladder_tail(text: str) -> bool:
     normalized = text.lower()
-    return any(marker in normalized for marker in DAILY_USE_PRODUCT_MARKERS)
+    repeated_generated_terms = sum(
+        normalized.count(marker)
+        for marker in (
+            "result effect",
+            "task result",
+            "effect task",
+            "effect proposals",
+        )
+    )
+    return repeated_generated_terms >= 3 and any(
+        marker in normalized for marker in RECURSIVE_GENERATED_TAIL_MARKERS
+    )
+
+
+def _is_non_product_proof_ladder_tail(text: str) -> bool:
+    return _is_report_only_proof_ladder_tail(
+        text
+    ) or _is_recursive_generated_proof_ladder_tail(text)
 
 
 def _daily_use_product_goal_exists(root: Path) -> bool:

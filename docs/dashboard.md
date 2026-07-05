@@ -318,18 +318,18 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Add a one-command next-day self-hosting check that verifies local fetch, saved resume, current `main` proof, and the browser next action before work resumes.
+- focus: Add browser-first Goal creation from the first-run and `/today` surfaces so a new operator can create the first ClankerOS Goal without using the CLI.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-07-05T18:43:00.625552+00:00
+- created_at: 2026-07-05T19:20:06.804456+00:00
 
 ## Simplicity Guardrail
 
 - policy: highest-score-then-lowest-complexity
-- reason: selected lower complexity 3 among 2 candidates with equal score 9
-- selected_score: 9
-- selected_complexity: 3
-- selected_focus: Add a one-command next-day self-hosting check that verifies local fetch, saved resume, current `main` proof, and the browser next action before work resumes.
+- reason: selected only actionable item with score 10 and complexity 5; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
+- selected_score: 10
+- selected_complexity: 5
+- selected_focus: Add browser-first Goal creation from the first-run and `/today` surfaces so a new operator can create the first ClankerOS Goal without using the CLI.
 
 ## Expansion Operator Approval Schema Decision
 

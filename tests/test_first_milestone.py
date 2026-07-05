@@ -29422,7 +29422,7 @@ def test_iterate_demotes_report_only_tail_when_daily_use_goal_exists(
     assert "Hosted Dashboard Proof Checklist" not in packet
     assert "- selected_score: 10" in packet
     assert "- selected_complexity: 3" in packet
-    assert "demoted 1 report-only proof-ladder tail(s)" in packet
+    assert "demoted 1 report-only/generated proof-ladder tail(s)" in packet
 
     with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
         connection.row_factory = sqlite3.Row
@@ -29442,6 +29442,73 @@ def test_iterate_demotes_report_only_tail_when_daily_use_goal_exists(
     )
     assert row["selected_score"] == 10
     assert row["selected_complexity"] == 3
+    assert "daily-use product Goal exists" in row["selection_reason"]
+
+
+def test_iterate_falls_back_when_only_recursive_tail_remains_for_daily_use_goal(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.create_goal(
+        "clankeros",
+        "Use ClankerOS from shipped main tomorrow with the daily-use browser app.",
+    )
+    recursive_tail = (
+        "Add local downstream follow-up result task result effect task result "
+        "effect task result effect task result effect task result effect task "
+        "result effect task result effect task result effect task result "
+        "decision effect proposals from accepted blocked result effect task "
+        "result effect task result effect task result effect task result "
+        "effect task result effect task result effect task results."
+    )
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                f"- [ ] {recursive_tail} <!-- score=9 complexity=4 -->",
+                "",
+                "## blocked",
+                "",
+                "- [ ] Choose deployment target before hosted dashboard work.",
+                "",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "Refresh the daily-use product queue" in packet
+    assert recursive_tail not in packet
+    assert "only recursive/report-only proof-ladder tail(s) remained" in packet
+    assert "- Source: tasks.md#fallback" in packet
+
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        connection.row_factory = sqlite3.Row
+        row = connection.execute(
+            """
+            select focus, source_section, selection_reason,
+                   selected_score, selected_complexity
+            from iteration_packets
+            order by created_at desc
+            limit 1
+            """
+        ).fetchone()
+
+    assert row is not None
+    assert row["focus"] == (
+        "Refresh the daily-use product queue with the next browser-first ClankerOS task."
+    )
+    assert row["source_section"] == "fallback"
+    assert row["selected_score"] == 0
+    assert row["selected_complexity"] == 0
     assert "daily-use product Goal exists" in row["selection_reason"]
 
 

@@ -1,5 +1,37 @@
 # Status
 
+## 2026-07-05 Product-Aligned Iteration Selector
+
+- Hardened `python3 -m agent_os.cli iterate` so a live daily-use ClankerOS
+  product Goal demotes both literal report-only proof-ladder tails and
+  recursive generated downstream/result-effect tails.
+- If an active queue section contains only recursive/generated proof-ladder
+  tails, the selector now writes an explicit product-queue refresh fallback
+  instead of presenting the tail as actionable work.
+- Reseeded the next queue with the next browser-first product slice:
+  browser Goal creation from first-run and `/today` surfaces, so a new
+  operator can create the first ClankerOS Goal without using the CLI.
+- Regenerated `docs/next-iteration.md` and `docs/dashboard.md`; the current
+  packet now selects the browser-first Goal creation slice from `tasks.md#next`
+  and records the generated-tail demotion in the simplicity guardrail.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/iteration.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_iterate_demotes_report_only_tail_when_daily_use_goal_exists tests/test_first_milestone.py::test_iterate_falls_back_when_only_recursive_tail_remains_for_daily_use_goal tests/test_first_milestone.py::test_iterate_prefers_lower_complexity_when_scores_tie -q --tb=short`:
+    3 passed in 9.51s.
+  - `python3 -m agent_os.cli iterate`: selected browser-first Goal creation
+    from the first-run and `/today` surfaces and wrote
+    `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+- CI note: GitHub Actions run `28751725135` for the previous
+  `Add next-day self-hosting check` push still had Fast smoke verification
+  green while the Full pytest suite job was in progress at the latest check.
+- Non-claim: this selector slice changes local planning and dashboard
+  visibility only. It does not create Goals from the browser yet, call
+  providers, push, deploy, create PRs, or mutate external systems from
+  ClankerOS.
+
 ## 2026-07-05 Next-Day Self-Hosting Check
 
 - Added `python3 -m agent_os.cli self-hosting-check` as a one-command
