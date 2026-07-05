@@ -324,8 +324,10 @@ Core layers for the bootstrap:
   recommended next action, and remaining-work counts. Search now indexes the
 first-class coder worktree, coder commit, and publication approval records,
 so approval queries can route directly to scoped approval, workflow, or run
-surfaces instead of relying only on legacy approval rows. It is content-first
-and
+surfaces instead of relying only on legacy approval rows. Search now preserves
+content-only matches in known Markdown, JSON, patch, log, and text artifacts,
+rather than requiring the query to also appear in the artifact path or name.
+It is content-first and
 opens with a visible `Search Operator Workbench` before shared route/focus
   diagnostics, with cards for query, first useful hit, result list, and
   `/resume`. A visible read-only `Search Suggestions` panel now appears
@@ -1368,7 +1370,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   collapsed and preserving no-write/provider/network/external-effect
   counters; after a Goal exists, it can render the same confirmed local
   next-action form inline for scout delegation, context-pack generation, and
-  first delegation execution. Those three forms, confirmation pages, and
+  first delegation execution. The progress, checklist, and empty-state links
+  for the current post-Goal first-run gate now target that inline command form
+  directly instead of only opening the generic Goal page. Those three forms,
+  confirmation pages, and
   result pages use operator language (`Create scout delegation`,
   `Generate context pack`, `Run scout delegation`) while preserving raw
   `delegate`, `context-pack`, and `run-delegation` action ids in evidence.

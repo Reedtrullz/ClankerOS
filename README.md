@@ -177,7 +177,10 @@ read-only `First Run Command Bar` that names the next first-run action, target
 surface, form surface, Goal/delegation context, and zero-effect counters; after
 a Goal exists it can render the same confirmed local next-action form inline,
 so scout delegation, context-pack generation, and first delegation execution
-can continue from the guide. The command bar is followed by a visible
+can continue from the guide. The first-run progress, checklist, and empty-state
+step links now jump to that same inline command action while the current
+post-Goal gate is Delegation, Context, or Run, instead of sending the operator
+to a generic Goal page. The command bar is followed by a visible
 `First Run Launchpad` with five browser choices: continue guided setup, open a
 populated demo, inspect workflow, review verification proof, or check health
 and safety. A visible `First Run Next Step` panel follows with one primary
@@ -862,7 +865,9 @@ Use `/search` for bounded global search across indexed goals, projects,
 delegations, known artifacts, incidents, recommendations, memory, runs, and
 approvals. Goal search results include live local phase, one next action, and
 remaining-work counts, so action or phase searches can return the Goal to
-continue. Approval search now includes the first-class coder worktree, commit,
+continue. Artifact search now preserves content-only matches, so a phrase
+inside a known Markdown, JSON, patch, log, or text artifact can return the
+artifact even when the phrase is not present in the file name. Approval search now includes the first-class coder worktree, commit,
 and publication approval queues, with scoped links back to the matching
 `/approvals?goal_id=...`, `/approvals?run_id=...`, workflow, or run surface
 instead of only the older generic approval rows. `/search` is now

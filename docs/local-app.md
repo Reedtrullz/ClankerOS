@@ -97,6 +97,9 @@ confirmation requirement, and zero provider/network/external-effect counters.
   surface, form surface, Goal/delegation context, and zero-effect counters; once
   a Goal exists, it can render the same confirmed local next-action form inline
   for the scout delegation, context-pack, and first delegation run gates. The
+  first-run progress, checklist, and empty-state step links now jump to that
+  same inline command action for the current post-Goal gate instead of opening
+  only the generic Goal page. The
   guide also renders `First Run Next Step` between the launchpad and progress
   strip, turning the current setup or delegation gate into one primary
   same-page browser action with setup, handoff, resume, and safety cards.
@@ -854,7 +857,9 @@ confirmation requirement, and zero provider/network/external-effect counters.
   `Create commit request` return the relevant Goal. Approval results now cover
   coder worktree approvals, coder commit approvals, and publication approvals,
   including scoped links to the relevant approval queue, workflow, or run
-  detail surface. It is content-first and
+  detail surface. Artifact results now preserve content-only matches, so a
+  phrase inside a known Markdown, JSON, patch, log, or text artifact can open
+  that artifact even when the phrase is absent from the path. It is content-first and
   opens with a visible `Search Operator Workbench` before shared route/focus
   diagnostics, with cards for the current query, first useful hit, result
   list, and `/resume`. When a Goal exists, the suggestions panel starts with

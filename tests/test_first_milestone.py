@@ -8453,6 +8453,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_next_reason</dt><dd>goal_ready_for_delegation" in goals_after_first_goal.body
     assert "first_run_step: create_first_goal status=done" in goals_after_first_goal.body
     assert "first_run_step: create_first_delegation status=current" in goals_after_first_goal.body
+    assert (
+        "<a class='first-run-progress-action' href='#first-run-command-action'>"
+        "Create scout delegation</a>"
+    ) in goals_after_first_goal.body
+    assert (
+        "<a class='first-run-checklist-link' href='#first-run-command-action'>"
+        "Continue</a>"
+    ) in goals_after_first_goal.body
     assert "first_run_step: generate_context_pack status=waiting_for_delegation" in goals_after_first_goal.body
     assert "first_run_command_current_step</dt><dd>create_first_delegation" in goals_after_first_goal.body
     assert "first_run_command_next_action</dt><dd>Create scout delegation" in goals_after_first_goal.body
@@ -9055,6 +9063,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_next_reason</dt><dd>delegation_waiting_for_context_pack" in goals_after_delegation.body
     assert "first_run_step: create_first_delegation status=done" in goals_after_delegation.body
     assert "first_run_step: generate_context_pack status=current" in goals_after_delegation.body
+    assert (
+        "<a class='first-run-progress-action' href='#first-run-command-action'>"
+        "Generate context pack</a>"
+    ) in goals_after_delegation.body
+    assert (
+        "<a class='first-run-checklist-link' href='#first-run-command-action'>"
+        "Continue</a>"
+    ) in goals_after_delegation.body
     assert "first_run_step: run_first_delegation status=waiting_for_context_pack" in goals_after_delegation.body
     assert f"first_run_context_pack_action</dt><dd>/actions/context-pack delegation_id={delegation.id}" in goals_after_delegation.body
     assert "first_run_command_current_step</dt><dd>generate_context_pack" in goals_after_delegation.body
@@ -9173,6 +9189,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_next_reason</dt><dd>context_pack_ready" in home_after_delegate.body
     assert "first_run_step: run_first_delegation status=current" in home_after_delegate.body
     assert "first_run_step: generate_context_pack status=done" in home_after_delegate.body
+    assert (
+        "<a class='first-run-progress-action' href='#first-run-command-action'>"
+        "Run first delegation</a>"
+    ) in home_after_delegate.body
+    assert (
+        "<a class='first-run-checklist-link' href='#first-run-command-action'>"
+        "Continue</a>"
+    ) in home_after_delegate.body
     assert f"first_run_context_pack_action</dt><dd>/actions/context-pack delegation_id={delegation.id}" in home_after_delegate.body
     assert "first_run_run_delegation_command</dt><dd>python3 -m agent_os.cli run-delegation" in home_after_delegate.body
     assert "first_run_run_delegation_action</dt><dd>/actions/run-delegation delegation_id=" in home_after_delegate.body
@@ -18038,6 +18062,24 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal" in search.body
     assert result.goal_id in search.body
     assert "artifact" in search.body
+    (tmp_path / "knowledge.md").write_text(
+        "Daily browser retrieval anchor: searchable-proof-continuity.\n",
+        encoding="utf-8",
+    )
+    artifact_content_search = render_local_app_route(
+        tmp_path,
+        "/search?q=searchable-proof-continuity",
+    )
+    assert artifact_content_search.status == 200
+    assert "Global Search" in artifact_content_search.body
+    assert "data-search-result-lane='artifacts'" in artifact_content_search.body
+    assert "href='/artifacts?path=knowledge.md'" in artifact_content_search.body
+    assert (
+        "content_match query=searchable-proof-continuity path=knowledge.md"
+        in artifact_content_search.body
+    )
+    assert "search_result_map_artifacts_results</dt><dd>1" in artifact_content_search.body
+    assert "search_command_artifact_results</dt><dd>1" in artifact_content_search.body
 
     search_next_action = render_local_app_route(tmp_path, "/search?q=Create%20commit%20request")
     assert search_next_action.status == 200

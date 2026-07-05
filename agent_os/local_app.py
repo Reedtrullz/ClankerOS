@@ -8725,9 +8725,10 @@ def _search_results(root: Path, storage: Storage, term: str) -> list[dict[str, s
         action_href: str = "",
         action_label: str = "",
         action_surface_source: str = "",
+        force: bool = False,
     ) -> None:
         text = " ".join([category, title, href, summary]).lower()
-        if needle in text:
+        if force or needle in text:
             item = {
                 "category": category,
                 "title": title,
@@ -8907,9 +8908,16 @@ def _search_results(root: Path, storage: Storage, term: str) -> list[dict[str, s
         )
     for artifact in _known_artifact_paths(root, storage):
         summary = artifact
-        if _artifact_contains(root, artifact, needle):
-            summary = f"content_match path={artifact}"
-        add("artifact", Path(artifact).name, f"/artifacts?path={quote(artifact)}", summary)
+        content_match = bool(needle) and _artifact_contains(root, artifact, needle)
+        if content_match:
+            summary = f"content_match query={term} path={artifact}"
+        add(
+            "artifact",
+            Path(artifact).name,
+            f"/artifacts?path={quote(artifact)}",
+            summary,
+            force=content_match,
+        )
     return results[:80]
 
 
@@ -14147,12 +14155,26 @@ _FIRST_RUN_STEPS: tuple[tuple[str, str, str], ...] = (
 
 def _first_run_step_href(progress: dict[str, Any], step: str) -> str:
     goal_id = str(progress.get("goal_id") or "")
+    delegation_id = str(progress.get("delegation_id") or "")
+    current_step = str(progress.get("current_step") or "")
     if step == "create_project":
         return "#first-run-create-project"
     if step == "create_first_goal":
         return "#first-run-create-goal"
+    if step == current_step and step in {
+        "create_first_delegation",
+        "generate_context_pack",
+        "run_first_delegation",
+    }:
+        return "#first-run-command-action"
+    if delegation_id and step in {
+        "create_first_delegation",
+        "generate_context_pack",
+        "run_first_delegation",
+    }:
+        return f"/delegations/{quote(delegation_id)}"
     if goal_id:
-        return f"/goals/{quote(goal_id)}"
+        return f"/goals/{quote(goal_id)}#goal-action-dock"
     return "#first-run-guide"
 
 

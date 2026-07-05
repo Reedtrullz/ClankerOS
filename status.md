@@ -1,5 +1,51 @@
 # Status
 
+## 2026-07-05 First-Run Direct Action Links
+
+- First-run progress, checklist, and empty-state cards now route the current
+  post-Goal gate directly to `#first-run-command-action` when the operator is
+  creating the scout delegation, generating the context pack, or running the
+  first delegation.
+- Completed post-Goal first-run steps now route to the concrete delegation
+  surface when a delegation exists, while Goal-created/waiting steps still
+  route to the Goal action dock.
+- This makes the empty-checkout walkthrough more direct: after Project and
+  Goal creation, the visible first-run cards land on the inline confirmed
+  command form rather than a generic Goal page.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed in 49.42s.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+- Non-claim: this is read-only link routing over existing first-run state and
+  existing confirmation-gated forms. It does not write on GET, run providers,
+  use the network, approve work, push, create PRs, deploy, or mutate external
+  systems.
+
+## 2026-07-05 Artifact Content Search
+
+- `/search` now preserves content-only matches in known artifacts instead of
+  dropping them when the searched phrase is absent from the artifact path or
+  filename.
+- Artifact result summaries now include `content_match query=<term>
+  path=<artifact>` for those content hits, while the link still opens the
+  bounded `/artifacts?path=...` viewer.
+- Regression coverage writes a temporary `knowledge.md` phrase and proves the
+  query returns an Artifacts-lane result with one artifact count.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed in 65.38s.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+- Non-claim: search still uses the existing bounded known-artifact inventory
+  and artifact resolver. It does not add raw filesystem browsing, execute
+  artifact content, write on GET, call providers, use the network, or mutate
+  external systems.
+
 ## 2026-07-05 Goal Milestone Checklist UX
 
 - Goal detail pages now include a read-only `Goal Milestone Checklist` after
