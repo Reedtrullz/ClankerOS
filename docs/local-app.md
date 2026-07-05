@@ -1409,9 +1409,11 @@ current branch/commit proof posture, latest recorded CI source/status/scope/run
 id, exact `gh run view` and record-after-success command templates, the current
 product action, and a Finish Today target. A browser-local `Dogfooding Session
 Checklist` then stores fixture, action, route walk, proof, and finish checks in
-`localStorage:clankeros-dogfooding-session`; Workspace View Memory can inspect
-or reset that value without changing saved project data. The page still includes
-a confirmation-gated `demo-app-scenario` form that creates or refreshes
+`localStorage:clankeros-dogfooding-session`; its Action step follows the real
+non-demo Goal's current action surface when one exists, while its Fixture step
+continues to point at the deterministic demo refresh. Workspace View Memory can
+inspect or reset that value without changing saved project data. The page still
+includes a confirmation-gated `demo-app-scenario` form that creates or refreshes
 deterministic local fixture state and returns to `/dogfooding`, so the route
 walk can start from the checklist without hopping through `/demo`. The confirmed
 action result also honors that submitted return target, and the saved workspace

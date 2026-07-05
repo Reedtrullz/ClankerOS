@@ -1,5 +1,32 @@
 # Status
 
+## 2026-07-05 Dogfooding Session Checklist Real Goal Action
+
+- `/dogfooding` keeps the existing `Dogfooding Real Goal Continuation` panel,
+  and the browser-local `Dogfooding Session Checklist` now also routes its
+  Action step through the real non-demo Goal when one exists.
+- In the post-first-delegation state, the checklist Action row shows
+  `Coder prep: Run coder prep` and links to the exact
+  `/goals/<goal_id>#goal-action-dock-form` browser form instead of sending the
+  operator back to the demo fixture flow.
+- The checklist preserves a separate Fixture step for the deterministic
+  `local-app-demo` refresh and records `action_source`, real Goal/source/phase,
+  form availability, fixture status, and zero-effect counters as collapsed
+  evidence.
+- Demo-only sessions still report `action_source=demo_fixture` and keep their
+  existing run/approval route behavior.
+- Local verification:
+  - `python3 -m compileall agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_runs_delegation_from_browser_action tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    2 passed in 108.30s.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+- Non-claim: this is read-only browser routing and browser-local checklist
+  state over existing Goal/demo data. It does not write on GET, run providers,
+  fetch GitHub, use the network, approve work, push, create PRs, deploy, or
+  mutate external systems from ClankerOS.
+
 ## 2026-07-05 Dogfooding Real Goal Continuation
 
 - `/dogfooding` now starts with a read-only `Dogfooding Real Goal Continuation`

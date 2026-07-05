@@ -32857,6 +32857,7 @@ def _dogfooding_return_brief(root: Path) -> str:
 
 
 def _dogfooding_session_checklist(root: Path) -> str:
+    storage = _storage(root)
     project, selected_delegation, selected_run = _demo_selected_state(root)
     run_id = selected_run.id if selected_run else ""
     progress = _demo_progress_state(root, run_id)
@@ -32869,30 +32870,62 @@ def _dogfooding_session_checklist(root: Path) -> str:
     action_href = "#dogfooding-fixture-action"
     action_label = "Create fixture"
     action_summary = "Seed deterministic local state before walking the product."
+    action_source = "demo_fixture"
+    real_row, real_source = _dogfooding_real_goal_row(root, storage)
+    real_goal_id = ""
+    real_project_id = ""
+    real_phase = "none"
+    real_form_available = False
+    real_action_href = ""
+    real_action_label = ""
+    if real_row is not None:
+        real_goal_id = str(real_row["id"])
+        real_project_id = str(real_row["project_id"] or "")
+        real_state = _goal_state(root, storage, real_goal_id)
+        real_next_action = _goal_next_action(root, real_state)
+        real_phase = _goal_current_phase(real_state)
+        real_form_available = bool(_goal_next_action_form(real_state, real_next_action))
+        real_action_href = _goal_primary_action_href(
+            real_state,
+            real_next_action,
+            form_available=real_form_available,
+            absolute=True,
+        )
+        real_action_label = _goal_action_cta_label(real_next_action, real_form_available)
+        next_action = real_next_action.action
+        action_href = real_action_href
+        action_label = real_action_label
+        action_summary = f"{real_phase}: {real_next_action.action}"
+        action_source = "real_goal"
+        if not goal_id:
+            goal_id = real_goal_id
     if project is not None:
-        action_href = "/demo"
-        action_label = "Open demo"
-        action_summary = next_action
+        if not real_goal_id:
+            action_href = "/demo"
+            action_label = "Open demo"
+            action_summary = next_action
         if selected_run is not None:
-            action_href = f"/runs/{quote(selected_run.id)}"
-            action_label = "Open run"
-            if next_action in {
-                "approve_or_reject_commit_request",
-                "approve_or_reject_publication_request",
-            }:
-                action_href = "/approvals"
-                action_label = "Open approvals"
-            elif next_action in {
-                "manual_operator_push_pr_outside_clankeros",
-                "review_completed_goal_evidence",
-            } and goal_id:
-                action_href = f"/goals/{quote(goal_id)}"
-                action_label = "Open goal"
-        elif selected_delegation is not None:
+            if not real_goal_id:
+                action_href = f"/runs/{quote(selected_run.id)}"
+                action_label = "Open run"
+                if next_action in {
+                    "approve_or_reject_commit_request",
+                    "approve_or_reject_publication_request",
+                }:
+                    action_href = "/approvals"
+                    action_label = "Open approvals"
+                elif next_action in {
+                    "manual_operator_push_pr_outside_clankeros",
+                    "review_completed_goal_evidence",
+                } and goal_id:
+                    action_href = f"/goals/{quote(goal_id)}"
+                    action_label = "Open goal"
+        elif selected_delegation is not None and not real_goal_id:
             action_href = f"/delegations/{quote(selected_delegation.id)}"
             action_label = "Open delegation"
 
-    latest_ci = _latest_ci_evidence_record(root, project_id=project.name if project else None)
+    ci_project_id = real_project_id or (project.name if project else None)
+    latest_ci = _latest_ci_evidence_record(root, project_id=ci_project_id)
     if latest_ci is None:
         ci_status = "missing"
         ci_source = "none"
@@ -32980,9 +33013,28 @@ def _dogfooding_session_checklist(root: Path) -> str:
                     ("dogfooding_session_checklist_delegation", selected_delegation.id if selected_delegation else "none"),
                     ("dogfooding_session_checklist_run", run_id or "none"),
                     ("dogfooding_session_checklist_next_action", next_action),
+                    ("dogfooding_session_checklist_action_source", action_source),
                     (
                         "dogfooding_session_checklist_action_surface",
                         SafeHtml(f"<a href='{_e(action_href)}'>{_e(action_label)}</a>"),
+                    ),
+                    (
+                        "dogfooding_session_checklist_real_goal",
+                        SafeHtml(f"<a href='/goals/{_e(quote(real_goal_id))}'>{_e(real_goal_id)}</a>")
+                        if real_goal_id
+                        else "none",
+                    ),
+                    (
+                        "dogfooding_session_checklist_real_goal_project",
+                        SafeHtml(f"<a href='/projects/{_e(quote(real_project_id))}'>{_e(real_project_id)}</a>")
+                        if real_project_id
+                        else "none",
+                    ),
+                    ("dogfooding_session_checklist_real_goal_source", real_source),
+                    ("dogfooding_session_checklist_real_goal_phase", real_phase),
+                    (
+                        "dogfooding_session_checklist_real_goal_form_available",
+                        str(real_form_available).lower(),
                     ),
                     ("dogfooding_session_checklist_ci_status", ci_status),
                     ("dogfooding_session_checklist_ci_source", ci_source),

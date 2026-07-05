@@ -1464,7 +1464,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   duplicate Goal forms; a read-only `/dogfooding` operator workbench with Do
   Now, ClankerOS, Workflow, and Proof cards before the longer checklist, while
   keeping real-Goal, dogfooding workbench, and fixture/command evidence
-  collapsed by default; a read-only `/dogfooding` GitHub
+  collapsed by default; a browser-local `/dogfooding` session checklist whose
+  Action step now follows the real non-demo Goal action surface when one
+  exists, while its Fixture step still points at the deterministic
+  `local-app-demo` refresh; a read-only `/dogfooding` GitHub
   Actions follow-up section with direct pushed-snapshot `ci-snapshot-handoff`,
   `gh run view`, JSON-validated record, and manual record-after-success
   templates for the current checkout; a

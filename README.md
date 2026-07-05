@@ -1176,7 +1176,10 @@ walk. After that, `Dogfooding Operator Workbench`, `Dogfooding Return Brief`,
 and the browser-local `Dogfooding Session Checklist` still cover fixture
 refresh, demo/workflow/project/delegation/run surfaces, current checkout CI
 proof, `gh run view` and record-after-success command templates, Finish Today,
-and `localStorage:clankeros-dogfooding-session`. The confirmed
+and `localStorage:clankeros-dogfooding-session`. When a real non-demo Goal
+exists, the checklist's Action step follows that Goal's current action surface
+instead of the fixture route, while the Fixture step remains the deterministic
+demo refresh. The confirmed
 `demo-app-scenario` action still creates or refreshes the local fixture and
 returns to `/dogfooding`, while evidence panels stay collapsed by default. GET
 remains read-only, and the page does not fetch GitHub status.

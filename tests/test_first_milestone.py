@@ -10643,6 +10643,28 @@ def test_local_app_runs_delegation_from_browser_action(
         f"dogfooding_real_continuation_click: <a href='/goals/{goal_id}#goal-action-dock-form'>Run coder prep</a>"
         in dogfooding_after_run.body
     )
+    assert "Dogfooding Session Checklist" in dogfooding_after_run.body
+    assert "dogfooding_session_checklist_fixture_status</dt><dd>missing" in dogfooding_after_run.body
+    assert "dogfooding_session_checklist_next_action</dt><dd>Run coder prep" in dogfooding_after_run.body
+    assert "dogfooding_session_checklist_action_source</dt><dd>real_goal" in dogfooding_after_run.body
+    assert (
+        f"dogfooding_session_checklist_action_surface</dt><dd><a href='/goals/{goal_id}#goal-action-dock-form'>Run coder prep</a>"
+        in dogfooding_after_run.body
+    )
+    assert (
+        f"dogfooding_session_checklist_real_goal</dt><dd><a href='/goals/{goal_id}'>{goal_id}</a>"
+        in dogfooding_after_run.body
+    )
+    assert (
+        "dogfooding_session_checklist_real_goal_source</dt><dd>non_demo_lead_goal"
+        in dogfooding_after_run.body
+    )
+    assert "dogfooding_session_checklist_real_goal_phase</dt><dd>Coder prep" in dogfooding_after_run.body
+    assert "dogfooding_session_checklist_real_goal_form_available</dt><dd>true" in dogfooding_after_run.body
+    assert (
+        f"dogfooding_session_check: action summary=Coder prep: Run coder prep surface=<a href='/goals/{goal_id}#goal-action-dock-form'>Run coder prep</a>"
+        in dogfooding_after_run.body
+    )
     assert dogfooding_after_run.body.index("Dogfooding Real Goal Continuation") < dogfooding_after_run.body.index(
         "Dogfooding Operator Workbench"
     )
@@ -12558,6 +12580,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert dogfooding_with_demo.body.count("data-dogfooding-session-checklist-item='true'") == 5
     assert "dogfooding_session_checklist_fixture_status</dt><dd>available" in dogfooding_with_demo.body
     assert "dogfooding_session_checklist_next_action</dt><dd>request_commit_for_reviewed_run" in dogfooding_with_demo.body
+    assert "dogfooding_session_checklist_action_source</dt><dd>demo_fixture" in dogfooding_with_demo.body
+    assert "dogfooding_session_checklist_real_goal</dt><dd>none" in dogfooding_with_demo.body
+    assert "dogfooding_session_checklist_real_goal_source</dt><dd>no_real_goal" in dogfooding_with_demo.body
+    assert "dogfooding_session_checklist_real_goal_phase</dt><dd>none" in dogfooding_with_demo.body
+    assert "dogfooding_session_checklist_real_goal_form_available</dt><dd>false" in dogfooding_with_demo.body
     assert "dogfooding_session_checklist_memory_storage</dt><dd>localStorage:clankeros-dogfooding-session" in dogfooding_with_demo.body
     assert "data-dogfooding-fixture-evidence='true'" in dogfooding_with_demo.body
     assert "data-dogfooding-fixture-action='true'" in dogfooding_with_demo.body
