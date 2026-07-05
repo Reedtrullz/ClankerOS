@@ -318,18 +318,18 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Make post-approval-request `/today` expose `Approve worktree` as the primary same-page first-run action with confirmation and finish-today resume proof.
+- focus: Make post-approval-decision `/today` expose `Run approved worktree` as the primary same-page first-run action with confirmation and finish-today resume proof.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-07-05T20:30:18.330068+00:00
+- created_at: 2026-07-05T20:40:54.825746+00:00
 
 ## Simplicity Guardrail
 
 - policy: highest-score-then-lowest-complexity
-- reason: selected only actionable item with score 10 and complexity 4; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
+- reason: selected only actionable item with score 10 and complexity 5; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
 - selected_score: 10
-- selected_complexity: 4
-- selected_focus: Make post-approval-request `/today` expose `Approve worktree` as the primary same-page first-run action with confirmation and finish-today resume proof.
+- selected_complexity: 5
+- selected_focus: Make post-approval-decision `/today` expose `Run approved worktree` as the primary same-page first-run action with confirmation and finish-today resume proof.
 
 ## Expansion Operator Approval Schema Decision
 

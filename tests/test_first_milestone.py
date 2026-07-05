@@ -11891,8 +11891,12 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         "<a href='/today?notice=coder_worktree_approval%3A%20"
     ) in approval_result.body
     assert "#today-current-action'>/today#today-current-action</a>" in approval_result.body
+    approval_request_json = coder_worktree_plan_md.with_name("coder_worktree_approval_request.json")
     approval_request_md = coder_worktree_plan_md.with_name("coder_worktree_approval_request.md")
+    assert approval_request_json.exists()
     assert approval_request_md.exists()
+    approval_request = json.loads(approval_request_json.read_text(encoding="utf-8"))
+    approval_id = approval_request["approval_id"]
     approval_workspace = json.loads(
         (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
     )
@@ -11906,6 +11910,73 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
 
     today_after_approval_request = render_local_app_route(tmp_path, "/today")
     assert "today_command_primary_action</dt><dd>Approve worktree" in today_after_approval_request.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Approve worktree</a>"
+    ) in today_after_approval_request.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Approve worktree</a>"
+    ) in today_after_approval_request.body
+    assert f"today_command_reason</dt><dd>approval={approval_id}" in today_after_approval_request.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_approval_request.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_approval_request.body
+    assert "Approve Worktree" in today_after_approval_request.body
+    assert "action='/actions/approve-coder-worktree'" in today_after_approval_request.body
+    assert f"name='approval_id' value='{approval_id}'" in today_after_approval_request.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_approval_request.body
+
+    approval_decision_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-worktree",
+        method="POST",
+        form={
+            "approval_id": [approval_id],
+            "decided_by": ["operator"],
+            "note": ["Approve bounded worktree execution from Today"],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert approval_decision_confirmation.status == 409
+    assert "Confirm worktree approval" in approval_decision_confirmation.body
+    assert "action_confirmation_label</dt><dd>Approve worktree" in approval_decision_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in approval_decision_confirmation.body
+
+    approval_decision = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-worktree",
+        method="POST",
+        form={
+            "approval_id": [approval_id],
+            "decided_by": ["operator"],
+            "note": ["Approve bounded worktree execution from Today"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert approval_decision.status == 200
+    assert "approved_coder_worktree:" in approval_decision.body
+    assert "action_result_command_label</dt><dd>Approve worktree" in approval_decision.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=approved_coder_worktree%3A%20"
+    ) in approval_decision.body
+    assert "#today-current-action'>/today#today-current-action</a>" in approval_decision.body
+    approval_decision_md = coder_worktree_plan_md.with_name("coder_worktree_approval_decision.md")
+    assert approval_decision_md.exists()
+    approval_decision_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert approval_decision_workspace["open_project"] == "first-target"
+    assert approval_decision_workspace["open_goal"] == created_goal_id
+    assert approval_decision_workspace["last_viewed_artifact"] == str(
+        approval_decision_md.relative_to(tmp_path)
+    )
+    assert approval_decision_workspace["resume_surface"] == "/today#today-current-action"
+    assert approval_decision_workspace["updated_by"] == "approve-coder-worktree"
+
+    today_after_approval_decision = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Run approved worktree" in today_after_approval_decision.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:

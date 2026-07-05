@@ -22902,7 +22902,10 @@ def _goal_next_action_form(
             return_to_override=return_to_override,
         )
     if next_action.action == "Approve worktree":
-        return _goal_approve_worktree_form(state)
+        return _goal_approve_worktree_form(
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Run approved worktree":
         return _goal_run_worktree_handoff(state["root"], state)
     if next_action.action == "Create commit request":
@@ -23266,11 +23269,15 @@ def _goal_action_dock_return_path(state: dict[str, Any]) -> str:
     return f"/goals/{quote(goal.id)}#goal-action-dock"
 
 
-def _goal_approve_worktree_form(state: dict[str, Any]) -> str:
+def _goal_approve_worktree_form(
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     approval = _goal_pending_worktree_approval(state)
     if approval is None:
         return "<p class='muted'>approve_worktree_form_status: unavailable_until_pending_worktree_approval_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Approve Worktree</h3>",
@@ -46226,6 +46233,7 @@ def _handle_post(
                     else None
                 ),
                 updated_by="approve-coder-worktree",
+                resume_surface=location,
             )
         elif action == "run-coder-worktree":
             delegation_id = _required(form, "delegation_id")
