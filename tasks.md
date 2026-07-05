@@ -39,9 +39,12 @@
 - [x] Make post-Goal `/today` expose `Create scout delegation` as the primary
   same-page first-run action with confirmation and finish-today resume proof.
   <!-- score=10 complexity=4 -->
-- [ ] Make post-delegation `/today` expose `Generate context pack` as the
+- [x] Make post-delegation `/today` expose `Generate context pack` as the
   primary same-page first-run action with confirmation and finish-today resume
   proof. <!-- score=10 complexity=4 -->
+- [ ] Make post-context-pack `/today` expose `Run delegation` as the primary
+  same-page first-run action with confirmation and finish-today resume proof.
+  <!-- score=10 complexity=4 -->
 - [x] Extend the static dashboard with incident summaries once incidents exist.
 - [x] Add a compact incident resolution path after more failure modes exist.
 - [x] Add queue-health checks for repeated blocked or failed work.

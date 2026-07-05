@@ -11541,6 +11541,99 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(tmp_path: Path)
     assert delegated_workspace["open_goal"] == created_goal_id
     assert delegated_workspace["resume_surface"] == "/today#today-current-action"
     assert delegated_workspace["updated_by"] == "delegate"
+    delegations = storage.list_subagent_delegations(created_goal_id)
+    assert len(delegations) == 1
+    delegation = delegations[0]
+
+    today_after_delegate = render_local_app_route(tmp_path, "/today")
+    assert today_after_delegate.status == 200
+    assert "today_command_status</dt><dd>goal_ready" in today_after_delegate.body
+    assert "today_command_primary_action</dt><dd>Generate context pack" in today_after_delegate.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Generate context pack</a>"
+    ) in today_after_delegate.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Generate context pack</a>"
+    ) in today_after_delegate.body
+    assert "today_command_reason</dt><dd>delegation=" in today_after_delegate.body
+    assert "context_pack_missing" in today_after_delegate.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_delegate.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_delegate.body
+    assert (
+        "today_command_action_return_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_delegate.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_delegate.body
+    assert "today_command_finish_resume_reason</dt><dd>today_current_action_form_available" in today_after_delegate.body
+    assert "id='today-current-action'" in today_after_delegate.body
+    assert "data-today-current-action='true'" in today_after_delegate.body
+    assert "data-today-current-action-form='true'" in today_after_delegate.body
+    assert "<h3>Generate Context Pack</h3>" in today_after_delegate.body
+    assert "action='/actions/context-pack'" in today_after_delegate.body
+    assert f"name='delegation_id' value='{delegation.id}'" in today_after_delegate.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_delegate.body
+    assert "name='resume_surface' value='/today#today-current-action'" in today_after_delegate.body
+    assert "name='updated_by' value='today-command-center'" in today_after_delegate.body
+
+    context_pack_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/context-pack",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert context_pack_confirmation.status == 409
+    assert "Confirm context pack" in context_pack_confirmation.body
+    assert "action_confirmation_label</dt><dd>Generate context pack" in context_pack_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in context_pack_confirmation.body
+
+    context_pack_result = render_local_app_route(
+        tmp_path,
+        "/actions/context-pack",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert context_pack_result.status == 200
+    assert "Context pack ready" in context_pack_result.body
+    assert "action_result_command_label</dt><dd>Generate context pack" in context_pack_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=context_pack%3A%20"
+    ) in context_pack_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in context_pack_result.body
+    context_pack_md = (
+        tmp_path
+        / ".clanker"
+        / "delegations"
+        / delegation.id
+        / "context"
+        / "context_pack.md"
+    )
+    assert context_pack_md.exists()
+    context_workspace = json.loads((tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8"))
+    assert context_workspace["open_project"] == "first-target"
+    assert context_workspace["open_goal"] == created_goal_id
+    assert context_workspace["last_viewed_artifact"] == str(context_pack_md.relative_to(tmp_path))
+    assert context_workspace["resume_surface"] == "/today#today-current-action"
+    assert context_workspace["updated_by"] == "context-pack"
+
+    today_after_context_pack = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Run delegation" in today_after_context_pack.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Run delegation</a>"
+    ) in today_after_context_pack.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:

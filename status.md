@@ -1,5 +1,43 @@
 # Status
 
+## 2026-07-05 Post-Delegation Today Context Pack
+
+- Completed the selected next-iteration slice for post-delegation `/today`
+  context-pack generation.
+- `/today` now embeds the lead Goal's `Generate context pack` form with a
+  Today-local return target, so a confirmed context-pack write launched from
+  the daily cockpit saves `resume_surface=/today#today-current-action` instead
+  of sending the operator back to the Goal action dock.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack confirmation, generated `context_pack.md`, workspace resume
+  persistence, and the next visible Today action becoming `Run delegation`.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-context-pack `/today` should expose `Run delegation` as the primary
+  same-page first-run action with confirmation and finish-today resume proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered context-pack
+    form still emitted the Goal action-dock `return_to`.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 10.15s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 7.92s.
+  - `python3 -m agent_os.cli iterate`: selected the post-context-pack `/today`
+    run-delegation slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+- CI note: GitHub Actions run `28752750164` for the previous pushed commit has
+  Fast smoke verification green; the Full pytest suite is still running at the
+  latest check.
+- Non-claim: this Today context-pack slice performs only confirmed local
+  context-pack writes. It does not run a delegation, call providers, use
+  app-side network, push, deploy, create PRs, or mutate external systems from
+  ClankerOS.
+
 ## 2026-07-05 Post-Goal Today Scout Delegation
 
 - Completed the selected next-iteration slice for post-Goal `/today` scout
