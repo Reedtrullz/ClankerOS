@@ -4,6 +4,15 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Next-day self-hosting preflight is now first-class:
+  `python3 -m agent_os.cli self-hosting-check` verifies local fetch, saved
+  resume, current-`main` CI proof, and the browser Goal next action before
+  work resumes. It writes `.clanker/self-hosting-checks/latest.json` and
+  `docs/self-hosting-check.md`; `/today` and the static dashboard read the
+  latest report without fetching, polling GitHub, calling providers, pushing,
+  creating PRs, or deploying. Focused local proof: compile, the self-hosting
+  regression plus adjacent same-commit CI proof regression (`2 passed`), live
+  `/today` readback, static dashboard generation, and diff check.
 - Stale Goal hygiene is now first-class on `/today` and `/goals`: old
   demo/context-pack Goals are counted, reviewable, pausable through the
   existing confirmation-gated local action, and preserved as evidence instead

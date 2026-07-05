@@ -3066,6 +3066,155 @@ def test_local_app_treats_main_workflow_proof_as_current_on_same_commit_branch(
     assert "goal_ci_current_match_source: main_same_commit_local_main" in goal.body
 
 
+def test_self_hosting_check_verifies_fetch_resume_main_proof_and_browser_next_action(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    AgentSystem(tmp_path).initialize()
+    _init_git_repo(tmp_path)
+    subprocess.run(["git", "branch", "-M", "main"], cwd=tmp_path, check=True)
+    origin_path = tmp_path / ".origin.git"
+    subprocess.run(["git", "init", "--bare", str(origin_path)], check=True, capture_output=True)
+    subprocess.run(["git", "remote", "add", "origin", str(origin_path)], cwd=tmp_path, check=True)
+    subprocess.run(
+        ["git", "push", "-u", "origin", "main"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    subprocess.run(
+        ["git", "switch", "-c", "codex/next-day-check"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.upsert_registered_project(
+        name="clankeros",
+        root_path=str(tmp_path),
+        default_test_command="python3 -m pytest -q",
+        allowed_write_roots=[str(tmp_path)],
+    )
+    goal_id = storage.create_goal(
+        "clankeros",
+        "Use ClankerOS from shipped main tomorrow.",
+        title="Use ClankerOS from shipped main tomorrow",
+    )
+    workspace_path = tmp_path / ".clanker" / "app" / "workspace.json"
+    workspace_path.parent.mkdir(parents=True, exist_ok=True)
+    workspace_path.write_text(
+        json.dumps(
+            {
+                "open_project": "clankeros",
+                "open_goal": goal_id,
+                "filters": "",
+                "expanded_panels": "",
+                "last_viewed_artifact": "",
+                "resume_surface": f"/goals/{goal_id}#goal-action-dock-form",
+                "updated_by": "operator",
+                "updated_at": "2026-07-05T00:00:00Z",
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    ci_evidence_path = tmp_path / ".clanker" / "ci-snapshots" / "next-day-main.json"
+    ci_evidence_path.parent.mkdir(parents=True, exist_ok=True)
+    ci_evidence_path.write_text(
+        json.dumps(
+            {
+                "status": "success",
+                "status_source": "github_status_json",
+                "evidence_scope": "workflow_run",
+                "network_actions_taken": 0,
+                "external_mutations_taken": 0,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    storage.record_ci_snapshot_evidence(
+        project_id="clankeros",
+        branch_name="main",
+        commit_sha=commit,
+        provider="github-actions",
+        external_run_id="next-day-main",
+        external_url="https://github.com/Reedtrullz/ClankerOS/actions/runs/next-day-main",
+        status="success",
+        recorded_by="operator",
+        evidence_path=str(ci_evidence_path),
+        result_json={
+            "status_source": "github_status_json",
+            "evidence_scope": "workflow_run",
+            "network_actions_taken": 0,
+            "external_mutations_taken": 0,
+        },
+        idempotency_key="next-day-main",
+    )
+
+    assert main(["--root", str(tmp_path), "self-hosting-check"]) == 0
+    output = capsys.readouterr().out
+    assert "self_hosting_check: ready" in output
+    assert "local_fetch: ready" in output
+    assert "saved_resume: ready" in output
+    assert "current_main_proof: ready" in output
+    assert "browser_next_action: ready" in output
+    assert "network_actions_taken: 1" in output
+    assert "external_mutations_taken: 0" in output
+
+    latest_path = tmp_path / ".clanker" / "self-hosting-checks" / "latest.json"
+    payload = json.loads(latest_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "ready"
+    assert payload["checks"]["local_fetch"]["reason"] == "fetch_completed"
+    assert payload["checks"]["saved_resume"]["resume_surface"] == (
+        f"/goals/{goal_id}#goal-action-dock-form"
+    )
+    assert payload["checks"]["current_main_proof"]["ci_current_proof"] == (
+        "current_workflow_run_success"
+    )
+    assert payload["checks"]["current_main_proof"]["head_matches_remote_main"] is True
+    assert payload["checks"]["browser_next_action"]["action"] == "Create scout delegation"
+    assert payload["checks"]["browser_next_action"]["surface"] == (
+        f"/goals/{goal_id}#goal-action-dock-form"
+    )
+    assert (tmp_path / "docs" / "self-hosting-check.md").exists()
+
+    today = render_local_app_route(tmp_path, "/today")
+    assert today.status == 200
+    assert "data-today-self-hosting-check='true'" in today.body
+    assert "today_self_hosting_check_status</dt><dd>ready" in today.body
+    assert "today_self_hosting_check_local_fetch</dt><dd>ready" in today.body
+    assert "today_self_hosting_check_saved_resume</dt><dd>ready" in today.body
+    assert "today_self_hosting_check_current_main_proof</dt><dd>ready" in today.body
+    assert "today_self_hosting_check_browser_next_action</dt><dd>ready" in today.body
+    assert "today_self_hosting_check_browser_action</dt><dd>Create scout delegation" in today.body
+    assert "today_self_hosting_check_resume_surface</dt><dd><a href='/goals/" in today.body
+    assert "today_self_hosting_check_network_actions_taken</dt><dd>1" in today.body
+    assert "today_self_hosting_check_write_on_get</dt><dd>false" in today.body
+    assert "today_self_hosting_check_browser_network_actions_taken</dt><dd>0" in today.body
+
+    dashboard_text = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
+    assert "### Next-Day Self-Hosting Check" in dashboard_text
+    assert "- status: ready" in dashboard_text
+    assert "- local_fetch: ready" in dashboard_text
+    assert "- saved_resume: ready" in dashboard_text
+    assert "- current_main_proof: ready" in dashboard_text
+    assert "- browser_next_action: ready" in dashboard_text
+    assert "- browser_action: Create scout delegation" in dashboard_text
+    assert "- report: docs/self-hosting-check.md" in dashboard_text
+    assert "- browser_write_on_get: false" in dashboard_text
+    assert "- browser_network_actions_taken: 0" in dashboard_text
+
+
 def test_local_app_rejects_pending_ci_snapshot_status_json_without_record(
     tmp_path: Path,
 ) -> None:

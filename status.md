@@ -1,5 +1,40 @@
 # Status
 
+## 2026-07-05 Next-Day Self-Hosting Check
+
+- Added `python3 -m agent_os.cli self-hosting-check` as a one-command
+  next-day preflight for ClankerOS dogfooding.
+- The command runs a bounded `git fetch --prune origin main` by default,
+  verifies the saved workspace resume surface, checks locally recorded
+  current-`main` CI proof, derives the browser Goal next action, and writes
+  `.clanker/self-hosting-checks/latest.json` plus
+  `docs/self-hosting-check.md`.
+- `/today` and the static dashboard now expose the `Next-Day Self-Hosting
+  Check` state with the latest status, command, report/evidence links, saved
+  resume surface, current-main proof state, browser next action, and explicit
+  no-write/no-app network counters.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/self_hosting_check.py agent_os/cli.py agent_os/local_app.py agent_os/dashboard.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_self_hosting_check_verifies_fetch_resume_main_proof_and_browser_next_action tests/test_first_milestone.py::test_local_app_treats_main_workflow_proof_as_current_on_same_commit_branch -q --tb=short`:
+    2 passed in 7.68s.
+  - `python3 -m agent_os.cli self-hosting-check`:
+    wrote `docs/self-hosting-check.md` and
+    `.clanker/self-hosting-checks/latest.json`; live status was
+    `attention_needed` because this follow-up branch is ahead of the recorded
+    `origin/main` proof, while local fetch, saved resume, and browser next
+    action were ready.
+  - Live `/today` render readback found the self-hosting panel, ready fetch,
+    ready saved resume, `attention_needed` current-main proof, ready browser
+    next action, and `today_self_hosting_check_write_on_get=false`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md` with the `Next-Day Self-Hosting Check` section.
+  - `git diff --check`: passed.
+- Non-claim: the browser app does not run fetch, poll GitHub, call providers,
+  push, create PRs, deploy, or mutate external systems. The CLI preflight
+  performs the operator-requested git fetch and records it as one network
+  action with zero external mutations.
+
 ## 2026-07-05 Post-Merge Self-Hosting Reset
 
 - Local git posture was reset after PR `#1` shipped: invalid duplicate ref

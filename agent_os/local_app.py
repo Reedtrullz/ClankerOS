@@ -2990,6 +2990,7 @@ def _today_page(root: Path) -> str:
         _today_decision_queue(root, storage, lead_goal),
         _today_workflow_map(root, storage, lead_goal),
         _today_ci_handoff(root, lead_goal),
+        _today_self_hosting_check(root),
         _today_goal_queue(
             root,
             storage,
@@ -3012,6 +3013,171 @@ def _today_page(root: Path) -> str:
         sections.append(_first_run_panel(root, storage))
     sections.append(_non_claim_banner())
     return "".join(sections)
+
+
+def _today_self_hosting_check(root: Path) -> str:
+    from agent_os.self_hosting_check import (
+        load_latest_self_hosting_check,
+        self_hosting_check_command_template,
+    )
+
+    payload = load_latest_self_hosting_check(root)
+    command = self_hosting_check_command_template(root)
+    if payload is None:
+        status = "missing"
+        created_at = "never"
+        checks = {
+            "local_fetch": {"status": "missing", "reason": "check_not_run"},
+            "saved_resume": {"status": "missing", "reason": "check_not_run"},
+            "current_main_proof": {"status": "missing", "reason": "check_not_run"},
+            "browser_next_action": {"status": "missing", "reason": "check_not_run"},
+        }
+        report_href = "none"
+        evidence_href = "none"
+        safety = {
+            "network_actions_taken": 0,
+            "external_mutations_taken": 0,
+            "provider_calls_taken": 0,
+            "browser_write_on_get": False,
+            "browser_network_actions_taken": 0,
+        }
+    else:
+        status = str(payload.get("status", "unknown"))
+        created_at = str(payload.get("created_at", "unknown"))
+        checks = payload.get("checks", {}) if isinstance(payload.get("checks"), dict) else {}
+        artifacts = payload.get("artifacts", {}) if isinstance(payload.get("artifacts"), dict) else {}
+        report_path = str(artifacts.get("report", "docs/self-hosting-check.md"))
+        latest_json = str(artifacts.get("latest_json", ".clanker/self-hosting-checks/latest.json"))
+        report_href = f"/artifacts?path={quote(report_path)}"
+        evidence_href = f"/artifacts?path={quote(latest_json)}"
+        safety = payload.get("safety", {}) if isinstance(payload.get("safety"), dict) else {}
+
+    def check_status(name: str) -> str:
+        check = checks.get(name, {}) if isinstance(checks, dict) else {}
+        return str(check.get("status", "missing")) if isinstance(check, dict) else "missing"
+
+    def check_reason(name: str) -> str:
+        check = checks.get(name, {}) if isinstance(checks, dict) else {}
+        return str(check.get("reason", "missing")) if isinstance(check, dict) else "missing"
+
+    resume_check = checks.get("saved_resume", {}) if isinstance(checks, dict) else {}
+    action_check = checks.get("browser_next_action", {}) if isinstance(checks, dict) else {}
+    proof_check = checks.get("current_main_proof", {}) if isinstance(checks, dict) else {}
+    resume_surface = (
+        str(resume_check.get("resume_surface", "none"))
+        if isinstance(resume_check, dict)
+        else "none"
+    )
+    next_action = (
+        str(action_check.get("action", "none"))
+        if isinstance(action_check, dict)
+        else "none"
+    )
+    next_surface = (
+        str(action_check.get("surface", "none"))
+        if isinstance(action_check, dict)
+        else "none"
+    )
+    current_proof = (
+        str(proof_check.get("ci_current_proof", "none"))
+        if isinstance(proof_check, dict)
+        else "none"
+    )
+    proof_match_source = (
+        str(proof_check.get("ci_current_match_source", "none"))
+        if isinstance(proof_check, dict)
+        else "none"
+    )
+    report_link: str | SafeHtml = (
+        SafeHtml(f"<a href='{_e(report_href)}'>docs/self-hosting-check.md</a>")
+        if report_href != "none"
+        else "none"
+    )
+    evidence_link: str | SafeHtml = (
+        SafeHtml(f"<a href='{_e(evidence_href)}'>latest.json</a>")
+        if evidence_href != "none"
+        else "none"
+    )
+    resume_link: str | SafeHtml = (
+        SafeHtml(f"<a href='{_e(resume_surface)}'>{_e(resume_surface)}</a>")
+        if resume_surface.startswith("/")
+        else resume_surface
+    )
+    next_link: str | SafeHtml = (
+        SafeHtml(f"<a href='{_e(next_surface)}'>{_e(next_surface)}</a>")
+        if next_surface.startswith("/")
+        else next_surface
+    )
+    return "".join(
+        [
+            "<section id='today-self-hosting-check' class='panel today-self-hosting-check' data-today-self-hosting-check='true'>",
+            "<h2>Next-Day Self-Hosting Check</h2>",
+            "<p class='muted'>One terminal command verifies fetch, resume, main proof, and the browser next action before work resumes.</p>",
+            "<div class='today-ci-merge-grid' data-today-self-hosting-cards='true'>",
+            "<article class='today-ci-merge-card today-ci-merge-primary' data-today-self-hosting-card='status'>",
+            "<h3>Status</h3>",
+            f"<strong>{_e(status)}</strong>",
+            f"<p>Recorded: {_e(created_at)}</p>",
+            "</article>",
+            "<article class='today-ci-merge-card' data-today-self-hosting-card='command'>",
+            "<h3>Command</h3>",
+            f"<strong>{_e(command)}</strong>",
+            "<p>Run from the repository root before resuming tomorrow.</p>",
+            "</article>",
+            "<article class='today-ci-merge-card' data-today-self-hosting-card='next-action'>",
+            "<h3>Browser Next Action</h3>",
+            f"<strong>{_e(next_action)}</strong>",
+            f"<p>{next_link}</p>",
+            "</article>",
+            "</div>",
+            "<details class='today-self-hosting-evidence' data-today-self-hosting-evidence='true'><summary>Next-day self-hosting evidence</summary>",
+            _kv(
+                [
+                    ("today_self_hosting_check_status", status),
+                    ("today_self_hosting_check_created_at", created_at),
+                    ("today_self_hosting_check_command", command),
+                    ("today_self_hosting_check_report", report_link),
+                    ("today_self_hosting_check_evidence", evidence_link),
+                    ("today_self_hosting_check_local_fetch", check_status("local_fetch")),
+                    ("today_self_hosting_check_local_fetch_reason", check_reason("local_fetch")),
+                    ("today_self_hosting_check_saved_resume", check_status("saved_resume")),
+                    ("today_self_hosting_check_saved_resume_reason", check_reason("saved_resume")),
+                    ("today_self_hosting_check_resume_surface", resume_link),
+                    ("today_self_hosting_check_current_main_proof", check_status("current_main_proof")),
+                    ("today_self_hosting_check_current_main_reason", check_reason("current_main_proof")),
+                    ("today_self_hosting_check_ci_proof", current_proof),
+                    ("today_self_hosting_check_ci_match_source", proof_match_source),
+                    ("today_self_hosting_check_browser_next_action", check_status("browser_next_action")),
+                    ("today_self_hosting_check_browser_next_action_reason", check_reason("browser_next_action")),
+                    ("today_self_hosting_check_browser_action", next_action),
+                    ("today_self_hosting_check_browser_surface", next_link),
+                    (
+                        "today_self_hosting_check_network_actions_taken",
+                        str(safety.get("network_actions_taken", 0)),
+                    ),
+                    (
+                        "today_self_hosting_check_external_mutations_taken",
+                        str(safety.get("external_mutations_taken", 0)),
+                    ),
+                    (
+                        "today_self_hosting_check_provider_calls_taken",
+                        str(safety.get("provider_calls_taken", 0)),
+                    ),
+                    ("today_self_hosting_check_write_on_get", "false"),
+                    ("today_self_hosting_check_browser_network_actions_taken", "0"),
+                    ("today_self_hosting_check_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "today_self_hosting_check_safety: browser reads latest local report only",
+                    "today_self_hosting_check_boundary: terminal command owns git fetch; app GET owns no writes",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
 
 
 def _today_live_state(

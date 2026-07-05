@@ -79,6 +79,10 @@ from agent_os.ci_snapshot_evidence import (
     record_ci_snapshot_evidence,
     record_ci_snapshot_evidence_from_gh_status_json,
 )
+from agent_os.self_hosting_check import (
+    render_self_hosting_check_cli_lines,
+    run_next_day_self_hosting_check,
+)
 from agent_os.context_pack import ContextPackError, generate_context_pack
 from agent_os.coder_prep import (
     CoderPrepError,
@@ -768,6 +772,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     subparsers.add_parser("dashboard", help="Write the static dashboard.")
     subparsers.add_parser("iterate", help="Write the next iteration packet from repo queues.")
+    self_hosting_check = subparsers.add_parser(
+        "self-hosting-check",
+        aliases=["next-day-check"],
+        help="Run the next-day self-hosting preflight before resuming ClankerOS work.",
+    )
+    self_hosting_check.add_argument("--remote", default="origin")
+    self_hosting_check.add_argument("--branch", default="main")
+    self_hosting_check.add_argument(
+        "--fetch-mode",
+        choices=["update", "dry-run", "none"],
+        default="update",
+        help="Use update for the real check, dry-run for proof-only fetch, or none for diagnostics.",
+    )
     review = subparsers.add_parser("review", help="Write a human-first run review packet.")
     review.add_argument("run_id")
     steer = subparsers.add_parser("steer", help="Write a deterministic steering review.")
@@ -2301,6 +2318,18 @@ def main(argv: list[str] | None = None) -> int:
         print(f"section: {packet.source_section}")
         print(f"packet: {packet.packet_path}")
         return 0
+
+    if args.command in {"self-hosting-check", "next-day-check"}:
+        AgentSystem(root).initialize()
+        result = run_next_day_self_hosting_check(
+            root,
+            remote=args.remote,
+            branch=args.branch,
+            fetch_mode=args.fetch_mode,
+        )
+        for line in render_self_hosting_check_cli_lines(result):
+            print(line)
+        return 0 if result.status == "ready" else 1
 
     if args.command == "review":
         system = AgentSystem(root)

@@ -30,7 +30,7 @@
   <!-- score=10 complexity=3 -->
 - [x] Make the iteration selector deprioritize recursive report-only proof
   ladder tails whenever a daily-use product Goal exists. <!-- score=10 complexity=3 -->
-- [ ] Add a one-command next-day self-hosting check that verifies local fetch,
+- [x] Add a one-command next-day self-hosting check that verifies local fetch,
   saved resume, current `main` proof, and the browser next action before work
   resumes. <!-- score=9 complexity=3 -->
 - [x] Extend the static dashboard with incident summaries once incidents exist.
