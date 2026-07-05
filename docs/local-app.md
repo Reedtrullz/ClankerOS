@@ -865,8 +865,12 @@ confirmation requirement, and zero provider/network/external-effect counters.
   diagnostics, with cards for the current query, first useful hit, result
   list, and `/resume`. When a Goal exists, the suggestions panel starts with
   the live Current Action and links straight to the Goal action dock before the
-  current-Goal and next-action search query cards. A visible read-only `Search Result Map` follows with
-  Goals, Projects, Work, Decisions, Knowledge, and Artifacts lane cards before
+  current-Goal and next-action search query cards. A visible read-only
+  `Search Domain Coverage` panel follows with the objective's required
+  domains: Goals, Projects, Delegations, Artifacts, Incidents,
+  Recommendations, Memory, Runs, and Approvals. A visible read-only
+  `Search Result Map` follows with Goals, Projects, Work, Decisions,
+  Knowledge, and Artifacts lane cards before
   the flat result list. A browser-local `Search Result Filter` follows the map,
   narrowing already-rendered results to all, goals, projects, work, decisions,
   knowledge, or artifacts. It remembers the selected lane per query in

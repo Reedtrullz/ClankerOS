@@ -7516,6 +7516,25 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-search-suggestion-key='artifacts' data-search-suggestion-source='known_artifact_paths'" in search.body
     assert "href='/artifacts'>Browse artifacts</a>" in search.body
     assert "data-search-suggestions-evidence='true'" in search.body
+    assert "Search Domain Coverage" in search.body
+    assert "data-search-domain-coverage='true'" in search.body
+    assert "data-search-domain-coverage-grid='true'" in search.body
+    assert search.body.count("class='search-domain-card") == 9
+    for domain in [
+        "goals",
+        "projects",
+        "delegations",
+        "artifacts",
+        "incidents",
+        "recommendations",
+        "memory",
+        "runs",
+        "approvals",
+    ]:
+        assert f"data-search-domain-card='{domain}'" in search.body
+    assert "data-search-domain-card='goals' data-search-domain-status='ready_for_query'" in search.body
+    assert "data-search-domain-card='approvals' data-search-domain-status='ready_for_query'" in search.body
+    assert "data-search-domain-coverage-evidence='true'" in search.body
     assert "Search Result Map" in search.body
     assert "data-search-result-map='true'" in search.body
     assert "data-search-result-map-cards='true'" in search.body
@@ -7539,6 +7558,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-search-result-filter-empty='true' hidden" in search.body
     assert "data-search-result-filter-evidence='true'" in search.body
     assert "data-search-command-evidence='true'" in search.body
+    assert search.body.index("data-search-suggestions='true'") < search.body.index(
+        "data-search-domain-coverage='true'"
+    )
+    assert search.body.index("data-search-domain-coverage='true'") < search.body.index(
+        "data-search-operator-workbench='true'"
+    )
     assert search.body.index("data-search-operator-workbench='true'") < search.body.index(
         "data-search-result-map='true'"
     )
@@ -7563,6 +7588,24 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "search_result_map_primary_surface</dt><dd><a href='#search-form'>Search form</a>" in search.body
     assert "search_result_map_primary_surface_source</dt><dd>search_form" in search.body
     assert "search_result_map_write_on_get</dt><dd>false" in search.body
+    assert "search_domain_coverage_status</dt><dd>ready_for_query" in search.body
+    assert "search_domain_coverage_query</dt><dd>none" in search.body
+    assert (
+        "search_domain_coverage_required_domains</dt><dd>goals, projects, delegations, "
+        "artifacts, incidents, recommendations, memory, runs, approvals"
+    ) in search.body
+    assert "search_domain_coverage_domain_count</dt><dd>9" in search.body
+    assert "search_domain_coverage_total_results</dt><dd>0" in search.body
+    assert "search_domain_coverage_goals_results</dt><dd>0" in search.body
+    assert "search_domain_coverage_approvals_results</dt><dd>0" in search.body
+    assert "search_domain_coverage_covered_domains</dt><dd>0" in search.body
+    assert "search_domain_coverage_missing_domains</dt><dd>9" in search.body
+    assert "search_domain_coverage_write_on_get</dt><dd>false" in search.body
+    assert "search_domain_coverage_provider_calls_taken</dt><dd>0" in search.body
+    assert "search_domain_coverage_network_actions_taken</dt><dd>0" in search.body
+    assert "search_domain_coverage_external_effects_created</dt><dd>false" in search.body
+    assert "search_domain_coverage_raw_filesystem_browsing</dt><dd>false" in search.body
+    assert "search_domain_coverage_safety: read-only indexed domain coverage; no raw filesystem browsing" in search.body
     assert "search_result_map_network_actions_taken</dt><dd>0" in search.body
     assert "search_result_map_external_effects_created</dt><dd>false" in search.body
     assert "search_result_map_raw_filesystem_browsing</dt><dd>false" in search.body
@@ -18077,6 +18120,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "href='/search?q=Create%20commit%20request'>Search next action</a>" in search.body
     assert "href='/artifacts'>Browse artifacts</a>" in search.body
     assert "data-search-suggestions-evidence='true'" in search.body
+    assert "Search Domain Coverage" in search.body
+    assert "data-search-domain-coverage='true'" in search.body
+    assert "data-search-domain-coverage-grid='true'" in search.body
+    assert search.body.count("class='search-domain-card") == 9
+    assert "data-search-domain-card='goals' data-search-domain-status='ready'" in search.body
+    assert "data-search-domain-card='artifacts' data-search-domain-status='ready'" in search.body
+    assert "data-search-domain-card='approvals'" in search.body
+    assert "data-search-domain-coverage-evidence='true'" in search.body
     assert "Search Result Map" in search.body
     assert "data-search-result-map='true'" in search.body
     assert "data-search-result-map-cards='true'" in search.body
@@ -18116,6 +18167,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-search-result-filter-reset='true'>Reset lane</button>" in search.body
     assert "data-search-result-filter-evidence='true'" in search.body
     assert "data-search-command-evidence='true'" in search.body
+    assert search.body.index("data-search-suggestions='true'") < search.body.index(
+        "data-search-domain-coverage='true'"
+    )
+    assert search.body.index("data-search-domain-coverage='true'") < search.body.index(
+        "data-search-operator-workbench='true'"
+    )
     assert search.body.index("data-search-operator-workbench='true'") < search.body.index(
         "data-search-result-map='true'"
     )
@@ -18146,6 +18203,18 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "search_result_map_network_actions_taken</dt><dd>0" in search.body
     assert "search_result_map_external_effects_created</dt><dd>false" in search.body
     assert "search_result_map_raw_filesystem_browsing</dt><dd>false" in search.body
+    assert "search_domain_coverage_status</dt><dd>results_ready" in search.body
+    assert "search_domain_coverage_query</dt><dd>fixture-backed" in search.body
+    assert "search_domain_coverage_required_domains</dt><dd>goals, projects, delegations, artifacts, incidents, recommendations, memory, runs, approvals" in search.body
+    assert "search_domain_coverage_domain_count</dt><dd>9" in search.body
+    assert "search_domain_coverage_total_results</dt><dd>" in search.body
+    assert "search_domain_coverage_goals_results</dt><dd>" in search.body
+    assert "search_domain_coverage_artifacts_results</dt><dd>" in search.body
+    assert "search_domain_coverage_covered_domains</dt><dd>" in search.body
+    assert "search_domain_coverage_missing_domains</dt><dd>" in search.body
+    assert "search_domain_coverage_write_on_get</dt><dd>false" in search.body
+    assert "search_domain_coverage_network_actions_taken</dt><dd>0" in search.body
+    assert "search_domain_coverage_raw_filesystem_browsing</dt><dd>false" in search.body
     assert (
         f"search_result_map_click: <a href='/goals/{result.goal_id}#goal-action-dock-form'>"
         "Create commit request</a>"
@@ -21200,6 +21269,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     search_approvals = render_local_app_route(tmp_path, "/search?q=approval")
     assert search_approvals.status == 200
     assert "Global Search" in search_approvals.body
+    assert "Search Domain Coverage" in search_approvals.body
+    assert "data-search-domain-card='approvals' data-search-domain-status='ready'" in search_approvals.body
+    assert "search_domain_coverage_approvals_results</dt><dd>" in search_approvals.body
+    assert "search_domain_coverage_raw_filesystem_browsing</dt><dd>false" in search_approvals.body
     assert "Search Result Map" in search_approvals.body
     assert "data-search-result-lane='decisions' data-search-result-status='ready'" in search_approvals.body
     assert "search_result_map_decisions_results</dt><dd>" in search_approvals.body

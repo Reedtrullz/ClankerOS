@@ -881,7 +881,11 @@ query, first useful hit, result list, and `/resume` into four browser cards.
 When a Goal exists, the suggestions panel starts with the live Current Action
 and links straight to the Goal action dock, while keeping the current-Goal and
 next-action search query cards as secondary discovery paths.
-It now follows with a visible read-only `Search Result Map` for Goals,
+It now follows with a visible read-only `Search Domain Coverage` panel that
+names the objective's required global-search domains: Goals, Projects,
+Delegations, Artifacts, Incidents, Recommendations, Memory, Runs, and
+Approvals.
+The broader visible read-only `Search Result Map` still follows for Goals,
 Projects, Work, Decisions, Knowledge, and Artifacts, so category counts and
 first targets are visible before the flat result list. A browser-local
 `Search Result Filter` follows the map so broad queries can be narrowed to one

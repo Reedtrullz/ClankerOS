@@ -8062,6 +8062,7 @@ def _search_page(root: Path, *, query: str) -> str:
             "</details>",
             "</section>",
             _search_suggestions(root, storage, term, results),
+            _search_domain_coverage(term, results),
             _search_operator_workbench(term, results),
             _search_result_map(term, results),
             _search_result_filter(term, results),
@@ -8442,6 +8443,110 @@ def _search_lane_specs() -> list[tuple[str, str, set[str], str]]:
         ("knowledge", "Knowledge", {"memory", "skill"}, "Open knowledge"),
         ("artifacts", "Artifacts", {"artifact"}, "Open artifact"),
     ]
+
+
+def _search_domain_specs() -> list[tuple[str, str, set[str]]]:
+    return [
+        ("goals", "Goals", {"goal"}),
+        ("projects", "Projects", {"project"}),
+        ("delegations", "Delegations", {"delegation"}),
+        ("artifacts", "Artifacts", {"artifact"}),
+        ("incidents", "Incidents", {"incident"}),
+        ("recommendations", "Recommendations", {"recommendation"}),
+        ("memory", "Memory", {"memory"}),
+        ("runs", "Runs", {"run"}),
+        ("approvals", "Approvals", {"approval"}),
+    ]
+
+
+def _search_domain_coverage(term: str, results: list[dict[str, str]]) -> str:
+    domain_specs = _search_domain_specs()
+    cards: list[str] = []
+    rows: list[tuple[str, str | SafeHtml]] = [
+        ("search_domain_coverage_status", "results_ready" if results else ("ready_for_query" if not term else "empty")),
+        ("search_domain_coverage_query", term or "none"),
+        (
+            "search_domain_coverage_required_domains",
+            ", ".join(key for key, _label, _categories in domain_specs),
+        ),
+        ("search_domain_coverage_domain_count", str(len(domain_specs))),
+        ("search_domain_coverage_total_results", str(len(results))),
+    ]
+    domain_lines: list[str] = []
+    covered_domains = 0
+    for key, label, categories in domain_specs:
+        domain_results = [
+            item for item in results if item.get("category", "unknown") in categories
+        ]
+        if domain_results:
+            covered_domains += 1
+        first = domain_results[0] if domain_results else None
+        if first:
+            href = _search_item_primary_href(first)
+            action = _search_item_primary_label(first)
+            source = _search_item_primary_source(first)
+            summary = f"{first['category']}: {first['summary']}"
+            status = "ready"
+        else:
+            href = "#search-form" if not term else "#search-results"
+            action = "Start search" if not term else "Review results"
+            source = "search_form" if not term else "search_results"
+            summary = "No indexed local matches in this required domain."
+            status = "ready_for_query" if not term else "empty"
+        card_class = (
+            "search-domain-card search-domain-primary"
+            if key == "goals"
+            else "search-domain-card"
+        )
+        cards.extend(
+            [
+                (
+                    f"<article class='{card_class}' data-search-domain-card='{_e(key)}' "
+                    f"data-search-domain-status='{_e(status)}'>"
+                ),
+                f"<h3>{_e(label)}</h3>",
+                f"<p><strong>{len(domain_results)}</strong> results</p>",
+                f"<p>{_e(summary)}</p>",
+                f"<a class='search-domain-link' href='{_e(href)}'>{_e(action)}</a>",
+                "</article>",
+            ]
+        )
+        rows.append((f"search_domain_coverage_{key}_results", str(len(domain_results))))
+        rows.append((f"search_domain_coverage_{key}_surface_source", source))
+        domain_lines.append(
+            f"search_domain_coverage_domain: {_e(key)} count={len(domain_results)} "
+            f"surface=<a href='{_e(href)}'>{_e(action)}</a>"
+        )
+    rows.extend(
+        [
+            ("search_domain_coverage_covered_domains", str(covered_domains)),
+            ("search_domain_coverage_missing_domains", str(len(domain_specs) - covered_domains)),
+            ("search_domain_coverage_write_on_get", "false"),
+            ("search_domain_coverage_provider_calls_taken", "0"),
+            ("search_domain_coverage_network_actions_taken", "0"),
+            ("search_domain_coverage_external_effects_created", "false"),
+            ("search_domain_coverage_raw_filesystem_browsing", "false"),
+        ]
+    )
+    return "".join(
+        [
+            "<section id='search-domain-coverage' class='panel search-domain-coverage' data-search-domain-coverage='true'><h2>Search Domain Coverage</h2>",
+            "<p class='muted'>Objective domains shown before the broader result lanes.</p>",
+            "<div class='search-domain-grid' data-search-domain-coverage-grid='true'>",
+            *cards,
+            "</div>",
+            "<details class='search-domain-evidence' data-search-domain-coverage-evidence='true'><summary>Search domain coverage evidence</summary>",
+            _kv(rows),
+            _ul(
+                [
+                    *domain_lines,
+                    "search_domain_coverage_safety: read-only indexed domain coverage; no raw filesystem browsing",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
 
 
 def _search_result_lane_key(category: str) -> str:
@@ -52957,6 +53062,13 @@ def _html_page(
     .search-suggestion-action, .search-suggestion-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .search-suggestion-action {{ background:var(--accent); color:#fff; }}
     .search-suggestion-link {{ background:var(--surface); color:var(--accent); }}
+    .search-domain-coverage {{ border-left:4px solid var(--accent); }}
+    .search-domain-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin:12px 0; }}
+    .search-domain-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .search-domain-card h3 {{ margin-top:0; }}
+    .search-domain-card p {{ margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .search-domain-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .search-domain-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
     .search-result-map {{ border-left:4px solid var(--accent); }}
     .search-result-map-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:10px; margin:12px 0; }}
     .search-result-map-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
@@ -52975,9 +53087,9 @@ def _html_page(
     .search-result-filter-memory-status {{ min-height:30px; display:inline-flex; align-items:center; color:var(--muted); }}
     .search-result-filter-reset {{ min-height:32px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); padding:6px 10px; }}
     .search-result-filter-empty {{ margin:10px 0 0; }}
-    .search-state-details, .search-command-evidence, .search-workbench-evidence, .search-suggestions-evidence, .search-result-map-evidence, .search-result-filter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .search-state-details summary, .search-command-evidence summary, .search-workbench-evidence summary, .search-suggestions-evidence summary, .search-result-map-evidence summary, .search-result-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .search-state-details:not([open]) > :not(summary), .search-command-evidence:not([open]) > :not(summary), .search-workbench-evidence:not([open]) > :not(summary), .search-suggestions-evidence:not([open]) > :not(summary), .search-result-map-evidence:not([open]) > :not(summary), .search-result-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .search-state-details, .search-command-evidence, .search-workbench-evidence, .search-suggestions-evidence, .search-domain-evidence, .search-result-map-evidence, .search-result-filter-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .search-state-details summary, .search-command-evidence summary, .search-workbench-evidence summary, .search-suggestions-evidence summary, .search-domain-evidence summary, .search-result-map-evidence summary, .search-result-filter-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .search-state-details:not([open]) > :not(summary), .search-command-evidence:not([open]) > :not(summary), .search-workbench-evidence:not([open]) > :not(summary), .search-suggestions-evidence:not([open]) > :not(summary), .search-domain-evidence:not([open]) > :not(summary), .search-result-map-evidence:not([open]) > :not(summary), .search-result-filter-evidence:not([open]) > :not(summary) {{ display:none; }}
     @media (max-width: 640px) {{ .search-result-filter-button, .search-result-filter-reset {{ width:100%; justify-content:center; }} .search-result-filter-memory {{ align-items:stretch; }} .search-result-filter-memory-status {{ width:100%; }} }}
     .first-run-command-bar {{ border-left:4px solid var(--accent); margin:12px 0; }}
     .first-run-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
@@ -53814,7 +53926,7 @@ def _html_page(
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
     @media (max-width: 860px) {{ #run-readiness-strip {{ scroll-margin-top:260px; }} .run-readiness-grid, .run-readiness-strip dl {{ grid-template-columns:1fr; }} }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-action-prep, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #profile-routing-plan, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-goal-continuation, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map, #artifact-view-memory {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-action-prep-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-return-brief-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-loop-checklist-grid, .today-quick-capture-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profile-plan-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-real-grid, .dogfooding-workbench-grid, .dogfooding-return-grid, .dogfooding-session-checklist-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .artifact-view-memory-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-action-prep, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #profile-routing-plan, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-goal-continuation, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map, #artifact-view-memory {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-action-prep-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-return-brief-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-loop-checklist-grid, .today-quick-capture-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-domain-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profile-plan-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-real-grid, .dogfooding-workbench-grid, .dogfooding-return-grid, .dogfooding-session-checklist-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .artifact-view-memory-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #ci-evidence-readiness-strip, #ci-merge-readiness-map {{ scroll-margin-top:260px; }} .ci-evidence-readiness-grid, .ci-merge-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #health-readiness-strip {{ scroll-margin-top:260px; }} .health-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}

@@ -1,5 +1,28 @@
 # Status
 
+## 2026-07-05 Search Domain Coverage
+
+- `/search` now includes a visible read-only `Search Domain Coverage` panel
+  after `Search Suggestions` and before the operator workbench.
+- The panel names the objective's required global-search domains directly:
+  Goals, Projects, Delegations, Artifacts, Incidents, Recommendations, Memory,
+  Runs, and Approvals.
+- Each card uses the existing bounded indexed search results, shows a count,
+  links to the first matching local surface when present, and records collapsed
+  evidence for per-domain counts, coverage, missing domains, and safety
+  boundaries.
+- Local verification:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    2 passed in 106.00s.
+- Non-claim: this is read-only visibility over existing indexed search
+  results. It does not add raw filesystem browsing, write on GET, call
+  providers, use the network, approve work, push, create PRs, deploy, or
+  mutate external systems from ClankerOS.
+
 ## 2026-07-05 Exact Resume Readiness Contract
 
 - Resume readiness now requires a safe saved `resume_surface` in
