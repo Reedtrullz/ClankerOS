@@ -318,10 +318,10 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Make post-run `/today` expose `Run coder prep` as the primary same-page first-run action with confirmation and finish-today resume proof.
+- focus: Make post-coder-prep `/today` expose `Create worktree plan` as the primary same-page first-run action with confirmation and finish-today resume proof.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-07-05T20:05:22.723835+00:00
+- created_at: 2026-07-05T20:15:32.803511+00:00
 
 ## Simplicity Guardrail
 
@@ -329,7 +329,7 @@
 - reason: selected only actionable item with score 10 and complexity 4; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
 - selected_score: 10
 - selected_complexity: 4
-- selected_focus: Make post-run `/today` expose `Run coder prep` as the primary same-page first-run action with confirmation and finish-today resume proof.
+- selected_focus: Make post-coder-prep `/today` expose `Create worktree plan` as the primary same-page first-run action with confirmation and finish-today resume proof.
 
 ## Expansion Operator Approval Schema Decision
 

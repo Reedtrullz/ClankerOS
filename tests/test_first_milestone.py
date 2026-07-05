@@ -11708,6 +11708,72 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
 
     today_after_run = render_local_app_route(tmp_path, "/today")
     assert "today_command_primary_action</dt><dd>Run coder prep" in today_after_run.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Run coder prep</a>"
+    ) in today_after_run.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Run coder prep</a>"
+    ) in today_after_run.body
+    assert "today_command_reason</dt><dd>implementation_handoff_or_result_available" in today_after_run.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_run.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_run.body
+    assert "Run Coder Prep" in today_after_run.body
+    assert "action='/actions/coder-prep'" in today_after_run.body
+    assert f"name='delegation_id' value='{delegation.id}'" in today_after_run.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_run.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_run.body
+
+    prep_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-prep",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert prep_confirmation.status == 409
+    assert "Confirm coder prep" in prep_confirmation.body
+    assert "action_confirmation_label</dt><dd>Prepare coder packet" in prep_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in prep_confirmation.body
+
+    prep_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-prep",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert prep_result.status == 200
+    assert "coder_prep:" in prep_result.body
+    assert "action_result_command_label</dt><dd>Prepare coder packet" in prep_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=coder_prep%3A%20"
+    ) in prep_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in prep_result.body
+    coder_prep_md = sorted(
+        (tmp_path / ".clanker" / "delegations" / delegation.id / "runs").glob(
+            "*/coder_prep/coder_prep.md"
+        )
+    )[-1]
+    prep_workspace = json.loads((tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8"))
+    assert prep_workspace["open_project"] == "first-target"
+    assert prep_workspace["open_goal"] == created_goal_id
+    assert prep_workspace["last_viewed_artifact"] == str(coder_prep_md.relative_to(tmp_path))
+    assert prep_workspace["resume_surface"] == "/today#today-current-action"
+    assert prep_workspace["updated_by"] == "coder-prep"
+
+    today_after_prep = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Create worktree plan" in today_after_prep.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
