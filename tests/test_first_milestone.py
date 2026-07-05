@@ -8843,6 +8843,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "Create First Goal</a>"
     ) in registered_today.body
     assert "day_plan_next_surface: <a href='#first-run-create-goal'>Create First Goal</a>" in registered_today.body
+    assert "id='first-run-create-goal'" in registered_today.body
+    assert "action='/actions/create-goal'" in registered_today.body
+    assert "name='project_id' value='first-target'" in registered_today.body
+    assert "data-action-draft-action='create-goal'" in registered_today.body
+    assert "data-action-form-brief-action='create-goal'" in registered_today.body
     create_goal_result = render_local_app_route(
         tmp_path,
         "/actions/create-goal",
@@ -11557,7 +11562,14 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
         "action_continuation_home_target</dt><dd><a href='/#first-run-create-goal'>"
         "Create First Goal</a>"
     ) in register_result.body
-    assert "action_continuation_today_target</dt><dd><a href='/today#first-run-create-goal'>/today</a>" in register_result.body
+    assert (
+        "action_continuation_today_target</dt><dd><a href='/today#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in register_result.body
+    assert (
+        "action_continuation_today: <a href='/today#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in register_result.body
     assert "action_continuation_project</dt><dd>clankeros" in register_result.body
     assert "action_continuation_saved_project</dt><dd>clankeros" in register_result.body
     assert "action_continuation_saved_goal</dt><dd>none" in register_result.body

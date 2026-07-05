@@ -47812,7 +47812,7 @@ def _action_result_first_run_continuation(
                     ),
                     (
                         "action_continuation_today_target",
-                        SafeHtml(f"<a href='{_e(today_href)}'>/today</a>"),
+                        SafeHtml(f"<a href='{_e(today_href)}'>{_e(first_run_label)}</a>"),
                     ),
                     (
                         "action_continuation_next_page",
@@ -47838,6 +47838,7 @@ def _action_result_first_run_continuation(
                     f"action_continuation_now: {_e(str(progress['next_action']))}",
                     f"action_continuation_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
                     f"action_continuation_home: <a href='{_e(home_href)}'>{_e(first_run_label)}</a>",
+                    f"action_continuation_today: <a href='{_e(today_href)}'>{_e(first_run_label)}</a>",
                     "action_continuation_safety: confirmed local first-run action only",
                 ]
             ),

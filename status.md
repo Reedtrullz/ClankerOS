@@ -1,5 +1,38 @@
 # Status
 
+## 2026-07-05 Browser-First Goal Creation
+
+- Completed the selected next-iteration slice for browser-first Goal creation
+  from first-run and `/today` surfaces.
+- The first-run action result continuation now labels the `/today` deep link as
+  `Create First Goal` instead of exposing the raw route, keeping the continuation
+  focused on the operator's next action.
+- Regression coverage now proves that `/today` exposes the `#first-run-create-goal`
+  anchor, the `/actions/create-goal` form, the saved project payload, draft
+  memory, and the action brief before creating the first Goal.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-Goal `/today` should expose `Create scout delegation` as the primary
+  same-page first-run action with confirmation and finish-today resume proof.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 22.85s.
+  - `python3 -m agent_os.cli iterate`: selected the post-Goal `/today`
+    scout-delegation slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- CI note: GitHub Actions run `28752080795` for the previous push has Fast
+  smoke verification green; the Full pytest suite is still running at the
+  latest check.
+- Sidecar review note: no blocking UX/test gap was found for this slice. The
+  residual risk is that no live browser/visual click-through of
+  `/today#first-run-create-goal` was run in this iteration.
+- Non-claim: this browser-first slice performs only confirmed local writes. It
+  does not call providers, push, deploy, create PRs, or mutate external systems
+  from ClankerOS.
+
 ## 2026-07-05 Product-Aligned Iteration Selector
 
 - Hardened `python3 -m agent_os.cli iterate` so a live daily-use ClankerOS

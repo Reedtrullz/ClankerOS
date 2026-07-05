@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_f03a8c19f7ec
+- Packet ID: iteration_a1039aade417
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Add browser-first Goal creation from the first-run and `/today` surfaces so a new operator can create the first ClankerOS Goal without using the CLI.
+Advance the Agent System north-star goal by completing: Make post-Goal `/today` expose `Create scout delegation` as the primary same-page first-run action with confirmation and finish-today resume proof.
 
 ## Definition Of Done
 
@@ -130,9 +130,9 @@ Advance the Agent System north-star goal by completing: Add browser-first Goal c
 ## Simplicity Guardrail
 
 - selection_policy: highest-score-then-lowest-complexity
-- selection_reason: selected only actionable item with score 10 and complexity 5; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
+- selection_reason: selected only actionable item with score 10 and complexity 4; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
 - selected_score: 10
-- selected_complexity: 5
+- selected_complexity: 4
 
 ## Guardrails And Non-Claims
 
