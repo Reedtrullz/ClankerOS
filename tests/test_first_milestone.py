@@ -23508,6 +23508,104 @@ def test_today_and_home_prefer_clankeros_goal_over_demo_fixture(
     assert "profiles_workbench_resume_project</dt><dd>clankeros" in profiles.body
 
 
+def test_goal_surfaces_expose_stale_goal_hygiene_without_losing_real_focus(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_goal_id = storage.create_goal(
+        "clankeros",
+        "Use ClankerOS from shipped main tomorrow with the daily-use browser app.",
+    )
+    stale_context_goal_id = storage.create_goal(
+        "clankeros",
+        "Demo context-pack repo scouting before edits",
+    )
+    stale_demo_goal_id = storage.create_goal(
+        "local-app-demo",
+        "Demo the ClankerOS local operator app with fixture-backed state",
+    )
+    stale_paused_goal_id = storage.create_goal(
+        "clankeros",
+        "Demo context pack cleanup before edits",
+    )
+    storage.set_goal_status(stale_paused_goal_id, "paused")
+    workspace_path = tmp_path / ".clanker" / "app" / "workspace.json"
+    workspace_path.parent.mkdir(parents=True, exist_ok=True)
+    workspace_path.write_text(
+        json.dumps(
+            {
+                "open_project": "clankeros",
+                "open_goal": stale_context_goal_id,
+                "filters": "",
+                "expanded_panels": "",
+                "last_viewed_artifact": "",
+                "resume_surface": f"/goals/{stale_context_goal_id}",
+                "updated_by": "test-fixture",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    today = render_local_app_route(tmp_path, "/today")
+    assert today.status == 200
+    assert "today_lead_goal_source</dt><dd>clankeros_project_goal" in today.body
+    assert f"today_lead_goal</dt><dd>{real_goal_id}" in today.body
+    assert "data-today-stale-goal-hygiene='true'" in today.body
+    assert "today_stale_goal_hygiene_status</dt><dd>attention_needed" in today.body
+    assert "today_stale_goal_hygiene_candidates</dt><dd>3" in today.body
+    assert "today_stale_goal_hygiene_active_candidates</dt><dd>2" in today.body
+    assert "today_stale_goal_hygiene_paused_candidates</dt><dd>1" in today.body
+    assert f"today_stale_goal_hygiene_lead_goal_protected</dt><dd>{real_goal_id}" in today.body
+    assert (
+        "today_stale_goal_hygiene_primary_surface</dt><dd>"
+        "<a href='/goals#goal-stale-hygiene'>/goals#goal-stale-hygiene</a>"
+    ) in today.body
+    assert (
+        "today_stale_goal_hygiene_archive_status</dt><dd>"
+        "not_supported_for_goals_evidence_retained"
+    ) in today.body
+    assert "today_stale_goal_hygiene_write_on_get</dt><dd>false" in today.body
+    assert "today_stale_goal_hygiene_network_actions_taken</dt><dd>0" in today.body
+    assert "today_stale_goal_hygiene_external_effects_created</dt><dd>false" in today.body
+    assert stale_context_goal_id in today.body
+    assert stale_demo_goal_id in today.body
+    assert stale_paused_goal_id in today.body
+
+    goals = render_local_app_route(tmp_path, "/goals")
+    assert goals.status == 200
+    assert "goal_board_workbench_source</dt><dd>clankeros_project_goal_selector_hygiene" in goals.body
+    assert f"goal_board_workbench_selected_goal</dt><dd><a href='/goals/{real_goal_id}'" in goals.body
+    assert "goal_board_priority_source</dt><dd>clankeros_project_goal_selector_hygiene" in goals.body
+    assert f"goal_board_primary_goal</dt><dd><a href='/goals/{real_goal_id}'" in goals.body
+    assert "data-goal-stale-hygiene='true'" in goals.body
+    assert goals.body.count("data-goal-stale-hygiene-card='true'") == 3
+    assert "goal_stale_hygiene_status</dt><dd>attention_needed" in goals.body
+    assert "goal_stale_hygiene_candidates</dt><dd>3" in goals.body
+    assert "goal_stale_hygiene_active_candidates</dt><dd>2" in goals.body
+    assert "goal_stale_hygiene_paused_candidates</dt><dd>1" in goals.body
+    assert "goal_stale_hygiene_pause_path</dt><dd>existing_confirmed_pause_goal_action" in goals.body
+    assert (
+        "goal_stale_hygiene_complete_path</dt><dd>"
+        "goal_completion_readiness_when_publication_handoff_ready"
+    ) in goals.body
+    assert (
+        "goal_stale_hygiene_archive_status</dt><dd>"
+        "not_supported_for_goals_evidence_retained"
+    ) in goals.body
+    assert "goal_stale_hygiene_write_on_get</dt><dd>false" in goals.body
+    assert "goal_stale_hygiene_network_actions_taken</dt><dd>0" in goals.body
+    assert "goal_stale_hygiene_external_effects_created</dt><dd>false" in goals.body
+    assert "fixture_demo_goal" in goals.body
+    assert "context_pack_demo_goal" in goals.body
+    assert "mutation_path=confirmed_pause_goal" in goals.body
+    assert "mutation_path=resume_on_goal_detail" in goals.body
+    assert "Pause stale Goal" in goals.body
+    assert "action='/actions/pause-goal'" in goals.body
+
+
 def test_artifact_index_prefers_real_goal_artifacts_over_demo_noise(
     tmp_path: Path,
 ) -> None:
@@ -29137,6 +29235,65 @@ def test_iterate_prefers_lower_complexity_when_scores_tie(tmp_path: Path) -> Non
     assert row["selected_score"] == 10
     assert row["selected_complexity"] == 2
     assert "lower complexity" in row["selection_reason"]
+
+
+def test_iterate_demotes_report_only_tail_when_daily_use_goal_exists(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.create_goal(
+        "clankeros",
+        "Use ClankerOS from shipped main tomorrow with the daily-use browser app.",
+    )
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                "- [ ] Add an explicit stale Goal hygiene path for old demo/context-pack Goals:",
+                "  review, pause, complete, or archive them without hiding their evidence.",
+                "  <!-- score=10 complexity=3 -->",
+                "- [ ] Add report-only Hosted Dashboard Proof Checklist from latest Real-Cost-sourced Real Cost Tracking proof checklists. <!-- score=12 complexity=1 -->",
+                "",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "Add an explicit stale Goal hygiene path for old demo/context-pack Goals" in packet
+    assert "review, pause, complete, or archive them without hiding their evidence." in packet
+    assert "Hosted Dashboard Proof Checklist" not in packet
+    assert "- selected_score: 10" in packet
+    assert "- selected_complexity: 3" in packet
+    assert "demoted 1 report-only proof-ladder tail(s)" in packet
+
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        connection.row_factory = sqlite3.Row
+        row = connection.execute(
+            """
+            select focus, selection_reason, selected_score, selected_complexity
+            from iteration_packets
+            order by created_at desc
+            limit 1
+            """
+        ).fetchone()
+
+    assert row is not None
+    assert row["focus"] == (
+        "Add an explicit stale Goal hygiene path for old demo/context-pack Goals: "
+        "review, pause, complete, or archive them without hiding their evidence."
+    )
+    assert row["selected_score"] == 10
+    assert row["selected_complexity"] == 3
+    assert "daily-use product Goal exists" in row["selection_reason"]
 
 
 def test_dashboard_reports_simplicity_guardrail_for_iteration_selection(

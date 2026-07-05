@@ -25,10 +25,10 @@
 
 ## next
 
-- [ ] Add an explicit stale Goal hygiene path for old demo/context-pack Goals:
+- [x] Add an explicit stale Goal hygiene path for old demo/context-pack Goals:
   review, pause, complete, or archive them without hiding their evidence.
   <!-- score=10 complexity=3 -->
-- [ ] Make the iteration selector deprioritize recursive report-only proof
+- [x] Make the iteration selector deprioritize recursive report-only proof
   ladder tails whenever a daily-use product Goal exists. <!-- score=10 complexity=3 -->
 - [ ] Add a one-command next-day self-hosting check that verifies local fetch,
   saved resume, current `main` proof, and the browser next action before work

@@ -4,6 +4,15 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Stale Goal hygiene is now first-class on `/today` and `/goals`: old
+  demo/context-pack Goals are counted, reviewable, pausable through the
+  existing confirmation-gated local action, and preserved as evidence instead
+  of hidden. Goal board selection now skips stale saved workspace focus when a
+  real ClankerOS dogfooding Goal exists. The iteration selector also parses
+  multiline `tasks.md` metadata and demotes report-only proof-ladder tails
+  behind daily-use product work when a live ClankerOS product Goal exists.
+  Local proof: compile plus the focused stale-hygiene/selector regression set
+  (`3 passed`).
 - Post-merge self-hosting reset is now the current ClankerOS focus. Invalid
   duplicate local git refs were quarantined so fetch works again, `main`
   fast-forwarded to merge commit

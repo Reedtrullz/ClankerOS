@@ -37,12 +37,28 @@
   current from a non-`main` checkout when local `main` or `origin/main` points
   at the same commit, while still showing the branch mismatch and match
   source explicitly.
-- Remaining next slice: add an explicit stale Goal hygiene path and make the
-  iteration selector deprioritize recursive report-only proof-ladder tails
-  when a daily-use product Goal exists.
-- Non-claim: this reset records local ClankerOS state and proof only. It does
-  not deploy, call providers, push, create a PR, or mutate external systems
-  from the app.
+- `/today` and `/goals` now expose first-class stale Goal hygiene for old
+  demo/context-pack Goals. The panels count active/paused/completed stale
+  candidates, keep evidence visible, link to review/resume/completion
+  readiness, and reuse the existing confirmation-gated `pause-goal` action for
+  active stale Goals. Goal board selection now protects the real ClankerOS
+  dogfooding Goal when saved workspace state points at stale demo/context-pack
+  work.
+- The iteration selector now parses multiline `tasks.md` item metadata and
+  demotes report-only proof-ladder tails behind daily-use product work when a
+  live ClankerOS product Goal exists, with the demotion reason recorded in the
+  iteration packet and SQLite row.
+- Local verification so far:
+  - `python3 -m compileall -q agent_os/local_app.py agent_os/iteration.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_surfaces_expose_stale_goal_hygiene_without_losing_real_focus tests/test_first_milestone.py::test_iterate_demotes_report_only_tail_when_daily_use_goal_exists tests/test_first_milestone.py::test_iterate_prefers_lower_complexity_when_scores_tie -q --tb=short`:
+    3 passed in 21.23s.
+- Remaining next slice: add a one-command next-day self-hosting check that
+  verifies local fetch, saved resume, current `main` proof, and browser next
+  action before work resumes.
+- Non-claim: this reset and hygiene slice record local ClankerOS state and
+  proof only. They do not deploy, call providers, push, create a PR, or mutate
+  external systems from the app.
 
 ## 2026-07-05 Browser Execution Trust Hardening
 

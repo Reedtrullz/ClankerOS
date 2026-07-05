@@ -2998,6 +2998,7 @@ def _today_page(root: Path) -> str:
             completed=completed,
             lead_goal=lead_goal,
         ),
+        _today_stale_goal_hygiene(rows, lead_goal=lead_goal),
         _home_start_here(root, storage, lead_goal, first_run_same_page=True),
         _home_day_plan(root, storage, lead_goal, first_run_same_page=True),
         _home_attention_brief(root, storage, lead_goal),
@@ -5124,6 +5125,71 @@ def _today_goal_queue(
                 ]
             ),
             _ul(item_lines),
+            "</section>",
+        ]
+    )
+
+
+def _today_stale_goal_hygiene(
+    rows: list[sqlite3.Row],
+    *,
+    lead_goal: sqlite3.Row | None,
+) -> str:
+    lead_goal_id = str(lead_goal["id"]) if lead_goal is not None else ""
+    candidates = _stale_goal_hygiene_candidates(rows, lead_goal_id=lead_goal_id)
+    active_count = sum(1 for row, _reason in candidates if _goal_bucket(row) == "active")
+    paused_count = sum(1 for row, _reason in candidates if _goal_bucket(row) == "paused")
+    completed_count = sum(1 for row, _reason in candidates if _goal_bucket(row) == "completed")
+    status = "attention_needed" if active_count or paused_count else "clear"
+    visible_candidates = candidates[:8]
+    lines = []
+    for row, reason in visible_candidates:
+        goal_id = str(row["id"])
+        bucket = _goal_bucket(row)
+        title = _compact_label(
+            str(row["title"] or row["description"] or goal_id),
+            84,
+        )
+        lines.append(
+            "today_stale_goal_hygiene_candidate: "
+            f"goal=<a href='/goals/{quote(goal_id)}'>{_e(title)}</a> "
+            f"status={_e(str(row['status']))} bucket={_e(bucket)} "
+            f"reason={_e(reason)} action={_goal_hygiene_action_surface(row)}"
+        )
+    overflow = len(candidates) - len(visible_candidates)
+    if overflow > 0:
+        lines.append(
+            f"today_stale_goal_hygiene_overflow: {overflow} more candidates on <a href='/goals#goal-stale-hygiene'>/goals#goal-stale-hygiene</a>"
+        )
+    if not lines:
+        lines.append("today_stale_goal_hygiene_clear: no stale demo or context-pack Goals detected")
+    return "".join(
+        [
+            "<section id='today-stale-goal-hygiene' class='panel goal-stale-hygiene today-stale-goal-hygiene' data-today-stale-goal-hygiene='true'><h2>Stale Goal Hygiene</h2>",
+            "<p class='muted'>Keeps old demo and context-pack Goals visible as evidence while steering Today toward the real daily-use Goal.</p>",
+            _kv(
+                [
+                    ("today_stale_goal_hygiene_status", status),
+                    ("today_stale_goal_hygiene_source", "demo_context_pack_goal_classifier"),
+                    ("today_stale_goal_hygiene_candidates", str(len(candidates))),
+                    ("today_stale_goal_hygiene_active_candidates", str(active_count)),
+                    ("today_stale_goal_hygiene_paused_candidates", str(paused_count)),
+                    ("today_stale_goal_hygiene_completed_candidates", str(completed_count)),
+                    ("today_stale_goal_hygiene_lead_goal_protected", lead_goal_id or "none"),
+                    (
+                        "today_stale_goal_hygiene_primary_surface",
+                        SafeHtml("<a href='/goals#goal-stale-hygiene'>/goals#goal-stale-hygiene</a>"),
+                    ),
+                    ("today_stale_goal_hygiene_pause_path", "existing_confirmed_pause_goal_action"),
+                    ("today_stale_goal_hygiene_complete_path", "goal_completion_readiness_when_publication_handoff_ready"),
+                    ("today_stale_goal_hygiene_archive_status", "not_supported_for_goals_evidence_retained"),
+                    ("today_stale_goal_hygiene_write_on_get", "false"),
+                    ("today_stale_goal_hygiene_provider_calls_taken", "0"),
+                    ("today_stale_goal_hygiene_network_actions_taken", "0"),
+                    ("today_stale_goal_hygiene_external_effects_created", "false"),
+                ]
+            ),
+            _ul(lines),
             "</section>",
         ]
     )
@@ -16286,6 +16352,7 @@ def _goals(root: Path) -> str:
                 paused=paused,
                 completed=completed,
             ),
+            _goal_stale_hygiene_panel(rows),
             _goal_creation_panel(storage, rows),
             _goal_board_filter(rows, active, paused, completed),
             _list_section(
@@ -16637,7 +16704,14 @@ def _goal_board_command_bar(
     paused: list[sqlite3.Row],
     completed: list[sqlite3.Row],
 ) -> str:
-    selected_row, source = _goal_board_selected_row(root, rows, active, paused, completed)
+    selected_row, source = _goal_board_selected_row(
+        root,
+        storage,
+        rows,
+        active,
+        paused,
+        completed,
+    )
     if selected_row is None:
         first_run = _first_run_progress(root, storage)
         lines = [
@@ -16784,22 +16858,51 @@ def _goal_board_command_bar(
 
 def _goal_board_selected_row(
     root: Path,
+    storage: Storage,
     rows: list[sqlite3.Row],
     active: list[sqlite3.Row],
     paused: list[sqlite3.Row],
     completed: list[sqlite3.Row],
 ) -> tuple[sqlite3.Row | None, str]:
     saved_goal = str(_load_workspace_state(root).get("open_goal") or "").strip()
+    saved_stale_row: sqlite3.Row | None = None
     if saved_goal:
         for row in rows:
             if str(row["id"]) == saved_goal:
+                if _stale_goal_hygiene_reason(row):
+                    saved_stale_row = row
+                    break
                 return row, "saved_goal"
+    real_goal, real_source = _dogfooding_real_goal_row(root, storage)
+    if real_goal is not None and not _stale_goal_hygiene_reason(real_goal):
+        if saved_stale_row is not None:
+            return real_goal, f"{real_source}_selector_hygiene"
+        if active and _stale_goal_hygiene_reason(active[0]):
+            return real_goal, f"{real_source}_selector_hygiene"
     if active:
-        return active[0], "active_goal"
+        if not _stale_goal_hygiene_reason(active[0]):
+            return active[0], "active_goal"
+        for row in active:
+            if not _stale_goal_hygiene_reason(row):
+                return row, "active_goal_selector_hygiene"
     if paused:
+        for row in paused:
+            if not _stale_goal_hygiene_reason(row):
+                return row, "paused_goal_selector_hygiene"
+        if saved_stale_row is not None:
+            return saved_stale_row, "saved_goal_stale_hygiene"
         return paused[0], "paused_goal"
     if completed:
+        for row in completed:
+            if not _stale_goal_hygiene_reason(row):
+                return row, "completed_goal_selector_hygiene"
+        if saved_stale_row is not None:
+            return saved_stale_row, "saved_goal_stale_hygiene"
         return completed[0], "completed_goal"
+    if saved_stale_row is not None:
+        return saved_stale_row, "saved_goal_stale_hygiene"
+    if active:
+        return active[0], "active_goal"
     return None, "first_run"
 
 
@@ -16812,7 +16915,14 @@ def _goal_board_workbench(
     paused: list[sqlite3.Row],
     completed: list[sqlite3.Row],
 ) -> str:
-    selected_row, source = _goal_board_selected_row(root, rows, active, paused, completed)
+    selected_row, source = _goal_board_selected_row(
+        root,
+        storage,
+        rows,
+        active,
+        paused,
+        completed,
+    )
     if selected_row is None:
         first_run = _first_run_progress(root, storage)
         current_step = str(first_run["current_step"])
@@ -17030,6 +17140,121 @@ def _goal_board_workbench(
                     ("goal_board_workbench_provider_calls_taken", "0"),
                     ("goal_board_workbench_network_actions_taken", "0"),
                     ("goal_board_workbench_external_effects_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _goal_stale_hygiene_panel(rows: list[sqlite3.Row]) -> str:
+    candidates = _stale_goal_hygiene_candidates(rows)
+    active_count = sum(1 for row, _reason in candidates if _goal_bucket(row) == "active")
+    paused_count = sum(1 for row, _reason in candidates if _goal_bucket(row) == "paused")
+    completed_count = sum(1 for row, _reason in candidates if _goal_bucket(row) == "completed")
+    status = "attention_needed" if active_count or paused_count else "clear"
+    cards: list[str] = []
+    lines: list[str] = []
+    for row, reason in candidates[:12]:
+        goal_id = str(row["id"])
+        bucket = _goal_bucket(row)
+        title = _compact_label(
+            str(row["title"] or row["description"] or goal_id),
+            96,
+        )
+        action_surface = _goal_hygiene_action_surface(row)
+        mutation_path = "review_only"
+        action_html = (
+            f"<a class='goal-stale-hygiene-link' href='/goals/{quote(goal_id)}'>Review Goal</a>"
+        )
+        if bucket == "active":
+            mutation_path = "confirmed_pause_goal"
+            action_html = "".join(
+                [
+                    "<details class='goal-stale-hygiene-action' data-goal-stale-hygiene-pause='true'>",
+                    "<summary>Pause stale Goal</summary>",
+                    "<p class='muted'>Moves this local Goal out of the active lane while keeping its artifacts and evidence visible.</p>",
+                    _input_form(
+                        "pause-goal",
+                        {"goal_id": goal_id},
+                        {
+                            "paused_by": "operator",
+                            "note": "Pause stale demo/context-pack Goal from hygiene panel.",
+                        },
+                    ),
+                    "</details>",
+                ]
+            )
+        elif bucket == "paused":
+            mutation_path = "resume_on_goal_detail"
+            action_html = (
+                f"<a class='goal-stale-hygiene-link' href='/goals/{quote(goal_id)}#goal-next-action'>Resume on Goal page</a>"
+            )
+        elif bucket == "completed":
+            mutation_path = "completion_review_only"
+            action_html = (
+                f"<a class='goal-stale-hygiene-link' href='/goals/{quote(goal_id)}#goal-completion-readiness'>Review completion</a>"
+            )
+        cards.append(
+            "".join(
+                [
+                    "<article class='goal-stale-hygiene-card' data-goal-stale-hygiene-card='true' ",
+                    f"data-goal-stale-hygiene-bucket='{_e(bucket)}' ",
+                    f"data-goal-stale-hygiene-reason='{_e(reason)}'>",
+                    f"<span class='goal-stale-hygiene-kicker'>{_e(bucket)} / {_e(reason)}</span>",
+                    f"<h3><a href='/goals/{quote(goal_id)}'>{_e(title)}</a></h3>",
+                    f"<p>{_e(str(row['project_id'] or 'unknown'))} · status {_e(str(row['status']))}</p>",
+                    "<div class='goal-stale-hygiene-actions'>",
+                    f"<a class='goal-stale-hygiene-link' href='/goals/{quote(goal_id)}'>Review</a>",
+                    str(action_html),
+                    "</div>",
+                    "</article>",
+                ]
+            )
+        )
+        lines.append(
+            "goal_stale_hygiene_candidate: "
+            f"goal=<a href='/goals/{quote(goal_id)}'>{_e(title)}</a> "
+            f"status={_e(str(row['status']))} bucket={_e(bucket)} "
+            f"reason={_e(reason)} mutation_path={_e(mutation_path)} "
+            f"action={action_surface}"
+        )
+    overflow = len(candidates) - len(cards)
+    if overflow > 0:
+        lines.append(f"goal_stale_hygiene_overflow: {overflow} more stale candidates beyond first 12")
+    if not lines:
+        lines.append("goal_stale_hygiene_clear: no stale demo or context-pack Goals detected")
+    cards_html = (
+        "<div class='goal-stale-hygiene-grid' data-goal-stale-hygiene-cards='true'>"
+        + "".join(cards)
+        + "</div>"
+        if cards
+        else "<p class='muted'>No stale demo or context-pack Goals need attention.</p>"
+    )
+    return "".join(
+        [
+            "<section id='goal-stale-hygiene' class='panel goal-stale-hygiene' data-goal-stale-hygiene='true'><h2>Stale Goal Hygiene</h2>",
+            "<p class='muted'>Review old demo/context-pack Goals, pause active stale work, or inspect completion evidence without hiding any artifacts.</p>",
+            cards_html,
+            "<details class='goal-stale-hygiene-evidence' data-goal-stale-hygiene-evidence='true'><summary>Stale Goal hygiene evidence</summary>",
+            _kv(
+                [
+                    ("goal_stale_hygiene_status", status),
+                    ("goal_stale_hygiene_source", "demo_context_pack_goal_classifier"),
+                    ("goal_stale_hygiene_candidates", str(len(candidates))),
+                    ("goal_stale_hygiene_active_candidates", str(active_count)),
+                    ("goal_stale_hygiene_paused_candidates", str(paused_count)),
+                    ("goal_stale_hygiene_completed_candidates", str(completed_count)),
+                    ("goal_stale_hygiene_review_path", "open_goal_detail"),
+                    ("goal_stale_hygiene_pause_path", "existing_confirmed_pause_goal_action"),
+                    ("goal_stale_hygiene_complete_path", "goal_completion_readiness_when_publication_handoff_ready"),
+                    ("goal_stale_hygiene_archive_status", "not_supported_for_goals_evidence_retained"),
+                    ("goal_stale_hygiene_write_on_get", "false"),
+                    ("goal_stale_hygiene_provider_calls_taken", "0"),
+                    ("goal_stale_hygiene_network_actions_taken", "0"),
+                    ("goal_stale_hygiene_external_effects_created", "false"),
                 ]
             ),
             _ul(lines),
@@ -21932,6 +22157,62 @@ def _goal_bucket(row: sqlite3.Row) -> str:
     if status in {"paused", "blocked", "waiting", "waiting_approval"}:
         return "paused"
     return "active"
+
+
+def _goal_row_text(row: sqlite3.Row) -> str:
+    return " ".join(
+        str(row[key] or "")
+        for key in ("id", "project_id", "title", "description", "original_prompt")
+        if key in row.keys()
+    )
+
+
+def _stale_goal_hygiene_reason(row: sqlite3.Row) -> str:
+    project_id = str(row["project_id"] or "").strip().lower()
+    text = _goal_row_text(row).lower()
+    if project_id == "local-app-demo":
+        return "fixture_demo_goal"
+    if "demo the clankeros local operator app" in text or "fixture-backed" in text:
+        return "fixture_demo_goal"
+    context_pack_markers = {"context-pack", "context pack"}
+    if any(marker in text for marker in context_pack_markers) and (
+        "demo" in text or "scouting" in text or "before edits" in text
+    ):
+        return "context_pack_demo_goal"
+    return ""
+
+
+def _stale_goal_hygiene_candidates(
+    rows: list[sqlite3.Row],
+    *,
+    lead_goal_id: str = "",
+) -> list[tuple[sqlite3.Row, str]]:
+    candidates: list[tuple[sqlite3.Row, str]] = []
+    for row in rows:
+        goal_id = str(row["id"])
+        if lead_goal_id and goal_id == lead_goal_id:
+            continue
+        reason = _stale_goal_hygiene_reason(row)
+        if reason:
+            candidates.append((row, reason))
+    return candidates
+
+
+def _goal_hygiene_review_surface(row: sqlite3.Row) -> SafeHtml:
+    goal_id = str(row["id"])
+    return SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(goal_id)}</a>")
+
+
+def _goal_hygiene_action_surface(row: sqlite3.Row) -> SafeHtml:
+    goal_id = str(row["id"])
+    bucket = _goal_bucket(row)
+    if bucket == "active":
+        return SafeHtml(f"<a href='/goals/{quote(goal_id)}#goal-pause'>Pause Goal</a>")
+    if bucket == "paused":
+        return SafeHtml(f"<a href='/goals/{quote(goal_id)}#goal-next-action'>Resume Goal</a>")
+    if bucket == "completed":
+        return SafeHtml(f"<a href='/goals/{quote(goal_id)}#goal-completion-readiness'>Review completion</a>")
+    return _goal_hygiene_review_surface(row)
 
 
 def _goal_index_line(
@@ -33622,6 +33903,11 @@ def _dogfooding_real_goal_row(
         return None, "no_real_goal"
 
     def lead(candidates: list[sqlite3.Row]) -> sqlite3.Row:
+        non_stale = [
+            row for row in candidates if not _stale_goal_hygiene_reason(row)
+        ]
+        if non_stale:
+            candidates = non_stale
         active = [row for row in candidates if _goal_bucket(row) == "active"]
         paused = [row for row in candidates if _goal_bucket(row) == "paused"]
         completed = [row for row in candidates if _goal_bucket(row) == "completed"]
@@ -53339,6 +53625,20 @@ def _html_page(
     .goal-attention-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-attention-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-attention-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .goal-stale-hygiene {{ border-left:4px solid var(--warn); }}
+    .goal-stale-hygiene-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-stale-hygiene-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; display:grid; gap:8px; }}
+    .goal-stale-hygiene-card h3 {{ margin:0; font-size:16px; line-height:1.3; overflow-wrap:anywhere; }}
+    .goal-stale-hygiene-card p {{ margin:0; color:var(--muted); overflow-wrap:anywhere; }}
+    .goal-stale-hygiene-kicker {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .goal-stale-hygiene-actions {{ display:flex; flex-wrap:wrap; gap:7px; align-items:flex-start; }}
+    .goal-stale-hygiene-link, .goal-stale-hygiene-action summary {{ display:inline-flex; align-items:center; min-height:32px; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); color:var(--accent); background:var(--surface); text-decoration:none; overflow-wrap:anywhere; cursor:pointer; }}
+    .goal-stale-hygiene-action {{ min-width:0; max-width:100%; }}
+    .goal-stale-hygiene-action[open] {{ flex-basis:100%; border:1px solid var(--line); background:var(--panel); padding:8px; }}
+    .goal-stale-hygiene-action form {{ margin-top:8px; }}
+    .goal-stale-hygiene-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-stale-hygiene-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-stale-hygiene-evidence:not([open]) > :not(summary) {{ display:none; }}
     .goal-decision-queue, .today-decision-queue {{ border-left:4px solid var(--warn); }}
     .goal-decision-list {{ list-style:none; padding:0; margin:12px 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:10px; }}
     .goal-decision-row {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; display:grid; gap:8px; align-content:start; }}

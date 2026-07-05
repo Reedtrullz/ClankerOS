@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_f712fec0c7f1
+- Packet ID: iteration_39ef27dab3ed
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Surface changed-file and diff summaries in review and dashboard operator signals.
+Advance the Agent System north-star goal by completing: Add a one-command next-day self-hosting check that verifies local fetch, saved resume, current `main` proof, and the browser next action before work resumes.
 
 ## Definition Of Done
 
@@ -130,9 +130,9 @@ Advance the Agent System north-star goal by completing: Surface changed-file and
 ## Simplicity Guardrail
 
 - selection_policy: highest-score-then-lowest-complexity
-- selection_reason: selected highest score 10; complexity 4 recorded for audit
-- selected_score: 10
-- selected_complexity: 4
+- selection_reason: selected lower complexity 3 among 2 candidates with equal score 9
+- selected_score: 9
+- selected_complexity: 3
 
 ## Guardrails And Non-Claims
 
@@ -143,7 +143,7 @@ Advance the Agent System north-star goal by completing: Surface changed-file and
 
 ## Current Posture
 
-- pending tasks: 29
+- pending tasks: 151
 - waiting approval: 0
 - blocked tasks: 0
 - failed tasks: 0
