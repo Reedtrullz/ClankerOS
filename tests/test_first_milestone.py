@@ -3303,6 +3303,9 @@ def test_profiles_route_reads_storage_profiles_without_enabling_providers(
     )
     assert save_plan.status == 200
     assert "profile_plan_saved: .clanker/app/profile-routing-plan.json" in save_plan.body
+    assert "lane_profiles.planning</dt><dd>planner" in save_plan.body
+    assert "planning_profile</dt><dd>planner" in save_plan.body
+    assert "cheap_model_profile</dt><dd>tester" in save_plan.body
     plan_path = tmp_path / ".clanker" / "app" / "profile-routing-plan.json"
     assert plan_path.exists()
     plan_payload = json.loads(plan_path.read_text(encoding="utf-8"))
@@ -5816,6 +5819,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "first_run_command_form_surface</dt><dd><a href='#first-run-create-project'>"
         "Create Project</a>"
     ) in root.body
+    assert "first_run_command_goal_form_status</dt><dd>not_requested" in root.body
+    assert "first_run_command_goal_form_error</dt><dd>none" in root.body
     assert "first_run_command_action_form_available</dt><dd>true" in root.body
     assert "first_run_command_inline_action_form_available</dt><dd>false" in root.body
     assert "first_run_command_confirmation_required</dt><dd>true" in root.body

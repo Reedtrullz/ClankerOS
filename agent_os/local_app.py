@@ -13935,17 +13935,17 @@ def _save_profile_routing_plan(root: Path, form: dict[str, list[str]]) -> dict[s
     path = _profile_plan_path(root)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    lane_profile_fields = {
+        f"{lane_key.replace('-', '_')}_profile": lane["profile"]
+        for lane_key, lane in lanes.items()
+    }
     return {
         "status": "profile_plan_saved",
         "path": _profile_plan_relative_path().as_posix(),
         "updated_by": updated_by,
         "lane_count": len(lanes),
-        "planning_profile": lanes["planning"]["profile"],
-        "coding_profile": lanes["coding"]["profile"],
-        "review_profile": lanes["review"]["profile"],
-        "docs_profile": lanes["docs"]["profile"],
-        "cheap_model_profile": lanes["cheap-model"]["profile"],
-        "frontier_model_profile": lanes["frontier-model"]["profile"],
+        "lane_profiles": {lane_key: lane["profile"] for lane_key, lane in lanes.items()},
+        **lane_profile_fields,
         "provider_routing_active": False,
         "model_routing_enabled": False,
         "provider_calls_taken": 0,
@@ -14751,6 +14751,8 @@ def _first_run_command_bar(root: Path, storage: Storage, progress: dict[str, Any
     inline_form_available = False
     confirmation_required = False
     form_surface: str | SafeHtml = "none"
+    goal_form_status = "not_requested"
+    goal_form_error = "none"
     if current_step == "create_project":
         form_available = True
         confirmation_required = True
@@ -14764,8 +14766,11 @@ def _first_run_command_bar(root: Path, storage: Storage, progress: dict[str, Any
             goal_state = _goal_state(root, storage, goal_id)
             next_action = _goal_next_action(root, goal_state)
             goal_form = _goal_next_action_form(goal_state, next_action)
-        except Exception:
+            goal_form_status = "available" if goal_form else "not_available"
+        except Exception as error:
             goal_form = ""
+            goal_form_status = "error"
+            goal_form_error = type(error).__name__
         if goal_form:
             form_available = True
             inline_form_available = True
@@ -14800,6 +14805,8 @@ def _first_run_command_bar(root: Path, storage: Storage, progress: dict[str, Any
         ("first_run_command_reason", progress["next_reason"]),
         ("first_run_command_target_surface", progress["next_surface"]),
         ("first_run_command_form_surface", form_surface),
+        ("first_run_command_goal_form_status", goal_form_status),
+        ("first_run_command_goal_form_error", goal_form_error),
         ("first_run_command_action_form_available", str(form_available).lower()),
         (
             "first_run_command_inline_action_form_available",
