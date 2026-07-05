@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -213,11 +214,14 @@ def render_coder_prep_review_lines(root: Path, delegation_id: str, run_id: str) 
     ]
 
 
-def list_coder_prep_packets(root: Path) -> list[dict[str, Any]]:
+def list_coder_prep_packets(
+    root: Path,
+    *,
+    delegation_ids: Iterable[str] | None = None,
+) -> list[dict[str, Any]]:
     root = root.resolve()
     packets: list[dict[str, Any]] = []
-    pattern = ".clanker/delegations/*/runs/*/coder_prep/coder_prep.json"
-    for path in sorted(root.glob(pattern)):
+    for path in _coder_prep_packet_paths(root, delegation_ids=delegation_ids):
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
@@ -226,6 +230,29 @@ def list_coder_prep_packets(root: Path) -> list[dict[str, Any]]:
             payload["_path"] = str(path.relative_to(root))
             packets.append(payload)
     return packets
+
+
+def _coder_prep_packet_paths(
+    root: Path,
+    *,
+    delegation_ids: Iterable[str] | None,
+) -> list[Path]:
+    if delegation_ids is None:
+        return sorted(root.glob(".clanker/delegations/*/runs/*/coder_prep/coder_prep.json"))
+
+    base = (root / ".clanker" / "delegations").resolve()
+    paths: list[Path] = []
+    requested = sorted({str(delegation_id).strip() for delegation_id in delegation_ids})
+    for delegation_id in requested:
+        if not delegation_id:
+            continue
+        delegation_root = (base / delegation_id).resolve()
+        try:
+            delegation_root.relative_to(base)
+        except ValueError:
+            continue
+        paths.extend(delegation_root.glob("runs/*/coder_prep/coder_prep.json"))
+    return sorted(paths)
 
 
 def _payload(
