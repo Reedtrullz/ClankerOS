@@ -427,7 +427,10 @@ confirmation requirement, and zero provider/network/external-effect counters.
   target-surface evidence, zero-effect counters, and timeline metadata. Each
   timeline and Activity Log event renders with a time, event-kind badge,
   clickable local message, and target badge so artifacts, delegations, runs,
-  approvals, and goal events are easier to scan without reading raw logs. A
+  approvals, CI proof records, and goal events are easier to scan without
+  reading raw logs. Project-scoped CI snapshot/deploy proof records appear as
+  explicit `CI proof recorded` artifact events before generic artifact backfill.
+  A
   read-only `Goal Timeline Digest` follows the command bar with Span, Latest,
   Artifact, Next, and Safety cards, then a browser-local `Timeline Lane Filter`
   for switching the rendered chronology between all events, artifacts,
@@ -1098,7 +1101,10 @@ confirmation requirement, and zero provider/network/external-effect counters.
 - `/goals/<goal_id>` also includes a typed `Goal Artifact Explorer`. It groups
   goal-linked Markdown, JSON, Patch/Diff, and Text/Log artifacts and links each
   item through `/artifacts?path=...`; it does not expose raw filesystem
-  browsing. The artifact area starts with a read-only
+  browsing. Project-scoped CI snapshot/deploy proof JSON is registered as
+  bounded `ci_snapshot_evidence`/`ci_deploy_evidence` artifacts, so Goal latest
+  artifact, source filters, and the inline reader can open the recorded proof
+  after an operator supplies it. The artifact area starts with a read-only
   `Goal Artifact Command Bar` that exposes Open, Latest, Types, Inventory, and
   Safety cards, summarizes artifact record counts, available/missing posture,
   render-family counts, source-family counts, the latest artifact, one bounded
@@ -1121,11 +1127,12 @@ confirmation requirement, and zero provider/network/external-effect counters.
   run/coder-run state can prove it, and the artifact workbench, relationship
   map, review brief, command bar, and confirmed `Remember Artifact` form all
   carry that Goal/project context forward without writing on GET.
-  The Goal timeline backfills
-  generic `Artifact recorded` entries
-  from the same bounded artifact registry after workflow-specific timeline
-  events are added, so artifacts such as context-pack JSON, handoff JSON,
-  diffs, changed-file lists, and git-status logs appear chronologically. The
+  The Goal timeline adds explicit `CI proof recorded` entries for project CI
+  snapshot/deploy proof artifacts, then backfills generic `Artifact recorded`
+  entries from the same bounded artifact registry after workflow-specific
+  timeline events are added, so artifacts such as context-pack JSON, handoff
+  JSON, diffs, changed-file lists, and git-status logs appear chronologically.
+  The
   `Goal Timeline Command Bar` keeps the latest linked event, event-family
   summary, run/task/note flow, and safety posture visible before collapsed
   evidence and that longer list.

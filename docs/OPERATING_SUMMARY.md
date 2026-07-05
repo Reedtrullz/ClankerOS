@@ -673,11 +673,12 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   Goal pages also
   include clickable timeline entries with operator-facing lifecycle language
   for approval requested/granted, execution completed, review passed, commit
-  approved, and publication approved states. The timeline also
-  backfills generic artifact events from the same bounded Goal Artifact
-  Explorer registry, deduping workflow-specific artifact links so produced
-  context packs, handoffs, diffs, changed-file lists, and text logs stay
-  chronological. Timeline and Activity Log rows render as scan-first events
+  approved, and publication approved states. The timeline also adds explicit
+  `CI proof recorded` artifact events for project-scoped CI snapshot/deploy
+  proof records before it backfills generic artifact events from the same
+  bounded Goal Artifact Explorer registry, deduping workflow-specific artifact
+  links so produced context packs, handoffs, diffs, changed-file lists, and text
+  logs stay chronological. Timeline and Activity Log rows render as scan-first events
   with time, event-kind badge, clickable local message, and target badge, so
   artifacts, delegations, runs, approvals, tasks, and goal events are easier
   to distinguish at a glance. The Goal timeline starts with a read-only
@@ -1095,8 +1096,11 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   They also include a typed
   `Goal Artifact Explorer` that groups goal-linked Markdown,
   JSON, Patch/Diff, and Text/Log artifacts and links them through the bounded
-  inert `/artifacts` viewer without raw filesystem browsing. Goal `Artifacts`
-  starts with a read-only `Goal Artifact Command Bar` that summarizes artifact
+  inert `/artifacts` viewer without raw filesystem browsing. Project-scoped CI
+  snapshot/deploy proof JSON is included as bounded
+  `ci_snapshot_evidence`/`ci_deploy_evidence` artifacts, so latest-artifact
+  surfaces, source filters, and the inline reader can open the recorded proof
+  after the operator supplies it. Goal `Artifacts` starts with a read-only `Goal Artifact Command Bar` that summarizes artifact
   record counts, available/missing posture, render-family counts,
   source-family counts, the latest artifact label, raw latest-artifact href,
   one bounded review click, and zero-effect counters through visible Open,

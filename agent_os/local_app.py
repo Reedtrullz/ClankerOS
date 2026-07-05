@@ -24617,6 +24617,23 @@ def _goal_timeline_items(root: Path, state: dict[str, Any]) -> list[dict[str, st
         if publication.handoff_at:
             href = _artifact_href(root, publication.handoff_artifact_path) if publication.handoff_artifact_path else run_href
             items.append({"at": publication.handoff_at, "message": f"Publication handoff ready: {publication.id}.", "href": href})
+    for source, record in _goal_project_ci_evidence_records(root, goal.project_id):
+        evidence_path = _repo_relative_artifact_path(
+            root,
+            getattr(record, "evidence_path", None),
+        )
+        if not evidence_path or evidence_path == "none":
+            continue
+        if _goal_artifact_render_kind(evidence_path) is None:
+            continue
+        items.append(
+            {
+                "at": str(getattr(record, "created_at", "") or goal.updated_at),
+                "message": f"CI proof recorded: {_goal_ci_evidence_record_label(source, record)}.",
+                "href": _artifact_href(root, evidence_path),
+                "kind": "artifact",
+            }
+        )
     for row in state["events"]:
         items.append({"at": row["created_at"], "message": str(row["message"]), "href": f"/goals/{quote(goal.id)}"})
     artifact_hrefs = {
@@ -26819,9 +26836,43 @@ def _goal_artifact_preview(
     return fallback
 
 
+def _goal_project_ci_evidence_records(root: Path, project_id: str) -> list[tuple[str, Any]]:
+    storage = _storage(root)
+    records: list[tuple[str, Any]] = []
+    for record in storage.list_recent_ci_deploy_evidence_records(limit=None):
+        if record.project_id == project_id:
+            records.append(("ci_deploy_evidence", record))
+    for record in storage.list_recent_ci_snapshot_evidence_records(limit=None):
+        if record.project_id == project_id:
+            records.append(("ci_snapshot_evidence", record))
+    return sorted(
+        records,
+        key=lambda item: (
+            str(getattr(item[1], "created_at", "")),
+            str(getattr(item[1], "id", "")),
+        ),
+    )
+
+
+def _goal_ci_evidence_record_label(source: str, record: Any) -> str:
+    result = record.result_json if isinstance(getattr(record, "result_json", None), dict) else {}
+    source_label = (
+        "CI deploy proof"
+        if source == "ci_deploy_evidence"
+        else "CI snapshot proof"
+    )
+    run_id = str(getattr(record, "external_run_id", "") or getattr(record, "id", "unknown"))
+    status = str(getattr(record, "status", "unknown") or "unknown")
+    scope = str(result.get("evidence_scope", "unknown") or "unknown")
+    if scope and scope != "unknown":
+        return f"{source_label} {run_id} ({status}, {scope})"
+    return f"{source_label} {run_id} ({status})"
+
+
 def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, str]]:
     records: list[dict[str, str]] = []
     seen: set[tuple[str, str]] = set()
+    goal = state["goal"]
 
     def add(label: str, path: str | Path | None, *, source: str) -> None:
         relative_path = _repo_relative_artifact_path(root, path)
@@ -26906,6 +26957,12 @@ def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, 
             ("publication_handoff", publication.handoff_artifact_path),
         ]:
             add(label, path, source="publication")
+    for source, record in _goal_project_ci_evidence_records(root, goal.project_id):
+        add(
+            _goal_ci_evidence_record_label(source, record),
+            getattr(record, "evidence_path", None),
+            source=source,
+        )
     return records
 
 
@@ -26950,6 +27007,8 @@ def _goal_artifact_record_rank(record: dict[str, str]) -> int:
         "coder_run": 80,
         "commit": 110,
         "publication": 120,
+        "ci_deploy_evidence": 130,
+        "ci_snapshot_evidence": 135,
     }
     rank = rank_by_source.get(source, 0)
     if source == "coder_run" and label.endswith(" review") and kind == "markdown":

@@ -12430,6 +12430,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
         },
         idempotency_key="demo-goal-ci",
     )
+    ci_evidence_relative = ci_evidence_path.relative_to(tmp_path).as_posix()
 
     demo = render_local_app_route(tmp_path, "/demo")
     assert demo.status == 200
@@ -12690,7 +12691,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in workspace_with_demo.body
     )
     assert "workspace_restore_map_goal_label_source</dt><dd>title" in workspace_with_demo.body
-    assert result.review_path.relative_to(tmp_path).as_posix() in workspace_with_demo.body
+    assert ci_evidence_relative in workspace_with_demo.body
     assert "workspace_restore_map_filters_status</dt><dd>suggested" in workspace_with_demo.body
     assert "workspace_restore_map_panels_status</dt><dd>suggested" in workspace_with_demo.body
     assert "workspace_restore_map_readiness_status</dt><dd>not_started" in workspace_with_demo.body
@@ -12720,7 +12721,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
         f"workspace_save_defaults_resume_surface</dt><dd><a href='{workspace_action_surface}'>"
         f"{workspace_action_surface}</a>"
     ) in workspace_with_demo.body
-    assert result.review_path.relative_to(tmp_path).as_posix() in workspace_with_demo.body
+    assert ci_evidence_relative in workspace_with_demo.body
     assert "workspace_save_defaults_applied_to_form</dt><dd>true" in workspace_with_demo.body
     assert "workspace_save_defaults_confirmation_required</dt><dd>true" in workspace_with_demo.body
     assert "workspace_save_defaults_write_on_get</dt><dd>false" in workspace_with_demo.body
@@ -13504,7 +13505,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in resume_unsaved.body
     assert "resume_command_action_form_available</dt><dd>true" in resume_unsaved.body
     assert "resume_command_continue: <a href='/goals/" in resume_unsaved.body
-    home_day_plan_resume_artifact = result.review_path.relative_to(tmp_path).as_posix()
+    home_day_plan_resume_artifact = ci_evidence_relative
     home_day_plan_workspace_confirmation = render_local_app_route(
         tmp_path,
         "/actions/save-workspace",
@@ -13540,12 +13541,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "home_activity_goals_surface</dt><dd><a href='/goals'>Open goals</a>" in dashboard.body
     assert "home_activity_artifact_surface</dt><dd><a href='" in dashboard.body
     assert "home_activity_artifact_surface</dt><dd><a href='/artifacts?path=" in dashboard.body
-    assert f"Open coder run {result.coder_worktree_run_id}" in dashboard.body
+    assert "Open CI snapshot proof demo-goal-ci" in dashboard.body
     home_activity_artifact_card = dashboard.body[
         dashboard.body.index("data-home-activity-artifacts='true'") :
         dashboard.body.index("data-home-activity-notes='true'")
     ]
-    assert f"Open coder run {result.coder_worktree_run_id}" in home_activity_artifact_card
+    assert "Open CI snapshot proof demo-goal-ci" in home_activity_artifact_card
     assert "Open artifact</a>" not in home_activity_artifact_card
     assert "home_activity_note_surface</dt><dd><a href='" in dashboard.body
     assert "Execution completed" in dashboard.body
@@ -13981,13 +13982,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_session_latest_activity_at</dt><dd>" in today.body
     assert "today_session_latest_activity_message</dt><dd>" in today.body
     assert (
-        f"today_session_latest_activity_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        "today_session_latest_activity_label</dt><dd>CI proof recorded: "
+        "CI snapshot proof demo-goal-ci"
         in today.body
     )
     assert "today_session_latest_activity_surface</dt><dd><a href=" in today.body
     assert (
-        f"today_session_latest_activity_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
-        f"/runs/{result.coder_worktree_run_id}</a>"
+        f"today_session_latest_activity_raw_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'>"
+        f"/artifacts?path={ci_evidence_relative}</a>"
         in today.body
     )
     assert "today_session_latest_artifact</dt><dd><a href='/artifacts?path=" in today.body
@@ -13995,13 +13997,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_session_card_count</dt><dd>4" in today.body
     assert "today_session_continue_surface</dt><dd><a href='#today-current-action'>Create commit request</a>" in today.body
     assert (
-        f"today_session_latest_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        "today_session_latest_label</dt><dd>CI proof recorded: "
+        "CI snapshot proof demo-goal-ci"
         in today.body
     )
     assert "today_session_latest_surface</dt><dd><a href=" in today.body
     assert (
-        f"today_session_latest_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
-        f"/runs/{result.coder_worktree_run_id}</a>"
+        f"today_session_latest_raw_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'>"
+        f"/artifacts?path={ci_evidence_relative}</a>"
         in today.body
     )
     assert (
@@ -14027,13 +14030,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_session_click: <a href='#today-current-action'>Create commit request</a>" in today.body
     assert "today_session_resume: not_started -> <a href='#today-current-action'>Create commit request</a>" in today.body
     assert (
-        f"today_session_latest: <a href='/runs/{result.coder_worktree_run_id}'>"
-        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+        f"today_session_latest: <a href='/artifacts?path={ci_evidence_relative}'>"
+        "CI proof recorded: CI snapshot proof demo-goal-ci"
         in today.body
     )
     assert (
-        f"today_session_latest_raw: <a href='/runs/{result.coder_worktree_run_id}'>"
-        f"/runs/{result.coder_worktree_run_id}</a>"
+        f"today_session_latest_raw: <a href='/artifacts?path={ci_evidence_relative}'>"
+        f"/artifacts?path={ci_evidence_relative}</a>"
         in today.body
     )
     assert "today_session_ci: direct_public_snapshot/success" in today.body
@@ -14254,13 +14257,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_activity_digest_latest_at</dt><dd>" in today.body
     assert "today_activity_digest_latest_message</dt><dd>" in today.body
     assert (
-        f"today_activity_digest_latest_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        "today_activity_digest_latest_label</dt><dd>CI proof recorded: "
+        "CI snapshot proof demo-goal-ci"
         in today.body
     )
     assert "today_activity_digest_latest_surface</dt><dd><a href=" in today.body
     assert (
-        f"today_activity_digest_latest_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
-        f"/runs/{result.coder_worktree_run_id}</a>"
+        f"today_activity_digest_latest_raw_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'>"
+        f"/artifacts?path={ci_evidence_relative}</a>"
         in today.body
     )
     assert "today_activity_digest_window_surface</dt><dd><a href='/goals/" in today.body
@@ -14269,13 +14273,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "today_activity_digest_latest_artifact_label</dt><dd>"
         in today.body
     )
-    assert "today_activity_digest_latest_artifact_label</dt><dd>Open coder run " in today.body
-    assert " review" in today.body
+    assert "today_activity_digest_latest_artifact_label</dt><dd>Open CI snapshot proof demo-goal-ci" in today.body
     assert (
         "today_activity_digest_latest_artifact</dt><dd><a href='/artifacts?path="
     ) in today.body
     assert (
-        f"coder run {result.coder_worktree_run_id}"
+        "CI snapshot proof demo-goal-ci"
     ) in today.body
     assert (
         "today_activity_digest_latest_artifact_raw_surface</dt><dd><a href='/artifacts?path="
@@ -14286,13 +14289,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "today_activity_digest_network_actions_taken</dt><dd>0" in today.body
     assert "today_activity_digest_external_effects_created</dt><dd>false" in today.body
     assert (
-        f"today_activity_click: <a href='/runs/{result.coder_worktree_run_id}'>"
-        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+        f"today_activity_click: <a href='/artifacts?path={ci_evidence_relative}'>"
+        "CI proof recorded: CI snapshot proof demo-goal-ci"
         in today.body
     )
     assert (
-        f"today_activity_raw_surface: <a href='/runs/{result.coder_worktree_run_id}'>"
-        f"/runs/{result.coder_worktree_run_id}</a>"
+        f"today_activity_raw_surface: <a href='/artifacts?path={ci_evidence_relative}'>"
+        f"/artifacts?path={ci_evidence_relative}</a>"
         in today.body
     )
     assert "today_activity_window: <a href='/goals/" in today.body
@@ -14592,7 +14595,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
             "open_goal": [result.goal_id],
             "filters": [f"goal:{result.goal_id}"],
             "expanded_panels": ["today,day-plan,daily-loop,next-action,timeline,evidence,artifacts,notes"],
-            "last_viewed_artifact": [result.review_path.relative_to(tmp_path).as_posix()],
+            "last_viewed_artifact": [ci_evidence_relative],
             "resume_surface": ["/today#today-current-action"],
             "updated_by": ["today-command-center"],
             "return_to": ["/today"],
@@ -14972,13 +14975,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "Goal Next action: Create commit request - Demo the ClankerOS local operator app"
     ) in goal.body
     assert (
-        f"href='/goals/{result.goal_id}#goal-artifacts'>Goal Artifacts: 21/21 available - "
+        f"href='/goals/{result.goal_id}#goal-artifacts'>Goal Artifacts: 22/22 available - "
         "Demo the ClankerOS local operator app"
     ) in goal.body
     assert (
         f"href='/goals/{result.goal_id}#goal-artifact-reader'>"
-        f"Goal Artifact reader: Read coder run {result.coder_worktree_run_id} review - "
-        "Demo the ClankerOS local opera"
+        "Goal Artifact reader: Read CI snapshot proof demo-goal-ci"
     ) in goal.body
     assert (
         f"href='/goals/{result.goal_id}#goal-approvals'>Goal Approvals: 1 pending - "
@@ -15008,7 +15010,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in goal.body
     assert (
         "palette_goal_section_command: Artifacts "
-        "label=Goal Artifacts: 21/21 available - "
+        "label=Goal Artifacts: 22/22 available - "
         "Demo the ClankerOS local operator app with fixture-backed state "
         f"surface=<a href='/goals/{result.goal_id}#goal-artifacts'>"
         "goal-artifacts</a>"
@@ -15073,12 +15075,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-command-palette-quick-artifact='true' href='/artifacts?path=" in goal.body
     assert (
         "data-command-palette-quick-artifact='true' "
-        f"href='/artifacts?path=runs/{result.run_id}/review.md'>"
-        f"Open coder run {result.coder_worktree_run_id} review</a>"
+        f"href='/artifacts?path={ci_evidence_relative}'>"
+        "Open CI snapshot proof demo-goal-ci"
     ) in goal.body
     assert (
         "data-command-palette-quick-artifact='true' "
-        f"href='/artifacts?path=runs/{result.run_id}/review.md'>Open artifact</a>"
+        f"href='/artifacts?path={ci_evidence_relative}'>Open artifact</a>"
     ) not in goal.body
     assert (
         "data-command-palette-quick-finish='true' href='#goal-finish-today'>"
@@ -15096,8 +15098,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "palette_quick_switch_artifact_source</dt><dd>current_goal_latest" in goal.body
     assert (
         "palette_quick_switch_artifact: "
-        f"<a href='/artifacts?path=runs/{result.run_id}/review.md'>"
-        f"Open coder run {result.coder_worktree_run_id} review</a>"
+        f"<a href='/artifacts?path={ci_evidence_relative}'>"
+        "Open CI snapshot proof demo-goal-ci"
     ) in goal.body
     assert "palette_quick_switch_finish_source</dt><dd>goal_finish_form" in goal.body
     assert (
@@ -15550,27 +15552,28 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_review_latest_kind</dt><dd>" in goal.body
     assert "goal_review_latest_message</dt><dd>" in goal.body
     assert (
-        f"goal_review_latest_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        "goal_review_latest_label</dt><dd>CI proof recorded: "
+        "CI snapshot proof demo-goal-ci"
         in goal.body
     )
     assert "goal_review_latest_surface</dt><dd><a href='" in goal.body
     assert (
-        f"goal_review_latest_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
-        f"/runs/{result.coder_worktree_run_id}</a>"
+        f"goal_review_latest_raw_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'>"
+        f"/artifacts?path={ci_evidence_relative}</a>"
         in goal.body
     )
     assert "goal_review_evidence_items</dt><dd>" in goal.body
-    assert "goal_review_artifact_records</dt><dd>21" in goal.body
+    assert "goal_review_artifact_records</dt><dd>22" in goal.body
     assert "goal_review_proof_items</dt><dd>" in goal.body
-    assert "goal_review_available_artifacts</dt><dd>21" in goal.body
+    assert "goal_review_available_artifacts</dt><dd>22" in goal.body
     assert "goal_review_missing_artifacts</dt><dd>0" in goal.body
-    assert f"goal_review_latest_artifact</dt><dd>coder run {result.coder_worktree_run_id} review" in goal.body
-    assert "goal_review_latest_artifact_kind</dt><dd>markdown" in goal.body
+    assert "goal_review_latest_artifact</dt><dd>CI snapshot proof demo-goal-ci" in goal.body
+    assert "goal_review_latest_artifact_kind</dt><dd>json" in goal.body
     assert "goal_review_latest_artifact_status</dt><dd>available" in goal.body
-    assert "goal_review_latest_artifact_surface</dt><dd><a href='/artifacts?path=runs/" in goal.body
+    assert f"goal_review_latest_artifact_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'" in goal.body
     assert (
         "goal_review_artifact_reader_surface</dt><dd><a href='#goal-artifact-reader'>"
-        f"Read coder run {result.coder_worktree_run_id} review</a>"
+        "Read CI snapshot proof demo-goal-ci"
     ) in goal.body
     assert "goal_review_current_gate</dt><dd>commit_request" in goal.body
     assert "goal_review_gate_progress</dt><dd>8/15 gates done" in goal.body
@@ -15587,14 +15590,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_review_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_review_external_effects_created</dt><dd>false" in goal.body
     assert (
-        f"goal_review_latest: run Execution completed: {result.coder_worktree_run_id}. "
-        f"-> <a href='/runs/{result.coder_worktree_run_id}'>"
-        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+        "goal_review_latest: artifact CI proof recorded: CI snapshot proof demo-goal-ci (success, workflow_run)."
+        f" -> <a href='/artifacts?path={ci_evidence_relative}'>"
+        "CI proof recorded: CI snapshot proof demo-goal-ci"
         in goal.body
     )
     assert (
-        f"goal_review_latest_raw: <a href='/runs/{result.coder_worktree_run_id}'>"
-        f"/runs/{result.coder_worktree_run_id}</a>"
+        f"goal_review_latest_raw: <a href='/artifacts?path={ci_evidence_relative}'>"
+        f"/artifacts?path={ci_evidence_relative}</a>"
         in goal.body
     )
     assert "goal_review_proof:" in goal.body
@@ -16259,16 +16262,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_return_saved_goal_matches_current</dt><dd>false" in goal.body
     assert "goal_return_latest_activity_message</dt><dd>" in goal.body
     assert (
-        f"goal_return_latest_activity_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        "goal_return_latest_activity_label</dt><dd>CI proof recorded: "
+        "CI snapshot proof demo-goal-ci"
         in goal.body
     )
     assert (
-        f"goal_return_latest_activity_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
-        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+        f"goal_return_latest_activity_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'>"
+        "CI proof recorded: CI snapshot proof demo-goal-ci"
     ) in goal.body
     assert (
-        f"goal_return_latest_activity_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
-        f"/runs/{result.coder_worktree_run_id}</a>"
+        f"goal_return_latest_activity_raw_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'>"
+        f"/artifacts?path={ci_evidence_relative}</a>"
     ) in goal.body
     assert "goal_return_latest_artifact</dt><dd><a href='/artifacts?path=" in goal.body
     assert "data-goal-return-proof='true'" in goal.body
@@ -16289,12 +16293,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_return_external_effects_created</dt><dd>false" in goal.body
     assert "goal_return_now: Create commit request" in goal.body
     assert (
-        f"goal_return_latest: <a href='/runs/{result.coder_worktree_run_id}'>"
-        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+        f"goal_return_latest: <a href='/artifacts?path={ci_evidence_relative}'>"
+        "CI proof recorded: CI snapshot proof demo-goal-ci"
     ) in goal.body
     assert (
-        f"goal_return_latest_raw: <a href='/runs/{result.coder_worktree_run_id}'>"
-        f"/runs/{result.coder_worktree_run_id}</a>"
+        f"goal_return_latest_raw: <a href='/artifacts?path={ci_evidence_relative}'>"
+        f"/artifacts?path={ci_evidence_relative}</a>"
     ) in goal.body
     assert (
         f"goal_return_goal: <a href='/goals/{result.goal_id}'>"
@@ -16332,20 +16336,21 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_session_digest_latest_kind</dt><dd>" in goal.body
     assert "goal_session_digest_latest_message</dt><dd>" in goal.body
     assert (
-        f"goal_session_digest_latest_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        "goal_session_digest_latest_label</dt><dd>CI proof recorded: "
+        "CI snapshot proof demo-goal-ci"
         in goal.body
     )
     assert (
-        f"goal_session_digest_latest_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
-        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+        f"goal_session_digest_latest_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'>"
+        "CI proof recorded: CI snapshot proof demo-goal-ci"
     ) in goal.body
     assert (
-        f"goal_session_digest_latest_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
-        f"/runs/{result.coder_worktree_run_id}</a>"
+        f"goal_session_digest_latest_raw_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'>"
+        f"/artifacts?path={ci_evidence_relative}</a>"
     ) in goal.body
     assert (
         "goal_session_digest_latest_artifact_label</dt><dd>"
-        f"Open coder run {result.coder_worktree_run_id} review"
+        "Open CI snapshot proof demo-goal-ci"
     ) in goal.body
     assert "goal_session_digest_latest_artifact</dt><dd><a href='/artifacts?path=" in goal.body
     assert "goal_session_digest_latest_artifact_raw_surface</dt><dd><a href='/artifacts?path=" in goal.body
@@ -16363,12 +16368,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_session_digest_continue: <a href='#goal-action-dock-form'>Create commit request</a>" in goal.body
     assert "goal_session_digest_since_save: not_saved latest_after_save=false" in goal.body
     assert (
-        f"-> <a href='/runs/{result.coder_worktree_run_id}'>"
-        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+        f"-> <a href='/artifacts?path={ci_evidence_relative}'>"
+        "CI proof recorded: CI snapshot proof demo-goal-ci"
     ) in goal.body
     assert (
-        f"goal_session_digest_latest_raw: <a href='/runs/{result.coder_worktree_run_id}'>"
-        f"/runs/{result.coder_worktree_run_id}</a>"
+        f"goal_session_digest_latest_raw: <a href='/artifacts?path={ci_evidence_relative}'>"
+        f"/artifacts?path={ci_evidence_relative}</a>"
     ) in goal.body
     assert "goal_session_digest_artifact: <a href='/artifacts?path=" in goal.body
     assert "goal_session_digest_waiting: approvals=1 incidents=0 recommendations=0 -> <a href='/approvals'>Review approvals</a>" in goal.body
@@ -16396,13 +16401,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_activity_pulse_latest_kind</dt><dd>" in goal.body
     assert "goal_activity_pulse_latest_message</dt><dd>" in goal.body
     assert (
-        f"goal_activity_pulse_latest_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        "goal_activity_pulse_latest_label</dt><dd>CI proof recorded: "
+        "CI snapshot proof demo-goal-ci"
         in goal.body
     )
     assert "goal_activity_pulse_latest_surface</dt><dd><a href='" in goal.body
     assert (
-        f"goal_activity_pulse_latest_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
-        f"/runs/{result.coder_worktree_run_id}</a>"
+        f"goal_activity_pulse_latest_raw_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'>"
+        f"/artifacts?path={ci_evidence_relative}</a>"
         in goal.body
     )
     assert "goal_activity_pulse_artifact_events</dt><dd>" in goal.body
@@ -16410,24 +16416,24 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_activity_pulse_run_events</dt><dd>" in goal.body
     assert "goal_activity_pulse_latest_artifact</dt><dd><a href='/artifacts?path=" in goal.body
     assert (
-        f"goal_activity_pulse_latest_artifact_label</dt><dd>Open coder run {result.coder_worktree_run_id} review"
+        "goal_activity_pulse_latest_artifact_label</dt><dd>Open CI snapshot proof demo-goal-ci"
         in goal.body
     )
     activity_pulse_artifact_card = goal.body[
         goal.body.index("data-goal-activity-pulse-artifact='true'") :
         goal.body.index("data-goal-activity-pulse-next='true'")
     ]
-    assert "goal-activity-pulse-link' href='/artifacts?path=runs/" in activity_pulse_artifact_card
+    assert f"goal-activity-pulse-link' href='/artifacts?path={ci_evidence_relative}'" in activity_pulse_artifact_card
     assert (
-        f"Open coder run {result.coder_worktree_run_id} review</a>"
+        "Open CI snapshot proof demo-goal-ci"
         in activity_pulse_artifact_card
     )
     assert "Open artifact</a>" not in activity_pulse_artifact_card
     activity_pulse_artifact_evidence = goal.body[
-        goal.body.index("goal_activity_pulse_artifact: <a href='/artifacts?path=runs/") :
+        goal.body.index(f"goal_activity_pulse_artifact: <a href='/artifacts?path={ci_evidence_relative}'") :
         goal.body.index("goal_activity_pulse_next:")
     ]
-    assert f"Open coder run {result.coder_worktree_run_id} review</a>" in activity_pulse_artifact_evidence
+    assert "Open CI snapshot proof demo-goal-ci" in activity_pulse_artifact_evidence
     assert "Open artifact</a>" not in activity_pulse_artifact_evidence
     assert (
         f"goal-activity-pulse-link' href='/artifacts?path=runs/{result.coder_worktree_run_id}/review.md'>Open artifact</a>"
@@ -16442,14 +16448,14 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_activity_pulse_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_activity_pulse_external_effects_created</dt><dd>false" in goal.body
     assert (
-        f"goal_activity_pulse_latest: run Execution completed: {result.coder_worktree_run_id}. "
-        f"-> <a href='/runs/{result.coder_worktree_run_id}'>"
-        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+        "goal_activity_pulse_latest: artifact CI proof recorded: CI snapshot proof demo-goal-ci (success, workflow_run)."
+        f" -> <a href='/artifacts?path={ci_evidence_relative}'>"
+        "CI proof recorded: CI snapshot proof demo-goal-ci"
         in goal.body
     )
     assert (
-        f"goal_activity_pulse_latest_raw: <a href='/runs/{result.coder_worktree_run_id}'>"
-        f"/runs/{result.coder_worktree_run_id}</a>"
+        f"goal_activity_pulse_latest_raw: <a href='/artifacts?path={ci_evidence_relative}'>"
+        f"/artifacts?path={ci_evidence_relative}</a>"
         in goal.body
     )
     assert "goal_activity_pulse_recent:" in goal.body
@@ -16956,16 +16962,17 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "timeline_command_latest_kind</dt><dd>" in goal.body
     assert "timeline_command_latest_message</dt><dd>" in goal.body
     assert (
-        f"timeline_command_latest_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        "timeline_command_latest_label</dt><dd>CI proof recorded: "
+        "CI snapshot proof demo-goal-ci"
         in goal.body
     )
     assert (
-        f"timeline_command_latest_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
-        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+        f"timeline_command_latest_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'>"
+        "CI proof recorded: CI snapshot proof demo-goal-ci"
     ) in goal.body
     assert (
-        f"timeline_command_latest_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
-        f"/runs/{result.coder_worktree_run_id}</a>"
+        f"timeline_command_latest_raw_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'>"
+        f"/artifacts?path={ci_evidence_relative}</a>"
     ) in goal.body
     assert "timeline_command_artifact_events</dt><dd>" in goal.body
     assert "timeline_command_approval_events</dt><dd>" in goal.body
@@ -16979,12 +16986,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "timeline_command_external_effects_created</dt><dd>false" in goal.body
     assert "timeline_command_now:" in goal.body
     assert (
-        f"timeline_command_click: <a href='/runs/{result.coder_worktree_run_id}'>"
-        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+        f"timeline_command_click: <a href='/artifacts?path={ci_evidence_relative}'>"
+        "CI proof recorded: CI snapshot proof demo-goal-ci"
     ) in goal.body
     assert (
-        f"timeline_command_raw_surface: <a href='/runs/{result.coder_worktree_run_id}'>"
-        f"/runs/{result.coder_worktree_run_id}</a>"
+        f"timeline_command_raw_surface: <a href='/artifacts?path={ci_evidence_relative}'>"
+        f"/artifacts?path={ci_evidence_relative}</a>"
     ) in goal.body
     assert "timeline_command_safety: read-only local timeline" in goal.body
     assert "Goal Timeline Digest" in goal.body
@@ -17010,30 +17017,31 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "timeline_digest_latest_kind</dt><dd>" in goal.body
     assert "timeline_digest_latest_message</dt><dd>" in goal.body
     assert (
-        f"timeline_digest_latest_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        "timeline_digest_latest_label</dt><dd>CI proof recorded: "
+        "CI snapshot proof demo-goal-ci"
         in goal.body
     )
     assert (
-        f"timeline_digest_latest_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
-        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+        f"timeline_digest_latest_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'>"
+        "CI proof recorded: CI snapshot proof demo-goal-ci"
     ) in goal.body
     assert (
-        f"timeline_digest_latest_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
-        f"/runs/{result.coder_worktree_run_id}</a>"
+        f"timeline_digest_latest_raw_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'>"
+        f"/artifacts?path={ci_evidence_relative}</a>"
     ) in goal.body
     assert "timeline_digest_artifact_events</dt><dd>" in goal.body
     assert "timeline_digest_latest_artifact</dt><dd><a href='/artifacts?path=" in goal.body
     assert (
-        f"timeline_digest_latest_artifact_label</dt><dd>Open coder run {result.coder_worktree_run_id} review"
+        "timeline_digest_latest_artifact_label</dt><dd>Open CI snapshot proof demo-goal-ci"
         in goal.body
     )
     timeline_digest_artifact_card = goal.body[
         goal.body.index("data-goal-timeline-digest-artifact='true'") :
         goal.body.index("data-goal-timeline-digest-next='true'")
     ]
-    assert "goal-timeline-link' href='/artifacts?path=runs/" in timeline_digest_artifact_card
+    assert f"goal-timeline-link' href='/artifacts?path={ci_evidence_relative}'" in timeline_digest_artifact_card
     assert (
-        f"Open coder run {result.coder_worktree_run_id} review</a>"
+        "Open CI snapshot proof demo-goal-ci"
         in timeline_digest_artifact_card
     )
     assert "Latest artifact</a>" not in timeline_digest_artifact_card
@@ -17049,8 +17057,8 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "timeline_digest_external_effects_created</dt><dd>false" in goal.body
     assert "timeline_digest_latest:" in goal.body
     assert (
-        f"timeline_digest_latest_click: <a href='/runs/{result.coder_worktree_run_id}'>"
-        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+        f"timeline_digest_latest_click: <a href='/artifacts?path={ci_evidence_relative}'>"
+        "CI proof recorded: CI snapshot proof demo-goal-ci"
     ) in goal.body
     assert "timeline_digest_next: Create commit request" in goal.body
     assert "timeline_digest_safety: read-only local chronology digest" in goal.body
@@ -17126,6 +17134,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert f"Artifact recorded: coder run {result.coder_worktree_run_id} changed files." in goal.body
     assert f"Artifact recorded: coder run {result.coder_worktree_run_id} diff." in goal.body
     assert f"Artifact recorded: coder run {result.coder_worktree_run_id} git status." in goal.body
+    assert (
+        "CI proof recorded: CI snapshot proof demo-goal-ci (success, workflow_run)."
+        in goal.body
+    )
+    assert f"href='/artifacts?path={ci_evidence_relative}'" in goal.body
     assert "Activity Log" in goal.body
     assert "Goal Activity Command Bar" in goal.body
     assert "data-goal-activity-command-bar='true'" in goal.body
@@ -17146,28 +17159,29 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_activity_command_items</dt><dd>" in goal.body
     assert "goal_activity_command_latest_message</dt><dd>" in goal.body
     assert (
-        f"goal_activity_command_latest_label</dt><dd>Execution completed: {result.coder_worktree_run_id}."
+        "goal_activity_command_latest_label</dt><dd>CI proof recorded: "
+        "CI snapshot proof demo-goal-ci"
         in goal.body
     )
     assert (
-        f"goal_activity_command_latest_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
-        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+        f"goal_activity_command_latest_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'>"
+        "CI proof recorded: CI snapshot proof demo-goal-ci"
     ) in goal.body
     assert (
-        f"goal_activity_command_latest_raw_surface</dt><dd><a href='/runs/{result.coder_worktree_run_id}'>"
-        f"/runs/{result.coder_worktree_run_id}</a>"
+        f"goal_activity_command_latest_raw_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'>"
+        f"/artifacts?path={ci_evidence_relative}</a>"
     ) in goal.body
     assert "goal_activity_command_source</dt><dd>goal_timeline_items" in goal.body
     assert "goal_activity_command_write_on_get</dt><dd>false" in goal.body
     assert "goal_activity_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_activity_command_external_effects_created</dt><dd>false" in goal.body
     assert (
-        f"goal_activity_click: <a href='/runs/{result.coder_worktree_run_id}'>"
-        f"Execution completed: {result.coder_worktree_run_id}.</a>"
+        f"goal_activity_click: <a href='/artifacts?path={ci_evidence_relative}'>"
+        "CI proof recorded: CI snapshot proof demo-goal-ci"
     ) in goal.body
     assert (
-        f"goal_activity_raw_surface: <a href='/runs/{result.coder_worktree_run_id}'>"
-        f"/runs/{result.coder_worktree_run_id}</a>"
+        f"goal_activity_raw_surface: <a href='/artifacts?path={ci_evidence_relative}'>"
+        f"/artifacts?path={ci_evidence_relative}</a>"
     ) in goal.body
     assert "goal_activity_safety: read-only local timeline" in goal.body
     assert "Goal Delegation Command Bar" in goal.body
@@ -17365,16 +17379,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_evidence_command_json_artifacts</dt><dd>" in goal.body
     assert "goal_evidence_command_patch_artifacts</dt><dd>" in goal.body
     assert "goal_evidence_command_text_artifacts</dt><dd>" in goal.body
-    assert f"goal_evidence_command_latest_artifact</dt><dd>coder run {result.coder_worktree_run_id} verification stderr" in goal.body
-    assert f"goal_evidence_command_latest_label</dt><dd>Open coder run {result.coder_worktree_run_id} verification stderr" in goal.body
+    assert "goal_evidence_command_latest_artifact</dt><dd>CI snapshot proof demo-goal-ci" in goal.body
+    assert "goal_evidence_command_latest_label</dt><dd>Open CI snapshot proof demo-goal-ci" in goal.body
     assert (
         "goal_evidence_command_latest_surface</dt><dd><a href='/artifacts?path="
         in goal.body
     )
-    assert f"Open coder run {result.coder_worktree_run_id} verification stderr</a>" in goal.body
+    assert "Open CI snapshot proof demo-goal-ci" in goal.body
     assert "goal_evidence_command_latest_raw_surface</dt><dd><a href='/artifacts?path=" in goal.body
     assert "goal_evidence_command_latest_artifact_surface</dt><dd><a href='/artifacts?path=" in goal.body
-    assert f"goal_evidence_command_next_action</dt><dd>Open coder run {result.coder_worktree_run_id} verification stderr" in goal.body
+    assert "goal_evidence_command_next_action</dt><dd>Open CI snapshot proof demo-goal-ci" in goal.body
     assert "goal_evidence_command_target_surface</dt><dd><a href='/artifacts?path=" in goal.body
     assert "goal_evidence_command_source</dt><dd>goal_evidence_lines_and_artifact_registry" in goal.body
     assert "goal_evidence_command_write_on_get</dt><dd>false" in goal.body
@@ -17382,10 +17396,10 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_evidence_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_evidence_command_external_effects_created</dt><dd>false" in goal.body
     assert "data-goal-evidence-primary='true' href='/artifacts?path=" in goal.body
-    assert f">Open coder run {result.coder_worktree_run_id} verification stderr</a>" in goal.body
-    assert f"goal_evidence_now: Open coder run {result.coder_worktree_run_id} verification stderr" in goal.body
+    assert ">Open CI snapshot proof demo-goal-ci" in goal.body
+    assert "goal_evidence_now: Open CI snapshot proof demo-goal-ci" in goal.body
     assert f"goal_evidence_latest: <a href='/artifacts?path=" in goal.body
-    assert f"Open coder run {result.coder_worktree_run_id} verification stderr</a>" in goal.body
+    assert "Open CI snapshot proof demo-goal-ci" in goal.body
     assert "goal_evidence_latest_raw: <a href='/artifacts?path=" in goal.body
     assert "goal_evidence_safety: read-only local evidence inventory" in goal.body
     assert "Goal Evidence Digest" in goal.body
@@ -17418,7 +17432,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_evidence_digest_json_artifacts</dt><dd>" in goal.body
     assert "goal_evidence_digest_patch_artifacts</dt><dd>" in goal.body
     assert "goal_evidence_digest_text_artifacts</dt><dd>" in goal.body
-    assert f"goal_evidence_digest_latest_label</dt><dd>Open coder run {result.coder_worktree_run_id} review" in goal.body
+    assert "goal_evidence_digest_latest_label</dt><dd>Open CI snapshot proof demo-goal-ci" in goal.body
     assert "goal_evidence_digest_latest_surface</dt><dd><a href='/artifacts?path=" in goal.body
     assert "goal_evidence_digest_latest_raw_surface</dt><dd><a href='/artifacts?path=" in goal.body
     assert "goal_evidence_digest_latest_artifact_surface</dt><dd><a href='/artifacts?path=" in goal.body
@@ -17449,32 +17463,31 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-artifact-list='true'" in goal.body
     assert "<a href='#goal-artifact-command-bar'>Artifact command</a>" in goal.body
     assert "Goal artifact command evidence" in goal.body
-    assert "Detailed artifact list (21)" in goal.body
+    assert "Detailed artifact list (22)" in goal.body
     assert f"goal_artifact_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_artifact_command_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_artifact_command_status</dt><dd>available" in goal.body
-    assert "goal_artifact_command_items</dt><dd>21" in goal.body
-    assert "goal_artifact_command_records</dt><dd>21" in goal.body
-    assert "goal_artifact_command_available_records</dt><dd>21" in goal.body
+    assert "goal_artifact_command_items</dt><dd>22" in goal.body
+    assert "goal_artifact_command_records</dt><dd>22" in goal.body
+    assert "goal_artifact_command_available_records</dt><dd>22" in goal.body
     assert "goal_artifact_command_missing_records</dt><dd>0" in goal.body
     assert "goal_artifact_command_markdown_artifacts</dt><dd>5" in goal.body
-    assert "goal_artifact_command_json_artifacts</dt><dd>10" in goal.body
+    assert "goal_artifact_command_json_artifacts</dt><dd>11" in goal.body
     assert "goal_artifact_command_patch_artifacts</dt><dd>1" in goal.body
     assert "goal_artifact_command_text_artifacts</dt><dd>5" in goal.body
-    assert "goal_artifact_command_sources</dt><dd>coder_prep:3, coder_run:10, delegation:1, delegation_metadata:4, worktree_plan:3" in goal.body
-    assert f"goal_artifact_command_latest_artifact</dt><dd>coder run {result.coder_worktree_run_id} review" in goal.body
-    assert "goal_artifact_command_latest_kind</dt><dd>markdown" in goal.body
-    assert "goal_artifact_command_latest_source</dt><dd>coder_run" in goal.body
+    assert "goal_artifact_command_sources</dt><dd>ci_snapshot_evidence:1, coder_prep:3, coder_run:10, delegation:1, delegation_metadata:4, worktree_plan:3" in goal.body
+    assert "goal_artifact_command_latest_artifact</dt><dd>CI snapshot proof demo-goal-ci" in goal.body
+    assert "goal_artifact_command_latest_kind</dt><dd>json" in goal.body
+    assert "goal_artifact_command_latest_source</dt><dd>ci_snapshot_evidence" in goal.body
     assert "goal_artifact_command_latest_status</dt><dd>available" in goal.body
-    assert f"goal_artifact_command_latest_label</dt><dd>Open coder run {result.coder_worktree_run_id} review" in goal.body
-    assert "goal_artifact_command_latest_surface</dt><dd><a href='/artifacts?path=runs/" in goal.body
-    assert f"Open coder run {result.coder_worktree_run_id} review</a>" in goal.body
-    assert "goal_artifact_command_latest_raw_surface</dt><dd><a href='/artifacts?path=runs/" in goal.body
-    assert "goal_artifact_command_latest_artifact_surface</dt><dd><a href='/artifacts?path=runs/" in goal.body
+    assert "goal_artifact_command_latest_label</dt><dd>Open CI snapshot proof demo-goal-ci" in goal.body
+    assert f"goal_artifact_command_latest_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'" in goal.body
+    assert "Open CI snapshot proof demo-goal-ci" in goal.body
+    assert f"goal_artifact_command_latest_raw_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'" in goal.body
+    assert f"goal_artifact_command_latest_artifact_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'" in goal.body
     assert "review.md" in goal.body
-    assert f"goal_artifact_command_next_action</dt><dd>Open coder run {result.coder_worktree_run_id} review" in goal.body
-    assert f"goal_artifact_command_target_surface</dt><dd><a href='/artifacts?path=runs/" in goal.body
-    assert f"coder run {result.coder_worktree_run_id} review</a>" in goal.body
+    assert "goal_artifact_command_next_action</dt><dd>Open CI snapshot proof demo-goal-ci" in goal.body
+    assert f"goal_artifact_command_target_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'" in goal.body
     assert "goal_artifact_command_reason</dt><dd>latest available goal artifact is ready for bounded review" in goal.body
     assert "goal_artifact_command_source</dt><dd>goal_artifact_registry" in goal.body
     assert "goal_artifact_command_raw_filesystem_browsing</dt><dd>false" in goal.body
@@ -17482,13 +17495,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_artifact_command_provider_calls_taken</dt><dd>0" in goal.body
     assert "goal_artifact_command_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_artifact_command_external_effects_created</dt><dd>false" in goal.body
-    assert "data-goal-artifact-primary='true' href='/artifacts?path=runs/" in goal.body
-    assert f">Open coder run {result.coder_worktree_run_id} review</a>" in goal.body
-    assert f"goal_artifact_now: Open coder run {result.coder_worktree_run_id} review" in goal.body
-    assert f"goal_artifact_latest_link: <a href='/artifacts?path=runs/" in goal.body
-    assert f"Open coder run {result.coder_worktree_run_id} review</a>" in goal.body
-    assert "goal_artifact_latest_raw: <a href='/artifacts?path=runs/" in goal.body
-    assert f"goal_artifact_latest: coder run {result.coder_worktree_run_id} review kind=markdown source=coder_run status=available" in goal.body
+    assert f"data-goal-artifact-primary='true' href='/artifacts?path={ci_evidence_relative}'" in goal.body
+    assert ">Open CI snapshot proof demo-goal-ci" in goal.body
+    assert "goal_artifact_now: Open CI snapshot proof demo-goal-ci" in goal.body
+    assert f"goal_artifact_latest_link: <a href='/artifacts?path={ci_evidence_relative}'" in goal.body
+    assert f"goal_artifact_latest_raw: <a href='/artifacts?path={ci_evidence_relative}'" in goal.body
+    assert "goal_artifact_latest: CI snapshot proof demo-goal-ci (success, workflow_run) kind=json source=ci_snapshot_evidence status=available" in goal.body
     assert "goal_artifact_safety: read-only bounded artifact inventory" in goal.body
     assert "Goal Artifact Explorer" in goal.body
     assert "data-goal-artifact-explorer='true'" in goal.body
@@ -17512,7 +17524,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-artifact-filter-memory='true'" in goal.body
     assert "data-goal-artifact-filter-view-status='true'>View: default</span>" in goal.body
     assert "data-goal-artifact-filter-reset='true'>Reset filter</button>" in goal.body
-    assert "data-goal-artifact-filter-status='true'>Showing 21 of 21 artifacts.</p>" in goal.body
+    assert "data-goal-artifact-filter-status='true'>Showing 22 of 22 artifacts.</p>" in goal.body
     assert "data-goal-artifact-filter-empty='true' hidden" in goal.body
     assert "data-goal-artifact-filter-evidence='true'" in goal.body
     assert "Goal Artifact Reader" in goal.body
@@ -17529,33 +17541,33 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-artifact-reader-reset='true'>Reset reader</button>" in goal.body
     assert "data-goal-artifact-reader-focus='true'" in goal.body
     assert (
-        f"data-goal-artifact-reader-selected-label='true'>"
-        f"coder run {result.coder_worktree_run_id} review</strong>"
+        "data-goal-artifact-reader-selected-label='true'>"
+        "CI snapshot proof demo-goal-ci"
     ) in goal.body
-    assert "data-goal-artifact-reader-selected-kind='true'>markdown</strong>" in goal.body
-    assert "data-goal-artifact-reader-selected-source='true'>coder_run</strong>" in goal.body
-    assert f">Open coder run {result.coder_worktree_run_id} review</a>" in goal.body
+    assert "data-goal-artifact-reader-selected-kind='true'>json</strong>" in goal.body
+    assert "data-goal-artifact-reader-selected-source='true'>ci_snapshot_evidence</strong>" in goal.body
+    assert ">Open CI snapshot proof demo-goal-ci" in goal.body
     assert "data-goal-artifact-reader-evidence='true'" in goal.body
     assert "data-goal-artifact-reader-previews='true'" in goal.body
     assert (
         goal.body.count("<article class='goal-artifact-preview' data-goal-artifact-preview='true'")
-        == 21
+        == 22
     )
     assert f"goal_artifact_reader_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_artifact_reader_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_artifact_reader_status</dt><dd>available" in goal.body
-    assert "goal_artifact_reader_total_records</dt><dd>21" in goal.body
-    assert "goal_artifact_reader_preview_records</dt><dd>21" in goal.body
-    assert f"goal_artifact_reader_selected_artifact</dt><dd>coder run {result.coder_worktree_run_id} review" in goal.body
-    assert "goal_artifact_reader_selected_path</dt><dd>runs/" in goal.body
+    assert "goal_artifact_reader_total_records</dt><dd>22" in goal.body
+    assert "goal_artifact_reader_preview_records</dt><dd>22" in goal.body
+    assert "goal_artifact_reader_selected_artifact</dt><dd>CI snapshot proof demo-goal-ci" in goal.body
+    assert f"goal_artifact_reader_selected_path</dt><dd>{ci_evidence_relative}" in goal.body
     assert "review.md" in goal.body
-    assert "goal_artifact_reader_selected_kind</dt><dd>markdown" in goal.body
-    assert "goal_artifact_reader_selected_source</dt><dd>coder_run" in goal.body
-    assert "goal_artifact_reader_selected_renderer</dt><dd>markdown_safe_html" in goal.body
+    assert "goal_artifact_reader_selected_kind</dt><dd>json" in goal.body
+    assert "goal_artifact_reader_selected_source</dt><dd>ci_snapshot_evidence" in goal.body
+    assert "goal_artifact_reader_selected_renderer</dt><dd>json_pretty_pre" in goal.body
     assert "goal_artifact_reader_byte_cap</dt><dd>8000" in goal.body
-    assert f"goal_artifact_reader_open_label</dt><dd>Open coder run {result.coder_worktree_run_id} review" in goal.body
+    assert "goal_artifact_reader_open_label</dt><dd>Open CI snapshot proof demo-goal-ci" in goal.body
     assert (
-        "goal_artifact_reader_open_surface</dt><dd><a href='/artifacts?path=runs/"
+        f"goal_artifact_reader_open_surface</dt><dd><a href='/artifacts?path={ci_evidence_relative}'"
         in goal.body
     )
     assert "goal_artifact_reader_focus_available</dt><dd>true" in goal.body
@@ -17568,16 +17580,16 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_artifact_reader_provider_calls_taken</dt><dd>0" in goal.body
     assert "goal_artifact_reader_network_actions_taken</dt><dd>0" in goal.body
     assert "goal_artifact_reader_external_effects_created</dt><dd>false" in goal.body
-    assert f"goal_artifact_reader_open: <a href='/artifacts?path=runs/" in goal.body
-    assert f"Open coder run {result.coder_worktree_run_id} review</a>" in goal.body
+    assert f"goal_artifact_reader_open: <a href='/artifacts?path={ci_evidence_relative}'" in goal.body
+    assert "Open CI snapshot proof demo-goal-ci" in goal.body
     assert (
-        f"goal_artifact_reader_focus: selected=coder run {result.coder_worktree_run_id} "
-        "review source=coder_run"
+        "goal_artifact_reader_focus: selected=CI snapshot proof demo-goal-ci (success, workflow_run) "
+        "source=ci_snapshot_evidence"
     ) in goal.body
     assert "goal_artifact_reader_memory: restores selected known artifact from browser storage per Goal" in goal.body
     assert "goal_artifact_reader_safety: bounded inert in-page preview of registered Goal artifacts only" in goal.body
-    assert "reader_artifact_renderer</dt><dd>markdown_safe_html" in goal.body
-    assert "data-artifact-renderer='markdown_safe_html'" in goal.body
+    assert "reader_artifact_renderer</dt><dd>json_pretty_pre" in goal.body
+    assert "data-artifact-renderer='json_pretty_pre'" in goal.body
     assert "function updateGoalArtifactReader(path, options)" in goal.body
     assert "var selectedShown = false;" in goal.body
     assert "var selectedPreview = null;" in goal.body
@@ -17600,13 +17612,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_artifact_filter_scope</dt><dd>browser_local_rendered_artifacts" in goal.body
     assert f"goal_artifact_filter_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_artifact_filter_project</dt><dd>{result.project_id}" in goal.body
-    assert "goal_artifact_filter_total_records</dt><dd>21" in goal.body
+    assert "goal_artifact_filter_total_records</dt><dd>22" in goal.body
     assert "goal_artifact_filter_markdown_artifacts</dt><dd>5" in goal.body
-    assert "goal_artifact_filter_json_artifacts</dt><dd>10" in goal.body
+    assert "goal_artifact_filter_json_artifacts</dt><dd>11" in goal.body
     assert "goal_artifact_filter_patch_artifacts</dt><dd>1" in goal.body
     assert "goal_artifact_filter_text_artifacts</dt><dd>5" in goal.body
-    assert "goal_artifact_filter_sources</dt><dd>coder_prep=3, coder_run=10, delegation=1, delegation_metadata=4, worktree_plan=3" in goal.body
-    assert "goal_artifact_filter_source_count</dt><dd>5" in goal.body
+    assert "goal_artifact_filter_sources</dt><dd>ci_snapshot_evidence=1, coder_prep=3, coder_run=10, delegation=1, delegation_metadata=4, worktree_plan=3" in goal.body
+    assert "goal_artifact_filter_source_count</dt><dd>6" in goal.body
     assert "goal_artifact_filter_source</dt><dd>data-goal-artifact-item" in goal.body
     assert "goal_artifact_filter_persistence</dt><dd>browser_local_view_memory" in goal.body
     assert (
@@ -17630,6 +17642,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-artifact-type='json'" in goal.body
     assert "data-goal-artifact-type='patch'" in goal.body
     assert "data-goal-artifact-type='text'" in goal.body
+    assert "data-goal-artifact-source='ci_snapshot_evidence'" in goal.body
     assert "data-goal-artifact-source='coder_run'" in goal.body
     assert "data-goal-artifact-status='available'" in goal.body
     assert "data-goal-artifact-text='" in goal.body
@@ -17950,6 +17963,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ci_records = Storage(tmp_path / ".agent" / "state.db").list_recent_ci_snapshot_evidence_records()
     inferred_record = next(
         record for record in ci_records if record.external_run_id == "282999001"
+    )
+    inferred_ci_evidence_relative = (
+        Path(inferred_record.evidence_path).relative_to(tmp_path).as_posix()
     )
     assert inferred_record.project_id == result.project_id
     assert inferred_record.external_url == "https://github.com/example/subject/actions/runs/282999001"
@@ -18764,7 +18780,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "profiles_command_model_routing_enabled</dt><dd>false" in profiles.body
     assert "provider_routing_active</dt><dd>false" in profiles.body
 
-    resume_artifact = result.review_path.relative_to(tmp_path).as_posix()
+    resume_artifact = inferred_ci_evidence_relative
     daily_loop_workspace_confirmation = render_local_app_route(
         tmp_path,
         "/actions/save-workspace",

@@ -733,8 +733,10 @@ detailed skill readback.
 Timeline entries link back to the relevant local artifact, delegation, run,
 approval queue, or goal surface, and render as scan-first event rows with
 time, event-kind badge, clickable message, and target badge. The timeline also
-backfills generic `Artifact recorded` events from the same bounded artifact
-registry used by the Goal Artifact Explorer. The timeline starts with a
+adds explicit `CI proof recorded` artifact events for project-scoped CI
+snapshot/deploy proof records, then backfills generic `Artifact recorded` events
+from the same bounded artifact registry used by the Goal Artifact Explorer. The
+timeline starts with a
 read-only `Goal Timeline Command Bar` that exposes visible Now, Latest,
 Families, Flow, and Safety cards before collapsed timeline command evidence
 and metadata. A read-only `Goal Timeline Digest` follows with Span, Latest,
@@ -769,8 +771,11 @@ saving. It does not write on page load, fetch GitHub status, call providers,
 push, create PRs, deploy, or mutate external systems.
 The Goal Artifact Explorer groups goal-linked artifacts as Markdown, JSON,
 Patch, or Text and links them through the bounded `/artifacts` viewer instead
-of exposing raw filesystem browsing. The Goal page now starts the artifact
-area with a read-only `Goal Artifact Command Bar` that opens with visible Open,
+of exposing raw filesystem browsing. Project-scoped CI snapshot/deploy proof
+JSON is included as bounded `ci_snapshot_evidence`/`ci_deploy_evidence`
+artifacts, so the latest-artifact surfaces can open the proof record directly
+after an operator records it. The Goal page now starts the artifact area with a
+read-only `Goal Artifact Command Bar` that opens with visible Open,
 Latest, Types, Inventory, and Safety cards. It summarizes artifact record
 counts, available/missing posture, render-family counts, source-family counts,
 the latest artifact, and one next bounded artifact review click while keeping

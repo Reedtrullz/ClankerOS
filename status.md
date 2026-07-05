@@ -1,5 +1,31 @@
 # Status
 
+## 2026-07-05 Goal CI Proof Artifact Timeline
+
+- Goal detail pages now treat project-scoped CI deploy evidence and direct CI
+  snapshot evidence as first-class Goal artifacts.
+- The bounded `Goal Artifact Explorer`, source filter, reader, and command bar
+  include CI proof JSON records under `ci_deploy_evidence` /
+  `ci_snapshot_evidence`; after proof is recorded, latest-artifact surfaces can
+  open the proof JSON directly instead of only the latest coder-run artifact.
+- The Goal timeline now adds explicit `CI proof recorded: ...` artifact events
+  for those records, so proof appears chronologically alongside context packs,
+  handoffs, coder prep, worktree runs, reviews, commits, and publication
+  handoffs.
+- Local verification:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed in 104.68s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed in 44.73s.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+- Non-claim: this is read-only Goal proof surfacing over existing local
+  operator-supplied CI evidence records. It does not fetch GitHub, run CI, call
+  providers, use network, write on GET, approve work, push, create PRs, deploy,
+  or mutate external systems from ClankerOS.
+
 ## 2026-07-05 Verification Milestone Proof Map
 
 - `/verification` now includes a read-only `Milestone Proof Map` after the
