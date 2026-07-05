@@ -341,7 +341,10 @@ The rest of `/resume` reads the saved workspace state, prefers the exact saved
 `resume_surface` local route when one exists, shows the saved
 goal/project/artifact links, preserves filters and expanded panel readbacks,
 and keeps saved-state, command, workbench, and browser-local resume evidence
-collapsed by default. When no workspace has been explicitly saved yet but the
+collapsed by default. Its `Resume Readiness` checklist now treats the safe
+saved `resume_surface` as required proof for true come-back-tomorrow readiness,
+alongside project, Goal, filters, expanded panels, and an existing last
+artifact. When no workspace has been explicitly saved yet but the
 database already has a lead Goal, `/resume` now treats that Goal as the return
 source, renders its current confirmed action form at
 `#resume-workbench-action-form`, and labels the command/workbench source as
@@ -362,8 +365,9 @@ existing `/workspace#save-workspace` finish surface. The `Resume Command Bar`
 follows with readiness, phase, current gate, next action, target surface,
 action-form availability, last artifact, and zero-effect counters inside
 collapsed evidence. It also adds a `Resume
-Readiness` checklist for the saved project, goal, filters, expanded panels,
-last artifact existence, and next local surface, and shows a `Resume Next
+Readiness` checklist for the saved project, goal, safe exact resume surface,
+filters, expanded panels, last artifact existence, and next local surface, and
+shows a `Resume Next
 Action` section with the saved goal's current phase, one next action, operator
 attention cue, target surface, and the same confirmed local action form that
 the Goal page would show when that next action is browser-available. When

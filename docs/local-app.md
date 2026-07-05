@@ -296,7 +296,8 @@ confirmation requirement, and zero provider/network/external-effect counters.
   phase/gate, one next action, target surface, action-form availability, last
   artifact, and zero-effect counters inside collapsed evidence. It includes a
   `Resume Readiness` checklist for the saved project,
-  goal, filters, expanded panels, last artifact existence, and next local
+  goal, safe exact resume surface, filters, expanded panels, last artifact
+  existence, and next local
   surface, shows the saved goal's current phase and one next action in
   `Resume Next Action`, renders the same confirmed local action form as the
   Goal page when that action is browser-available, includes a read-only

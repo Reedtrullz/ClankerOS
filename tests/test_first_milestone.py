@@ -8089,6 +8089,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "workspace_restore_map_panels_status</dt><dd>saved" in workspace_saved.body
     assert "workspace_restore_map_open_project_saved</dt><dd>true" in workspace_saved.body
     assert "workspace_restore_map_open_goal_saved</dt><dd>true" in workspace_saved.body
+    assert "workspace_restore_map_resume_surface_saved</dt><dd>true" in workspace_saved.body
     assert "workspace_restore_map_resume_hub_surface</dt><dd><a href='/resume'>/resume</a>" in workspace_saved.body
     resume_saved = render_local_app_route(tmp_path, "/resume")
     assert "Browser Resume" in resume_saved.body
@@ -18776,6 +18777,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "workspace_daily_resume_ready</dt><dd>true" in restored_workspace.body
     assert "workspace_daily_resume_status</dt><dd>ready" in restored_workspace.body
     assert "workspace_daily_last_artifact_exists</dt><dd>true" in restored_workspace.body
+    assert "workspace_daily_resume_surface_saved</dt><dd>true" in restored_workspace.body
+    assert (
+        f"workspace_daily_resume_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        f"/goals/{result.goal_id}#goal-action-dock-form</a>"
+    ) in restored_workspace.body
     assert "workspace_daily_progress</dt><dd>8/15 gates done" in restored_workspace.body
     assert "workspace_daily_waiting_items</dt><dd>approvals=1 incidents=0 recommendations=0" in restored_workspace.body
     assert "workspace_daily_finish_status</dt><dd>ready" in restored_workspace.body
@@ -19086,6 +19092,11 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "resume_readiness_expanded_panels</dt><dd>present" in resume.body
     assert "resume_readiness_last_viewed_artifact</dt><dd>present" in resume.body
     assert "resume_readiness_last_artifact_exists</dt><dd>true" in resume.body
+    assert "resume_readiness_resume_surface</dt><dd>present" in resume.body
+    assert (
+        f"resume_readiness_exact_surface</dt><dd><a href='/goals/{result.goal_id}#goal-action-dock-form'>"
+        f"/goals/{result.goal_id}#goal-action-dock-form</a>"
+    ) in resume.body
     assert "resume_readiness_come_back_tomorrow_ready</dt><dd>true" in resume.body
     assert "[project] -&gt; [goal] -&gt; [filters/panels] -&gt; [artifact] -&gt; [next action]" in resume.body
     assert "resume_readiness_write_on_get</dt><dd>false" in resume.body
@@ -23017,6 +23028,12 @@ def test_today_finish_today_saves_exact_resume_surface(tmp_path: Path) -> None:
     assert (
         "workspace_restore_map_primary_surface</dt><dd>"
         "<a href='/today#today-current-action'>Open Today current action</a>"
+    ) in workspace_page.body
+    assert "workspace_restore_map_resume_surface_saved</dt><dd>true" in workspace_page.body
+    assert "workspace_daily_resume_surface_saved</dt><dd>true" in workspace_page.body
+    assert (
+        "workspace_daily_resume_surface</dt><dd><a href='/today#today-current-action'>"
+        "/today#today-current-action</a>"
     ) in workspace_page.body
 
 

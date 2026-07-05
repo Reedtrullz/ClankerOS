@@ -3074,6 +3074,7 @@ def _today_session_summary(
         filters=filters,
         expanded=expanded,
         last_artifact=last_artifact,
+        resume_surface=str(workspace.get("resume_surface") or "").strip(),
     )
     ci_state = _ci_evidence_command_state(root)
 
@@ -3372,6 +3373,7 @@ def _today_loop_checklist(
         filters=str(workspace.get("filters") or "").strip(),
         expanded=str(workspace.get("expanded_panels") or "").strip(),
         last_artifact=str(workspace.get("last_viewed_artifact") or "").strip(),
+        resume_surface=str(workspace.get("resume_surface") or "").strip(),
     )
     ci_state = _ci_evidence_command_state(root)
     record_base = "/ci-evidence"
@@ -5510,6 +5512,7 @@ def _today_command_center(
         filters=filters,
         expanded=expanded,
         last_artifact=last_artifact,
+        resume_surface=str(workspace.get("resume_surface") or "").strip(),
     )
     inbox = collect_inbox_items(root)
     pending_approvals = (
@@ -6416,6 +6419,7 @@ def _home_operator_board(
         filters=filters,
         expanded=expanded,
         last_artifact=last_artifact,
+        resume_surface=saved_resume_surface,
     )
     ci_record = _latest_ci_evidence_record(root)
     if ci_record is None:
@@ -6653,6 +6657,7 @@ def _home_start_here(
         filters=filters,
         expanded=expanded,
         last_artifact=last_artifact,
+        resume_surface=str(workspace.get("resume_surface") or "").strip(),
     )
     ci_record = _latest_ci_evidence_record(root)
     if ci_record is None:
@@ -6781,6 +6786,7 @@ def _home_day_plan(
         filters=filters,
         expanded=expanded,
         last_artifact=last_artifact,
+        resume_surface=str(workspace.get("resume_surface") or "").strip(),
     )
     first_run = _first_run_progress(root, storage)
     rows: list[tuple[str, str | SafeHtml]] = [
@@ -9160,6 +9166,7 @@ def _resume_today_brief(
         filters=filters,
         expanded=expanded,
         last_artifact=last_artifact,
+        resume_surface=str(state.get("resume_surface") or "").strip(),
     )
     ci_state = _ci_evidence_command_state(root)
     mode = "empty"
@@ -9535,6 +9542,7 @@ def _resume_command_bar(
         filters=filters,
         expanded=expanded,
         last_artifact=last_artifact,
+        resume_surface=str(state.get("resume_surface") or "").strip(),
     )
     required = readiness["required"]
     status = "no_saved_workspace" if not any(required.values()) else "partial"
@@ -9710,6 +9718,7 @@ def _resume_operator_workbench(
         filters=filters,
         expanded=expanded,
         last_artifact=last_artifact,
+        resume_surface=str(state.get("resume_surface") or "").strip(),
     )
     required = readiness["required"]
     status = "no_saved_workspace" if not any(required.values()) else "partial"
@@ -10073,8 +10082,10 @@ def _resume_readiness_section(
         filters=filters,
         expanded=expanded,
         last_artifact=last_artifact,
+        resume_surface=str(state.get("resume_surface") or "").strip(),
     )
     last_artifact_exists = bool(readiness["last_artifact_exists"])
+    saved_resume_surface = str(readiness["resume_surface"])
     ready = bool(readiness["ready"])
     status = str(readiness["status"])
     next_surface = str(readiness["next_surface"])
@@ -10100,6 +10111,13 @@ def _resume_readiness_section(
                     ("resume_readiness_expanded_panels", "present" if expanded else "missing"),
                     ("resume_readiness_last_viewed_artifact", "present" if last_artifact else "missing"),
                     ("resume_readiness_last_artifact_exists", str(last_artifact_exists).lower()),
+                    ("resume_readiness_resume_surface", "present" if saved_resume_surface else "missing"),
+                    (
+                        "resume_readiness_exact_surface",
+                        SafeHtml(f"<a href='{_e(saved_resume_surface)}'>{_e(saved_resume_surface)}</a>")
+                        if saved_resume_surface
+                        else "none",
+                    ),
                     (
                         "resume_readiness_next_surface",
                         SafeHtml(f"<a href='{_e(next_surface)}'>{_e(next_label)}</a>"),
@@ -10131,6 +10149,7 @@ def _workspace_resume_readiness(
     filters: str,
     expanded: str,
     last_artifact: str,
+    resume_surface: str = "",
 ) -> dict[str, object]:
     last_artifact_exists = False
     if last_artifact:
@@ -10138,6 +10157,7 @@ def _workspace_resume_readiness(
             last_artifact_exists = resolve_artifact_path(root, last_artifact).exists()
         except ValueError:
             last_artifact_exists = False
+    safe_resume_surface = _safe_local_return_path(resume_surface) or ""
     required = {
         "open_project": bool(open_project),
         "open_goal": bool(open_goal),
@@ -10145,16 +10165,24 @@ def _workspace_resume_readiness(
         "expanded_panels": bool(expanded),
         "last_viewed_artifact": bool(last_artifact),
         "last_artifact_exists": last_artifact_exists,
+        "resume_surface": bool(safe_resume_surface),
     }
     ready = all(required.values())
     status = "ready" if ready else ("partial" if any(required.values()) else "not_started")
-    next_surface = f"/goals/{quote(open_goal)}" if open_goal else (f"/projects/{quote(open_project)}" if open_project else "/goals")
+    next_surface = (
+        safe_resume_surface
+        if safe_resume_surface
+        else f"/goals/{quote(open_goal)}"
+        if open_goal
+        else (f"/projects/{quote(open_project)}" if open_project else "/goals")
+    )
     return {
         "required": required,
         "ready": ready,
         "status": status,
         "next_surface": next_surface,
         "last_artifact_exists": last_artifact_exists,
+        "resume_surface": safe_resume_surface,
     }
 
 
@@ -11030,6 +11058,7 @@ def _workspace_restore_map(
         filters=filters,
         expanded=expanded,
         last_artifact=last_artifact,
+        resume_surface=saved_resume_surface,
     )
     required = readiness["required"]
     first_run = _workspace_first_run_context(root) if _workspace_should_use_first_run(root, open_goal) else None
@@ -11071,7 +11100,7 @@ def _workspace_restore_map(
         primary_href = "/goals"
         primary_label = "Open goals"
 
-    restore_ready = bool(saved_resume_surface and open_project and (open_goal or last_artifact))
+    restore_ready = bool(readiness["ready"])
     goal_id = open_goal or save_defaults["open_goal"]
     project_id = open_project or save_defaults["open_project"]
     artifact_path = last_artifact or save_defaults["last_viewed_artifact"]
@@ -11195,6 +11224,7 @@ def _workspace_restore_map(
                     ("workspace_restore_map_filters_saved", str(required["filters"]).lower()),
                     ("workspace_restore_map_expanded_panels_saved", str(required["expanded_panels"]).lower()),
                     ("workspace_restore_map_last_artifact_saved", str(required["last_viewed_artifact"]).lower()),
+                    ("workspace_restore_map_resume_surface_saved", str(required["resume_surface"]).lower()),
                     (
                         "workspace_restore_map_save_surface",
                         SafeHtml("<a href='#save-workspace'>#save-workspace</a>"),
@@ -11282,6 +11312,7 @@ def _workspace_daily_brief(
         filters=filters,
         expanded=expanded,
         last_artifact=last_artifact,
+        resume_surface=str(state.get("resume_surface") or "").strip(),
     )
     required = readiness["required"]
     first_run_context = (
@@ -11428,6 +11459,16 @@ def _workspace_daily_brief(
                         "workspace_daily_last_artifact_exists",
                         "true" if readiness["last_artifact_exists"] else "false",
                     ),
+                    (
+                        "workspace_daily_resume_surface_saved",
+                        "true" if required["resume_surface"] else "false",
+                    ),
+                    (
+                        "workspace_daily_resume_surface",
+                        SafeHtml(f"<a href='{_e(str(readiness['resume_surface']))}'>{_e(str(readiness['resume_surface']))}</a>")
+                        if readiness["resume_surface"]
+                        else "none",
+                    ),
                     ("workspace_daily_progress", progress),
                     ("workspace_daily_waiting_items", waiting_items),
                     ("workspace_daily_finish_status", finish_status),
@@ -11468,6 +11509,7 @@ def _workspace_operator_workbench(
         filters=filters,
         expanded=expanded,
         last_artifact=last_artifact,
+        resume_surface=str(state.get("resume_surface") or "").strip(),
     )
     required = readiness["required"]
     status = "no_saved_workspace" if not any(required.values()) else "partial"
@@ -20478,6 +20520,7 @@ def _goal_return_brief(
         filters=str(workspace.get("filters") or "").strip(),
         expanded=str(workspace.get("expanded_panels") or "").strip(),
         last_artifact=saved_artifact,
+        resume_surface=saved_resume_surface,
     )
     latest_item = _goal_latest_timeline_item(root, state)
     latest_message = latest_item.get("message", "none") if latest_item else "none"
@@ -45614,6 +45657,7 @@ def _action_result_resume_receipt_section(
         filters=filters,
         expanded=expanded,
         last_artifact=last_artifact,
+        resume_surface=resume_surface,
     )
     resume_href = resume_surface or "/resume"
     resume_label = resume_surface or "/resume"

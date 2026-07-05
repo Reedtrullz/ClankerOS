@@ -1,5 +1,30 @@
 # Status
 
+## 2026-07-05 Exact Resume Readiness Contract
+
+- Resume readiness now requires a safe saved `resume_surface` in
+  `.clanker/app/workspace.json`, in addition to project, Goal, filters,
+  expanded panels, last viewed artifact, and artifact-exists proof.
+- `/resume` exposes `resume_readiness_resume_surface` and
+  `resume_readiness_exact_surface`, while `/workspace` exposes
+  `workspace_restore_map_resume_surface_saved`,
+  `workspace_daily_resume_surface_saved`, and the exact saved resume surface.
+- `Workspace Restore Map` now uses the shared readiness result for its
+  `restore_ready` posture, so a partial saved project/Goal/artifact context is
+  not presented as fully ready for tomorrow unless the exact local return URL
+  is also saved.
+- Local verification:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_finish_today_saves_exact_resume_surface tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    2 passed in 68.32s.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+- Non-claim: this is read-only resume classification and evidence surfacing
+  over existing confirmed workspace saves. It does not write on GET, call
+  providers, poll GitHub, use the network, approve work, push, create PRs,
+  deploy, or mutate external systems from ClankerOS.
+
 ## 2026-07-05 CI Merge Readiness Map
 
 - `/ci-evidence` now includes a read-only `CI Merge Readiness Map` between the

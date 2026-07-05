@@ -270,7 +270,8 @@ Core layers for the bootstrap:
   current phase/gate, one next action, target surface, action-form
   availability, last artifact, and zero-effect counters inside collapsed
   evidence. It also includes a `Resume Readiness` checklist for the saved project, goal,
-  filters, expanded panels, last artifact existence, and next local surface,
+  safe exact resume surface, filters, expanded panels, last artifact existence,
+  and next local surface,
   and the saved goal's current phase plus one recommended next action and the
   same confirmed local action form as the Goal page when that action is
   browser-available, plus a read-only `Resume Workflow Map` sourced from the
