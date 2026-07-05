@@ -4995,6 +4995,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "action=register-project link=Register ClankerOS project"
         in guide.body
     )
+    assert "href='#guide-command-panel'>Register ClankerOS project</a>" in guide.body
     assert "data-guide-first-run-step-key='create_first_goal'" in guide.body
     assert "data-guide-first-run-step-link-label='Needs project'" in guide.body
     assert "data-guide-first-run-step-key='run_first_delegation'" in guide.body
@@ -8351,6 +8352,22 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-action-draft-action='create-goal'" in registered_guide.body
     assert "guide_command_form_available</dt><dd>true" in registered_guide.body
     assert "guide_command_confirmation_required</dt><dd>true" in registered_guide.body
+    assert "data-guide-first-run-step-key='create_project'" in registered_guide.body
+    assert "data-guide-first-run-step-status='done'" in registered_guide.body
+    assert "data-guide-first-run-step-link-label='Open Project'" in registered_guide.body
+    assert "href='/projects/first-target'>Open Project</a>" in registered_guide.body
+    assert (
+        "guide_first_run_step: create_project status=done "
+        "action=register-project link=Open Project href=/projects/first-target"
+        in registered_guide.body
+    )
+    assert "data-guide-first-run-step-key='create_first_goal'" in registered_guide.body
+    assert "data-guide-first-run-step-status='current'" in registered_guide.body
+    assert (
+        "data-guide-first-run-step-link-label='Create first goal'"
+        in registered_guide.body
+    )
+    assert "href='#guide-command-panel'>Create first goal</a>" in registered_guide.body
     assert "data-guide-milestone-checklist='true'" in registered_guide.body
     assert "data-guide-milestone-card-key='project' data-guide-milestone-card-status='done'" in registered_guide.body
     assert "data-guide-milestone-card-key='goal' data-guide-milestone-card-status='current'" in registered_guide.body

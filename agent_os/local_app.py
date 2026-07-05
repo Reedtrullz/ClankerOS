@@ -1905,13 +1905,12 @@ def _guide_page(root: Path) -> str:
     first_run_lines: list[str] = []
     for index, (step, label, action) in enumerate(_FIRST_RUN_STEPS, start=1):
         status = _first_run_step_status(first_run, step)
-        raw_href = _first_run_step_href(first_run, step)
-        href = f"/goals{raw_href}" if raw_href.startswith("#") else raw_href
+        href = _guide_first_run_step_href(first_run, step, status)
         action_name = _action_name_for_first_run_step(step)
         link_label = _first_run_step_link_label(step, status, action)
         first_run_lines.append(
             f"guide_first_run_step: {step} status={status} "
-            f"action={action_name} link={link_label}"
+            f"action={action_name} link={link_label} href={href}"
         )
         first_run_cards.append(
             "".join(
@@ -14547,6 +14546,37 @@ def _first_run_step_link_label(step: str, status: str, action: str) -> str:
         "waiting_for_delegation": "Needs delegation",
         "waiting_for_context_pack": "Needs context pack",
     }.get(status, "Inspect step")
+
+
+def _guide_first_run_step_href(
+    first_run: dict[str, Any],
+    step: str,
+    status: str,
+) -> str:
+    project_id = str(first_run.get("default_project") or "")
+    goal_id = str(first_run.get("goal_id") or "")
+    delegation_id = str(first_run.get("delegation_id") or "")
+    current_step = str(first_run.get("current_step") or "")
+    if step == current_step:
+        return "#guide-command-panel"
+    if step == "create_project":
+        if first_run.get("project_registered") and project_id:
+            return f"/projects/{quote(project_id)}"
+        return "#guide-command-panel"
+    if step == "create_first_goal":
+        if goal_id:
+            return f"/goals/{quote(goal_id)}"
+        return "#guide-command-panel"
+    if step in {
+        "create_first_delegation",
+        "generate_context_pack",
+        "run_first_delegation",
+    }:
+        if delegation_id:
+            return f"/delegations/{quote(delegation_id)}"
+        if goal_id:
+            return f"/goals/{quote(goal_id)}#goal-action-dock"
+    return "#guide-command-panel"
 
 
 def _first_run_step_href(progress: dict[str, Any], step: str) -> str:

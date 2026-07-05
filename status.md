@@ -1,5 +1,32 @@
 # Status
 
+## 2026-07-05 Guide First Run Target Routing
+
+- `/guide` First Run Path cards now use guide-specific targets instead of the
+  older generic first-run href helper.
+- Current first-run steps stay on `#guide-command-panel` when the guide
+  already renders the confirmed local form, while completed steps open their
+  real local surface. For example, after a project is registered but no Goal
+  exists, `Open Project` now links to `/projects/<project>` and `Create first
+  goal` stays on the guide command panel.
+- The collapsed guide evidence now records each first-run step's action id,
+  visible link label, and target href.
+- Local verification:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed in 54.09s.
+  - Registered-project `/guide` render smoke after a confirmed local
+    `register-project` POST: status 200 registration, 538492 guide bytes,
+    `Open Project` linked to `/projects/first-target`, `Create first goal`
+    linked to `#guide-command-panel`, guide href evidence was present, and
+    `guide_write_on_get=false` plus `guide_network_actions_taken=0` were
+    present.
+- Non-claim: this is read-only guide navigation and evidence presentation.
+  It does not add new action authority, write on GET, call providers, use the
+  network, approve work, push, create PRs, deploy, or mutate external systems
+  from ClankerOS.
+
 ## 2026-07-05 Guide First Run Action Labels
 
 - `/guide` First Run Path cards now use action-specific link labels instead

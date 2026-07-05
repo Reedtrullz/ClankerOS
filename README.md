@@ -309,7 +309,9 @@ and then create the first Goal from the guide without hunting through docs.
 Its First Run Path cards use concrete action labels such as `Register
 ClankerOS project`, `Needs project`, and `Needs Goal` instead of generic
 continue/waiting text, and the guide evidence records the action id plus the
-visible link label for each step.
+visible link label for each step. Completed steps open their real local
+surface, such as the registered project page, while the current step stays on
+the guide command panel when its confirmed form is available.
 Its Proof card also follows the current Goal's CI handoff when a Goal is in
 focus, falling back to `/verification` during first run. A
 read-only `Operator Recipes` panel follows it with seven intent cards for
