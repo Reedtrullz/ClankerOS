@@ -930,12 +930,12 @@ confirmation requirement, and zero provider/network/external-effect counters.
   memories, operator notes, future-work recommendations, and confirmed
   `pin-memory` actions. It opens with a visible `Memory Operator Workbench`
   before shared route/focus diagnostics and command readback, with cards for
-  the next memory action, proposed pins, operator notes, and `/resume` or goal
-  context, then a `Memory Pinboard` and browser-local
-  `Memory Inventory Filter`. If the bank is empty but a saved or lead Goal
-  exists, the Memory workbench, pinboard, and command bar point to that Goal's
-  operator-notes surface and Goal Memory surface before falling back to generic
-  setup. The filter narrows already-rendered rows by lane
+  the next memory action, proposed pins, operator notes, and `/resume` or real
+  Goal context, then a `Memory Pinboard` and browser-local
+  `Memory Inventory Filter`. If the bank is empty but a saved workspace Goal
+  or real ClankerOS/root Goal exists, the Memory workbench, pinboard, and
+  command bar point to that Goal's operator-notes surface and Goal Memory
+  surface before falling back to generic setup. The filter narrows already-rendered rows by lane
   or text, remembers lane/query in
   `localStorage:clankeros-memory-inventory-filter`, and resets without
   changing memory records. Memory state, workbench, pinboard, filter, and
@@ -947,7 +947,7 @@ confirmation requirement, and zero provider/network/external-effect counters.
   readback, and projects using them. It now opens with a visible
   `Skills Operator Workbench` before shared route/focus diagnostics or
   command readback, with cards for the next skill review, generated skills,
-  usage, and `/resume` or Goal context, then a `Skills Usage Map` and
+  usage, and `/resume` or real Goal context, then a `Skills Usage Map` and
   browser-local `Skills Inventory Filter`. The filter narrows already-rendered
   rows by lane or text, remembers lane/query in
   `localStorage:clankeros-skills-inventory-filter`, and resets without
@@ -959,7 +959,7 @@ confirmation requirement, and zero provider/network/external-effect counters.
   `.clanker/profiles.yml` when present and opens with a visible
   `Profiles Operator Workbench` before shared route/focus diagnostics or
   command readback, with cards for the next profile review, future lanes,
-  storage, and `/resume` or Goal context. Profiles state, workbench evidence,
+  storage, and `/resume` or real Goal context. Profiles state, workbench evidence,
   profile-plan evidence, and command evidence stay collapsed by default while
   preserving configured, storage, enabled, disabled, future-lane, saved
   inactive lane preferences, adapter, write-posture, use-for, provider,

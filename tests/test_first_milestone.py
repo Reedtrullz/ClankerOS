@@ -23002,6 +23002,43 @@ def test_today_and_home_prefer_clankeros_goal_over_demo_fixture(
     assert "today_network_actions_taken</dt><dd>0" in today.body
     assert "today_external_effects_created</dt><dd>false" in today.body
 
+    memory = render_local_app_route(tmp_path, "/memory")
+    assert memory.status == 200
+    assert "memory_workbench_goal_source</dt><dd>clankeros_project_goal" in memory.body
+    assert f"memory_workbench_goal</dt><dd>{clankeros_goal_id}" in memory.body
+    assert "memory_workbench_project</dt><dd>clankeros" in memory.body
+    assert (
+        f"memory_workbench_resume_surface</dt><dd><a href='/goals/{clankeros_goal_id}#goal-memory'>"
+        "Goal Memory</a>"
+        in memory.body
+    )
+    assert "memory_pinboard_goal_source</dt><dd>clankeros_project_goal" in memory.body
+    assert f"memory_pinboard_goal</dt><dd>{clankeros_goal_id}" in memory.body
+    assert "memory_command_goal_source</dt><dd>clankeros_project_goal" in memory.body
+    assert f"memory_command_goal</dt><dd>{clankeros_goal_id}" in memory.body
+
+    skills = render_local_app_route(tmp_path, "/skills")
+    assert skills.status == 200
+    assert (
+        f"skills_workbench_resume_surface</dt><dd><a href='/goals/{clankeros_goal_id}'>"
+        "Current Goal</a>"
+        in skills.body
+    )
+    assert "skills_workbench_resume_source</dt><dd>clankeros_project_goal" in skills.body
+    assert f"skills_workbench_resume_goal</dt><dd>{clankeros_goal_id}" in skills.body
+    assert "skills_workbench_resume_project</dt><dd>clankeros" in skills.body
+
+    profiles = render_local_app_route(tmp_path, "/profiles")
+    assert profiles.status == 200
+    assert (
+        f"profiles_workbench_resume_surface</dt><dd><a href='/goals/{clankeros_goal_id}'>"
+        "Current Goal</a>"
+        in profiles.body
+    )
+    assert "profiles_workbench_resume_source</dt><dd>clankeros_project_goal" in profiles.body
+    assert f"profiles_workbench_resume_goal</dt><dd>{clankeros_goal_id}" in profiles.body
+    assert "profiles_workbench_resume_project</dt><dd>clankeros" in profiles.body
+
 
 def test_today_finish_today_saves_exact_resume_surface(tmp_path: Path) -> None:
     result = run_demo_app_scenario(tmp_path)

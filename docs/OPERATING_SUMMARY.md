@@ -470,10 +470,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   actions. It is action-first and opens with a visible
   `Memory Operator Workbench` before shared route/focus diagnostics and
   command readback, with cards for the next memory action, proposed pins,
-  operator notes, and `/resume` or goal context. When the bank is empty but a
-  saved or lead Goal exists, the Memory workbench, pinboard, and command bar
-  route to that Goal's operator-notes and Goal Memory surfaces instead of the
-  generic `/goals` setup index. When proposed memories exist,
+  operator notes, and `/resume` or real Goal context. When the bank is empty
+  but a saved workspace Goal or real ClankerOS/root Goal exists, the Memory
+  workbench, pinboard, and command bar route to that Goal's operator-notes and
+  Goal Memory surfaces instead of the generic `/goals` setup index. When proposed memories exist,
   the workbench also opens a same-page `pin-memory` form for the first
   proposed memory before collapsed evidence; the write still happens only
   through the confirmed POST action. A visible read-only `Memory Pinboard`
@@ -489,7 +489,7 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   for available/generated skill records with usage counts. It is action-first
   and opens with a visible `Skills Operator Workbench` before shared
   route/focus diagnostics or command readback, with cards for the next skill
-  review, generated skills, usage, and `/resume` or Goal context. A visible
+  review, generated skills, usage, and `/resume` or real Goal context. A visible
   `Skills Usage Map` follows with Now, Available, Generated, Usage, Projects,
   and Safety cards; the Now card's primary action names the selected skill
   when opening a skill artifact, such as `Open local-files skill`, instead of
@@ -529,7 +529,7 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   labels. It is action-first and opens with a visible
   `Profiles Operator Workbench` before shared route/focus diagnostics or
   command readback, with cards for the next profile review, future lanes,
-  storage, and `/resume` or Goal context. The read-only `Profile Routing
+  storage, and `/resume` or real ClankerOS/root Goal context. The read-only `Profile Routing
   Matrix` maps Planning, Coding, Review, Docs, Cheap Model, and Frontier Model
   lanes to stored local profiles, cost posture, `use_for` labels, and inactive
   provider/model routing status. A visible `Profile Routing Plan` panel lets

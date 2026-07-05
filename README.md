@@ -910,10 +910,11 @@ diagnostics and command readback, turning the next memory action, proposed
 pins, operator notes, and resume target into four browser cards. It now follows
 with a visible read-only `Memory Pinboard` for Active Pins, Proposed Pins,
 Project, Global, Generated, Operator Notes, and Future Work before the dense
-memory inventory. When no memory records exist but a saved or lead Goal does,
-the workbench, pinboard, and command bar route the first action to that Goal's
-operator-notes surface and the resume card to Goal Memory instead of falling
-back to the generic `/goals` index. Memory state, pinboard, workbench evidence, and command
+memory inventory. When no memory records exist but a saved workspace Goal or
+real ClankerOS/root Goal exists, the workbench, pinboard, and command bar
+route the first action to that Goal's operator-notes surface and the resume
+card to Goal Memory instead of falling back to the generic `/goals` index.
+Memory state, pinboard, workbench evidence, and command
 evidence stay collapsed by default while preserving entry counts,
 proposed-memory pin posture, saved workspace context, and
 no-write/provider/network/external-effect boundaries in the DOM. `/skills`
@@ -928,7 +929,9 @@ executing skills. Skills state, usage-map, filter, workbench evidence, and
 command evidence stay collapsed by default while preserving skill counts,
 generated-skill posture, usage/project counts, last-used posture, the first
 bounded skill artifact, and no execution/install/provider/network effects in
-the DOM.
+the DOM. When no explicit workspace resume exists, the Skills resume card
+returns to the same real ClankerOS/root Goal context used by Today, Home, and
+Memory instead of drifting to demo fixture Goals.
 `/profiles` is also action-first: it opens with a visible
 `Profiles Operator Workbench` before shared route/focus diagnostics or command
 readback, turning storage-profile review, future-lane review, and resume
@@ -948,7 +951,9 @@ providers or model routing. Profiles state, matrix evidence, filter evidence,
 plan evidence, workbench evidence, and command evidence stay collapsed by default while preserving
 configured/storage profile counts, future-lane readiness, adapter/write
 posture, `use_for` posture, and provider/model routing disabled proof in the
-DOM.
+DOM. Without an explicit saved workspace, its Resume card also points back to
+the same real ClankerOS/root Goal context before falling back to generic Goal
+setup.
 `/profiles` also shows both `.clanker/profiles.yml` names and SQLite profile
 storage rows, including labels, modes, cost tiers, write posture, adapter
 status, and `use_for` labels without enabling providers.

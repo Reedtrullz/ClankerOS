@@ -1,5 +1,31 @@
 # Status
 
+## 2026-07-05 Secondary Surfaces Real Goal Context
+
+- `/memory`, `/skills`, and `/profiles` now use the same dogfooding-aware Goal
+  fallback as Home and Today when no explicit workspace save overrides the
+  context.
+- Memory no longer resumes to a `local-app-demo` Goal when the real
+  `clankeros` Goal exists behind fixture noise; its workbench, pinboard, and
+  command evidence expose `clankeros_project_goal`.
+- Skills and Profiles keep their read-only review surfaces, but their Resume
+  cards now point back to the real current Goal instead of the generic
+  `/goals` setup page when no saved workspace exists.
+- Local verification:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_and_home_prefer_clankeros_goal_over_demo_fixture -q --tb=short`:
+    1 passed in 25.46s.
+  - Render-marker check on `/memory`, `/skills`, and `/profiles`: Memory
+    selected `goal_1fa51c15f846` from `clankeros_project_goal`; Skills and
+    Profiles exposed `skills_workbench_resume_source` /
+    `profiles_workbench_resume_source` as `clankeros_project_goal` and linked
+    Resume to `/goals/goal_1fa51c15f846`.
+- Non-claim: this is local browser context selection and read-only resume
+  routing. It does not fetch GitHub, mark PRs ready, merge, push, create PRs,
+  deploy, call providers, install skills, activate model routing, write on
+  GET, or mutate external systems from ClankerOS.
+
 ## 2026-07-05 Home And Today Real Goal Lead Selection
 
 - Home and Today now prefer an actual non-demo operator Goal, especially the

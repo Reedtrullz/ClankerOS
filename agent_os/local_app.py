@@ -5499,19 +5499,17 @@ def _resume_goal_state(
     if goal_id:
         return goal_id, _goal_state(root, storage, goal_id), "saved_goal_state"
 
-    rows = _goal_rows(storage, limit=20)
+    rows = _goal_rows(storage, limit=100)
     active = [row for row in rows if _goal_bucket(row) == "active"]
     paused = [row for row in rows if _goal_bucket(row) == "paused"]
     completed = [row for row in rows if _goal_bucket(row) == "completed"]
-    lead = (
-        active[0]
-        if active
-        else (paused[0] if paused else (completed[0] if completed else None))
-    )
+    lead, source = _operator_lead_goal(root, storage, active, paused, completed)
     if lead is None:
         return "", None, "none"
     goal_id = str(lead["id"])
-    return goal_id, _goal_state(root, storage, goal_id), "lead_goal_state"
+    if source == "default_goal_bucket_order":
+        source = "lead_goal_state"
+    return goal_id, _goal_state(root, storage, goal_id), source
 
 
 def _today_goal_queue_line(
@@ -13259,6 +13257,44 @@ def _skills_usage_map(
     )
 
 
+def _secondary_operator_resume_context(root: Path) -> dict[str, str]:
+    workspace = _load_workspace_state(root)
+    workspace_goal = str(workspace.get("open_goal") or "")
+    workspace_project = str(workspace.get("open_project") or "")
+    if workspace_goal or workspace_project:
+        target = workspace_goal or workspace_project
+        return {
+            "href": "/resume",
+            "label": "/resume",
+            "summary": f"Saved context: {target}.",
+            "source": "saved_workspace",
+            "goal_id": workspace_goal,
+            "project_id": workspace_project,
+        }
+
+    goal_id, state, source = _resume_goal_state(root, _storage(root), "")
+    goal = state.get("goal") if state else None
+    if goal_id and goal is not None:
+        label, _label_source = _goal_display_label(root, goal_id)
+        return {
+            "href": f"/goals/{quote(goal_id)}",
+            "label": "Current Goal",
+            "summary": f"Current Goal: {label or goal_id}.",
+            "source": source,
+            "goal_id": goal_id,
+            "project_id": str(getattr(goal, "project_id", "") or ""),
+        }
+
+    return {
+        "href": "/goals",
+        "label": "/goals",
+        "summary": "No saved context yet.",
+        "source": "none",
+        "goal_id": "",
+        "project_id": "",
+    }
+
+
 def _skills_operator_workbench(
     root: Path,
     *,
@@ -13278,6 +13314,7 @@ def _skills_operator_workbench(
     }
     projects.update(str(skill.project_id) for skill in skills if skill.project_id)
     workspace = _load_workspace_state(root)
+    resume_context = _secondary_operator_resume_context(root)
     first_skill = (
         generated[0]
         if generated
@@ -13312,13 +13349,9 @@ def _skills_operator_workbench(
             target_href = "#skills-available"
             target_label = "Available Skills"
             primary_summary = f"{first_skill.name} is available for local review."
-    resume_href = "/resume" if workspace.get("open_goal") or workspace.get("open_project") else "/goals"
-    resume_label = "/resume" if resume_href == "/resume" else "/goals"
-    resume_summary = (
-        f"Saved context: {workspace.get('open_goal') or workspace.get('open_project') or 'none'}."
-        if resume_href == "/resume"
-        else "No saved context yet."
-    )
+    resume_href = resume_context["href"]
+    resume_label = resume_context["label"]
+    resume_summary = resume_context["summary"]
     rows = [
         ("skills_workbench_status", status),
         ("skills_workbench_total_records", str(len(skills))),
@@ -13333,6 +13366,9 @@ def _skills_operator_workbench(
         ("skills_workbench_next_action", next_action),
         ("skills_workbench_target_surface", SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")),
         ("skills_workbench_resume_surface", SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>")),
+        ("skills_workbench_resume_source", resume_context["source"]),
+        ("skills_workbench_resume_goal", resume_context["goal_id"] or "none"),
+        ("skills_workbench_resume_project", resume_context["project_id"] or "none"),
         ("skills_workbench_workspace_project", workspace.get("open_project", "")),
         ("skills_workbench_workspace_goal", workspace.get("open_goal", "")),
         ("skills_workbench_workspace_artifact", workspace.get("last_viewed_artifact", "")),
@@ -14281,6 +14317,7 @@ def _profiles_operator_workbench(
         if item
     }
     workspace = _load_workspace_state(root)
+    resume_context = _secondary_operator_resume_context(root)
     status = "future_ready"
     first_target = "Planning"
     next_action = "Review future profile lanes"
@@ -14301,13 +14338,9 @@ def _profiles_operator_workbench(
         target_href = "#profiles-configured"
         target_label = "Configured Profiles"
         primary_summary = f"{configured_profiles[0]} is present in .clanker/profiles.yml."
-    resume_href = "/resume" if workspace.get("open_goal") or workspace.get("open_project") else "/goals"
-    resume_label = "/resume" if resume_href == "/resume" else "/goals"
-    resume_summary = (
-        f"Saved context: {workspace.get('open_goal') or workspace.get('open_project') or 'none'}."
-        if resume_href == "/resume"
-        else "No saved context yet."
-    )
+    resume_href = resume_context["href"]
+    resume_label = resume_context["label"]
+    resume_summary = resume_context["summary"]
     rows = [
         ("profiles_workbench_status", status),
         ("profiles_workbench_profiles_file", "present" if profile_path_exists else "missing"),
@@ -14323,6 +14356,9 @@ def _profiles_operator_workbench(
         ("profiles_workbench_next_action", next_action),
         ("profiles_workbench_target_surface", SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")),
         ("profiles_workbench_resume_surface", SafeHtml(f"<a href='{_e(resume_href)}'>{_e(resume_label)}</a>")),
+        ("profiles_workbench_resume_source", resume_context["source"]),
+        ("profiles_workbench_resume_goal", resume_context["goal_id"] or "none"),
+        ("profiles_workbench_resume_project", resume_context["project_id"] or "none"),
         ("profiles_workbench_workspace_project", workspace.get("open_project", "")),
         ("profiles_workbench_workspace_goal", workspace.get("open_goal", "")),
         ("profiles_workbench_workspace_artifact", workspace.get("last_viewed_artifact", "")),
