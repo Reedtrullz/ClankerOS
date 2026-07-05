@@ -1808,8 +1808,11 @@ python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or ci_snap
 
 After pushing or opening a PR, wait for the GitHub `Tests` workflow to run the
 fast smoke job first, then the dependent full-suite job with
-`python -m pytest -q`. The smoke job is early route/CLI proof only; a committed
-workflow file is not CI proof until GitHub Actions passes on that commit.
+`python -m pytest -q --durations=25 --durations-min=1.0`. The smoke job is
+early route/CLI proof only; a committed workflow file is not CI proof until
+GitHub Actions passes on that commit. The duration summary stays in GitHub
+logs so slow-test diagnosis starts from Actions evidence instead of a local
+full-suite rerun.
 While the run is pending, generate a pasteable watch/record handoff without
 contacting GitHub from ClankerOS:
 

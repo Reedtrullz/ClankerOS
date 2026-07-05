@@ -1631,7 +1631,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   local CLI smoke, route-marker app smoke, fixture-backed app-demo smoke,
   demo, dashboard, iterate, focused local-app/CI-handoff pytest, and
   whitespace checks before a dependent 45-minute `full-suite` job spends time
-  on `python -m pytest -q`.
+  on `python -m pytest -q --durations=25 --durations-min=1.0`, keeping
+  slow-test evidence in GitHub logs instead of requiring an immediate local
+  full-suite rerun.
 - CI/deploy evidence ingestion: an operator can attach CI or deploy proof to a
   GitHub handoff packet with `ci-deploy-evidence`. The record preserves
   provider, external run id, URL, commit, branch, handoff, and JSON evidence

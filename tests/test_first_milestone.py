@@ -4359,6 +4359,8 @@ def test_github_actions_workflow_runs_automatic_verification() -> None:
         "local_app_demo_scenario_populates_fixture_state",
         "git diff --check",
         "python -m pytest -q",
+        "--durations=25",
+        "--durations-min=1.0",
     ]:
         assert expected in workflow
 
@@ -4383,6 +4385,7 @@ def test_github_actions_smoke_uses_temp_root_and_expected_order() -> None:
         "git diff --check",
         "full-suite:",
         "python -m pytest -q",
+        "--durations=25",
     ]
     positions = [workflow.index(marker) for marker in ordered_markers]
     assert positions == sorted(positions)

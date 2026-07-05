@@ -1,5 +1,19 @@
 # Status
 
+## 2026-07-05 GitHub Full Suite Duration Evidence
+
+- The GitHub Actions `Full pytest suite` job still runs the repository-wide
+  pytest suite in Actions, but now invokes
+  `python -m pytest -q --durations=25 --durations-min=1.0`.
+- This keeps slow-test evidence in GitHub logs after the full-suite job
+  completes, so merge-gate diagnosis starts from Actions evidence instead of
+  requiring an immediate local full-suite rerun.
+- README public snapshot guidance and the operating summary now name the
+  duration-reporting command.
+- Non-claim: this is CI observability only. It does not split the suite, make
+  the running GitHub job green, call providers, push, create PRs, deploy, or
+  mutate external systems from ClankerOS.
+
 ## 2026-07-05 Goal Summary Proof/Finish/Resume UX
 
 - Goal detail pages now bring Proof, Finish, and Resume into the first
