@@ -1,5 +1,45 @@
 # Status
 
+## 2026-07-05 Post-Goal Today Scout Delegation
+
+- Completed the selected next-iteration slice for post-Goal `/today` scout
+  delegation.
+- `/today` now embeds the lead Goal's `Create scout delegation` form with a
+  Today-local return target, so a confirmed delegation launched from the daily
+  cockpit saves `resume_surface=/today#today-current-action` instead of
+  sending the operator back to the Goal action dock.
+- The Today command evidence now exposes
+  `today_command_action_return_surface`, separate from the Finish Today resume
+  target, so the operator can verify both where the immediate action returns
+  and what tomorrow's saved resume point will be.
+- Regression coverage proves the post-Goal `/today` state names
+  `Create scout delegation` as the primary action, renders the same-page
+  `#today-current-action` delegate form, requires confirmation, preserves the
+  Today return target through confirmation, and records the workspace resume
+  point after the confirmed local write.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-delegation `/today` should expose `Generate context pack` as the
+  primary same-page first-run action with confirmation and finish-today resume
+  proof.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 17.40s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 6.20s.
+  - `python3 -m agent_os.cli iterate`: selected the post-delegation `/today`
+    context-pack slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- CI note: GitHub Actions run `28752441277` for the previous push has Fast
+  smoke verification green; the Full pytest suite is still running at the
+  latest check.
+- Non-claim: this Today scout-delegation slice performs only confirmed local
+  writes. It does not start subagents, call providers, use app-side network,
+  push, deploy, create PRs, or mutate external systems from ClankerOS.
+
 ## 2026-07-05 Browser-First Goal Creation
 
 - Completed the selected next-iteration slice for browser-first Goal creation

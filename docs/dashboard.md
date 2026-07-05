@@ -318,10 +318,10 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Make post-Goal `/today` expose `Create scout delegation` as the primary same-page first-run action with confirmation and finish-today resume proof.
+- focus: Make post-delegation `/today` expose `Generate context pack` as the primary same-page first-run action with confirmation and finish-today resume proof.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-07-05T19:33:43.459686+00:00
+- created_at: 2026-07-05T19:45:50.979994+00:00
 
 ## Simplicity Guardrail
 
@@ -329,7 +329,7 @@
 - reason: selected only actionable item with score 10 and complexity 4; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
 - selected_score: 10
 - selected_complexity: 4
-- selected_focus: Make post-Goal `/today` expose `Create scout delegation` as the primary same-page first-run action with confirmation and finish-today resume proof.
+- selected_focus: Make post-delegation `/today` expose `Generate context pack` as the primary same-page first-run action with confirmation and finish-today resume proof.
 
 ## Expansion Operator Approval Schema Decision
 

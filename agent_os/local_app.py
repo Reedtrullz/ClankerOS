@@ -6018,6 +6018,7 @@ def _today_command_center(
     finish_form = ""
     pause_form = ""
     note_form = ""
+    action_return_surface: str | SafeHtml = "not_available"
     pause_available = "false"
     note_available = "false"
     pause_surface: str | SafeHtml = "not_available"
@@ -6059,7 +6060,16 @@ def _today_command_center(
         state = _goal_state(root, storage, goal_id)
         goal = state["goal"]
         next_action = _goal_next_action(root, state)
-        action_form = _goal_next_action_form(state, next_action)
+        today_action_return = "/today#today-current-action"
+        action_form = _goal_next_action_form(
+            state,
+            next_action,
+            return_to_override=today_action_return,
+        )
+        if action_form:
+            action_return_surface = SafeHtml(
+                f"<a href='{_e(today_action_return)}'>{_e(today_action_return)}</a>"
+            )
         pause_form = _goal_pause_form(state)
         note_form = _today_note_form(root, state)
         pause_available = "true" if pause_form else "false"
@@ -6225,6 +6235,7 @@ def _today_command_center(
         ("today_command_ci_surface", SafeHtml("<a href='/verification'>/verification</a>")),
         ("today_command_action_form_available", str(bool(action_form)).lower()),
         ("today_command_confirmation_required", str(bool(action_form)).lower()),
+        ("today_command_action_return_surface", action_return_surface),
         ("today_command_finish_status", finish_status),
         (
             "today_command_finish_resume_surface",
@@ -22852,9 +22863,17 @@ def _goal_next_action(root: Path, state: dict[str, Any]) -> GoalNextAction:
     return GoalNextAction("Create scout delegation", f"/goals/{quote(goal.id)}", "goal_has_no_delegation_yet")
 
 
-def _goal_next_action_form(state: dict[str, Any], next_action: GoalNextAction) -> str:
+def _goal_next_action_form(
+    state: dict[str, Any],
+    next_action: GoalNextAction,
+    *,
+    return_to_override: str | None = None,
+) -> str:
     if next_action.action == "Create scout delegation":
-        return _goal_scout_delegation_form(state)
+        return _goal_scout_delegation_form(
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Resume paused goal":
         return _goal_resume_form(state)
     if next_action.action == "Generate context pack":
@@ -23663,14 +23682,18 @@ def _goal_packet_delegation_id(packets: list[dict[str, Any]]) -> str:
     return ""
 
 
-def _goal_scout_delegation_form(state: dict[str, Any]) -> str:
+def _goal_scout_delegation_form(
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     goal = state.get("goal")
     if goal is None:
         return ""
     task = _goal_delegation_target_task(state)
     if task is None:
         return "<p class='muted'>delegate_form_status: unavailable_until_planned_task_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Create Scout Delegation</h3>",

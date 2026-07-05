@@ -11416,6 +11416,133 @@ def test_local_app_runs_delegation_from_browser_action(
     )
 
 
+def test_today_post_goal_scout_delegation_stays_on_daily_surface(tmp_path: Path) -> None:
+    AgentSystem(tmp_path).initialize()
+    target_repo = tmp_path / "clankeros"
+    target_repo.mkdir()
+    subprocess.run(["git", "init"], cwd=target_repo, check=True, capture_output=True)
+
+    register_result = render_local_app_route(
+        tmp_path,
+        "/actions/register-project",
+        method="POST",
+        form={
+            "name": ["first-target"],
+            "path": [str(target_repo)],
+            "test_command": ["python3 -m pytest -q"],
+            "allowed_write_roots": [str(target_repo)],
+            "confirm": ["yes"],
+        },
+    )
+    assert register_result.status == 200
+    create_goal_result = render_local_app_route(
+        tmp_path,
+        "/actions/create-goal",
+        method="POST",
+        form={
+            "project_id": ["first-target"],
+            "prompt": ["Create a browser-first first-run workflow"],
+            "created_by_profile": ["planner"],
+            "confirm": ["yes"],
+        },
+    )
+    assert create_goal_result.status == 200
+
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        created_goal_id = connection.execute(
+            """
+            select id from goals
+            where project_id = ?
+            order by created_at desc, id desc
+            limit 1
+            """,
+            ("first-target",),
+        ).fetchone()[0]
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    first_task = storage.list_tasks(created_goal_id)[0]
+
+    today = render_local_app_route(tmp_path, "/today")
+    assert today.status == 200
+    assert "today_command_status</dt><dd>goal_ready" in today.body
+    assert "today_command_primary_action</dt><dd>Create scout delegation" in today.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Create scout delegation</a>"
+    ) in today.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Create scout delegation</a>"
+    ) in today.body
+    assert "today_command_action_form_available</dt><dd>true" in today.body
+    assert "today_command_confirmation_required</dt><dd>true" in today.body
+    assert (
+        "today_command_action_return_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today.body
+    assert "today_command_finish_resume_reason</dt><dd>today_current_action_form_available" in today.body
+    assert "today_command_finish_form_available</dt><dd>true" in today.body
+    assert "today_command_finish_confirmation_required</dt><dd>true" in today.body
+    assert "id='today-current-action'" in today.body
+    assert "data-today-current-action='true'" in today.body
+    assert "action='/actions/delegate'" in today.body
+    assert f"name='goal_id' value='{created_goal_id}'" in today.body
+    assert f"name='task_id' value='{first_task.id}'" in today.body
+    assert "name='profile' value='scout'" in today.body
+    assert "name='return_to' value='/today#today-current-action'" in today.body
+    assert "name='resume_surface' value='/today#today-current-action'" in today.body
+    assert "name='updated_by' value='today-command-center'" in today.body
+
+    delegate_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/delegate",
+        method="POST",
+        form={
+            "goal_id": [created_goal_id],
+            "task_id": [first_task.id],
+            "profile": ["scout"],
+            "title": ["Scout from Today"],
+            "requested_by": ["operator"],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert delegate_confirmation.status == 409
+    assert "Confirm scout delegation" in delegate_confirmation.body
+    assert "action_confirmation_label</dt><dd>Create scout delegation" in delegate_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in delegate_confirmation.body
+
+    delegate_result = render_local_app_route(
+        tmp_path,
+        "/actions/delegate",
+        method="POST",
+        form={
+            "goal_id": [created_goal_id],
+            "task_id": [first_task.id],
+            "profile": ["scout"],
+            "title": ["Scout from Today"],
+            "requested_by": ["operator"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert delegate_result.status == 200
+    assert "Scout delegation created" in delegate_result.body
+    assert "action_result_command_label</dt><dd>Create scout delegation" in delegate_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=subagent_delegation%3A%20"
+    ) in delegate_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in delegate_result.body
+    delegated_workspace = json.loads((tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8"))
+    assert delegated_workspace["open_project"] == "first-target"
+    assert delegated_workspace["open_goal"] == created_goal_id
+    assert delegated_workspace["resume_surface"] == "/today#today-current-action"
+    assert delegated_workspace["updated_by"] == "delegate"
+
+
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
     AgentSystem(tmp_path).initialize()
     target_repo = tmp_path / "clankeros"
