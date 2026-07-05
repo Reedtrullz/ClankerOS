@@ -43244,6 +43244,7 @@ def _health(root: Path, *, host: str, port: int) -> str:
                 host=host,
                 port=port,
             ),
+            _health_ci_boundary(root),
             _health_command_bar(
                 root,
                 status_relative=status_relative,
@@ -43515,6 +43516,165 @@ def _health_readiness_strip(
                     f"health_readiness_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
                     f"health_readiness_status_artifact: {_artifact_link(status_relative)}",
                     "health_readiness_safety: local health readiness; writes only the bounded status artifact",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _health_ci_href(raw_href: str) -> str:
+    if not raw_href or raw_href == "none":
+        return "/ci-evidence"
+    if raw_href.startswith("#"):
+        return f"/ci-evidence{raw_href}"
+    if raw_href.startswith("/"):
+        return raw_href
+    return "/ci-evidence"
+
+
+def _health_ci_boundary(root: Path) -> str:
+    state = _ci_evidence_command_state(root)
+    latest = _latest_ci_evidence_record(root)
+    commands = _ci_snapshot_command_context(root)
+    record_href = "/ci-evidence#record-ci-snapshot-json"
+    latest_href = _health_ci_href(state.get("latest_target", "/ci-evidence"))
+    merge_state = _ci_merge_readiness_state(
+        state,
+        full_proof_href=latest_href,
+        record_href=record_href,
+    )
+    gate_status = merge_state["gate_status"]
+    primary_href = _health_ci_href(merge_state["primary_href"])
+    primary_label = merge_state["primary_label"]
+    latest_label = (
+        f"{state['latest_status']} / {state['latest_scope']}"
+        if state["latest_status"] != "missing"
+        else "No local CI proof"
+    )
+    latest_url: str | SafeHtml = "none"
+    latest_evidence: str | SafeHtml = "none"
+    if latest is not None:
+        _, record = latest
+        external_url = str(getattr(record, "external_url", "") or "")
+        if external_url:
+            latest_url = SafeHtml(f"<a href='{_e(external_url)}'>{_e(external_url)}</a>")
+        evidence_path = str(getattr(record, "evidence_path", "") or "")
+        if evidence_path:
+            evidence = Path(evidence_path)
+            try:
+                relative = evidence.resolve().relative_to(root.resolve())
+                latest_evidence = _artifact_link(str(relative))
+            except ValueError:
+                latest_evidence = evidence_path
+    return "".join(
+        [
+            (
+                "<section id='health-ci-boundary' "
+                "class='panel health-ci-boundary' "
+                "data-health-ci-boundary='true' "
+                f"data-health-ci-boundary-status='{_e(gate_status)}'>"
+                "<h2>Health CI Boundary</h2>"
+            ),
+            "<p class='muted'>Local CI proof posture for the current checkout. GitHub status remains operator-supplied; this page does not poll GitHub.</p>",
+            "<div class='health-ci-grid' data-health-ci-boundary-actions='true'>",
+            (
+                "<article class='health-ci-card health-ci-primary' "
+                f"data-health-ci-boundary-card='gate' data-health-ci-boundary-card-status='{_e(gate_status)}'>"
+                "<h3>Checkout Proof</h3>"
+                f"<p>{_e(gate_status.replace('_', ' '))}</p>"
+                f"<a class='health-ci-link' data-health-ci-boundary-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a>"
+                "</article>"
+            ),
+            (
+                "<article class='health-ci-card' "
+                f"data-health-ci-boundary-card='fast-smoke' data-health-ci-boundary-card-status='{_e(merge_state['fast_smoke_status'])}'>"
+                "<h3>Fast Smoke</h3>"
+                f"<p>{_e(merge_state['fast_smoke_status'].replace('_', ' '))}</p>"
+                "<a class='health-ci-link' href='/ci-evidence#record-ci-snapshot-json'>Record smoke</a>"
+                "</article>"
+            ),
+            (
+                "<article class='health-ci-card' "
+                f"data-health-ci-boundary-card='full-suite' data-health-ci-boundary-card-status='{_e(merge_state['full_suite_status'])}'>"
+                "<h3>Full pytest suite</h3>"
+                f"<p>{_e(merge_state['full_suite_status'].replace('_', ' '))}</p>"
+                "<a class='health-ci-link' href='/ci-evidence#record-ci-snapshot-json'>Record full suite</a>"
+                "</article>"
+            ),
+            (
+                "<article class='health-ci-card' "
+                f"data-health-ci-boundary-card='latest' data-health-ci-boundary-card-status='{_e(state['latest_status'])}'>"
+                "<h3>Latest Record</h3>"
+                f"<p>{_e(latest_label)}</p>"
+                f"<a class='health-ci-link' href='{_e(latest_href)}'>Inspect CI evidence</a>"
+                "</article>"
+            ),
+            (
+                "<article class='health-ci-card' "
+                "data-health-ci-boundary-card='safety' data-health-ci-boundary-card-status='read_only_no_fetch'>"
+                "<h3>Safety</h3>"
+                "<p>No GitHub polling, provider calls, pushes, PRs, deploys, or external mutations.</p>"
+                "<a class='health-ci-link' href='#health-ci-boundary-evidence'>Review boundary</a>"
+                "</article>"
+            ),
+            "</div>",
+            "<details id='health-ci-boundary-evidence' class='health-ci-boundary-evidence' data-health-ci-boundary-evidence='true'><summary>Health CI boundary evidence</summary>",
+            _kv(
+                [
+                    ("health_ci_boundary_status", gate_status),
+                    ("health_ci_boundary_review_status", merge_state["review_status"]),
+                    ("health_ci_boundary_fast_smoke_status", merge_state["fast_smoke_status"]),
+                    ("health_ci_boundary_full_suite_status", merge_state["full_suite_status"]),
+                    ("health_ci_boundary_branch", state["branch"]),
+                    ("health_ci_boundary_current_commit", state["current_commit"]),
+                    ("health_ci_boundary_current_proof", state["current_proof"]),
+                    ("health_ci_boundary_latest_source", state["latest_source"]),
+                    ("health_ci_boundary_latest_status", state["latest_status"]),
+                    ("health_ci_boundary_latest_scope", state["latest_scope"]),
+                    ("health_ci_boundary_latest_commit", state["latest_commit"]),
+                    ("health_ci_boundary_latest_run_id", state["latest_external_run_id"]),
+                    ("health_ci_boundary_latest_url", latest_url),
+                    ("health_ci_boundary_latest_evidence", latest_evidence),
+                    (
+                        "health_ci_boundary_primary_surface",
+                        SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+                    ),
+                    ("health_ci_boundary_next_step", merge_state["next_step"]),
+                    (
+                        "health_ci_boundary_status_command",
+                        SafeHtml(f"<code>{_e(commands['status_command'])}</code>"),
+                    ),
+                    (
+                        "health_ci_boundary_fast_smoke_record_command",
+                        SafeHtml(f"<code>{_e(commands['fast_smoke_record_command'])}</code>"),
+                    ),
+                    (
+                        "health_ci_boundary_full_suite_record_command",
+                        SafeHtml(f"<code>{_e(commands['validated_record_command'])}</code>"),
+                    ),
+                    ("health_ci_boundary_review_ready_claim", "local_fast_smoke_or_full_suite_proof_only"),
+                    ("health_ci_boundary_merge_ready_claim", "requires_current_full_workflow_success_record"),
+                    ("health_ci_boundary_source", "operator_supplied_ci_evidence_records"),
+                    ("health_ci_boundary_section_write_on_get", "false"),
+                    ("health_ci_boundary_health_status_artifact_write_on_get", "true"),
+                    ("health_ci_boundary_github_status_fetch", "none"),
+                    ("health_ci_boundary_provider_calls_taken", "0"),
+                    ("health_ci_boundary_network_actions_taken", "0"),
+                    ("health_ci_boundary_external_effects_created", "false"),
+                    ("health_ci_boundary_push_created", "false"),
+                    ("health_ci_boundary_pr_created", "false"),
+                    ("health_ci_boundary_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"health_ci_boundary_now: {_e(gate_status)}",
+                    f"health_ci_boundary_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    f"health_ci_boundary_fast_smoke: {_e(merge_state['fast_smoke_status'])}",
+                    f"health_ci_boundary_full_suite: {_e(merge_state['full_suite_status'])}",
+                    "health_ci_boundary_safety: read-only local CI proof summary; GitHub status JSON is operator-supplied",
                 ]
             ),
             "</details>",
@@ -54161,9 +54321,19 @@ def _html_page(
     .health-readiness-card[data-health-readiness-card-status="warnings"], .health-readiness-card[data-health-readiness-card-status="nonlocal_warning"], .health-readiness-strip[data-health-readiness-status="warnings"] .health-readiness-primary {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
     .health-readiness-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--ok); color:var(--ink); background:var(--surface); overflow-wrap:anywhere; text-decoration:none; }}
     .health-readiness-strip[data-health-readiness-status="warnings"] .health-readiness-link {{ border-color:var(--warn); }}
-    .health-workbench-evidence, .health-readiness-evidence, .health-command-evidence, .health-diagnostics-evidence, .health-counts-evidence, .health-key-commands-evidence, .health-workflow-imports-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .health-workbench-evidence summary, .health-readiness-evidence summary, .health-command-evidence summary, .health-diagnostics-evidence summary, .health-counts-evidence summary, .health-key-commands-evidence summary, .health-workflow-imports-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .health-workbench-evidence:not([open]) > :not(summary), .health-readiness-evidence:not([open]) > :not(summary), .health-command-evidence:not([open]) > :not(summary), .health-diagnostics-evidence:not([open]) > :not(summary), .health-counts-evidence:not([open]) > :not(summary), .health-key-commands-evidence:not([open]) > :not(summary), .health-workflow-imports-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .health-ci-boundary {{ border-left:4px solid var(--warn); }}
+    .health-ci-boundary[data-health-ci-boundary-status="merge_ready_from_local_full_suite_proof"] {{ border-left-color:var(--ok); }}
+    .health-ci-grid {{ display:grid; grid-template-columns:repeat(5, minmax(150px, 1fr)); gap:10px; margin:12px 0; }}
+    .health-ci-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; }}
+    .health-ci-card h3 {{ margin:0 0 8px; }}
+    .health-ci-card p {{ min-height:44px; margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .health-ci-primary {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
+    .health-ci-boundary[data-health-ci-boundary-status="merge_ready_from_local_full_suite_proof"] .health-ci-primary {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
+    .health-ci-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--warn); color:var(--ink); background:var(--surface); overflow-wrap:anywhere; text-decoration:none; }}
+    .health-ci-boundary[data-health-ci-boundary-status="merge_ready_from_local_full_suite_proof"] .health-ci-link {{ border-color:var(--ok); }}
+    .health-workbench-evidence, .health-readiness-evidence, .health-ci-boundary-evidence, .health-command-evidence, .health-diagnostics-evidence, .health-counts-evidence, .health-key-commands-evidence, .health-workflow-imports-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .health-workbench-evidence summary, .health-readiness-evidence summary, .health-ci-boundary-evidence summary, .health-command-evidence summary, .health-diagnostics-evidence summary, .health-counts-evidence summary, .health-key-commands-evidence summary, .health-workflow-imports-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .health-workbench-evidence:not([open]) > :not(summary), .health-readiness-evidence:not([open]) > :not(summary), .health-ci-boundary-evidence:not([open]) > :not(summary), .health-command-evidence:not([open]) > :not(summary), .health-diagnostics-evidence:not([open]) > :not(summary), .health-counts-evidence:not([open]) > :not(summary), .health-key-commands-evidence:not([open]) > :not(summary), .health-workflow-imports-evidence:not([open]) > :not(summary) {{ display:none; }}
     .health-command-bar {{ border-left:4px solid var(--ok); }}
     .health-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }}
     .health-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
@@ -54606,7 +54776,7 @@ def _html_page(
     @media (max-width: 860px) {{ #run-readiness-strip {{ scroll-margin-top:260px; }} .run-readiness-grid, .run-readiness-strip dl {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-action-prep, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #profile-routing-plan, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-goal-continuation, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map, #artifact-view-memory, #verification-milestone-proof-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-action-prep-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-return-brief-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-loop-checklist-grid, .today-quick-capture-grid, .today-ci-merge-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-domain-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profile-plan-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-real-grid, .dogfooding-workbench-grid, .dogfooding-return-grid, .dogfooding-session-checklist-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .artifact-view-memory-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .verification-milestone-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #ci-evidence-readiness-strip, #ci-merge-readiness-map {{ scroll-margin-top:260px; }} .ci-evidence-readiness-grid, .ci-merge-readiness-grid {{ grid-template-columns:1fr; }} }}
-    @media (max-width: 860px) {{ #health-readiness-strip {{ scroll-margin-top:260px; }} .health-readiness-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ #health-readiness-strip, #health-ci-boundary {{ scroll-margin-top:260px; }} .health-readiness-grid, .health-ci-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 640px) {{ .action-form-brief dl {{ grid-template-columns:1fr; gap:4px; }} .action-form-brief dd {{ word-break:normal; overflow-wrap:anywhere; }} }}
     @media (max-width: 860px) {{ .workflow-scope-grid {{ grid-template-columns:1fr; }} }}

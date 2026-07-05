@@ -1,5 +1,25 @@
 # Status
 
+## 2026-07-05 Health CI Boundary
+
+- `/health` now includes a read-only `Health CI Boundary` between the
+  readiness strip and command bar.
+- The boundary surfaces current checkout proof, Fast Smoke, Full pytest suite,
+  latest local CI proof, and no-GitHub-polling safety from the same
+  operator-supplied CI evidence classifier used by `/ci-evidence`, Today, and
+  Goal CI handoffs.
+- Local verification:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed in 56.38s.
+  - `git diff --check -- agent_os/local_app.py tests/test_first_milestone.py README.md docs/local-app.md docs/OPERATING_SUMMARY.md status.md`:
+    passed.
+- Non-claim: this is read-only health-page CI proof presentation over existing
+  local evidence records. It does not fetch GitHub, run CI, call providers,
+  use network actions, approve work, push, create PRs, deploy, or mutate
+  external systems from ClankerOS.
+
 ## 2026-07-05 Skills Last Used Usage Map Card
 
 - `/skills` now makes the objective's `Last used` requirement first-class in

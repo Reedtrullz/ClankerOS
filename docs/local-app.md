@@ -1203,7 +1203,10 @@ confirmation requirement, and zero provider/network/external-effect counters.
 - `/health` - Python, git, storage, command, import, route, and counter health.
   It opens with a `Health Operator Workbench` before shared diagnostics, with
   Status, Artifact, Diagnostics, and Safety cards for readiness, warning
-  review, the refreshed local status artifact, and zero-effect counters. The
+  review, the refreshed local status artifact, and zero-effect counters. A
+  read-only `Health CI Boundary` follows the readiness strip, showing current
+  checkout proof, Fast Smoke, Full pytest suite, latest local proof record, and
+  the no-GitHub-polling safety boundary from operator-supplied CI evidence. The
   command bar, diagnostics, counts, registered commands, and workflow imports
   stay collapsed as evidence while preserving the explicit
   `status_artifact_write_on_get=true` boundary.

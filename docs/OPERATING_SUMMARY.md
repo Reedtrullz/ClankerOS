@@ -1507,8 +1507,10 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   `status_artifact_write_on_get=true`, one next local surface, and zero
   provider/network/external-effect counters into visible cards, followed by a
   `Health Readiness Strip` for local bind scope, storage, workflow imports,
-  next local action, and the status-artifact-only safety boundary before the
-  collapsed command/diagnostic evidence; a read-only
+  next local action, and the status-artifact-only safety boundary, plus a
+  read-only `Health CI Boundary` for current checkout proof, Fast Smoke,
+  Full pytest suite, latest local CI proof, and operator-supplied/no-polling
+  safety before the collapsed command/diagnostic evidence; a read-only
   operator inbox plus local approval and
   incident pages for pending worktree, commit, and publication decisions,
   with the inbox opening from an `Inbox Operator Workbench` before shared

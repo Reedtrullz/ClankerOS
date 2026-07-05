@@ -10025,6 +10025,34 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "health_readiness_network_actions_taken</dt><dd>0" in health.body
     assert "health_readiness_external_effects_created</dt><dd>false" in health.body
     assert "health_readiness_safety: local health readiness; writes only the bounded status artifact" in health.body
+    assert "Health CI Boundary" in health.body
+    assert "data-health-ci-boundary='true'" in health.body
+    assert "data-health-ci-boundary-actions='true'" in health.body
+    assert "data-health-ci-boundary-card='gate' data-health-ci-boundary-card-status='not_merge_ready'" in health.body
+    assert "data-health-ci-boundary-card='fast-smoke' data-health-ci-boundary-card-status='missing_or_stale'" in health.body
+    assert "data-health-ci-boundary-card='full-suite' data-health-ci-boundary-card-status='missing_full_suite_success'" in health.body
+    assert "data-health-ci-boundary-card='latest' data-health-ci-boundary-card-status='success'" in health.body
+    assert "data-health-ci-boundary-card='safety' data-health-ci-boundary-card-status='read_only_no_fetch'" in health.body
+    assert "Full pytest suite" in health.body
+    assert "data-health-ci-boundary-primary='true' href='/ci-evidence#record-ci-snapshot-json'>Confirm checkout then record CI proof" in health.body
+    assert "data-health-ci-boundary-evidence='true'" in health.body
+    assert "health_ci_boundary_status</dt><dd>not_merge_ready" in health.body
+    assert "health_ci_boundary_review_status</dt><dd>needs_ci_proof" in health.body
+    assert "health_ci_boundary_fast_smoke_status</dt><dd>missing_or_stale" in health.body
+    assert "health_ci_boundary_full_suite_status</dt><dd>missing_full_suite_success" in health.body
+    assert "health_ci_boundary_current_proof</dt><dd>current_commit_unknown" in health.body
+    assert "health_ci_boundary_latest_source</dt><dd>publication_handoff" in health.body
+    assert "health_ci_boundary_latest_status</dt><dd>success" in health.body
+    assert "health_ci_boundary_latest_commit</dt><dd>abc123" in health.body
+    assert "health_ci_boundary_latest_run_id</dt><dd>123" in health.body
+    assert "health_ci_boundary_primary_surface</dt><dd><a href='/ci-evidence#record-ci-snapshot-json'>Confirm checkout then record CI proof</a>" in health.body
+    assert "health_ci_boundary_review_ready_claim</dt><dd>local_fast_smoke_or_full_suite_proof_only" in health.body
+    assert "health_ci_boundary_merge_ready_claim</dt><dd>requires_current_full_workflow_success_record" in health.body
+    assert "health_ci_boundary_github_status_fetch</dt><dd>none" in health.body
+    assert "health_ci_boundary_provider_calls_taken</dt><dd>0" in health.body
+    assert "health_ci_boundary_network_actions_taken</dt><dd>0" in health.body
+    assert "health_ci_boundary_external_effects_created</dt><dd>false" in health.body
+    assert "health_ci_boundary_safety: read-only local CI proof summary; GitHub status JSON is operator-supplied" in health.body
     assert "Health Command Bar" in health.body
     assert "data-health-command-bar='true'" in health.body
     assert "data-health-command-evidence='true'" in health.body
@@ -10036,6 +10064,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "data-health-readiness-strip='true'"
     )
     assert health.body.index("data-health-readiness-strip='true'") < health.body.index(
+        "data-health-ci-boundary='true'"
+    )
+    assert health.body.index("data-health-ci-boundary='true'") < health.body.index(
         "data-health-command-bar='true'"
     )
     assert health.body.index("data-health-operator-workbench='true'") < health.body.index(
@@ -10043,6 +10074,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     )
     assert "<details class='health-workbench-evidence' data-health-workbench-evidence='true'><summary>Health workbench evidence</summary>" in health.body
     assert "<details class='health-readiness-evidence' data-health-readiness-evidence='true'><summary>Health readiness evidence</summary>" in health.body
+    assert "<details id='health-ci-boundary-evidence' class='health-ci-boundary-evidence' data-health-ci-boundary-evidence='true'><summary>Health CI boundary evidence</summary>" in health.body
     assert "<details class='health-command-evidence' data-health-command-evidence='true'><summary>Health command evidence</summary>" in health.body
     assert "<details id='health-diagnostics' class='health-diagnostics-evidence' data-health-diagnostics-evidence='true'><summary>Health diagnostics evidence</summary>" in health.body
     assert "<details id='health-counts' class='health-counts-evidence' data-health-counts-evidence='true'><summary>Health counts evidence</summary>" in health.body

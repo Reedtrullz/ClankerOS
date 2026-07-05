@@ -1473,7 +1473,9 @@ with a `Health Operator Workbench` that turns warning count, bind scope,
 branch/commit, storage and workflow-import readiness, the refreshed local
 status artifact, the fact that the artifact is written on GET, one next local
 surface, and zero provider/network/external-effect counters into visible
-operator cards before the collapsed command and diagnostic evidence. Stop it with
+operator cards. It also includes a read-only `Health CI Boundary` for current
+checkout proof, Fast Smoke, Full pytest suite, latest local proof, and
+operator-supplied/no-polling safety before the collapsed command and diagnostic evidence. Stop it with
 `Ctrl-C`.
 
 The underlying CLI workflow remains the source of truth: scout a repo, inspect
