@@ -4,6 +4,17 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Post-merge self-hosting reset is now the current ClankerOS focus. Invalid
+  duplicate local git refs were quarantined so fetch works again, `main`
+  fast-forwarded to merge commit
+  `a86f92996adc276831dcb5cb7b341bfc89c42ee3`, GitHub Actions run
+  `28744414894` was recorded as local CI evidence
+  `ci_snapshot_evidence_afdf67ba9bcd`, and a real continuation Goal
+  `goal_c96f52bf5137` plus workspace resume surface
+  `/goals/goal_c96f52bf5137#goal-action-dock-form` now anchor `/today`,
+  `/goals`, `/resume`, and `/ci-evidence`. Operator surfaces now also explain
+  why the `main` CI proof counts from the follow-up branch when the commit is
+  identical.
 - Saved-Goal action result pages now include a visible `Continue Goal` panel
   inside `Action Result Next Step`, before the inline confirmed next-action
   form. After first Goal creation, the success page names `Create scout

@@ -1,5 +1,49 @@
 # Status
 
+## 2026-07-05 Post-Merge Self-Hosting Reset
+
+- Local git posture was reset after PR `#1` shipped: invalid duplicate ref
+  files with names such as `.git/refs/heads/main (1)` and
+  `.git/refs/remotes/origin/codex/goal-first-local-app (2)` were quarantined
+  under `.git/invalid-refs-backup/20260705-post-merge-self-hosting/`, not
+  deleted.
+- `git fetch origin main codex/goal-first-local-app` now succeeds, local
+  `main` fast-forwarded to merge commit
+  `a86f92996adc276831dcb5cb7b341bfc89c42ee3`, and the follow-up branch is
+  `codex/post-merge-self-hosting`.
+- The post-merge GitHub Actions workflow-run proof for `main` run
+  `28744414894` was recorded as local ClankerOS CI evidence
+  `ci_snapshot_evidence_afdf67ba9bcd` with `status_source=github_status_json`,
+  `evidence_scope=workflow_run`, `network_actions_taken=0`, and
+  `external_mutations_taken=0`.
+- A new real dogfooding Goal was created:
+  `goal_c96f52bf5137`, titled `Use ClankerOS from shipped main tomorrow...`.
+  Its artifacts live under
+  `.clanker/projects/clankeros/goals/goal_c96f52bf5137/`.
+- The durable workspace resume file now points at project `clankeros`, Goal
+  `goal_c96f52bf5137`, and exact resume surface
+  `/goals/goal_c96f52bf5137#goal-action-dock-form`.
+- The stale dogfood Goal `goal_1fa51c15f846` was paused through the existing
+  confirmed `pause-goal` local app action after the new continuation Goal was
+  created. The workspace was then re-saved to `goal_c96f52bf5137`, so
+  `/resume` still returns to the real post-merge self-hosting action.
+- Render readback confirmed `/`, `/today`, `/goals`,
+  `/goals/goal_c96f52bf5137`, and `/ci-evidence` include the new continuation
+  Goal and merge commit `a86f92996adc276831dcb5cb7b341bfc89c42ee3`; the stale
+  `goal_1fa51c15f846` demo/context-pack Goal no longer appears on those
+  primary surfaces after the reset.
+- `/today`, Goal CI handoff, Goal verification, Home, and `/ci-evidence`
+  evidence rows now treat an operator-supplied `main` workflow-run proof as
+  current from a non-`main` checkout when local `main` or `origin/main` points
+  at the same commit, while still showing the branch mismatch and match
+  source explicitly.
+- Remaining next slice: add an explicit stale Goal hygiene path and make the
+  iteration selector deprioritize recursive report-only proof-ladder tails
+  when a daily-use product Goal exists.
+- Non-claim: this reset records local ClankerOS state and proof only. It does
+  not deploy, call providers, push, create a PR, or mutate external systems
+  from the app.
+
 ## 2026-07-05 Browser Execution Trust Hardening
 
 - Approved coder worktree execution now parses operator-provided commands into

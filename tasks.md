@@ -2,6 +2,11 @@
 
 ## now
 
+- [x] Reset the post-merge ClankerOS dogfood state to shipped `main`: local git
+  fetch works after invalid duplicate ref quarantine, post-merge `main` CI
+  proof is recorded, operator surfaces recognize same-commit `main` proof from
+  the follow-up branch, and the saved resume surface points at the real
+  continuation Goal. <!-- score=10 complexity=2 -->
 - [x] Implement Milestone 1 local closed loop.
 - [x] Verify the loop with automated tests and a CLI smoke run.
 - [x] Record the first learning/eval improvement.
@@ -20,6 +25,14 @@
 
 ## next
 
+- [ ] Add an explicit stale Goal hygiene path for old demo/context-pack Goals:
+  review, pause, complete, or archive them without hiding their evidence.
+  <!-- score=10 complexity=3 -->
+- [ ] Make the iteration selector deprioritize recursive report-only proof
+  ladder tails whenever a daily-use product Goal exists. <!-- score=10 complexity=3 -->
+- [ ] Add a one-command next-day self-hosting check that verifies local fetch,
+  saved resume, current `main` proof, and the browser next action before work
+  resumes. <!-- score=9 complexity=3 -->
 - [x] Extend the static dashboard with incident summaries once incidents exist.
 - [x] Add a compact incident resolution path after more failure modes exist.
 - [x] Add queue-health checks for repeated blocked or failed work.

@@ -3351,9 +3351,11 @@ def _project_ci_evidence_command_state(root: Path, project_id: str) -> dict[str,
             "latest_source": "none",
             "latest_status": "missing",
             "latest_scope": "none",
+            "latest_branch": "none",
             "latest_commit": "none",
             "latest_external_run_id": "none",
             "current_proof": "missing_current_commit_proof",
+            "current_match_source": "missing_record",
             "command_status": "no_project_scoped_records",
             "next_action": "Record Goal CI proof",
             "target_surface": "#record-goal-ci-proof",
@@ -3364,15 +3366,18 @@ def _project_ci_evidence_command_state(root: Path, project_id: str) -> dict[str,
     result = getattr(record, "result_json", {}) or {}
     latest_scope = str(result.get("evidence_scope", "unknown"))
     latest_status = str(getattr(record, "status", "unknown"))
+    latest_branch = str(getattr(record, "branch_name", "unknown"))
     latest_commit = str(getattr(record, "commit_sha", "unknown"))
 
-    branch_matches = str(getattr(record, "branch_name", "")) == branch
-    commit_matches = current_commit_known and _commit_refs_match(
-        latest_commit,
-        current_commit,
-        repo_state["commit"],
+    match = _ci_record_current_checkout_match(
+        project_root,
+        record_branch=latest_branch,
+        record_commit=latest_commit,
+        current_branch=branch,
+        full_commit=current_commit,
+        short_commit=repo_state["commit"],
     )
-    matches_current = branch_matches and commit_matches
+    matches_current = current_commit_known and bool(match["matches_current"])
     if not current_commit_known:
         current_proof = "current_commit_unknown"
         command_status = "project_records_available_current_commit_unknown"
@@ -3412,9 +3417,13 @@ def _project_ci_evidence_command_state(root: Path, project_id: str) -> dict[str,
         "latest_source": source_kind,
         "latest_status": latest_status,
         "latest_scope": latest_scope,
+        "latest_branch": latest_branch,
         "latest_commit": latest_commit,
         "latest_external_run_id": str(getattr(record, "external_run_id", "unknown")),
         "current_proof": current_proof,
+        "current_match_source": (
+            "current_commit_unknown" if not current_commit_known else str(match["source"])
+        ),
         "command_status": command_status,
         "next_action": next_action,
         "target_surface": target_surface,
@@ -4773,6 +4782,7 @@ def _today_workflow_map(
 
 
 def _today_ci_handoff(root: Path, lead_goal: sqlite3.Row | None) -> str:
+    handoff_root = root
     if lead_goal is None:
         state = _ci_evidence_command_state(root)
         latest_record = _latest_ci_evidence_record(root)
@@ -4790,6 +4800,7 @@ def _today_ci_handoff(root: Path, lead_goal: sqlite3.Row | None) -> str:
         storage = _storage(root)
         project = storage.get_registered_project(project_id)
         project_root = Path(project.root_path) if project else root
+        handoff_root = project_root
         state = _project_ci_evidence_command_state(root, project_id)
         latest_record = _latest_ci_evidence_record(root, project_id=project_id)
         repo = _repo_state(project_root)
@@ -4811,6 +4822,7 @@ def _today_ci_handoff(root: Path, lead_goal: sqlite3.Row | None) -> str:
     latest_source = state["latest_source"]
     latest_status = state["latest_status"]
     latest_scope = state["latest_scope"]
+    latest_branch = state.get("latest_branch", "none")
     latest_commit = state["latest_commit"]
     latest_run_id = state["latest_external_run_id"]
     merge_state = _ci_merge_readiness_state(
@@ -4848,15 +4860,17 @@ def _today_ci_handoff(root: Path, lead_goal: sqlite3.Row | None) -> str:
         )
         latest_evidence = _artifact_link(evidence_path)
         latest_recorded_by = str(getattr(record, "recorded_by", "unknown"))
-        branch_matches = str(getattr(record, "branch_name", "")) == state["branch"]
-        commit_matches = _commit_refs_match(
-            str(getattr(record, "commit_sha", "")),
-            state["current_commit"],
-            repo["commit"],
+        match = _ci_record_current_checkout_match(
+            handoff_root,
+            record_branch=str(getattr(record, "branch_name", "")),
+            record_commit=str(getattr(record, "commit_sha", "")),
+            current_branch=state["branch"],
+            full_commit=state["current_commit"],
+            short_commit=repo["commit"],
         )
-        branch_matches_current = str(branch_matches).lower()
-        commit_matches_current = str(commit_matches).lower()
-        matches_current = str(branch_matches and commit_matches).lower()
+        branch_matches_current = str(match["branch_matches"]).lower()
+        commit_matches_current = str(match["commit_matches"]).lower()
+        matches_current = str(match["matches_current"]).lower()
 
     branch_arg = shlex.quote(state["branch"])
     repo_arg = shlex.quote(repo_slug)
@@ -4908,11 +4922,16 @@ def _today_ci_handoff(root: Path, lead_goal: sqlite3.Row | None) -> str:
                     ("today_ci_handoff_latest_status", latest_status),
                     ("today_ci_handoff_latest_scope", latest_scope),
                     ("today_ci_handoff_latest_provider", latest_provider),
+                    ("today_ci_handoff_latest_branch", latest_branch),
                     ("today_ci_handoff_latest_commit", latest_commit),
                     ("today_ci_handoff_latest_run_id", latest_run_id),
                     ("today_ci_handoff_latest_url", latest_url),
                     ("today_ci_handoff_latest_evidence", latest_evidence),
                     ("today_ci_handoff_latest_recorded_by", latest_recorded_by),
+                    (
+                        "today_ci_handoff_current_match_source",
+                        state.get("current_match_source", "unknown"),
+                    ),
                     (
                         "today_ci_handoff_branch_matches_current",
                         branch_matches_current,
@@ -7526,8 +7545,14 @@ def _home_verification_handoff(root: Path) -> str:
     else:
         source_kind, record = latest_record
         result = record.result_json if isinstance(record.result_json, dict) else {}
-        branch_matches = record.branch_name == repo["branch"]
-        commit_matches = _commit_refs_match(record.commit_sha, full_commit, repo["commit"])
+        match = _ci_record_current_checkout_match(
+            root,
+            record_branch=record.branch_name,
+            record_commit=record.commit_sha,
+            current_branch=repo["branch"],
+            full_commit=full_commit,
+            short_commit=repo["commit"],
+        )
         lines.extend(
             [
                 ("home_latest_ci_source", source_kind),
@@ -7541,11 +7566,18 @@ def _home_verification_handoff(root: Path) -> str:
                     SafeHtml(f"<a href='{_e(record.external_url)}'>{_e(record.external_url)}</a>"),
                 ),
                 ("home_latest_ci_record_source", "operator_supplied"),
-                ("home_latest_ci_branch_matches_current", str(branch_matches).lower()),
-                ("home_latest_ci_commit_matches_current", str(commit_matches).lower()),
+                ("home_latest_ci_current_match_source", str(match["source"])),
+                (
+                    "home_latest_ci_branch_matches_current",
+                    str(match["branch_matches"]).lower(),
+                ),
+                (
+                    "home_latest_ci_commit_matches_current",
+                    str(match["commit_matches"]).lower(),
+                ),
                 (
                     "home_latest_ci_matches_current_checkout",
-                    str(branch_matches and commit_matches).lower(),
+                    str(match["matches_current"]).lower(),
                 ),
                 ("home_latest_ci_network_actions_taken", str(result.get("network_actions_taken", "unknown"))),
                 (
@@ -20332,6 +20364,7 @@ def _goal_ci_handoff(root: Path, state: dict[str, Any]) -> str:
     latest_recorded_by = "none"
     branch_matches_current = "missing"
     commit_matches_current = "missing"
+    current_match_source = project_ci_state.get("current_match_source", "missing")
     matches_current = False
     if latest_record is not None:
         source_kind, record = latest_record
@@ -20348,11 +20381,18 @@ def _goal_ci_handoff(root: Path, state: dict[str, Any]) -> str:
             _artifact_link(_repo_relative_artifact_path(root, record.evidence_path))
         )
         latest_recorded_by = str(record.recorded_by)
-        branch_matches = record.branch_name == repo["branch"]
-        commit_matches = _commit_refs_match(record.commit_sha, full_commit, repo["commit"])
-        matches_current = branch_matches and commit_matches
-        branch_matches_current = str(branch_matches).lower()
-        commit_matches_current = str(commit_matches).lower()
+        match = _ci_record_current_checkout_match(
+            project_root,
+            record_branch=record.branch_name,
+            record_commit=record.commit_sha,
+            current_branch=repo["branch"],
+            full_commit=full_commit,
+            short_commit=repo["commit"],
+        )
+        matches_current = bool(match["matches_current"])
+        branch_matches_current = str(match["branch_matches"]).lower()
+        commit_matches_current = str(match["commit_matches"]).lower()
+        current_match_source = str(match["source"])
 
     if latest_record is None:
         handoff_status = "missing"
@@ -20479,6 +20519,7 @@ def _goal_ci_handoff(root: Path, state: dict[str, Any]) -> str:
                     ("goal_ci_handoff_latest_url", latest_url),
                     ("goal_ci_handoff_latest_evidence", latest_evidence),
                     ("goal_ci_handoff_latest_recorded_by", latest_recorded_by),
+                    ("goal_ci_handoff_current_match_source", current_match_source),
                     ("goal_ci_handoff_branch_matches_current", branch_matches_current),
                     ("goal_ci_handoff_commit_matches_current", commit_matches_current),
                     ("goal_ci_handoff_matches_current_checkout", str(matches_current).lower()),
@@ -28166,6 +28207,7 @@ def _goal_verification_evidence(root: Path, state: dict[str, Any]) -> str:
                 branch_matches=False,
                 commit_matches=False,
                 matches_current=False,
+                current_match_source="missing_record",
             )
             + _collapsible_list_section(
                 "Goal Verification Evidence",
@@ -28179,9 +28221,18 @@ def _goal_verification_evidence(root: Path, state: dict[str, Any]) -> str:
         )
 
     source_kind, record = latest_record
-    branch_matches = record.branch_name == repo["branch"]
-    commit_matches = _commit_refs_match(record.commit_sha, full_commit, repo["commit"])
-    matches_current = branch_matches and commit_matches
+    match = _ci_record_current_checkout_match(
+        project_root,
+        record_branch=record.branch_name,
+        record_commit=record.commit_sha,
+        current_branch=repo["branch"],
+        full_commit=full_commit,
+        short_commit=repo["commit"],
+    )
+    branch_matches = bool(match["branch_matches"])
+    commit_matches = bool(match["commit_matches"])
+    matches_current = bool(match["matches_current"])
+    current_match_source = str(match["source"])
     result = record.result_json if isinstance(record.result_json, dict) else {}
     lines.extend(
         [
@@ -28198,6 +28249,7 @@ def _goal_verification_evidence(root: Path, state: dict[str, Any]) -> str:
             f"goal_ci_branch_matches_current: {str(branch_matches).lower()}",
             f"goal_ci_commit_matches_current: {str(commit_matches).lower()}",
             f"goal_ci_matches_current_checkout: {str(matches_current).lower()}",
+            f"goal_ci_current_match_source: {_e(current_match_source)}",
             "goal_ci_record_source: operator_supplied",
             f"goal_ci_network_actions_taken: {_e(result.get('network_actions_taken', 'unknown'))}",
             f"goal_ci_external_mutations_taken: {_e(result.get('external_mutations_taken', 'unknown'))}",
@@ -28215,6 +28267,7 @@ def _goal_verification_evidence(root: Path, state: dict[str, Any]) -> str:
             branch_matches=branch_matches,
             commit_matches=commit_matches,
             matches_current=matches_current,
+            current_match_source=current_match_source,
         )
         + _collapsible_list_section(
             "Goal Verification Evidence",
@@ -28239,6 +28292,7 @@ def _goal_verification_command_bar(
     branch_matches: bool,
     commit_matches: bool,
     matches_current: bool,
+    current_match_source: str,
 ) -> str:
     result_json = getattr(record, "result_json", {}) if record is not None else {}
     result = result_json if isinstance(result_json, dict) else {}
@@ -28350,6 +28404,7 @@ def _goal_verification_command_bar(
                     ("goal_verification_command_branch_matches_current", str(branch_matches).lower()),
                     ("goal_verification_command_commit_matches_current", str(commit_matches).lower()),
                     ("goal_verification_command_matches_current_checkout", str(matches_current).lower()),
+                    ("goal_verification_command_current_match_source", current_match_source),
                     ("goal_verification_command_latest_run_id", latest_run_id),
                     ("goal_verification_command_latest_url", latest_url_html),
                     (
@@ -28441,6 +28496,60 @@ def _commit_refs_match(record_commit: str, full_commit: str, short_commit: str) 
         if record == candidate or candidate.startswith(record) or record.startswith(candidate):
             return True
     return False
+
+
+def _ci_record_current_checkout_match(
+    root: Path,
+    *,
+    record_branch: str,
+    record_commit: str,
+    current_branch: str,
+    full_commit: str,
+    short_commit: str,
+) -> dict[str, Any]:
+    branch = record_branch.strip()
+    current = current_branch.strip()
+    commit_matches = _commit_refs_match(record_commit, full_commit, short_commit)
+    branch_matches = bool(branch and current and current != "unknown" and branch == current)
+    if not commit_matches:
+        return {
+            "branch_matches": branch_matches,
+            "commit_matches": False,
+            "matches_current": False,
+            "source": "commit_mismatch",
+        }
+    if branch_matches:
+        return {
+            "branch_matches": True,
+            "commit_matches": True,
+            "matches_current": True,
+            "source": "branch_and_commit",
+        }
+    if branch == "main":
+        for source, ref_name in (
+            ("main_same_commit_local_main", "refs/heads/main"),
+            ("main_same_commit_origin_main", "refs/remotes/origin/main"),
+        ):
+            ref_commit = _git(root, ["rev-parse", "--verify", ref_name])
+            if ref_commit and _commit_refs_match(ref_commit, full_commit, short_commit):
+                return {
+                    "branch_matches": False,
+                    "commit_matches": True,
+                    "matches_current": True,
+                    "source": source,
+                }
+        return {
+            "branch_matches": False,
+            "commit_matches": True,
+            "matches_current": False,
+            "source": "main_record_without_matching_local_main_ref",
+        }
+    return {
+        "branch_matches": branch_matches,
+        "commit_matches": True,
+        "matches_current": False,
+        "source": "branch_mismatch",
+    }
 
 
 def _goal_operator_note_lines(root: Path, state: dict[str, Any]) -> list[str]:
@@ -31851,10 +31960,12 @@ def _ci_evidence_command_state(root: Path) -> dict[str, str]:
             "latest_source": "none",
             "latest_status": "missing",
             "latest_scope": "none",
+            "latest_branch": "none",
             "latest_commit": "none",
             "latest_external_run_id": "none",
             "latest_target": "#record-ci-snapshot-json",
             "current_proof": "missing_current_commit_proof",
+            "current_match_source": "missing_record",
             "command_status": "no_records",
             "next_action": "Paste GitHub Actions JSON",
             "target_surface": "#record-ci-snapshot-json",
@@ -31865,38 +31976,49 @@ def _ci_evidence_command_state(root: Path) -> dict[str, str]:
     result = getattr(record, "result_json", {}) or {}
     latest_scope = str(result.get("evidence_scope", "unknown"))
     latest_status = str(getattr(record, "status", "unknown"))
+    latest_branch = str(getattr(record, "branch_name", "unknown"))
     latest_commit = str(getattr(record, "commit_sha", "unknown"))
     if source_kind == "direct_public_snapshot":
         latest_target = "#recent-direct-snapshot-ci-evidence"
     else:
         latest_target = "#recent-ci-evidence"
+    commit_matches = current_commit_known and _commit_refs_match(
+        latest_commit,
+        current_commit,
+        repo_state["commit"],
+    )
 
     if not current_commit_known:
         current_proof = "current_commit_unknown"
+        current_match_source = "current_commit_unknown"
         command_status = "records_available_current_commit_unknown"
         next_action = "Confirm checkout then record CI proof"
         target_surface = "#record-ci-snapshot-json"
         reason = "current_checkout_commit_unknown"
-    elif latest_commit != current_commit:
+    elif not commit_matches:
         current_proof = "stale_or_different_commit"
+        current_match_source = "commit_mismatch"
         command_status = "latest_record_for_different_commit"
         next_action = "Record current commit CI proof"
         target_surface = "#record-ci-snapshot-json"
         reason = "latest_record_commit_does_not_match_current_checkout"
     elif latest_status == "success" and latest_scope == "workflow_run":
         current_proof = "current_workflow_run_success"
+        current_match_source = "commit_only_global"
         command_status = "current_full_ci_recorded"
         next_action = "Review latest CI evidence"
         target_surface = latest_target
         reason = "current_commit_has_workflow_run_success"
     elif latest_status == "success" and latest_scope.startswith("workflow_job:"):
         current_proof = "current_job_scope_only"
+        current_match_source = "commit_only_global"
         command_status = "current_fast_smoke_recorded"
         next_action = "Record full-suite CI proof"
         target_surface = "#record-ci-snapshot-json"
         reason = "latest_record_is_job_scoped_early_proof"
     else:
         current_proof = "current_ci_record_not_full_success"
+        current_match_source = "commit_only_global"
         command_status = "current_ci_record_needs_review"
         next_action = "Review and refresh CI evidence"
         target_surface = "#record-ci-snapshot-json"
@@ -31908,10 +32030,12 @@ def _ci_evidence_command_state(root: Path) -> dict[str, str]:
         "latest_source": source_kind,
         "latest_status": latest_status,
         "latest_scope": latest_scope,
+        "latest_branch": latest_branch,
         "latest_commit": latest_commit,
         "latest_external_run_id": str(getattr(record, "external_run_id", "unknown")),
         "latest_target": latest_target,
         "current_proof": current_proof,
+        "current_match_source": current_match_source,
         "command_status": command_status,
         "next_action": next_action,
         "target_surface": target_surface,
@@ -32969,8 +33093,13 @@ def _ci_merge_readiness_map(
                     ("ci_merge_readiness_latest_source", state["latest_source"]),
                     ("ci_merge_readiness_latest_status", latest_status),
                     ("ci_merge_readiness_latest_scope", latest_scope),
+                    ("ci_merge_readiness_latest_branch", state["latest_branch"]),
                     ("ci_merge_readiness_latest_commit", state["latest_commit"]),
                     ("ci_merge_readiness_latest_run_id", state["latest_external_run_id"]),
+                    (
+                        "ci_merge_readiness_current_match_source",
+                        state["current_match_source"],
+                    ),
                     ("ci_merge_readiness_latest_label", latest_label),
                     (
                         "ci_merge_readiness_primary_surface",
@@ -33098,7 +33227,9 @@ def _ci_proof_workbench(root: Path) -> str:
                     ("ci_proof_workbench_latest_source", state["latest_source"]),
                     ("ci_proof_workbench_latest_status", state["latest_status"]),
                     ("ci_proof_workbench_latest_scope", state["latest_scope"]),
+                    ("ci_proof_workbench_latest_branch", state["latest_branch"]),
                     ("ci_proof_workbench_latest_run_id", state["latest_external_run_id"]),
+                    ("ci_proof_workbench_current_match_source", state["current_match_source"]),
                     ("ci_proof_workbench_next_action", state["next_action"]),
                     (
                         "ci_proof_workbench_status_command_template",
@@ -33239,8 +33370,10 @@ def _ci_evidence_command_bar(
                     ("ci_evidence_command_latest_source", state["latest_source"]),
                     ("ci_evidence_command_latest_status", state["latest_status"]),
                     ("ci_evidence_command_latest_scope", state["latest_scope"]),
+                    ("ci_evidence_command_latest_branch", state["latest_branch"]),
                     ("ci_evidence_command_latest_commit", state["latest_commit"]),
                     ("ci_evidence_command_latest_run_id", state["latest_external_run_id"]),
+                    ("ci_evidence_command_current_match_source", state["current_match_source"]),
                     ("ci_evidence_command_next_action", state["next_action"]),
                     (
                         "ci_evidence_command_target_surface",

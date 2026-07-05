@@ -2952,6 +2952,120 @@ def test_local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json(
     assert "evidence_scope=workflow_job:Fast smoke verification" in ci_evidence_after.body
 
 
+def test_local_app_treats_main_workflow_proof_as_current_on_same_commit_branch(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    AgentSystem(tmp_path).initialize()
+    _init_git_repo(tmp_path)
+    subprocess.run(["git", "branch", "-M", "main"], cwd=tmp_path, check=True)
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    subprocess.run(
+        ["git", "switch", "-c", "codex/post-merge-test"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "clankeros",
+                "--path",
+                str(tmp_path),
+                "--test-command",
+                "python3 -m pytest -q",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "goal",
+                "--project",
+                "clankeros",
+                "Continue from shipped main with local CI proof.",
+            ]
+        )
+        == 0
+    )
+    goal_output = capsys.readouterr().out
+    goal_id = next(
+        line.split(": ", 1)[1]
+        for line in goal_output.splitlines()
+        if line.startswith("goal_id: ")
+    )
+
+    ci_evidence_path = tmp_path / ".clanker" / "ci-snapshots" / "same-main.json"
+    ci_evidence_path.parent.mkdir(parents=True, exist_ok=True)
+    ci_evidence_path.write_text(
+        json.dumps(
+            {
+                "status": "success",
+                "status_source": "github_status_json",
+                "evidence_scope": "workflow_run",
+                "network_actions_taken": 0,
+                "external_mutations_taken": 0,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    Storage(tmp_path / ".agent" / "state.db").record_ci_snapshot_evidence(
+        project_id="clankeros",
+        branch_name="main",
+        commit_sha=commit,
+        provider="github-actions",
+        external_run_id="same-main",
+        external_url="https://github.com/Reedtrullz/ClankerOS/actions/runs/same-main",
+        status="success",
+        recorded_by="operator",
+        evidence_path=str(ci_evidence_path),
+        result_json={
+            "status_source": "github_status_json",
+            "evidence_scope": "workflow_run",
+            "network_actions_taken": 0,
+            "external_mutations_taken": 0,
+        },
+        idempotency_key="same-main",
+    )
+
+    today = render_local_app_route(tmp_path, "/today")
+    assert today.status == 200
+    assert "today_ci_handoff_branch</dt><dd>codex/post-merge-test" in today.body
+    assert "today_ci_handoff_latest_branch</dt><dd>main" in today.body
+    assert "today_ci_handoff_current_proof</dt><dd>current_workflow_run_success" in today.body
+    assert "today_ci_handoff_current_match_source</dt><dd>main_same_commit_local_main" in today.body
+    assert "today_ci_handoff_branch_matches_current</dt><dd>false" in today.body
+    assert "today_ci_handoff_commit_matches_current</dt><dd>true" in today.body
+    assert "today_ci_handoff_matches_current_checkout</dt><dd>true" in today.body
+    assert "today_ci_handoff_merge_readiness_status</dt><dd>merge_ready_from_local_full_suite_proof" in today.body
+    assert "today_ci_handoff_network_actions_taken</dt><dd>0" in today.body
+    assert "today_ci_handoff_external_effects_created</dt><dd>false" in today.body
+
+    goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert goal.status == 200
+    assert "goal_ci_handoff_current_match_source</dt><dd>main_same_commit_local_main" in goal.body
+    assert "goal_ci_handoff_matches_current_checkout</dt><dd>true" in goal.body
+    assert "goal_ci_handoff_merge_readiness_status</dt><dd>merge_ready_from_local_full_suite_proof" in goal.body
+    assert "goal_verification_command_current_match_source</dt><dd>main_same_commit_local_main" in goal.body
+    assert "goal_verification_command_matches_current_checkout</dt><dd>true" in goal.body
+    assert "goal_ci_current_match_source: main_same_commit_local_main" in goal.body
+
+
 def test_local_app_rejects_pending_ci_snapshot_status_json_without_record(
     tmp_path: Path,
 ) -> None:
