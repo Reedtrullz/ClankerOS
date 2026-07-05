@@ -116,7 +116,10 @@ confirmation requirement, and zero provider/network/external-effect counters.
   Active first-run Goal pages also show a read-only `Goal First Run Rail`
   between Attention and the Goal Command Bar, keeping Project, Goal,
   Delegation, Context, and Run visible on the Goal page and routing the
-  current gate to the existing confirmed Goal action form.
+  current gate to the existing confirmed Goal action form. Done steps open
+  their concrete local surfaces, such as the project page, Goal page, or
+  delegation page, while waiting steps link back to the current prerequisite
+  action on the Goal page.
   Populated Goal pages also show a read-only `Goal Milestone Checklist` near
   the top of the page after the Goal Path Rail. It translates the product
   no-docs path into seven Goal-local browser cards: Launch App, Create Project,

@@ -201,7 +201,10 @@ cards for Project, Goal, Delegation, Context, and Run, while detailed status
 evidence stays collapsed and read-only. Active first-run Goal pages also show
 a read-only `Goal First Run Rail` between Attention and the Goal Command Bar,
 so the same Project -> Goal -> Delegation -> Context -> Run path stays visible
-and routes the current step to the existing confirmed Goal action form.
+and routes the current step to the existing confirmed Goal action form. Done
+steps open their concrete local surfaces, such as the project page, Goal page,
+or delegation page, while waiting steps link back to the current prerequisite
+action on the Goal page.
 Confirmed browser
 project registration and goal creation also update the saved workspace, so
 `/resume` already knows the first project/goal after those actions. When a

@@ -1,5 +1,34 @@
 # Status
 
+## 2026-07-05 Goal First Run Rail Target Labels
+
+- Active first-run Goal pages now make the `Goal First Run Rail` use
+  action-specific labels and concrete local targets instead of generic
+  `Open` or `Waiting` rail links.
+- Done steps open their real local surfaces: project rows link to
+  `/projects/<project>`, Goal rows link to `/goals/<goal_id>`, and
+  delegation/context/run rows link to the delegation page when a delegation
+  exists. Waiting steps link back to the current prerequisite action on the
+  same Goal page.
+- Rail cards now expose the action id and visible link label through
+  `data-goal-first-run-*` attributes, and collapsed evidence records each
+  step's surface, action id, link label, and href.
+- Local verification:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed in 62.75s.
+  - Direct Goal-page first-run render smoke against a temporary root after
+    confirmed local `register-project` and `create-goal` POSTs: created
+    `goal_bf8c7ee036dd`, rendered 830089 bytes, and found the rail, concrete
+    project/Goal links, current-action and waiting-prerequisite links,
+    `goal_first_run_write_on_get=false`, and
+    `goal_first_run_network_actions_taken=0`.
+- Non-claim: this is read-only Goal-page first-run rail navigation and
+  evidence presentation. It does not add new action authority, write on GET,
+  call providers, use the network, approve work, push, create PRs, deploy, or
+  mutate external systems from ClankerOS.
+
 ## 2026-07-05 Guide First Run Target Routing
 
 - `/guide` First Run Path cards now use guide-specific targets instead of the

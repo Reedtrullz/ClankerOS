@@ -8632,6 +8632,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "data-goal-first-run-step='create_first_delegation' "
         "data-goal-first-run-status='current'"
     ) in first_goal_page.body
+    assert "data-goal-first-run-action='register-project'" in first_goal_page.body
+    assert "data-goal-first-run-link-label='Open Project'" in first_goal_page.body
+    assert "href='/projects/first-target'>Open Project</a>" in first_goal_page.body
+    assert "data-goal-first-run-action='create-goal'" in first_goal_page.body
+    assert "data-goal-first-run-link-label='Open Goal'" in first_goal_page.body
+    assert f"href='/goals/{created_goal_id}'>Open Goal</a>" in first_goal_page.body
+    assert "data-goal-first-run-link-label='Create scout delegation'" in first_goal_page.body
+    assert "href='#goal-action-dock-form'>Create scout delegation</a>" in first_goal_page.body
+    assert "data-goal-first-run-link-label='Needs delegation'" in first_goal_page.body
+    assert "href='#goal-action-dock-form'>Needs delegation</a>" in first_goal_page.body
     assert "goal_first_run_current_step</dt><dd>create_first_delegation" in first_goal_page.body
     assert "goal_first_run_next_action</dt><dd>Create scout delegation" in first_goal_page.body
     assert (
@@ -8656,6 +8666,12 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "goal_first_run_step: create_first_delegation status=current "
         "surface=<a href='#goal-action-dock-form'>Create scout delegation</a>"
     ) in first_goal_page.body
+    assert (
+        "goal_first_run_step: create_project status=done "
+        "surface=<a href='/projects/first-target'>Open Project</a> "
+        "action=register-project link=Open Project href=/projects/first-target"
+        in first_goal_page.body
+    )
     assert "goal_first_run_safety: read-only first-run rail" in first_goal_page.body
     assert first_goal_page.body.index("data-goal-attention-digest='true'") < first_goal_page.body.index(
         "data-goal-first-run-rail='true'"
@@ -9257,6 +9273,15 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "data-goal-first-run-step='generate_context_pack' "
         "data-goal-first-run-status='current'"
     ) in delegated_goal_page.body
+    assert "data-goal-first-run-link-label='Open Delegation'" in delegated_goal_page.body
+    assert (
+        f"href='/delegations/{delegation.id}'>Open Delegation</a>"
+        in delegated_goal_page.body
+    )
+    assert "data-goal-first-run-link-label='Generate context pack'" in delegated_goal_page.body
+    assert "href='#goal-action-dock-form'>Generate context pack</a>" in delegated_goal_page.body
+    assert "data-goal-first-run-link-label='Needs context pack'" in delegated_goal_page.body
+    assert "href='#goal-action-dock-form'>Needs context pack</a>" in delegated_goal_page.body
     assert "goal_first_run_current_step</dt><dd>generate_context_pack" in delegated_goal_page.body
     assert "goal_first_run_next_action</dt><dd>Generate context pack" in delegated_goal_page.body
     assert (

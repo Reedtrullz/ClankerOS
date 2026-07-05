@@ -18985,19 +18985,38 @@ def _goal_first_run_rail(
     for index, (step, label, action) in enumerate(_FIRST_RUN_STEPS, start=1):
         status = statuses[step]
         is_current = step == current_step
-        href = primary_href if is_current else _first_run_step_href(progress, step)
-        link_label = primary_label if is_current else ("Open" if status == "done" else "Waiting")
+        action_name = _action_name_for_first_run_step(step)
+        href = primary_href
+        if not is_current and status == "done":
+            if step == "create_project":
+                href = f"/projects/{quote(goal.project_id)}"
+            elif step == "create_first_goal":
+                href = f"/goals/{quote(goal.id)}"
+            elif delegation_id and step in {
+                "create_first_delegation",
+                "generate_context_pack",
+                "run_first_delegation",
+            }:
+                href = f"/delegations/{quote(delegation_id)}"
+        link_label = (
+            primary_label
+            if is_current
+            else _first_run_step_link_label(step, status, action)
+        )
         card_class = "goal-first-run-card goal-first-run-current" if is_current else "goal-first-run-card"
         lines.append(
             f"goal_first_run_step: {_e(step)} status={_e(status)} "
-            f"surface=<a href='{_e(href)}'>{_e(link_label)}</a>"
+            f"surface=<a href='{_e(href)}'>{_e(link_label)}</a> "
+            f"action={_e(action_name)} link={_e(link_label)} href={_e(href)}"
         )
         cards.append(
             "".join(
                 [
                     f"<article class='{card_class}' data-goal-first-run-card='true' ",
                     f"data-goal-first-run-step='{_e(step)}' ",
-                    f"data-goal-first-run-status='{_e(status)}'>",
+                    f"data-goal-first-run-status='{_e(status)}' "
+                    f"data-goal-first-run-action='{_e(action_name)}' "
+                    f"data-goal-first-run-link-label='{_e(link_label)}'>",
                     f"<p class='goal-first-run-index'>{index}</p>",
                     f"<h3>{_e(label)}</h3>",
                     f"<p>{_e(action)}</p>",

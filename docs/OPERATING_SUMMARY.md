@@ -1420,7 +1420,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   read-only `Goal First Run Rail` between Attention and the Goal Command Bar,
   preserving the Project -> Goal -> Delegation -> Context -> Run path on the
   Goal page and pointing the current gate at the existing confirmed Goal action
-  form. After a confirmed
+  form. Done steps open their concrete local surfaces, such as the project
+  page, Goal page, or delegation page, while waiting steps link back to the
+  current prerequisite action on the Goal page. After a confirmed
   `register-project` action, `Action Result Details` can also continue the
   first-run browser path before a saved Goal exists by rendering the
   confirmation-required `create-goal` form inline plus Home and Today fallback
