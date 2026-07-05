@@ -1,5 +1,22 @@
 # Status
 
+## 2026-07-05 CI Merge Readiness Map
+
+- `/ci-evidence` now includes a read-only `CI Merge Readiness Map` between the
+  CI readiness strip and JSON assistant.
+- The map separates missing proof, fast-smoke-only review proof, and
+  full-suite merge proof for the current checkout using only local
+  operator-supplied CI evidence records.
+- It keeps fast smoke labeled as review/early route proof and requires a
+  current full workflow success record before the app can call the local proof
+  posture merge-ready.
+- It also surfaces a copy-only `gh pr view --json
+  isDraft,mergeable,mergeStateStatus,statusCheckRollup,url` command for PR
+  state checks outside ClankerOS without app-side GitHub polling.
+- Non-claim: this is proof classification and copy-only command guidance. It
+  does not fetch GitHub, mark PRs ready, merge, push, create PRs, deploy, call
+  providers, or mutate external systems from ClankerOS.
+
 ## 2026-07-05 GitHub Full Suite Duration Evidence
 
 - The GitHub Actions `Full pytest suite` job still runs the repository-wide

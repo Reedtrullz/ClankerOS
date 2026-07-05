@@ -1375,7 +1375,11 @@ and validated recorder templates. A browser-local `CI JSON Assistant` follows
 with copy buttons for the current `gh run view` JSON command, optional
 clipboard paste into the recorder textarea, and quick job-name fill buttons
 for fast-smoke or full-suite proof. Fast-smoke proof remains labeled as early
-route/CLI proof only. The `CI Evidence Recording Guide` shows a handoff-specific
+route/CLI proof only. A visible `CI Merge Readiness Map` now distinguishes
+missing proof, fast-smoke-only review proof, and full-suite merge proof using
+only local operator-supplied evidence. It also shows a copy-only `gh pr view`
+JSON command for operator PR-state checks without app-side GitHub polling. The
+`CI Evidence Recording Guide` shows a handoff-specific
 `ci-deploy-evidence` command when a local GitHub handoff exists, and a direct
 `ci-snapshot-handoff`, `ci-snapshot-evidence-from-gh-json`, and manual
 `ci-snapshot-evidence` command template when the operator is recording a

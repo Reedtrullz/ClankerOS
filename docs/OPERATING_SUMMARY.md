@@ -308,7 +308,10 @@ Core layers for the bootstrap:
   copy-only GitHub Actions proof loop, then a visible
   `CI Evidence Readiness Strip` for current proof posture, latest local record,
   operator-supplied GitHub JSON, confirmed local recording, and the no-fetch
-  safety boundary before the browser-local `CI JSON Assistant` for copying
+  safety boundary, followed by a visible `CI Merge Readiness Map` that keeps
+  fast-smoke-only review proof separate from merge-ready full-suite proof and
+  exposes copy-only `gh pr view` PR-state commands, before the browser-local
+  `CI JSON Assistant` for copying
   the current `gh run view` JSON command,
   optionally pasting clipboard JSON into the recorder textarea, and filling
   fast-smoke or full-suite job names. Summary rows, proof workbench evidence,

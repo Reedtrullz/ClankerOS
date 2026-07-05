@@ -31921,6 +31921,7 @@ def _ci_evidence_page(root: Path) -> str:
             "</section>",
             _ci_proof_workbench(root),
             _ci_evidence_readiness_strip(root, records, snapshot_records),
+            _ci_merge_readiness_map(root, records, snapshot_records),
             _ci_json_clipboard_assistant(root),
             _ci_evidence_summary_evidence(summary_rows),
             _ci_evidence_command_bar(root, records, snapshot_records),
@@ -32051,6 +32052,162 @@ def _ci_evidence_readiness_strip(
                     f"ci_evidence_readiness_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
                     f"ci_evidence_readiness_latest: <a href='{_e(state['latest_target'])}'>{_e(latest_action_label)}</a>",
                     "ci_evidence_readiness_safety: read-only CI proof guidance; GitHub status JSON is operator-supplied",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _ci_merge_readiness_map(
+    root: Path,
+    records: list[Any],
+    snapshot_records: list[Any],
+) -> str:
+    state = _ci_evidence_command_state(root)
+    commands = _ci_snapshot_command_context(root)
+    current_proof = state["current_proof"]
+    latest_scope = state["latest_scope"]
+    latest_status = state["latest_status"]
+    current_commit = state["current_commit"]
+    branch = state["branch"]
+    repo = commands["repo"]
+    pr_command = (
+        f"gh pr view --repo {repo} --json "
+        "isDraft,mergeable,mergeStateStatus,statusCheckRollup,url"
+    )
+    fast_smoke_recorded = current_proof in {
+        "current_job_scope_only",
+        "current_workflow_run_success",
+    }
+    full_suite_recorded = current_proof == "current_workflow_run_success"
+    if full_suite_recorded:
+        gate_status = "merge_ready_from_local_full_suite_proof"
+        primary_label = "Review full proof"
+        primary_href = state["latest_target"]
+        review_status = "review_ready"
+        full_suite_status = "recorded_success"
+        next_step = "Confirm PR review state outside ClankerOS, then merge outside ClankerOS."
+    elif fast_smoke_recorded:
+        gate_status = "review_ready_fast_smoke_only"
+        primary_label = "Record full suite"
+        primary_href = "#record-ci-snapshot-json"
+        review_status = "review_ready_with_fast_smoke"
+        full_suite_status = "missing_full_suite_success"
+        next_step = "Wait for Full pytest suite to complete, then paste completed workflow JSON."
+    else:
+        gate_status = "not_merge_ready"
+        primary_label = state["next_action"]
+        primary_href = state["target_surface"]
+        review_status = "needs_ci_proof"
+        full_suite_status = "missing_full_suite_success"
+        next_step = "Paste GitHub Actions JSON after the relevant run or job succeeds."
+    if not primary_href.startswith("#") and not primary_href.startswith("/"):
+        primary_href = "/ci-evidence"
+    fast_smoke_status = "recorded_success" if fast_smoke_recorded else "missing_or_stale"
+    latest_label = (
+        f"{latest_status} / {latest_scope}"
+        if latest_status != "missing"
+        else "No local CI proof"
+    )
+    cards = "".join(
+        [
+            "<article class='ci-merge-card ci-merge-primary' data-ci-merge-readiness-card='gate'>",
+            "<h3>Merge Gate</h3>",
+            f"<p>{_e(gate_status.replace('_', ' '))}</p>",
+            f"<a class='ci-merge-action' data-ci-merge-readiness-primary='true' href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+            "</article>",
+            "<article class='ci-merge-card' data-ci-merge-readiness-card='review'>",
+            "<h3>Review</h3>",
+            f"<p>{_e(review_status.replace('_', ' '))}</p>",
+            "<a class='ci-merge-link' href='#ci-proof-workbench'>Proof workbench</a>",
+            "</article>",
+            "<article class='ci-merge-card' data-ci-merge-readiness-card='fast-smoke'>",
+            "<h3>Fast Smoke</h3>",
+            f"<p>{_e(fast_smoke_status.replace('_', ' '))}</p>",
+            "<a class='ci-merge-link' href='#record-ci-snapshot-json'>Record smoke</a>",
+            "</article>",
+            "<article class='ci-merge-card' data-ci-merge-readiness-card='full-suite'>",
+            "<h3>Full Suite</h3>",
+            f"<p>{_e(full_suite_status.replace('_', ' '))}</p>",
+            "<a class='ci-merge-link' href='#record-ci-snapshot-json'>Record full suite</a>",
+            "</article>",
+            "<article class='ci-merge-card' data-ci-merge-readiness-card='pr-state'>",
+            "<h3>PR State</h3>",
+            "<p>Copy-only outside-app check.</p>",
+            "<a class='ci-merge-link' href='#ci-merge-readiness-evidence'>PR command</a>",
+            "</article>",
+        ]
+    )
+    return "".join(
+        [
+            "<section id='ci-merge-readiness-map' class='panel ci-merge-readiness-map' data-ci-merge-readiness-map='true'><h2>CI Merge Readiness Map</h2>",
+            "<p class='muted'>Separates review-ready proof from merge-ready proof using only local operator-supplied CI records.</p>",
+            "<div class='ci-merge-readiness-grid' data-ci-merge-readiness-actions='true'>",
+            cards,
+            "</div>",
+            "<details id='ci-merge-readiness-evidence' class='ci-merge-readiness-evidence' data-ci-merge-readiness-evidence='true'><summary>CI merge readiness evidence</summary>",
+            _kv(
+                [
+                    ("ci_merge_readiness_status", gate_status),
+                    ("ci_merge_readiness_review_status", review_status),
+                    ("ci_merge_readiness_fast_smoke_status", fast_smoke_status),
+                    ("ci_merge_readiness_full_suite_status", full_suite_status),
+                    ("ci_merge_readiness_handoff_record_count", str(len(records))),
+                    ("ci_merge_readiness_snapshot_record_count", str(len(snapshot_records))),
+                    ("ci_merge_readiness_branch", branch),
+                    ("ci_merge_readiness_current_commit", current_commit),
+                    ("ci_merge_readiness_current_proof", current_proof),
+                    ("ci_merge_readiness_latest_source", state["latest_source"]),
+                    ("ci_merge_readiness_latest_status", latest_status),
+                    ("ci_merge_readiness_latest_scope", latest_scope),
+                    ("ci_merge_readiness_latest_commit", state["latest_commit"]),
+                    ("ci_merge_readiness_latest_run_id", state["latest_external_run_id"]),
+                    ("ci_merge_readiness_latest_label", latest_label),
+                    (
+                        "ci_merge_readiness_primary_surface",
+                        SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
+                    ),
+                    ("ci_merge_readiness_next_step", next_step),
+                    (
+                        "ci_merge_readiness_status_command",
+                        SafeHtml(f"<code>{_e(commands['status_command'])}</code>"),
+                    ),
+                    (
+                        "ci_merge_readiness_fast_smoke_record_command",
+                        SafeHtml(f"<code>{_e(commands['fast_smoke_record_command'])}</code>"),
+                    ),
+                    (
+                        "ci_merge_readiness_full_suite_record_command",
+                        SafeHtml(f"<code>{_e(commands['validated_record_command'])}</code>"),
+                    ),
+                    (
+                        "ci_merge_readiness_pr_state_command",
+                        SafeHtml(f"<code>{_e(pr_command)}</code>"),
+                    ),
+                    ("ci_merge_readiness_review_ready_claim", "local_fast_smoke_or_full_suite_proof_only"),
+                    ("ci_merge_readiness_merge_ready_claim", "requires_current_full_workflow_success_record"),
+                    ("ci_merge_readiness_pr_state_claim", "operator_checked_outside_clankeros"),
+                    ("ci_merge_readiness_source", "operator_supplied_ci_evidence_records"),
+                    ("ci_merge_readiness_write_on_get", "false"),
+                    ("ci_merge_readiness_github_status_fetch", "none"),
+                    ("ci_merge_readiness_provider_calls_taken", "0"),
+                    ("ci_merge_readiness_network_actions_taken", "0"),
+                    ("ci_merge_readiness_external_effects_created", "false"),
+                    ("ci_merge_readiness_push_created", "false"),
+                    ("ci_merge_readiness_pr_created", "false"),
+                    ("ci_merge_readiness_deploy_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"ci_merge_readiness_now: {_e(gate_status)}",
+                    f"ci_merge_readiness_click: <a href='{_e(primary_href)}'>{_e(primary_label)}</a>",
+                    f"ci_merge_readiness_fast_smoke: {_e(fast_smoke_status)}",
+                    f"ci_merge_readiness_full_suite: {_e(full_suite_status)}",
+                    f"ci_merge_readiness_pr_state: <code>{_e(pr_command)}</code>",
+                    "ci_merge_readiness_safety: read-only local proof map; GitHub and PR state are operator checked outside ClankerOS",
                 ]
             ),
             "</details>",
@@ -52548,6 +52705,14 @@ def _html_page(
     .ci-evidence-readiness-primary {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
     .ci-evidence-readiness-card[data-ci-evidence-readiness-card-status="current_commit_unknown"], .ci-evidence-readiness-card[data-ci-evidence-readiness-card-status="stale_or_different_commit"], .ci-evidence-readiness-card[data-ci-evidence-readiness-card-status="missing_current_commit_proof"] {{ border-color:var(--warn); box-shadow:inset 3px 0 0 var(--warn); }}
     .ci-evidence-readiness-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .ci-merge-readiness-map {{ border-left:4px solid var(--accent); }}
+    .ci-merge-readiness-grid {{ display:grid; grid-template-columns:minmax(240px, 1.2fr) repeat(4, minmax(150px, 1fr)); gap:10px; margin:12px 0; }}
+    .ci-merge-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
+    .ci-merge-card h3 {{ margin-top:0; }}
+    .ci-merge-card p {{ min-height:44px; margin:0 0 10px; color:var(--muted); overflow-wrap:anywhere; }}
+    .ci-merge-primary {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .ci-merge-action, .ci-merge-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
+    .ci-merge-action {{ background:var(--accent); color:#fff; }}
     .ci-json-assistant {{ border-left:4px solid var(--ok); }}
     .ci-json-assistant-grid {{ display:grid; grid-template-columns:minmax(260px, 1.25fr) repeat(3, minmax(170px, 1fr)); gap:10px; margin:12px 0; }}
     .ci-json-assistant-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; overflow-wrap:anywhere; }}
@@ -52556,9 +52721,9 @@ def _html_page(
     .ci-json-assistant-card code {{ display:block; margin:0 0 10px; white-space:normal; overflow-wrap:anywhere; }}
     .ci-json-assistant-primary {{ border-color:var(--ok); box-shadow:inset 3px 0 0 var(--ok); }}
     .ci-json-assistant-link {{ display:inline-flex; align-items:center; min-height:34px; max-width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--accent); background:var(--surface); color:var(--accent); overflow-wrap:anywhere; text-decoration:none; }}
-    .ci-evidence-summary-evidence, .ci-proof-workbench-evidence, .ci-evidence-readiness-evidence, .ci-json-assistant-evidence, .ci-evidence-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
-    .ci-evidence-summary-evidence summary, .ci-proof-workbench-evidence summary, .ci-evidence-readiness-evidence summary, .ci-json-assistant-evidence summary, .ci-evidence-command-evidence summary {{ cursor:pointer; font-weight:700; }}
-    .ci-evidence-summary-evidence:not([open]) > :not(summary), .ci-proof-workbench-evidence:not([open]) > :not(summary), .ci-evidence-readiness-evidence:not([open]) > :not(summary), .ci-json-assistant-evidence:not([open]) > :not(summary), .ci-evidence-command-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .ci-evidence-summary-evidence, .ci-proof-workbench-evidence, .ci-evidence-readiness-evidence, .ci-merge-readiness-evidence, .ci-json-assistant-evidence, .ci-evidence-command-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .ci-evidence-summary-evidence summary, .ci-proof-workbench-evidence summary, .ci-evidence-readiness-evidence summary, .ci-merge-readiness-evidence summary, .ci-json-assistant-evidence summary, .ci-evidence-command-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .ci-evidence-summary-evidence:not([open]) > :not(summary), .ci-proof-workbench-evidence:not([open]) > :not(summary), .ci-evidence-readiness-evidence:not([open]) > :not(summary), .ci-merge-readiness-evidence:not([open]) > :not(summary), .ci-json-assistant-evidence:not([open]) > :not(summary), .ci-evidence-command-evidence:not([open]) > :not(summary) {{ display:none; }}
     .today-current-action, .today-finish, .today-note, .today-pause {{ margin-top:12px; border:1px solid var(--line); background:var(--surface); padding:10px; }}
     .today-current-action-form {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
     .today-current-action-form h3 {{ margin:0 0 6px; font-size:16px; }}
@@ -53606,7 +53771,7 @@ def _html_page(
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
     @media (max-width: 860px) {{ #run-readiness-strip {{ scroll-margin-top:260px; }} .run-readiness-grid, .run-readiness-strip dl {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-action-prep, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #profile-routing-plan, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-goal-continuation, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map, #artifact-view-memory {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-action-prep-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-return-brief-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-loop-checklist-grid, .today-quick-capture-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profile-plan-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-real-grid, .dogfooding-workbench-grid, .dogfooding-return-grid, .dogfooding-session-checklist-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .artifact-view-memory-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
-    @media (max-width: 860px) {{ #ci-evidence-readiness-strip {{ scroll-margin-top:260px; }} .ci-evidence-readiness-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ #ci-evidence-readiness-strip, #ci-merge-readiness-map {{ scroll-margin-top:260px; }} .ci-evidence-readiness-grid, .ci-merge-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #health-readiness-strip {{ scroll-margin-top:260px; }} .health-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 640px) {{ .action-form-brief dl {{ grid-template-columns:1fr; gap:4px; }} .action-form-brief dd {{ word-break:normal; overflow-wrap:anywhere; }} }}

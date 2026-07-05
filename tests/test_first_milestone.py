@@ -2704,6 +2704,23 @@ def test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json(
     assert "ci_proof_workbench_full_suite_boundary</dt><dd>completed_workflow_run_success_required" in ci_evidence.body
     assert "ci_proof_workbench_github_status_fetch</dt><dd>none" in ci_evidence.body
     assert "ci_proof_workbench_network_actions_taken</dt><dd>0" in ci_evidence.body
+    assert "CI Merge Readiness Map" in ci_evidence.body
+    assert "data-ci-merge-readiness-map='true'" in ci_evidence.body
+    assert "data-ci-merge-readiness-actions='true'" in ci_evidence.body
+    assert "data-ci-merge-readiness-card='gate'" in ci_evidence.body
+    assert "data-ci-merge-readiness-card='review'" in ci_evidence.body
+    assert "data-ci-merge-readiness-card='fast-smoke'" in ci_evidence.body
+    assert "data-ci-merge-readiness-card='full-suite'" in ci_evidence.body
+    assert "data-ci-merge-readiness-card='pr-state'" in ci_evidence.body
+    assert "data-ci-merge-readiness-evidence='true'" in ci_evidence.body
+    assert "ci_merge_readiness_status</dt><dd>not_merge_ready" in ci_evidence.body
+    assert "ci_merge_readiness_review_status</dt><dd>needs_ci_proof" in ci_evidence.body
+    assert "ci_merge_readiness_fast_smoke_status</dt><dd>missing_or_stale" in ci_evidence.body
+    assert "ci_merge_readiness_full_suite_status</dt><dd>missing_full_suite_success" in ci_evidence.body
+    assert "ci_merge_readiness_pr_state_command</dt><dd><code>gh pr view --repo &lt;owner/repo&gt;" in ci_evidence.body
+    assert "ci_merge_readiness_merge_ready_claim</dt><dd>requires_current_full_workflow_success_record" in ci_evidence.body
+    assert "ci_merge_readiness_github_status_fetch</dt><dd>none" in ci_evidence.body
+    assert "ci_merge_readiness_network_actions_taken</dt><dd>0" in ci_evidence.body
     assert "CI JSON Assistant" in ci_evidence.body
     assert "data-ci-json-assistant='true'" in ci_evidence.body
     assert "data-ci-json-assistant-cards='true'" in ci_evidence.body
@@ -2810,6 +2827,11 @@ def test_local_app_records_ci_snapshot_evidence_from_pasted_gh_json(
     assert "ci_proof_workbench_latest_run_id</dt><dd>28211577106" in ci_evidence_after.body
     assert "ci_proof_workbench_review_surface</dt><dd><a href='#recent-direct-snapshot-ci-evidence'>#recent-direct-snapshot-ci-evidence</a>" in ci_evidence_after.body
     assert "ci_proof_workbench_safety: copy-only GitHub command guidance; local recording still requires confirmation" in ci_evidence_after.body
+    assert "ci_merge_readiness_status</dt><dd>not_merge_ready" in ci_evidence_after.body
+    assert "ci_merge_readiness_current_proof</dt><dd>current_commit_unknown" in ci_evidence_after.body
+    assert "ci_merge_readiness_latest_scope</dt><dd>workflow_run" in ci_evidence_after.body
+    assert "ci_merge_readiness_latest_run_id</dt><dd>28211577106" in ci_evidence_after.body
+    assert "ci_merge_readiness_full_suite_status</dt><dd>missing_full_suite_success" in ci_evidence_after.body
     assert "Recent Direct Snapshot CI Evidence" in ci_evidence_after.body
     assert records[0].id in ci_evidence_after.body
     assert "source=direct_public_snapshot" in ci_evidence_after.body
@@ -2819,11 +2841,45 @@ def test_local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json(
     tmp_path: Path,
 ) -> None:
     AgentSystem(tmp_path).initialize()
+    subprocess.run(["git", "init", "-b", "main"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.email", "operator@example.test"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "ClankerOS Test"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "commit.gpgsign", "false"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+    (tmp_path / "tracked.txt").write_text("tracked\n", encoding="utf-8")
+    subprocess.run(["git", "add", "tracked.txt"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "commit", "-m", "initial test commit"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
     status_json = json.dumps(
         {
             "status": "in_progress",
             "conclusion": "",
-            "headSha": "52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9",
+            "headSha": commit,
             "headBranch": "main",
             "url": "https://github.com/Reedtrullz/ClankerOS/actions/runs/28211577106",
             "jobs": [
@@ -2853,7 +2909,7 @@ def test_local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json(
         form={
             "project": ["clankeros"],
             "branch": ["main"],
-            "commit": ["52e748d601b79a5c6373ed73ebcee3fc0fdf3ef9"],
+            "commit": [commit],
             "provider": ["github-actions"],
             "external_run_id": ["28211577106"],
             "status_json": [status_json],
@@ -2876,8 +2932,15 @@ def test_local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json(
     )
 
     ci_evidence_after = render_local_app_route(tmp_path, "/ci-evidence")
+    assert "ci_evidence_command_status</dt><dd>current_fast_smoke_recorded" in ci_evidence_after.body
     assert "ci_evidence_command_latest_scope</dt><dd>workflow_job:Fast smoke verification" in ci_evidence_after.body
     assert "ci_evidence_command_latest_run_id</dt><dd>28211577106" in ci_evidence_after.body
+    assert "ci_merge_readiness_status</dt><dd>review_ready_fast_smoke_only" in ci_evidence_after.body
+    assert "ci_merge_readiness_review_status</dt><dd>review_ready_with_fast_smoke" in ci_evidence_after.body
+    assert "ci_merge_readiness_fast_smoke_status</dt><dd>recorded_success" in ci_evidence_after.body
+    assert "ci_merge_readiness_full_suite_status</dt><dd>missing_full_suite_success" in ci_evidence_after.body
+    assert "ci_merge_readiness_primary_surface</dt><dd><a href='#record-ci-snapshot-json'>Record full suite</a>" in ci_evidence_after.body
+    assert "ci_merge_readiness_next_step</dt><dd>Wait for Full pytest suite to complete, then paste completed workflow JSON." in ci_evidence_after.body
     assert "status_source=github_status_json_job" in ci_evidence_after.body
     assert "evidence_scope=workflow_job:Fast smoke verification" in ci_evidence_after.body
 
