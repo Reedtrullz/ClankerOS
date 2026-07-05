@@ -5905,9 +5905,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "data-first-run-action-ladder-step-key='create_project'" in root.body
     assert "data-first-run-action-ladder-step-status='current'" in root.body
     assert "data-first-run-action-ladder-action='register-project'" in root.body
+    assert "data-first-run-action-ladder-link-label='Register ClankerOS project'" in root.body
     assert "data-first-run-action-ladder-current='true'" in root.body
     assert "data-first-run-action-ladder-step-key='run_first_delegation'" in root.body
     assert "data-first-run-action-ladder-step-status='waiting_for_goal'" in root.body
+    assert "data-first-run-action-ladder-link-label='Needs Goal'" in root.body
     assert "data-first-run-action-ladder-evidence='true'" in root.body
     assert "first_run_action_ladder_status</dt><dd>active" in root.body
     assert "first_run_action_ladder_current_step</dt><dd>create_project" in root.body
@@ -5931,8 +5933,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_action_ladder_provider_calls_taken</dt><dd>0" in root.body
     assert "first_run_action_ladder_network_actions_taken</dt><dd>0" in root.body
     assert "first_run_action_ladder_external_effects_created</dt><dd>false" in root.body
-    assert "first_run_action_ladder_step: create_project status=current action=register-project" in root.body
-    assert "first_run_action_ladder_step: run_first_delegation status=waiting_for_goal action=run-delegation" in root.body
+    assert (
+        "first_run_action_ladder_step: create_project status=current "
+        "surface=<a href='#first-run-create-project'>Register ClankerOS project</a> "
+        "action=register-project link=Register ClankerOS project href=#first-run-create-project"
+        in root.body
+    )
+    assert (
+        "first_run_action_ladder_step: run_first_delegation status=waiting_for_goal "
+        "surface=<a href='#first-run-create-project'>Needs Goal</a> "
+        "action=run-delegation link=Needs Goal href=#first-run-create-project"
+        in root.body
+    )
     assert (
         "first_run_action_ladder_now: Register ClankerOS project -&gt; "
         "<a href='#first-run-create-project'>Create Project</a>"
@@ -5951,8 +5963,13 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert root.body.count("data-first-run-empty-state-step='true'") == 5
     assert "data-first-run-empty-state-step-key='create_project'" in root.body
     assert "data-first-run-empty-state-step-status='current'" in root.body
+    assert "data-first-run-empty-state-step-action='register-project'" in root.body
+    assert "data-first-run-empty-state-link-label='Register ClankerOS project'" in root.body
     assert "data-first-run-empty-state-step-key='create_first_goal'" in root.body
     assert "data-first-run-empty-state-step-status='waiting_for_project'" in root.body
+    assert "data-first-run-empty-state-link-label='Needs project'" in root.body
+    assert "href='#first-run-create-project'>Register ClankerOS project</a>" in root.body
+    assert "href='#first-run-create-project'>Needs project</a>" in root.body
     assert (
         "data-first-run-empty-state-primary='true' "
         "href='#first-run-create-project'>Create Project</a>"
@@ -5975,8 +5992,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_empty_state_provider_calls_taken</dt><dd>0" in root.body
     assert "first_run_empty_state_network_actions_taken</dt><dd>0" in root.body
     assert "first_run_empty_state_external_effects_created</dt><dd>false" in root.body
-    assert "first_run_empty_state_step: create_project status=current" in root.body
-    assert "first_run_empty_state_step: run_first_delegation status=waiting_for_goal" in root.body
+    assert (
+        "first_run_empty_state_step: create_project status=current "
+        "surface=<a href='#first-run-create-project'>Register ClankerOS project</a> "
+        "action=register-project link=Register ClankerOS project href=#first-run-create-project"
+        in root.body
+    )
+    assert (
+        "first_run_empty_state_step: run_first_delegation status=waiting_for_goal "
+        "surface=<a href='#first-run-create-project'>Needs Goal</a> "
+        "action=run-delegation link=Needs Goal href=#first-run-create-project"
+        in root.body
+    )
     assert "first_run_empty_state_action: follow visible text map to first delegation" in root.body
     assert "first_run_empty_state_safety: read-only illustration; confirmed forms own writes" in root.body
     assert "First Run Checklist" in root.body
@@ -5986,8 +6013,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert root.body.count("data-first-run-checklist-item='true'") == 5
     assert "data-first-run-checklist-step='create_project'" in root.body
     assert "data-first-run-checklist-state='current'" in root.body
+    assert "data-first-run-checklist-action='register-project'" in root.body
+    assert "data-first-run-checklist-link-label='Register ClankerOS project'" in root.body
     assert "data-first-run-checklist-step='create_first_goal'" in root.body
     assert "data-first-run-checklist-state='waiting_for_project'" in root.body
+    assert "data-first-run-checklist-link-label='Needs project'" in root.body
     assert "data-first-run-checklist-toggle='create_project'" in root.body
     assert "data-first-run-checklist-note='true'" in root.body
     assert "data-first-run-checklist-reset='true'>Reset checklist</button>" in root.body
@@ -6009,7 +6039,8 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_checklist_external_effects_created</dt><dd>false" in root.body
     assert (
         "first_run_checklist_item: create_project state=current "
-        "action=Register ClankerOS project"
+        "surface=<a href='#first-run-create-project'>Register ClankerOS project</a> "
+        "action=register-project link=Register ClankerOS project href=#first-run-create-project"
     ) in root.body
     assert "first_run_checklist_view_memory: restores operator checks and note from browser storage" in root.body
     assert (
@@ -8412,8 +8443,18 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "First Run Action Ladder" in registered_goals.body
     assert "first_run_action_ladder_current_step</dt><dd>create_first_goal" in registered_goals.body
     assert "first_run_action_ladder_current_action_name</dt><dd>create-goal" in registered_goals.body
-    assert "first_run_action_ladder_step: create_project status=done action=register-project" in registered_goals.body
-    assert "first_run_action_ladder_step: create_first_goal status=current action=create-goal" in registered_goals.body
+    assert (
+        "first_run_action_ladder_step: create_project status=done "
+        "surface=<a href='/projects/first-target'>Open Project</a> "
+        "action=register-project link=Open Project href=/projects/first-target"
+        in registered_goals.body
+    )
+    assert (
+        "first_run_action_ladder_step: create_first_goal status=current "
+        "surface=<a href='#first-run-create-goal'>Create first goal</a> "
+        "action=create-goal link=Create first goal href=#first-run-create-goal"
+        in registered_goals.body
+    )
     assert "first_run_action_ladder_form_available</dt><dd>true" in registered_goals.body
     assert "first_run_action_ladder_confirmation_required</dt><dd>true" in registered_goals.body
     assert "goal_board_workbench_status</dt><dd>first_run" in registered_goals.body
@@ -8702,8 +8743,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     ) in goals_after_first_goal.body
     assert (
         "<a class='first-run-checklist-link' href='#first-run-command-action'>"
-        "Continue</a>"
+        "Create scout delegation</a>"
     ) in goals_after_first_goal.body
+    assert "data-first-run-checklist-link-label='Create scout delegation'" in goals_after_first_goal.body
     assert "first_run_step: generate_context_pack status=waiting_for_delegation" in goals_after_first_goal.body
     assert "first_run_command_current_step</dt><dd>create_first_delegation" in goals_after_first_goal.body
     assert "first_run_command_next_action</dt><dd>Create scout delegation" in goals_after_first_goal.body
@@ -8744,9 +8786,24 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "first_run_action_ladder_delegation</dt><dd>none" in goals_after_first_goal.body
     assert "first_run_action_ladder_form_available</dt><dd>true" in goals_after_first_goal.body
     assert "first_run_action_ladder_confirmation_required</dt><dd>true" in goals_after_first_goal.body
-    assert "first_run_action_ladder_step: create_first_goal status=done action=create-goal" in goals_after_first_goal.body
-    assert "first_run_action_ladder_step: create_first_delegation status=current action=delegate" in goals_after_first_goal.body
-    assert "first_run_action_ladder_step: run_first_delegation status=waiting_for_delegation action=run-delegation" in goals_after_first_goal.body
+    assert (
+        "first_run_action_ladder_step: create_first_goal status=done "
+        f"surface=<a href='/goals/{created_goal_id}'>Open Goal</a> "
+        f"action=create-goal link=Open Goal href=/goals/{created_goal_id}"
+        in goals_after_first_goal.body
+    )
+    assert (
+        "first_run_action_ladder_step: create_first_delegation status=current "
+        "surface=<a href='#first-run-command-action'>Create scout delegation</a> "
+        "action=delegate link=Create scout delegation href=#first-run-command-action"
+        in goals_after_first_goal.body
+    )
+    assert (
+        "first_run_action_ladder_step: run_first_delegation status=waiting_for_delegation "
+        "surface=<a href='#first-run-command-action'>Needs delegation</a> "
+        "action=run-delegation link=Needs delegation href=#first-run-command-action"
+        in goals_after_first_goal.body
+    )
     assert "Goal Board Workbench" in goals_after_first_goal.body
     assert "goal_board_workbench_status</dt><dd>available" in goals_after_first_goal.body
     assert "goal_board_workbench_source</dt><dd>saved_goal" in goals_after_first_goal.body
@@ -9321,8 +9378,9 @@ def test_local_app_routes_render_modern_workflow_and_health(
     ) in goals_after_delegation.body
     assert (
         "<a class='first-run-checklist-link' href='#first-run-command-action'>"
-        "Continue</a>"
+        "Generate context pack</a>"
     ) in goals_after_delegation.body
+    assert "data-first-run-checklist-link-label='Needs context pack'" in goals_after_delegation.body
     assert "first_run_step: run_first_delegation status=waiting_for_context_pack" in goals_after_delegation.body
     assert f"first_run_context_pack_action</dt><dd>/actions/context-pack delegation_id={delegation.id}" in goals_after_delegation.body
     assert "first_run_command_current_step</dt><dd>generate_context_pack" in goals_after_delegation.body
@@ -9447,7 +9505,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     ) in home_after_delegate.body
     assert (
         "<a class='first-run-checklist-link' href='#first-run-command-action'>"
-        "Continue</a>"
+        "Run first delegation</a>"
     ) in home_after_delegate.body
     assert f"first_run_context_pack_action</dt><dd>/actions/context-pack delegation_id={delegation.id}" in home_after_delegate.body
     assert "first_run_run_delegation_command</dt><dd>python3 -m agent_os.cli run-delegation" in home_after_delegate.body
@@ -11450,6 +11508,23 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
     )
     assert (
         "first_run_progress_step: create_first_goal status=current "
+        "surface=<a href='#first-run-create-goal'>Create first goal</a> "
+        "action=create-goal link=Create first goal href=#first-run-create-goal"
+        in register_home.body
+    )
+    assert "data-first-run-action-ladder-link-label='Open Project'" in register_home.body
+    assert "data-first-run-empty-state-link-label='Open Project'" in register_home.body
+    assert "data-first-run-empty-state-link-label='Create first goal'" in register_home.body
+    assert (
+        "first_run_empty_state_step: create_project status=done "
+        "surface=<a href='/projects/clankeros'>Open Project</a> "
+        "action=register-project link=Open Project href=/projects/clankeros"
+        in register_home.body
+    )
+    assert "data-first-run-checklist-link-label='Open Project'" in register_home.body
+    assert "data-first-run-checklist-link-label='Create first goal'" in register_home.body
+    assert (
+        "first_run_checklist_item: create_first_goal state=current "
         "surface=<a href='#first-run-create-goal'>Create first goal</a> "
         "action=create-goal link=Create first goal href=#first-run-create-goal"
         in register_home.body

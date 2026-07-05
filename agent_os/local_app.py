@@ -14604,7 +14604,7 @@ def _first_run_step_href(progress: dict[str, Any], step: str) -> str:
     return "#first-run-guide"
 
 
-def _first_run_progress_step_target(
+def _first_run_step_target(
     progress: dict[str, Any],
     step: str,
     status: str,
@@ -14648,7 +14648,7 @@ def _first_run_progress_strip(progress: dict[str, Any]) -> str:
     lines: list[str] = []
     for index, (step, label, action) in enumerate(_FIRST_RUN_STEPS, start=1):
         status = statuses[step]
-        href, link_label = _first_run_progress_step_target(progress, step, status, action)
+        href, link_label = _first_run_step_target(progress, step, status, action)
         card_classes = ["first-run-progress-card", f"first-run-progress-{status}"]
         if step == current_step:
             card_classes.append("first-run-progress-current")
@@ -15020,42 +15020,21 @@ def _first_run_action_ladder(progress: dict[str, Any]) -> str:
         proof_href = f"/goals/{quote(goal_id)}#goal-workflow-map"
         proof_label = "Goal workflow"
 
-    def step_target(step: str, status: str) -> tuple[str, str]:
-        if step == current_step:
-            return primary_href, primary_label
-        if step == "create_project":
-            if progress["project_registered"]:
-                return f"/projects/{quote(str(progress['default_project']))}", "Project"
-            return "#first-run-create-project", "Create Project"
-        if step == "create_first_goal":
-            if goal_id:
-                return f"/goals/{quote(goal_id)}", "Goal"
-            return "#first-run-create-goal", "Create First Goal"
-        if step in {"create_first_delegation", "generate_context_pack", "run_first_delegation"}:
-            if delegation_id:
-                return f"/delegations/{quote(delegation_id)}", "Delegation"
-            if goal_id:
-                return f"/goals/{quote(goal_id)}#goal-action-dock", "Goal action dock"
-        return "#first-run-guide", "First Run Guide" if status != "waiting_for_goal" else "Waiting"
-
     cards: list[str] = []
     lines: list[str] = []
     for index, (step, label, action) in enumerate(_FIRST_RUN_STEPS, start=1):
         status = _first_run_step_status(progress, step)
         action_name = _action_name_for_first_run_step(step)
-        href, target_label = step_target(step, status)
+        href, target_label = _first_run_step_target(progress, step, status, action)
         is_current = step == current_step
         lines.append(
-            f"first_run_action_ladder_step: {step} status={status} action={action_name}"
+            f"first_run_action_ladder_step: {_e(step)} status={_e(status)} "
+            f"surface=<a href='{_e(href)}'>{_e(target_label)}</a> "
+            f"action={_e(action_name)} link={_e(target_label)} href={_e(href)}"
         )
         card_classes = ["first-run-action-ladder-card", f"first-run-action-ladder-{status}"]
         if is_current:
             card_classes.append("first-run-action-ladder-current")
-        action_html = (
-            f"<a class='first-run-action-ladder-action' href='{_e(href)}'>{_e(target_label)}</a>"
-            if status in {"current", "done"} or goal_id
-            else "<span class='first-run-action-ladder-waiting'>Waiting</span>"
-        )
         cards.append(
             "".join(
                 [
@@ -15065,13 +15044,14 @@ def _first_run_action_ladder(progress: dict[str, Any]) -> str:
                         f"data-first-run-action-ladder-step-key='{_e(step)}' "
                         f"data-first-run-action-ladder-step-status='{_e(status)}' "
                         f"data-first-run-action-ladder-action='{_e(action_name)}' "
+                        f"data-first-run-action-ladder-link-label='{_e(target_label)}' "
                         f"data-first-run-action-ladder-current='{str(is_current).lower()}'>"
                     ),
                     f"<span class='first-run-action-ladder-index'>{index}</span>",
                     f"<h3>{_e(label)}</h3>",
                     f"<p>{_e(action)}</p>",
                     f"<p class='first-run-action-ladder-status'>{_e(status.replace('_', ' '))}</p>",
-                    action_html,
+                    f"<a class='first-run-action-ladder-action' href='{_e(href)}'>{_e(target_label)}</a>",
                     "</article>",
                 ]
             )
@@ -15142,32 +15122,32 @@ def _first_run_action_ladder(progress: dict[str, Any]) -> str:
 
 def _first_run_empty_state_illustration(progress: dict[str, Any]) -> str:
     primary_href, primary_label = _first_run_same_page_target(progress)
-    steps = [
-        ("create_project", "Project"),
-        ("create_first_goal", "Goal"),
-        ("create_first_delegation", "Delegation"),
-        ("generate_context_pack", "Context"),
-        ("run_first_delegation", "Run"),
-    ]
     art = "[ Project ] -- [ Goal ] -- [ Delegation ] -- [ Context ] -- [ Run ]"
     step_cards: list[str] = []
     step_lines: list[str] = []
-    for index, (step, label) in enumerate(steps, start=1):
+    for index, (step, label, action) in enumerate(_FIRST_RUN_STEPS, start=1):
         status = _first_run_step_status(progress, step)
-        href = _first_run_step_href(progress, step)
-        step_lines.append(f"first_run_empty_state_step: {step} status={status}")
+        step_action = _action_name_for_first_run_step(step)
+        href, link_label = _first_run_step_target(progress, step, status, action)
+        step_lines.append(
+            f"first_run_empty_state_step: {_e(step)} status={_e(status)} "
+            f"surface=<a href='{_e(href)}'>{_e(link_label)}</a> "
+            f"action={_e(step_action)} link={_e(link_label)} href={_e(href)}"
+        )
         step_cards.append(
             "".join(
                 [
                     (
                         "<article class='first-run-empty-card' data-first-run-empty-state-step='true' "
                         f"data-first-run-empty-state-step-key='{_e(step)}' "
-                        f"data-first-run-empty-state-step-status='{_e(status)}'>"
+                        f"data-first-run-empty-state-step-status='{_e(status)}' "
+                        f"data-first-run-empty-state-step-action='{_e(step_action)}' "
+                        f"data-first-run-empty-state-link-label='{_e(link_label)}'>"
                     ),
                     f"<span>{index}</span>",
                     f"<strong>{_e(label)}</strong>",
                     f"<em>{_e(status.replace('_', ' '))}</em>",
-                    f"<a href='{_e(href)}'>{_e('Open' if status == 'done' else ('Continue' if status == 'current' else 'Waiting'))}</a>",
+                    f"<a href='{_e(href)}'>{_e(link_label)}</a>",
                     "</article>",
                 ]
             )
@@ -15180,7 +15160,7 @@ def _first_run_empty_state_illustration(progress: dict[str, Any]) -> str:
             "first_run_empty_state_target_surface",
             SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>"),
         ),
-        ("first_run_empty_state_total_steps", str(len(steps))),
+        ("first_run_empty_state_total_steps", str(len(_FIRST_RUN_STEPS))),
         ("first_run_empty_state_illustration", art),
         ("first_run_empty_state_project_registered", str(progress["project_registered"]).lower()),
         ("first_run_empty_state_goal_created", str(progress["goal_created"]).lower()),
@@ -15239,10 +15219,13 @@ def _first_run_checklist(progress: dict[str, Any]) -> str:
     evidence_lines: list[str] = []
     for index, (step, label, action) in enumerate(_FIRST_RUN_STEPS, start=1):
         status = statuses[step]
-        href = _first_run_step_href(progress, step)
+        href, link_label = _first_run_step_target(progress, step, status, action)
         state_label = status.replace("_", " ")
+        action_name = _action_name_for_first_run_step(step)
         evidence_lines.append(
-            f"first_run_checklist_item: {step} state={status} action={action}"
+            f"first_run_checklist_item: {_e(step)} state={_e(status)} "
+            f"surface=<a href='{_e(href)}'>{_e(link_label)}</a> "
+            f"action={_e(action_name)} link={_e(link_label)} href={_e(href)}"
         )
         items.append(
             "".join(
@@ -15251,7 +15234,9 @@ def _first_run_checklist(progress: dict[str, Any]) -> str:
                         "<li class='first-run-checklist-item' "
                         "data-first-run-checklist-item='true' "
                         f"data-first-run-checklist-step='{_e(step)}' "
-                        f"data-first-run-checklist-state='{_e(status)}'>"
+                        f"data-first-run-checklist-state='{_e(status)}' "
+                        f"data-first-run-checklist-action='{_e(action_name)}' "
+                        f"data-first-run-checklist-link-label='{_e(link_label)}'>"
                     ),
                     "<label class='first-run-checklist-main'>",
                     (
@@ -15267,7 +15252,7 @@ def _first_run_checklist(progress: dict[str, Any]) -> str:
                     "</label>",
                     (
                         f"<a class='first-run-checklist-link' href='{_e(href)}'>"
-                        f"{_e('Open' if status == 'done' else ('Continue' if status == 'current' else 'Waiting'))}</a>"
+                        f"{_e(link_label)}</a>"
                     ),
                     "</li>",
                 ]

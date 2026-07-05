@@ -1,5 +1,28 @@
 # Status
 
+## 2026-07-05 First Run Guide Shared Concrete Targets
+
+- The `First Run Action Ladder`, `First Run Empty State Map`, and
+  browser-local `First Run Checklist` now use the same concrete first-run
+  labels and targets as the `First Run Progress` strip.
+- Current steps name the actual browser action, such as
+  `Register ClankerOS project`, `Create scout delegation`, `Generate context
+  pack`, or `Run first delegation`; completed steps open concrete local
+  Project/Goal/delegation surfaces; waiting steps name the missing prerequisite
+  instead of generic `Waiting` or `Continue`.
+- The ladder, empty-state, and checklist cards expose action ids plus visible
+  link labels through `data-first-run-*` attributes, and collapsed evidence
+  records each step's surface, action id, visible link label, and href.
+- Local verification:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    2 passed in 68.26s.
+- Non-claim: this is read-only first-run guide navigation and evidence
+  presentation. It does not add action authority, write on GET, call
+  providers, use the network, approve work, push, create PRs, deploy, or
+  mutate external systems from ClankerOS.
+
 ## 2026-07-05 First Run Progress Concrete Step Targets
 
 - The shared `First Run Progress` strip now uses the same concrete first-run

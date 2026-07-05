@@ -195,7 +195,10 @@ so a blank checkout shows a path instead of just empty inventories. A
 browser-local `First Run Checklist` then lets the operator mark setup checks
 and keep a short return note in `localStorage:clankeros-first-run-checklist`;
 the real step state still comes from ClankerOS progress and GET rendering
-stays read-only. A visible `First Run Progress` strip follows with a progress
+stays read-only. The Action Ladder, Empty State Map, and Checklist now use the
+same action-specific labels and concrete targets as the progress strip, so
+current gates name the real browser action and waiting gates name the missing
+prerequisite. A visible `First Run Progress` strip follows with a progress
 bar and five step cards for Project, Goal, Delegation, Context, and Run. Its
 cards use action-specific labels such as `Register ClankerOS project`, `Open
 Project`, and `Needs Goal`, link completed steps to their concrete local
