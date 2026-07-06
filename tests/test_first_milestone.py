@@ -12563,6 +12563,101 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         "today_command_primary_action</dt><dd>Create publication handoff"
         in today_after_publication_approval.body
     )
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Create publication handoff</a>"
+    ) in today_after_publication_approval.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Create publication handoff</a>"
+    ) in today_after_publication_approval.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_publication_approval.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_publication_approval.body
+    assert "Create Publication Handoff" in today_after_publication_approval.body
+    assert "action='/actions/coder-publication-handoff'" in today_after_publication_approval.body
+    assert f"name='run_id' value='{coder_run.id}'" in today_after_publication_approval.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_publication_approval.body
+    assert (
+        "return_to_after_publication_handoff</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_publication_approval.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_publication_approval.body
+
+    publication_handoff_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-publication-handoff",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert publication_handoff_confirmation.status == 409
+    assert "Confirm publication handoff" in publication_handoff_confirmation.body
+    assert (
+        "action_confirmation_label</dt><dd>Prepare publication handoff"
+        in publication_handoff_confirmation.body
+    )
+    assert "name='return_to' value='/today#today-current-action'" in publication_handoff_confirmation.body
+
+    publication_handoff_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-publication-handoff",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert publication_handoff_result.status == 200
+    assert "coder_publication_handoff:" in publication_handoff_result.body
+    assert (
+        "action_result_command_label</dt><dd>Prepare publication handoff"
+        in publication_handoff_result.body
+    )
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=coder_publication_handoff%3A%20"
+    ) in publication_handoff_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in publication_handoff_result.body
+    ready_publication = next(
+        item
+        for item in list_coder_publications(
+            tmp_path,
+            status="ready_for_operator",
+            limit=10,
+        )
+        if item.run_id == coder_run.id
+    )
+    publication_handoff_md = tmp_path / Path(
+        ready_publication.handoff_artifact_path
+    ).with_suffix(".md")
+    assert publication_handoff_md.exists()
+    assert (publication_handoff_md.parent / "pr_body.md").exists()
+    publication_handoff_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert publication_handoff_workspace["open_project"] == "first-target"
+    assert publication_handoff_workspace["open_goal"] == created_goal_id
+    assert publication_handoff_workspace["last_viewed_artifact"] == str(
+        publication_handoff_md.relative_to(tmp_path)
+    )
+    assert publication_handoff_workspace["resume_surface"] == "/today#today-current-action"
+    assert publication_handoff_workspace["updated_by"] == "coder-publication-handoff"
+
+    today_after_publication_handoff = render_local_app_route(tmp_path, "/today")
+    assert (
+        "today_command_primary_action</dt><dd>Manual publish outside ClankerOS"
+        in today_after_publication_handoff.body
+    )
+    assert "Manual Publish Boundary" in today_after_publication_handoff.body
+    assert "Publication Handoff Commands" in today_after_publication_handoff.body
+    assert "manual_boundary: outside_clankeros" in today_after_publication_handoff.body
+    assert "copy_only: true" in today_after_publication_handoff.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:

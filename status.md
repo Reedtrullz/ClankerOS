@@ -1,5 +1,58 @@
 # Status
 
+## 2026-07-06 Post-Publication-Approval Today Publication Handoff
+
+- Completed the selected slice for post-publication-approval `/today`
+  publication-handoff continuation.
+- `/today` now embeds the lead Goal's `Create publication handoff` form with a
+  Today-local return target, so a confirmed publication handoff launched from
+  the daily cockpit writes the local publication handoff and PR-body artifacts
+  and saves `resume_surface=/today#today-current-action` instead of returning
+  the operator to the Goal action dock or run page.
+- The publication-handoff form now records the approved publication id, source
+  run id, and `return_to_after_publication_handoff` in form evidence, while
+  keeping the existing local handoff writer behind an explicit confirmation
+  screen.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, confirmed local scout run, Today-local coder-prep
+  creation, Today-local worktree-plan creation, Today-local approval request
+  creation, Today-local approval decision confirmation, Today-local approved
+  worktree run confirmation with a bounded file change, Today-local Open
+  review confirmation, Today-local Create commit request confirmation,
+  Today-local Approve commit confirmation, Today-local Commit approved
+  worktree confirmation, Today-local Create publication request confirmation,
+  Today-local Approve publication confirmation, Today-local Create publication
+  handoff confirmation, generated `publication_handoff.md` and `pr_body.md`,
+  workspace resume persistence, and the next visible Today action becoming
+  `Manual publish outside ClankerOS`.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-publication-handoff `/today` should expose
+  `Manual publish outside ClankerOS` as the primary same-page action with
+  copy-only commands, local completion confirmation, and finish-today resume
+  proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered
+    publication-handoff form still emitted the Goal action-dock `return_to`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 47.92s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 25.63s.
+  - `python3 -m agent_os.cli iterate`: selected the
+    post-publication-handoff `/today` Manual publish outside ClankerOS slice
+    and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this Today publication-handoff slice writes only local handoff
+  and PR-body artifacts plus workspace resume state. It does not push, deploy,
+  create PRs, call providers, use app-side network actions, or mutate external
+  systems from ClankerOS.
+
 ## 2026-07-06 Post-Publication-Request Today Publication Approval
 
 - Completed the selected slice for post-publication-request `/today`

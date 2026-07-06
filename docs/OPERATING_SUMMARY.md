@@ -137,6 +137,11 @@ Core layers for the bootstrap:
   current-action form record only the local approval decision, preserve
   `return_to=/today#today-current-action`, and save the workspace resume
   surface back to the daily cockpit before the publication-handoff gate.
+  Publication handoffs launched from the post-publication-approval Today
+  current-action form write only local publication handoff and PR-body
+  artifacts with suggested manual commands, preserve
+  `return_to=/today#today-current-action`, and save the workspace resume
+  surface back to the daily cockpit before the manual publish boundary.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only
