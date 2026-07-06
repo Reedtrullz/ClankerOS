@@ -14653,6 +14653,145 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert "action='/actions/coder-commit-request'" in successor_goal_after_review.body
     assert "completed-goal-provenance.md" in successor_goal_after_review.body
 
+    next_goal_commit_message = "Implement successor bounded change from approved worktree run"
+    next_goal_commit_request_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-commit-request",
+        method="POST",
+        form={
+            "run_id": [next_coder_run.id],
+            "message": [next_goal_commit_message],
+            "note": ["Successor commit request from resume"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_commit_request_result.status == 200
+    assert "coder_commit_request:" in next_goal_commit_request_result.body
+    assert (
+        "action_result_command_label</dt><dd>Create commit request"
+        in next_goal_commit_request_result.body
+    )
+    assert (
+        "source_review</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_review_path.relative_to(tmp_path)}'>"
+        in next_goal_commit_request_result.body
+    )
+    assert (
+        f"source_review_sha256</dt><dd>{hashlib.sha256(next_goal_review_path.read_bytes()).hexdigest()}"
+        in next_goal_commit_request_result.body
+    )
+    assert (
+        "source_review_markdown_consumed</dt><dd>true"
+        in next_goal_commit_request_result.body
+    )
+    assert (
+        "source_coder_worktree_run_summary_consumed</dt><dd>true"
+        in next_goal_commit_request_result.body
+    )
+    assert "source_diff_sha256</dt><dd>" in next_goal_commit_request_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Approve commit"
+        in next_goal_commit_request_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_commit_request_result.body
+    assert (
+        "action='/actions/approve-coder-commit'"
+        in next_goal_commit_request_result.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_commit_request_result.body
+    )
+
+    next_goal_commit_approvals = [
+        item
+        for item in list_coder_worktree_commit_approvals(
+            tmp_path,
+            status="pending_operator_approval",
+            limit=20,
+        )
+        if item.run_id == next_coder_run.id
+    ]
+    assert len(next_goal_commit_approvals) == 1
+    next_goal_commit_approval = next_goal_commit_approvals[0]
+    next_goal_commit_request_payload = json.loads(
+        (tmp_path / next_goal_commit_approval.request_artifact_path).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert next_goal_commit_request_payload["source_review"] == str(
+        next_goal_review_path.relative_to(tmp_path)
+    )
+    assert next_goal_commit_request_payload["source_review_sha256"] == hashlib.sha256(
+        next_goal_review_path.read_bytes()
+    ).hexdigest()
+    assert next_goal_commit_request_payload["source_review_markdown_consumed"] is True
+    assert (
+        next_goal_commit_request_payload["source_coder_worktree_run_summary_consumed"]
+        is True
+    )
+    assert next_goal_commit_request_payload["source_delegation_run_id"] == next_coder_run.source_run_id
+
+    next_goal_commit_request_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_commit_request_workspace["open_goal"] == next_goal_id
+    assert next_goal_commit_request_workspace["updated_by"] == "coder-commit-request"
+    assert (
+        next_goal_commit_request_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_commit_request_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_commit_request = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_commit_request.status == 200
+    assert (
+        "today_command_primary_action</dt><dd>Approve commit"
+        in today_after_next_goal_commit_request.body
+    )
+    assert "action='/actions/approve-coder-commit'" in today_after_next_goal_commit_request.body
+    assert (
+        f"name='approval_id' value='{next_goal_commit_approval.id}'"
+        in today_after_next_goal_commit_request.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_commit_request.body
+
+    resume_after_next_goal_commit_request = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_commit_request.status == 200
+    assert (
+        "resume_return_brief_next_action</dt><dd>Approve commit"
+        in resume_after_next_goal_commit_request.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Approve commit"
+        in resume_after_next_goal_commit_request.body
+    )
+    assert "action='/actions/approve-coder-commit'" in resume_after_next_goal_commit_request.body
+    assert (
+        f"name='approval_id' value='{next_goal_commit_approval.id}'"
+        in resume_after_next_goal_commit_request.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={Path(next_goal_commit_approval.request_artifact_path).with_suffix('.md')}'>"
+        in resume_after_next_goal_commit_request.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_commit_request.body
+
+    successor_goal_after_commit_request = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_commit_request.status == 200
+    assert (
+        "completed_goal_provenance_history_status</dt><dd>available"
+        in successor_goal_after_commit_request.body
+    )
+    assert "recommended_action</dt><dd>Approve commit" in successor_goal_after_commit_request.body
+    assert "action='/actions/approve-coder-commit'" in successor_goal_after_commit_request.body
+    assert "completed-goal-provenance.md" in successor_goal_after_commit_request.body
+
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
     AgentSystem(tmp_path).initialize()
@@ -28148,6 +28287,7 @@ def test_coder_worktree_commit_promotion_requires_review_and_is_idempotent(
     assert "source_coder_worktree_run_summary_consumed: true" in request_output
     assert "source_review: runs/" in request_output
     assert "source_review_sha256: " in request_output
+    assert "source_review_markdown_consumed: true" in request_output
     assert "commit_created: false" in request_output
     assert "push_created: false" in request_output
     assert "provider_calls_taken_by_clankeros: 0" in request_output
@@ -28169,6 +28309,8 @@ def test_coder_worktree_commit_promotion_requires_review_and_is_idempotent(
     assert request_payload["source_diff_sha256"]
     assert request_payload["review_path"].endswith(f"runs/{source_run_id}/review.md")
     review_path = tmp_path / "runs" / source_run_id / "review.md"
+    assert request_payload["source_review"] == str(review_path.relative_to(tmp_path))
+    assert request_payload["source_delegation_run_id"] == source_run_id
     assert request_payload["source_coder_worktree_run"] == str(
         evidence_dir.relative_to(tmp_path)
     )
@@ -28188,19 +28330,37 @@ def test_coder_worktree_commit_promotion_requires_review_and_is_idempotent(
     assert request_payload["source_review_sha256"] == hashlib.sha256(
         review_path.read_bytes()
     ).hexdigest()
+    assert request_payload["source_review_markdown_consumed"] is True
     assert "agent_os/delegation_runner.py" in request_payload["changed_files"]
-    assert (evidence_dir / "coder_worktree_commit_approval_request.md").exists()
+    request_markdown = (
+        evidence_dir / "coder_worktree_commit_approval_request.md"
+    ).read_text(encoding="utf-8")
+    assert f"- source_delegation_run_id: {source_run_id}" in request_markdown
+    assert f"- source_review: {review_path.relative_to(tmp_path)}" in request_markdown
+    assert "- source_review_markdown_consumed: true" in request_markdown
     commit_request_alias = json.loads(
         (evidence_dir / "coder_commit" / "coder_commit_request.json").read_text(
             encoding="utf-8"
         )
     )
+    assert commit_request_alias["source_delegation_run_id"] == source_run_id
     assert commit_request_alias["source_review"] == str(review_path.relative_to(tmp_path))
     assert commit_request_alias["source_review_sha256"] == request_payload["source_review_sha256"]
+    assert commit_request_alias["source_review_markdown_consumed"] is True
     assert commit_request_alias["source_coder_worktree_run_summary"] == str(
         (evidence_dir / "summary.md").relative_to(tmp_path)
     )
     assert commit_request_alias["source_coder_worktree_run_summary_consumed"] is True
+    commit_request_markdown = (
+        evidence_dir / "coder_commit" / "coder_commit_request.md"
+    ).read_text(encoding="utf-8")
+    assert f"- source_delegation_run_id: {source_run_id}" in commit_request_markdown
+    assert "- source_review_markdown_consumed: true" in commit_request_markdown
+
+    legacy_request_payload = dict(request_payload)
+    legacy_request_payload.pop("source_review", None)
+    legacy_request_payload.pop("source_review_markdown_consumed", None)
+    request_artifact.write_text(json.dumps(legacy_request_payload), encoding="utf-8")
 
     assert (
         main(
@@ -28219,6 +28379,12 @@ def test_coder_worktree_commit_promotion_requires_review_and_is_idempotent(
     )
     duplicate_output = capsys.readouterr().out
     assert f"coder_worktree_commit_approval: already_recorded {commit_approval_id}" in duplicate_output
+    assert "source_review_markdown_consumed: true" in duplicate_output
+    backfilled_request_payload = json.loads(request_artifact.read_text(encoding="utf-8"))
+    assert backfilled_request_payload["source_review"] == str(
+        review_path.relative_to(tmp_path)
+    )
+    assert backfilled_request_payload["source_review_markdown_consumed"] is True
 
     assert (
         main(

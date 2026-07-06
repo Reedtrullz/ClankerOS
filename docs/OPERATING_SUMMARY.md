@@ -238,6 +238,17 @@ Core layers for the bootstrap:
   and `/today`, `/resume`, and the successor Goal page advance to
   `Create commit request` while retaining `completed-goal-provenance.md` as
   durable history.
+  When the successor commit request is then created from either daily surface,
+  the request consumes `runs/<source_run_id>/review.md` as proof, including
+  the review Markdown path, hash, and
+  `source_review_markdown_consumed: true`, while preserving the prior run
+  summary and diff proof. The commit-request artifacts and browser result
+  expose the same review proof plus source delegation run provenance. The
+  commit-request Markdown becomes the active workspace artifact, the original
+  daily return surface is preserved for the embedded `Approve commit` form,
+  and `/today`, `/resume`, and the successor Goal page advance to
+  `Approve commit` while retaining `completed-goal-provenance.md` as durable
+  history.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only

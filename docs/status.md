@@ -4,15 +4,24 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Successor Goal commit requests from `/today` and `/resume` now consume
+  `runs/<source_run_id>/review.md` as first-class proof before the app offers
+  `Approve commit`. The request artifacts, CLI/dashboard rows, Goal form, and
+  browser result expose `source_review`, `source_review_sha256`,
+  `source_review_markdown_consumed: true`, carried run-summary proof, and
+  source delegation run provenance. Pending legacy request artifacts for the
+  same run/diff/message are backfilled with the current review proof before
+  idempotent reuse. `/today`, `/resume`, and the successor Goal page now
+  advance to `Approve commit` while retaining completed-Goal provenance
+  history and preserving the original daily return surface. Focused local
+  proof: compile plus the backend commit-request regression and long daily
+  browser-flow regression.
 - Successor Goal worktree reviews from `/today` and `/resume` now consume the
   approved worktree run evidence as first-class proof before the app offers
   `Create commit request`. The review artifact records the coder worktree run
   directory, run JSON hash, run summary Markdown path and hash, and diff hash;
   the backend commit request gate now requires that matching proof instead of
-  accepting a review that merely mentions the run id. `/today`, `/resume`, and
-  the successor Goal page now advance to `Create commit request` while
-  retaining completed-Goal provenance history and preserving the original
-  daily return surface.
+  accepting a review that merely mentions the run id.
 - Successor Goal approved worktree runs from `/today` and `/resume` now consume
   `coder_worktree_approval_decision.md` as first-class proof. The run evidence
   records decision JSON/Markdown paths and hashes in `run.json`, `summary.md`,

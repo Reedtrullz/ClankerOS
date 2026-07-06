@@ -24264,6 +24264,7 @@ def _goal_commit_request_form(
     if run is None:
         return "<p class='muted'>commit_request_form_status: unavailable_until_reviewed_completed_run_exists</p>"
     return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
+    review_gate = _run_review_gate_state(root, run)
     return "".join(
         [
             "<h3>Create Commit Request</h3>",
@@ -24271,6 +24272,34 @@ def _goal_commit_request_form(
             _kv(
                 [
                     ("coder_worktree_run", run.id),
+                    ("source_run_id", run.source_run_id),
+                    (
+                        "source_review",
+                        _artifact_link(str(review_gate["review_path"]))
+                        if review_gate["exists"]
+                        else str(review_gate["review_path"]),
+                    ),
+                    (
+                        "source_review_sha256",
+                        _sha256_for_display(root / str(review_gate["review_path"]))
+                        if review_gate["exists"]
+                        else "missing",
+                    ),
+                    (
+                        "source_review_markdown_consumed",
+                        str(review_gate["commit_request_form_available"]).lower(),
+                    ),
+                    (
+                        "source_coder_worktree_run_summary",
+                        _artifact_link(
+                            str(review_gate["source_coder_worktree_run_summary"])
+                        ),
+                    ),
+                    (
+                        "source_coder_worktree_run_summary_consumed",
+                        str(review_gate["source_coder_worktree_run_summary_consumed"]).lower(),
+                    ),
+                    ("source_diff_sha256", str(review_gate["source_diff_sha256"])),
                     (
                         "return_to_after_commit_request",
                         SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
@@ -47928,7 +47957,7 @@ def _handle_post(
                 )
         elif action == "coder-commit-request":
             run_id = _required(form, "run_id")
-            result = request_coder_worktree_commit_approval(
+            commit_result = request_coder_worktree_commit_approval(
                 root,
                 storage,
                 run_id,
@@ -47936,14 +47965,59 @@ def _handle_post(
                 commit_message=_required(form, "message"),
                 note=_one(form, "note") or "Requested from local app.",
             )
-            message = f"coder_commit_request: {result.approval.id}"
+            request_payload: dict[str, Any] = {}
+            try:
+                request_payload = json.loads(
+                    (root / commit_result.approval.request_artifact_path).read_text(
+                        encoding="utf-8"
+                    )
+                )
+            except (OSError, json.JSONDecodeError):
+                request_payload = {}
+            result = {
+                "approval": commit_result.approval,
+                "already_recorded": commit_result.already_recorded,
+                "source_review": request_payload.get(
+                    "source_review",
+                    request_payload.get(
+                        "review_path",
+                        commit_result.approval.review_path,
+                    ),
+                ),
+                "source_review_sha256": request_payload.get(
+                    "source_review_sha256",
+                    "missing",
+                ),
+                "source_review_markdown_consumed": request_payload.get(
+                    "source_review_markdown_consumed"
+                )
+                is True,
+                "source_coder_worktree_run_summary": request_payload.get(
+                    "source_coder_worktree_run_summary",
+                    "missing",
+                ),
+                "source_coder_worktree_run_summary_sha256": request_payload.get(
+                    "source_coder_worktree_run_summary_sha256",
+                    "missing",
+                ),
+                "source_coder_worktree_run_summary_consumed": request_payload.get(
+                    "source_coder_worktree_run_summary_consumed"
+                )
+                is True,
+                "source_diff": request_payload.get("source_diff", "missing"),
+                "source_diff_sha256": request_payload.get(
+                    "source_diff_sha256",
+                    "missing",
+                ),
+            }
+            message = f"coder_commit_request: {commit_result.approval.id}"
             run_location = f"/runs/{quote(run_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or run_location
             _remember_delegation_workspace(
                 root,
                 storage,
-                result.approval.delegation_id,
-                artifact_path=Path(result.approval.request_artifact_path).with_suffix(".md"),
+                commit_result.approval.delegation_id,
+                artifact_path=Path(commit_result.approval.request_artifact_path).with_suffix(".md"),
                 updated_by="coder-commit-request",
                 resume_surface=location,
             )
@@ -60543,6 +60617,13 @@ def _repo_relative_artifact_path(root: Path, path: str | Path | None) -> str:
 
 def _artifact_href(root: Path, path: str | Path | None) -> str:
     return f"/artifacts?path={quote(_repo_relative_artifact_path(root, path))}"
+
+
+def _sha256_for_display(path: Path) -> str:
+    try:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError:
+        return "missing"
 
 
 def _row_exists(db_path: Path, table: str, row_id: str) -> bool:

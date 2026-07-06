@@ -329,19 +329,21 @@ no-change, missing-worktree, unsafe-git-state, stale-source, or
 failed-verification runs unless the operator explicitly used `--allow-unverified`
 at request time. For eligible reviewed runs it records the current worktree
 HEAD, source `run.json` hash, `summary.md` path/hash, `diff.patch` hash,
-changed-file list, review path/hash, branch, and commit message, then writes
-both compatibility and modern request artifacts. The modern operator artifacts
-are:
+changed-file list, review path/hash, `source_review_markdown_consumed: true`,
+source delegation run id, branch, and commit message, then writes both
+compatibility and modern request artifacts. The modern operator artifacts are:
 
 ```text
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/coder_commit_request.json
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/coder_commit_request.md
 ```
 
-The request is idempotent for the same run evidence, diff hash, and commit
-message unless `--force-new` is used. A different commit message creates a
-separate request. It does not stage files, create a commit, push, create a PR,
-deploy, call providers, or use the network.
+The request is idempotent for the same run evidence, diff hash, commit message,
+and matching review Markdown proof unless `--force-new` is used. Pending legacy
+request artifacts for the same run/diff/message are backfilled with the current
+review path/hash and `source_review_markdown_consumed: true` before reuse. A
+different commit message creates a separate request. It does not stage files,
+create a commit, push, create a PR, deploy, call providers, or use the network.
 
 `approve-coder-commit <commit_request_id> --decided-by <id> --note <note>`
 marks that dedicated request approved and writes:

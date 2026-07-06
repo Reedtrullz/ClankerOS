@@ -1,5 +1,51 @@
 # Status
 
+## 2026-07-06 Successor Goal Commit Request Daily Resume
+
+- Completed the selected slice for successor Goal commit requests from
+  `/today` and `/resume`.
+- A confirmed browser `coder-commit-request` action now returns explicit
+  operator-facing proof fields for the consumed review Markdown:
+  `source_review`, `source_review_sha256`,
+  `source_review_markdown_consumed: true`, carried run-summary proof,
+  `source_diff_sha256`, and the pending approval record.
+- The generated `coder_worktree_commit_approval_request.json` / `.md` and
+  modern `coder_commit/coder_commit_request.json` / `.md` artifacts now record
+  the source delegation run id, review path, review hash, and
+  `source_review_markdown_consumed: true`. CLI output and static dashboard
+  rows expose the same proof fields.
+- Idempotent reuse now checks the stored review Markdown proof. Pending legacy
+  request artifacts for the same run/diff/message are backfilled with the
+  current review path/hash and consumed flag before being returned as
+  `already_recorded`.
+- Running commit request from `/resume#resume-workbench-action-form` preserves
+  that return surface for the embedded `Approve commit` form. `/today`,
+  `/resume`, and the successor Goal page all move the primary action to
+  `Approve commit`, while `completed-goal-provenance.md` remains visible as
+  durable history.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal commit approvals from `/today` and `/resume` should consume
+  `coder_commit/coder_commit_request.md` as proof, keep provenance history
+  visible, and move the primary action to `Commit approved worktree`.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/coder_worktree_execution.py agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_commit_promotion_requires_review_and_is_idempotent -q --tb=short`:
+    1 passed in 4.61s after adding review-Markdown consumption and legacy
+    backfill assertions.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 98.90s after extending the successor Goal flow through
+    commit-request creation and verifying `/today`, `/resume`, and the Goal
+    page advance to `Approve commit`.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal commit
+    approval proof slice and refreshed `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+- Non-claim: this slice writes only local commit-request proof metadata after
+  existing confirmed local browser or CLI actions. It does not approve commits,
+  stage files, create a commit, push, create PRs, deploy, call providers, use
+  app-side network actions, or mutate external systems. Local browser/test
+  proof is not CI, deploy, or live production proof.
+
 ## 2026-07-06 Successor Goal Worktree Review Daily Resume
 
 - Completed the selected slice for successor Goal worktree reviews from
