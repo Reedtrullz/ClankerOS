@@ -284,6 +284,18 @@ Core layers for the bootstrap:
   preserved for the embedded `Approve publication` form, and `/today`,
   `/resume`, and the successor Goal page advance to `Approve publication`
   while retaining `completed-goal-provenance.md` as durable history.
+  When the successor publication approval is then decided from either daily
+  surface, `approve-coder-publication` consumes
+  `coder_publication/publication_request.md` as proof before writing the local
+  publication decision. The decision artifacts and browser result expose the
+  publication request JSON/Markdown paths and hashes plus
+  `source_coder_publication_request_markdown_consumed: true`, while keeping
+  `push_created`, `pr_created`, and `deploy_created` false and external
+  effect counters at zero. The publication decision Markdown becomes the
+  active workspace artifact, the original daily return surface is preserved
+  for the embedded `Create publication handoff` form, and `/today`, `/resume`,
+  and the successor Goal page advance to `Create publication handoff` while
+  retaining `completed-goal-provenance.md` as durable history.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only
@@ -1981,9 +1993,13 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   `coder_publication/publication_request.json/.md`. The request artifacts
   retain the consumed local commit JSON/Markdown paths and hashes plus
   `source_coder_commit_markdown_consumed: true`.
-  `approve-coder-publication` writes the local decision without pushing or
-  creating a PR. `coder-publication-handoff` requires the approved request,
-  revalidates the request artifact hash and commit artifact hash, and writes
+  `approve-coder-publication` consumes the matching
+  `coder_publication/publication_request.json/.md` pair and writes the local
+  decision without pushing or creating a PR. The decision artifacts record the
+  source publication request JSON/Markdown paths and hashes plus
+  `source_coder_publication_request_markdown_consumed: true`.
+  `coder-publication-handoff` requires the approved request, revalidates the
+  request JSON and Markdown hashes plus commit artifact hashes, and writes
   `publication_handoff.json`, `publication_handoff.md`, and `pr_body.md` with
   suggested push and draft-PR commands only. It does not execute those commands,
   run `git fetch`, contact GitHub, deploy, call providers, use the network, or

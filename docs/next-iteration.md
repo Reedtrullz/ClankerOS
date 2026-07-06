@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_7a740d817abb
+- Packet ID: iteration_9b54b6100752
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Make successor Goal publication approvals from `/today` and `/resume` consume `coder_publication/publication_request.md` as proof, keep provenance history visible, and move the primary action to `Create publication handoff`.
+Advance the Agent System north-star goal by completing: Make successor Goal publication handoffs from `/today` and `/resume` consume `coder_publication/publication_decision.md` as proof, keep provenance history visible, and move the primary action to `Manual publish outside ClankerOS`.
 
 ## Definition Of Done
 

@@ -422,19 +422,25 @@ older request artifacts. It does not push, create a PR, deploy, call
 providers, use the network, run `git fetch`, or contact GitHub.
 
 `approve-coder-publication <publication_request_id> --decided-by <id> --note
-<note>` marks that request approved and writes:
+<note>` marks that request approved only after loading the matching
+`coder_publication/publication_request.json` and
+`coder_publication/publication_request.md` proof pair. It verifies both
+artifacts match the publication request id and coder worktree run, requires
+the request to carry the upstream local-commit Markdown proof, and writes:
 
 ```text
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_decision.json
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_decision.md
 ```
 
-The approval decision does not push, create a PR, deploy, call providers, or
-use the network.
+The approval decision records the consumed publication request JSON/Markdown
+paths and hashes plus
+`source_coder_publication_request_markdown_consumed: true`. It does not push,
+create a PR, deploy, call providers, or use the network.
 
 `coder-publication-handoff <coder_worktree_run_id>` requires an approved
-publication request, revalidates the request artifact hash, commit artifact
-hash, and commit SHA, then writes local suggested commands only:
+publication request, revalidates the request JSON and Markdown hashes, commit
+artifact hash, and commit SHA, then writes local suggested commands only:
 
 ```text
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_handoff.json

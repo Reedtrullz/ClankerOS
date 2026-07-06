@@ -15378,6 +15378,205 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     )
     assert "completed-goal-provenance.md" in successor_goal_after_publication_request.body
 
+    next_goal_publication_request_md_sha = hashlib.sha256(
+        next_goal_publication_request_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    next_goal_publication_approval_result = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-publication",
+        method="POST",
+        form={
+            "publication_id": [next_goal_publication.id],
+            "note": ["Approve successor publication from Resume"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "decided_by": ["operator"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_publication_approval_result.status == 200
+    assert "approved_coder_publication:" in next_goal_publication_approval_result.body
+    assert (
+        "action_result_command_label</dt><dd>Approve publication"
+        in next_goal_publication_approval_result.body
+    )
+    assert (
+        "source_coder_publication_request</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_publication_request_md.with_suffix('.json').relative_to(tmp_path)}'>"
+        in next_goal_publication_approval_result.body
+    )
+    assert (
+        "source_coder_publication_request_md</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_publication_request_md.relative_to(tmp_path)}'>"
+        in next_goal_publication_approval_result.body
+    )
+    assert (
+        f"source_publication_request_md_sha256</dt><dd>{next_goal_publication_request_md_sha}"
+        in next_goal_publication_approval_result.body
+    )
+    assert (
+        "source_coder_publication_request_markdown_consumed</dt><dd>true"
+        in next_goal_publication_approval_result.body
+    )
+    assert "push_created</dt><dd>false" in next_goal_publication_approval_result.body
+    assert "pr_created</dt><dd>false" in next_goal_publication_approval_result.body
+    assert "network_actions_taken</dt><dd>0" in next_goal_publication_approval_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Create publication handoff"
+        in next_goal_publication_approval_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_publication_approval_result.body
+    assert (
+        "action='/actions/coder-publication-handoff'"
+        in next_goal_publication_approval_result.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_publication_approval_result.body
+    )
+
+    next_goal_approved_publication = next(
+        item
+        for item in list_coder_publications(
+            tmp_path,
+            status="approved",
+            limit=20,
+        )
+        if item.run_id == next_coder_run.id
+    )
+    next_goal_publication_decision_md = (
+        tmp_path / Path(next_goal_approved_publication.decision_artifact_path).with_suffix(".md")
+    )
+    assert next_goal_publication_decision_md.exists()
+    next_goal_publication_decision_payload = json.loads(
+        next_goal_publication_decision_md.with_suffix(".json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert next_goal_publication_decision_payload["source_coder_publication_request"] == str(
+        next_goal_publication_request_md.with_suffix(".json").relative_to(tmp_path)
+    )
+    assert next_goal_publication_decision_payload["source_coder_publication_request_md"] == str(
+        next_goal_publication_request_md.relative_to(tmp_path)
+    )
+    assert (
+        next_goal_publication_decision_payload["source_publication_request_md_sha256"]
+        == next_goal_publication_request_md_sha
+    )
+    assert (
+        next_goal_publication_decision_payload[
+            "source_coder_publication_request_markdown_consumed"
+        ]
+        is True
+    )
+    next_goal_publication_decision_text = (
+        next_goal_publication_decision_md.read_text(encoding="utf-8")
+    )
+    assert (
+        f"- source_coder_publication_request_md: {next_goal_publication_request_md.relative_to(tmp_path)}"
+        in next_goal_publication_decision_text
+    )
+    assert (
+        "- source_coder_publication_request_markdown_consumed: true"
+        in next_goal_publication_decision_text
+    )
+
+    next_goal_publication_approval_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert next_goal_publication_approval_workspace["open_goal"] == next_goal_id
+    assert (
+        next_goal_publication_approval_workspace["updated_by"]
+        == "approve-coder-publication"
+    )
+    assert next_goal_publication_approval_workspace["last_viewed_artifact"] == str(
+        next_goal_publication_decision_md.relative_to(tmp_path)
+    )
+    assert (
+        next_goal_publication_approval_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+
+    today_after_next_goal_publication_approval = render_local_app_route(
+        tmp_path,
+        "/today",
+    )
+    assert today_after_next_goal_publication_approval.status == 200
+    assert (
+        "today_command_primary_action</dt><dd>Create publication handoff"
+        in today_after_next_goal_publication_approval.body
+    )
+    assert (
+        "action='/actions/coder-publication-handoff'"
+        in today_after_next_goal_publication_approval.body
+    )
+    assert (
+        f"name='run_id' value='{next_coder_run.id}'"
+        in today_after_next_goal_publication_approval.body
+    )
+    assert (
+        f"source_publication_request_md_sha256</dt><dd>{next_goal_publication_request_md_sha}"
+        in today_after_next_goal_publication_approval.body
+    )
+    assert (
+        "source_coder_publication_request_markdown_consumed</dt><dd>true"
+        in today_after_next_goal_publication_approval.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_publication_approval.body
+
+    resume_after_next_goal_publication_approval = render_local_app_route(
+        tmp_path,
+        "/resume",
+    )
+    assert resume_after_next_goal_publication_approval.status == 200
+    assert (
+        "resume_return_brief_next_action</dt><dd>Create publication handoff"
+        in resume_after_next_goal_publication_approval.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Create publication handoff"
+        in resume_after_next_goal_publication_approval.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_publication_decision_md.relative_to(tmp_path)}'>"
+        in resume_after_next_goal_publication_approval.body
+    )
+    assert (
+        "action='/actions/coder-publication-handoff'"
+        in resume_after_next_goal_publication_approval.body
+    )
+    assert (
+        f"name='run_id' value='{next_coder_run.id}'"
+        in resume_after_next_goal_publication_approval.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_publication_approval.body
+
+    successor_goal_after_publication_approval = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_publication_approval.status == 200
+    assert (
+        "completed_goal_provenance_history_status</dt><dd>available"
+        in successor_goal_after_publication_approval.body
+    )
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_goal_publication_decision_md.relative_to(tmp_path)}"
+        in successor_goal_after_publication_approval.body
+    )
+    assert (
+        "recommended_action</dt><dd>Create publication handoff"
+        in successor_goal_after_publication_approval.body
+    )
+    assert (
+        "action='/actions/coder-publication-handoff'"
+        in successor_goal_after_publication_approval.body
+    )
+    assert "completed-goal-provenance.md" in successor_goal_after_publication_approval.body
+
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
     AgentSystem(tmp_path).initialize()
@@ -27341,6 +27540,19 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "data-action-result-form-draft-cleanup='true'" in approve_publication.body
     assert "data-action-result-form-draft-action='approve-coder-publication'" in approve_publication.body
     assert (
+        "source_coder_publication_request_md</dt><dd>"
+        f"<a href='/artifacts?path={publication_request_md.relative_to(tmp_path)}'>"
+        in approve_publication.body
+    )
+    assert (
+        f"source_publication_request_md_sha256</dt><dd>{hashlib.sha256(publication_request_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in approve_publication.body
+    )
+    assert (
+        "source_coder_publication_request_markdown_consumed</dt><dd>true"
+        in approve_publication.body
+    )
+    assert (
         f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
         in approve_publication.body
     )
@@ -27373,7 +27585,17 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "Create Publication Handoff" in approved_publication_goal.body
     assert "action='/actions/coder-publication-handoff'" in approved_publication_goal.body
     assert f"name='run_id' value='{run_id}'" in approved_publication_goal.body
+    assert (
+        "source_coder_publication_request_md</dt><dd>"
+        f"<a href='/artifacts?path={publication_request_md.relative_to(tmp_path)}'>"
+        in approved_publication_goal.body
+    )
+    assert (
+        "source_coder_publication_request_markdown_consumed</dt><dd>true"
+        in approved_publication_goal.body
+    )
     publication_handoff_goal_form = _goal_publication_handoff_form(
+        tmp_path,
         {"goal": goal_record, "publications": [approved_publication]}
     )
     assert (
@@ -29872,6 +30094,14 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     )
     approval_output = capsys.readouterr().out
     assert f"approved_coder_publication: {publication_request_id}" in approval_output
+    request_markdown_sha = hashlib.sha256(
+        request_markdown.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert f"source_coder_publication_request: {request_artifact.relative_to(tmp_path)}" in approval_output
+    assert f"source_coder_publication_request_md: {request_markdown.relative_to(tmp_path)}" in approval_output
+    assert f"source_publication_request_sha256: {hashlib.sha256(request_artifact.read_bytes()).hexdigest()}" in approval_output
+    assert f"source_publication_request_md_sha256: {request_markdown_sha}" in approval_output
+    assert "source_coder_publication_request_markdown_consumed: true" in approval_output
     decision_artifact = tmp_path / next(
         line.split(": ", 1)[1]
         for line in approval_output.splitlines()
@@ -29880,9 +30110,24 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     decision_payload = json.loads(decision_artifact.read_text(encoding="utf-8"))
     assert decision_payload["kind"] == "coder_worktree_publication_approval_decision"
     assert decision_payload["source_request_sha256"]
+    assert decision_payload["source_coder_publication_request"] == str(
+        request_artifact.relative_to(tmp_path)
+    )
+    assert decision_payload["source_coder_publication_request_md"] == str(
+        request_markdown.relative_to(tmp_path)
+    )
+    assert decision_payload["source_publication_request_sha256"] == hashlib.sha256(
+        request_artifact.read_bytes()
+    ).hexdigest()
+    assert decision_payload["source_publication_request_md_sha256"] == request_markdown_sha
+    assert decision_payload["source_coder_publication_request_markdown_consumed"] is True
     assert decision_payload["push_created"] is False
     assert decision_payload["pr_created"] is False
     assert decision_payload["network_actions_taken"] == 0
+    decision_markdown = decision_artifact.with_suffix(".md").read_text(encoding="utf-8")
+    assert f"- source_coder_publication_request_md: {request_markdown.relative_to(tmp_path)}" in decision_markdown
+    assert f"- source_publication_request_md_sha256: {request_markdown_sha}" in decision_markdown
+    assert "- source_coder_publication_request_markdown_consumed: true" in decision_markdown
 
     assert (
         main(
@@ -29901,6 +30146,7 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     )
     repeat_approval_output = capsys.readouterr().out
     assert f"approved_coder_publication: already_approved {publication_request_id}" in repeat_approval_output
+    assert "source_coder_publication_request_markdown_consumed: true" in repeat_approval_output
 
     assert main(["--root", str(tmp_path), "coder-publication-handoff", run_id]) == 0
     handoff_output = capsys.readouterr().out
@@ -29965,6 +30211,9 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert f"source_coder_commit_md: {commit_markdown.relative_to(tmp_path)}" in review
     assert f"source_commit_md_sha256: {commit_markdown_sha}" in review
     assert "source_coder_commit_markdown_consumed: true" in review
+    assert f"source_coder_publication_request_md: {request_markdown.relative_to(tmp_path)}" in review
+    assert f"source_publication_request_md_sha256: {request_markdown_sha}" in review
+    assert "source_coder_publication_request_markdown_consumed: true" in review
     assert f"suggested_push_command: git push origin {branch_name}" in review
     assert "suggested_draft_pr_command: gh pr create --draft --base main" in review
 
@@ -29976,6 +30225,9 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert f"source_commit_md={commit_markdown.relative_to(tmp_path)}" in dashboard
     assert f"source_commit_md_sha256={commit_markdown_sha}" in dashboard
     assert "source_commit_markdown_consumed=true" in dashboard
+    assert f"source_publication_request_md={request_markdown.relative_to(tmp_path)}" in dashboard
+    assert f"source_publication_request_md_sha256={request_markdown_sha}" in dashboard
+    assert "source_publication_request_markdown_consumed=true" in dashboard
     assert f"suggested_push_command=git push origin {branch_name}" in dashboard
     assert "suggested_draft_pr_command=gh pr create --draft --base main" in dashboard
 
@@ -30270,6 +30522,81 @@ def test_coder_publication_request_blocks_tampered_commit_artifact(
         )
 
 
+def test_coder_publication_approval_blocks_tampered_request_markdown(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    (
+        _source_run_id,
+        _delegation_id,
+        _approval_id,
+        run_id,
+        evidence_dir,
+        _worktree_path,
+        _repo_path,
+        _commit_sha,
+        _parent_sha,
+        _branch_name,
+    ) = _commit_completed_coder_worktree(tmp_path, capsys)
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-publication-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--remote",
+                "origin",
+                "--target-branch",
+                "main",
+                "--note",
+                "Request publication handoff",
+            ]
+        )
+        == 0
+    )
+    request_output = capsys.readouterr().out
+    publication_request_id = next(
+        line.split(": ", 1)[1]
+        for line in request_output.splitlines()
+        if line.startswith("publication_request_id: ")
+    )
+    request_markdown = evidence_dir / "coder_publication" / "publication_request.md"
+    request_markdown.write_text(
+        request_markdown.read_text(encoding="utf-8").replace(
+            f"- publication_request_id: {publication_request_id}",
+            "- publication_request_id: tampered_publication_request",
+        ),
+        encoding="utf-8",
+    )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "approve-coder-publication",
+                publication_request_id,
+                "--decided-by",
+                "operator",
+                "--note",
+                "should fail",
+            ]
+        )
+        == 1
+    )
+    approval_output = capsys.readouterr().out
+    assert (
+        "approve_coder_publication_failed: publication request markdown proof does not match approval"
+        in approval_output
+    )
+    incidents = Storage(tmp_path / ".agent" / "state.db").list_recent_incidents(limit=5)
+    assert incidents[0].failure_class == "source_request_hash_mismatch"
+
+
 def test_coder_publication_handoff_blocks_without_approval_and_source_drift(
     tmp_path: Path,
     capsys,
@@ -30348,6 +30675,53 @@ def test_coder_publication_handoff_blocks_without_approval_and_source_drift(
     request_drift_output = capsys.readouterr().out
     assert "coder_publication_handoff_failed: source_request_hash_mismatch" in request_drift_output
     assert request_drift_publication_id in request_drift_output
+
+    request_markdown_drift_root = tmp_path / "request-markdown-drift"
+    request_markdown_drift_root.mkdir()
+    (
+        _source_run_id,
+        _delegation_id,
+        _approval_id,
+        request_markdown_drift_run_id,
+        request_markdown_drift_evidence_dir,
+        _worktree_path,
+        _repo_path,
+        _commit_sha,
+        _parent_sha,
+        _branch_name,
+    ) = _commit_completed_coder_worktree(request_markdown_drift_root, capsys)
+    request_markdown_drift_publication_id = _request_and_approve_coder_publication(
+        request_markdown_drift_root,
+        capsys,
+        request_markdown_drift_run_id,
+    )
+    request_markdown_artifact = (
+        request_markdown_drift_evidence_dir
+        / "coder_publication"
+        / "publication_request.md"
+    )
+    request_markdown_artifact.write_text(
+        request_markdown_artifact.read_text(encoding="utf-8")
+        + "\n- tampered_after_approval: true\n",
+        encoding="utf-8",
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(request_markdown_drift_root),
+                "coder-publication-handoff",
+                request_markdown_drift_run_id,
+            ]
+        )
+        == 1
+    )
+    request_markdown_drift_output = capsys.readouterr().out
+    assert (
+        "coder_publication_handoff_failed: source_request_markdown_hash_mismatch"
+        in request_markdown_drift_output
+    )
+    assert request_markdown_drift_publication_id in request_markdown_drift_output
 
 
 def test_commit_coder_worktree_requires_approved_request_and_nonempty_message(

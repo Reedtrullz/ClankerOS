@@ -23797,6 +23797,7 @@ def _goal_next_action_form(
         )
     if next_action.action == "Create publication handoff":
         return _goal_publication_handoff_form(
+            state["root"],
             state,
             return_to_override=return_to_override,
         )
@@ -24576,6 +24577,13 @@ def _goal_approve_publication_form(
                         _sha256_for_display(root / publication.request_artifact_path),
                     ),
                     (
+                        "publication_request_md_sha256",
+                        _sha256_for_display(
+                            root
+                            / str(Path(publication.request_artifact_path).with_suffix(".md"))
+                        ),
+                    ),
+                    (
                         "source_coder_commit",
                         _artifact_link(
                             str(
@@ -24631,6 +24639,7 @@ def _goal_approve_publication_form(
 
 
 def _goal_publication_handoff_form(
+    root: Path,
     state: dict[str, Any],
     *,
     return_to_override: str | None = None,
@@ -24647,6 +24656,7 @@ def _goal_publication_handoff_form(
                 [
                     ("publication_id", publication.id),
                     ("run_id", publication.run_id),
+                    *_publication_decision_proof_rows(root, publication),
                     (
                         "return_to_after_publication_handoff",
                         SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
@@ -42810,9 +42820,12 @@ def _run_workbench_action_form(
             "Write local publication handoff and PR-body artifacts with suggested manual "
             "commands only. It does not push, create a PR, deploy, call providers, or use the network."
         )
-        form = _form(
-            action_name,
-            hidden_fields({"run_id": coder_run.id}),
+        form = (
+            _kv(_publication_decision_proof_rows(root, approved_publication))
+            + _form(
+                action_name,
+                hidden_fields({"run_id": coder_run.id}),
+            )
         )
     else:
         return result
@@ -48374,23 +48387,64 @@ def _handle_post(
             )
         elif action == "approve-coder-publication":
             publication_id = _required(form, "publication_id")
-            result = approve_coder_publication(
+            publication_decision = approve_coder_publication(
                 root,
                 storage,
                 publication_id,
                 decided_by=_one(form, "decided_by") or "operator",
                 note=_one(form, "note") or "Approved from local app.",
             )
-            message = f"approved_coder_publication: {result.publication.id}"
-            run_location = f"/runs/{quote(result.publication.run_id)}"
+            decision_payload: dict[str, Any] = {}
+            decision_path = (
+                root / (publication_decision.publication.decision_artifact_path or "")
+            )
+            try:
+                decision_payload = json.loads(decision_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                decision_payload = {}
+            result = {
+                "publication": publication_decision.publication,
+                "already_approved": publication_decision.already_approved,
+                "source_coder_publication_request": decision_payload.get(
+                    "source_coder_publication_request",
+                    publication_decision.publication.request_artifact_path,
+                ),
+                "source_coder_publication_request_md": decision_payload.get(
+                    "source_coder_publication_request_md",
+                    "missing",
+                ),
+                "source_publication_request_sha256": decision_payload.get(
+                    "source_publication_request_sha256",
+                    decision_payload.get("source_request_sha256", "missing"),
+                ),
+                "source_publication_request_md_sha256": decision_payload.get(
+                    "source_publication_request_md_sha256",
+                    "missing",
+                ),
+                "source_coder_publication_request_markdown_consumed": decision_payload.get(
+                    "source_coder_publication_request_markdown_consumed"
+                )
+                is True,
+                "push_created": decision_payload.get("push_created") is True,
+                "pr_created": decision_payload.get("pr_created") is True,
+                "deploy_created": decision_payload.get("deploy_created") is True,
+                "network_actions_taken": int(
+                    decision_payload.get("network_actions_taken") or 0
+                ),
+                "external_mutations_taken": int(
+                    decision_payload.get("external_mutations_taken") or 0
+                ),
+            }
+            message = f"approved_coder_publication: {publication_decision.publication.id}"
+            run_location = f"/runs/{quote(publication_decision.publication.run_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or run_location
             _remember_delegation_workspace(
                 root,
                 storage,
-                result.publication.delegation_id,
+                publication_decision.publication.delegation_id,
                 artifact_path=(
-                    Path(result.publication.decision_artifact_path).with_suffix(".md")
-                    if result.publication.decision_artifact_path
+                    Path(publication_decision.publication.decision_artifact_path).with_suffix(".md")
+                    if publication_decision.publication.decision_artifact_path
                     else None
                 ),
                 updated_by="approve-coder-publication",
@@ -50340,6 +50394,7 @@ def _run_action_forms(root: Path, run_id: str) -> str:
             [
                 "<section id='publication-handoff-action'><h2>Publication Handoff Action</h2>",
                 "<p class='muted'>This writes local publication handoff and PR-body artifacts with suggested manual commands only. It does not push, create a PR, deploy, call providers, or use the network.</p>",
+                _kv(_publication_decision_proof_rows(root, approved_publication[0])),
                 _form("coder-publication-handoff", {"run_id": run_id}),
                 "</section>",
             ]
@@ -50382,6 +50437,69 @@ def _publication_request_payload_for_display(root: Path, publication: Any) -> di
     except (OSError, json.JSONDecodeError):
         return {}
     return payload if isinstance(payload, dict) else {}
+
+
+def _publication_decision_payload_for_display(root: Path, publication: Any) -> dict[str, Any]:
+    decision_artifact_path = getattr(publication, "decision_artifact_path", "")
+    if not decision_artifact_path:
+        return {}
+    try:
+        payload = json.loads((root / decision_artifact_path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _publication_decision_proof_rows(
+    root: Path,
+    publication: Any,
+) -> list[tuple[str, str | SafeHtml]]:
+    decision_payload = _publication_decision_payload_for_display(root, publication)
+    decision_path = str(getattr(publication, "decision_artifact_path", "") or "missing")
+    decision_md_path = (
+        str(Path(decision_path).with_suffix(".md"))
+        if decision_path != "missing"
+        else "missing"
+    )
+    request_path = str(
+        decision_payload.get(
+            "source_coder_publication_request",
+            getattr(publication, "request_artifact_path", "missing"),
+        )
+    )
+    request_md_path = str(
+        decision_payload.get("source_coder_publication_request_md", "missing")
+    )
+    return [
+        ("publication_decision", _artifact_link(decision_path)),
+        ("publication_decision_md", _artifact_link(decision_md_path)),
+        ("publication_decision_sha256", _sha256_for_display(root / decision_path)),
+        ("publication_decision_md_sha256", _sha256_for_display(root / decision_md_path)),
+        ("source_coder_publication_request", _artifact_link(request_path)),
+        ("source_coder_publication_request_md", _artifact_link(request_md_path)),
+        (
+            "source_publication_request_sha256",
+            str(
+                decision_payload.get(
+                    "source_publication_request_sha256",
+                    decision_payload.get("source_request_sha256", "missing"),
+                )
+            ),
+        ),
+        (
+            "source_publication_request_md_sha256",
+            str(decision_payload.get("source_publication_request_md_sha256", "missing")),
+        ),
+        (
+            "source_coder_publication_request_markdown_consumed",
+            str(
+                decision_payload.get(
+                    "source_coder_publication_request_markdown_consumed"
+                )
+                is True
+            ).lower(),
+        ),
+    ]
 
 
 def _pending_approval_lines(root: Path) -> list[str]:
@@ -61728,6 +61846,7 @@ def _commit_line(item: Any) -> str:
 def _publication_line(root: Path, item: Any) -> str:
     handoff = item.handoff_artifact_path if item.status == "ready_for_operator" else "none"
     request_payload = _publication_request_payload_for_display(root, item)
+    decision_payload = _publication_decision_payload_for_display(root, item)
     source_commit = str(
         request_payload.get("source_coder_commit", item.source_commit_artifact_path)
     )
@@ -61744,6 +61863,16 @@ def _publication_line(root: Path, item: Any) -> str:
     source_commit_markdown_consumed = str(
         request_payload.get("source_coder_commit_markdown_consumed") is True
     ).lower()
+    source_publication_request_md = str(
+        decision_payload.get("source_coder_publication_request_md", "missing")
+    )
+    source_publication_request_md_sha = str(
+        decision_payload.get("source_publication_request_md_sha256", "missing")
+    )
+    source_publication_request_markdown_consumed = str(
+        decision_payload.get("source_coder_publication_request_markdown_consumed")
+        is True
+    ).lower()
     return (
         f"{item.id}: status={item.status} run={item.run_id} project={item.project_id} "
         f"commit={item.commit_sha} request={_artifact_link(item.request_artifact_path)} "
@@ -61752,6 +61881,9 @@ def _publication_line(root: Path, item: Any) -> str:
         f"source_commit_md={_artifact_link(source_commit_md)} "
         f"source_commit_md_sha256={_e(source_commit_md_sha)} "
         f"source_commit_markdown_consumed={_e(source_commit_markdown_consumed)} "
+        f"source_publication_request_md={_artifact_link(source_publication_request_md)} "
+        f"source_publication_request_md_sha256={_e(source_publication_request_md_sha)} "
+        f"source_publication_request_markdown_consumed={_e(source_publication_request_markdown_consumed)} "
         f"handoff={_artifact_link(handoff)} "
         "push_created=false pr_created=false deploy_created=false"
     )
