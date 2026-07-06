@@ -12188,9 +12188,33 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         "<a href='/today?notice=run_review%3A%20"
     ) in review_result.body
     assert "#today-current-action'>/today#today-current-action</a>" in review_result.body
+    assert (
+        "source_coder_worktree_run_summary</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in review_result.body
+    )
+    assert (
+        "source_coder_worktree_run_summary_consumed</dt><dd>true"
+        in review_result.body
+    )
+    assert "source_coder_worktree_run_sha256</dt><dd>" in review_result.body
+    assert "source_diff_sha256</dt><dd>" in review_result.body
     review_path = tmp_path / "runs" / coder_run.source_run_id / "review.md"
     assert review_path.exists()
-    assert coder_run.id in review_path.read_text(encoding="utf-8")
+    review_text = review_path.read_text(encoding="utf-8")
+    assert coder_run.id in review_text
+    assert (
+        f"source_coder_worktree_run_summary: {coder_worktree_summary.relative_to(tmp_path)}"
+        in review_text
+    )
+    assert "source_coder_worktree_run_summary_consumed: true" in review_text
+    assert (
+        f"source_coder_worktree_run_sha256: {hashlib.sha256(coder_worktree_run_json.read_bytes()).hexdigest()}"
+        in review_text
+    )
+    assert (
+        f"source_diff_sha256: {hashlib.sha256(coder_worktree_summary.with_name('diff.patch').read_bytes()).hexdigest()}"
+        in review_text
+    )
     review_workspace = json.loads(
         (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
     )
@@ -14475,6 +14499,159 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     )
     assert "recommended_action</dt><dd>Open review" in successor_goal_after_worktree_run.body
     assert "completed-goal-provenance.md" in successor_goal_after_worktree_run.body
+
+    next_goal_review_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/review-run",
+        method="POST",
+        form={
+            "run_id": [next_coder_run.id],
+            "return_to": ["/resume#resume-workbench-action-form"],
+        },
+    )
+    assert next_goal_review_confirmation.status == 409
+    assert "Confirm review-run" in next_goal_review_confirmation.body
+    assert "action_confirmation_label</dt><dd>Open review" in next_goal_review_confirmation.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_review_confirmation.body
+    )
+
+    next_goal_review_result = render_local_app_route(
+        tmp_path,
+        "/actions/review-run",
+        method="POST",
+        form={
+            "run_id": [next_coder_run.id],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_review_result.status == 200
+    assert "run_review:" in next_goal_review_result.body
+    assert (
+        "action_result_command_label</dt><dd>Open review"
+        in next_goal_review_result.body
+    )
+    assert (
+        "source_coder_worktree_run_summary</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in next_goal_review_result.body
+    )
+    assert (
+        "source_coder_worktree_run_summary_consumed</dt><dd>true"
+        in next_goal_review_result.body
+    )
+    assert "source_coder_worktree_run_sha256</dt><dd>" in next_goal_review_result.body
+    assert "source_diff_sha256</dt><dd>" in next_goal_review_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Create commit request"
+        in next_goal_review_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_review_result.body
+    assert "action='/actions/coder-commit-request'" in next_goal_review_result.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_review_result.body
+    )
+
+    next_goal_review_path = tmp_path / "runs" / next_coder_run.source_run_id / "review.md"
+    assert next_goal_review_path.exists()
+    next_goal_review_text = next_goal_review_path.read_text(encoding="utf-8")
+    assert next_coder_run.id in next_goal_review_text
+    assert (
+        f"source_coder_worktree_run_summary: {next_coder_worktree_summary.relative_to(tmp_path)}"
+        in next_goal_review_text
+    )
+    assert "source_coder_worktree_run_summary_consumed: true" in next_goal_review_text
+    assert (
+        f"source_coder_worktree_run_sha256: {hashlib.sha256(next_coder_worktree_run_json.read_bytes()).hexdigest()}"
+        in next_goal_review_text
+    )
+    assert (
+        f"source_diff_sha256: {hashlib.sha256(next_coder_worktree_summary.with_name('diff.patch').read_bytes()).hexdigest()}"
+        in next_goal_review_text
+    )
+    next_goal_review_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_review_workspace["open_goal"] == next_goal_id
+    assert next_goal_review_workspace["updated_by"] == "review-run"
+    assert next_goal_review_workspace["last_viewed_artifact"] == str(
+        next_goal_review_path.relative_to(tmp_path)
+    )
+    assert (
+        next_goal_review_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_review_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_review = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_review.status == 200
+    assert "Today Completed Goal Provenance" not in today_after_next_goal_review.body
+    assert (
+        "today_command_primary_action</dt><dd>Create commit request"
+        in today_after_next_goal_review.body
+    )
+    assert "action='/actions/coder-commit-request'" in today_after_next_goal_review.body
+    assert (
+        f"name='run_id' value='{next_coder_run.id}'"
+        in today_after_next_goal_review.body
+    )
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_next_goal_review.body
+    )
+    assert (
+        f"<a href='/artifacts?path={next_goal_review_path.relative_to(tmp_path)}'>"
+        in today_after_next_goal_review.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_review.body
+
+    resume_after_next_goal_review = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_review.status == 200
+    assert "Resume Completed Goal Provenance" not in resume_after_next_goal_review.body
+    assert (
+        "resume_return_brief_next_action</dt><dd>Create commit request"
+        in resume_after_next_goal_review.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Create commit request"
+        in resume_after_next_goal_review.body
+    )
+    assert "action='/actions/coder-commit-request'" in resume_after_next_goal_review.body
+    assert (
+        f"name='run_id' value='{next_coder_run.id}'"
+        in resume_after_next_goal_review.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in resume_after_next_goal_review.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_review_path.relative_to(tmp_path)}'>"
+        in resume_after_next_goal_review.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_review.body
+
+    successor_goal_after_review = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_review.status == 200
+    assert (
+        "completed_goal_provenance_history_status</dt><dd>available"
+        in successor_goal_after_review.body
+    )
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_goal_review_path.relative_to(tmp_path)}"
+        in successor_goal_after_review.body
+    )
+    assert "goal_artifact_reader_selected_source</dt><dd>coder_run" in successor_goal_after_review.body
+    assert "recommended_action</dt><dd>Create commit request" in successor_goal_after_review.body
+    assert "action='/actions/coder-commit-request'" in successor_goal_after_review.body
+    assert "completed-goal-provenance.md" in successor_goal_after_review.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
@@ -27847,7 +28024,29 @@ def test_coder_worktree_approval_and_run_capture_bounded_evidence(
     assert "changed_files_within_allowed_files: true" in review
     assert "changed_files_count: 1" in review
     assert "diff_summary: files:1,added:2,deleted:0" in review
-    assert "diff.patch" in review
+    assert f"source_coder_worktree_run: {evidence_dir.relative_to(tmp_path)}" in review
+    assert (
+        f"source_coder_worktree_run_json: {(evidence_dir / 'run.json').relative_to(tmp_path)}"
+        in review
+    )
+    assert (
+        f"source_coder_worktree_run_sha256: {hashlib.sha256((evidence_dir / 'run.json').read_bytes()).hexdigest()}"
+        in review
+    )
+    assert (
+        f"source_coder_worktree_run_summary: {(evidence_dir / 'summary.md').relative_to(tmp_path)}"
+        in review
+    )
+    assert (
+        f"source_coder_worktree_run_summary_sha256: {hashlib.sha256((evidence_dir / 'summary.md').read_bytes()).hexdigest()}"
+        in review
+    )
+    assert "source_coder_worktree_run_summary_consumed: true" in review
+    assert f"source_diff: {(evidence_dir / 'diff.patch').relative_to(tmp_path)}" in review
+    assert (
+        f"source_diff_sha256: {hashlib.sha256((evidence_dir / 'diff.patch').read_bytes()).hexdigest()}"
+        in review
+    )
 
     dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
     assert "### Coder Worktree Approvals" in dashboard
@@ -27858,6 +28057,8 @@ def test_coder_worktree_approval_and_run_capture_bounded_evidence(
     assert "changed_files=agent_os/delegation_runner.py" in dashboard
     assert "changed_files_count=1" in dashboard
     assert "diff_summary=files:1,added:2,deleted:0" in dashboard
+    assert f"source_run_summary={(evidence_dir / 'summary.md').relative_to(tmp_path)}" in dashboard
+    assert "source_run_summary_consumed_by_review=true" in dashboard
 
     assert main(["--root", str(tmp_path), "delegation-result", delegation_id]) == 0
     delegation_output = capsys.readouterr().out
@@ -27943,6 +28144,10 @@ def test_coder_worktree_commit_promotion_requires_review_and_is_idempotent(
     assert "coder_worktree_commit_approval: " in request_output
     assert f"run_id: {run_id}" in request_output
     assert "status: pending_operator_approval" in request_output
+    assert "source_coder_worktree_run_summary: .clanker/delegations/" in request_output
+    assert "source_coder_worktree_run_summary_consumed: true" in request_output
+    assert "source_review: runs/" in request_output
+    assert "source_review_sha256: " in request_output
     assert "commit_created: false" in request_output
     assert "push_created: false" in request_output
     assert "provider_calls_taken_by_clankeros: 0" in request_output
@@ -27963,8 +28168,39 @@ def test_coder_worktree_commit_promotion_requires_review_and_is_idempotent(
     assert request_payload["source_coder_worktree_run_sha256"]
     assert request_payload["source_diff_sha256"]
     assert request_payload["review_path"].endswith(f"runs/{source_run_id}/review.md")
+    review_path = tmp_path / "runs" / source_run_id / "review.md"
+    assert request_payload["source_coder_worktree_run"] == str(
+        evidence_dir.relative_to(tmp_path)
+    )
+    assert request_payload["source_coder_worktree_run_json"] == str(
+        (evidence_dir / "run.json").relative_to(tmp_path)
+    )
+    assert request_payload["source_coder_worktree_run_summary"] == str(
+        (evidence_dir / "summary.md").relative_to(tmp_path)
+    )
+    assert request_payload["source_coder_worktree_run_summary_sha256"] == hashlib.sha256(
+        (evidence_dir / "summary.md").read_bytes()
+    ).hexdigest()
+    assert request_payload["source_coder_worktree_run_summary_consumed"] is True
+    assert request_payload["source_diff"] == str(
+        (evidence_dir / "diff.patch").relative_to(tmp_path)
+    )
+    assert request_payload["source_review_sha256"] == hashlib.sha256(
+        review_path.read_bytes()
+    ).hexdigest()
     assert "agent_os/delegation_runner.py" in request_payload["changed_files"]
     assert (evidence_dir / "coder_worktree_commit_approval_request.md").exists()
+    commit_request_alias = json.loads(
+        (evidence_dir / "coder_commit" / "coder_commit_request.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert commit_request_alias["source_review"] == str(review_path.relative_to(tmp_path))
+    assert commit_request_alias["source_review_sha256"] == request_payload["source_review_sha256"]
+    assert commit_request_alias["source_coder_worktree_run_summary"] == str(
+        (evidence_dir / "summary.md").relative_to(tmp_path)
+    )
+    assert commit_request_alias["source_coder_worktree_run_summary_consumed"] is True
 
     assert (
         main(

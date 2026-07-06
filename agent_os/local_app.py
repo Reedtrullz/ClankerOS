@@ -38,6 +38,7 @@ from agent_os.coder_worktree_execution import (
     approve_coder_worktree,
     approve_coder_worktree_commit,
     coder_worktree_change_summary,
+    coder_worktree_run_review_proof,
     commit_coder_worktree,
     get_coder_worktree_run,
     list_coder_worktree_approvals,
@@ -1584,6 +1585,7 @@ def run_demo_app_scenario(root: Path) -> DemoScenarioResult:
         command="python3 scripts/change_demo.py",
         verify=True,
     ).run
+    review_proof = coder_worktree_run_review_proof(root, coder_run)
     review_path = root / "runs" / run_id / "review.md"
     review_path.parent.mkdir(parents=True, exist_ok=True)
     review_path.write_text(
@@ -1595,6 +1597,17 @@ def run_demo_app_scenario(root: Path) -> DemoScenarioResult:
                 f"- coder_worktree_run_id: {coder_run.id}",
                 "- review_status: fixture_reviewed",
                 "- changed_files_within_allowed_files: true",
+                f"- source_coder_worktree_run: {review_proof['source_coder_worktree_run']}",
+                f"- source_coder_worktree_run_json: {review_proof['source_coder_worktree_run_json']}",
+                "- source_coder_worktree_run_sha256: "
+                f"{review_proof['source_coder_worktree_run_sha256']}",
+                "- source_coder_worktree_run_summary: "
+                f"{review_proof['source_coder_worktree_run_summary']}",
+                "- source_coder_worktree_run_summary_sha256: "
+                f"{review_proof['source_coder_worktree_run_summary_sha256']}",
+                "- source_coder_worktree_run_summary_consumed: true",
+                f"- source_diff: {review_proof['source_diff']}",
+                f"- source_diff_sha256: {review_proof['source_diff_sha256']}",
                 "- non_claim: fixture review does not commit, push, deploy, call providers, or use the network.",
                 "",
             ]
@@ -24287,6 +24300,10 @@ def _goal_review_run_form(
         return "<p class='muted'>review_run_form_status: unavailable_until_completed_unreviewed_run_exists</p>"
     return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     review_path = Path("runs") / run.source_run_id / "review.md"
+    try:
+        review_proof = coder_worktree_run_review_proof(root, run)
+    except CoderWorktreeCommitError:
+        review_proof = {}
     return "".join(
         [
             "<h3>Open Review</h3>",
@@ -24296,6 +24313,34 @@ def _goal_review_run_form(
                     ("coder_worktree_run", run.id),
                     ("source_run_id", run.source_run_id),
                     ("review_artifact", review_path.as_posix()),
+                    (
+                        "source_coder_worktree_run",
+                        _artifact_link(
+                            review_proof.get("source_coder_worktree_run", run.evidence_path)
+                        ),
+                    ),
+                    (
+                        "source_coder_worktree_run_summary",
+                        _artifact_link(
+                            review_proof.get(
+                                "source_coder_worktree_run_summary",
+                                str(Path(run.evidence_path) / "summary.md"),
+                            )
+                        ),
+                    ),
+                    (
+                        "source_coder_worktree_run_summary_consumed",
+                        str(
+                            review_proof.get(
+                                "source_coder_worktree_run_summary_consumed",
+                                False,
+                            )
+                        ).lower(),
+                    ),
+                    (
+                        "source_diff_sha256",
+                        str(review_proof.get("source_diff_sha256", "missing")),
+                    ),
                     (
                         "return_to_after_review",
                         SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
@@ -43469,9 +43514,30 @@ def _run_review_gate(root: Path, coder_run: Any) -> str:
         ("review_path", _artifact_link(state["review_path"]) if state["exists"] else state["review_path"]),
         ("review_file_exists", str(state["exists"]).lower()),
         ("review_mentions_run", str(state["mentions_run"]).lower()),
+        ("review_consumes_run_evidence", str(state["consumes_run_evidence"]).lower()),
+        (
+            "source_coder_worktree_run",
+            _artifact_link(str(state["source_coder_worktree_run"])),
+        ),
+        (
+            "source_coder_worktree_run_summary",
+            _artifact_link(str(state["source_coder_worktree_run_summary"])),
+        ),
+        (
+            "source_coder_worktree_run_summary_sha256",
+            str(state["source_coder_worktree_run_summary_sha256"]),
+        ),
+        (
+            "source_coder_worktree_run_summary_consumed",
+            str(state["source_coder_worktree_run_summary_consumed"]).lower(),
+        ),
+        ("source_diff_sha256", str(state["source_diff_sha256"])),
         ("commit_request_form_available", str(state["commit_request_form_available"]).lower()),
         ("blocked_reason", state["blocked_reason"]),
-        ("backend_rule", "review.md must mention the coder worktree run id before coder-commit-request"),
+        (
+            "backend_rule",
+            "review.md must consume matching coder worktree run evidence before coder-commit-request",
+        ),
         ("network_actions_taken", "0"),
         ("external_mutations_taken", "0"),
     ]
@@ -43491,6 +43557,7 @@ def _run_evidence_map(root: Path, coder_run: Any) -> str:
     review_path = Path(str(review_gate["review_path"]))
     artifacts = {
         "run_json": evidence_path / "run.json",
+        "summary": evidence_path / "summary.md",
         "review": review_path,
         "diff": evidence_path / "diff.patch",
         "changed_files": evidence_path / "changed_files.json",
@@ -43551,7 +43618,7 @@ def _run_evidence_map(root: Path, coder_run: Any) -> str:
             "Review",
             str(review_gate["status"]),
             (
-                "Review mentions this run and unlocks commit request."
+                "Review consumes this run evidence and unlocks commit request."
                 if review_gate["commit_request_form_available"]
                 else str(review_gate["blocked_reason"])
             ),
@@ -43634,6 +43701,22 @@ def _run_evidence_map(root: Path, coder_run: Any) -> str:
                         str(review_gate["mentions_run"]).lower(),
                     ),
                     (
+                        "run_evidence_map_review_consumes_run_evidence",
+                        str(review_gate["consumes_run_evidence"]).lower(),
+                    ),
+                    (
+                        "run_evidence_map_source_coder_worktree_run_summary",
+                        _artifact_link(str(review_gate["source_coder_worktree_run_summary"])),
+                    ),
+                    (
+                        "run_evidence_map_source_coder_worktree_run_summary_sha256",
+                        str(review_gate["source_coder_worktree_run_summary_sha256"]),
+                    ),
+                    (
+                        "run_evidence_map_source_diff_sha256",
+                        str(review_gate["source_diff_sha256"]),
+                    ),
+                    (
                         "run_evidence_map_commit_request_form_available",
                         str(review_gate["commit_request_form_available"]).lower(),
                     ),
@@ -43696,23 +43779,63 @@ def _run_review_gate_state(root: Path, coder_run: Any) -> dict[str, Any]:
     absolute_review_path = root / review_path
     exists = absolute_review_path.is_file()
     mentions_run = False
+    consumes_run_evidence = False
+    proof: dict[str, Any] = {}
+    proof_error = "none"
+    try:
+        proof = coder_worktree_run_review_proof(root, coder_run)
+    except CoderWorktreeCommitError as error:
+        proof_error = str(error)
     if exists:
         try:
-            mentions_run = coder_run.id in absolute_review_path.read_text(encoding="utf-8")
+            review_text = absolute_review_path.read_text(encoding="utf-8")
         except OSError:
+            review_text = ""
             mentions_run = False
-    commit_request_form_available = (
-        coder_run.status == "completed" and exists and mentions_run
-    )
+        else:
+            mentions_run = coder_run.id in review_text
+            consumes_run_evidence = bool(
+                proof
+                and all(
+                    fragment in review_text
+                    for fragment in [
+                        coder_run.id,
+                        f"source_coder_worktree_run: {proof['source_coder_worktree_run']}",
+                        f"source_coder_worktree_run_json: {proof['source_coder_worktree_run_json']}",
+                        (
+                            "source_coder_worktree_run_sha256: "
+                            f"{proof['source_coder_worktree_run_sha256']}"
+                        ),
+                        (
+                            "source_coder_worktree_run_summary: "
+                            f"{proof['source_coder_worktree_run_summary']}"
+                        ),
+                        (
+                            "source_coder_worktree_run_summary_sha256: "
+                            f"{proof['source_coder_worktree_run_summary_sha256']}"
+                        ),
+                        "source_coder_worktree_run_summary_consumed: true",
+                        f"source_diff: {proof['source_diff']}",
+                        f"source_diff_sha256: {proof['source_diff_sha256']}",
+                    ]
+                )
+            )
+    commit_request_form_available = coder_run.status == "completed" and exists and consumes_run_evidence
     if commit_request_form_available:
         status = "reviewed"
         blocked_reason = "none"
     elif not exists:
         status = "missing"
         blocked_reason = "review_artifact_missing"
+    elif proof_error != "none":
+        status = "proof_missing"
+        blocked_reason = "run_evidence_not_readable"
     elif not mentions_run:
         status = "stale_or_unmatched"
         blocked_reason = "review_artifact_does_not_mention_run"
+    elif not consumes_run_evidence:
+        status = "stale_or_unmatched"
+        blocked_reason = "review_artifact_does_not_match_run_evidence"
     else:
         status = "not_ready"
         blocked_reason = f"coder_worktree_status_{coder_run.status}"
@@ -43720,6 +43843,19 @@ def _run_review_gate_state(root: Path, coder_run: Any) -> dict[str, Any]:
         "review_path": review_path.as_posix(),
         "exists": exists,
         "mentions_run": mentions_run,
+        "consumes_run_evidence": consumes_run_evidence,
+        "source_coder_worktree_run": proof.get("source_coder_worktree_run", coder_run.evidence_path),
+        "source_coder_worktree_run_summary": proof.get(
+            "source_coder_worktree_run_summary",
+            str(Path(coder_run.evidence_path) / "summary.md"),
+        ),
+        "source_coder_worktree_run_summary_sha256": proof.get(
+            "source_coder_worktree_run_summary_sha256",
+            "missing",
+        ),
+        "source_coder_worktree_run_summary_consumed": consumes_run_evidence,
+        "source_diff_sha256": proof.get("source_diff_sha256", "missing"),
+        "proof_error": proof_error,
         "status": status,
         "blocked_reason": blocked_reason,
         "commit_request_form_available": commit_request_form_available,
@@ -47755,6 +47891,31 @@ def _handle_post(
                 "external_mutations_taken": 0,
             }
             if coder_run is not None:
+                review_proof = coder_worktree_run_review_proof(root, coder_run)
+                result.update(
+                    {
+                        "source_coder_worktree_run": review_proof[
+                            "source_coder_worktree_run"
+                        ],
+                        "source_coder_worktree_run_json": review_proof[
+                            "source_coder_worktree_run_json"
+                        ],
+                        "source_coder_worktree_run_sha256": review_proof[
+                            "source_coder_worktree_run_sha256"
+                        ],
+                        "source_coder_worktree_run_summary": review_proof[
+                            "source_coder_worktree_run_summary"
+                        ],
+                        "source_coder_worktree_run_summary_sha256": review_proof[
+                            "source_coder_worktree_run_summary_sha256"
+                        ],
+                        "source_coder_worktree_run_summary_consumed": review_proof[
+                            "source_coder_worktree_run_summary_consumed"
+                        ],
+                        "source_diff": review_proof["source_diff"],
+                        "source_diff_sha256": review_proof["source_diff_sha256"],
+                    }
+                )
                 run_location = f"/runs/{quote(requested_run_id)}"
                 location = _safe_local_return_path(_one(form, "return_to")) or run_location
                 _remember_delegation_workspace(

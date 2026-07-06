@@ -321,14 +321,17 @@ deploy, call providers, or intentionally use the network.
 
 `coder-commit-request <coder_worktree_run_id> --requested-by <id> --message
 <commit_message> --note <note>` is the next gate after a successful coder
-worktree run has been included in `review <coder_worktree_run_id>` or the
-source delegation run review. It refuses unreviewed, failed, blocked,
-outside-file, no-change, missing-worktree, unsafe-git-state, stale-source, or
-failed-verification runs unless the operator explicitly used
-`--allow-unverified` at request time. For eligible reviewed runs it records the
-current worktree HEAD, source `run.json` hash, `diff.patch` hash, changed-file
-list, review path, branch, and commit message, then writes both compatibility
-and modern request artifacts. The modern operator artifacts are:
+worktree run has been included in the source delegation run review. The review
+must consume matching run evidence: the coder worktree run directory, source
+`run.json`, source run hash, `summary.md`, summary hash, `diff.patch`, and
+diff hash. It refuses unreviewed, stale-review, failed, blocked, outside-file,
+no-change, missing-worktree, unsafe-git-state, stale-source, or
+failed-verification runs unless the operator explicitly used `--allow-unverified`
+at request time. For eligible reviewed runs it records the current worktree
+HEAD, source `run.json` hash, `summary.md` path/hash, `diff.patch` hash,
+changed-file list, review path/hash, branch, and commit message, then writes
+both compatibility and modern request artifacts. The modern operator artifacts
+are:
 
 ```text
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/coder_commit_request.json

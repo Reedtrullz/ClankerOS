@@ -230,6 +230,14 @@ Core layers for the bootstrap:
   for the embedded `Open review` form, and `/today`, `/resume`, and the
   successor Goal page advance to `Open review` while retaining
   `completed-goal-provenance.md` as durable history.
+  When the successor worktree review is then opened from either daily surface,
+  the review consumes the approved worktree run evidence as proof, including
+  the run JSON hash, run summary Markdown path and hash, and diff hash. The
+  review artifact becomes the active workspace artifact, the original daily
+  return surface is preserved for the embedded `Create commit request` form,
+  and `/today`, `/resume`, and the successor Goal page advance to
+  `Create commit request` while retaining `completed-goal-provenance.md` as
+  durable history.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only
@@ -1431,8 +1439,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   boundary before the dense workflow state. The page then shows the same
   upstream and downstream workflow posture as a `Run Workflow State` readback,
   plus a `Run Review Gate` readback that mirrors the backend requirement that
-  `runs/<source_run_id>/review.md` exists and mentions the coder worktree run
-  id before `coder-commit-request` is offered. A read-only `Run Evidence Map`
+  `runs/<source_run_id>/review.md` exists and consumes the matching coder
+  worktree run JSON, summary Markdown, and diff hashes before
+  `coder-commit-request` is offered. A read-only `Run Evidence Map`
   then turns review, diff, changed files, bounded validation, logs, and
   verification output into visible cards backed only by bounded artifact
   viewer links before the full evidence list. Once publication handoff is

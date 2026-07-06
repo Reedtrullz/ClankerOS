@@ -1,5 +1,56 @@
 # Status
 
+## 2026-07-06 Successor Goal Worktree Review Daily Resume
+
+- Completed the selected slice for successor Goal worktree reviews from
+  `/today` and `/resume`.
+- A confirmed browser `review-run` action now returns explicit
+  operator-facing proof fields for the consumed approved worktree run evidence:
+  source run directory, `run.json` path/hash, `summary.md` path/hash,
+  `source_coder_worktree_run_summary_consumed: true`, and `diff.patch` hash.
+- The generated `runs/<source_run_id>/review.md` now records the same proof
+  fields in the Coder Worktree Run section. The backend commit-request gate
+  requires those matching fields before it offers or accepts
+  `coder-commit-request`; a review that merely mentions the coder worktree run
+  id is no longer enough.
+- The commit-request artifacts now retain the source review hash and consumed
+  run-summary proof in both the compatibility approval request and
+  `coder_commit/coder_commit_request.json` / `.md`. CLI output and static
+  dashboard rows expose the same review/run-summary proof fields.
+- Running review from `/resume#resume-workbench-action-form` preserves that
+  return surface for the embedded `Create commit request` form. `/today`,
+  `/resume`, and the successor Goal page all move the primary action to
+  `Create commit request`, while `completed-goal-provenance.md` remains
+  visible as durable history.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal commit requests from `/today` and `/resume` should consume
+  `runs/<source_run_id>/review.md` as proof, keep provenance history visible,
+  and move the primary action to `Approve commit`.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/coder_worktree_execution.py agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_commit_promotion_requires_review_and_is_idempotent -q --tb=short`:
+    1 passed in 15.00s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 88.90s after extending the successor Goal flow through
+    review-run and verifying `/today`, `/resume`, and the Goal page advance to
+    `Create commit request`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_approval_and_run_capture_bounded_evidence -q --tb=short`:
+    1 passed in 2.64s after adding review/dashboard proof assertions.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form -q --tb=short`:
+    1 passed in 6.35s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed in 56.06s after updating the demo fixture review to carry the
+    same run-summary and diff proof fields as real review artifacts.
+  - Consolidated focused run:
+    `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_commit_promotion_requires_review_and_is_idempotent tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface tests/test_first_milestone.py::test_coder_worktree_approval_and_run_capture_bounded_evidence tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    5 passed in 168.31s.
+- Non-claim: this slice writes only local review and commit-request proof
+  metadata after existing confirmed local browser or CLI actions. It does not
+  approve commits, stage files, create a commit, push, create PRs, deploy, call
+  providers, use app-side network actions, or mutate external systems. Local
+  browser/test proof is not CI, deploy, or live production proof.
+
 ## 2026-07-06 Successor Goal Approved Worktree Run Daily Resume
 
 - Completed the selected slice for successor Goal approved worktree runs from

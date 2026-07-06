@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_1480347e3a77
+- Packet ID: iteration_63e67bfa0fe4
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Make successor Goal worktree reviews from `/today` and `/resume` consume approved worktree run evidence as proof, keep provenance history visible, and move the primary action to `Create commit request`.
+Advance the Agent System north-star goal by completing: Make successor Goal commit requests from `/today` and `/resume` consume `runs/<source_run_id>/review.md` as proof, keep provenance history visible, and move the primary action to `Approve commit`.
 
 ## Definition Of Done
 

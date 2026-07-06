@@ -4,6 +4,15 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Successor Goal worktree reviews from `/today` and `/resume` now consume the
+  approved worktree run evidence as first-class proof before the app offers
+  `Create commit request`. The review artifact records the coder worktree run
+  directory, run JSON hash, run summary Markdown path and hash, and diff hash;
+  the backend commit request gate now requires that matching proof instead of
+  accepting a review that merely mentions the run id. `/today`, `/resume`, and
+  the successor Goal page now advance to `Create commit request` while
+  retaining completed-Goal provenance history and preserving the original
+  daily return surface.
 - Successor Goal approved worktree runs from `/today` and `/resume` now consume
   `coder_worktree_approval_decision.md` as first-class proof. The run evidence
   records decision JSON/Markdown paths and hashes in `run.json`, `summary.md`,
