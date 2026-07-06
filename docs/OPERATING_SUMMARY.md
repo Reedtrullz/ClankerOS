@@ -172,6 +172,11 @@ Core layers for the bootstrap:
   clears the workspace `completed_goal_handoff_*` fields, registers the
   provenance markdown in the successor Goal artifact reader and timeline, and
   keeps `/today` and `/resume` focused on the successor Goal's next action.
+  When that successor context pack is generated from either daily surface, the
+  generated `context_pack.md` becomes the newest Goal artifact on `/today`,
+  `/resume`, and the successor Goal page; the completed-Goal provenance
+  markdown remains visible only as durable history, and the primary action
+  advances to `Run delegation` without reopening the transient handoff panels.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only

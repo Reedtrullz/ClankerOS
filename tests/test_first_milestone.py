@@ -13043,6 +13043,101 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         "<a href='#resume-workbench-action-form'>Generate context pack</a>"
         in resume_after_next_goal_delegate.body
     )
+    next_goal_delegation = Storage(
+        tmp_path / ".agent" / "state.db"
+    ).list_subagent_delegations(next_goal_id)[0]
+    assert "action='/actions/context-pack'" in today_after_next_goal_delegate.body
+    assert (
+        f"name='delegation_id' value='{next_goal_delegation.id}'"
+        in today_after_next_goal_delegate.body
+    )
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_next_goal_delegate.body
+    )
+    assert "action='/actions/context-pack'" in resume_after_next_goal_delegate.body
+    assert (
+        f"name='delegation_id' value='{next_goal_delegation.id}'"
+        in resume_after_next_goal_delegate.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in resume_after_next_goal_delegate.body
+    )
+
+    next_goal_context_pack_result = render_local_app_route(
+        tmp_path,
+        "/actions/context-pack",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_context_pack_result.status == 200
+    assert "Context pack ready" in next_goal_context_pack_result.body
+    assert "action_result_command_label</dt><dd>Generate context pack" in next_goal_context_pack_result.body
+    assert "#resume-workbench-action-form'>/resume#resume-workbench-action-form</a>" in next_goal_context_pack_result.body
+    next_context_pack_md = (
+        tmp_path
+        / ".clanker"
+        / "delegations"
+        / next_goal_delegation.id
+        / "context"
+        / "context_pack.md"
+    )
+    assert next_context_pack_md.exists()
+    next_context_pack_relative = next_context_pack_md.relative_to(tmp_path)
+    next_goal_context_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_context_workspace["open_goal"] == next_goal_id
+    assert next_goal_context_workspace["updated_by"] == "context-pack"
+    assert next_goal_context_workspace["last_viewed_artifact"] == str(
+        next_context_pack_relative
+    )
+    assert (
+        next_goal_context_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_context_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_context_pack = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_context_pack.status == 200
+    assert "Today Completed Goal Provenance" not in today_after_next_goal_context_pack.body
+    assert "Today Completed Goal Handoff" not in today_after_next_goal_context_pack.body
+    assert "today_command_primary_action</dt><dd>Run delegation" in today_after_next_goal_context_pack.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Run delegation</a>"
+        in today_after_next_goal_context_pack.body
+    )
+    assert "today_activity_digest_latest_artifact_label</dt><dd>Open context pack markdown" in today_after_next_goal_context_pack.body
+    assert (
+        "today_activity_digest_latest_artifact_raw_surface</dt><dd>"
+        f"<a href='/artifacts?path={next_context_pack_relative}'>"
+        in today_after_next_goal_context_pack.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_context_pack.body
+
+    resume_after_next_goal_context_pack = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_context_pack.status == 200
+    assert "Resume Completed Goal Provenance" not in resume_after_next_goal_context_pack.body
+    assert "Resume Completed Goal Handoff" not in resume_after_next_goal_context_pack.body
+    assert "resume_return_brief_next_action</dt><dd>Run delegation" in resume_after_next_goal_context_pack.body
+    assert "resume_workbench_next_action</dt><dd>Run delegation" in resume_after_next_goal_context_pack.body
+    assert (
+        "resume_workbench_primary_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Run delegation</a>"
+        in resume_after_next_goal_context_pack.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_context_pack_relative}'>"
+        in resume_after_next_goal_context_pack.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_context_pack.body
 
     successor_goal_page = render_local_app_route(tmp_path, f"/goals/{next_goal_id}")
     assert successor_goal_page.status == 200
@@ -13058,6 +13153,25 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert "timeline_filter_artifact_events</dt><dd>" in successor_goal_page.body
     assert "goal_artifact_reader" in successor_goal_page.body
     assert "completed-goal-provenance.md" in successor_goal_page.body
+
+    successor_goal_after_context_pack = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_context_pack.status == 200
+    assert "completed_goal_provenance_history_status</dt><dd>available" in successor_goal_after_context_pack.body
+    assert "Artifact recorded: completed Goal provenance." in successor_goal_after_context_pack.body
+    assert f"Context pack built for {next_goal_delegation.id}." in successor_goal_after_context_pack.body
+    assert "Artifact recorded: context pack markdown." in successor_goal_after_context_pack.body
+    assert "Artifact recorded: context pack json." in successor_goal_after_context_pack.body
+    assert "goal_artifact_reader_selected_artifact</dt><dd>context pack markdown" in successor_goal_after_context_pack.body
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_context_pack_relative}"
+        in successor_goal_after_context_pack.body
+    )
+    assert "goal_artifact_reader_selected_source</dt><dd>context_pack" in successor_goal_after_context_pack.body
+    assert "recommended_action</dt><dd>Run delegation" in successor_goal_after_context_pack.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:

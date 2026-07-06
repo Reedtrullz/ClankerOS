@@ -2987,6 +2987,13 @@ def _today_page(root: Path) -> str:
             prefix="today",
             title="Today Completed Goal Handoff",
         ),
+        _goal_provenance_history_panel(
+            root,
+            storage,
+            goal_id=lead_goal_id,
+            prefix="today",
+            title="Today Goal Provenance History",
+        ),
         _today_live_state(
             root,
             storage,
@@ -3524,6 +3531,153 @@ def _completed_goal_handoff_provenance_panel(
                         else f"{prefix}_completed_goal_provenance_previous_artifact: none"
                     ),
                     f"{prefix}_completed_goal_provenance_safety: read-only provenance; current Goal action owns continuation",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _goal_provenance_history_panel(
+    root: Path,
+    storage: Storage,
+    *,
+    goal_id: str,
+    prefix: str,
+    title: str,
+) -> str:
+    goal_id = str(goal_id or "").strip()
+    if not goal_id or goal_id == "none":
+        return ""
+    state = _goal_state(root, storage, goal_id)
+    goal = state.get("goal")
+    if goal is None:
+        return ""
+    metadata = _goal_completed_provenance_metadata(root, state)
+    if metadata.get("status") != "available":
+        return ""
+
+    artifact_path = str(metadata.get("artifact_path") or "none").strip()
+    source_goal_id = str(metadata.get("source_goal_id") or "none").strip()
+    successor_goal_id = str(metadata.get("successor_goal_id") or goal_id).strip()
+    trigger_action = str(metadata.get("trigger_action") or "none").strip()
+    trigger_result_id = str(metadata.get("trigger_result_id") or "none").strip()
+    previous_resume_surface = str(
+        metadata.get("previous_resume_surface") or "none"
+    ).strip()
+    previous_artifact = str(metadata.get("previous_artifact") or "none").strip()
+
+    source_href = (
+        f"/goals/{quote(source_goal_id)}#goal-completion-readiness"
+        if source_goal_id and source_goal_id != "none"
+        else ""
+    )
+    successor_href = f"/goals/{quote(successor_goal_id or goal_id)}#goal-completed-provenance-history"
+    artifact_value: str | SafeHtml = (
+        _artifact_link(artifact_path) if artifact_path != "none" else "none"
+    )
+    source_value: str | SafeHtml = (
+        SafeHtml(f"<a href='{_e(source_href)}'>{_e(source_goal_id)}</a>")
+        if source_href
+        else "none"
+    )
+    successor_value: str | SafeHtml = SafeHtml(
+        f"<a href='{_e(successor_href)}'>{_e(successor_goal_id or goal_id)}</a>"
+    )
+    previous_resume_value: str | SafeHtml = (
+        SafeHtml(
+            f"<a href='{_e(previous_resume_surface)}'>{_e(previous_resume_surface)}</a>"
+        )
+        if previous_resume_surface != "none"
+        else "none"
+    )
+    previous_artifact_value: str | SafeHtml = (
+        _artifact_link(previous_artifact) if previous_artifact != "none" else "none"
+    )
+    data_attr = f"data-{prefix}-goal-provenance-history"
+    section_id = f"{prefix}-goal-provenance-history"
+    return "".join(
+        [
+            (
+                f"<section id='{_e(section_id)}' "
+                "class='panel goal-provenance-history' "
+                f"{data_attr}='true'>"
+            ),
+            f"<h2>{_e(title)}</h2>",
+            "<p class='muted'>Durable history for the prior completed Goal; the current Goal stays in control of the next action.</p>",
+            "<div class='today-ci-merge-grid goal-provenance-history-grid' data-goal-provenance-history-actions='true'>",
+            "<article class='today-ci-merge-card today-ci-merge-primary' data-goal-provenance-history-card='successor'>",
+            "<h3>Current Goal</h3>",
+            f"<strong>{_e(successor_goal_id or goal_id)}</strong>",
+            "<p>Continuation Goal with provenance attached.</p>",
+            f"<a class='today-ci-merge-action' href='{_e(successor_href)}'>Open history</a>",
+            "</article>",
+            "<article class='today-ci-merge-card' data-goal-provenance-history-card='artifact'>",
+            "<h3>History Artifact</h3>",
+            f"<strong>{_e(artifact_path)}</strong>",
+            "<p>Completed Goal provenance retained as evidence.</p>",
+            str(artifact_value) if isinstance(artifact_value, SafeHtml) else _e(artifact_value),
+            "</article>",
+            "<article class='today-ci-merge-card' data-goal-provenance-history-card='source'>",
+            "<h3>Source Goal</h3>",
+            f"<strong>{_e(source_goal_id)}</strong>",
+            "<p>Prior completed Goal that created this continuation.</p>",
+            str(source_value) if isinstance(source_value, SafeHtml) else _e(source_value),
+            "</article>",
+            "</div>",
+            "<details class='goal-provenance-history-evidence' data-goal-provenance-history-evidence='true'><summary>Goal provenance history evidence</summary>",
+            _kv(
+                [
+                    (f"{prefix}_goal_provenance_history_status", metadata["status"]),
+                    (
+                        f"{prefix}_goal_provenance_history_source_goal",
+                        source_value,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_successor_goal",
+                        successor_value,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_trigger_action",
+                        trigger_action,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_trigger_result_id",
+                        trigger_result_id,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_artifact",
+                        artifact_value,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_previous_resume_surface",
+                        previous_resume_value,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_previous_artifact",
+                        previous_artifact_value,
+                    ),
+                    (f"{prefix}_goal_provenance_history_write_on_get", "false"),
+                    (
+                        f"{prefix}_goal_provenance_history_provider_calls_taken",
+                        "0",
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_network_actions_taken",
+                        "0",
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_external_effects_created",
+                        "false",
+                    ),
+                ]
+            ),
+            _ul(
+                [
+                    f"{prefix}_goal_provenance_history_artifact: {_artifact_link(artifact_path) if artifact_path != 'none' else 'none'}",
+                    f"{prefix}_goal_provenance_history_successor: <a href='{_e(successor_href)}'>{_e(successor_goal_id or goal_id)}</a>",
+                    f"{prefix}_goal_provenance_history_safety: read-only history; active action remains on the current Goal",
                 ]
             ),
             "</details>",
@@ -10252,6 +10406,13 @@ def _resume_page(root: Path) -> str:
                 prefix="resume",
                 title="Resume Completed Goal Handoff",
             ),
+            _goal_provenance_history_panel(
+                root,
+                _storage(root),
+                goal_id=open_goal,
+                prefix="resume",
+                title="Resume Goal Provenance History",
+            ),
             _browser_resume_section(),
             _resume_operator_workbench(root, state, open_project, open_goal, filters, expanded, last_artifact),
             _resume_command_bar(root, state, open_project, open_goal, filters, expanded, last_artifact),
@@ -10939,7 +11100,11 @@ def _resume_operator_workbench(
             phase = _goal_current_phase(goal_state)
             next_action = action.action
             reason = action.reason
-            action_form = _goal_next_action_form(goal_state, action)
+            action_form = _goal_next_action_form(
+                goal_state,
+                action,
+                return_to_override="/resume#resume-workbench-action-form",
+            )
             form_available = bool(action_form)
             target_href = _goal_primary_action_href(
                 goal_state,
@@ -24666,6 +24831,18 @@ def _delegation_has_context_pack(
     return (context_dir / "context_pack.md").exists() or (context_dir / "context_pack.json").exists()
 
 
+def _delegation_context_pack_artifacts(
+    root: Path,
+    delegation: Any,
+) -> list[tuple[str, Path]]:
+    context_dir = Path(".clanker") / "delegations" / delegation.id / "context"
+    candidates = [
+        ("context pack json", context_dir / "context_pack.json"),
+        ("context pack markdown", context_dir / "context_pack.md"),
+    ]
+    return [(label, path) for label, path in candidates if (root / path).exists()]
+
+
 def _goal_overview(
     state: dict[str, Any],
     phase: str,
@@ -26400,6 +26577,19 @@ def _goal_timeline_items(root: Path, state: dict[str, Any]) -> list[dict[str, st
         if delegation.completed_at:
             items.append({"at": delegation.completed_at, "message": f"Execution completed: delegation {delegation.id}.", "href": delegation_href})
         metadata = load_delegation_result_metadata(delegation)
+        context_pack_artifacts = _delegation_context_pack_artifacts(root, delegation)
+        if context_pack_artifacts and not metadata.get("context_pack_md"):
+            at = max(
+                _artifact_time(root, path.as_posix()) or goal.updated_at
+                for _label, path in context_pack_artifacts
+            )
+            items.append(
+                {
+                    "at": at,
+                    "message": f"Context pack built for {delegation.id}.",
+                    "href": delegation_href,
+                }
+            )
         for label, key in [
             ("Context pack built", "context_pack_md"),
             ("Implementation handoff created", "implementation_handoff_md"),
@@ -28816,6 +29006,8 @@ def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, 
                 source="delegation",
             )
         add(f"delegation {delegation.id} result", delegation.result_artifact_path, source="delegation")
+        for label, path in _delegation_context_pack_artifacts(root, delegation):
+            add(label, path, source="context_pack")
         for key in [
             "context_pack_json",
             "context_pack_md",
@@ -28907,6 +29099,7 @@ def _goal_artifact_record_rank(record: dict[str, str]) -> int:
         "recommendation": 35,
         "delegation": 40,
         "completed_goal_provenance": 45,
+        "context_pack": 50,
         "delegation_metadata": 50,
         "coder_prep": 60,
         "worktree_plan": 70,

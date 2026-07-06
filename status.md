@@ -1,5 +1,55 @@
 # Status
 
+## 2026-07-06 Successor Goal Context Pack Daily Resume
+
+- Completed the selected slice for successor Goal context-pack generation from
+  `/today` and `/resume`.
+- `/resume` now posts the embedded context-pack form back to
+  `/resume#resume-workbench-action-form`, matching `/today`'s
+  `#today-current-action` return behavior instead of falling back to the Goal
+  action dock.
+- After a confirmed context-pack POST for the successor Goal, the browser
+  workspace stays on the successor Goal, records `context-pack` as the updater,
+  stores the generated `.clanker/delegations/<delegation>/context/context_pack.md`
+  as `last_viewed_artifact`, preserves the resume surface, and keeps
+  `completed_goal_handoff_source_goal` cleared.
+- `/today` and `/resume` no longer render the transient completed-Goal
+  provenance or handoff panels after promotion. They instead expose a durable
+  Goal provenance history panel that links the retained
+  `completed-goal-provenance.md` while keeping `Run delegation` as the primary
+  successor Goal action.
+- The successor Goal page now records context-pack JSON and Markdown as
+  `context_pack` artifacts, selects the generated Markdown as newest evidence,
+  and adds a timeline entry when a context pack exists without older delegation
+  result metadata.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal `Run delegation` from `/today` and `/resume` should consume
+  the generated context pack as proof, keep provenance history visible, and
+  move the primary action to the next implementation handoff or coder-prep
+  step.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because `/resume` did not preserve
+    `return_to=/resume#resume-workbench-action-form` for the context-pack form.
+  - Second red run failed because `/resume` did not expose
+    `completed-goal-provenance.md` after context-pack generation.
+  - `python3 -m py_compile agent_os/local_app.py`: passed.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 148.24s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 57.55s.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal
+    `Run delegation` slice and refreshed `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this slice performs only confirmed local context-pack writes and
+  local browser/readback updates. It does not run the delegation, create an
+  implementation handoff, create coder-prep, push, deploy, call providers, use
+  app-side network actions, or mutate external systems.
+
 ## 2026-07-06 Successor Goal Provenance Promotion
 
 - Completed the selected slice for durable successor-Goal provenance history.
