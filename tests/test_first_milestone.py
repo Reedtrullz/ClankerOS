@@ -13360,6 +13360,156 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert "recommended_action</dt><dd>Run coder prep" in successor_goal_after_run.body
     assert "completed-goal-provenance.md" in successor_goal_after_run.body
 
+    next_goal_prep_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-prep",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "return_to": ["/resume#resume-workbench-action-form"],
+        },
+    )
+    assert next_goal_prep_confirmation.status == 409
+    assert "Confirm coder prep" in next_goal_prep_confirmation.body
+    assert "action_confirmation_label</dt><dd>Prepare coder packet" in next_goal_prep_confirmation.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_prep_confirmation.body
+    )
+
+    next_goal_prep_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-prep",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_prep_result.status == 200
+    assert "coder_prep:" in next_goal_prep_result.body
+    assert "action_result_command_label</dt><dd>Prepare coder packet" in next_goal_prep_result.body
+    assert (
+        "source_handoff_md</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in next_goal_prep_result.body
+    )
+    assert (
+        "action_result_next_step_next_action</dt><dd>Create worktree plan"
+        in next_goal_prep_result.body
+    )
+    assert (
+        "action_result_next_step_primary_surface</dt><dd>"
+        "<a href='#action-result-next-step-form'>Create worktree plan</a>"
+        in next_goal_prep_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_prep_result.body
+    assert "action='/actions/coder-worktree-plan'" in next_goal_prep_result.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_prep_result.body
+    )
+    assert (
+        f"name='return_to' value='/goals/{next_goal_id}#goal-action-dock-form'"
+        not in next_goal_prep_result.body
+    )
+    assert "action_continuation_next_action</dt><dd>Create worktree plan" in next_goal_prep_result.body
+    assert "provider_calls_taken_by_clankeros</dt><dd>0" in next_goal_prep_result.body
+    assert "network_actions_taken</dt><dd>0" in next_goal_prep_result.body
+    assert "external_mutations_taken</dt><dd>0" in next_goal_prep_result.body
+
+    next_coder_prep_md = sorted(
+        (tmp_path / ".clanker" / "delegations" / next_goal_delegation.id / "runs").glob(
+            "*/coder_prep/coder_prep.md"
+        )
+    )[-1]
+    next_coder_prep_json = next_coder_prep_md.with_suffix(".json")
+    assert next_coder_prep_md.exists()
+    assert next_coder_prep_json.exists()
+    next_coder_prep_relative = next_coder_prep_md.relative_to(tmp_path)
+    next_coder_prep_payload = json.loads(next_coder_prep_json.read_text(encoding="utf-8"))
+    assert next_coder_prep_payload["source"]["handoff_md"] == str(next_handoff_relative)
+    assert next_coder_prep_payload["source_handoff_markdown_consumed"] is True
+    assert next_coder_prep_payload["safety"]["provider_calls_taken_by_clankeros"] == 0
+    assert next_coder_prep_payload["safety"]["network_actions_taken"] == 0
+    assert next_coder_prep_payload["safety"]["external_mutations_taken"] == 0
+    next_coder_prep_text = next_coder_prep_md.read_text(encoding="utf-8")
+    assert f"- source_handoff_md: {next_handoff_relative}" in next_coder_prep_text
+    assert "- Coder prep does not edit source files." in next_coder_prep_text
+    next_goal_prep_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_prep_workspace["open_goal"] == next_goal_id
+    assert next_goal_prep_workspace["updated_by"] == "coder-prep"
+    assert next_goal_prep_workspace["last_viewed_artifact"] == str(next_coder_prep_relative)
+    assert (
+        next_goal_prep_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_prep_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_prep = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_prep.status == 200
+    assert "Today Completed Goal Provenance" not in today_after_next_goal_prep.body
+    assert "Today Completed Goal Handoff" not in today_after_next_goal_prep.body
+    assert "today_command_primary_action</dt><dd>Create worktree plan" in today_after_next_goal_prep.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Create worktree plan</a>"
+        in today_after_next_goal_prep.body
+    )
+    assert "today_command_reason</dt><dd>coder_prep_available" in today_after_next_goal_prep.body
+    assert "action='/actions/coder-worktree-plan'" in today_after_next_goal_prep.body
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_next_goal_prep.body
+    )
+    assert (
+        f"<a href='/artifacts?path={next_coder_prep_relative}'>"
+        in today_after_next_goal_prep.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_prep.body
+
+    resume_after_next_goal_prep = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_prep.status == 200
+    assert "Resume Completed Goal Provenance" not in resume_after_next_goal_prep.body
+    assert "Resume Completed Goal Handoff" not in resume_after_next_goal_prep.body
+    assert "resume_return_brief_next_action</dt><dd>Create worktree plan" in resume_after_next_goal_prep.body
+    assert "resume_workbench_next_action</dt><dd>Create worktree plan" in resume_after_next_goal_prep.body
+    assert (
+        "resume_workbench_primary_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Create worktree plan</a>"
+        in resume_after_next_goal_prep.body
+    )
+    assert "action='/actions/coder-worktree-plan'" in resume_after_next_goal_prep.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in resume_after_next_goal_prep.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_coder_prep_relative}'>"
+        in resume_after_next_goal_prep.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_prep.body
+
+    successor_goal_after_prep = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_prep.status == 200
+    assert "completed_goal_provenance_history_status</dt><dd>available" in successor_goal_after_prep.body
+    assert "Artifact recorded: coder_prep_plan_markdown." in successor_goal_after_prep.body
+    assert "goal_artifact_reader_selected_artifact</dt><dd>coder_prep_plan_markdown" in successor_goal_after_prep.body
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_coder_prep_relative}"
+        in successor_goal_after_prep.body
+    )
+    assert "goal_artifact_reader_selected_source</dt><dd>coder_prep" in successor_goal_after_prep.body
+    assert "recommended_action</dt><dd>Create worktree plan" in successor_goal_after_prep.body
+    assert "completed-goal-provenance.md" in successor_goal_after_prep.body
+
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
     AgentSystem(tmp_path).initialize()

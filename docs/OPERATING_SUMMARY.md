@@ -184,6 +184,14 @@ Core layers for the bootstrap:
   daily return surface on the embedded result-page continuation form, and
   advances `/today`, `/resume`, and the successor Goal page to `Run coder
   prep` while retaining `completed-goal-provenance.md` as durable history.
+  When successor coder-prep is then run from either daily surface, the browser
+  result payload exposes the consumed `implementation_handoff.md`, generated
+  `coder_prep.json` and `coder_prep.md`, bounded files, and zero-effect
+  counters; the generated `coder_prep.md` becomes the active workspace
+  artifact, the original daily return surface is preserved for the embedded
+  `Create worktree plan` form, and `/today`, `/resume`, and the successor
+  Goal page advance to `Create worktree plan` while retaining
+  `completed-goal-provenance.md` as durable history.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only

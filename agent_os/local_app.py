@@ -47348,30 +47348,74 @@ def _handle_post(
             result = summary
         elif action == "coder-prep":
             delegation_id = _required(form, "delegation_id")
-            result = prepare_coder_from_handoff(root, storage, delegation_id)
-            message = f"coder_prep: {result.prep_id}"
+            prep_result = prepare_coder_from_handoff(root, storage, delegation_id)
+            message = f"coder_prep: {prep_result.prep_id}"
             delegation_location = f"/delegations/{quote(delegation_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or delegation_location
             _remember_delegation_workspace(
                 root,
                 storage,
                 delegation_id,
-                artifact_path=result.markdown_path or result.artifact_path,
+                artifact_path=prep_result.markdown_path or prep_result.artifact_path,
                 updated_by="coder-prep",
                 resume_surface=location,
             )
+            result = {
+                "prep_id": prep_result.prep_id,
+                "delegation_id": prep_result.delegation_id,
+                "project_id": prep_result.project_id,
+                "artifact_path": prep_result.artifact_path,
+                "markdown_path": prep_result.markdown_path,
+                "source_handoff_md": prep_result.source_handoff_md,
+                "source_handoff_markdown_consumed": True,
+                "allowed_files": prep_result.allowed_files,
+                "already_recorded": prep_result.already_recorded,
+                "task_rows_created": 0,
+                "runs_created": 0,
+                "routing_decisions_created": 0,
+                "worktrees_created": 0,
+                "effects_created": 0,
+                "approval_requests_created": 0,
+                "source_edits_taken": 0,
+                "commands_rerun": 0,
+                "provider_calls_taken_by_clankeros": 0,
+                "network_actions_taken": 0,
+                "external_mutations_taken": 0,
+            }
         elif action == "coder-prep-from-handoff":
             handoff_md = _required(form, "handoff_md")
-            result = prepare_coder_from_handoff_markdown(root, storage, handoff_md)
-            message = f"coder_prep: {result.prep_id}"
-            location = f"/delegations/{quote(result.delegation_id)}"
+            prep_result = prepare_coder_from_handoff_markdown(root, storage, handoff_md)
+            message = f"coder_prep: {prep_result.prep_id}"
+            location = f"/delegations/{quote(prep_result.delegation_id)}"
             _remember_delegation_workspace(
                 root,
                 storage,
-                result.delegation_id,
-                artifact_path=result.markdown_path or result.artifact_path,
+                prep_result.delegation_id,
+                artifact_path=prep_result.markdown_path or prep_result.artifact_path,
                 updated_by="coder-prep-from-handoff",
             )
+            result = {
+                "prep_id": prep_result.prep_id,
+                "delegation_id": prep_result.delegation_id,
+                "project_id": prep_result.project_id,
+                "artifact_path": prep_result.artifact_path,
+                "markdown_path": prep_result.markdown_path,
+                "source_handoff_md": prep_result.source_handoff_md,
+                "source_handoff_markdown_consumed": True,
+                "allowed_files": prep_result.allowed_files,
+                "already_recorded": prep_result.already_recorded,
+                "task_rows_created": 0,
+                "runs_created": 0,
+                "routing_decisions_created": 0,
+                "worktrees_created": 0,
+                "effects_created": 0,
+                "approval_requests_created": 0,
+                "source_edits_taken": 0,
+                "commands_rerun": 0,
+                "provider_calls_taken_by_clankeros": 0,
+                "network_actions_taken": 0,
+                "external_mutations_taken": 0,
+            }
         elif action == "coder-worktree-plan":
             delegation_id = _required(form, "delegation_id")
             result = prepare_worktree_plan_from_coder_prep(root, storage, delegation_id)
@@ -48953,7 +48997,11 @@ def _action_result_continuation_section(root: Path, location: str, message: str)
 
     phase = _goal_current_phase(state)
     next_action = _goal_next_action(root, state)
-    action_form = _goal_next_action_form(state, next_action)
+    action_form = _goal_next_action_form(
+        state,
+        next_action,
+        return_to_override=location,
+    )
     return "".join(
         [
             "<section id='action-continuation' class='action-continuation' data-action-continuation='true'><h2>Action Continuation</h2>",

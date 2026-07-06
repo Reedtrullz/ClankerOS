@@ -1,5 +1,53 @@
 # Status
 
+## 2026-07-06 Successor Goal Coder Prep Daily Resume
+
+- Completed the selected slice for successor Goal coder-prep from `/today`
+  and `/resume`.
+- A confirmed browser `coder-prep` action now returns an explicit
+  operator-facing result payload with `source_handoff_md`,
+  `source_handoff_markdown_consumed: true`, generated `coder_prep.json` /
+  `coder_prep.md` artifact links, bounded allowed files, and zero-effect
+  safety counters for source edits, task/run/routing/effect/approval rows,
+  worktrees, commands, provider calls, network actions, and external
+  mutations.
+- The action-result "Action Continuation" details form now preserves the same
+  return surface as the main result-page next-step form. Running successor
+  coder-prep from `/resume#resume-workbench-action-form` keeps the embedded
+  `Create worktree plan` form pointed at that resume workbench instead of
+  falling back to the Goal action dock.
+- The generated `coder_prep.md` consumes the current
+  `implementation_handoff.md` as proof, records its source handoff path and
+  hash, and remains a bounded local plan artifact. It does not edit source
+  files, create a worktree, run commands, approve work, call providers, or use
+  the network.
+- `/today`, `/resume`, and the successor Goal page all move the primary action
+  to `Create worktree plan` after confirmed coder-prep, while
+  `completed-goal-provenance.md` remains visible as durable provenance history
+  rather than a transient completed-Goal panel.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal worktree-plan creation from `/today` and `/resume` should
+  consume `coder_prep.md` as proof, keep provenance history visible, and move
+  the primary action to `Request worktree approval`.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the explicit result payload because the coder-prep result
+    page did not expose `provider_calls_taken_by_clankeros: 0`.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 59.66s after the final continuation-form correction.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace --tb=short`:
+    1 passed in 6.03s.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_runs_delegation_from_browser_action --tb=short`:
+    1 passed in 6.03s.
+- Non-claim: this slice creates only local coder-prep artifacts after an
+  existing confirmed local browser action. It does not create a worktree plan,
+  request or approve execution, run commands, edit files, commit, push, create
+  PRs, deploy, call providers, use app-side network actions, or mutate
+  external systems.
+
 ## 2026-07-06 Successor Goal Run Delegation Daily Resume
 
 - Completed the selected slice for successor Goal `Run delegation` from
