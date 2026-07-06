@@ -12382,6 +12382,99 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
 
     today_after_local_commit = render_local_app_route(tmp_path, "/today")
     assert "today_command_primary_action</dt><dd>Create publication request" in today_after_local_commit.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Create publication request</a>"
+    ) in today_after_local_commit.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Create publication request</a>"
+    ) in today_after_local_commit.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_local_commit.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_local_commit.body
+    assert "Create Publication Request" in today_after_local_commit.body
+    assert "action='/actions/coder-publication-request'" in today_after_local_commit.body
+    assert f"name='run_id' value='{coder_run.id}'" in today_after_local_commit.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_local_commit.body
+    assert (
+        "return_to_after_publication_request</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_local_commit.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_local_commit.body
+
+    publication_request_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-publication-request",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "remote": ["origin"],
+            "target_branch": ["main"],
+            "note": ["Request publication from Today"],
+            "return_to": ["/today#today-current-action"],
+            "requested_by": ["operator"],
+        },
+    )
+    assert publication_request_confirmation.status == 409
+    assert "Confirm publication request" in publication_request_confirmation.body
+    assert (
+        "action_confirmation_label</dt><dd>Create publication request"
+        in publication_request_confirmation.body
+    )
+    assert "name='return_to' value='/today#today-current-action'" in publication_request_confirmation.body
+
+    publication_request_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-publication-request",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "remote": ["origin"],
+            "target_branch": ["main"],
+            "note": ["Request publication from Today"],
+            "return_to": ["/today#today-current-action"],
+            "requested_by": ["operator"],
+            "confirm": ["yes"],
+        },
+    )
+    assert publication_request_result.status == 200
+    assert "coder_publication_request:" in publication_request_result.body
+    assert (
+        "action_result_command_label</dt><dd>Create publication request"
+        in publication_request_result.body
+    )
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=coder_publication_request%3A%20"
+    ) in publication_request_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in publication_request_result.body
+    publication = next(
+        item
+        for item in list_coder_publications(
+            tmp_path,
+            status="pending_operator_approval",
+            limit=10,
+        )
+        if item.run_id == coder_run.id
+    )
+    publication_request_md = tmp_path / Path(publication.request_artifact_path).with_suffix(".md")
+    assert publication_request_md.exists()
+    publication_request_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert publication_request_workspace["open_project"] == "first-target"
+    assert publication_request_workspace["open_goal"] == created_goal_id
+    assert publication_request_workspace["last_viewed_artifact"] == str(
+        publication_request_md.relative_to(tmp_path)
+    )
+    assert publication_request_workspace["resume_surface"] == "/today#today-current-action"
+    assert publication_request_workspace["updated_by"] == "coder-publication-request"
+
+    today_after_publication_request = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Approve publication" in today_after_publication_request.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:

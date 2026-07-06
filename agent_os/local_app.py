@@ -22935,7 +22935,10 @@ def _goal_next_action_form(
             return_to_override=return_to_override,
         )
     if next_action.action == "Create publication request":
-        return _goal_publication_request_form(state)
+        return _goal_publication_request_form(
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Approve publication":
         return _goal_approve_publication_form(state)
     if next_action.action == "Create publication handoff":
@@ -23530,15 +23533,29 @@ def _goal_commit_worktree_form(
     )
 
 
-def _goal_publication_request_form(state: dict[str, Any]) -> str:
+def _goal_publication_request_form(
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     approval = _goal_committed_worktree_approval(state)
     if approval is None:
         return "<p class='muted'>publication_request_form_status: unavailable_until_local_commit_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Create Publication Request</h3>",
             "<p class='muted'>Creates a pending local publication approval request from the isolated local commit. It does not push, create a PR, deploy, call a provider, or use the network.</p>",
+            _kv(
+                [
+                    ("commit_approval_id", approval.id),
+                    ("run_id", approval.run_id),
+                    (
+                        "return_to_after_publication_request",
+                        SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
+                    ),
+                ]
+            ),
             _input_form(
                 "coder-publication-request",
                 {

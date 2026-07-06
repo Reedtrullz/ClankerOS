@@ -129,6 +129,10 @@ Core layers for the bootstrap:
   create the gated commit only inside the isolated coder worktree, preserve
   `return_to=/today#today-current-action`, and save the workspace resume
   surface back to the daily cockpit before the publication-request gate.
+  Publication requests launched from the post-local-commit Today current-action
+  form create only the pending local publication approval artifact, preserve
+  `return_to=/today#today-current-action`, and save the workspace resume
+  surface back to the daily cockpit before the publication-approval gate.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only

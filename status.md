@@ -1,5 +1,55 @@
 # Status
 
+## 2026-07-06 Post-Local-Commit Today Publication Request
+
+- Completed the selected slice for post-local-commit `/today` publication
+  request continuation.
+- `/today` now embeds the lead Goal's `Create publication request` form with a
+  Today-local return target, so a confirmed publication request launched from
+  the daily cockpit writes the pending local publication approval artifact and
+  saves `resume_surface=/today#today-current-action` instead of returning the
+  operator to the Goal action dock or run page.
+- The publication-request form now records the committed local-worktree
+  approval id, source run id, and `return_to_after_publication_request` in form
+  evidence, while keeping the existing local publication request writer behind
+  an explicit confirmation screen.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, confirmed local scout run, Today-local coder-prep
+  creation, Today-local worktree-plan creation, Today-local approval request
+  creation, Today-local approval decision confirmation, Today-local approved
+  worktree run confirmation with a bounded file change, Today-local Open
+  review confirmation, Today-local Create commit request confirmation,
+  Today-local Approve commit confirmation, Today-local Commit approved
+  worktree confirmation, Today-local Create publication request confirmation,
+  generated `coder_publication/publication_request.md`, workspace resume
+  persistence, and the next visible Today action becoming
+  `Approve publication`.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-publication-request `/today` should expose `Approve publication` as the
+  primary same-page first-run action with confirmation and finish-today resume
+  proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered
+    publication-request form still emitted the Goal action-dock `return_to`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 46.30s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 43.11s.
+  - `python3 -m agent_os.cli iterate`: selected the post-publication-request
+    `/today` Approve publication slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this Today publication-request slice writes only a pending local
+  publication approval request artifact and workspace resume state. It does
+  not approve publication, push, deploy, create PRs, call providers, use
+  app-side network actions, or mutate external systems from ClankerOS.
+
 ## 2026-07-06 Post-Commit-Approval Today Local Commit
 
 - Completed the selected slice for post-commit-approval `/today` local-commit
