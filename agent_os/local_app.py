@@ -3043,6 +3043,13 @@ def _completed_goal_handoff_state(
         candidates.append(("saved_workspace_goal", saved_goal))
     if lead_goal is not None:
         candidates.append(("lead_goal", str(lead_goal["id"])))
+    for source, goal_id in candidates:
+        if not goal_id:
+            continue
+        state = _goal_state(root, storage, goal_id)
+        goal = state.get("goal")
+        if goal is not None and goal.status != "completed":
+            return None, "active_goal_in_progress", workspace
     for row in _goal_rows(storage, limit=25):
         if _goal_bucket(row) == "completed":
             candidates.append(("completed_goal_queue", str(row["id"])))
@@ -3075,6 +3082,10 @@ def _workspace_has_active_completed_goal_successor(
     if source_goal is None or current_goal is None:
         return False
     return source_goal.status == "completed" and current_goal.status != "completed"
+
+
+def _completed_goal_provenance_path(project_id: str, goal_id: str) -> Path:
+    return _goal_file_path(project_id, goal_id, "completed-goal-provenance.md")
 
 
 def _completed_goal_handoff_panel(
@@ -16550,6 +16561,7 @@ def _remember_delegation_workspace(
     artifact_path: str | Path | None,
     updated_by: str,
     resume_surface: str | None = None,
+    clear_completed_goal_handoff: bool = False,
 ) -> dict[str, Any] | None:
     delegation = storage.get_subagent_delegation(delegation_id)
     if delegation is None:
@@ -16558,18 +16570,144 @@ def _remember_delegation_workspace(
         goal = storage.get_goal(delegation.parent_goal_id)
     except KeyError:
         return None
+    workspace = {
+        **_load_workspace_state(root),
+        "open_project": goal.project_id,
+        "open_goal": goal.id,
+        "last_viewed_artifact": _repo_relative_artifact_path(root, artifact_path),
+        "resume_surface": _safe_local_return_path(resume_surface)
+        or f"/delegations/{quote(delegation_id)}",
+        "updated_by": updated_by,
+    }
+    if clear_completed_goal_handoff:
+        workspace.update(
+            {
+                "completed_goal_handoff_source_goal": "",
+                "completed_goal_handoff_previous_resume_surface": "",
+                "completed_goal_handoff_previous_artifact": "",
+            }
+        )
     return _write_workspace_state(
         root,
-        {
-            **_load_workspace_state(root),
-            "open_project": goal.project_id,
-            "open_goal": goal.id,
-            "last_viewed_artifact": _repo_relative_artifact_path(root, artifact_path),
-            "resume_surface": _safe_local_return_path(resume_surface)
-            or f"/delegations/{quote(delegation_id)}",
-            "updated_by": updated_by,
-        },
+        workspace,
     )
+
+
+def _promote_completed_goal_handoff_provenance(
+    root: Path,
+    storage: Storage,
+    *,
+    successor_goal_id: str,
+    trigger_action: str,
+    trigger_result_id: str,
+    trigger_artifact_path: str | Path | None,
+) -> dict[str, str] | None:
+    workspace = _load_workspace_state(root)
+    source_goal_id = str(workspace.get("completed_goal_handoff_source_goal") or "").strip()
+    workspace_goal_id = str(workspace.get("open_goal") or "").strip()
+    if (
+        not source_goal_id
+        or not successor_goal_id
+        or source_goal_id == successor_goal_id
+        or (workspace_goal_id and workspace_goal_id != successor_goal_id)
+    ):
+        return None
+    try:
+        source_goal = storage.get_goal(source_goal_id)
+        successor_goal = storage.get_goal(successor_goal_id)
+    except KeyError:
+        return None
+    if source_goal.status != "completed" or successor_goal.status == "completed":
+        return None
+
+    previous_resume_surface = (
+        _safe_local_return_path(
+            workspace.get("completed_goal_handoff_previous_resume_surface")
+        )
+        or ""
+    )
+    previous_artifact = _repo_relative_artifact_path(
+        root,
+        workspace.get("completed_goal_handoff_previous_artifact") or "",
+    )
+    trigger_artifact = _repo_relative_artifact_path(root, trigger_artifact_path)
+    relative_path = _completed_goal_provenance_path(
+        successor_goal.project_id,
+        successor_goal.id,
+    )
+    path = root / relative_path
+    if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        lines = [
+            "# Completed Goal Provenance",
+            "",
+            f"source_goal_id: {source_goal.id}",
+            f"successor_goal_id: {successor_goal.id}",
+            f"project_id: {successor_goal.project_id}",
+            f"trigger_action: {trigger_action}",
+            f"trigger_result_id: {trigger_result_id}",
+            f"trigger_artifact: {trigger_artifact}",
+            f"previous_resume_surface: {previous_resume_surface}",
+            f"previous_artifact: {previous_artifact}",
+            f"promoted_at: {utc_now()}",
+            "write_on_get: false",
+            "provider_calls_taken_by_clankeros: 0",
+            "network_actions_taken: 0",
+            "external_effects_created: false",
+            "",
+            "## Meaning",
+            "",
+            (
+                "The completed Goal handoff was promoted into this successor Goal "
+                "after the operator confirmed the first successor action."
+            ),
+            (
+                "The transient Today and Resume handoff panels can now clear while "
+                "this durable record preserves the source Goal, prior resume surface, "
+                "and prior artifact."
+            ),
+            "",
+        ]
+        path.write_text("\n".join(lines), encoding="utf-8")
+    return {
+        "artifact_path": relative_path.as_posix(),
+        "source_goal_id": source_goal.id,
+        "successor_goal_id": successor_goal.id,
+    }
+
+
+def _delegation_creation_artifact_path(delegation_id: str) -> Path:
+    return Path(".clanker") / "delegations" / f"{delegation_id}-created.json"
+
+
+def _write_delegation_creation_artifact(root: Path, delegation: Any) -> Path:
+    relative_path = _delegation_creation_artifact_path(delegation.id)
+    path = root / relative_path
+    if path.exists():
+        return relative_path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "artifact_kind": "delegation_creation",
+        "delegation_id": delegation.id,
+        "parent_goal_id": delegation.parent_goal_id,
+        "parent_task_id": delegation.parent_task_id,
+        "assigned_profile": delegation.assigned_profile,
+        "category": delegation.category,
+        "title": delegation.title,
+        "status": delegation.status,
+        "created_at": delegation.created_at,
+        "delegation_metadata_artifact": _repo_relative_artifact_path(
+            root,
+            delegation.result_artifact_path,
+        ),
+        "result_title": "Scout delegation created",
+        "write_on_get": False,
+        "provider_calls_taken_by_clankeros": 0,
+        "network_actions_taken": 0,
+        "external_effects_created": False,
+    }
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return relative_path
 
 
 def _workspace_path(root: Path) -> Path:
@@ -25591,6 +25729,7 @@ def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
             _goal_timeline_command_bar(state, items),
             _goal_timeline_digest(root, state, items),
             _goal_timeline_lane_filter(goal.id, items),
+            _goal_completed_provenance_history(root, state),
             "<details class='goal-timeline-metadata' data-goal-timeline-metadata='true'><summary>Timeline metadata</summary>",
             _kv(
                 [
@@ -25606,6 +25745,104 @@ def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
             "</section>",
         ]
     )
+
+
+def _goal_completed_provenance_history(root: Path, state: dict[str, Any]) -> str:
+    metadata = _goal_completed_provenance_metadata(root, state)
+    if metadata["status"] != "available":
+        return ""
+    artifact_path = metadata["artifact_path"]
+    artifact_surface = SafeHtml(
+        f"<a href='{_e(_artifact_href(root, artifact_path))}'>{_e(artifact_path)}</a>"
+    )
+    return "".join(
+        [
+            (
+                "<details id='goal-completed-provenance-history' "
+                "class='goal-completed-provenance-history' "
+                "data-goal-completed-provenance-history='true' open>"
+                "<summary>Completed Goal Provenance History</summary>"
+            ),
+            _kv(
+                [
+                    ("completed_goal_provenance_history_status", metadata["status"]),
+                    (
+                        "completed_goal_provenance_history_source_goal",
+                        metadata["source_goal_id"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_successor_goal",
+                        metadata["successor_goal_id"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_trigger_action",
+                        metadata["trigger_action"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_trigger_result_id",
+                        metadata["trigger_result_id"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_artifact",
+                        artifact_surface,
+                    ),
+                    (
+                        "completed_goal_provenance_history_previous_resume_surface",
+                        metadata["previous_resume_surface"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_previous_artifact",
+                        metadata["previous_artifact"],
+                    ),
+                    ("completed_goal_provenance_history_write_on_get", "false"),
+                    (
+                        "completed_goal_provenance_history_provider_calls_taken",
+                        "0",
+                    ),
+                    (
+                        "completed_goal_provenance_history_external_effects_created",
+                        "false",
+                    ),
+                ]
+            ),
+            "</details>",
+        ]
+    )
+
+
+def _goal_completed_provenance_metadata(
+    root: Path,
+    state: dict[str, Any],
+) -> dict[str, str]:
+    goal = state["goal"]
+    artifact_path = _completed_goal_provenance_path(goal.project_id, goal.id)
+    relative_path = artifact_path.as_posix()
+    path = root / artifact_path
+    metadata = {
+        "status": "missing",
+        "artifact_path": relative_path,
+        "source_goal_id": "none",
+        "successor_goal_id": goal.id,
+        "trigger_action": "none",
+        "trigger_result_id": "none",
+        "previous_resume_surface": "none",
+        "previous_artifact": "none",
+    }
+    if not path.exists():
+        return metadata
+    metadata["status"] = "available"
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return metadata
+    for line in text.splitlines():
+        if ":" not in line or line.lstrip().startswith("#"):
+            continue
+        key, value = line.split(":", 1)
+        key = key.strip()
+        if key in metadata:
+            metadata[key] = value.strip() or "none"
+    return metadata
 
 
 def _goal_timeline_lane_filter(goal_id: str, items: list[dict[str, str]]) -> str:
@@ -26274,6 +26511,8 @@ def _goal_timeline_items(root: Path, state: dict[str, Any]) -> list[dict[str, st
         )
     for row in state["events"]:
         items.append({"at": row["created_at"], "message": str(row["message"]), "href": f"/goals/{quote(goal.id)}"})
+    provenance_path = _completed_goal_provenance_path(goal.project_id, goal.id)
+    provenance_relative = provenance_path.as_posix()
     artifact_hrefs = {
         item.get("href", "")
         for item in items
@@ -26289,6 +26528,15 @@ def _goal_timeline_items(root: Path, state: dict[str, Any]) -> list[dict[str, st
                 "at": _artifact_time(root, record["path"]) or goal.updated_at,
                 "message": f"Artifact recorded: {record['label']}.",
                 "href": href,
+                "kind": "artifact",
+            }
+        )
+    if (root / provenance_path).exists():
+        items.append(
+            {
+                "at": _artifact_time(root, provenance_relative) or goal.updated_at,
+                "message": "Completed Goal provenance promoted.",
+                "href": _artifact_href(root, provenance_relative),
                 "kind": "artifact",
             }
         )
@@ -28537,6 +28785,13 @@ def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, 
             }
         )
 
+    provenance_path = _completed_goal_provenance_path(goal.project_id, goal.id)
+    if (root / provenance_path).exists():
+        add(
+            "completed Goal provenance",
+            provenance_path,
+            source="completed_goal_provenance",
+        )
     for task in state["tasks"]:
         for artifact in task.artifacts:
             add(f"task {task.id}", artifact, source="task")
@@ -28553,6 +28808,13 @@ def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, 
         add(f"recommendation {recommendation['id']}", recommendation["evidence_path"], source="recommendation")
     for delegation in state["delegations"]:
         metadata = load_delegation_result_metadata(delegation)
+        creation_artifact_path = _delegation_creation_artifact_path(delegation.id)
+        if (root / creation_artifact_path).exists():
+            add(
+                f"delegation {delegation.id} created",
+                creation_artifact_path,
+                source="delegation",
+            )
         add(f"delegation {delegation.id} result", delegation.result_artifact_path, source="delegation")
         for key in [
             "context_pack_json",
@@ -28613,8 +28875,13 @@ def _goal_latest_artifact_record(root: Path, state: dict[str, Any]) -> dict[str,
     ]
     if not existing:
         return None
+    focus_records = [
+        record
+        for record in existing
+        if str(record.get("source") or "") != "completed_goal_provenance"
+    ]
     return max(
-        existing,
+        focus_records or existing,
         key=lambda record: _goal_artifact_record_sort_key(root, record),
     )
 
@@ -28639,6 +28906,7 @@ def _goal_artifact_record_rank(record: dict[str, str]) -> int:
         "incident": 30,
         "recommendation": 35,
         "delegation": 40,
+        "completed_goal_provenance": 45,
         "delegation_metadata": 50,
         "coder_prep": 60,
         "worktree_plan": 70,
@@ -46624,13 +46892,28 @@ def _handle_post(
             message = f"subagent_delegation: {result.id}"
             delegation_location = f"/delegations/{quote(result.id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or delegation_location
+            delegation_creation_artifact = _write_delegation_creation_artifact(root, result)
+            completed_goal_provenance = _promote_completed_goal_handoff_provenance(
+                root,
+                storage,
+                successor_goal_id=result.parent_goal_id,
+                trigger_action="delegate",
+                trigger_result_id=result.id,
+                trigger_artifact_path=delegation_creation_artifact,
+            )
+            if completed_goal_provenance is not None:
+                message = (
+                    f"{message}; completed_goal_provenance_promoted: "
+                    f"{completed_goal_provenance['artifact_path']}"
+                )
             _remember_delegation_workspace(
                 root,
                 storage,
                 result.id,
-                artifact_path=result.result_artifact_path,
+                artifact_path=delegation_creation_artifact,
                 updated_by="delegate",
                 resume_surface=location,
+                clear_completed_goal_handoff=completed_goal_provenance is not None,
             )
         elif action == "pause-goal":
             result = _pause_goal_from_form(storage, form)

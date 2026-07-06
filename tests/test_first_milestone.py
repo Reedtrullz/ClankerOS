@@ -12967,6 +12967,98 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         not in resume_after_next_goal.body
     )
 
+    next_goal_task = Storage(tmp_path / ".agent" / "state.db").list_tasks(next_goal_id)[0]
+    next_goal_delegate_result = render_local_app_route(
+        tmp_path,
+        "/actions/delegate",
+        method="POST",
+        form={
+            "goal_id": [next_goal_id],
+            "task_id": [next_goal_task.id],
+            "profile": ["scout"],
+            "title": ["Scout successor from Today"],
+            "requested_by": ["operator"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_delegate_result.status == 200
+    assert "Scout delegation created" in next_goal_delegate_result.body
+    assert "completed_goal_provenance_promoted:" in next_goal_delegate_result.body
+    provenance_md = (
+        tmp_path
+        / ".clanker"
+        / "projects"
+        / "first-target"
+        / "goals"
+        / next_goal_id
+        / "completed-goal-provenance.md"
+    )
+    assert provenance_md.exists()
+    provenance_text = provenance_md.read_text(encoding="utf-8")
+    assert f"source_goal_id: {created_goal_id}" in provenance_text
+    assert f"successor_goal_id: {next_goal_id}" in provenance_text
+    assert "trigger_action: delegate" in provenance_text
+    assert "trigger_result_id: subagent_delegation_" in provenance_text
+    assert "previous_resume_surface: /today#today-current-action" in provenance_text
+    assert (
+        f"previous_artifact: {publication_handoff_md.relative_to(tmp_path)}"
+        in provenance_text
+    )
+    assert "provider_calls_taken_by_clankeros: 0" in provenance_text
+    assert "external_effects_created: false" in provenance_text
+
+    next_goal_delegated_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_delegated_workspace["open_goal"] == next_goal_id
+    assert next_goal_delegated_workspace["updated_by"] == "delegate"
+    assert next_goal_delegated_workspace["completed_goal_handoff_source_goal"] == ""
+    assert next_goal_delegated_workspace["completed_goal_handoff_previous_resume_surface"] == ""
+    assert next_goal_delegated_workspace["completed_goal_handoff_previous_artifact"] == ""
+    assert "subagent_delegation_" in next_goal_delegated_workspace["last_viewed_artifact"]
+    assert next_goal_delegated_workspace["last_viewed_artifact"].endswith(".json")
+
+    today_after_next_goal_delegate = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_delegate.status == 200
+    assert "Today Completed Goal Provenance" not in today_after_next_goal_delegate.body
+    assert "Today Completed Goal Handoff" not in today_after_next_goal_delegate.body
+    assert "today_command_primary_action</dt><dd>Generate context pack" in today_after_next_goal_delegate.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Generate context pack</a>"
+        in today_after_next_goal_delegate.body
+    )
+    assert "today_activity_digest_latest_artifact" in today_after_next_goal_delegate.body
+    assert "completed-goal-provenance.md" in today_after_next_goal_delegate.body
+
+    resume_after_next_goal_delegate = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_delegate.status == 200
+    assert "Resume Completed Goal Provenance" not in resume_after_next_goal_delegate.body
+    assert "Resume Completed Goal Handoff" not in resume_after_next_goal_delegate.body
+    assert "resume_return_brief_next_action</dt><dd>Generate context pack" in resume_after_next_goal_delegate.body
+    assert "resume_workbench_next_action</dt><dd>Generate context pack" in resume_after_next_goal_delegate.body
+    assert (
+        "resume_workbench_primary_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Generate context pack</a>"
+        in resume_after_next_goal_delegate.body
+    )
+
+    successor_goal_page = render_local_app_route(tmp_path, f"/goals/{next_goal_id}")
+    assert successor_goal_page.status == 200
+    assert "completed_goal_provenance_history_status</dt><dd>available" in successor_goal_page.body
+    assert f"completed_goal_provenance_history_source_goal</dt><dd>{created_goal_id}" in successor_goal_page.body
+    assert (
+        "completed_goal_provenance_history_artifact</dt><dd>"
+        f"<a href='/artifacts?path=.clanker/projects/first-target/goals/{next_goal_id}/completed-goal-provenance.md'>"
+        in successor_goal_page.body
+    )
+    assert "Artifact recorded: completed Goal provenance." in successor_goal_page.body
+    assert "Completed Goal provenance promoted." in successor_goal_page.body
+    assert "timeline_filter_artifact_events</dt><dd>" in successor_goal_page.body
+    assert "goal_artifact_reader" in successor_goal_page.body
+    assert "completed-goal-provenance.md" in successor_goal_page.body
+
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
     AgentSystem(tmp_path).initialize()

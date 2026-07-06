@@ -318,10 +318,10 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Make the successor Goal's first confirmed action move completed-Goal provenance into durable Goal history while keeping `/today` and `/resume` focused on the successor Goal's newest evidence and action.
+- focus: Make successor Goal context-pack generation from `/today` and `/resume` surface the generated context pack as newest evidence while retaining completed-Goal provenance history and moving the primary action to `Run delegation`.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-07-06T02:33:07.799735+00:00
+- created_at: 2026-07-06T02:50:49.259435+00:00
 
 ## Simplicity Guardrail
 
@@ -329,7 +329,7 @@
 - reason: selected only actionable item with score 10 and complexity 4; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
 - selected_score: 10
 - selected_complexity: 4
-- selected_focus: Make the successor Goal's first confirmed action move completed-Goal provenance into durable Goal history while keeping `/today` and `/resume` focused on the successor Goal's newest evidence and action.
+- selected_focus: Make successor Goal context-pack generation from `/today` and `/resume` surface the generated context pack as newest evidence while retaining completed-Goal provenance history and moving the primary action to `Run delegation`.
 
 ## Expansion Operator Approval Schema Decision
 

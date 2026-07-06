@@ -1,5 +1,43 @@
 # Status
 
+## 2026-07-06 Successor Goal Provenance Promotion
+
+- Completed the selected slice for durable successor-Goal provenance history.
+- When the active successor Goal's first confirmed browser action is the scout
+  delegation, ClankerOS now writes
+  `.clanker/projects/<project>/goals/<successor_goal>/completed-goal-provenance.md`
+  with the completed source Goal, successor Goal, triggering delegation id,
+  prior `/today#today-current-action` resume surface, carried publication
+  handoff artifact, and zero provider/network/external-effect counters.
+- The delegate action result includes
+  `completed_goal_provenance_promoted: <artifact>` and writes a
+  `subagent_delegation_...-created.json` browser-focus artifact, so workspace
+  resume state stays on the successor Goal's newest confirmed action instead
+  of the old completed-Goal handoff.
+- After promotion, `.clanker/app/workspace.json` clears the transient
+  `completed_goal_handoff_*` fields. `/today` and `/resume` no longer reopen
+  either completed-Goal handoff panel; they keep the successor Goal's next
+  action (`Generate context pack`) as the primary same-page action.
+- The successor Goal page now exposes a `Completed Goal Provenance History`
+  block, records the provenance markdown in the normal artifact reader, and
+  adds timeline entries for both the recorded artifact and the promotion event.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal context-pack generation from `/today` and `/resume` should
+  surface the generated context pack as newest evidence while keeping durable
+  completed-Goal provenance history.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the delegate action result did
+    not include `completed_goal_provenance_promoted:`.
+  - `python3 -m py_compile agent_os/local_app.py`: passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 51.07s.
+- Non-claim: this slice promotes only local browser-action provenance and
+  local artifacts after an already confirmed local delegate POST. It does not
+  run the delegation, generate a context pack, push, deploy, create PRs, call
+  providers, use app-side network actions, or mutate external systems.
+
 ## 2026-07-06 Post-Next-Goal Today And Resume Provenance
 
 - Completed the selected slice for post-next-Goal creation `/today` and

@@ -166,6 +166,12 @@ Core layers for the bootstrap:
   completed-Goal provenance panel that links the completed source Goal,
   previous resume surface, and carried artifact without reopening the old
   next-Goal creation gate or writing on GET.
+  When the successor Goal's first confirmed browser action creates a scout
+  delegation, the app promotes that transient provenance into
+  `.clanker/projects/<project>/goals/<goal_id>/completed-goal-provenance.md`,
+  clears the workspace `completed_goal_handoff_*` fields, registers the
+  provenance markdown in the successor Goal artifact reader and timeline, and
+  keeps `/today` and `/resume` focused on the successor Goal's next action.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only

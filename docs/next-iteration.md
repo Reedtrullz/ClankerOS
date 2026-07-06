@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_ccda3ae60eb6
+- Packet ID: iteration_7979860aa80b
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Make the successor Goal's first confirmed action move completed-Goal provenance into durable Goal history while keeping `/today` and `/resume` focused on the successor Goal's newest evidence and action.
+Advance the Agent System north-star goal by completing: Make successor Goal context-pack generation from `/today` and `/resume` surface the generated context pack as newest evidence while retaining completed-Goal provenance history and moving the primary action to `Run delegation`.
 
 ## Definition Of Done
 
