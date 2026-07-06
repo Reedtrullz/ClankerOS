@@ -9598,7 +9598,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     delegated_workspace = json.loads(workspace_json.read_text(encoding="utf-8"))
     assert delegated_workspace["open_project"] == "first-target"
     assert delegated_workspace["open_goal"] == created_goal_id
-    assert delegated_workspace["last_viewed_artifact"] == str(
+    delegation_created_artifact = (
+        Path(".clanker") / "delegations" / f"{delegation.id}-created.json"
+    )
+    assert delegated_workspace["last_viewed_artifact"] == str(delegation_created_artifact)
+    delegation_created_payload = json.loads(
+        (tmp_path / delegation_created_artifact).read_text(encoding="utf-8")
+    )
+    assert delegation_created_payload["artifact_kind"] == "delegation_creation"
+    assert delegation_created_payload["delegation_id"] == delegation.id
+    assert delegation_created_payload["delegation_metadata_artifact"] == str(
         Path(delegation.result_artifact_path).relative_to(tmp_path)
     )
     assert delegated_workspace["resume_surface"] == goal_action_dock

@@ -45,6 +45,12 @@
     `Run delegation` slice and refreshed `docs/next-iteration.md`.
   - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
   - `git diff --check`: passed.
+  - GitHub Actions run `28765307934` failed on the pushed commit because the
+    fast smoke suite still expected delegate resume state to point at the older
+    delegation metadata artifact instead of the newer
+    `subagent_delegation_...-created.json` browser-focus artifact.
+  - After updating that smoke assertion, the exact CI smoke selection passed
+    locally: 15 passed, 512 deselected in 178.01s.
 - Non-claim: this slice performs only confirmed local context-pack writes and
   local browser/readback updates. It does not run the delegation, create an
   implementation handoff, create coder-prep, push, deploy, call providers, use
