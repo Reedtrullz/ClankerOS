@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_03a9f7b8e3e4
+- Packet ID: iteration_3bfe286a3dba
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Make post-publication-request `/today` expose `Approve publication` as the primary same-page first-run action with confirmation and finish-today resume proof.
+Advance the Agent System north-star goal by completing: Make post-publication-approval `/today` expose `Create publication handoff` as the primary same-page first-run action with confirmation and finish-today resume proof.
 
 ## Definition Of Done
 

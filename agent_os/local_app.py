@@ -22940,7 +22940,10 @@ def _goal_next_action_form(
             return_to_override=return_to_override,
         )
     if next_action.action == "Approve publication":
-        return _goal_approve_publication_form(state)
+        return _goal_approve_publication_form(
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Create publication handoff":
         return _goal_publication_handoff_form(state)
     if next_action.action == "Manual publish outside ClankerOS":
@@ -23571,15 +23574,29 @@ def _goal_publication_request_form(
     )
 
 
-def _goal_approve_publication_form(state: dict[str, Any]) -> str:
+def _goal_approve_publication_form(
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     publication = _goal_pending_publication(state)
     if publication is None:
         return "<p class='muted'>approve_publication_form_status: unavailable_until_pending_publication_approval_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Approve Publication</h3>",
             "<p class='muted'>Records a local approval decision to prepare publication handoff artifacts. It does not push, create a PR, deploy, call a provider, or use the network.</p>",
+            _kv(
+                [
+                    ("publication_id", publication.id),
+                    ("run_id", publication.run_id),
+                    (
+                        "return_to_after_publication_approval",
+                        SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
+                    ),
+                ]
+            ),
             _input_form(
                 "approve-coder-publication",
                 {"publication_id": publication.id, "return_to": return_to},
@@ -46536,7 +46553,7 @@ def _handle_post(
                     else None
                 ),
                 updated_by="approve-coder-publication",
-                resume_surface=run_location,
+                resume_surface=location,
             )
         elif action == "coder-publication-handoff":
             run_id = _required(form, "run_id")

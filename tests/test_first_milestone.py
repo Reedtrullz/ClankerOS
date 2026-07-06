@@ -12475,6 +12475,94 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
 
     today_after_publication_request = render_local_app_route(tmp_path, "/today")
     assert "today_command_primary_action</dt><dd>Approve publication" in today_after_publication_request.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Approve publication</a>"
+    ) in today_after_publication_request.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Approve publication</a>"
+    ) in today_after_publication_request.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_publication_request.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_publication_request.body
+    assert "Approve Publication" in today_after_publication_request.body
+    assert "action='/actions/approve-coder-publication'" in today_after_publication_request.body
+    assert f"name='publication_id' value='{publication.id}'" in today_after_publication_request.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_publication_request.body
+    assert (
+        "return_to_after_publication_approval</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_publication_request.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_publication_request.body
+
+    publication_approval_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-publication",
+        method="POST",
+        form={
+            "publication_id": [publication.id],
+            "decided_by": ["operator"],
+            "note": ["Approve publication handoff from Today"],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert publication_approval_confirmation.status == 409
+    assert "Confirm publication approval" in publication_approval_confirmation.body
+    assert "action_confirmation_label</dt><dd>Approve publication" in publication_approval_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in publication_approval_confirmation.body
+
+    publication_approval_result = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-publication",
+        method="POST",
+        form={
+            "publication_id": [publication.id],
+            "decided_by": ["operator"],
+            "note": ["Approve publication handoff from Today"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert publication_approval_result.status == 200
+    assert "approved_coder_publication:" in publication_approval_result.body
+    assert "action_result_command_label</dt><dd>Approve publication" in publication_approval_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=approved_coder_publication%3A%20"
+    ) in publication_approval_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in publication_approval_result.body
+    approved_publication = next(
+        item
+        for item in list_coder_publications(
+            tmp_path,
+            status="approved",
+            limit=10,
+        )
+        if item.run_id == coder_run.id
+    )
+    publication_decision_md = tmp_path / Path(
+        approved_publication.decision_artifact_path
+    ).with_suffix(".md")
+    assert publication_decision_md.exists()
+    publication_approval_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert publication_approval_workspace["open_project"] == "first-target"
+    assert publication_approval_workspace["open_goal"] == created_goal_id
+    assert publication_approval_workspace["last_viewed_artifact"] == str(
+        publication_decision_md.relative_to(tmp_path)
+    )
+    assert publication_approval_workspace["resume_surface"] == "/today#today-current-action"
+    assert publication_approval_workspace["updated_by"] == "approve-coder-publication"
+
+    today_after_publication_approval = render_local_app_route(tmp_path, "/today")
+    assert (
+        "today_command_primary_action</dt><dd>Create publication handoff"
+        in today_after_publication_approval.body
+    )
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
