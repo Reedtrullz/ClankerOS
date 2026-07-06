@@ -12231,6 +12231,85 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
 
     today_after_commit_request = render_local_app_route(tmp_path, "/today")
     assert "today_command_primary_action</dt><dd>Approve commit" in today_after_commit_request.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Approve commit</a>"
+    ) in today_after_commit_request.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Approve commit</a>"
+    ) in today_after_commit_request.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_commit_request.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_commit_request.body
+    assert "Approve Commit" in today_after_commit_request.body
+    assert "action='/actions/approve-coder-commit'" in today_after_commit_request.body
+    assert f"name='approval_id' value='{commit_approval.id}'" in today_after_commit_request.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_commit_request.body
+    assert (
+        "return_to_after_commit_approval</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_commit_request.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_commit_request.body
+
+    commit_approval_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-commit",
+        method="POST",
+        form={
+            "approval_id": [commit_approval.id],
+            "decided_by": ["operator"],
+            "note": ["Approve local commit from Today"],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert commit_approval_confirmation.status == 409
+    assert "Confirm commit approval" in commit_approval_confirmation.body
+    assert "action_confirmation_label</dt><dd>Approve commit" in commit_approval_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in commit_approval_confirmation.body
+
+    commit_approval_result = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-commit",
+        method="POST",
+        form={
+            "approval_id": [commit_approval.id],
+            "decided_by": ["operator"],
+            "note": ["Approve local commit from Today"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert commit_approval_result.status == 200
+    assert "approved_coder_commit:" in commit_approval_result.body
+    assert "action_result_command_label</dt><dd>Approve commit" in commit_approval_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=approved_coder_commit%3A%20"
+    ) in commit_approval_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in commit_approval_result.body
+    commit_decision_md = (
+        tmp_path
+        / Path(commit_approval.source_run_evidence_path)
+        / "coder_commit"
+        / "coder_commit_decision.md"
+    )
+    assert commit_decision_md.exists()
+    commit_approval_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert commit_approval_workspace["open_project"] == "first-target"
+    assert commit_approval_workspace["open_goal"] == created_goal_id
+    assert commit_approval_workspace["last_viewed_artifact"] == str(
+        commit_decision_md.relative_to(tmp_path)
+    )
+    assert commit_approval_workspace["resume_surface"] == "/today#today-current-action"
+    assert commit_approval_workspace["updated_by"] == "approve-coder-commit"
+
+    today_after_commit_approval = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Commit approved worktree" in today_after_commit_approval.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:

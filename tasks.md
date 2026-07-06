@@ -66,9 +66,12 @@
 - [x] Make post-review `/today` expose `Create commit request` as the primary
   same-page first-run action with confirmation and finish-today resume proof.
   <!-- score=10 complexity=4 -->
-- [ ] Make post-commit-request `/today` expose `Approve commit` as the primary
+- [x] Make post-commit-request `/today` expose `Approve commit` as the primary
   same-page first-run action with confirmation and finish-today resume proof.
   <!-- score=10 complexity=4 -->
+- [ ] Make post-commit-approval `/today` expose `Commit approved worktree` as
+  the primary same-page first-run action with confirmation and finish-today
+  resume proof. <!-- score=10 complexity=4 -->
 - [x] Extend the static dashboard with incident summaries once incidents exist.
 - [x] Add a compact incident resolution path after more failure modes exist.
 - [x] Add queue-health checks for repeated blocked or failed work.

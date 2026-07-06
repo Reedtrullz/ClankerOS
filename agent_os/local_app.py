@@ -22925,7 +22925,10 @@ def _goal_next_action_form(
             return_to_override=return_to_override,
         )
     if next_action.action == "Approve commit":
-        return _goal_approve_commit_form(state)
+        return _goal_approve_commit_form(
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Commit approved worktree":
         return _goal_commit_worktree_form(state)
     if next_action.action == "Create publication request":
@@ -23453,15 +23456,29 @@ def _goal_review_run_form(
     )
 
 
-def _goal_approve_commit_form(state: dict[str, Any]) -> str:
+def _goal_approve_commit_form(
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     approval = _goal_pending_commit_approval(state)
     if approval is None:
         return "<p class='muted'>approve_commit_form_status: unavailable_until_pending_commit_approval_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Approve Commit</h3>",
             "<p class='muted'>Records a local approval decision for the reviewed commit request. It does not stage, commit, push, create a PR, deploy, call a provider, or use the network.</p>",
+            _kv(
+                [
+                    ("commit_approval_id", approval.id),
+                    ("run_id", approval.run_id),
+                    (
+                        "return_to_after_commit_approval",
+                        SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
+                    ),
+                ]
+            ),
             _input_form(
                 "approve-coder-commit",
                 {"approval_id": approval.id, "return_to": return_to},
@@ -46415,7 +46432,7 @@ def _handle_post(
                     / "coder_commit_decision.md"
                 ),
                 updated_by="approve-coder-commit",
-                resume_surface=run_location,
+                resume_surface=location,
             )
         elif action == "commit-coder-worktree":
             run_id = _required(form, "run_id")

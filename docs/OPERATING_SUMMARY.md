@@ -120,7 +120,11 @@ Core layers for the bootstrap:
   Commit requests launched from the post-review Today current-action form
   create the pending local commit approval artifact, preserve
   `return_to=/today#today-current-action`, and save the workspace resume
-  surface back to the daily cockpit before the commit-approval gate.
+  surface back to the daily cockpit before the commit-approval gate. Commit
+  approvals launched from the post-commit-request Today current-action form
+  record the local approval decision, preserve
+  `return_to=/today#today-current-action`, and save the workspace resume
+  surface back to the daily cockpit before the local commit gate.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only
