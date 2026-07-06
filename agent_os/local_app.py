@@ -47536,6 +47536,10 @@ def _handle_post(
                 request_payload.get("source_coder_worktree_plan_md")
                 or Path(approval.source_plan_path).with_suffix(".md")
             )
+            plan_markdown_consumed = (
+                request_payload.get("source_coder_worktree_plan_markdown_consumed") is True
+            )
+            source_plan_md_sha256 = str(request_payload.get("source_plan_md_sha256") or "missing")
             result = {
                 "approval_id": approval.id,
                 "delegation_id": approval.delegation_id,
@@ -47545,12 +47549,9 @@ def _handle_post(
                 "markdown_path": request_markdown_path,
                 "source_coder_worktree_plan": approval.source_plan_path,
                 "source_coder_worktree_plan_md": source_plan_md,
-                "source_coder_worktree_plan_markdown_consumed": request_payload.get(
-                    "source_coder_worktree_plan_markdown_consumed",
-                    True,
-                ),
+                "source_coder_worktree_plan_markdown_consumed": plan_markdown_consumed,
                 "source_plan_sha256": approval.source_plan_sha256,
-                "source_plan_md_sha256": request_payload.get("source_plan_md_sha256", "unknown"),
+                "source_plan_md_sha256": source_plan_md_sha256,
                 "source_coder_prep_md_sha256": approval.source_coder_prep_md_sha256,
                 "allowed_files": request_payload.get("allowed_files", []),
                 "already_recorded": approval_result.already_recorded,

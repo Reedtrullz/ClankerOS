@@ -21,6 +21,14 @@
   `/today#today-current-action` reports `already_recorded: true`, keeps the
   same approval-request artifact and plan hashes, and stores the Today return
   surface without changing the durable request payload.
+- Follow-up sidecar review found that legacy/existing approval request
+  artifacts could be reused by plan JSON hash while the browser result implied
+  Markdown proof consumption. Reuse now requires matching
+  `source_coder_worktree_plan_md`,
+  `source_coder_worktree_plan_markdown_consumed: true`, and
+  `source_plan_md_sha256`; stale pending requests are superseded before a new
+  Markdown-backed request is created, and legacy approved requests no longer
+  default missing Markdown proof to true in browser output.
 - `/today`, `/resume`, and the successor Goal page all move the primary action
   to `Approve worktree` after confirmed approval-request creation, while
   `completed-goal-provenance.md` remains visible as durable provenance history
@@ -39,6 +47,23 @@
     1 passed in 69.74s after adding the approval-request proof payload,
     request Markdown hash checks, Goal artifact reader coverage, and Today
     idempotence coverage.
+  - Follow-up legacy-reuse regression:
+    `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_approval_and_run_capture_bounded_evidence -q --tb=short`:
+    1 passed in 2.59s after proving a stale pending approval request without
+    Markdown proof is superseded rather than reused as `already_recorded`.
+  - Follow-up browser-flow rerun:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 86.23s.
+  - GitHub run `28770095852` for commit
+    `60469676696b1e6b12426c2b91eb89f6f14bb573` failed in Fast smoke
+    verification because `test_local_app_demo_scenario_populates_fixture_state`
+    still expected the previous `22/22` Goal artifact inventory. The slice
+    intentionally made worktree approval request/decision JSON and Markdown
+    first-class artifacts, so the demo smoke expectation now asserts `26/26`
+    artifacts, `worktree_approval:4`, Markdown count `7`, and JSON count `13`.
+  - Follow-up CI-smoke regression:
+    `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed in 66.98s.
   - `python3 -m compileall -q agent_os/coder_worktree_execution.py agent_os/local_app.py tests/test_first_milestone.py`:
     passed.
   - `python3 -m pytest -q tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace --tb=short`:

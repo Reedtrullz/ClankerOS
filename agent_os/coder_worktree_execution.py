@@ -187,7 +187,16 @@ def request_coder_worktree_approval(
 
     existing = None if force_new else _latest_approval_for_plan(storage, delegation_id, plan_sha)
     if existing is not None:
-        return CoderWorktreeApprovalResult(approval=existing, already_recorded=True)
+        if _approval_request_matches_plan_markdown(
+            root,
+            existing,
+            source_plan_md=source_plan_md,
+            source_plan_md_sha256=plan_markdown_sha,
+        ):
+            return CoderWorktreeApprovalResult(approval=existing, already_recorded=True)
+        if existing.status == "approved":
+            return CoderWorktreeApprovalResult(approval=existing, already_recorded=True)
+        _mark_approval_superseded(storage, existing.id)
 
     approval_id = new_id("coder_worktree_approval")
     now = utc_now()
@@ -2170,6 +2179,28 @@ def _validate_plan(
     return project_id, source_run_id, allowed_files, prep_sha
 
 
+def _approval_request_matches_plan_markdown(
+    root: Path,
+    approval: CoderWorktreeApprovalRecord,
+    *,
+    source_plan_md: str,
+    source_plan_md_sha256: str,
+) -> bool:
+    request_path = root / approval.request_artifact_path
+    try:
+        payload = json.loads(request_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    return (
+        payload.get("kind") == APPROVAL_REQUEST_KIND
+        and payload.get("source_coder_worktree_plan") == approval.source_plan_path
+        and payload.get("source_plan_sha256") == approval.source_plan_sha256
+        and payload.get("source_coder_worktree_plan_md") == source_plan_md
+        and payload.get("source_plan_md_sha256") == source_plan_md_sha256
+        and payload.get("source_coder_worktree_plan_markdown_consumed") is True
+    )
+
+
 def _validate_source_chain(root: Path, plan_path: Path, payload: dict[str, Any]) -> None:
     source = _dict_value(payload.get("source"))
     prep_json = str(source.get("coder_prep_json") or "")
@@ -2443,6 +2474,19 @@ def _mark_approval_approved(
             (approval_id,),
         ).fetchone()
     return _row_to_approval(row)
+
+
+def _mark_approval_superseded(storage: Storage, approval_id: str) -> None:
+    with _connect(storage) as connection:
+        connection.execute(
+            """
+            update coder_worktree_approvals
+            set status = 'superseded'
+            where id = ?
+              and status = 'pending_operator_approval'
+            """,
+            (approval_id,),
+        )
 
 
 def _insert_run(

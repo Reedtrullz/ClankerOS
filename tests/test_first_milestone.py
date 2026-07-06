@@ -18200,7 +18200,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "Goal Next action: Create commit request - Demo the ClankerOS local operator app"
     ) in goal.body
     assert (
-        f"href='/goals/{result.goal_id}#goal-artifacts'>Goal Artifacts: 22/22 available - "
+        f"href='/goals/{result.goal_id}#goal-artifacts'>Goal Artifacts: 26/26 available - "
         "Demo the ClankerOS local operator app"
     ) in goal.body
     assert (
@@ -18235,7 +18235,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in goal.body
     assert (
         "palette_goal_section_command: Artifacts "
-        "label=Goal Artifacts: 22/22 available - "
+        "label=Goal Artifacts: 26/26 available - "
         "Demo the ClankerOS local operator app with fixture-backed state "
         f"surface=<a href='/goals/{result.goal_id}#goal-artifacts'>"
         "goal-artifacts</a>"
@@ -18788,9 +18788,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in goal.body
     )
     assert "goal_review_evidence_items</dt><dd>" in goal.body
-    assert "goal_review_artifact_records</dt><dd>22" in goal.body
+    assert "goal_review_artifact_records</dt><dd>26" in goal.body
     assert "goal_review_proof_items</dt><dd>" in goal.body
-    assert "goal_review_available_artifacts</dt><dd>22" in goal.body
+    assert "goal_review_available_artifacts</dt><dd>26" in goal.body
     assert "goal_review_missing_artifacts</dt><dd>0" in goal.body
     assert "goal_review_latest_artifact</dt><dd>CI snapshot proof demo-goal-ci" in goal.body
     assert "goal_review_latest_artifact_kind</dt><dd>json" in goal.body
@@ -20698,19 +20698,19 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-artifact-list='true'" in goal.body
     assert "<a href='#goal-artifact-command-bar'>Artifact command</a>" in goal.body
     assert "Goal artifact command evidence" in goal.body
-    assert "Detailed artifact list (22)" in goal.body
+    assert "Detailed artifact list (26)" in goal.body
     assert f"goal_artifact_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_artifact_command_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_artifact_command_status</dt><dd>available" in goal.body
-    assert "goal_artifact_command_items</dt><dd>22" in goal.body
-    assert "goal_artifact_command_records</dt><dd>22" in goal.body
-    assert "goal_artifact_command_available_records</dt><dd>22" in goal.body
+    assert "goal_artifact_command_items</dt><dd>26" in goal.body
+    assert "goal_artifact_command_records</dt><dd>26" in goal.body
+    assert "goal_artifact_command_available_records</dt><dd>26" in goal.body
     assert "goal_artifact_command_missing_records</dt><dd>0" in goal.body
-    assert "goal_artifact_command_markdown_artifacts</dt><dd>5" in goal.body
-    assert "goal_artifact_command_json_artifacts</dt><dd>11" in goal.body
+    assert "goal_artifact_command_markdown_artifacts</dt><dd>7" in goal.body
+    assert "goal_artifact_command_json_artifacts</dt><dd>13" in goal.body
     assert "goal_artifact_command_patch_artifacts</dt><dd>1" in goal.body
     assert "goal_artifact_command_text_artifacts</dt><dd>5" in goal.body
-    assert "goal_artifact_command_sources</dt><dd>ci_snapshot_evidence:1, coder_prep:3, coder_run:10, delegation:1, delegation_metadata:4, worktree_plan:3" in goal.body
+    assert "goal_artifact_command_sources</dt><dd>ci_snapshot_evidence:1, coder_prep:3, coder_run:10, delegation:1, delegation_metadata:4, worktree_approval:4, worktree_plan:3" in goal.body
     assert "goal_artifact_command_latest_artifact</dt><dd>CI snapshot proof demo-goal-ci" in goal.body
     assert "goal_artifact_command_latest_kind</dt><dd>json" in goal.body
     assert "goal_artifact_command_latest_source</dt><dd>ci_snapshot_evidence" in goal.body
@@ -20759,7 +20759,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-artifact-filter-memory='true'" in goal.body
     assert "data-goal-artifact-filter-view-status='true'>View: default</span>" in goal.body
     assert "data-goal-artifact-filter-reset='true'>Reset filter</button>" in goal.body
-    assert "data-goal-artifact-filter-status='true'>Showing 22 of 22 artifacts.</p>" in goal.body
+    assert "data-goal-artifact-filter-status='true'>Showing 26 of 26 artifacts.</p>" in goal.body
     assert "data-goal-artifact-filter-empty='true' hidden" in goal.body
     assert "data-goal-artifact-filter-evidence='true'" in goal.body
     assert "Goal Artifact Reader" in goal.body
@@ -20786,13 +20786,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-artifact-reader-previews='true'" in goal.body
     assert (
         goal.body.count("<article class='goal-artifact-preview' data-goal-artifact-preview='true'")
-        == 22
+        == 26
     )
     assert f"goal_artifact_reader_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_artifact_reader_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_artifact_reader_status</dt><dd>available" in goal.body
-    assert "goal_artifact_reader_total_records</dt><dd>22" in goal.body
-    assert "goal_artifact_reader_preview_records</dt><dd>22" in goal.body
+    assert "goal_artifact_reader_total_records</dt><dd>26" in goal.body
+    assert "goal_artifact_reader_preview_records</dt><dd>26" in goal.body
     assert "goal_artifact_reader_selected_artifact</dt><dd>CI snapshot proof demo-goal-ci" in goal.body
     assert f"goal_artifact_reader_selected_path</dt><dd>{ci_evidence_relative}" in goal.body
     assert "review.md" in goal.body
@@ -20847,13 +20847,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_artifact_filter_scope</dt><dd>browser_local_rendered_artifacts" in goal.body
     assert f"goal_artifact_filter_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_artifact_filter_project</dt><dd>{result.project_id}" in goal.body
-    assert "goal_artifact_filter_total_records</dt><dd>22" in goal.body
-    assert "goal_artifact_filter_markdown_artifacts</dt><dd>5" in goal.body
-    assert "goal_artifact_filter_json_artifacts</dt><dd>11" in goal.body
+    assert "goal_artifact_filter_total_records</dt><dd>26" in goal.body
+    assert "goal_artifact_filter_markdown_artifacts</dt><dd>7" in goal.body
+    assert "goal_artifact_filter_json_artifacts</dt><dd>13" in goal.body
     assert "goal_artifact_filter_patch_artifacts</dt><dd>1" in goal.body
     assert "goal_artifact_filter_text_artifacts</dt><dd>5" in goal.body
-    assert "goal_artifact_filter_sources</dt><dd>ci_snapshot_evidence=1, coder_prep=3, coder_run=10, delegation=1, delegation_metadata=4, worktree_plan=3" in goal.body
-    assert "goal_artifact_filter_source_count</dt><dd>6" in goal.body
+    assert "goal_artifact_filter_sources</dt><dd>ci_snapshot_evidence=1, coder_prep=3, coder_run=10, delegation=1, delegation_metadata=4, worktree_approval=4, worktree_plan=3" in goal.body
+    assert "goal_artifact_filter_source_count</dt><dd>7" in goal.body
     assert "goal_artifact_filter_source</dt><dd>data-goal-artifact-item" in goal.body
     assert "goal_artifact_filter_persistence</dt><dd>browser_local_view_memory" in goal.body
     assert (
@@ -27135,6 +27135,44 @@ def test_coder_worktree_approval_and_run_capture_bounded_evidence(
     assert request_payload["source_plan_sha256"]
     assert "agent_os/delegation_runner.py" in request_payload["allowed_files"]
     assert (request_artifact.parent / "coder_worktree_approval_request.md").exists()
+
+    legacy_request_payload = dict(request_payload)
+    legacy_request_payload.pop("source_coder_worktree_plan_md", None)
+    legacy_request_payload.pop("source_plan_md_sha256", None)
+    legacy_request_payload.pop("source_coder_worktree_plan_markdown_consumed", None)
+    request_artifact.write_text(
+        json.dumps(legacy_request_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-worktree-approval",
+                delegation_id,
+                "--requested-by",
+                "operator",
+                "--note",
+                "Approve bounded worktree execution",
+            ]
+        )
+        == 0
+    )
+    duplicate_output = capsys.readouterr().out
+    assert "coder_worktree_approval: already_recorded" not in duplicate_output
+    replacement_approval_id = next(
+        line.split(": ", 1)[1]
+        for line in duplicate_output.splitlines()
+        if line.startswith("approval_id: ")
+    )
+    assert replacement_approval_id != approval_id
+    approval_id = replacement_approval_id
+    request_payload = json.loads(request_artifact.read_text(encoding="utf-8"))
+    assert request_payload["source_coder_worktree_plan_md"]
+    assert request_payload["source_plan_md_sha256"]
+    assert request_payload["source_coder_worktree_plan_markdown_consumed"] is True
 
     assert (
         main(
