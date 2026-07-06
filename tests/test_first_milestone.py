@@ -12869,6 +12869,104 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     )
     assert next_goal_workspace["updated_by"] == "create-goal"
 
+    today_after_next_goal = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal.status == 200
+    assert f"today_command_goal</dt><dd><a href='/goals/{next_goal_id}'" in today_after_next_goal.body
+    assert "today_command_primary_action</dt><dd>Create scout delegation" in today_after_next_goal.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Create scout delegation</a>"
+    ) in today_after_next_goal.body
+    assert "data-today-current-action='true'" in today_after_next_goal.body
+    assert "Today Completed Goal Provenance" in today_after_next_goal.body
+    assert "data-today-completed-goal-provenance='true'" in today_after_next_goal.body
+    assert (
+        "today_completed_goal_provenance_source_goal_id</dt><dd>"
+        + created_goal_id
+        in today_after_next_goal.body
+    )
+    assert (
+        "today_completed_goal_provenance_current_goal_id</dt><dd>"
+        + next_goal_id
+        in today_after_next_goal.body
+    )
+    assert (
+        "today_completed_goal_provenance_current_action</dt><dd>Create scout delegation"
+        in today_after_next_goal.body
+    )
+    assert (
+        "today_completed_goal_provenance_current_surface</dt><dd>"
+        "<a href='#today-current-action'>Create scout delegation</a>"
+        in today_after_next_goal.body
+    )
+    assert (
+        "today_completed_goal_provenance_previous_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+        in today_after_next_goal.body
+    )
+    assert (
+        "today_completed_goal_provenance_previous_artifact</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in today_after_next_goal.body
+    )
+    assert "today_completed_goal_provenance_write_on_get</dt><dd>false" in today_after_next_goal.body
+    assert (
+        "today_completed_goal_next_goal_form_available</dt><dd>true"
+        not in today_after_next_goal.body
+    )
+
+    resume_after_next_goal = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal.status == 200
+    assert (
+        "resume_return_brief_goal_id</dt><dd>"
+        + next_goal_id
+        in resume_after_next_goal.body
+    )
+    assert "resume_return_brief_next_action</dt><dd>Create scout delegation" in resume_after_next_goal.body
+    assert "resume_workbench_next_action</dt><dd>Create scout delegation" in resume_after_next_goal.body
+    assert (
+        "resume_workbench_primary_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Create scout delegation</a>"
+        in resume_after_next_goal.body
+    )
+    assert "id='resume-workbench-action-form'" in resume_after_next_goal.body
+    assert "Resume Completed Goal Provenance" in resume_after_next_goal.body
+    assert "data-resume-completed-goal-provenance='true'" in resume_after_next_goal.body
+    assert (
+        "resume_completed_goal_provenance_source_goal_id</dt><dd>"
+        + created_goal_id
+        in resume_after_next_goal.body
+    )
+    assert (
+        "resume_completed_goal_provenance_current_goal_id</dt><dd>"
+        + next_goal_id
+        in resume_after_next_goal.body
+    )
+    assert (
+        "resume_completed_goal_provenance_current_action</dt><dd>Create scout delegation"
+        in resume_after_next_goal.body
+    )
+    assert (
+        "resume_completed_goal_provenance_current_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Create scout delegation</a>"
+        in resume_after_next_goal.body
+    )
+    assert (
+        "resume_completed_goal_provenance_previous_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+        in resume_after_next_goal.body
+    )
+    assert (
+        "resume_completed_goal_provenance_previous_artifact</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in resume_after_next_goal.body
+    )
+    assert "resume_completed_goal_provenance_write_on_get</dt><dd>false" in resume_after_next_goal.body
+    assert (
+        "resume_completed_goal_next_goal_form_available</dt><dd>true"
+        not in resume_after_next_goal.body
+    )
+
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
     AgentSystem(tmp_path).initialize()

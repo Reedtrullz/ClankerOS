@@ -1,5 +1,52 @@
 # Status
 
+## 2026-07-06 Post-Next-Goal Today And Resume Provenance
+
+- Completed the selected slice for post-next-Goal creation `/today` and
+  `/resume` continuation.
+- After a confirmed next-Goal creation from a completed Goal handoff, `/today`
+  now keeps the successor Goal's current action as the primary continuation at
+  `#today-current-action` and `/resume` keeps the same action in
+  `#resume-workbench-action-form`.
+- Both routes now render read-only `Completed Goal Provenance` panels sourced
+  from `.clanker/app/workspace.json`
+  `completed_goal_handoff_source_goal`,
+  `completed_goal_handoff_previous_resume_surface`, and
+  `completed_goal_handoff_previous_artifact`. The panels link the completed
+  source Goal, previous daily resume surface, carried artifact, and current
+  successor Goal action.
+- The old completed-handoff next-Goal creation panel is suppressed once the
+  carried handoff has an active successor Goal, so the browser surfaces do not
+  keep presenting "create another Goal" as the continuation.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  once the successor Goal's first confirmed action produces its own evidence,
+  completed-Goal provenance should move into durable Goal history while
+  `/today` and `/resume` stay focused on the successor Goal's newest evidence
+  and action.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because `/today` did not render
+    `Today Completed Goal Provenance`.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 58.92s after the implementation cleanup.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 7.28s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 25.78s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed in 42.91s.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal history
+    and focused resume slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+- Non-claim: this slice is read-only on GET and adds no new action authority.
+  It does not create projects, create Goals, run work, push, deploy, create
+  PRs, call providers, use app-side network actions, or mutate external
+  systems from ClankerOS.
+
 ## 2026-07-06 Post-Completion Same-Page Next Goal Creation
 
 - Completed the selected slice for post-completion `/today` and `/resume`

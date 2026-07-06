@@ -159,6 +159,13 @@ Core layers for the bootstrap:
   moving the active resume target to the new Goal's current action. It still
   requires the normal confirmation page and does not push, create PRs, deploy,
   call providers, use app-side network actions, or create external effects.
+  Once that successor Goal exists, `/today` and `/resume` keep the successor
+  Goal's current action as the primary continuation: `/today` points Do Now at
+  `#today-current-action`, `/resume` opens the same action in
+  `#resume-workbench-action-form`, and both routes render a read-only
+  completed-Goal provenance panel that links the completed source Goal,
+  previous resume surface, and carried artifact without reopening the old
+  next-Goal creation gate or writing on GET.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only

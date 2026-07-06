@@ -2974,6 +2974,12 @@ def _today_page(root: Path) -> str:
         "</details>",
         "</section>",
         _today_command_center(root, storage, lead_goal),
+        _completed_goal_handoff_provenance_panel(
+            root,
+            storage,
+            prefix="today",
+            title="Today Completed Goal Provenance",
+        ),
         _completed_goal_handoff_panel(
             root,
             storage,
@@ -3029,6 +3035,8 @@ def _completed_goal_handoff_state(
     lead_goal: sqlite3.Row | None,
 ) -> tuple[dict[str, Any] | None, str, dict[str, str]]:
     workspace = _load_workspace_state(root)
+    if _workspace_has_active_completed_goal_successor(root, storage, workspace):
+        return None, "completed_goal_handoff_provenance", workspace
     candidates: list[tuple[str, str]] = []
     saved_goal = str(workspace.get("open_goal") or "").strip()
     if saved_goal:
@@ -3049,6 +3057,24 @@ def _completed_goal_handoff_state(
         if goal is not None and goal.status == "completed":
             return state, source, workspace
     return None, "none", workspace
+
+
+def _workspace_has_active_completed_goal_successor(
+    root: Path,
+    storage: Storage,
+    workspace: dict[str, str],
+) -> bool:
+    source_goal_id = str(workspace.get("completed_goal_handoff_source_goal") or "").strip()
+    current_goal_id = str(workspace.get("open_goal") or "").strip()
+    if not source_goal_id or not current_goal_id or source_goal_id == current_goal_id:
+        return False
+    source_state = _goal_state(root, storage, source_goal_id)
+    current_state = _goal_state(root, storage, current_goal_id)
+    source_goal = source_state.get("goal")
+    current_goal = current_state.get("goal")
+    if source_goal is None or current_goal is None:
+        return False
+    return source_goal.status == "completed" and current_goal.status != "completed"
 
 
 def _completed_goal_handoff_panel(
@@ -3241,6 +3267,252 @@ def _completed_goal_handoff_panel(
                     ),
                     f"{prefix}_completed_goal_artifact: {_artifact_link(latest_artifact) if latest_artifact else 'none'}",
                     f"{prefix}_completed_goal_safety: read-only handoff; confirmed create-goal form owns next Goal creation",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _completed_goal_handoff_provenance_panel(
+    root: Path,
+    storage: Storage,
+    *,
+    prefix: str,
+    title: str,
+) -> str:
+    workspace = _load_workspace_state(root)
+    source_goal_id = str(workspace.get("completed_goal_handoff_source_goal") or "").strip()
+    current_goal_id = str(workspace.get("open_goal") or "").strip()
+    if not source_goal_id or not current_goal_id or source_goal_id == current_goal_id:
+        return ""
+    source_state = _goal_state(root, storage, source_goal_id)
+    current_state = _goal_state(root, storage, current_goal_id)
+    source_goal = source_state.get("goal")
+    current_goal = current_state.get("goal")
+    if (
+        source_goal is None
+        or current_goal is None
+        or source_goal.status != "completed"
+        or current_goal.status == "completed"
+    ):
+        return ""
+
+    action = _goal_next_action(root, current_state)
+    form_available = bool(_goal_next_action_form(current_state, action))
+    if prefix == "today":
+        current_href = "#today-current-action" if form_available else action.href
+        current_label = action.action if form_available else action.href
+    elif prefix == "resume":
+        current_href = (
+            "#resume-workbench-action-form"
+            if form_available
+            else _goal_primary_action_href(
+                current_state,
+                action,
+                form_available=False,
+                absolute=True,
+            )
+        )
+        current_label = _goal_action_cta_label(action, form_available)
+    else:
+        current_href = _goal_primary_action_href(
+            current_state,
+            action,
+            form_available=form_available,
+            absolute=True,
+        )
+        current_label = _goal_action_cta_label(action, form_available)
+
+    previous_resume_surface = (
+        _safe_local_return_path(
+            workspace.get("completed_goal_handoff_previous_resume_surface")
+        )
+        or ""
+    )
+    previous_artifact = str(
+        workspace.get("completed_goal_handoff_previous_artifact") or ""
+    ).strip()
+    if not previous_artifact:
+        previous_artifact = _goal_latest_artifact_path(root, source_state)
+    saved_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
+    project_id = str(current_goal.project_id or workspace.get("open_project") or "").strip()
+    _source_href, source_label, source_label_source, source_surface = _goal_display_link(
+        root,
+        source_goal_id,
+    )
+    _current_href, current_goal_label, current_label_source, current_goal_surface = (
+        _goal_display_link(root, current_goal_id)
+    )
+    project_surface: str | SafeHtml = (
+        SafeHtml(f"<a href='/projects/{quote(project_id)}'>{_e(project_id)}</a>")
+        if project_id
+        else "none"
+    )
+    previous_resume_value: str | SafeHtml = (
+        SafeHtml(
+            f"<a href='{_e(previous_resume_surface)}'>{_e(previous_resume_surface)}</a>"
+        )
+        if previous_resume_surface
+        else "none"
+    )
+    previous_artifact_value: str | SafeHtml = (
+        SafeHtml(_artifact_link(previous_artifact)) if previous_artifact else "none"
+    )
+    source_evidence_href = f"/goals/{quote(source_goal_id)}#goal-completion-readiness"
+    current_surface = SafeHtml(
+        f"<a href='{_e(current_href)}'>{_e(current_label)}</a>"
+    )
+    source_evidence_surface = SafeHtml(
+        f"<a href='{_e(source_evidence_href)}'>Completed Goal evidence</a>"
+    )
+    data_attr = f"data-{prefix}-completed-goal-provenance"
+    section_id = f"{prefix}-completed-goal-provenance"
+    return "".join(
+        [
+            (
+                f"<section id='{_e(section_id)}' "
+                "class='panel completed-goal-provenance' "
+                f"{data_attr}='true'>"
+            ),
+            f"<h2>{_e(title)}</h2>",
+            "<p class='muted'>The next Goal is now the primary continuation. This provenance keeps the completed Goal handoff source visible without reopening the old next-Goal creation gate.</p>",
+            "<div class='today-ci-merge-grid completed-goal-provenance-grid' data-completed-goal-provenance-actions='true'>",
+            "<article class='today-ci-merge-card today-ci-merge-primary' data-completed-goal-provenance-card='continue'>",
+            "<h3>Continue</h3>",
+            f"<strong>{_e(action.action)}</strong>",
+            f"<p>{_e(current_goal_label or current_goal_id)}</p>",
+            f"<a class='today-ci-merge-action' href='{_e(current_href)}'>{_e(current_label)}</a>",
+            "</article>",
+            "<article class='today-ci-merge-card' data-completed-goal-provenance-card='source'>",
+            "<h3>From</h3>",
+            f"<strong>{_e(source_label or source_goal_id)}</strong>",
+            "<p>Completed Goal handoff source.</p>",
+            f"<a class='today-ci-merge-link' href='{_e(source_evidence_href)}'>Completed Goal evidence</a>",
+            "</article>",
+            "<article class='today-ci-merge-card' data-completed-goal-provenance-card='proof'>",
+            "<h3>Prior Proof</h3>",
+            f"<strong>{_e(previous_resume_surface or 'none')}</strong>",
+            "<p>Previous resume point and artifact carried forward.</p>",
+            (
+                f"<a class='today-ci-merge-link' href='{_e(previous_resume_surface)}'>Open prior resume</a>"
+                if previous_resume_surface
+                else "<span class='muted'>No prior resume surface</span>"
+            ),
+            "</article>",
+            "</div>",
+            "<details class='completed-goal-provenance-evidence' data-completed-goal-provenance-evidence='true'><summary>Completed Goal provenance evidence</summary>",
+            _kv(
+                [
+                    (f"{prefix}_completed_goal_provenance_status", "available"),
+                    (
+                        f"{prefix}_completed_goal_provenance_source",
+                        "workspace_completed_goal_handoff",
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_source_goal_id",
+                        source_goal_id,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_source_goal_label",
+                        source_label or source_goal_id,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_source_goal_label_source",
+                        source_label_source,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_source_goal",
+                        source_surface,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_source_evidence",
+                        source_evidence_surface,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_current_goal_id",
+                        current_goal_id,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_current_goal_label",
+                        current_goal_label or current_goal_id,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_current_goal_label_source",
+                        current_label_source,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_current_goal",
+                        current_goal_surface,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_project",
+                        project_surface,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_current_action",
+                        action.action,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_current_surface",
+                        current_surface,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_action_form_available",
+                        str(form_available).lower(),
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_previous_resume_surface",
+                        previous_resume_value,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_previous_artifact",
+                        previous_artifact_value,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_saved_resume_surface",
+                        SafeHtml(
+                            f"<a href='{_e(saved_resume_surface)}'>{_e(saved_resume_surface)}</a>"
+                        )
+                        if saved_resume_surface
+                        else "none",
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_write_on_get",
+                        "false",
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_provider_calls_taken",
+                        "0",
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_network_actions_taken",
+                        "0",
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_external_effects_created",
+                        "false",
+                    ),
+                ]
+            ),
+            _ul(
+                [
+                    f"{prefix}_completed_goal_provenance_continue: <a href='{_e(current_href)}'>{_e(current_label)}</a>",
+                    f"{prefix}_completed_goal_provenance_source: <a href='{_e(source_evidence_href)}'>Completed Goal evidence</a>",
+                    (
+                        f"{prefix}_completed_goal_provenance_previous_resume: "
+                        f"<a href='{_e(previous_resume_surface)}'>{_e(previous_resume_surface)}</a>"
+                        if previous_resume_surface
+                        else f"{prefix}_completed_goal_provenance_previous_resume: none"
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_previous_artifact: "
+                        f"{_artifact_link(previous_artifact)}"
+                        if previous_artifact
+                        else f"{prefix}_completed_goal_provenance_previous_artifact: none"
+                    ),
+                    f"{prefix}_completed_goal_provenance_safety: read-only provenance; current Goal action owns continuation",
                 ]
             ),
             "</details>",
@@ -9956,6 +10228,12 @@ def _resume_page(root: Path) -> str:
             "</details>",
             "</section>",
             _resume_today_brief(root, state, open_project, open_goal, filters, expanded, last_artifact),
+            _completed_goal_handoff_provenance_panel(
+                root,
+                _storage(root),
+                prefix="resume",
+                title="Resume Completed Goal Provenance",
+            ),
             _completed_goal_handoff_panel(
                 root,
                 _storage(root),

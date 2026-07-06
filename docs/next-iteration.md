@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_f1252d5190cc
+- Packet ID: iteration_ccda3ae60eb6
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Make post-next-Goal creation `/today` and `/resume` surface the new Goal's current action as the primary continuation while keeping the carried completed-Goal handoff source visible as provenance.
+Advance the Agent System north-star goal by completing: Make the successor Goal's first confirmed action move completed-Goal provenance into durable Goal history while keeping `/today` and `/resume` focused on the successor Goal's newest evidence and action.
 
 ## Definition Of Done
 
