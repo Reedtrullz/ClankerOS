@@ -261,6 +261,18 @@ Core layers for the bootstrap:
   `Commit approved worktree` form, and `/today`, `/resume`, and the successor
   Goal page advance to `Commit approved worktree` while retaining
   `completed-goal-provenance.md` as durable history.
+  When the successor approved local commit is then created from either daily
+  surface, `commit-coder-worktree` consumes
+  `coder_commit/coder_commit_decision.md` as proof before staging reviewed
+  allowed files. The local commit artifacts and browser result expose the
+  decision JSON/Markdown paths and hashes plus
+  `source_coder_commit_decision_markdown_consumed: true`, while keeping
+  `push_created`, `pr_created`, and `deploy_created` false and external
+  effect counters at zero. The local commit Markdown becomes the active
+  workspace artifact, the original daily return surface is preserved for the
+  embedded `Create publication request` form, and `/today`, `/resume`, and the
+  successor Goal page advance to `Create publication request` while retaining
+  `completed-goal-provenance.md` as durable history.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only
@@ -1939,14 +1951,17 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   dedicated `coder_commit/coder_commit_request.json/.md` request without
   staging or committing. `approve-coder-commit` records the operator decision
   in `coder_commit/coder_commit_decision.json/.md` without staging or
-  committing. `commit-coder-worktree` re-checks source hashes, branch/HEAD,
-  changed files, outside files, commit message, and verifier state before
-  staging only reviewed allowed files and creating one local git commit in the
-  isolated worktree branch. It records `coder_commit/commit.json`,
-  `pre_commit_status.txt`, `post_commit_status.txt`, `committed_diff.patch`,
-  `committed_files.json`, and a committed local effect that can feed
-  `github-handoff <effect_id>`. It never pushes, creates a PR, deploys, calls
-  providers, or mutates external systems. A committed coder worktree run can
+  committing. `commit-coder-worktree` consumes
+  `coder_commit/coder_commit_decision.json/.md` as approval proof, then
+  re-checks source hashes, branch/HEAD, changed files, outside files, commit
+  message, and verifier state before staging only reviewed allowed files and
+  creating one local git commit in the isolated worktree branch. It records
+  the consumed decision JSON/Markdown paths and hashes in
+  `coder_commit/commit.json/.md`, plus `pre_commit_status.txt`,
+  `post_commit_status.txt`, `committed_diff.patch`, `committed_files.json`,
+  and a committed local effect that can feed `github-handoff <effect_id>`. It
+  never pushes, creates a PR, deploys, calls providers, or mutates external
+  systems. A committed coder worktree run can
   then enter `coder-publication-request <coder_worktree_run_id>`, which
   validates the local commit artifact, commit SHA, safe worktree, safe remote
   and target branch names, committed-file bounds, zero push/PR/deploy

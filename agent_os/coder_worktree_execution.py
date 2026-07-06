@@ -155,6 +155,11 @@ class CoderWorktreeCommitResult:
     parent_commit_sha: str | None = None
     effect_id: str | None = None
     alias_evidence_path: str | None = None
+    source_coder_commit_decision: str | None = None
+    source_coder_commit_decision_md: str | None = None
+    source_commit_decision_sha256: str | None = None
+    source_commit_decision_md_sha256: str | None = None
+    source_coder_commit_decision_markdown_consumed: bool = False
 
 
 def request_coder_worktree_approval(
@@ -1062,6 +1067,7 @@ def promote_coder_worktree_commit(
         raise CoderWorktreeCommitError(f"commit approval not found: {approval_id}")
     if approval.status == "committed":
         _ensure_recorded_commit_exists(approval)
+        local_commit_payload = _load_coder_local_commit_payload(root, approval)
         return CoderWorktreeCommitResult(
             approval=approval,
             status="already_committed",
@@ -1072,9 +1078,39 @@ def promote_coder_worktree_commit(
             alias_evidence_path=str(
                 (_coder_commit_dir(root, approval) / "commit.json").relative_to(root)
             ),
+            source_coder_commit_decision=local_commit_payload.get(
+                "source_coder_commit_decision"
+            ),
+            source_coder_commit_decision_md=local_commit_payload.get(
+                "source_coder_commit_decision_md"
+            ),
+            source_commit_decision_sha256=local_commit_payload.get(
+                "source_commit_decision_sha256"
+            ),
+            source_commit_decision_md_sha256=local_commit_payload.get(
+                "source_commit_decision_md_sha256"
+            ),
+            source_coder_commit_decision_markdown_consumed=(
+                local_commit_payload.get(
+                    "source_coder_commit_decision_markdown_consumed"
+                )
+                is True
+            ),
         )
     if approval.status != "approved":
         raise CoderWorktreeCommitError("approval is not approved")
+    try:
+        decision_proof = _load_commit_decision_proof(root, approval)
+    except CoderWorktreeCommitError as error:
+        _block_commit_approval(
+            root,
+            storage,
+            approval,
+            failure_class="missing_commit_decision_proof",
+            detail=str(error),
+            verification_exit_code=None,
+        )
+        raise
 
     run = get_coder_worktree_run(storage, approval.run_id)
     if run is None:
@@ -1385,6 +1421,22 @@ def promote_coder_worktree_commit(
         "changed_files": approval.changed_files,
         "committed_files": committed_files,
         "commit_message": commit_message,
+        "source_coder_commit_decision": decision_proof[
+            "source_coder_commit_decision"
+        ],
+        "source_coder_commit_decision_md": decision_proof[
+            "source_coder_commit_decision_md"
+        ],
+        "source_commit_decision_sha256": decision_proof[
+            "source_commit_decision_sha256"
+        ],
+        "source_commit_decision_md_sha256": decision_proof[
+            "source_commit_decision_md_sha256"
+        ],
+        "source_coder_commit_decision_markdown_consumed": True,
+        "source_coder_commit_decision_markdown_excerpt": decision_proof[
+            "markdown_excerpt"
+        ],
         "source_coder_worktree_run_sha256": approval.source_coder_worktree_run_sha256,
         "source_diff_sha256": approval.source_diff_sha256,
         "verification_command": verification_command,
@@ -1415,6 +1467,22 @@ def promote_coder_worktree_commit(
         "branch_name": approval.branch_name,
         "commit_request_id": approval.id,
         "commit_approval_id": approval.id,
+        "source_coder_commit_decision": decision_proof[
+            "source_coder_commit_decision"
+        ],
+        "source_coder_commit_decision_md": decision_proof[
+            "source_coder_commit_decision_md"
+        ],
+        "source_commit_decision_sha256": decision_proof[
+            "source_commit_decision_sha256"
+        ],
+        "source_commit_decision_md_sha256": decision_proof[
+            "source_commit_decision_md_sha256"
+        ],
+        "source_coder_commit_decision_markdown_consumed": True,
+        "source_coder_commit_decision_markdown_excerpt": decision_proof[
+            "markdown_excerpt"
+        ],
         "commit_sha": commit_sha,
         "parent_commit_sha": parent_commit_sha,
         "commit_message": commit_message,
@@ -1471,6 +1539,17 @@ def promote_coder_worktree_commit(
         parent_commit_sha=parent_commit_sha,
         effect_id=effect.id,
         alias_evidence_path=str((coder_commit_dir / "commit.json").relative_to(root)),
+        source_coder_commit_decision=decision_proof["source_coder_commit_decision"],
+        source_coder_commit_decision_md=decision_proof[
+            "source_coder_commit_decision_md"
+        ],
+        source_commit_decision_sha256=decision_proof[
+            "source_commit_decision_sha256"
+        ],
+        source_commit_decision_md_sha256=decision_proof[
+            "source_commit_decision_md_sha256"
+        ],
+        source_coder_commit_decision_markdown_consumed=True,
     )
 
 
@@ -1906,6 +1985,7 @@ def render_commit_coder_worktree_cli_lines(
     evidence_path = result.alias_evidence_path or str(
         (_coder_commit_dir(root.resolve(), approval) / "commit.json").relative_to(root.resolve())
     )
+    payload = _load_coder_local_commit_payload(root.resolve(), approval)
     return [
         f"commit_coder_worktree: {result.status}",
         f"commit_request_id: {approval.id}",
@@ -1920,6 +2000,16 @@ def render_commit_coder_worktree_cli_lines(
         f"worktree_path: {approval.worktree_path}",
         f"branch_name: {approval.branch_name}",
         f"committed_files: {','.join(approval.changed_files) or 'none'}",
+        "source_coder_commit_decision: "
+        f"{payload.get('source_coder_commit_decision', result.source_coder_commit_decision or 'missing')}",
+        "source_coder_commit_decision_md: "
+        f"{payload.get('source_coder_commit_decision_md', result.source_coder_commit_decision_md or 'missing')}",
+        "source_commit_decision_sha256: "
+        f"{payload.get('source_commit_decision_sha256', result.source_commit_decision_sha256 or 'missing')}",
+        "source_commit_decision_md_sha256: "
+        f"{payload.get('source_commit_decision_md_sha256', result.source_commit_decision_md_sha256 or 'missing')}",
+        "source_coder_commit_decision_markdown_consumed: "
+        f"{_bool(payload.get('source_coder_commit_decision_markdown_consumed') is True or result.source_coder_commit_decision_markdown_consumed)}",
         f"evidence: {evidence_path}",
         "commit_created: true",
         "push_created: false",
@@ -2071,12 +2161,19 @@ def render_coder_local_commit_dashboard_lines(root: Path) -> list[str]:
     lines: list[str] = []
     for approval in list_coder_worktree_commit_approvals(root, status="committed", limit=10):
         artifact = _coder_commit_dir(root.resolve(), approval) / "commit.json"
+        payload = _load_coder_local_commit_payload(root.resolve(), approval)
         lines.append(
             f"- {approval.id}: delegation={approval.delegation_id} project={approval.project_id} "
             f"coder_worktree_run={approval.run_id} commit={approval.commit_sha or 'none'} "
             f"parent={approval.pre_commit_head} effect={approval.effect_id or 'none'} "
             f"github_handoff_available={_bool(bool(approval.effect_id))} "
             f"committed_files={','.join(approval.changed_files) or 'none'} "
+            "source_commit_decision_md="
+            f"{payload.get('source_coder_commit_decision_md', 'missing')} "
+            "source_commit_decision_md_sha256="
+            f"{payload.get('source_commit_decision_md_sha256', 'missing')} "
+            "source_commit_decision_markdown_consumed="
+            f"{_bool(payload.get('source_coder_commit_decision_markdown_consumed') is True)} "
             f"artifact={artifact.relative_to(root.resolve())} "
             "push_created=false pr_created=false deploy_created=false"
         )
@@ -3238,6 +3335,58 @@ def _load_commit_request_proof(
     }
 
 
+def _load_commit_decision_proof(
+    root: Path,
+    approval: CoderWorktreeCommitApprovalRecord,
+) -> dict[str, Any]:
+    decision_path = _coder_commit_dir(root, approval) / "coder_commit_decision.json"
+    decision_markdown_path = decision_path.with_suffix(".md")
+    try:
+        payload = json.loads(decision_path.read_text(encoding="utf-8"))
+        markdown_text = decision_markdown_path.read_text(encoding="utf-8")
+    except (OSError, json.JSONDecodeError) as error:
+        raise CoderWorktreeCommitError("coder commit decision is not readable") from error
+    if payload.get("kind") != COMMIT_APPROVAL_DECISION_KIND:
+        raise CoderWorktreeCommitError("coder commit decision has unexpected kind")
+    if payload.get("commit_request_id") != approval.id:
+        raise CoderWorktreeCommitError("coder commit decision does not match approval")
+    if payload.get("coder_worktree_run_id") != approval.run_id:
+        raise CoderWorktreeCommitError("coder commit decision does not match run")
+    if payload.get("status") != "approved":
+        raise CoderWorktreeCommitError("coder commit decision is not approved")
+    if payload.get("source_coder_commit_request_markdown_consumed") is not True:
+        raise CoderWorktreeCommitError(
+            "coder commit decision is missing request markdown proof"
+        )
+    if f"- commit_request_id: {approval.id}" not in markdown_text:
+        raise CoderWorktreeCommitError("coder commit decision markdown does not match approval")
+    if "- status: approved" not in markdown_text:
+        raise CoderWorktreeCommitError("coder commit decision markdown is not approved")
+    return {
+        "payload": payload,
+        "markdown_text": markdown_text,
+        "markdown_excerpt": markdown_text[:2000],
+        "source_coder_commit_decision": str(decision_path.relative_to(root)),
+        "source_coder_commit_decision_md": str(decision_markdown_path.relative_to(root)),
+        "source_commit_decision_sha256": _sha256_path(decision_path),
+        "source_commit_decision_md_sha256": hashlib.sha256(
+            markdown_text.encode("utf-8")
+        ).hexdigest(),
+    }
+
+
+def _load_coder_local_commit_payload(
+    root: Path,
+    approval: CoderWorktreeCommitApprovalRecord,
+) -> dict[str, Any]:
+    artifact = _coder_commit_dir(root, approval) / "commit.json"
+    try:
+        payload = json.loads(artifact.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
 def _record_coder_worktree_incident(
     storage: Storage,
     *,
@@ -3278,6 +3427,7 @@ def _commit_failure_class_from_error(error_text: str) -> str:
         ("worktree does not exist", "missing_worktree"),
         ("unsafe_git_state", "unsafe_git_state"),
         ("approved commit request is missing", "missing_commit_request"),
+        ("coder commit decision", "missing_commit_decision_proof"),
         ("approval is not approved", "commit_request_not_approved"),
         ("approval is not pending", "commit_request_not_approved"),
         ("source_hash_mismatch", "source_hash_mismatch"),
@@ -3309,6 +3459,7 @@ def _commit_failure_next_action(failure_class: str) -> str:
         return "review_coder_worktree_run"
     if failure_class in {
         "missing_commit_request",
+        "missing_commit_decision_proof",
         "commit_request_not_approved",
         "source_hash_mismatch",
         "changed_files_mismatch",
@@ -4105,6 +4256,13 @@ def _render_coder_local_commit_markdown(payload: dict[str, Any]) -> str:
             f"- parent_commit_sha: {payload['parent_commit_sha']}",
             f"- branch_name: {payload['branch_name']}",
             f"- worktree_path: {payload['worktree_path']}",
+            f"- source_coder_commit_decision: {payload['source_coder_commit_decision']}",
+            f"- source_coder_commit_decision_md: {payload['source_coder_commit_decision_md']}",
+            f"- source_commit_decision_sha256: {payload['source_commit_decision_sha256']}",
+            "- source_commit_decision_md_sha256: "
+            f"{payload['source_commit_decision_md_sha256']}",
+            "- source_coder_commit_decision_markdown_consumed: "
+            f"{_bool(payload['source_coder_commit_decision_markdown_consumed'] is True)}",
             f"- next_recommended_action: {payload['next_recommended_action']}",
             "",
             "## Committed Files",

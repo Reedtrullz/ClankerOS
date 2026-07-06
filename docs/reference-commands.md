@@ -365,14 +365,17 @@ artifacts and moves the operator workflow to the local commit gate.
 
 `commit-coder-worktree <coder_worktree_run_id> --message <commit_message>` is
 the only command in the coder worktree path that stages files and creates a
-local git commit. It requires an approved matching commit request, blocks if the
-source run hash changed, the worktree path is outside `.agent/worktrees`, the
-branch or HEAD moved, outside files appeared, files outside `allowed_files` are
-already staged, the changed file list differs, the commit message differs, or
-the verifier no longer passes. Use `--use-approved-message` only when the
-operator wants the message stored on the approved request. The command stages
-only reviewed allowed files, re-inspects the staged set before commit, and
-creates one commit in the isolated coder worktree branch. It writes:
+local git commit. It consumes
+`coder_commit/coder_commit_decision.json/.md` as approval proof first, then
+requires an approved matching commit request. It blocks if the decision proof
+is missing or mismatched, the source run hash changed, the worktree path is
+outside `.agent/worktrees`, the branch or HEAD moved, outside files appeared,
+files outside `allowed_files` are already staged, the changed file list
+differs, the commit message differs, or the verifier no longer passes. Use
+`--use-approved-message` only when the operator wants the message stored on
+the approved request. The command stages only reviewed allowed files,
+re-inspects the staged set before commit, and creates one commit in the
+isolated coder worktree branch. It writes:
 
 ```text
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/commit.json
@@ -387,7 +390,11 @@ The local commit records a committed `local_git_commit` effect. Pass the
 printed `effect_id` to `github-handoff <effect_id>` to write local push and
 draft-PR instructions. The handoff still takes `network_actions_taken=0` and
 does not push, create a PR, deploy, call providers, or mutate external
-systems. Compatibility commands remain available as
+systems. `commit.json`, `commit.md`, CLI output, dashboard rows, and browser
+action results include the consumed decision JSON/Markdown paths and hashes
+plus `source_coder_commit_decision_markdown_consumed: true` so the local
+commit remains auditable from the approval decision. Compatibility commands
+remain available as
 `coder-worktree-commit-approval`, `approve-coder-worktree-commit`, and
 `promote-coder-worktree-commit`, but the shorter `coder-commit-request`,
 `approve-coder-commit`, and `commit-coder-worktree` names are the primary

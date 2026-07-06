@@ -1,5 +1,57 @@
 # Status
 
+## 2026-07-06 Successor Goal Local Commit Daily Resume
+
+- Completed the selected slice for successor Goal approved local commits from
+  `/today` and `/resume`.
+- `commit-coder-worktree` now consumes
+  `coder_commit/coder_commit_decision.md` as first-class proof before staging
+  reviewed allowed files. The backend validates the modern decision JSON and
+  Markdown pair, requires the decision to match the commit approval and coder
+  worktree run, and rejects decision payloads missing the upstream request
+  Markdown proof.
+- The generated `coder_commit/commit.json` / `.md` artifacts now record the
+  consumed decision JSON path/hash, decision Markdown path/hash, and
+  `source_coder_commit_decision_markdown_consumed: true`. CLI output, static
+  dashboard rows, the Goal artifact reader, and browser action results expose
+  the same proof fields.
+- Goal artifact registration now includes modern coder commit request,
+  decision, and local commit JSON/Markdown sidecars, so the Goal page can
+  select the local commit Markdown as the newest readable evidence after the
+  local commit gate.
+- Running the local commit from `/resume#resume-workbench-action-form`
+  preserves that return surface for the embedded `Create publication request`
+  form. `/today`, `/resume`, and the successor Goal page all move the primary
+  action to `Create publication request`, while
+  `completed-goal-provenance.md` remains visible as durable history.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal publication requests from `/today` and `/resume` should
+  consume `coder_commit/commit.md` as proof, keep provenance history visible,
+  and move the primary action to `Approve publication`.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/coder_worktree_execution.py agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_commit_coder_worktree_creates_local_commit_effect_and_github_handoff -q --tb=short`:
+    1 passed in 13.89s before the artifact-reader fix, then 1 passed in 3.19s
+    after adding modern commit Markdown sidecars to the Goal artifact
+    registry.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 93.60s after extending the successor Goal flow through the
+    local commit and verifying `/today`, `/resume`, and the Goal page advance
+    to `Create publication request`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_commit_promotion_requires_review_and_is_idempotent -q --tb=short`:
+    1 passed in 3.61s.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal
+    publication-request proof slice and refreshed `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this slice creates only the existing approval-gated local commit
+  inside the isolated coder worktree after confirmed local browser or CLI
+  action. It does not push, create PRs, deploy, call providers, use app-side
+  network actions, mutate external systems, or merge the worktree branch back
+  into the source checkout. Local browser/test proof is not CI, deploy, or
+  live production proof.
+
 ## 2026-07-06 Successor Goal Commit Approval Daily Resume
 
 - Completed the selected slice for successor Goal commit approvals from

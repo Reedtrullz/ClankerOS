@@ -12450,8 +12450,42 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         "<a href='/today?notice=commit_coder_worktree%3A%20committed"
     ) in local_commit_result.body
     assert "#today-current-action'>/today#today-current-action</a>" in local_commit_result.body
+    commit_decision_json = commit_decision_md.with_suffix(".json")
+    assert (
+        "source_coder_commit_decision</dt><dd>"
+        f"<a href='/artifacts?path={commit_decision_json.relative_to(tmp_path)}'>"
+        in local_commit_result.body
+    )
+    assert (
+        "source_coder_commit_decision_md</dt><dd>"
+        f"<a href='/artifacts?path={commit_decision_md.relative_to(tmp_path)}'>"
+        in local_commit_result.body
+    )
+    assert (
+        f"source_commit_decision_md_sha256</dt><dd>{hashlib.sha256(commit_decision_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in local_commit_result.body
+    )
+    assert (
+        "source_coder_commit_decision_markdown_consumed</dt><dd>true"
+        in local_commit_result.body
+    )
+    assert "commit_created</dt><dd>true" in local_commit_result.body
+    assert "push_created</dt><dd>false" in local_commit_result.body
+    assert "pr_created</dt><dd>false" in local_commit_result.body
+    assert "network_actions_taken</dt><dd>0" in local_commit_result.body
     commit_md = tmp_path / Path(commit_approval.source_run_evidence_path) / "coder_commit" / "commit.md"
     assert commit_md.exists()
+    commit_payload = json.loads(commit_md.with_suffix(".json").read_text(encoding="utf-8"))
+    assert commit_payload["source_coder_commit_decision"] == str(
+        commit_decision_json.relative_to(tmp_path)
+    )
+    assert commit_payload["source_coder_commit_decision_md"] == str(
+        commit_decision_md.relative_to(tmp_path)
+    )
+    assert commit_payload["source_commit_decision_md_sha256"] == hashlib.sha256(
+        commit_decision_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert commit_payload["source_coder_commit_decision_markdown_consumed"] is True
     local_commit_workspace = json.loads(
         (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
     )
@@ -14919,6 +14953,156 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     )
     assert "action='/actions/commit-coder-worktree'" in successor_goal_after_commit_decision.body
     assert "completed-goal-provenance.md" in successor_goal_after_commit_decision.body
+
+    next_goal_local_commit_result = render_local_app_route(
+        tmp_path,
+        "/actions/commit-coder-worktree",
+        method="POST",
+        form={
+            "run_id": [next_coder_run.id],
+            "message": [next_goal_commit_message],
+            "committed_by": ["operator"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_local_commit_result.status == 200
+    assert "commit_coder_worktree: committed" in next_goal_local_commit_result.body
+    assert (
+        "action_result_command_label</dt><dd>Commit approved worktree"
+        in next_goal_local_commit_result.body
+    )
+    next_goal_decision_md = next_goal_decision_json.with_suffix(".md")
+    assert (
+        "source_coder_commit_decision</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_decision_json.relative_to(tmp_path)}'>"
+        in next_goal_local_commit_result.body
+    )
+    assert (
+        "source_coder_commit_decision_md</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_decision_md.relative_to(tmp_path)}'>"
+        in next_goal_local_commit_result.body
+    )
+    assert (
+        f"source_commit_decision_md_sha256</dt><dd>{hashlib.sha256(next_goal_decision_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in next_goal_local_commit_result.body
+    )
+    assert (
+        "source_coder_commit_decision_markdown_consumed</dt><dd>true"
+        in next_goal_local_commit_result.body
+    )
+    assert "commit_created</dt><dd>true" in next_goal_local_commit_result.body
+    assert "push_created</dt><dd>false" in next_goal_local_commit_result.body
+    assert "pr_created</dt><dd>false" in next_goal_local_commit_result.body
+    assert "deploy_created</dt><dd>false" in next_goal_local_commit_result.body
+    assert "network_actions_taken</dt><dd>0" in next_goal_local_commit_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Create publication request"
+        in next_goal_local_commit_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_local_commit_result.body
+    assert (
+        "action='/actions/coder-publication-request'"
+        in next_goal_local_commit_result.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_local_commit_result.body
+    )
+
+    next_goal_commit_json = next_goal_decision_json.with_name("commit.json")
+    next_goal_commit_md = next_goal_commit_json.with_suffix(".md")
+    next_goal_commit_payload = json.loads(
+        next_goal_commit_json.read_text(encoding="utf-8")
+    )
+    assert next_goal_commit_payload["source_coder_commit_decision"] == str(
+        next_goal_decision_json.relative_to(tmp_path)
+    )
+    assert next_goal_commit_payload["source_coder_commit_decision_md"] == str(
+        next_goal_decision_md.relative_to(tmp_path)
+    )
+    assert next_goal_commit_payload["source_commit_decision_md_sha256"] == hashlib.sha256(
+        next_goal_decision_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert (
+        next_goal_commit_payload["source_coder_commit_decision_markdown_consumed"]
+        is True
+    )
+    assert next_goal_commit_payload["commit_created"] is True
+    assert next_goal_commit_payload["push_created"] is False
+    assert next_goal_commit_md.exists()
+
+    next_goal_local_commit_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_local_commit_workspace["open_goal"] == next_goal_id
+    assert next_goal_local_commit_workspace["updated_by"] == "commit-coder-worktree"
+    assert next_goal_local_commit_workspace["last_viewed_artifact"] == str(
+        next_goal_commit_md.relative_to(tmp_path)
+    )
+    assert (
+        next_goal_local_commit_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_local_commit_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_local_commit = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_local_commit.status == 200
+    assert (
+        "today_command_primary_action</dt><dd>Create publication request"
+        in today_after_next_goal_local_commit.body
+    )
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Create publication request</a>"
+    ) in today_after_next_goal_local_commit.body
+    assert "action='/actions/coder-publication-request'" in today_after_next_goal_local_commit.body
+    assert f"name='run_id' value='{next_coder_run.id}'" in today_after_next_goal_local_commit.body
+    assert (
+        f"<a href='/artifacts?path={next_goal_commit_md.relative_to(tmp_path)}'>"
+        in today_after_next_goal_local_commit.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_local_commit.body
+
+    resume_after_next_goal_local_commit = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_local_commit.status == 200
+    assert (
+        "resume_return_brief_next_action</dt><dd>Create publication request"
+        in resume_after_next_goal_local_commit.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Create publication request"
+        in resume_after_next_goal_local_commit.body
+    )
+    assert "action='/actions/coder-publication-request'" in resume_after_next_goal_local_commit.body
+    assert f"name='run_id' value='{next_coder_run.id}'" in resume_after_next_goal_local_commit.body
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_commit_md.relative_to(tmp_path)}'>"
+        in resume_after_next_goal_local_commit.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_local_commit.body
+
+    successor_goal_after_local_commit = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_local_commit.status == 200
+    assert (
+        "completed_goal_provenance_history_status</dt><dd>available"
+        in successor_goal_after_local_commit.body
+    )
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_goal_commit_md.relative_to(tmp_path)}"
+        in successor_goal_after_local_commit.body
+    )
+    assert (
+        "recommended_action</dt><dd>Create publication request"
+        in successor_goal_after_local_commit.body
+    )
+    assert "action='/actions/coder-publication-request'" in successor_goal_after_local_commit.body
+    assert "completed-goal-provenance.md" in successor_goal_after_local_commit.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
@@ -29060,6 +29244,8 @@ def test_commit_coder_worktree_creates_local_commit_effect_and_github_handoff(
         run_id,
         commit_message=commit_message,
     )
+    commit_decision_json = evidence_dir / "coder_commit" / "coder_commit_decision.json"
+    commit_decision_md = commit_decision_json.with_suffix(".md")
 
     assert (
         main(
@@ -29104,6 +29290,23 @@ def test_commit_coder_worktree_creates_local_commit_effect_and_github_handoff(
     assert "commit_coder_worktree: committed" in commit_output
     assert f"commit_request_id: {commit_request_id}" in commit_output
     assert f"coder_worktree_run_id: {run_id}" in commit_output
+    assert (
+        f"source_coder_commit_decision: {commit_decision_json.relative_to(tmp_path)}"
+        in commit_output
+    )
+    assert (
+        f"source_coder_commit_decision_md: {commit_decision_md.relative_to(tmp_path)}"
+        in commit_output
+    )
+    assert (
+        f"source_commit_decision_sha256: {hashlib.sha256(commit_decision_json.read_bytes()).hexdigest()}"
+        in commit_output
+    )
+    assert (
+        f"source_commit_decision_md_sha256: {hashlib.sha256(commit_decision_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in commit_output
+    )
+    assert "source_coder_commit_decision_markdown_consumed: true" in commit_output
     assert "push_created: false" in commit_output
     assert "pr_created: false" in commit_output
     effect_id = next(
@@ -29159,11 +29362,27 @@ def test_commit_coder_worktree_creates_local_commit_effect_and_github_handoff(
     assert commit_payload["commit_sha"] == commit_sha
     assert commit_payload["parent_commit_sha"] == parent_sha
     assert commit_payload["commit_message"] == commit_message
+    assert commit_payload["source_coder_commit_decision"] == str(
+        commit_decision_json.relative_to(tmp_path)
+    )
+    assert commit_payload["source_coder_commit_decision_md"] == str(
+        commit_decision_md.relative_to(tmp_path)
+    )
+    assert commit_payload["source_commit_decision_sha256"] == hashlib.sha256(
+        commit_decision_json.read_bytes()
+    ).hexdigest()
+    assert commit_payload["source_commit_decision_md_sha256"] == hashlib.sha256(
+        commit_decision_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert commit_payload["source_coder_commit_decision_markdown_consumed"] is True
     assert commit_payload["committed_files"] == ["agent_os/delegation_runner.py"]
     assert commit_payload["next_recommended_action"] == "github_handoff"
     assert commit_payload["push_created"] is False
     assert commit_payload["pr_created"] is False
-    assert (commit_artifact.parent / "commit.md").exists()
+    commit_markdown = (commit_artifact.parent / "commit.md").read_text(encoding="utf-8")
+    assert f"- source_coder_commit_decision: {commit_decision_json.relative_to(tmp_path)}" in commit_markdown
+    assert f"- source_coder_commit_decision_md: {commit_decision_md.relative_to(tmp_path)}" in commit_markdown
+    assert "- source_coder_commit_decision_markdown_consumed: true" in commit_markdown
     assert (commit_artifact.parent / "pre_commit_status.txt").exists()
     assert (commit_artifact.parent / "post_commit_status.txt").exists()
     assert (commit_artifact.parent / "committed_diff.patch").exists()

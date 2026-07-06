@@ -29174,6 +29174,16 @@ def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, 
             ("commit_artifact", approval.commit_artifact_path),
         ]:
             add(label, path, source="commit")
+            if path:
+                add(f"{label}_markdown", Path(path).with_suffix(".md"), source="commit")
+        coder_commit_dir = Path(approval.source_run_evidence_path) / "coder_commit"
+        for label, path in [
+            ("coder_commit_request", coder_commit_dir / "coder_commit_request.json"),
+            ("coder_commit_decision", coder_commit_dir / "coder_commit_decision.json"),
+            ("coder_local_commit", coder_commit_dir / "commit.json"),
+        ]:
+            add(label, path, source="commit")
+            add(f"{label}_markdown", path.with_suffix(".md"), source="commit")
     for publication in state["publications"]:
         for label, path in [
             ("publication_request", publication.request_artifact_path),
@@ -48117,24 +48127,82 @@ def _handle_post(
             )
         elif action == "commit-coder-worktree":
             run_id = _required(form, "run_id")
-            result = commit_coder_worktree(
+            commit_result = commit_coder_worktree(
                 root,
                 storage,
                 run_id,
                 message=_required(form, "message"),
                 committed_by=_one(form, "committed_by") or "operator",
             )
-            message = f"commit_coder_worktree: {result.status}"
+            commit_payload: dict[str, Any] = {}
+            commit_artifact_path = (
+                root / commit_result.alias_evidence_path
+                if commit_result.alias_evidence_path
+                else root / commit_result.evidence_path
+            )
+            try:
+                commit_payload = json.loads(
+                    commit_artifact_path.read_text(encoding="utf-8")
+                )
+            except (OSError, json.JSONDecodeError):
+                commit_payload = {}
+            result = {
+                "approval": commit_result.approval,
+                "status": commit_result.status,
+                "commit_sha": commit_result.commit_sha,
+                "parent_commit_sha": commit_result.parent_commit_sha,
+                "effect_id": commit_result.effect_id,
+                "evidence_path": commit_result.evidence_path,
+                "alias_evidence_path": commit_result.alias_evidence_path,
+                "source_coder_commit_decision": commit_payload.get(
+                    "source_coder_commit_decision",
+                    commit_result.source_coder_commit_decision or "missing",
+                ),
+                "source_coder_commit_decision_md": commit_payload.get(
+                    "source_coder_commit_decision_md",
+                    commit_result.source_coder_commit_decision_md or "missing",
+                ),
+                "source_commit_decision_sha256": commit_payload.get(
+                    "source_commit_decision_sha256",
+                    commit_result.source_commit_decision_sha256 or "missing",
+                ),
+                "source_commit_decision_md_sha256": commit_payload.get(
+                    "source_commit_decision_md_sha256",
+                    commit_result.source_commit_decision_md_sha256 or "missing",
+                ),
+                "source_coder_commit_decision_markdown_consumed": (
+                    commit_payload.get(
+                        "source_coder_commit_decision_markdown_consumed"
+                    )
+                    is True
+                    or commit_result.source_coder_commit_decision_markdown_consumed
+                ),
+                "bounded_file_validation": commit_payload.get(
+                    "bounded_file_validation",
+                    {},
+                ),
+                "commit_created": commit_payload.get("commit_created") is True,
+                "push_created": commit_payload.get("push_created") is True,
+                "pr_created": commit_payload.get("pr_created") is True,
+                "deploy_created": commit_payload.get("deploy_created") is True,
+                "network_actions_taken": int(
+                    commit_payload.get("network_actions_taken") or 0
+                ),
+                "external_mutations_taken": int(
+                    commit_payload.get("external_mutations_taken") or 0
+                ),
+            }
+            message = f"commit_coder_worktree: {commit_result.status}"
             run_location = f"/runs/{quote(run_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or run_location
             _remember_delegation_workspace(
                 root,
                 storage,
-                result.approval.delegation_id,
+                commit_result.approval.delegation_id,
                 artifact_path=(
-                    Path(result.alias_evidence_path).with_suffix(".md")
-                    if result.alias_evidence_path
-                    else Path(result.evidence_path).with_suffix(".md")
+                    Path(commit_result.alias_evidence_path).with_suffix(".md")
+                    if commit_result.alias_evidence_path
+                    else Path(commit_result.evidence_path).with_suffix(".md")
                 ),
                 updated_by="commit-coder-worktree",
                 resume_surface=location,
