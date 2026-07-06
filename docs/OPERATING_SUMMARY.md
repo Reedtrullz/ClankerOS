@@ -201,6 +201,15 @@ Core layers for the bootstrap:
   for the embedded `Request worktree approval` form, and `/today`, `/resume`,
   and the successor Goal page advance to `Request worktree approval` while
   retaining `completed-goal-provenance.md` as durable history.
+  When the successor worktree approval request is then created from either
+  daily surface, the browser result payload exposes the consumed
+  `coder_worktree_plan.md`, plan JSON and Markdown hashes, generated
+  `coder_worktree_approval_request.json` and Markdown artifacts, pending
+  approval state, and zero-effect counters. The approval-request Markdown
+  becomes the active workspace artifact, the original daily return surface is
+  preserved for the embedded `Approve worktree` form, and `/today`,
+  `/resume`, and the successor Goal page advance to `Approve worktree` while
+  retaining `completed-goal-provenance.md` as durable history.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only

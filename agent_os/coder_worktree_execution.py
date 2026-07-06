@@ -175,6 +175,15 @@ def request_coder_worktree_approval(
         plan_path,
         plan_payload,
     )
+    plan_markdown_path = plan_path.with_suffix(".md")
+    try:
+        plan_markdown = plan_markdown_path.read_text(encoding="utf-8")
+    except OSError as error:
+        raise CoderWorktreeApprovalError(
+            "coder worktree plan markdown is not readable"
+        ) from error
+    source_plan_md = str(plan_markdown_path.relative_to(root))
+    plan_markdown_sha = hashlib.sha256(plan_markdown.encode("utf-8")).hexdigest()
 
     existing = None if force_new else _latest_approval_for_plan(storage, delegation_id, plan_sha)
     if existing is not None:
@@ -193,8 +202,12 @@ def request_coder_worktree_approval(
         "project_id": project_id,
         "source_run_id": source_run_id,
         "source_coder_worktree_plan": str(plan_path.relative_to(root)),
+        "source_coder_worktree_plan_md": source_plan_md,
         "source_plan_sha256": plan_sha,
+        "source_plan_md_sha256": plan_markdown_sha,
         "source_coder_prep_md_sha256": prep_sha,
+        "source_coder_worktree_plan_markdown_consumed": True,
+        "source_coder_worktree_plan_markdown_excerpt": plan_markdown[:2000],
         "allowed_files": allowed_files,
         "proposed_worktree": {
             "path_suggestion": proposed_worktree.get("path_suggestion", "none"),
@@ -213,6 +226,15 @@ def request_coder_worktree_approval(
         "note": note,
         "status": "pending_operator_approval",
         "requested_at": now,
+        "worktrees_created": 0,
+        "source_edits_taken": 0,
+        "commands_run": 0,
+        "commit_created": False,
+        "push_created": False,
+        "deploy_created": False,
+        "provider_calls_taken_by_clankeros": 0,
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
         "non_claims": [
             "Coder worktree approval does not create a worktree.",
             "Coder worktree approval does not run commands or edit source files.",
@@ -1479,6 +1501,8 @@ def render_coder_worktree_approval_cli_lines(
         f"delegation_id: {approval.delegation_id}",
         f"project_id: {approval.project_id}",
         f"status: {approval.status}",
+        f"source_coder_worktree_plan: {approval.source_plan_path}",
+        f"source_coder_worktree_plan_md: {Path(approval.source_plan_path).with_suffix('.md')}",
         f"source_plan_sha256: {approval.source_plan_sha256}",
         f"artifact: {(root / approval.request_artifact_path).relative_to(root)}",
         "worktrees_created: 0",
@@ -3330,11 +3354,24 @@ def _render_approval_request_markdown(payload: dict[str, Any]) -> str:
             f"- delegation_id: {payload['delegation_id']}",
             f"- project_id: {payload['project_id']}",
             f"- status: {payload['status']}",
+            f"- source_coder_worktree_plan: {payload['source_coder_worktree_plan']}",
+            f"- source_coder_worktree_plan_md: {payload['source_coder_worktree_plan_md']}",
+            "- source_coder_worktree_plan_markdown_consumed: true",
             f"- source_plan_sha256: {payload['source_plan_sha256']}",
+            f"- source_plan_md_sha256: {payload['source_plan_md_sha256']}",
             "",
             "## Allowed Files",
             "",
             *[f"- {path}" for path in payload["allowed_files"]],
+            "",
+            "## Safety Counters",
+            "",
+            f"- worktrees_created: {payload['worktrees_created']}",
+            f"- source_edits_taken: {payload['source_edits_taken']}",
+            f"- commands_run: {payload['commands_run']}",
+            f"- provider_calls_taken_by_clankeros: {payload['provider_calls_taken_by_clankeros']}",
+            f"- network_actions_taken: {payload['network_actions_taken']}",
+            f"- external_mutations_taken: {payload['external_mutations_taken']}",
             "",
             "## Non-Claims",
             "",

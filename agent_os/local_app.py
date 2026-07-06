@@ -29020,6 +29020,34 @@ def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, 
         _add_packet_artifacts(add, packet, source="coder_prep")
     for packet in state["worktree_plans"]:
         _add_packet_artifacts(add, packet, source="worktree_plan")
+    for approval in state["worktree_approvals"]:
+        request_path = Path(approval.request_artifact_path)
+        decision_path = (
+            Path(approval.decision_artifact_path)
+            if approval.decision_artifact_path
+            else None
+        )
+        add(
+            "coder_worktree_execution_approval_request_json",
+            request_path,
+            source="worktree_approval",
+        )
+        add(
+            "coder_worktree_execution_approval_request_markdown",
+            request_path.with_suffix(".md"),
+            source="worktree_approval",
+        )
+        if decision_path is not None:
+            add(
+                "coder_worktree_execution_approval_decision_json",
+                decision_path,
+                source="worktree_approval",
+            )
+            add(
+                "coder_worktree_execution_approval_decision_markdown",
+                decision_path.with_suffix(".md"),
+                source="worktree_approval",
+            )
     for run in state["worktree_runs"]:
         evidence_path = Path(run.evidence_path)
         add(f"coder run {run.id} review", Path("runs") / run.source_run_id / "review.md", source="coder_run")
@@ -29103,6 +29131,7 @@ def _goal_artifact_record_rank(record: dict[str, str]) -> int:
         "delegation_metadata": 50,
         "coder_prep": 60,
         "worktree_plan": 70,
+        "worktree_approval": 75,
         "coder_run": 80,
         "commit": 110,
         "publication": 120,
@@ -47478,24 +47507,66 @@ def _handle_post(
             }
         elif action == "coder-worktree-approval":
             delegation_id = _required(form, "delegation_id")
-            result = request_coder_worktree_approval(
+            approval_result = request_coder_worktree_approval(
                 root,
                 storage,
                 delegation_id,
                 requested_by=_one(form, "requested_by") or "operator",
                 note=_one(form, "note") or "Requested from local app.",
             )
-            message = f"coder_worktree_approval: {result.approval.id}"
+            approval = approval_result.approval
+            message = f"coder_worktree_approval: {approval.id}"
             delegation_location = f"/delegations/{quote(delegation_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or delegation_location
+            request_artifact_path = root / approval.request_artifact_path
+            request_markdown_path = request_artifact_path.with_suffix(".md")
             _remember_delegation_workspace(
                 root,
                 storage,
                 delegation_id,
-                artifact_path=Path(result.approval.request_artifact_path).with_suffix(".md"),
+                artifact_path=request_markdown_path,
                 updated_by="coder-worktree-approval",
                 resume_surface=location,
             )
+            try:
+                request_payload = json.loads(request_artifact_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                request_payload = {}
+            source_plan_md = str(
+                request_payload.get("source_coder_worktree_plan_md")
+                or Path(approval.source_plan_path).with_suffix(".md")
+            )
+            result = {
+                "approval_id": approval.id,
+                "delegation_id": approval.delegation_id,
+                "project_id": approval.project_id,
+                "status": approval.status,
+                "artifact_path": request_artifact_path,
+                "markdown_path": request_markdown_path,
+                "source_coder_worktree_plan": approval.source_plan_path,
+                "source_coder_worktree_plan_md": source_plan_md,
+                "source_coder_worktree_plan_markdown_consumed": request_payload.get(
+                    "source_coder_worktree_plan_markdown_consumed",
+                    True,
+                ),
+                "source_plan_sha256": approval.source_plan_sha256,
+                "source_plan_md_sha256": request_payload.get("source_plan_md_sha256", "unknown"),
+                "source_coder_prep_md_sha256": approval.source_coder_prep_md_sha256,
+                "allowed_files": request_payload.get("allowed_files", []),
+                "already_recorded": approval_result.already_recorded,
+                "worktrees_created": request_payload.get("worktrees_created", 0),
+                "source_edits_taken": request_payload.get("source_edits_taken", 0),
+                "commands_run": request_payload.get("commands_run", 0),
+                "commit_created": request_payload.get("commit_created", False),
+                "push_created": request_payload.get("push_created", False),
+                "deploy_created": request_payload.get("deploy_created", False),
+                "provider_calls_taken_by_clankeros": request_payload.get(
+                    "provider_calls_taken_by_clankeros",
+                    0,
+                ),
+                "network_actions_taken": request_payload.get("network_actions_taken", 0),
+                "external_mutations_taken": request_payload.get("external_mutations_taken", 0),
+            }
         elif action == "approve-coder-worktree":
             approval_id = _required(form, "approval_id")
             result = approve_coder_worktree(
