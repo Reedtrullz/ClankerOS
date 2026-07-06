@@ -12510,6 +12510,24 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert "Create Publication Request" in today_after_local_commit.body
     assert "action='/actions/coder-publication-request'" in today_after_local_commit.body
     assert f"name='run_id' value='{coder_run.id}'" in today_after_local_commit.body
+    assert (
+        "source_coder_commit</dt><dd>"
+        f"<a href='/artifacts?path={commit_md.with_suffix('.json').relative_to(tmp_path)}'>"
+        in today_after_local_commit.body
+    )
+    assert (
+        "source_coder_commit_md</dt><dd>"
+        f"<a href='/artifacts?path={commit_md.relative_to(tmp_path)}'>"
+        in today_after_local_commit.body
+    )
+    assert (
+        f"source_commit_md_sha256</dt><dd>{hashlib.sha256(commit_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in today_after_local_commit.body
+    )
+    assert (
+        "source_coder_commit_markdown_consumed</dt><dd>true"
+        in today_after_local_commit.body
+    )
     assert "name='return_to' value='/today#today-current-action'" in today_after_local_commit.body
     assert (
         "return_to_after_publication_request</dt><dd>"
@@ -12566,6 +12584,27 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         "<a href='/today?notice=coder_publication_request%3A%20"
     ) in publication_request_result.body
     assert "#today-current-action'>/today#today-current-action</a>" in publication_request_result.body
+    assert (
+        "source_coder_commit</dt><dd>"
+        f"<a href='/artifacts?path={commit_md.with_suffix('.json').relative_to(tmp_path)}'>"
+        in publication_request_result.body
+    )
+    assert (
+        "source_coder_commit_md</dt><dd>"
+        f"<a href='/artifacts?path={commit_md.relative_to(tmp_path)}'>"
+        in publication_request_result.body
+    )
+    assert (
+        f"source_commit_md_sha256</dt><dd>{hashlib.sha256(commit_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in publication_request_result.body
+    )
+    assert (
+        "source_coder_commit_markdown_consumed</dt><dd>true"
+        in publication_request_result.body
+    )
+    assert "push_created</dt><dd>false" in publication_request_result.body
+    assert "pr_created</dt><dd>false" in publication_request_result.body
+    assert "network_actions_taken</dt><dd>0" in publication_request_result.body
     publication = next(
         item
         for item in list_coder_publications(
@@ -12577,6 +12616,22 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     )
     publication_request_md = tmp_path / Path(publication.request_artifact_path).with_suffix(".md")
     assert publication_request_md.exists()
+    publication_request_payload = json.loads(
+        publication_request_md.with_suffix(".json").read_text(encoding="utf-8")
+    )
+    assert publication_request_payload["source_coder_commit"] == str(
+        commit_md.with_suffix(".json").relative_to(tmp_path)
+    )
+    assert publication_request_payload["source_coder_commit_md"] == str(
+        commit_md.relative_to(tmp_path)
+    )
+    assert publication_request_payload["source_commit_md_sha256"] == hashlib.sha256(
+        commit_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert publication_request_payload["source_coder_commit_markdown_consumed"] is True
+    publication_request_text = publication_request_md.read_text(encoding="utf-8")
+    assert f"- source_coder_commit_md: {commit_md.relative_to(tmp_path)}" in publication_request_text
+    assert "- source_coder_commit_markdown_consumed: true" in publication_request_text
     publication_request_workspace = json.loads(
         (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
     )
@@ -15062,6 +15117,14 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         f"<a href='/artifacts?path={next_goal_commit_md.relative_to(tmp_path)}'>"
         in today_after_next_goal_local_commit.body
     )
+    assert (
+        f"source_commit_md_sha256</dt><dd>{hashlib.sha256(next_goal_commit_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in today_after_next_goal_local_commit.body
+    )
+    assert (
+        "source_coder_commit_markdown_consumed</dt><dd>true"
+        in today_after_next_goal_local_commit.body
+    )
     assert "completed-goal-provenance.md" in today_after_next_goal_local_commit.body
 
     resume_after_next_goal_local_commit = render_local_app_route(tmp_path, "/resume")
@@ -15079,6 +15142,14 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert (
         "resume_workbench_last_artifact</dt><dd>"
         f"<a href='/artifacts?path={next_goal_commit_md.relative_to(tmp_path)}'>"
+        in resume_after_next_goal_local_commit.body
+    )
+    assert (
+        f"source_commit_md_sha256</dt><dd>{hashlib.sha256(next_goal_commit_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in resume_after_next_goal_local_commit.body
+    )
+    assert (
+        "source_coder_commit_markdown_consumed</dt><dd>true"
         in resume_after_next_goal_local_commit.body
     )
     assert "completed-goal-provenance.md" in resume_after_next_goal_local_commit.body
@@ -15102,7 +15173,210 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         in successor_goal_after_local_commit.body
     )
     assert "action='/actions/coder-publication-request'" in successor_goal_after_local_commit.body
+    assert (
+        f"source_commit_md_sha256</dt><dd>{hashlib.sha256(next_goal_commit_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in successor_goal_after_local_commit.body
+    )
+    assert (
+        "source_coder_commit_markdown_consumed</dt><dd>true"
+        in successor_goal_after_local_commit.body
+    )
     assert "completed-goal-provenance.md" in successor_goal_after_local_commit.body
+
+    next_goal_publication_request_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-publication-request",
+        method="POST",
+        form={
+            "run_id": [next_coder_run.id],
+            "remote": ["origin"],
+            "target_branch": ["main"],
+            "note": ["Request successor publication from Resume"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "requested_by": ["operator"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_publication_request_result.status == 200
+    assert "coder_publication_request:" in next_goal_publication_request_result.body
+    assert (
+        "action_result_command_label</dt><dd>Create publication request"
+        in next_goal_publication_request_result.body
+    )
+    assert (
+        "source_coder_commit</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_commit_json.relative_to(tmp_path)}'>"
+        in next_goal_publication_request_result.body
+    )
+    assert (
+        "source_coder_commit_md</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_commit_md.relative_to(tmp_path)}'>"
+        in next_goal_publication_request_result.body
+    )
+    assert (
+        f"source_commit_md_sha256</dt><dd>{hashlib.sha256(next_goal_commit_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in next_goal_publication_request_result.body
+    )
+    assert (
+        "source_coder_commit_markdown_consumed</dt><dd>true"
+        in next_goal_publication_request_result.body
+    )
+    assert "push_created</dt><dd>false" in next_goal_publication_request_result.body
+    assert "pr_created</dt><dd>false" in next_goal_publication_request_result.body
+    assert "network_actions_taken</dt><dd>0" in next_goal_publication_request_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Approve publication"
+        in next_goal_publication_request_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_publication_request_result.body
+    assert (
+        "action='/actions/approve-coder-publication'"
+        in next_goal_publication_request_result.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_publication_request_result.body
+    )
+
+    next_goal_publication = next(
+        item
+        for item in list_coder_publications(
+            tmp_path,
+            status="pending_operator_approval",
+            limit=20,
+        )
+        if item.run_id == next_coder_run.id
+    )
+    next_goal_publication_request_md = (
+        tmp_path / Path(next_goal_publication.request_artifact_path).with_suffix(".md")
+    )
+    assert next_goal_publication_request_md.exists()
+    next_goal_publication_payload = json.loads(
+        next_goal_publication_request_md.with_suffix(".json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert next_goal_publication_payload["source_coder_commit"] == str(
+        next_goal_commit_json.relative_to(tmp_path)
+    )
+    assert next_goal_publication_payload["source_coder_commit_md"] == str(
+        next_goal_commit_md.relative_to(tmp_path)
+    )
+    assert next_goal_publication_payload["source_commit_md_sha256"] == hashlib.sha256(
+        next_goal_commit_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert (
+        next_goal_publication_payload["source_coder_commit_markdown_consumed"]
+        is True
+    )
+    next_goal_publication_request_text = next_goal_publication_request_md.read_text(
+        encoding="utf-8"
+    )
+    assert (
+        f"- source_coder_commit_md: {next_goal_commit_md.relative_to(tmp_path)}"
+        in next_goal_publication_request_text
+    )
+    assert (
+        "- source_coder_commit_markdown_consumed: true"
+        in next_goal_publication_request_text
+    )
+    next_goal_publication_request_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert next_goal_publication_request_workspace["open_goal"] == next_goal_id
+    assert (
+        next_goal_publication_request_workspace["updated_by"]
+        == "coder-publication-request"
+    )
+    assert next_goal_publication_request_workspace["last_viewed_artifact"] == str(
+        next_goal_publication_request_md.relative_to(tmp_path)
+    )
+    assert (
+        next_goal_publication_request_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert (
+        next_goal_publication_request_workspace["completed_goal_handoff_source_goal"]
+        == ""
+    )
+
+    today_after_next_goal_publication_request = render_local_app_route(
+        tmp_path,
+        "/today",
+    )
+    assert today_after_next_goal_publication_request.status == 200
+    assert (
+        "today_command_primary_action</dt><dd>Approve publication"
+        in today_after_next_goal_publication_request.body
+    )
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Approve publication</a>"
+        in today_after_next_goal_publication_request.body
+    )
+    assert (
+        "action='/actions/approve-coder-publication'"
+        in today_after_next_goal_publication_request.body
+    )
+    assert (
+        f"name='publication_id' value='{next_goal_publication.id}'"
+        in today_after_next_goal_publication_request.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_publication_request.body
+
+    resume_after_next_goal_publication_request = render_local_app_route(
+        tmp_path,
+        "/resume",
+    )
+    assert resume_after_next_goal_publication_request.status == 200
+    assert (
+        "resume_return_brief_next_action</dt><dd>Approve publication"
+        in resume_after_next_goal_publication_request.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Approve publication"
+        in resume_after_next_goal_publication_request.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_publication_request_md.relative_to(tmp_path)}'>"
+        in resume_after_next_goal_publication_request.body
+    )
+    assert (
+        "action='/actions/approve-coder-publication'"
+        in resume_after_next_goal_publication_request.body
+    )
+    assert (
+        f"name='publication_id' value='{next_goal_publication.id}'"
+        in resume_after_next_goal_publication_request.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_publication_request.body
+
+    successor_goal_after_publication_request = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_publication_request.status == 200
+    assert (
+        "completed_goal_provenance_history_status</dt><dd>available"
+        in successor_goal_after_publication_request.body
+    )
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_goal_publication_request_md.relative_to(tmp_path)}"
+        in successor_goal_after_publication_request.body
+    )
+    assert (
+        "recommended_action</dt><dd>Approve publication"
+        in successor_goal_after_publication_request.body
+    )
+    assert (
+        "action='/actions/approve-coder-publication'"
+        in successor_goal_after_publication_request.body
+    )
+    assert "completed-goal-provenance.md" in successor_goal_after_publication_request.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
@@ -26798,6 +27072,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "action='/actions/approve-coder-commit'" in pending_commit_goal.body
     assert f"name='approval_id' value='{commit_approval.id}'" in pending_commit_goal.body
     commit_goal_form = _goal_approve_commit_form(
+        tmp_path,
         {"goal": goal_record, "commit_approvals": [commit_approval]}
     )
     assert (
@@ -26944,6 +27219,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         if item.run_id == run_id
     )
     publication_request_goal_form = _goal_publication_request_form(
+        tmp_path,
         {"goal": goal_record, "commit_approvals": [committed_commit_approval]}
     )
     assert (
@@ -27015,7 +27291,26 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "Approve Publication" in pending_publication_goal.body
     assert "action='/actions/approve-coder-publication'" in pending_publication_goal.body
     assert f"name='publication_id' value='{publication.id}'" in pending_publication_goal.body
+    assert (
+        "publication_request_md</dt><dd>"
+        f"<a href='/artifacts?path={publication_request_md.relative_to(tmp_path)}'>"
+        in pending_publication_goal.body
+    )
+    assert (
+        "source_coder_commit_md</dt><dd>"
+        f"<a href='/artifacts?path={commit_md.relative_to(tmp_path)}'>"
+        in pending_publication_goal.body
+    )
+    assert (
+        f"source_commit_md_sha256</dt><dd>{hashlib.sha256(commit_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in pending_publication_goal.body
+    )
+    assert (
+        "source_coder_commit_markdown_consumed</dt><dd>true"
+        in pending_publication_goal.body
+    )
     publication_goal_form = _goal_approve_publication_form(
+        tmp_path,
         {"goal": goal_record, "publications": [publication]}
     )
     assert (
@@ -29484,6 +29779,16 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert "coder_publication_request: " in request_output
     assert f"coder_worktree_run_id: {run_id}" in request_output
     assert "status: pending_operator_approval" in request_output
+    commit_artifact = evidence_dir / "coder_commit" / "commit.json"
+    commit_markdown = commit_artifact.with_suffix(".md")
+    commit_markdown_sha = hashlib.sha256(
+        commit_markdown.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert f"source_coder_commit: {commit_artifact.relative_to(tmp_path)}" in request_output
+    assert f"source_coder_commit_md: {commit_markdown.relative_to(tmp_path)}" in request_output
+    assert f"source_commit_sha256: {hashlib.sha256(commit_artifact.read_bytes()).hexdigest()}" in request_output
+    assert f"source_commit_md_sha256: {commit_markdown_sha}" in request_output
+    assert "source_coder_commit_markdown_consumed: true" in request_output
     assert "push_created: false" in request_output
     assert "pr_created: false" in request_output
     assert "network_actions_taken: 0" in request_output
@@ -29505,6 +29810,13 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert request_payload["parent_commit_sha"] == parent_sha
     assert request_payload["remote"] == "origin"
     assert request_payload["target_branch"] == "main"
+    assert request_payload["source_coder_commit"] == str(commit_artifact.relative_to(tmp_path))
+    assert request_payload["source_coder_commit_md"] == str(commit_markdown.relative_to(tmp_path))
+    assert request_payload["source_commit_sha256"] == hashlib.sha256(
+        commit_artifact.read_bytes()
+    ).hexdigest()
+    assert request_payload["source_commit_md_sha256"] == commit_markdown_sha
+    assert request_payload["source_coder_commit_markdown_consumed"] is True
     assert request_payload["committed_files"] == ["agent_os/delegation_runner.py"]
     assert request_payload["outside_allowed_files"] == []
     assert request_payload["push_created"] is False
@@ -29513,7 +29825,12 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert request_payload["provider_calls_taken_by_clankeros"] == 0
     assert request_payload["network_actions_taken"] == 0
     assert request_payload["external_mutations_taken"] == 0
-    assert (request_artifact.parent / "publication_request.md").exists()
+    request_markdown = request_artifact.parent / "publication_request.md"
+    assert request_markdown.exists()
+    request_markdown_text = request_markdown.read_text(encoding="utf-8")
+    assert f"- source_coder_commit_md: {commit_markdown.relative_to(tmp_path)}" in request_markdown_text
+    assert f"- source_commit_md_sha256: {commit_markdown_sha}" in request_markdown_text
+    assert "- source_coder_commit_markdown_consumed: true" in request_markdown_text
 
     assert (
         main(
@@ -29536,6 +29853,7 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     )
     duplicate_output = capsys.readouterr().out
     assert f"coder_publication_request: already_recorded {publication_request_id}" in duplicate_output
+    assert "source_coder_commit_markdown_consumed: true" in duplicate_output
 
     assert (
         main(
@@ -29644,6 +29962,9 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert "## Coder Publication" in review
     assert publication_request_id in review
     assert "coder_publication_handoff" in review
+    assert f"source_coder_commit_md: {commit_markdown.relative_to(tmp_path)}" in review
+    assert f"source_commit_md_sha256: {commit_markdown_sha}" in review
+    assert "source_coder_commit_markdown_consumed: true" in review
     assert f"suggested_push_command: git push origin {branch_name}" in review
     assert "suggested_draft_pr_command: gh pr create --draft --base main" in review
 
@@ -29652,6 +29973,9 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert "### Coder Publication Handoffs" in dashboard
     assert publication_request_id in dashboard
     assert commit_sha in dashboard
+    assert f"source_commit_md={commit_markdown.relative_to(tmp_path)}" in dashboard
+    assert f"source_commit_md_sha256={commit_markdown_sha}" in dashboard
+    assert "source_commit_markdown_consumed=true" in dashboard
     assert f"suggested_push_command=git push origin {branch_name}" in dashboard
     assert "suggested_draft_pr_command=gh pr create --draft --base main" in dashboard
 
@@ -29872,7 +30196,10 @@ def test_coder_publication_request_blocks_tampered_commit_artifact(
         == 1
     )
     bad_sha_output = capsys.readouterr().out
-    assert "coder_publication_request_failed: commit_sha_not_found" in bad_sha_output
+    assert (
+        "coder_publication_request_failed: local commit markdown proof does not match commit"
+        in bad_sha_output
+    )
 
     outside_payload = {
         **commit_payload,

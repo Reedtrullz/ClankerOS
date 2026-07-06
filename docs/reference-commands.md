@@ -403,18 +403,23 @@ operator flow.
 `coder-publication-request <coder_worktree_run_id> --requested-by <id>
 --remote origin --target-branch main --note <note>` is the next boundary after
 the isolated local coder worktree commit. It requires a valid
-`coder_commit/commit.json`, verifies the commit SHA exists in the isolated
-worktree, checks committed files remain inside `allowed_files`, validates safe
-remote and target branch names, requires a non-empty request note, and writes:
+`coder_commit/commit.json` plus matching `coder_commit/commit.md`, verifies
+the commit Markdown matches the coder worktree run and commit SHA, verifies
+the commit SHA exists in the isolated worktree, checks committed files remain
+inside `allowed_files`, validates safe remote and target branch names, requires
+a non-empty request note, and writes:
 
 ```text
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_request.json
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_request.md
 ```
 
-The request is idempotent for the same commit artifact hash, remote, and target
-branch unless `--force-new` is used. It does not push, create a PR, deploy,
-call providers, use the network, run `git fetch`, or contact GitHub.
+The request records the consumed local commit JSON/Markdown paths and hashes
+plus `source_coder_commit_markdown_consumed: true`. It is idempotent for the
+same commit artifact hash, remote, and target branch unless `--force-new` is
+used; idempotent reuse backfills missing commit Markdown proof fields into
+older request artifacts. It does not push, create a PR, deploy, call
+providers, use the network, run `git fetch`, or contact GitHub.
 
 `approve-coder-publication <publication_request_id> --decided-by <id> --note
 <note>` marks that request approved and writes:

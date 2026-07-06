@@ -273,6 +273,17 @@ Core layers for the bootstrap:
   embedded `Create publication request` form, and `/today`, `/resume`, and the
   successor Goal page advance to `Create publication request` while retaining
   `completed-goal-provenance.md` as durable history.
+  When the successor publication request is then created from either daily
+  surface, `coder-publication-request` consumes `coder_commit/commit.md` as
+  proof before writing the local publication approval request. The publication
+  request artifacts and browser result expose the local commit JSON/Markdown
+  paths and hashes plus `source_coder_commit_markdown_consumed: true`, while
+  keeping `push_created`, `pr_created`, and `deploy_created` false and
+  external effect counters at zero. The publication request Markdown becomes
+  the active workspace artifact, the original daily return surface is
+  preserved for the embedded `Approve publication` form, and `/today`,
+  `/resume`, and the successor Goal page advance to `Approve publication`
+  while retaining `completed-goal-provenance.md` as durable history.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only
@@ -1963,10 +1974,13 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   never pushes, creates a PR, deploys, calls providers, or mutates external
   systems. A committed coder worktree run can
   then enter `coder-publication-request <coder_worktree_run_id>`, which
-  validates the local commit artifact, commit SHA, safe worktree, safe remote
-  and target branch names, committed-file bounds, zero push/PR/deploy
-  counters, and a non-empty operator note before writing
-  `coder_publication/publication_request.json/.md`.
+  consumes `coder_commit/commit.json/.md` as proof, validates the local commit
+  Markdown matches the coder worktree run and commit SHA, checks safe worktree,
+  safe remote and target branch names, committed-file bounds, zero
+  push/PR/deploy counters, and a non-empty operator note before writing
+  `coder_publication/publication_request.json/.md`. The request artifacts
+  retain the consumed local commit JSON/Markdown paths and hashes plus
+  `source_coder_commit_markdown_consumed: true`.
   `approve-coder-publication` writes the local decision without pushing or
   creating a PR. `coder-publication-handoff` requires the approved request,
   revalidates the request artifact hash and commit artifact hash, and writes

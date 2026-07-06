@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_46d95fb9dae2
+- Packet ID: iteration_7a740d817abb
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Make successor Goal publication requests from `/today` and `/resume` consume `coder_commit/commit.md` as proof, keep provenance history visible, and move the primary action to `Approve publication`.
+Advance the Agent System north-star goal by completing: Make successor Goal publication approvals from `/today` and `/resume` consume `coder_publication/publication_request.md` as proof, keep provenance history visible, and move the primary action to `Create publication handoff`.
 
 ## Definition Of Done
 

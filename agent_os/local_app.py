@@ -23785,11 +23785,13 @@ def _goal_next_action_form(
         )
     if next_action.action == "Create publication request":
         return _goal_publication_request_form(
+            state["root"],
             state,
             return_to_override=return_to_override,
         )
     if next_action.action == "Approve publication":
         return _goal_approve_publication_form(
+            state["root"],
             state,
             return_to_override=return_to_override,
         )
@@ -24478,6 +24480,7 @@ def _goal_commit_worktree_form(
 
 
 def _goal_publication_request_form(
+    root: Path,
     state: dict[str, Any],
     *,
     return_to_override: str | None = None,
@@ -24486,6 +24489,13 @@ def _goal_publication_request_form(
     if approval is None:
         return "<p class='muted'>publication_request_form_status: unavailable_until_local_commit_exists</p>"
     return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
+    commit_path = (
+        Path(approval.source_run_evidence_path)
+        / "coder_commit"
+        / "commit.json"
+    )
+    commit_md_path = commit_path.with_suffix(".md")
+    commit_markdown_ready = _commit_markdown_consumed_for_display(root / commit_md_path)
     return "".join(
         [
             "<h3>Create Publication Request</h3>",
@@ -24494,6 +24504,23 @@ def _goal_publication_request_form(
                 [
                     ("commit_approval_id", approval.id),
                     ("run_id", approval.run_id),
+                    ("source_coder_commit", _artifact_link(str(commit_path))),
+                    (
+                        "source_coder_commit_sha256",
+                        _sha256_for_display(root / commit_path),
+                    ),
+                    (
+                        "source_coder_commit_md",
+                        _artifact_link(str(commit_md_path)),
+                    ),
+                    (
+                        "source_commit_md_sha256",
+                        _sha256_for_display(root / commit_md_path),
+                    ),
+                    (
+                        "source_coder_commit_markdown_consumed",
+                        commit_markdown_ready,
+                    ),
                     (
                         "return_to_after_publication_request",
                         SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
@@ -24516,6 +24543,7 @@ def _goal_publication_request_form(
 
 
 def _goal_approve_publication_form(
+    root: Path,
     state: dict[str, Any],
     *,
     return_to_override: str | None = None,
@@ -24524,6 +24552,7 @@ def _goal_approve_publication_form(
     if publication is None:
         return "<p class='muted'>approve_publication_form_status: unavailable_until_pending_publication_approval_exists</p>"
     return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
+    request_payload = _publication_request_payload_for_display(root, publication)
     return "".join(
         [
             "<h3>Approve Publication</h3>",
@@ -24532,6 +24561,57 @@ def _goal_approve_publication_form(
                 [
                     ("publication_id", publication.id),
                     ("run_id", publication.run_id),
+                    (
+                        "publication_request",
+                        _artifact_link(publication.request_artifact_path),
+                    ),
+                    (
+                        "publication_request_md",
+                        _artifact_link(
+                            str(Path(publication.request_artifact_path).with_suffix(".md"))
+                        ),
+                    ),
+                    (
+                        "publication_request_sha256",
+                        _sha256_for_display(root / publication.request_artifact_path),
+                    ),
+                    (
+                        "source_coder_commit",
+                        _artifact_link(
+                            str(
+                                request_payload.get(
+                                    "source_coder_commit",
+                                    publication.source_commit_artifact_path,
+                                )
+                            )
+                        ),
+                    ),
+                    (
+                        "source_coder_commit_md",
+                        _artifact_link(str(request_payload.get("source_coder_commit_md", "missing"))),
+                    ),
+                    (
+                        "source_commit_sha256",
+                        str(
+                            request_payload.get(
+                                "source_commit_sha256",
+                                publication.source_commit_artifact_sha256,
+                            )
+                        ),
+                    ),
+                    (
+                        "source_commit_md_sha256",
+                        str(request_payload.get("source_commit_md_sha256", "missing")),
+                    ),
+                    (
+                        "source_coder_commit_markdown_consumed",
+                        str(
+                            request_payload.get(
+                                "source_coder_commit_markdown_consumed"
+                            )
+                            is True
+                        ).lower(),
+                    ),
                     (
                         "return_to_after_publication_approval",
                         SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
@@ -29191,6 +29271,8 @@ def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, 
             ("publication_handoff", publication.handoff_artifact_path),
         ]:
             add(label, path, source="publication")
+            if path:
+                add(f"{label}_markdown", Path(path).with_suffix(".md"), source="publication")
     for source, record in _goal_project_ci_evidence_records(root, goal.project_id):
         add(
             _goal_ci_evidence_record_label(source, record),
@@ -42679,17 +42761,39 @@ def _run_workbench_action_form(
             "Create the local publication approval request from this committed run. It does "
             "not push, create a PR, deploy, call providers, or use the network."
         )
-        form = _input_form(
-            action_name,
-            hidden_fields(
-                {
-                    "run_id": coder_run.id,
-                    "requested_by": "operator",
-                    "remote": "origin",
-                    "target_branch": "main",
-                }
-            ),
-            {"note": "Request publication handoff"},
+        commit_path = Path(committed.source_run_evidence_path) / "coder_commit" / "commit.json"
+        commit_md_path = commit_path.with_suffix(".md")
+        form = (
+            _kv(
+                [
+                    ("source_coder_commit", _artifact_link(str(commit_path))),
+                    (
+                        "source_coder_commit_sha256",
+                        _sha256_for_display(root / commit_path),
+                    ),
+                    ("source_coder_commit_md", _artifact_link(str(commit_md_path))),
+                    (
+                        "source_commit_md_sha256",
+                        _sha256_for_display(root / commit_md_path),
+                    ),
+                    (
+                        "source_coder_commit_markdown_consumed",
+                        _commit_markdown_consumed_for_display(root / commit_md_path),
+                    ),
+                ]
+            )
+            + _input_form(
+                action_name,
+                hidden_fields(
+                    {
+                        "run_id": coder_run.id,
+                        "requested_by": "operator",
+                        "remote": "origin",
+                        "target_branch": "main",
+                    }
+                ),
+                {"note": "Request publication handoff"},
+            )
         )
     elif target_href == "#publication-handoff-action":
         approved_publication = next(
@@ -48209,7 +48313,7 @@ def _handle_post(
             )
         elif action == "coder-publication-request":
             run_id = _required(form, "run_id")
-            result = request_coder_publication(
+            publication_result = request_coder_publication(
                 root,
                 storage,
                 run_id,
@@ -48218,14 +48322,53 @@ def _handle_post(
                 target_branch=_one(form, "target_branch") or "main",
                 note=_required(form, "note"),
             )
-            message = f"coder_publication_request: {result.publication.id}"
+            request_payload: dict[str, Any] = {}
+            request_path = root / publication_result.publication.request_artifact_path
+            try:
+                request_payload = json.loads(request_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                request_payload = {}
+            result = {
+                "publication": publication_result.publication,
+                "already_recorded": publication_result.already_recorded,
+                "source_coder_commit": request_payload.get(
+                    "source_coder_commit",
+                    publication_result.publication.source_commit_artifact_path,
+                ),
+                "source_coder_commit_md": request_payload.get(
+                    "source_coder_commit_md",
+                    "missing",
+                ),
+                "source_commit_sha256": request_payload.get(
+                    "source_commit_sha256",
+                    publication_result.publication.source_commit_artifact_sha256,
+                ),
+                "source_commit_md_sha256": request_payload.get(
+                    "source_commit_md_sha256",
+                    "missing",
+                ),
+                "source_coder_commit_markdown_consumed": request_payload.get(
+                    "source_coder_commit_markdown_consumed"
+                )
+                is True,
+                "push_created": request_payload.get("push_created") is True,
+                "pr_created": request_payload.get("pr_created") is True,
+                "deploy_created": request_payload.get("deploy_created") is True,
+                "network_actions_taken": int(
+                    request_payload.get("network_actions_taken") or 0
+                ),
+                "external_mutations_taken": int(
+                    request_payload.get("external_mutations_taken") or 0
+                ),
+            }
+            message = f"coder_publication_request: {publication_result.publication.id}"
             run_location = f"/runs/{quote(run_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or run_location
             _remember_delegation_workspace(
                 root,
                 storage,
-                result.publication.delegation_id,
-                artifact_path=Path(result.publication.request_artifact_path).with_suffix(".md"),
+                publication_result.publication.delegation_id,
+                artifact_path=Path(publication_result.publication.request_artifact_path).with_suffix(".md"),
                 updated_by="coder-publication-request",
                 resume_surface=location,
             )
@@ -50128,10 +50271,30 @@ def _run_action_forms(root: Path, run_id: str) -> str:
             f"<p class='muted'>local_commit_recorded: {_e(committed[0].commit_sha or 'unknown')}</p>"
         )
     if committed and not publications:
+        commit_path = Path(committed[0].source_run_evidence_path) / "coder_commit" / "commit.json"
+        commit_md_path = commit_path.with_suffix(".md")
         sections.extend(
             [
                 "<h3>Publication Request Action</h3>",
                 "<p class='muted'>This writes a local publication approval request. It does not push, create a PR, deploy, call providers, or use the network.</p>",
+                _kv(
+                    [
+                        ("source_coder_commit", _artifact_link(str(commit_path))),
+                        (
+                            "source_coder_commit_sha256",
+                            _sha256_for_display(root / commit_path),
+                        ),
+                        ("source_coder_commit_md", _artifact_link(str(commit_md_path))),
+                        (
+                            "source_commit_md_sha256",
+                            _sha256_for_display(root / commit_md_path),
+                        ),
+                        (
+                            "source_coder_commit_markdown_consumed",
+                            _commit_markdown_consumed_for_display(root / commit_md_path),
+                        ),
+                    ]
+                ),
                 _input_form(
                     "coder-publication-request",
                     {
@@ -50208,6 +50371,17 @@ def _publication_handoff_commands_panel(root: Path, publication: Any) -> str:
         ],
         anchor_id="publication-handoff-commands",
     )
+
+
+def _publication_request_payload_for_display(root: Path, publication: Any) -> dict[str, Any]:
+    request_artifact_path = getattr(publication, "request_artifact_path", "")
+    if not request_artifact_path:
+        return {}
+    try:
+        payload = json.loads((root / request_artifact_path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
 
 
 def _pending_approval_lines(root: Path) -> list[str]:
@@ -60764,6 +60938,16 @@ def _sha256_for_display(path: Path) -> str:
         return "missing"
 
 
+def _commit_markdown_consumed_for_display(path: Path) -> str:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return "false"
+    return str(
+        "- source_coder_commit_decision_markdown_consumed: true" in text
+    ).lower()
+
+
 def _row_exists(db_path: Path, table: str, row_id: str) -> bool:
     rows = _table_rows(db_path, f"select id from {table} where id = ? limit 1", (row_id,))
     return bool(rows)
@@ -61543,9 +61727,32 @@ def _commit_line(item: Any) -> str:
 
 def _publication_line(root: Path, item: Any) -> str:
     handoff = item.handoff_artifact_path if item.status == "ready_for_operator" else "none"
+    request_payload = _publication_request_payload_for_display(root, item)
+    source_commit = str(
+        request_payload.get("source_coder_commit", item.source_commit_artifact_path)
+    )
+    source_commit_md = str(request_payload.get("source_coder_commit_md", "missing"))
+    source_commit_sha = str(
+        request_payload.get(
+            "source_commit_sha256",
+            item.source_commit_artifact_sha256,
+        )
+    )
+    source_commit_md_sha = str(
+        request_payload.get("source_commit_md_sha256", "missing")
+    )
+    source_commit_markdown_consumed = str(
+        request_payload.get("source_coder_commit_markdown_consumed") is True
+    ).lower()
     return (
         f"{item.id}: status={item.status} run={item.run_id} project={item.project_id} "
-        f"commit={item.commit_sha} handoff={_artifact_link(handoff)} "
+        f"commit={item.commit_sha} request={_artifact_link(item.request_artifact_path)} "
+        f"source_commit={_artifact_link(source_commit)} "
+        f"source_commit_sha256={_e(source_commit_sha)} "
+        f"source_commit_md={_artifact_link(source_commit_md)} "
+        f"source_commit_md_sha256={_e(source_commit_md_sha)} "
+        f"source_commit_markdown_consumed={_e(source_commit_markdown_consumed)} "
+        f"handoff={_artifact_link(handoff)} "
         "push_created=false pr_created=false deploy_created=false"
     )
 
