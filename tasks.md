@@ -150,10 +150,14 @@
   consume `coder_publication/publication_decision.md` as proof, keep provenance
   history visible, and move the primary action to
   `Manual publish outside ClankerOS`. <!-- score=10 complexity=4 -->
-- [ ] Make successor Goal manual publish completion from `/today` and
+- [x] Make successor Goal manual publish completion from `/today` and
   `/resume` consume `coder_publication/publication_handoff.md` as proof, keep
   provenance history visible, and move the primary action to completed Goal
   evidence plus next-Goal creation. <!-- score=10 complexity=4 -->
+- [ ] Make completed Goal `completion.md` first-class in next-Goal provenance
+  after `/today` and `/resume` next-Goal creation, while keeping the
+  publication handoff visible as the prior manual boundary artifact.
+  <!-- score=10 complexity=4 -->
 - [x] Extend the static dashboard with incident summaries once incidents exist.
 - [x] Add a compact incident resolution path after more failure modes exist.
 - [x] Add queue-health checks for repeated blocked or failed work.

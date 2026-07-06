@@ -1,5 +1,46 @@
 # Status
 
+## 2026-07-06 Successor Goal Manual Publish Completion Daily Resume
+
+- Completed the selected slice for successor Goal manual publish completion
+  from `/today` and `/resume`.
+- `complete-goal` now consumes
+  `coder_publication/publication_handoff.md` as first-class proof before
+  changing a Goal to `completed`. The browser action validates the matching
+  `publication_handoff.json` / `.md` pair, requires the handoff to match the
+  coder worktree run, project, and commit, requires the upstream publication
+  decision Markdown proof, and rejects tampered handoff Markdown before the
+  Goal status changes.
+- Confirmed completion writes Goal-scoped
+  `.clanker/projects/<project>/goals/<goal_id>/completion.json` and
+  `completion.md` evidence with the consumed handoff JSON path/hash, handoff
+  Markdown path/hash, and
+  `source_coder_publication_handoff_markdown_consumed: true`. The completion
+  action result, manual publish boundary, Goal completion readiness, Goal
+  artifact explorer, `/today` completed Goal handoff, and `/resume` completed
+  Goal handoff expose the same proof fields.
+- Running completion from `/today#today-current-action` preserves that return
+  surface, keeps the publication handoff Markdown as the saved active
+  artifact, and moves `/today` and `/resume` to completed Goal evidence plus
+  same-page next-Goal creation while retaining
+  `completed-goal-provenance.md` as durable history.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  completed Goal `completion.md` should become first-class in next-Goal
+  provenance after `/today` and `/resume` next-Goal creation, while keeping
+  the publication handoff visible as the prior manual boundary artifact.
+- Focused local proof so far:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 35.53s, including the new tampered
+    `publication_handoff.md` completion block.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 104.39s.
+- Non-claim: this slice records only local Goal completion proof after an
+  operator-confirmed manual publish boundary. It does not execute suggested
+  push or PR commands, deploy, call providers, use app-side network actions,
+  mutate external systems, or provide CI/deploy/live production proof.
+
 ## 2026-07-06 Successor Goal Publication Handoff Daily Resume
 
 - Completed the selected slice for successor Goal publication handoffs from

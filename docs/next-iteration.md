@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_bed1e1d49211
+- Packet ID: iteration_c86b3ed52732
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Make successor Goal manual publish completion from `/today` and `/resume` consume `coder_publication/publication_handoff.md` as proof, keep provenance history visible, and move the primary action to completed Goal evidence plus next-Goal creation.
+Advance the Agent System north-star goal by completing: Make completed Goal `completion.md` first-class in next-Goal provenance after `/today` and `/resume` next-Goal creation, while keeping the publication handoff visible as the prior manual boundary artifact.
 
 ## Definition Of Done
 

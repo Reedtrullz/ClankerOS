@@ -12811,6 +12811,12 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     ).with_suffix(".md")
     assert publication_handoff_md.exists()
     assert (publication_handoff_md.parent / "pr_body.md").exists()
+    publication_handoff_json_sha = hashlib.sha256(
+        (tmp_path / ready_publication.handoff_artifact_path).read_bytes()
+    ).hexdigest()
+    publication_handoff_md_sha = hashlib.sha256(
+        publication_handoff_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
     publication_handoff_workspace = json.loads(
         (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
     )
@@ -12843,6 +12849,12 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert "today_command_confirmation_required</dt><dd>true" in today_after_publication_handoff.body
     assert "suggested_push_command: git push origin" in today_after_publication_handoff.body
     assert "suggested_draft_pr_command: gh pr create --draft" in today_after_publication_handoff.body
+    assert (
+        f"source_coder_publication_handoff_md: <a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in today_after_publication_handoff.body
+    )
+    assert f"source_publication_handoff_md_sha256: {publication_handoff_md_sha}" in today_after_publication_handoff.body
+    assert "source_coder_publication_handoff_markdown_consumed: true" in today_after_publication_handoff.body
     assert "action='/actions/complete-goal'" in today_after_publication_handoff.body
     assert f"name='goal_id' value='{created_goal_id}'" in today_after_publication_handoff.body
     assert "name='return_to' value='/today#today-current-action'" in today_after_publication_handoff.body
@@ -12886,6 +12898,24 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert "goal_completed:" in complete_goal_result.body
     assert "action_result_command_label</dt><dd>Complete Goal" in complete_goal_result.body
     assert (
+        "source_coder_publication_handoff_md</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in complete_goal_result.body
+    )
+    assert (
+        f"source_publication_handoff_sha256</dt><dd>{publication_handoff_json_sha}"
+        in complete_goal_result.body
+    )
+    assert (
+        f"source_publication_handoff_md_sha256</dt><dd>{publication_handoff_md_sha}"
+        in complete_goal_result.body
+    )
+    assert (
+        "source_coder_publication_handoff_markdown_consumed</dt><dd>true"
+        in complete_goal_result.body
+    )
+    assert "completion_evidence_md</dt><dd>" in complete_goal_result.body
+    assert (
         "action_result_command_next_surface</dt><dd>"
         "<a href='/today?notice=goal_completed%3A%20"
     ) in complete_goal_result.body
@@ -12900,6 +12930,16 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     )
     assert complete_workspace["resume_surface"] == "/today#today-current-action"
     assert complete_workspace["updated_by"] == "complete-goal"
+    completion_json = tmp_path / ".clanker" / "projects" / "first-target" / "goals" / created_goal_id / "completion.json"
+    completion_md = completion_json.with_suffix(".md")
+    assert completion_json.exists()
+    assert completion_md.exists()
+    completion_payload = json.loads(completion_json.read_text(encoding="utf-8"))
+    assert completion_payload["source_coder_publication_handoff_md"] == str(
+        publication_handoff_md.relative_to(tmp_path)
+    )
+    assert completion_payload["source_publication_handoff_md_sha256"] == publication_handoff_md_sha
+    assert completion_payload["source_coder_publication_handoff_markdown_consumed"] is True
 
     today_after_completion = render_local_app_route(tmp_path, "/today")
     assert today_after_completion.status == 200
@@ -12915,6 +12955,24 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         "today_completed_goal_latest_artifact</dt><dd>"
         f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
     ) in today_after_completion.body
+    assert (
+        "today_completed_goal_completion_evidence</dt><dd>"
+        f"<a href='/artifacts?path={completion_md.relative_to(tmp_path)}'>"
+        in today_after_completion.body
+    )
+    assert (
+        "today_completed_goal_source_coder_publication_handoff_md</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in today_after_completion.body
+    )
+    assert (
+        f"today_completed_goal_source_publication_handoff_md_sha256</dt><dd>{publication_handoff_md_sha}"
+        in today_after_completion.body
+    )
+    assert (
+        "today_completed_goal_source_coder_publication_handoff_markdown_consumed</dt><dd>true"
+        in today_after_completion.body
+    )
     assert "today_completed_goal_next_work_action</dt><dd>Start next Goal" in today_after_completion.body
     assert (
         "today_completed_goal_next_work_surface</dt><dd>"
@@ -12959,6 +13017,24 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         "resume_completed_goal_evidence_surface</dt><dd>"
         f"<a href='/goals/{created_goal_id}#goal-completion-readiness'>Completed Goal evidence</a>"
     ) in resume_after_completion.body
+    assert (
+        "resume_completed_goal_completion_evidence</dt><dd>"
+        f"<a href='/artifacts?path={completion_md.relative_to(tmp_path)}'>"
+        in resume_after_completion.body
+    )
+    assert (
+        "resume_completed_goal_source_coder_publication_handoff_md</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in resume_after_completion.body
+    )
+    assert (
+        f"resume_completed_goal_source_publication_handoff_md_sha256</dt><dd>{publication_handoff_md_sha}"
+        in resume_after_completion.body
+    )
+    assert (
+        "resume_completed_goal_source_coder_publication_handoff_markdown_consumed</dt><dd>true"
+        in resume_after_completion.body
+    )
     assert "resume_completed_goal_next_work_action</dt><dd>Start next Goal" in resume_after_completion.body
     assert (
         "resume_completed_goal_next_work_surface</dt><dd>"
@@ -27822,6 +27898,12 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         ready_publication.handoff_artifact_path
     ).with_suffix(".md")
     assert publication_handoff_md.exists()
+    publication_handoff_json_sha = hashlib.sha256(
+        (tmp_path / ready_publication.handoff_artifact_path).read_bytes()
+    ).hexdigest()
+    publication_handoff_md_sha = hashlib.sha256(
+        publication_handoff_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
     publication_handoff_workspace = json.loads(
         (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
     )
@@ -27843,6 +27925,12 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     )
     assert f"source_publication_decision_md_sha256: {publication_decision_md_sha}" in manual_publish_goal.body
     assert "source_coder_publication_decision_markdown_consumed: true" in manual_publish_goal.body
+    assert (
+        f"source_coder_publication_handoff_md: <a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in manual_publish_goal.body
+    )
+    assert f"source_publication_handoff_md_sha256: {publication_handoff_md_sha}" in manual_publish_goal.body
+    assert "source_coder_publication_handoff_markdown_consumed: true" in manual_publish_goal.body
     assert "manual_boundary: outside_clankeros" in manual_publish_goal.body
     assert "copy_only: true" in manual_publish_goal.body
     assert "Goal Completion Readiness" in manual_publish_goal.body
@@ -27850,6 +27938,20 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "completion_readiness_reason</dt><dd>publication_handoff_ready_manual_publish_boundary" in manual_publish_goal.body
     assert "completion_readiness_current_gate</dt><dd>manual_publish" in manual_publish_goal.body
     assert "completion_readiness_publication_handoff_ready</dt><dd>true" in manual_publish_goal.body
+    assert "completion_readiness_proof_status</dt><dd>ready" in manual_publish_goal.body
+    assert (
+        "completion_readiness_source_coder_publication_handoff_md</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in manual_publish_goal.body
+    )
+    assert (
+        f"completion_readiness_source_publication_handoff_md_sha256</dt><dd>{publication_handoff_md_sha}"
+        in manual_publish_goal.body
+    )
+    assert (
+        "completion_readiness_source_coder_publication_handoff_markdown_consumed</dt><dd>true"
+        in manual_publish_goal.body
+    )
     assert "completion_readiness_complete_goal_form_available</dt><dd>true" in manual_publish_goal.body
     assert "completion_readiness_next_action</dt><dd>Complete goal after manual publish" in manual_publish_goal.body
     assert "completion_readiness_target_surface</dt><dd><a href='#goal-complete-goal-action'>Complete Goal</a>" in manual_publish_goal.body
@@ -27949,6 +28051,34 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert complete_confirmation.status == 409
     assert "Confirm complete-goal" in complete_confirmation.body
 
+    original_publication_handoff_md = publication_handoff_md.read_text(encoding="utf-8")
+    publication_handoff_md.write_text(
+        original_publication_handoff_md.replace(
+            "- suggested_push_command:",
+            "- suggested_push_command_tampered:",
+            1,
+        ),
+        encoding="utf-8",
+    )
+    blocked_complete_response = render_local_app_route(
+        tmp_path,
+        "/actions/complete-goal",
+        method="POST",
+        form={
+            "goal_id": [goal_id],
+            "completed_by": ["operator"],
+            "note": ["Manual publication finished outside ClankerOS"],
+            "confirm": ["yes"],
+        },
+    )
+    assert blocked_complete_response.status == 400
+    assert (
+        "publication handoff markdown proof does not match handoff payload"
+        in blocked_complete_response.body
+    )
+    assert storage.get_goal(goal_id).status != "completed"
+    publication_handoff_md.write_text(original_publication_handoff_md, encoding="utf-8")
+
     complete_response = render_local_app_route(
         tmp_path,
         "/actions/complete-goal",
@@ -27962,6 +28092,25 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     )
     assert complete_response.status == 200
     assert "goal_completed:" in complete_response.body
+    assert (
+        "source_coder_publication_handoff_md</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in complete_response.body
+    )
+    assert f"source_publication_handoff_sha256</dt><dd>{publication_handoff_json_sha}" in complete_response.body
+    assert f"source_publication_handoff_md_sha256</dt><dd>{publication_handoff_md_sha}" in complete_response.body
+    assert "source_coder_publication_handoff_markdown_consumed</dt><dd>true" in complete_response.body
+    completion_json = tmp_path / ".clanker" / "projects" / "subject" / "goals" / goal_id / "completion.json"
+    completion_md = completion_json.with_suffix(".md")
+    assert completion_json.exists()
+    assert completion_md.exists()
+    completion_payload = json.loads(completion_json.read_text(encoding="utf-8"))
+    assert completion_payload["source_coder_publication_handoff_md"] == str(
+        publication_handoff_md.relative_to(tmp_path)
+    )
+    assert completion_payload["source_publication_handoff_sha256"] == publication_handoff_json_sha
+    assert completion_payload["source_publication_handoff_md_sha256"] == publication_handoff_md_sha
+    assert completion_payload["source_coder_publication_handoff_markdown_consumed"] is True
     assert "data-action-result-form-draft-cleanup='true'" in complete_response.body
     assert "data-action-result-form-draft-action='complete-goal'" in complete_response.body
     assert (
@@ -27987,6 +28136,8 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "recommended_action</dt><dd>Review completed goal evidence" in completed_goal.body
     assert "completion_readiness_status</dt><dd>completed" in completed_goal.body
     assert "completion_readiness_next_action</dt><dd>Review completed goal evidence" in completed_goal.body
+    assert "goal completion evidence markdown" in completed_goal.body
+    assert f"<a href='/artifacts?path={completion_md.relative_to(tmp_path)}'>" in completed_goal.body
 
     goals_after_completion = render_local_app_route(tmp_path, "/goals")
     assert goals_after_completion.status == 200

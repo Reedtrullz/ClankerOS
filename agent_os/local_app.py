@@ -3129,6 +3129,22 @@ def _completed_goal_handoff_panel(
     latest_artifact = str(workspace.get("last_viewed_artifact") or "").strip()
     if not latest_artifact:
         latest_artifact = _goal_latest_artifact_path(root, state)
+    publication = _goal_ready_publication(state)
+    completion_proof = _publication_handoff_completion_proof_for_display(
+        root,
+        publication,
+    )
+    completion_evidence_json = _goal_file_path(
+        goal.project_id,
+        goal.id,
+        "completion.json",
+    )
+    completion_evidence_md = completion_evidence_json.with_suffix(".md")
+    completion_evidence_value: str | SafeHtml = (
+        SafeHtml(_artifact_link(str(completion_evidence_md)))
+        if (root / completion_evidence_md).exists()
+        else "none"
+    )
     saved_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
     saved_resume_value: str | SafeHtml = (
         SafeHtml(f"<a href='{_e(saved_resume_surface)}'>{_e(saved_resume_surface)}</a>")
@@ -3250,6 +3266,11 @@ def _completed_goal_handoff_panel(
                         SafeHtml(f"<a href='{_e(ci_href)}'>Goal CI handoff</a>"),
                     ),
                     (f"{prefix}_completed_goal_latest_artifact", artifact_value),
+                    (f"{prefix}_completed_goal_completion_evidence", completion_evidence_value),
+                    *_publication_handoff_completion_proof_rows(
+                        completion_proof,
+                        prefix=f"{prefix}_completed_goal",
+                    ),
                     (f"{prefix}_completed_goal_next_work_action", "Start next Goal"),
                     (
                         f"{prefix}_completed_goal_next_work_surface",
@@ -3297,6 +3318,8 @@ def _completed_goal_handoff_panel(
                         else f"{prefix}_completed_goal_next_goal_form: unavailable"
                     ),
                     f"{prefix}_completed_goal_artifact: {_artifact_link(latest_artifact) if latest_artifact else 'none'}",
+                    f"{prefix}_completed_goal_completion_evidence: {completion_evidence_value}",
+                    f"{prefix}_completed_goal_handoff_proof: {_e(completion_proof['source_coder_publication_handoff_md'])} consumed={_e(completion_proof['source_coder_publication_handoff_markdown_consumed'])}",
                     f"{prefix}_completed_goal_safety: read-only handoff; confirmed create-goal form owns next Goal creation",
                 ]
             ),
@@ -24680,6 +24703,10 @@ def _goal_manual_publish_panel(
     publication = _goal_ready_publication(state)
     if publication is None:
         return "<p class='muted'>manual_publish_status: unavailable_until_publication_handoff_ready</p>"
+    completion_proof = _publication_handoff_completion_proof_for_display(
+        root,
+        publication,
+    )
     return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
@@ -24692,6 +24719,10 @@ def _goal_manual_publish_panel(
                 [
                     ("publication_id", publication.id),
                     ("publication_status", publication.status),
+                    *_publication_handoff_completion_proof_rows(
+                        completion_proof,
+                        prefix="manual_publish",
+                    ),
                     (
                         "return_to_after_manual_publish",
                         SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
@@ -25625,6 +25656,10 @@ def _goal_completion_readiness(
         + _count_status(state["publications"], "pending_operator_approval")
     )
     publication = _goal_ready_publication(state)
+    completion_proof = _publication_handoff_completion_proof_for_display(
+        root,
+        publication,
+    )
     total_gates = len(gates)
     done_gates = counts.get("done", 0)
     ready_for_completion = goal.status != "completed" and publication is not None
@@ -25690,7 +25725,7 @@ def _goal_completion_readiness(
         "</article>",
         "<article class='goal-completion-card' data-goal-completion-publish='true'>"
         "<h3>Publish</h3>"
-        f"<p>{'handoff ready' if publication is not None else 'manual boundary not ready'}</p>"
+        f"<p>{'handoff ready' if publication is not None else 'manual boundary not ready'} · proof { _e(completion_proof['proof_status']) }</p>"
         "<a class='goal-completion-link' href='#goal-ci-handoff'>CI handoff</a>"
         "</article>",
         "<article class='goal-completion-card' data-goal-completion-safety='true'>"
@@ -25717,6 +25752,10 @@ def _goal_completion_readiness(
                 (
                     "completion_readiness_publication_handoff_ready",
                     "true" if publication is not None else "false",
+                ),
+                *_publication_handoff_completion_proof_rows(
+                    completion_proof,
+                    prefix="completion_readiness",
                 ),
                 (
                     "completion_readiness_complete_goal_form_available",
@@ -29171,6 +29210,18 @@ def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, 
             provenance_path,
             source="completed_goal_provenance",
         )
+    completion_path = _goal_file_path(goal.project_id, goal.id, "completion.json")
+    if (root / completion_path).exists():
+        add(
+            "goal completion evidence",
+            completion_path,
+            source="goal_completion",
+        )
+        add(
+            "goal completion evidence markdown",
+            completion_path.with_suffix(".md"),
+            source="goal_completion",
+        )
     for task in state["tasks"]:
         for artifact in task.artifacts:
             add(f"task {task.id}", artifact, source="task")
@@ -29341,6 +29392,7 @@ def _goal_artifact_record_rank(record: dict[str, str]) -> int:
         "coder_run": 80,
         "commit": 110,
         "publication": 120,
+        "goal_completion": 125,
         "ci_deploy_evidence": 130,
         "ci_snapshot_evidence": 135,
     }
@@ -48672,20 +48724,38 @@ def _complete_goal_from_form(
     ready_publication = _goal_ready_publication(state)
     if ready_publication is None:
         raise ValueError("complete-goal requires a ready publication handoff")
+    handoff_completion_proof = _publication_handoff_completion_proof(
+        root,
+        ready_publication,
+    )
     completed_by = (_one(form, "completed_by") or "operator").strip() or "operator"
     note = (_one(form, "note") or "").strip()
+    previous_status = goal.status
     storage.set_goal_status(goal.id, "completed")
+    completed_goal = storage.get_goal(goal.id)
+    completion_evidence = _write_goal_completion_evidence(
+        root,
+        goal=completed_goal,
+        previous_status=previous_status,
+        completed_by=completed_by,
+        note=note or "none",
+        publication=ready_publication,
+        handoff_completion_proof=handoff_completion_proof,
+    )
     return {
         "status": "goal_completed",
         "goal_id": goal.id,
         "project_id": goal.project_id,
-        "previous_status": goal.status,
+        "previous_status": previous_status,
         "new_status": "completed",
+        "completed_at": completed_goal.completed_at or "unknown",
         "completed_by": completed_by,
         "note": note or "none",
         "publication_id": ready_publication.id,
         "publication_status": ready_publication.status,
         "handoff_artifact_path": ready_publication.handoff_artifact_path,
+        **handoff_completion_proof,
+        **completion_evidence,
         "manual_publish_boundary": "outside_clankeros",
         "push_created": False,
         "pr_created": False,
@@ -48694,6 +48764,136 @@ def _complete_goal_from_form(
         "network_actions_taken": 0,
         "external_mutations_taken": 0,
     }
+
+
+def _write_goal_completion_evidence(
+    root: Path,
+    *,
+    goal: Any,
+    previous_status: str,
+    completed_by: str,
+    note: str,
+    publication: Any,
+    handoff_completion_proof: dict[str, str],
+) -> dict[str, str]:
+    completion_json = _goal_file_path(goal.project_id, goal.id, "completion.json")
+    completion_md = completion_json.with_suffix(".md")
+    payload = {
+        "kind": "goal_completion_evidence",
+        "schema_version": 1,
+        "goal_id": goal.id,
+        "project_id": goal.project_id,
+        "previous_status": previous_status,
+        "new_status": "completed",
+        "completed_at": goal.completed_at or utc_now(),
+        "completed_by": completed_by,
+        "note": note,
+        "publication_id": publication.id,
+        "publication_status": publication.status,
+        "manual_publish_boundary": "outside_clankeros",
+        "source": "complete-goal",
+        "source_coder_publication_handoff": handoff_completion_proof[
+            "source_coder_publication_handoff"
+        ],
+        "source_coder_publication_handoff_md": handoff_completion_proof[
+            "source_coder_publication_handoff_md"
+        ],
+        "source_publication_handoff_sha256": handoff_completion_proof[
+            "source_publication_handoff_sha256"
+        ],
+        "source_publication_handoff_md_sha256": handoff_completion_proof[
+            "source_publication_handoff_md_sha256"
+        ],
+        "source_coder_publication_handoff_markdown_consumed": True,
+        "publication_handoff_kind": handoff_completion_proof[
+            "publication_handoff_kind"
+        ],
+        "suggested_push_command": handoff_completion_proof["suggested_push_command"],
+        "suggested_draft_pr_command": handoff_completion_proof[
+            "suggested_draft_pr_command"
+        ],
+        "pr_body_path": handoff_completion_proof["pr_body_path"],
+        "handoff_body_path": handoff_completion_proof["handoff_body_path"],
+        "source_coder_publication_decision": handoff_completion_proof[
+            "source_coder_publication_decision"
+        ],
+        "source_coder_publication_decision_md": handoff_completion_proof[
+            "source_coder_publication_decision_md"
+        ],
+        "source_publication_decision_sha256": handoff_completion_proof[
+            "source_publication_decision_sha256"
+        ],
+        "source_publication_decision_md_sha256": handoff_completion_proof[
+            "source_publication_decision_md_sha256"
+        ],
+        "source_coder_publication_decision_markdown_consumed": (
+            handoff_completion_proof[
+                "source_coder_publication_decision_markdown_consumed"
+            ]
+            == "true"
+        ),
+        "push_created": False,
+        "pr_created": False,
+        "deploy_created": False,
+        "provider_calls_taken_by_clankeros": 0,
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
+        "non_claims": [
+            "Goal completion records local status only.",
+            "Goal completion did not push.",
+            "Goal completion did not create a PR.",
+            "Goal completion did not deploy.",
+            "Goal completion did not call providers or use the network.",
+            "Manual publication remains outside ClankerOS.",
+        ],
+    }
+    json_path = root / completion_json
+    md_path = root / completion_md
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    md_path.write_text(_render_goal_completion_markdown(payload), encoding="utf-8")
+    return {
+        "completion_evidence_path": completion_json.as_posix(),
+        "completion_evidence_md": completion_md.as_posix(),
+        "completion_evidence_sha256": hashlib.sha256(json_path.read_bytes()).hexdigest(),
+        "completion_evidence_md_sha256": hashlib.sha256(md_path.read_bytes()).hexdigest(),
+    }
+
+
+def _render_goal_completion_markdown(payload: dict[str, Any]) -> str:
+    return "\n".join(
+        [
+            "# Goal Completion Evidence",
+            "",
+            f"- goal_id: {payload['goal_id']}",
+            f"- project_id: {payload['project_id']}",
+            f"- previous_status: {payload['previous_status']}",
+            f"- new_status: {payload['new_status']}",
+            f"- completed_at: {payload['completed_at']}",
+            f"- completed_by: {payload['completed_by']}",
+            f"- publication_id: {payload['publication_id']}",
+            f"- publication_status: {payload['publication_status']}",
+            f"- manual_publish_boundary: {payload['manual_publish_boundary']}",
+            f"- source_coder_publication_handoff: {payload['source_coder_publication_handoff']}",
+            f"- source_coder_publication_handoff_md: {payload['source_coder_publication_handoff_md']}",
+            f"- source_publication_handoff_sha256: {payload['source_publication_handoff_sha256']}",
+            f"- source_publication_handoff_md_sha256: {payload['source_publication_handoff_md_sha256']}",
+            f"- source_coder_publication_handoff_markdown_consumed: {str(payload['source_coder_publication_handoff_markdown_consumed']).lower()}",
+            f"- suggested_push_command: {payload['suggested_push_command']}",
+            f"- suggested_draft_pr_command: {payload['suggested_draft_pr_command']}",
+            "",
+            "## Non-Claims",
+            "",
+            "- Goal completion did not push.",
+            "- Goal completion did not create a PR.",
+            "- Goal completion did not deploy, call providers, or use the network.",
+            "- Manual publication remains outside ClankerOS.",
+            "",
+        ]
+    )
 
 
 def _append_goal_operator_note(
@@ -50452,6 +50652,10 @@ def _run_action_forms(root: Path, run_id: str) -> str:
 
 def _publication_handoff_commands_panel(root: Path, publication: Any) -> str:
     payload = load_coder_publication_handoff_payload(root, publication)
+    completion_proof = _publication_handoff_completion_proof_for_display(
+        root,
+        publication,
+    )
     suggested_push = payload.get("suggested_push_command", "unavailable")
     suggested_pr = payload.get("suggested_draft_pr_command", "unavailable")
     pr_body_path = payload.get("pr_body_path", "unavailable")
@@ -50466,6 +50670,11 @@ def _publication_handoff_commands_panel(root: Path, publication: Any) -> str:
         [
             "handoff_status: ready_for_operator",
             f"handoff_artifact: {_artifact_link(publication.handoff_artifact_path)}",
+            f"source_coder_publication_handoff: {_artifact_link(completion_proof['source_coder_publication_handoff'])}",
+            f"source_coder_publication_handoff_md: {_artifact_link(completion_proof['source_coder_publication_handoff_md'])}",
+            f"source_publication_handoff_sha256: {_e(completion_proof['source_publication_handoff_sha256'])}",
+            f"source_publication_handoff_md_sha256: {_e(completion_proof['source_publication_handoff_md_sha256'])}",
+            f"source_coder_publication_handoff_markdown_consumed: {_e(completion_proof['source_coder_publication_handoff_markdown_consumed'])}",
             f"source_coder_publication_decision: {_artifact_link(str(source_decision))}",
             f"source_coder_publication_decision_md: {_artifact_link(str(source_decision_md))}",
             f"source_publication_decision_sha256: {_e(str(payload.get('source_publication_decision_sha256', 'missing')))}",
@@ -50484,6 +50693,173 @@ def _publication_handoff_commands_panel(root: Path, publication: Any) -> str:
         ],
         anchor_id="publication-handoff-commands",
     )
+
+
+def _publication_handoff_completion_proof_for_display(
+    root: Path,
+    publication: Any | None,
+) -> dict[str, str]:
+    if publication is None:
+        return _publication_handoff_completion_proof_record(
+            proof_status="missing",
+            proof_error="publication_handoff_not_ready",
+        )
+    try:
+        return _publication_handoff_completion_proof(root, publication)
+    except ValueError as error:
+        return _publication_handoff_completion_proof_record(
+            proof_status="invalid",
+            proof_error=str(error),
+            source_coder_publication_handoff=_repo_relative_artifact_path(
+                root,
+                getattr(publication, "handoff_artifact_path", None),
+            ),
+            source_coder_publication_handoff_md=_repo_relative_artifact_path(
+                root,
+                Path(str(getattr(publication, "handoff_artifact_path", ""))).with_suffix(".md")
+                if getattr(publication, "handoff_artifact_path", None)
+                else None,
+            ),
+            source_publication_handoff_sha256=_sha256_for_display(
+                root / getattr(publication, "handoff_artifact_path", "")
+            )
+            if getattr(publication, "handoff_artifact_path", None)
+            else "missing",
+            source_publication_handoff_md_sha256=_sha256_for_display(
+                (root / getattr(publication, "handoff_artifact_path")).with_suffix(".md")
+            )
+            if getattr(publication, "handoff_artifact_path", None)
+            else "missing",
+        )
+
+
+def _publication_handoff_completion_proof(
+    root: Path,
+    publication: Any,
+) -> dict[str, str]:
+    handoff_path_value = getattr(publication, "handoff_artifact_path", None)
+    if not handoff_path_value:
+        raise ValueError("complete-goal requires publication handoff artifact proof")
+    handoff_json = root / handoff_path_value
+    handoff_md = handoff_json.with_suffix(".md")
+    if not handoff_json.exists():
+        raise ValueError("complete-goal requires readable publication_handoff.json proof")
+    if not handoff_md.exists():
+        raise ValueError("complete-goal requires readable publication_handoff.md proof")
+    payload = load_coder_publication_handoff_payload(root, publication)
+    if not payload:
+        raise ValueError("complete-goal requires readable publication handoff payload")
+    if payload.get("kind") != "coder_worktree_publication_handoff":
+        raise ValueError("publication handoff artifact has unexpected kind")
+    if payload.get("coder_worktree_run_id") != getattr(publication, "run_id", None):
+        raise ValueError("publication handoff artifact does not match run")
+    if payload.get("project_id") != getattr(publication, "project_id", None):
+        raise ValueError("publication handoff artifact does not match project")
+    if payload.get("commit_sha") != getattr(publication, "commit_sha", None):
+        raise ValueError("publication handoff artifact does not match commit")
+    if payload.get("source_coder_publication_decision_markdown_consumed") is not True:
+        raise ValueError("publication handoff artifact is missing decision markdown proof")
+    try:
+        markdown = handoff_md.read_text(encoding="utf-8")
+    except OSError as error:
+        raise ValueError("complete-goal requires readable publication_handoff.md proof") from error
+    required_markdown = [
+        f"- coder_worktree_run_id: {getattr(publication, 'run_id', '')}",
+        f"- commit_sha: {getattr(publication, 'commit_sha', '')}",
+        "- source_coder_publication_decision_markdown_consumed: true",
+        "- suggested_push_command:",
+        "- suggested_draft_pr_command:",
+    ]
+    if not all(item in markdown for item in required_markdown):
+        raise ValueError("publication handoff markdown proof does not match handoff payload")
+    return _publication_handoff_completion_proof_record(
+        proof_status="ready",
+        proof_error="none",
+        source_coder_publication_handoff=_repo_relative_artifact_path(root, handoff_json),
+        source_coder_publication_handoff_md=_repo_relative_artifact_path(root, handoff_md),
+        source_publication_handoff_sha256=hashlib.sha256(handoff_json.read_bytes()).hexdigest(),
+        source_publication_handoff_md_sha256=hashlib.sha256(
+            handoff_md.read_bytes()
+        ).hexdigest(),
+        source_coder_publication_handoff_markdown_consumed="true",
+        publication_handoff_kind=str(payload.get("kind") or "missing"),
+        suggested_push_command=str(payload.get("suggested_push_command") or "missing"),
+        suggested_draft_pr_command=str(
+            payload.get("suggested_draft_pr_command") or "missing"
+        ),
+        pr_body_path=str(payload.get("pr_body_path") or "missing"),
+        handoff_body_path=str(payload.get("handoff_body_path") or "missing"),
+        source_coder_publication_decision=str(
+            payload.get("source_coder_publication_decision") or "missing"
+        ),
+        source_coder_publication_decision_md=str(
+            payload.get("source_coder_publication_decision_md") or "missing"
+        ),
+        source_publication_decision_sha256=str(
+            payload.get("source_publication_decision_sha256") or "missing"
+        ),
+        source_publication_decision_md_sha256=str(
+            payload.get("source_publication_decision_md_sha256") or "missing"
+        ),
+        source_coder_publication_decision_markdown_consumed=str(
+            payload.get("source_coder_publication_decision_markdown_consumed") is True
+        ).lower(),
+    )
+
+
+def _publication_handoff_completion_proof_record(**overrides: str) -> dict[str, str]:
+    record = {
+        "proof_status": "missing",
+        "proof_error": "none",
+        "source_coder_publication_handoff": "missing",
+        "source_coder_publication_handoff_md": "missing",
+        "source_publication_handoff_sha256": "missing",
+        "source_publication_handoff_md_sha256": "missing",
+        "source_coder_publication_handoff_markdown_consumed": "false",
+        "publication_handoff_kind": "missing",
+        "suggested_push_command": "missing",
+        "suggested_draft_pr_command": "missing",
+        "pr_body_path": "missing",
+        "handoff_body_path": "missing",
+        "source_coder_publication_decision": "missing",
+        "source_coder_publication_decision_md": "missing",
+        "source_publication_decision_sha256": "missing",
+        "source_publication_decision_md_sha256": "missing",
+        "source_coder_publication_decision_markdown_consumed": "false",
+    }
+    record.update({key: str(value) for key, value in overrides.items()})
+    return record
+
+
+def _publication_handoff_completion_proof_rows(
+    proof: dict[str, str],
+    *,
+    prefix: str,
+) -> list[tuple[str, str | SafeHtml]]:
+    return [
+        (f"{prefix}_proof_status", proof["proof_status"]),
+        (f"{prefix}_proof_error", proof["proof_error"]),
+        (
+            f"{prefix}_source_coder_publication_handoff",
+            _artifact_link(proof["source_coder_publication_handoff"]),
+        ),
+        (
+            f"{prefix}_source_coder_publication_handoff_md",
+            _artifact_link(proof["source_coder_publication_handoff_md"]),
+        ),
+        (
+            f"{prefix}_source_publication_handoff_sha256",
+            proof["source_publication_handoff_sha256"],
+        ),
+        (
+            f"{prefix}_source_publication_handoff_md_sha256",
+            proof["source_publication_handoff_md_sha256"],
+        ),
+        (
+            f"{prefix}_source_coder_publication_handoff_markdown_consumed",
+            proof["source_coder_publication_handoff_markdown_consumed"],
+        ),
+    ]
 
 
 def _publication_request_payload_for_display(root: Path, publication: Any) -> dict[str, Any]:

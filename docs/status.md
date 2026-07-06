@@ -4,6 +4,21 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Successor Goal manual publish completion from `/today` and `/resume` now
+  consumes `coder_publication/publication_handoff.md` as first-class proof
+  before local Goal completion. The browser action validates the handoff JSON
+  and Markdown pair, rejects tampered handoff Markdown before status changes,
+  writes Goal-scoped `completion.json` / `completion.md`, and exposes handoff
+  proof paths/hashes plus
+  `source_coder_publication_handoff_markdown_consumed: true` in the action
+  result, manual publish boundary, Goal completion readiness, Goal artifact
+  explorer, `/today` completed Goal handoff, and `/resume` completed Goal
+  handoff. `/today` and `/resume` now move to completed Goal evidence plus
+  same-page next-Goal creation while keeping completed-Goal provenance visible
+  and push, PR, deploy, provider, network, and external mutation counters false
+  or zero. Focused local proof: compile plus the Goal action-card/manual
+  publish regression with a tampered-handoff completion block, and the long
+  daily browser-flow regression.
 - Successor Goal publication handoffs from `/today` and `/resume` now consume
   `coder_publication/publication_decision.md` as first-class proof before the
   app writes local handoff and PR-body artifacts. The handoff artifacts,

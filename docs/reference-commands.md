@@ -459,6 +459,22 @@ includes `git push <remote> <branch>` and a draft `gh pr create` command with
 a body-file path. It does not execute either command. Manual operator
 execution remains required for push or PR creation, and deploy remains out of
 scope.
+
+The browser `complete-goal` action is available only after a ready publication
+handoff exists. It consumes and validates the matching
+`coder_publication/publication_handoff.json` /
+`coder_publication/publication_handoff.md` pair, records the handoff JSON and
+Markdown paths and hashes plus
+`source_coder_publication_handoff_markdown_consumed: true`, and writes:
+
+```text
+.clanker/projects/<project_id>/goals/<goal_id>/completion.json
+.clanker/projects/<project_id>/goals/<goal_id>/completion.md
+```
+
+Completion records local Goal status only. It does not run the suggested push
+or PR commands, create a PR, deploy, call providers, use the network, or create
+external effects.
 `record-delegation-result` remains the manual ingestion path for
 operator-supplied output.
 

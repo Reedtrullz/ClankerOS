@@ -144,9 +144,14 @@ Core layers for the bootstrap:
   surface back to the daily cockpit before the manual publish boundary.
   Manual publish boundary actions launched from the post-publication-handoff
   Today current-action panel show copy-only push/PR commands for use outside
-  ClankerOS, preserve `return_to=/today#today-current-action`, and let the
-  operator confirm only local Goal completion while saving the completed
-  Goal's resume surface back to the daily cockpit.
+  ClankerOS, expose the consumed `publication_handoff.json` /
+  `publication_handoff.md` proof pair and hashes, preserve
+  `return_to=/today#today-current-action`, and let the operator confirm only
+  local Goal completion after `complete-goal` validates that handoff Markdown.
+  The completion action writes Goal-scoped `completion.json` / `completion.md`
+  evidence, keeps push/PR/deploy/provider/network/external-effect counters at
+  zero, and saves the completed Goal's resume surface back to the daily
+  cockpit.
   After local Goal completion, `/today` and `/resume` render a read-only
   completed Goal handoff that links the completed evidence, latest artifact,
   Goal CI handoff, saved daily resume surface, and the current project's
@@ -307,6 +312,15 @@ Core layers for the bootstrap:
   the active workspace artifact, the original daily return surface is
   preserved for the manual publish boundary, and `/today`, `/resume`, and the
   successor Goal page advance to `Manual publish outside ClankerOS` while
+  retaining `completed-goal-provenance.md` as durable history.
+  When the successor manual publish boundary is then completed from either
+  daily surface, `complete-goal` consumes
+  `coder_publication/publication_handoff.md` as proof, validates the handoff
+  JSON/Markdown pair and upstream publication-decision proof, rejects tampered
+  handoff Markdown before changing Goal status, writes
+  `completion.json` / `completion.md` under the Goal, keeps the publication
+  handoff Markdown as the saved active artifact, and moves `/today` and
+  `/resume` to completed Goal evidence plus same-page next-Goal creation while
   retaining `completed-goal-provenance.md` as durable history.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
