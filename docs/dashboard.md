@@ -318,10 +318,10 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Make post-worktree-run `/today` expose `Open review` as the primary same-page first-run action with confirmation and finish-today resume proof.
+- focus: Make post-review `/today` expose `Create commit request` as the primary same-page first-run action with confirmation and finish-today resume proof.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-07-05T20:57:45.702233+00:00
+- created_at: 2026-07-06T00:54:28.381078+00:00
 
 ## Simplicity Guardrail
 
@@ -329,7 +329,7 @@
 - reason: selected only actionable item with score 10 and complexity 4; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
 - selected_score: 10
 - selected_complexity: 4
-- selected_focus: Make post-worktree-run `/today` expose `Open review` as the primary same-page first-run action with confirmation and finish-today resume proof.
+- selected_focus: Make post-review `/today` expose `Create commit request` as the primary same-page first-run action with confirmation and finish-today resume proof.
 
 ## Expansion Operator Approval Schema Decision
 

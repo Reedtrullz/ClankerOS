@@ -113,7 +113,11 @@ Core layers for the bootstrap:
   collapsed details panel. Approved worktree runs launched from that Today
   current-action form keep the confirmed command, verifier, and bounded-file
   checks intact while returning the action result and workspace resume surface
-  to `/today#today-current-action`. Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
+  to `/today#today-current-action`. Review actions launched after those runs
+  from the same Today current-action form also write the local review artifact,
+  preserve `return_to=/today#today-current-action`, and save the workspace
+  resume surface back to the daily cockpit before the commit-request gate.
+  Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only
   `Today Live State` panel follows with five-second local

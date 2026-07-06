@@ -22915,7 +22915,11 @@ def _goal_next_action_form(
     if next_action.action == "Create commit request":
         return _goal_commit_request_form(state["root"], state)
     if next_action.action == "Open review":
-        return _goal_review_run_form(state["root"], state)
+        return _goal_review_run_form(
+            state["root"],
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Approve commit":
         return _goal_approve_commit_form(state)
     if next_action.action == "Commit approved worktree":
@@ -23400,21 +23404,30 @@ def _goal_commit_request_form(root: Path, state: dict[str, Any]) -> str:
     )
 
 
-def _goal_review_run_form(root: Path, state: dict[str, Any]) -> str:
+def _goal_review_run_form(
+    root: Path,
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     run = _goal_unreviewed_completed_worktree_run(root, state)
     if run is None:
         return "<p class='muted'>review_run_form_status: unavailable_until_completed_unreviewed_run_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     review_path = Path("runs") / run.source_run_id / "review.md"
     return "".join(
         [
-            "<h3>Create Review</h3>",
+            "<h3>Open Review</h3>",
             "<p class='muted'>Writes the local human-readable review artifact required before a commit request. It does not approve commits, stage files, commit, push, create a PR, deploy, call a provider, or use the network.</p>",
             _kv(
                 [
                     ("coder_worktree_run", run.id),
                     ("source_run_id", run.source_run_id),
                     ("review_artifact", review_path.as_posix()),
+                    (
+                        "return_to_after_review",
+                        SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
+                    ),
                 ]
             ),
             _form("review-run", {"run_id": run.id, "return_to": return_to}),
@@ -48743,6 +48756,16 @@ ACTION_FORM_COPY: dict[str, dict[str, str]] = {
         "confirm_button": "Run approved worktree",
         "result_title": "Worktree run finished",
         "result_body": "ClankerOS ran the approved local worktree command, recorded evidence, and saved the next return point.",
+    },
+    "review-run": {
+        "title": "Open review",
+        "body": "Write the local review artifact for the completed worktree run before requesting a commit.",
+        "button": "Open review",
+        "confirm_title": "Confirm review-run",
+        "confirm_body": "Review the completed worktree run and return surface before ClankerOS writes the local review artifact.",
+        "confirm_button": "Open review",
+        "result_title": "Review opened",
+        "result_body": "ClankerOS wrote the local review artifact and saved the next return point for the commit request gate.",
     },
     "coder-commit-request": {
         "title": "Create commit request",

@@ -11425,7 +11425,20 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     _init_git_repo(target_repo)
     (target_repo / "scripts").mkdir()
     (target_repo / "scripts" / "noop.py").write_text("pass\n", encoding="utf-8")
-    subprocess.run(["git", "add", "scripts/noop.py"], cwd=target_repo, check=True)
+    (target_repo / "scripts" / "change_noop.py").write_text(
+        "from pathlib import Path\n"
+        "target = Path('scripts/noop.py')\n"
+        "marker = '# changed by approved worktree\\n'\n"
+        "text = target.read_text(encoding='utf-8')\n"
+        "if marker not in text:\n"
+        "    target.write_text(text.rstrip() + '\\n' + marker, encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    subprocess.run(
+        ["git", "add", "scripts/noop.py", "scripts/change_noop.py"],
+        cwd=target_repo,
+        check=True,
+    )
     subprocess.run(
         ["git", "commit", "-m", "add no-op script"],
         cwd=target_repo,
@@ -12002,7 +12015,8 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert "name='return_to' value='/today#today-current-action'" in today_after_approval_decision.body
     assert "return_to_after_command</dt><dd><a href='/today#today-current-action'>/today#today-current-action</a>" in today_after_approval_decision.body
 
-    worktree_command = "python3 scripts/noop.py"
+    worktree_command = "python3 scripts/change_noop.py"
+    verify_command = "python3 scripts/noop.py"
     run_worktree_confirmation = render_local_app_route(
         tmp_path,
         "/actions/run-coder-worktree",
@@ -12011,7 +12025,7 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
             "delegation_id": [delegation.id],
             "command": [worktree_command],
             "verify": ["yes"],
-            "verify_command": [worktree_command],
+            "verify_command": [verify_command],
             "return_to": ["/today#today-current-action"],
         },
     )
@@ -12028,7 +12042,7 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
             "delegation_id": [delegation.id],
             "command": [worktree_command],
             "verify": ["yes"],
-            "verify_command": [worktree_command],
+            "verify_command": [verify_command],
             "return_to": ["/today#today-current-action"],
             "confirm": ["yes"],
         },
@@ -12061,12 +12075,76 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert run_worktree_workspace["updated_by"] == "run-coder-worktree"
 
     today_after_worktree_run = render_local_app_route(tmp_path, "/today")
+    coder_runs = list_coder_worktree_runs(tmp_path, delegation_id=delegation.id)
+    assert len(coder_runs) == 1
+    coder_run = coder_runs[0]
     assert "today_command_primary_action</dt><dd>Open review" in today_after_worktree_run.body
     assert (
         "today_command_primary_surface</dt><dd>"
         "<a href='#today-current-action'>Open review</a>"
     ) in today_after_worktree_run.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Open review</a>"
+    ) in today_after_worktree_run.body
     assert "today_command_action_form_available</dt><dd>true" in today_after_worktree_run.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_worktree_run.body
+    assert "Open Review" in today_after_worktree_run.body
+    assert "action='/actions/review-run'" in today_after_worktree_run.body
+    assert f"name='run_id' value='{coder_run.id}'" in today_after_worktree_run.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_worktree_run.body
+    assert "return_to_after_review</dt><dd><a href='/today#today-current-action'>/today#today-current-action</a>" in today_after_worktree_run.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_worktree_run.body
+
+    review_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/review-run",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert review_confirmation.status == 409
+    assert "Confirm review-run" in review_confirmation.body
+    assert "action_confirmation_label</dt><dd>Open review" in review_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in review_confirmation.body
+
+    review_result = render_local_app_route(
+        tmp_path,
+        "/actions/review-run",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert review_result.status == 200
+    assert "run_review:" in review_result.body
+    assert "action_result_command_label</dt><dd>Open review" in review_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=run_review%3A%20"
+    ) in review_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in review_result.body
+    review_path = tmp_path / "runs" / coder_run.source_run_id / "review.md"
+    assert review_path.exists()
+    assert coder_run.id in review_path.read_text(encoding="utf-8")
+    review_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert review_workspace["open_project"] == "first-target"
+    assert review_workspace["open_goal"] == created_goal_id
+    assert review_workspace["last_viewed_artifact"] == str(review_path.relative_to(tmp_path))
+    assert review_workspace["resume_surface"] == "/today#today-current-action"
+    assert review_workspace["updated_by"] == "review-run"
+
+    today_after_review = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Create commit request" in today_after_review.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
@@ -23592,7 +23670,7 @@ def test_goal_next_action_card_exposes_reviewed_commit_request_form(
     assert before_review.status == 200
     assert "recommended_action</dt><dd>Open review" in before_review.body
     assert "next_action_form_available</dt><dd>true" in before_review.body
-    assert "Create Review" in before_review.body
+    assert "Open Review" in before_review.body
     assert "action='/actions/review-run'" in before_review.body
     assert f"name='run_id' value='{run_id}'" in before_review.body
     assert f"coder_worktree_run</dt><dd>{run_id}" in before_review.body
