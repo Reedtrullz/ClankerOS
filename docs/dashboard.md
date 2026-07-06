@@ -318,10 +318,10 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Make successor Goal worktree approval decisions from `/today` and `/resume` consume `coder_worktree_approval_request.md` as proof, keep provenance history visible, and move the primary action to `Run approved worktree`.
+- focus: Make successor Goal approved worktree runs from `/today` and `/resume` consume `coder_worktree_approval_decision.md` as proof, keep provenance history visible, and move the primary action to `Open review`.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-07-06T05:28:18.033785+00:00
+- created_at: 2026-07-06T05:58:51.033249+00:00
 
 ## Simplicity Guardrail
 
@@ -329,7 +329,7 @@
 - reason: selected only actionable item with score 10 and complexity 4; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
 - selected_score: 10
 - selected_complexity: 4
-- selected_focus: Make successor Goal worktree approval decisions from `/today` and `/resume` consume `coder_worktree_approval_request.md` as proof, keep provenance history visible, and move the primary action to `Run approved worktree`.
+- selected_focus: Make successor Goal approved worktree runs from `/today` and `/resume` consume `coder_worktree_approval_decision.md` as proof, keep provenance history visible, and move the primary action to `Open review`.
 
 ## Expansion Operator Approval Schema Decision
 

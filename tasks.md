@@ -114,10 +114,14 @@
 - [x] Make successor Goal worktree approval request from `/today` and `/resume`
   consume `coder_worktree_plan.md` as proof, keep provenance history visible,
   and move the primary action to `Approve worktree`. <!-- score=10 complexity=4 -->
-- [ ] Make successor Goal worktree approval decisions from `/today` and
+- [x] Make successor Goal worktree approval decisions from `/today` and
   `/resume` consume `coder_worktree_approval_request.md` as proof, keep
   provenance history visible, and move the primary action to
   `Run approved worktree`. <!-- score=10 complexity=4 -->
+- [ ] Make successor Goal approved worktree runs from `/today` and `/resume`
+  consume `coder_worktree_approval_decision.md` as proof, keep provenance
+  history visible, and move the primary action to `Open review`.
+  <!-- score=10 complexity=4 -->
 - [x] Extend the static dashboard with incident summaries once incidents exist.
 - [x] Add a compact incident resolution path after more failure modes exist.
 - [x] Add queue-health checks for repeated blocked or failed work.

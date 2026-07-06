@@ -47579,18 +47579,70 @@ def _handle_post(
             )
             message = f"approved_coder_worktree: {result.approval.id}"
             location = _safe_local_return_path(_one(form, "return_to")) or "/"
+            approval = result.approval
+            decision_artifact_path = (
+                root / approval.decision_artifact_path
+                if approval.decision_artifact_path
+                else root / ""
+            )
+            decision_markdown_path = decision_artifact_path.with_suffix(".md")
             _remember_delegation_workspace(
                 root,
                 storage,
-                result.approval.delegation_id,
-                artifact_path=(
-                    Path(result.approval.decision_artifact_path).with_suffix(".md")
-                    if result.approval.decision_artifact_path
-                    else None
-                ),
+                approval.delegation_id,
+                artifact_path=decision_markdown_path if approval.decision_artifact_path else None,
                 updated_by="approve-coder-worktree",
                 resume_surface=location,
             )
+            try:
+                decision_payload = json.loads(decision_artifact_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                decision_payload = {}
+            source_request = str(
+                decision_payload.get("source_coder_worktree_approval_request")
+                or approval.request_artifact_path
+            )
+            source_request_md = str(
+                decision_payload.get("source_coder_worktree_approval_request_md")
+                or Path(approval.request_artifact_path).with_suffix(".md")
+            )
+            result = {
+                "approval_id": approval.id,
+                "delegation_id": approval.delegation_id,
+                "project_id": approval.project_id,
+                "status": approval.status,
+                "artifact_path": decision_artifact_path,
+                "markdown_path": decision_markdown_path,
+                "source_coder_worktree_plan": approval.source_plan_path,
+                "source_plan_sha256": approval.source_plan_sha256,
+                "source_coder_worktree_approval_request": source_request,
+                "source_coder_worktree_approval_request_md": source_request_md,
+                "source_coder_worktree_approval_request_markdown_consumed": decision_payload.get(
+                    "source_coder_worktree_approval_request_markdown_consumed"
+                )
+                is True,
+                "source_approval_request_sha256": decision_payload.get(
+                    "source_approval_request_sha256",
+                    "missing",
+                ),
+                "source_approval_request_md_sha256": decision_payload.get(
+                    "source_approval_request_md_sha256",
+                    "missing",
+                ),
+                "already_approved": result.already_approved,
+                "worktrees_created": decision_payload.get("worktrees_created", 0),
+                "source_edits_taken": decision_payload.get("source_edits_taken", 0),
+                "commands_run": decision_payload.get("commands_run", 0),
+                "commit_created": decision_payload.get("commit_created", False),
+                "push_created": decision_payload.get("push_created", False),
+                "deploy_created": decision_payload.get("deploy_created", False),
+                "provider_calls_taken_by_clankeros": decision_payload.get(
+                    "provider_calls_taken_by_clankeros",
+                    0,
+                ),
+                "network_actions_taken": decision_payload.get("network_actions_taken", 0),
+                "external_mutations_taken": decision_payload.get("external_mutations_taken", 0),
+            }
         elif action == "run-coder-worktree":
             delegation_id = _required(form, "delegation_id")
             run_result = run_approved_coder_worktree(

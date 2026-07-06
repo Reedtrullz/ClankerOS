@@ -1,5 +1,64 @@
 # Status
 
+## 2026-07-06 Successor Goal Worktree Approval Decision Daily Resume
+
+- Completed the selected slice for successor Goal worktree approval decisions
+  from `/today` and `/resume`.
+- A confirmed browser `approve-coder-worktree` action now returns an explicit
+  operator-facing result payload with
+  `source_coder_worktree_approval_request_md`,
+  `source_coder_worktree_approval_request_markdown_consumed: true`, the
+  approval-request JSON and Markdown hashes, generated
+  `coder_worktree_approval_decision.json` /
+  `coder_worktree_approval_decision.md` artifact links, approved state, and
+  zero-effect safety counters.
+- The generated `coder_worktree_approval_decision.md` consumes the current
+  `coder_worktree_approval_request.md` as proof, records the request path and
+  hash, and remains a local approval decision artifact. It does not create a
+  worktree, run commands, edit files, commit, push, deploy, call providers, or
+  use the network.
+- Running the approval-decision action from
+  `/resume#resume-workbench-action-form` preserves that return surface for the
+  embedded `Run approved worktree` form. An idempotent rerun from
+  `/today#today-current-action` reports `already_approved: true`, keeps the
+  same approval-decision artifact and request hashes, and stores the Today
+  return surface without changing the durable decision payload.
+- `/today`, `/resume`, and the successor Goal page all move the primary action
+  to `Run approved worktree` after confirmed approval decision, while
+  `completed-goal-provenance.md` remains visible as durable provenance history
+  rather than a transient completed-Goal panel.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal approved worktree runs from `/today` and `/resume` should
+  consume `coder_worktree_approval_decision.md` as proof, keep provenance
+  history visible, and move the primary action to `Open review`.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the explicit approval-decision result payload because the
+    browser result page did not expose
+    `source_coder_worktree_approval_request_md`.
+  - `python3 -m compileall -q agent_os/coder_worktree_execution.py agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 75.78s after adding approval-request Markdown consumption,
+    request JSON/Markdown hash checks, Goal artifact reader coverage, Today
+    idempotence coverage, and daily return-surface preservation for the
+    embedded `Run approved worktree` form.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_approval_and_run_capture_bounded_evidence -q --tb=short`:
+    1 passed in 2.48s before adding the CLI source-request assertions; the
+    strengthened CLI regression then passed in 13.69s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed in 53.91s.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal approved
+    worktree-run slice and refreshed `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this slice creates only local approval-decision artifacts after an
+  existing confirmed local browser action. It does not create or run a
+  worktree, run commands, edit files, commit, push, create PRs, deploy, call
+  providers, use app-side network actions, or mutate external systems. Local
+  browser/test proof is not CI, deploy, or live production proof.
+
 ## 2026-07-06 Successor Goal Worktree Approval Request Daily Resume
 
 - Completed the selected slice for successor Goal worktree approval requests

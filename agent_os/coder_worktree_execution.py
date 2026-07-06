@@ -292,6 +292,19 @@ def approve_coder_worktree(
 
     decided_at = utc_now()
     decision_path = root / (approval.decision_artifact_path or "")
+    request_artifact = root / approval.request_artifact_path
+    request_markdown = request_artifact.with_suffix(".md")
+    try:
+        request_payload = json.loads(request_artifact.read_text(encoding="utf-8"))
+        request_markdown_text = request_markdown.read_text(encoding="utf-8")
+    except (OSError, json.JSONDecodeError) as error:
+        raise CoderWorktreeApprovalError("coder worktree approval request is not readable") from error
+    if request_payload.get("kind") != APPROVAL_REQUEST_KIND:
+        raise CoderWorktreeApprovalError("coder worktree approval request has unexpected kind")
+    if request_payload.get("approval_id") != approval.id:
+        raise CoderWorktreeApprovalError("coder worktree approval request does not match approval")
+    source_request = str(request_artifact.relative_to(root))
+    source_request_md = str(request_markdown.relative_to(root))
     payload = {
         "kind": APPROVAL_DECISION_KIND,
         "schema_version": 1,
@@ -300,11 +313,20 @@ def approve_coder_worktree(
         "project_id": approval.project_id,
         "source_coder_worktree_plan": approval.source_plan_path,
         "source_plan_sha256": approval.source_plan_sha256,
+        "source_coder_worktree_approval_request": source_request,
+        "source_coder_worktree_approval_request_md": source_request_md,
+        "source_approval_request_sha256": hashlib.sha256(request_artifact.read_bytes()).hexdigest(),
+        "source_approval_request_md_sha256": hashlib.sha256(
+            request_markdown_text.encode("utf-8")
+        ).hexdigest(),
+        "source_coder_worktree_approval_request_markdown_consumed": True,
+        "source_coder_worktree_approval_request_markdown_excerpt": request_markdown_text[:2000],
         "status": "approved",
         "decided_by": decided_by,
         "note": note,
         "decided_at": decided_at,
         "worktrees_created": 0,
+        "source_edits_taken": 0,
         "commands_run": 0,
         "commit_created": False,
         "push_created": False,
@@ -1539,6 +1561,8 @@ def render_coder_worktree_decision_cli_lines(
         f"delegation_id: {approval.delegation_id}",
         f"project_id: {approval.project_id}",
         f"status: {approval.status}",
+        f"source_coder_worktree_approval_request: {approval.request_artifact_path}",
+        f"source_coder_worktree_approval_request_md: {Path(approval.request_artifact_path).with_suffix('.md')}",
         f"artifact: {(root / (approval.decision_artifact_path or '')).relative_to(root)}",
         "worktrees_created: 0",
         "commands_run: 0",
@@ -3431,8 +3455,26 @@ def _render_approval_decision_markdown(payload: dict[str, Any]) -> str:
             "# Coder Worktree Approval Decision",
             "",
             f"- approval_id: {payload['approval_id']}",
+            f"- delegation_id: {payload['delegation_id']}",
+            f"- project_id: {payload['project_id']}",
             f"- status: {payload['status']}",
+            f"- source_coder_worktree_plan: {payload['source_coder_worktree_plan']}",
+            f"- source_plan_sha256: {payload['source_plan_sha256']}",
+            f"- source_coder_worktree_approval_request: {payload['source_coder_worktree_approval_request']}",
+            f"- source_coder_worktree_approval_request_md: {payload['source_coder_worktree_approval_request_md']}",
+            "- source_coder_worktree_approval_request_markdown_consumed: true",
+            f"- source_approval_request_sha256: {payload['source_approval_request_sha256']}",
+            f"- source_approval_request_md_sha256: {payload['source_approval_request_md_sha256']}",
             f"- decided_by: {payload['decided_by']}",
+            "",
+            "## Safety Counters",
+            "",
+            f"- worktrees_created: {payload['worktrees_created']}",
+            f"- source_edits_taken: {payload['source_edits_taken']}",
+            f"- commands_run: {payload['commands_run']}",
+            f"- provider_calls_taken_by_clankeros: {payload['provider_calls_taken_by_clankeros']}",
+            f"- network_actions_taken: {payload['network_actions_taken']}",
+            f"- external_mutations_taken: {payload['external_mutations_taken']}",
             "",
             "## Non-Claims",
             "",

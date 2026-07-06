@@ -14018,6 +14018,224 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert "recommended_action</dt><dd>Approve worktree" in successor_goal_after_approval.body
     assert "completed-goal-provenance.md" in successor_goal_after_approval.body
 
+    next_goal_approval_decision_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-worktree",
+        method="POST",
+        form={
+            "approval_id": [next_approval_id],
+            "decided_by": ["operator"],
+            "note": ["Approve successor worktree from Resume"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+        },
+    )
+    assert next_goal_approval_decision_confirmation.status == 409
+    assert "Confirm worktree approval" in next_goal_approval_decision_confirmation.body
+    assert (
+        "action_confirmation_label</dt><dd>Approve worktree"
+        in next_goal_approval_decision_confirmation.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_approval_decision_confirmation.body
+    )
+
+    next_goal_approval_decision = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-worktree",
+        method="POST",
+        form={
+            "approval_id": [next_approval_id],
+            "decided_by": ["operator"],
+            "note": ["Approve successor worktree from Resume"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_approval_decision.status == 200
+    assert "approved_coder_worktree:" in next_goal_approval_decision.body
+    assert "action_result_command_label</dt><dd>Approve worktree" in next_goal_approval_decision.body
+    assert (
+        "source_coder_worktree_approval_request_md</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in next_goal_approval_decision.body
+    )
+    assert (
+        "source_coder_worktree_approval_request_markdown_consumed</dt><dd>true"
+        in next_goal_approval_decision.body
+    )
+    assert "source_approval_request_sha256</dt><dd>" in next_goal_approval_decision.body
+    assert "source_approval_request_md_sha256</dt><dd>" in next_goal_approval_decision.body
+    assert "status</dt><dd>approved" in next_goal_approval_decision.body
+    assert "worktrees_created</dt><dd>0" in next_goal_approval_decision.body
+    assert "source_edits_taken</dt><dd>0" in next_goal_approval_decision.body
+    assert "commands_run</dt><dd>0" in next_goal_approval_decision.body
+    assert "provider_calls_taken_by_clankeros</dt><dd>0" in next_goal_approval_decision.body
+    assert "network_actions_taken</dt><dd>0" in next_goal_approval_decision.body
+    assert "external_mutations_taken</dt><dd>0" in next_goal_approval_decision.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Run approved worktree"
+        in next_goal_approval_decision.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_approval_decision.body
+    assert "action='/actions/run-coder-worktree'" in next_goal_approval_decision.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_approval_decision.body
+    )
+
+    next_approval_decision_json = next_approval_request_md.with_name(
+        "coder_worktree_approval_decision.json"
+    )
+    next_approval_decision_md = next_approval_request_md.with_name(
+        "coder_worktree_approval_decision.md"
+    )
+    assert next_approval_decision_json.exists()
+    assert next_approval_decision_md.exists()
+    next_approval_decision_relative = next_approval_decision_md.relative_to(tmp_path)
+    next_approval_decision_payload = json.loads(
+        next_approval_decision_json.read_text(encoding="utf-8")
+    )
+    assert (
+        next_approval_decision_payload["source_coder_worktree_approval_request"]
+        == str(next_approval_request_json.relative_to(tmp_path))
+    )
+    assert (
+        next_approval_decision_payload["source_coder_worktree_approval_request_md"]
+        == str(next_approval_request_relative)
+    )
+    assert next_approval_decision_payload["source_approval_request_sha256"] == hashlib.sha256(
+        next_approval_request_json.read_bytes()
+    ).hexdigest()
+    assert next_approval_decision_payload["source_approval_request_md_sha256"] == hashlib.sha256(
+        next_approval_request_text.encode("utf-8")
+    ).hexdigest()
+    assert (
+        next_approval_decision_payload[
+            "source_coder_worktree_approval_request_markdown_consumed"
+        ]
+        is True
+    )
+    assert next_approval_decision_payload["status"] == "approved"
+    assert next_approval_decision_payload["worktrees_created"] == 0
+    assert next_approval_decision_payload["source_edits_taken"] == 0
+    assert next_approval_decision_payload["commands_run"] == 0
+    assert next_approval_decision_payload["provider_calls_taken_by_clankeros"] == 0
+    assert next_approval_decision_payload["network_actions_taken"] == 0
+    assert next_approval_decision_payload["external_mutations_taken"] == 0
+    next_approval_decision_text = next_approval_decision_md.read_text(encoding="utf-8")
+    assert (
+        f"- source_coder_worktree_approval_request_md: {next_approval_request_relative}"
+        in next_approval_decision_text
+    )
+    assert (
+        "- source_coder_worktree_approval_request_markdown_consumed: true"
+        in next_approval_decision_text
+    )
+    assert "- Approving a coder worktree request does not create a worktree." in next_approval_decision_text
+    next_goal_decision_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_decision_workspace["open_goal"] == next_goal_id
+    assert next_goal_decision_workspace["updated_by"] == "approve-coder-worktree"
+    assert next_goal_decision_workspace["last_viewed_artifact"] == str(
+        next_approval_decision_relative
+    )
+    assert (
+        next_goal_decision_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_decision_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_decision = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_decision.status == 200
+    assert "Today Completed Goal Provenance" not in today_after_next_goal_decision.body
+    assert "today_command_primary_action</dt><dd>Run approved worktree" in today_after_next_goal_decision.body
+    assert "action='/actions/run-coder-worktree'" in today_after_next_goal_decision.body
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_next_goal_decision.body
+    )
+    assert (
+        f"<a href='/artifacts?path={next_approval_decision_relative}'>"
+        in today_after_next_goal_decision.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_decision.body
+
+    next_goal_approval_decision_today_rerun = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-worktree",
+        method="POST",
+        form={
+            "approval_id": [next_approval_id],
+            "decided_by": ["operator"],
+            "note": ["Approve successor worktree from Today"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_approval_decision_today_rerun.status == 200
+    assert "already_approved</dt><dd>true" in next_goal_approval_decision_today_rerun.body
+    assert (
+        "source_coder_worktree_approval_request_markdown_consumed</dt><dd>true"
+        in next_goal_approval_decision_today_rerun.body
+    )
+    assert (
+        "action_result_next_step_next_action</dt><dd>Run approved worktree"
+        in next_goal_approval_decision_today_rerun.body
+    )
+    assert "action='/actions/run-coder-worktree'" in next_goal_approval_decision_today_rerun.body
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in next_goal_approval_decision_today_rerun.body
+    )
+    assert (
+        json.loads(next_approval_decision_json.read_text(encoding="utf-8"))
+        == next_approval_decision_payload
+    )
+
+    resume_after_next_goal_decision = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_decision.status == 200
+    assert "Resume Completed Goal Provenance" not in resume_after_next_goal_decision.body
+    assert (
+        "resume_return_brief_next_action</dt><dd>Run approved worktree"
+        in resume_after_next_goal_decision.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Run approved worktree"
+        in resume_after_next_goal_decision.body
+    )
+    assert "action='/actions/run-coder-worktree'" in resume_after_next_goal_decision.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in resume_after_next_goal_decision.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_approval_decision_relative}'>"
+        in resume_after_next_goal_decision.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_decision.body
+
+    successor_goal_after_decision = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_decision.status == 200
+    assert "completed_goal_provenance_history_status</dt><dd>available" in successor_goal_after_decision.body
+    assert "Artifact recorded: coder_worktree_execution_approval_decision_markdown." in successor_goal_after_decision.body
+    assert (
+        "goal_artifact_reader_selected_artifact</dt><dd>coder_worktree_execution_approval_decision_markdown"
+        in successor_goal_after_decision.body
+    )
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_approval_decision_relative}"
+        in successor_goal_after_decision.body
+    )
+    assert "goal_artifact_reader_selected_source</dt><dd>worktree_approval" in successor_goal_after_decision.body
+    assert "recommended_action</dt><dd>Run approved worktree" in successor_goal_after_decision.body
+    assert "completed-goal-provenance.md" in successor_goal_after_decision.body
+
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
     AgentSystem(tmp_path).initialize()
@@ -27227,6 +27445,8 @@ def test_coder_worktree_approval_and_run_capture_bounded_evidence(
     decision_output = capsys.readouterr().out
     assert f"approved_coder_worktree: {approval_id}" in decision_output
     assert "status: approved" in decision_output
+    assert "source_coder_worktree_approval_request: .clanker/delegations/" in decision_output
+    assert "source_coder_worktree_approval_request_md: .clanker/delegations/" in decision_output
     assert "worktrees_created: 0" in decision_output
     decision_artifact = tmp_path / next(
         line.split(": ", 1)[1]
@@ -27236,6 +27456,25 @@ def test_coder_worktree_approval_and_run_capture_bounded_evidence(
     decision_payload = json.loads(decision_artifact.read_text(encoding="utf-8"))
     assert decision_payload["kind"] == "coder_worktree_execution_approval_decision"
     assert decision_payload["status"] == "approved"
+    assert decision_payload["source_coder_worktree_approval_request"] == str(
+        request_artifact.relative_to(tmp_path)
+    )
+    assert decision_payload["source_coder_worktree_approval_request_md"] == str(
+        request_artifact.with_suffix(".md").relative_to(tmp_path)
+    )
+    assert decision_payload["source_approval_request_sha256"] == hashlib.sha256(
+        request_artifact.read_bytes()
+    ).hexdigest()
+    assert decision_payload["source_approval_request_md_sha256"] == hashlib.sha256(
+        request_artifact.with_suffix(".md").read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert decision_payload["source_coder_worktree_approval_request_markdown_consumed"] is True
+    assert decision_payload["worktrees_created"] == 0
+    assert decision_payload["source_edits_taken"] == 0
+    assert decision_payload["commands_run"] == 0
+    assert decision_payload["provider_calls_taken_by_clankeros"] == 0
+    assert decision_payload["network_actions_taken"] == 0
+    assert decision_payload["external_mutations_taken"] == 0
 
     assert (
         main(
