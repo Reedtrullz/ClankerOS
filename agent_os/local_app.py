@@ -22930,7 +22930,10 @@ def _goal_next_action_form(
             return_to_override=return_to_override,
         )
     if next_action.action == "Commit approved worktree":
-        return _goal_commit_worktree_form(state)
+        return _goal_commit_worktree_form(
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Create publication request":
         return _goal_publication_request_form(state)
     if next_action.action == "Approve publication":
@@ -23491,15 +23494,29 @@ def _goal_approve_commit_form(
     )
 
 
-def _goal_commit_worktree_form(state: dict[str, Any]) -> str:
+def _goal_commit_worktree_form(
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     approval = _goal_approved_commit_approval(state)
     if approval is None:
         return "<p class='muted'>commit_worktree_form_status: unavailable_until_commit_approval_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Commit Approved Worktree</h3>",
             "<p class='muted'>Creates one local commit only inside the isolated coder worktree after the existing backend gate re-checks review, source hashes, branch/HEAD, changed files, bounded-file validation, and verifier state. It does not push, create a PR, deploy, call a provider, or use the network.</p>",
+            _kv(
+                [
+                    ("commit_approval_id", approval.id),
+                    ("run_id", approval.run_id),
+                    (
+                        "return_to_after_local_commit",
+                        SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
+                    ),
+                ]
+            ),
             _input_form(
                 "commit-coder-worktree",
                 {

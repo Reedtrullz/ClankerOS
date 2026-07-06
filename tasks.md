@@ -69,7 +69,10 @@
 - [x] Make post-commit-request `/today` expose `Approve commit` as the primary
   same-page first-run action with confirmation and finish-today resume proof.
   <!-- score=10 complexity=4 -->
-- [ ] Make post-commit-approval `/today` expose `Commit approved worktree` as
+- [x] Make post-commit-approval `/today` expose `Commit approved worktree` as
+  the primary same-page first-run action with confirmation and finish-today
+  resume proof. <!-- score=10 complexity=4 -->
+- [ ] Make post-local-commit `/today` expose `Create publication request` as
   the primary same-page first-run action with confirmation and finish-today
   resume proof. <!-- score=10 complexity=4 -->
 - [x] Extend the static dashboard with incident summaries once incidents exist.

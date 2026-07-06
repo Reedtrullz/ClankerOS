@@ -12310,6 +12310,78 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
 
     today_after_commit_approval = render_local_app_route(tmp_path, "/today")
     assert "today_command_primary_action</dt><dd>Commit approved worktree" in today_after_commit_approval.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Commit approved worktree</a>"
+    ) in today_after_commit_approval.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Commit approved worktree</a>"
+    ) in today_after_commit_approval.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_commit_approval.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_commit_approval.body
+    assert "Commit Approved Worktree" in today_after_commit_approval.body
+    assert "action='/actions/commit-coder-worktree'" in today_after_commit_approval.body
+    assert f"name='run_id' value='{coder_run.id}'" in today_after_commit_approval.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_commit_approval.body
+    assert (
+        "return_to_after_local_commit</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_commit_approval.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_commit_approval.body
+
+    local_commit_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/commit-coder-worktree",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "message": [commit_message],
+            "committed_by": ["operator"],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert local_commit_confirmation.status == 409
+    assert "Confirm local commit" in local_commit_confirmation.body
+    assert "action_confirmation_label</dt><dd>Commit approved worktree" in local_commit_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in local_commit_confirmation.body
+
+    local_commit_result = render_local_app_route(
+        tmp_path,
+        "/actions/commit-coder-worktree",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "message": [commit_message],
+            "committed_by": ["operator"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert local_commit_result.status == 200
+    assert "commit_coder_worktree: committed" in local_commit_result.body
+    assert "action_result_command_label</dt><dd>Commit approved worktree" in local_commit_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=commit_coder_worktree%3A%20committed"
+    ) in local_commit_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in local_commit_result.body
+    commit_md = tmp_path / Path(commit_approval.source_run_evidence_path) / "coder_commit" / "commit.md"
+    assert commit_md.exists()
+    local_commit_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert local_commit_workspace["open_project"] == "first-target"
+    assert local_commit_workspace["open_goal"] == created_goal_id
+    assert local_commit_workspace["last_viewed_artifact"] == str(commit_md.relative_to(tmp_path))
+    assert local_commit_workspace["resume_surface"] == "/today#today-current-action"
+    assert local_commit_workspace["updated_by"] == "commit-coder-worktree"
+
+    today_after_local_commit = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Create publication request" in today_after_local_commit.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
