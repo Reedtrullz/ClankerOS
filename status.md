@@ -1,5 +1,42 @@
 # Status
 
+## 2026-07-06 Post-Completion Same-Page Next Goal Creation
+
+- Completed the selected slice for post-completion `/today` and `/resume`
+  same-page next-Goal creation.
+- `/today` and `/resume` completed Goal handoffs now embed the existing
+  confirmed local `create-goal` form directly in the completed Goal handoff
+  panel. The form carries `completed_goal_id`, `completed_goal_artifact`,
+  `previous_resume_surface`, and a local `return_to` value so the operator can
+  start the next project Goal without leaving the completed handoff surface.
+- Confirmed `create-goal` submissions from the completed handoff preserve the
+  completed Goal provenance in `.clanker/app/workspace.json` via
+  `completed_goal_handoff_source_goal`,
+  `completed_goal_handoff_previous_resume_surface`, and
+  `completed_goal_handoff_previous_artifact`, while the active
+  `resume_surface` moves to the new Goal's current action.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-next-Goal creation `/today` and `/resume` should surface the new Goal's
+  current action as the primary continuation while keeping the carried
+  completed-Goal handoff source visible as provenance.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because `/today` did not render
+    `today_completed_goal_next_goal_form_available=true`.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 49.59s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 6.27s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 24.36s.
+- Non-claim: this slice creates a new Goal only after the existing confirmed
+  local `create-goal` POST path is submitted. Rendering `/today` or `/resume`
+  still writes nothing on GET and does not push, deploy, create PRs, call
+  providers, use app-side network actions, or mutate external systems.
+
 ## 2026-07-06 Post-Completion Today And Resume Handoff
 
 - Completed the selected slice for post-completion `/today` and `/resume`

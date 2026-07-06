@@ -150,8 +150,15 @@ Core layers for the bootstrap:
   After local Goal completion, `/today` and `/resume` render a read-only
   completed Goal handoff that links the completed evidence, latest artifact,
   Goal CI handoff, saved daily resume surface, and the current project's
-  existing `Start Goal For This Project` form without changing the saved
-  resume proof or creating external effects.
+  `Start Goal For This Project` surface without changing the saved resume
+  proof or creating external effects. The same handoff now also embeds the
+  existing confirmed local `create-goal` form in place, so the operator can
+  start the next Goal directly from `/today` or `/resume`. Confirmed
+  next-Goal creation carries the completed Goal id, prior artifact, and saved
+  daily resume surface into `.clanker/app/workspace.json` as provenance while
+  moving the active resume target to the new Goal's current action. It still
+  requires the normal confirmation page and does not push, create PRs, deploy,
+  call providers, use app-side network actions, or create external effects.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only

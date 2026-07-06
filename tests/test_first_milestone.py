@@ -12747,6 +12747,27 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         "today_completed_goal_next_work_surface</dt><dd>"
         "<a href='/projects/first-target#start-goal-for-this-project'>Start Goal For This Project</a>"
     ) in today_after_completion.body
+    assert "today_completed_goal_next_goal_form_available</dt><dd>true" in today_after_completion.body
+    assert "today_completed_goal_next_goal_confirmation_required</dt><dd>true" in today_after_completion.body
+    assert "today_completed_goal_next_goal_action</dt><dd>create-goal" in today_after_completion.body
+    assert (
+        "today_completed_goal_next_goal_form_surface</dt><dd>"
+        "<a href='#today-completed-goal-next-goal-form'>Create next Goal here</a>"
+    ) in today_after_completion.body
+    assert "id='today-completed-goal-next-goal-form'" in today_after_completion.body
+    assert "data-completed-goal-next-goal-form='today'" in today_after_completion.body
+    assert "action='/actions/create-goal'" in today_after_completion.body
+    assert "name='project_id' value='first-target'" in today_after_completion.body
+    assert "name='completed_goal_id' value='" + created_goal_id + "'" in today_after_completion.body
+    assert (
+        "name='previous_resume_surface' value='/today#today-current-action'"
+        in today_after_completion.body
+    )
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_completion.body
+    )
+    assert "today_completed_goal_next_goal_carries_previous_evidence</dt><dd>true" in today_after_completion.body
     assert (
         "today_completed_goal_saved_resume_surface</dt><dd>"
         "<a href='/today#today-current-action'>/today#today-current-action</a>"
@@ -12770,6 +12791,20 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         "resume_completed_goal_next_work_surface</dt><dd>"
         "<a href='/projects/first-target#start-goal-for-this-project'>Start Goal For This Project</a>"
     ) in resume_after_completion.body
+    assert "resume_completed_goal_next_goal_form_available</dt><dd>true" in resume_after_completion.body
+    assert "resume_completed_goal_next_goal_confirmation_required</dt><dd>true" in resume_after_completion.body
+    assert "resume_completed_goal_next_goal_action</dt><dd>create-goal" in resume_after_completion.body
+    assert (
+        "resume_completed_goal_next_goal_form_surface</dt><dd>"
+        "<a href='#resume-completed-goal-next-goal-form'>Create next Goal here</a>"
+    ) in resume_after_completion.body
+    assert "id='resume-completed-goal-next-goal-form'" in resume_after_completion.body
+    assert "data-completed-goal-next-goal-form='resume'" in resume_after_completion.body
+    assert "name='completed_goal_id' value='" + created_goal_id + "'" in resume_after_completion.body
+    assert (
+        "name='previous_resume_surface' value='/today#today-current-action'"
+        in resume_after_completion.body
+    )
     assert (
         "resume_completed_goal_saved_resume_surface</dt><dd>"
         "<a href='/today#today-current-action'>/today#today-current-action</a>"
@@ -12777,6 +12812,62 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert "resume_completed_goal_saved_resume_preserved</dt><dd>true" in resume_after_completion.body
     assert "resume_completed_goal_write_on_get</dt><dd>false" in resume_after_completion.body
     assert "resume_completed_goal_external_effects_created</dt><dd>false" in resume_after_completion.body
+
+    next_goal_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/create-goal",
+        method="POST",
+        form={
+            "project_id": ["first-target"],
+            "prompt": ["Follow up after the completed Today workflow."],
+            "created_by_profile": ["planner"],
+            "completed_goal_id": [created_goal_id],
+            "completed_goal_artifact": [str(publication_handoff_md.relative_to(tmp_path))],
+            "previous_resume_surface": ["/today#today-current-action"],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert next_goal_confirmation.status == 409
+    assert "Confirm Goal setup" in next_goal_confirmation.body
+    assert "name='completed_goal_id' value='" + created_goal_id + "'" in next_goal_confirmation.body
+    assert (
+        "action_preflight_return_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in next_goal_confirmation.body
+    assert "completed_goal_id</dt><dd>" + created_goal_id in next_goal_confirmation.body
+    assert "previous_resume_surface</dt><dd>/today#today-current-action" in next_goal_confirmation.body
+
+    next_goal_result = render_local_app_route(
+        tmp_path,
+        "/actions/create-goal",
+        method="POST",
+        form={
+            "project_id": ["first-target"],
+            "prompt": ["Follow up after the completed Today workflow."],
+            "created_by_profile": ["planner"],
+            "completed_goal_id": [created_goal_id],
+            "completed_goal_artifact": [str(publication_handoff_md.relative_to(tmp_path))],
+            "previous_resume_surface": ["/today#today-current-action"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_result.status == 200
+    assert "goal_created:" in next_goal_result.body
+    assert "completed_goal_id</dt><dd>" + created_goal_id in next_goal_result.body
+    next_goal_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    next_goal_id = next_goal_workspace["open_goal"]
+    assert next_goal_id != created_goal_id
+    assert next_goal_workspace["open_project"] == "first-target"
+    assert next_goal_workspace["resume_surface"] == f"/goals/{next_goal_id}#goal-action-dock-form"
+    assert next_goal_workspace["completed_goal_handoff_source_goal"] == created_goal_id
+    assert next_goal_workspace["completed_goal_handoff_previous_resume_surface"] == "/today#today-current-action"
+    assert next_goal_workspace["completed_goal_handoff_previous_artifact"] == str(
+        publication_handoff_md.relative_to(tmp_path)
+    )
+    assert next_goal_workspace["updated_by"] == "create-goal"
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:

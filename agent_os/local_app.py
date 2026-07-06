@@ -3100,7 +3100,41 @@ def _completed_goal_handoff_panel(
     artifact_value = _artifact_link(latest_artifact) if latest_artifact else "none"
     completed_at = getattr(goal, "completed_at", None) or "unknown"
     section_id = f"{prefix}-completed-goal-handoff"
+    next_goal_form_id = f"{prefix}-completed-goal-next-goal-form"
     data_attr = f"data-{prefix}-completed-goal-handoff"
+    next_goal_form = ""
+    next_goal_form_surface: str | SafeHtml = "none"
+    next_goal_form_available = bool(project_id)
+    if project_id:
+        next_goal_form_surface = SafeHtml(
+            f"<a href='#{_e(next_goal_form_id)}'>Create next Goal here</a>"
+        )
+        next_goal_form = "".join(
+            [
+                (
+                    f"<section id='{_e(next_goal_form_id)}' "
+                    "class='completed-goal-next-goal-form' "
+                    f"data-completed-goal-next-goal-form='{_e(prefix)}'>"
+                ),
+                "<h3>Create next Goal here</h3>",
+                "<p class='muted'>Start the next local Goal from this completed Goal handoff. Confirmation is required before ClankerOS creates any new local records.</p>",
+                _input_form(
+                    "create-goal",
+                    {
+                        "project_id": project_id,
+                        "completed_goal_id": goal_id,
+                        "completed_goal_artifact": latest_artifact,
+                        "previous_resume_surface": saved_resume_surface,
+                        "return_to": saved_resume_surface or f"/{prefix}#{section_id}",
+                    },
+                    {
+                        "prompt": "Follow up after the completed Goal.",
+                        "created_by_profile": "planner",
+                    },
+                ),
+                "</section>",
+            ]
+        )
     return "".join(
         [
             (
@@ -3126,9 +3160,15 @@ def _completed_goal_handoff_panel(
             "<h3>Next Work</h3>",
             "<strong>Start next Goal</strong>",
             f"<p>{_e(project_id or 'Goal board')}</p>",
-            f"<a class='today-ci-merge-link' href='{_e(next_work_href)}'>{_e(next_work_label)}</a>",
+            (
+                f"<a class='today-ci-merge-link' href='#{_e(next_goal_form_id)}'>"
+                "Create next Goal here</a>"
+                if next_goal_form_available
+                else f"<a class='today-ci-merge-link' href='{_e(next_work_href)}'>{_e(next_work_label)}</a>"
+            ),
             "</article>",
             "</div>",
+            next_goal_form,
             "<details class='completed-goal-handoff-evidence' data-completed-goal-handoff-evidence='true'><summary>Completed Goal handoff evidence</summary>",
             _kv(
                 [
@@ -3160,6 +3200,23 @@ def _completed_goal_handoff_panel(
                             f"<a href='{_e(next_work_href)}'>{_e(next_work_label)}</a>"
                         ),
                     ),
+                    (
+                        f"{prefix}_completed_goal_next_goal_form_available",
+                        str(next_goal_form_available).lower(),
+                    ),
+                    (f"{prefix}_completed_goal_next_goal_action", "create-goal"),
+                    (
+                        f"{prefix}_completed_goal_next_goal_form_surface",
+                        next_goal_form_surface,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_next_goal_confirmation_required",
+                        str(next_goal_form_available).lower(),
+                    ),
+                    (
+                        f"{prefix}_completed_goal_next_goal_carries_previous_evidence",
+                        str(bool(goal_id and latest_artifact and saved_resume_surface)).lower(),
+                    ),
                     (f"{prefix}_completed_goal_saved_resume_surface", saved_resume_value),
                     (
                         f"{prefix}_completed_goal_saved_resume_preserved",
@@ -3176,8 +3233,14 @@ def _completed_goal_handoff_panel(
                     f"{prefix}_completed_goal_evidence: <a href='{_e(evidence_href)}'>Completed Goal evidence</a>",
                     f"{prefix}_completed_goal_resume: <a href='{_e(saved_resume_surface or '/resume')}'>{_e(saved_resume_surface or '/resume')}</a>",
                     f"{prefix}_completed_goal_next_work: <a href='{_e(next_work_href)}'>{_e(next_work_label)}</a>",
+                    (
+                        f"{prefix}_completed_goal_next_goal_form: "
+                        f"<a href='#{_e(next_goal_form_id)}'>Create next Goal here</a>"
+                        if next_goal_form_available
+                        else f"{prefix}_completed_goal_next_goal_form: unavailable"
+                    ),
                     f"{prefix}_completed_goal_artifact: {_artifact_link(latest_artifact) if latest_artifact else 'none'}",
-                    f"{prefix}_completed_goal_safety: read-only handoff; existing confirmed forms own any next Goal creation",
+                    f"{prefix}_completed_goal_safety: read-only handoff; confirmed create-goal form owns next Goal creation",
                 ]
             ),
             "</details>",
@@ -16122,6 +16185,9 @@ def _load_workspace_state(root: Path) -> dict[str, str]:
         "last_action_next_href",
         "last_action_status",
         "last_action_updated_at",
+        "completed_goal_handoff_source_goal",
+        "completed_goal_handoff_previous_resume_surface",
+        "completed_goal_handoff_previous_artifact",
     ]
     if not path.exists():
         return {key: "" for key in keys} | {"updated_by": "operator", "updated_at": "never"}
@@ -16150,6 +16216,16 @@ def _write_workspace_state(root: Path, state: dict[str, str]) -> dict[str, Any]:
         "last_action_next_href": state.get("last_action_next_href", "").strip(),
         "last_action_status": state.get("last_action_status", "").strip(),
         "last_action_updated_at": state.get("last_action_updated_at", "").strip(),
+        "completed_goal_handoff_source_goal": str(
+            state.get("completed_goal_handoff_source_goal") or ""
+        ).strip(),
+        "completed_goal_handoff_previous_resume_surface": _safe_local_return_path(
+            state.get("completed_goal_handoff_previous_resume_surface")
+        )
+        or "",
+        "completed_goal_handoff_previous_artifact": str(
+            state.get("completed_goal_handoff_previous_artifact") or ""
+        ).strip(),
         "network_actions_taken": 0,
         "external_mutations_taken": 0,
     }
@@ -46235,10 +46311,20 @@ def _handle_post(
                 created_by_profile=_one(form, "created_by_profile") or "planner",
             )
             message = f"goal_created: {lifecycle.goal.id}"
-            location = f"/goals/{quote(lifecycle.goal.id)}"
+            location = (
+                _safe_local_return_path(_one(form, "return_to"))
+                or f"/goals/{quote(lifecycle.goal.id)}"
+            )
             resume_surface, _resume_label, _form_available = _workspace_goal_action_resume_target(
                 root,
                 lifecycle.goal.id,
+            )
+            completed_goal_id = (_one(form, "completed_goal_id") or "").strip()
+            completed_goal_artifact = (
+                _one(form, "completed_goal_artifact") or ""
+            ).strip()
+            previous_resume_surface = _safe_local_return_path(
+                _one(form, "previous_resume_surface")
             )
             _write_workspace_state(
                 root,
@@ -46249,6 +46335,9 @@ def _handle_post(
                     "last_viewed_artifact": str(lifecycle.goal_artifact_path.relative_to(root)),
                     "resume_surface": resume_surface or f"/goals/{quote(lifecycle.goal.id)}",
                     "updated_by": "create-goal",
+                    "completed_goal_handoff_source_goal": completed_goal_id,
+                    "completed_goal_handoff_previous_resume_surface": previous_resume_surface,
+                    "completed_goal_handoff_previous_artifact": completed_goal_artifact,
                 },
             )
             result = lifecycle

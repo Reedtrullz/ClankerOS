@@ -88,9 +88,12 @@
 - [x] Make post-completion `/today` and `/resume` expose completed Goal
   evidence plus a clear next-Goal/start-new-work action without losing the
   saved daily resume proof. <!-- score=10 complexity=4 -->
-- [ ] Make post-completion `/today` and `/resume` offer same-page next-Goal
+- [x] Make post-completion `/today` and `/resume` offer same-page next-Goal
   creation from the completed Goal handoff while carrying forward prior
   evidence and preserving the saved daily resume proof. <!-- score=10 complexity=5 -->
+- [ ] Make post-next-Goal creation `/today` and `/resume` surface the new
+  Goal's current action as the primary continuation while keeping the carried
+  completed-Goal handoff source visible as provenance. <!-- score=10 complexity=4 -->
 - [x] Extend the static dashboard with incident summaries once incidents exist.
 - [x] Add a compact incident resolution path after more failure modes exist.
 - [x] Add queue-health checks for repeated blocked or failed work.

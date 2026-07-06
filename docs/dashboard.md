@@ -318,18 +318,18 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Make post-completion `/today` and `/resume` offer same-page next-Goal creation from the completed Goal handoff while carrying forward prior evidence and preserving the saved daily resume proof.
+- focus: Make post-next-Goal creation `/today` and `/resume` surface the new Goal's current action as the primary continuation while keeping the carried completed-Goal handoff source visible as provenance.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-07-06T02:06:24.270669+00:00
+- created_at: 2026-07-06T02:19:39.846102+00:00
 
 ## Simplicity Guardrail
 
 - policy: highest-score-then-lowest-complexity
-- reason: selected only actionable item with score 10 and complexity 5; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
+- reason: selected only actionable item with score 10 and complexity 4; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
 - selected_score: 10
-- selected_complexity: 5
-- selected_focus: Make post-completion `/today` and `/resume` offer same-page next-Goal creation from the completed Goal handoff while carrying forward prior evidence and preserving the saved daily resume proof.
+- selected_complexity: 4
+- selected_focus: Make post-next-Goal creation `/today` and `/resume` surface the new Goal's current action as the primary continuation while keeping the carried completed-Goal handoff source visible as provenance.
 
 ## Expansion Operator Approval Schema Decision
 
