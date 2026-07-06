@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_5fcfbd0ba94c
+- Packet ID: iteration_d3e96fe0ecc4
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Make post-completion `/today` and `/resume` expose completed Goal evidence plus a clear next-Goal/start-new-work action without losing the saved daily resume proof.
+Advance the Agent System north-star goal by completing: Make post-completion `/today` and `/resume` offer same-page next-Goal creation from the completed Goal handoff while carrying forward prior evidence and preserving the saved daily resume proof.
 
 ## Definition Of Done
 
@@ -130,9 +130,9 @@ Advance the Agent System north-star goal by completing: Make post-completion `/t
 ## Simplicity Guardrail
 
 - selection_policy: highest-score-then-lowest-complexity
-- selection_reason: selected only actionable item with score 10 and complexity 4; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
+- selection_reason: selected only actionable item with score 10 and complexity 5; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
 - selected_score: 10
-- selected_complexity: 4
+- selected_complexity: 5
 
 ## Guardrails And Non-Claims
 

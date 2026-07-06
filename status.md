@@ -1,5 +1,41 @@
 # Status
 
+## 2026-07-06 Post-Completion Today And Resume Handoff
+
+- Completed the selected slice for post-completion `/today` and `/resume`
+  continuation.
+- `/today` now renders a read-only `Today Completed Goal Handoff` after the
+  saved or lead Goal is locally completed. The handoff links completed Goal
+  evidence, the Goal timeline, Goal CI handoff, the latest saved artifact, the
+  saved daily resume surface, and the current project's existing
+  `Start Goal For This Project` form.
+- `/resume` now renders the same completed Goal handoff as a return-to-work
+  bridge, so the operator can review the completed Goal evidence and start the
+  next Goal without losing the saved `/today#today-current-action` resume
+  proof.
+- The completed handoff is read-only on GET and reports zero provider calls,
+  network actions, and external effects. Next-Goal creation still belongs to
+  existing confirmed local forms.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-completion `/today` and `/resume` should offer same-page next-Goal
+  creation from the completed Goal handoff while carrying forward prior
+  evidence and preserving the saved daily resume proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because `/today` did not render
+    `Today Completed Goal Handoff`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 58.41s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 31.24s.
+- Non-claim: this slice does not create a new Goal, push, deploy, create PRs,
+  call providers, use app-side network actions, or mutate external systems
+  from ClankerOS. It exposes the existing project start-goal form as the next
+  action after completion.
+
 ## 2026-07-06 Post-Publication-Handoff Today Manual Publish Boundary
 
 - Completed the selected slice for post-publication-handoff `/today` manual

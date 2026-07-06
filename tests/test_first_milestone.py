@@ -12728,6 +12728,56 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert complete_workspace["resume_surface"] == "/today#today-current-action"
     assert complete_workspace["updated_by"] == "complete-goal"
 
+    today_after_completion = render_local_app_route(tmp_path, "/today")
+    assert today_after_completion.status == 200
+    assert "Today Completed Goal Handoff" in today_after_completion.body
+    assert "data-today-completed-goal-handoff='true'" in today_after_completion.body
+    assert "today_completed_goal_status</dt><dd>completed" in today_after_completion.body
+    assert f"today_completed_goal_goal_id</dt><dd>{created_goal_id}" in today_after_completion.body
+    assert (
+        "today_completed_goal_evidence_surface</dt><dd>"
+        f"<a href='/goals/{created_goal_id}#goal-completion-readiness'>Completed Goal evidence</a>"
+    ) in today_after_completion.body
+    assert (
+        "today_completed_goal_latest_artifact</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+    ) in today_after_completion.body
+    assert "today_completed_goal_next_work_action</dt><dd>Start next Goal" in today_after_completion.body
+    assert (
+        "today_completed_goal_next_work_surface</dt><dd>"
+        "<a href='/projects/first-target#start-goal-for-this-project'>Start Goal For This Project</a>"
+    ) in today_after_completion.body
+    assert (
+        "today_completed_goal_saved_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_completion.body
+    assert "today_completed_goal_saved_resume_preserved</dt><dd>true" in today_after_completion.body
+    assert "today_completed_goal_write_on_get</dt><dd>false" in today_after_completion.body
+    assert "today_completed_goal_external_effects_created</dt><dd>false" in today_after_completion.body
+
+    resume_after_completion = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_completion.status == 200
+    assert "Resume Completed Goal Handoff" in resume_after_completion.body
+    assert "data-resume-completed-goal-handoff='true'" in resume_after_completion.body
+    assert "resume_completed_goal_status</dt><dd>completed" in resume_after_completion.body
+    assert f"resume_completed_goal_goal_id</dt><dd>{created_goal_id}" in resume_after_completion.body
+    assert (
+        "resume_completed_goal_evidence_surface</dt><dd>"
+        f"<a href='/goals/{created_goal_id}#goal-completion-readiness'>Completed Goal evidence</a>"
+    ) in resume_after_completion.body
+    assert "resume_completed_goal_next_work_action</dt><dd>Start next Goal" in resume_after_completion.body
+    assert (
+        "resume_completed_goal_next_work_surface</dt><dd>"
+        "<a href='/projects/first-target#start-goal-for-this-project'>Start Goal For This Project</a>"
+    ) in resume_after_completion.body
+    assert (
+        "resume_completed_goal_saved_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in resume_after_completion.body
+    assert "resume_completed_goal_saved_resume_preserved</dt><dd>true" in resume_after_completion.body
+    assert "resume_completed_goal_write_on_get</dt><dd>false" in resume_after_completion.body
+    assert "resume_completed_goal_external_effects_created</dt><dd>false" in resume_after_completion.body
+
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
     AgentSystem(tmp_path).initialize()

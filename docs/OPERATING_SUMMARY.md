@@ -147,6 +147,11 @@ Core layers for the bootstrap:
   ClankerOS, preserve `return_to=/today#today-current-action`, and let the
   operator confirm only local Goal completion while saving the completed
   Goal's resume surface back to the daily cockpit.
+  After local Goal completion, `/today` and `/resume` render a read-only
+  completed Goal handoff that links the completed evidence, latest artifact,
+  Goal CI handoff, saved daily resume surface, and the current project's
+  existing `Start Goal For This Project` form without changing the saved
+  resume proof or creating external effects.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only

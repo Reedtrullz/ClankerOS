@@ -85,9 +85,12 @@
   `Manual publish outside ClankerOS` as the primary same-page first-run action
   with copy-only commands, local completion confirmation, and finish-today
   resume proof. <!-- score=10 complexity=4 -->
-- [ ] Make post-completion `/today` and `/resume` expose completed Goal
+- [x] Make post-completion `/today` and `/resume` expose completed Goal
   evidence plus a clear next-Goal/start-new-work action without losing the
   saved daily resume proof. <!-- score=10 complexity=4 -->
+- [ ] Make post-completion `/today` and `/resume` offer same-page next-Goal
+  creation from the completed Goal handoff while carrying forward prior
+  evidence and preserving the saved daily resume proof. <!-- score=10 complexity=5 -->
 - [x] Extend the static dashboard with incident summaries once incidents exist.
 - [x] Add a compact incident resolution path after more failure modes exist.
 - [x] Add queue-health checks for repeated blocked or failed work.
