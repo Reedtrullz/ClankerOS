@@ -1,5 +1,49 @@
 # Status
 
+## 2026-07-06 Successor Goal Run Delegation Daily Resume
+
+- Completed the selected slice for successor Goal `Run delegation` from
+  `/today` and `/resume`.
+- A confirmed browser `run-delegation` now reloads the completed delegation
+  metadata, exposes the context-pack and implementation-handoff artifact paths
+  in the action result payload, and stores the human-readable
+  `implementation_handoff.md` as the workspace `last_viewed_artifact` when it
+  exists.
+- The action-result "next step" form now preserves the return surface that
+  launched the action. Running a successor delegation from
+  `/resume#resume-workbench-action-form` keeps the embedded `Run coder prep`
+  form pointed back to that same resume workbench instead of falling back to
+  the Goal action dock.
+- Existing repo-relative markdown/json/text result strings are linked as
+  artifact surfaces in action-result readbacks, so context-pack and
+  implementation-handoff proof paths are clickable even when they arrive as
+  metadata strings.
+- The Goal artifact selector now ranks actionable artifact types before
+  same-second timestamps. After a successful scout run, the successor Goal's
+  artifact reader selects `implementation_handoff.md` while the timeline keeps
+  the machine-readable `implementation_handoff.json` event.
+- `/today`, `/resume`, and the successor Goal page all move the primary action
+  to `Run coder prep` after the confirmed run, while
+  `completed-goal-provenance.md` remains visible as durable provenance history
+  rather than a transient completed-Goal panel.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal coder-prep from `/today` and `/resume` should consume
+  `implementation_handoff.md` as proof, keep provenance history visible, and
+  move the primary action to `Create worktree plan`.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface`:
+    1 passed in 70.54s after the final assertion alignment.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_runs_delegation_from_browser_action`:
+    1 passed in 6.01s.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state`:
+    1 passed in 55.50s.
+- Non-claim: this slice runs only the existing confirmed local delegation
+  adapter path in tests and updates local browser/readback state. It does not
+  create coder-prep, worktree plans, commits, pushes, PRs, deploys, provider
+  calls, app-side network actions, or external mutations.
+
 ## 2026-07-06 Successor Goal Context Pack Daily Resume
 
 - Completed the selected slice for successor Goal context-pack generation from

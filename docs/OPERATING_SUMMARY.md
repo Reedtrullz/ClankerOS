@@ -177,6 +177,13 @@ Core layers for the bootstrap:
   `/resume`, and the successor Goal page; the completed-Goal provenance
   markdown remains visible only as durable history, and the primary action
   advances to `Run delegation` without reopening the transient handoff panels.
+  When the successor delegation is then run from `/today` or `/resume`, the
+  existing local adapter path consumes an evidence copy of that context pack,
+  writes `implementation_handoff.json` and `implementation_handoff.md`, saves
+  the Markdown handoff as the active workspace artifact, keeps the original
+  daily return surface on the embedded result-page continuation form, and
+  advances `/today`, `/resume`, and the successor Goal page to `Run coder
+  prep` while retaining `completed-goal-provenance.md` as durable history.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only

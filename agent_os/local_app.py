@@ -29078,11 +29078,11 @@ def _goal_latest_artifact_record(root: Path, state: dict[str, Any]) -> dict[str,
     )
 
 
-def _goal_artifact_record_sort_key(root: Path, record: dict[str, str]) -> tuple[str, int, str, str]:
+def _goal_artifact_record_sort_key(root: Path, record: dict[str, str]) -> tuple[int, str, str, str]:
     timestamp = _artifact_time(root, record.get("path", "")) or ""
     return (
-        timestamp,
         _goal_artifact_record_rank(record),
+        timestamp,
         str(record.get("label") or ""),
         str(record.get("path") or ""),
     )
@@ -47295,13 +47295,23 @@ def _handle_post(
             )
             delegation_location = f"/delegations/{quote(delegation_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or delegation_location
+            completed_delegation = storage.get_subagent_delegation(delegation_id)
+            run_metadata = (
+                load_delegation_result_metadata(completed_delegation)
+                if completed_delegation is not None
+                else {}
+            )
+            workspace_artifact_path = (
+                run_metadata.get("implementation_handoff_md")
+                or run_metadata.get("implementation_handoff_json")
+                or run_result.result_artifact_path
+                or (run_result.evidence_dir / "summary.md")
+            )
             _remember_delegation_workspace(
                 root,
                 storage,
                 delegation_id,
-                artifact_path=(
-                    run_result.result_artifact_path or (run_result.evidence_dir / "summary.md")
-                ),
+                artifact_path=workspace_artifact_path,
                 updated_by="run-delegation",
                 resume_surface=location,
             )
@@ -47316,6 +47326,10 @@ def _handle_post(
                 "parsed_output_path": run_result.parsed_output_path,
                 "evidence_dir": run_result.evidence_dir,
                 "result_artifact_path": run_result.result_artifact_path,
+                "context_pack_json": run_metadata.get("context_pack_json"),
+                "context_pack_md": run_metadata.get("context_pack_md"),
+                "implementation_handoff_json": run_metadata.get("implementation_handoff_json"),
+                "implementation_handoff_md": run_metadata.get("implementation_handoff_md"),
                 "incident_id": run_result.incident_id,
                 "memory_proposal_id": run_result.memory_proposal_id,
                 "next_recommended_action": run_result.next_recommended_action,
@@ -48227,7 +48241,11 @@ def _action_result_next_step_context(
             return base
         phase = _goal_current_phase(state)
         next_action = _goal_next_action(root, state)
-        action_form = _goal_next_action_form(state, next_action)
+        action_form = _goal_next_action_form(
+            state,
+            next_action,
+            return_to_override=location,
+        )
         form_available = bool(action_form)
         primary_href = "#action-result-next-step-form" if form_available else next_action.href
         primary_label = next_action.action
@@ -49405,6 +49423,15 @@ def _flatten_action_result(
         return [(key, str(value).lower())]
     if value is None:
         return [(key, "none")]
+    if isinstance(value, str):
+        relative_value = _repo_relative_artifact_path(root, value)
+        if _goal_artifact_render_kind(relative_value) is not None:
+            try:
+                artifact_path = resolve_artifact_path(root, relative_value)
+            except ValueError:
+                artifact_path = None
+            if artifact_path is not None and artifact_path.exists():
+                return [(key, _artifact_link(relative_value))]
     if key.endswith("_path") or key.endswith("_artifact_path"):
         return [(key, _artifact_link(_repo_relative_artifact_path(root, str(value))))]
     return [(key, str(value))]

@@ -101,10 +101,13 @@
   surface the generated context pack as newest evidence while retaining
   completed-Goal provenance history and moving the primary action to
   `Run delegation`. <!-- score=10 complexity=4 -->
-- [ ] Make successor Goal `Run delegation` from `/today` and `/resume`
+- [x] Make successor Goal `Run delegation` from `/today` and `/resume`
   consume the generated context pack as proof, keep provenance history
   visible, and move the primary action to the next implementation handoff or
   coder-prep step. <!-- score=10 complexity=4 -->
+- [ ] Make successor Goal coder-prep from `/today` and `/resume` consume
+  `implementation_handoff.md` as proof, keep provenance history visible, and
+  move the primary action to `Create worktree plan`. <!-- score=10 complexity=4 -->
 - [x] Extend the static dashboard with incident summaries once incidents exist.
 - [x] Add a compact incident resolution path after more failure modes exist.
 - [x] Add queue-health checks for repeated blocked or failed work.

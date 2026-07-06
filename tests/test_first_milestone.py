@@ -36,7 +36,10 @@ from agent_os.local_app import (
     run_local_app_demo_smoke_test,
     validate_bind_host,
 )
-from agent_os.subagent_delegation import record_delegation_result
+from agent_os.subagent_delegation import (
+    load_delegation_result_metadata,
+    record_delegation_result,
+)
 from agent_os.storage import Storage, Task
 from agent_os.capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals import (
     IDEMPOTENCY_PREFIX as COUNT8_CAPABILITY_FOLLOWUP_RESULT_EFFECT_PREFIX,
@@ -11342,13 +11345,16 @@ def test_local_app_runs_delegation_from_browser_action(
     assert completed_delegation is not None
     assert completed_delegation.status == "completed"
     assert completed_delegation.result_artifact_path
+    run_metadata = load_delegation_result_metadata(completed_delegation)
+    assert run_metadata["implementation_handoff_md"].endswith(
+        "/implementation_handoff.md"
+    )
+    assert "implementation_handoff_md</dt><dd><a href='/artifacts?path=.clanker/delegations/" in run_result.body
     run_workspace_path = tmp_path / ".clanker" / "app" / "workspace.json"
     run_workspace = json.loads(run_workspace_path.read_text(encoding="utf-8"))
     assert run_workspace["open_project"] == refreshed.get_goal(goal_id).project_id
     assert run_workspace["open_goal"] == goal_id
-    assert run_workspace["last_viewed_artifact"] == str(
-        Path(completed_delegation.result_artifact_path).relative_to(tmp_path)
-    )
+    assert run_workspace["last_viewed_artifact"] == run_metadata["implementation_handoff_md"]
     assert run_workspace["resume_surface"] == goal_action_dock
     assert run_workspace["updated_by"] == "run-delegation"
 
@@ -11727,12 +11733,15 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert completed_delegation is not None
     assert completed_delegation.status == "completed"
     assert completed_delegation.result_artifact_path
+    run_metadata = load_delegation_result_metadata(completed_delegation)
+    assert run_metadata["implementation_handoff_md"].endswith(
+        "/implementation_handoff.md"
+    )
+    assert "implementation_handoff_md</dt><dd><a href='/artifacts?path=.clanker/delegations/" in run_result.body
     run_workspace = json.loads((tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8"))
     assert run_workspace["open_project"] == "first-target"
     assert run_workspace["open_goal"] == created_goal_id
-    assert run_workspace["last_viewed_artifact"] == str(
-        Path(completed_delegation.result_artifact_path).relative_to(tmp_path)
-    )
+    assert run_workspace["last_viewed_artifact"] == run_metadata["implementation_handoff_md"]
     assert run_workspace["resume_surface"] == "/today#today-current-action"
     assert run_workspace["updated_by"] == "run-delegation"
 
@@ -13181,6 +13190,175 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     )
     assert "goal_artifact_reader_selected_source</dt><dd>context_pack" in successor_goal_after_context_pack.body
     assert "recommended_action</dt><dd>Run delegation" in successor_goal_after_context_pack.body
+
+    assert "action='/actions/run-delegation'" in today_after_next_goal_context_pack.body
+    assert (
+        f"name='delegation_id' value='{next_goal_delegation.id}'"
+        in today_after_next_goal_context_pack.body
+    )
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_next_goal_context_pack.body
+    )
+    assert "action='/actions/run-delegation'" in resume_after_next_goal_context_pack.body
+    assert (
+        f"name='delegation_id' value='{next_goal_delegation.id}'"
+        in resume_after_next_goal_context_pack.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in resume_after_next_goal_context_pack.body
+    )
+
+    next_goal_run_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/run-delegation",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "operator_id": ["operator"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+        },
+    )
+    assert next_goal_run_confirmation.status == 409
+    assert "Confirm scout run" in next_goal_run_confirmation.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_run_confirmation.body
+    )
+
+    next_goal_run_result = render_local_app_route(
+        tmp_path,
+        "/actions/run-delegation",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "operator_id": ["operator"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_run_result.status == 200
+    assert "run_delegation:" in next_goal_run_result.body
+    assert "Scout run finished" in next_goal_run_result.body
+    assert "action_result_command_label</dt><dd>Run scout delegation" in next_goal_run_result.body
+    assert "#resume-workbench-action-form'>/resume#resume-workbench-action-form</a>" in next_goal_run_result.body
+    assert "action_result_next_step_next_action</dt><dd>Run coder prep" in next_goal_run_result.body
+    assert (
+        "action_result_next_step_primary_surface</dt><dd>"
+        "<a href='#action-result-next-step-form'>Run coder prep</a>"
+        in next_goal_run_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_run_result.body
+    assert "action='/actions/coder-prep'" in next_goal_run_result.body
+    assert (
+        f"name='delegation_id' value='{next_goal_delegation.id}'"
+        in next_goal_run_result.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_run_result.body
+    )
+    assert "context_pack_md</dt><dd><a href='/artifacts?path=.clanker/delegations/" in next_goal_run_result.body
+    assert (
+        "implementation_handoff_md</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in next_goal_run_result.body
+    )
+    assert "provider_calls_taken_by_clankeros</dt><dd>0" in next_goal_run_result.body
+    assert "network_actions_taken</dt><dd>0" in next_goal_run_result.body
+    assert "external_mutations_taken</dt><dd>0" in next_goal_run_result.body
+
+    refreshed_after_next_run = Storage(tmp_path / ".agent" / "state.db")
+    next_completed_delegation = refreshed_after_next_run.get_subagent_delegation(
+        next_goal_delegation.id
+    )
+    assert next_completed_delegation is not None
+    assert next_completed_delegation.status == "completed"
+    next_run_metadata = load_delegation_result_metadata(next_completed_delegation)
+    next_run_context_pack_relative = Path(next_run_metadata["context_pack_md"])
+    assert str(next_run_context_pack_relative).endswith("/evidence/context_pack.md")
+    assert (tmp_path / next_run_context_pack_relative).exists()
+    next_handoff_relative = Path(next_run_metadata["implementation_handoff_md"])
+    next_handoff_md = tmp_path / next_handoff_relative
+    assert next_handoff_md.exists()
+    next_handoff_text = next_handoff_md.read_text(encoding="utf-8")
+    assert f"- context_pack_md: {next_run_context_pack_relative}" in next_handoff_text
+    assert "- returned_files_in_inventory:" in next_handoff_text
+    next_goal_run_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_run_workspace["open_goal"] == next_goal_id
+    assert next_goal_run_workspace["updated_by"] == "run-delegation"
+    assert next_goal_run_workspace["last_viewed_artifact"] == str(next_handoff_relative)
+    assert (
+        next_goal_run_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_run_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_run = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_run.status == 200
+    assert "Today Completed Goal Provenance" not in today_after_next_goal_run.body
+    assert "Today Completed Goal Handoff" not in today_after_next_goal_run.body
+    assert "today_command_primary_action</dt><dd>Run coder prep" in today_after_next_goal_run.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Run coder prep</a>"
+        in today_after_next_goal_run.body
+    )
+    assert "today_command_reason</dt><dd>implementation_handoff_or_result_available" in today_after_next_goal_run.body
+    assert "action='/actions/coder-prep'" in today_after_next_goal_run.body
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_next_goal_run.body
+    )
+    assert "today_activity_digest_latest_artifact_label</dt><dd>Open implementation_handoff_md" in today_after_next_goal_run.body
+    assert (
+        f"<a href='/artifacts?path={next_handoff_relative}'>"
+        in today_after_next_goal_run.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_run.body
+
+    resume_after_next_goal_run = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_run.status == 200
+    assert "Resume Completed Goal Provenance" not in resume_after_next_goal_run.body
+    assert "Resume Completed Goal Handoff" not in resume_after_next_goal_run.body
+    assert "resume_return_brief_next_action</dt><dd>Run coder prep" in resume_after_next_goal_run.body
+    assert "resume_workbench_next_action</dt><dd>Run coder prep" in resume_after_next_goal_run.body
+    assert (
+        "resume_workbench_primary_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Run coder prep</a>"
+        in resume_after_next_goal_run.body
+    )
+    assert "action='/actions/coder-prep'" in resume_after_next_goal_run.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in resume_after_next_goal_run.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_handoff_relative}'>"
+        in resume_after_next_goal_run.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_run.body
+
+    successor_goal_after_run = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_run.status == 200
+    assert "completed_goal_provenance_history_status</dt><dd>available" in successor_goal_after_run.body
+    assert "Execution completed: delegation " in successor_goal_after_run.body
+    assert "Artifact recorded: implementation_handoff_json." in successor_goal_after_run.body
+    assert "goal_artifact_reader_selected_artifact</dt><dd>implementation_handoff_md" in successor_goal_after_run.body
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_handoff_relative}"
+        in successor_goal_after_run.body
+    )
+    assert "goal_artifact_reader_selected_source</dt><dd>delegation_metadata" in successor_goal_after_run.body
+    assert "recommended_action</dt><dd>Run coder prep" in successor_goal_after_run.body
+    assert "completed-goal-provenance.md" in successor_goal_after_run.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:

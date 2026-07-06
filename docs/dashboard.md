@@ -318,10 +318,10 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Make successor Goal `Run delegation` from `/today` and `/resume` consume the generated context pack as proof, keep provenance history visible, and move the primary action to the next implementation handoff or coder-prep step.
+- focus: Make successor Goal coder-prep from `/today` and `/resume` consume `implementation_handoff.md` as proof, keep provenance history visible, and move the primary action to `Create worktree plan`.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-07-06T03:08:30.101079+00:00
+- created_at: 2026-07-06T04:14:51.270760+00:00
 
 ## Simplicity Guardrail
 
@@ -329,7 +329,7 @@
 - reason: selected only actionable item with score 10 and complexity 4; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
 - selected_score: 10
 - selected_complexity: 4
-- selected_focus: Make successor Goal `Run delegation` from `/today` and `/resume` consume the generated context pack as proof, keep provenance history visible, and move the primary action to the next implementation handoff or coder-prep step.
+- selected_focus: Make successor Goal coder-prep from `/today` and `/resume` consume `implementation_handoff.md` as proof, keep provenance history visible, and move the primary action to `Create worktree plan`.
 
 ## Expansion Operator Approval Schema Decision
 
