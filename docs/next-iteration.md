@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_b17d3d0038a7
+- Packet ID: iteration_ffd0a44a4595
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Make post-review `/today` expose `Create commit request` as the primary same-page first-run action with confirmation and finish-today resume proof.
+Advance the Agent System north-star goal by completing: Make post-commit-request `/today` expose `Approve commit` as the primary same-page first-run action with confirmation and finish-today resume proof.
 
 ## Definition Of Done
 

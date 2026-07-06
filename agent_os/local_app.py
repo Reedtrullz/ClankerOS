@@ -22913,7 +22913,11 @@ def _goal_next_action_form(
             return_to_override=return_to_override,
         )
     if next_action.action == "Create commit request":
-        return _goal_commit_request_form(state["root"], state)
+        return _goal_commit_request_form(
+            state["root"],
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Open review":
         return _goal_review_run_form(
             state["root"],
@@ -23383,15 +23387,29 @@ def _goal_run_worktree_handoff(
     )
 
 
-def _goal_commit_request_form(root: Path, state: dict[str, Any]) -> str:
+def _goal_commit_request_form(
+    root: Path,
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     run = _goal_reviewed_completed_worktree_run(root, state)
     if run is None:
         return "<p class='muted'>commit_request_form_status: unavailable_until_reviewed_completed_run_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Create Commit Request</h3>",
             "<p class='muted'>Creates a pending local commit approval request from the reviewed worktree evidence. It does not stage, commit, push, create a PR, deploy, call a provider, or use the network.</p>",
+            _kv(
+                [
+                    ("coder_worktree_run", run.id),
+                    (
+                        "return_to_after_commit_request",
+                        SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
+                    ),
+                ]
+            ),
             _input_form(
                 "coder-commit-request",
                 {"run_id": run.id, "return_to": return_to, "requested_by": "operator"},

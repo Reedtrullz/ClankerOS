@@ -63,7 +63,10 @@
 - [x] Make post-worktree-run `/today` expose `Open review` as the primary
   same-page first-run action with confirmation and finish-today resume proof.
   <!-- score=10 complexity=4 -->
-- [ ] Make post-review `/today` expose `Create commit request` as the primary
+- [x] Make post-review `/today` expose `Create commit request` as the primary
+  same-page first-run action with confirmation and finish-today resume proof.
+  <!-- score=10 complexity=4 -->
+- [ ] Make post-commit-request `/today` expose `Approve commit` as the primary
   same-page first-run action with confirmation and finish-today resume proof.
   <!-- score=10 complexity=4 -->
 - [x] Extend the static dashboard with incident summaries once incidents exist.

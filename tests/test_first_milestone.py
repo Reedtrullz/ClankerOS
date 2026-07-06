@@ -12145,6 +12145,92 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
 
     today_after_review = render_local_app_route(tmp_path, "/today")
     assert "today_command_primary_action</dt><dd>Create commit request" in today_after_review.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Create commit request</a>"
+    ) in today_after_review.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Create commit request</a>"
+    ) in today_after_review.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_review.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_review.body
+    assert "Create Commit Request" in today_after_review.body
+    assert "action='/actions/coder-commit-request'" in today_after_review.body
+    assert f"name='run_id' value='{coder_run.id}'" in today_after_review.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_review.body
+    assert (
+        "return_to_after_commit_request</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_review.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_review.body
+
+    commit_message = "Implement bounded change from approved worktree run"
+    commit_request_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-commit-request",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "message": [commit_message],
+            "note": ["Request local commit after review from Today"],
+            "return_to": ["/today#today-current-action"],
+            "requested_by": ["operator"],
+        },
+    )
+    assert commit_request_confirmation.status == 409
+    assert "Confirm commit request" in commit_request_confirmation.body
+    assert "action_confirmation_label</dt><dd>Create commit request" in commit_request_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in commit_request_confirmation.body
+
+    commit_request_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-commit-request",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "message": [commit_message],
+            "note": ["Request local commit after review from Today"],
+            "return_to": ["/today#today-current-action"],
+            "requested_by": ["operator"],
+            "confirm": ["yes"],
+        },
+    )
+    assert commit_request_result.status == 200
+    assert "coder_commit_request:" in commit_request_result.body
+    assert "action_result_command_label</dt><dd>Create commit request" in commit_request_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=coder_commit_request%3A%20"
+    ) in commit_request_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in commit_request_result.body
+    commit_approval = next(
+        item
+        for item in list_coder_worktree_commit_approvals(
+            tmp_path,
+            status="pending_operator_approval",
+            limit=10,
+        )
+        if item.run_id == coder_run.id
+    )
+    commit_request_md = tmp_path / Path(commit_approval.request_artifact_path).with_suffix(".md")
+    assert commit_request_md.exists()
+    commit_request_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert commit_request_workspace["open_project"] == "first-target"
+    assert commit_request_workspace["open_goal"] == created_goal_id
+    assert commit_request_workspace["last_viewed_artifact"] == str(
+        commit_request_md.relative_to(tmp_path)
+    )
+    assert commit_request_workspace["resume_surface"] == "/today#today-current-action"
+    assert commit_request_workspace["updated_by"] == "coder-commit-request"
+
+    today_after_commit_request = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Approve commit" in today_after_commit_request.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:

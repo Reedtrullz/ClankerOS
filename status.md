@@ -1,5 +1,52 @@
 # Status
 
+## 2026-07-06 Post-Review Today Commit Request
+
+- Completed the selected slice for post-review `/today` commit-request
+  continuation.
+- `/today` now embeds the lead Goal's `Create commit request` form with a
+  Today-local return target, so a confirmed commit request launched from the
+  daily cockpit writes the pending local commit approval artifact and saves
+  `resume_surface=/today#today-current-action` instead of returning the
+  operator to the Goal action dock or run page.
+- The commit-request form now records the reviewed coder worktree run and
+  `return_to_after_commit_request` in form evidence, while keeping the
+  existing local commit approval request writer behind an explicit
+  confirmation screen.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, confirmed local scout run, Today-local coder-prep
+  creation, Today-local worktree-plan creation, Today-local approval request
+  creation, Today-local approval decision confirmation, Today-local approved
+  worktree run confirmation with a bounded file change, Today-local Open
+  review confirmation, Today-local Create commit request confirmation,
+  generated `coder_commit_request.md`, workspace resume persistence, and the
+  next visible Today action becoming `Approve commit`.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-commit-request `/today` should expose `Approve commit` as the primary
+  same-page first-run action with confirmation and finish-today resume proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered
+    commit-request form still emitted the Goal action-dock `return_to`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 38.97s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms tests/test_first_milestone.py::test_goal_runs_approved_worktree_from_browser_action tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    4 passed in 76.77s.
+  - `python3 -m agent_os.cli iterate`: selected the post-commit-request
+    `/today` Approve commit slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this Today commit-request slice writes only a confirmed local
+  commit approval request artifact and workspace resume state. It does not
+  approve a commit, stage files, commit, push, deploy, create PRs, call
+  providers, use app-side network actions, or mutate external systems from
+  ClankerOS.
+
 ## 2026-07-06 Post-Worktree-Run Today Review
 
 - Completed the selected slice for post-worktree-run `/today` review
