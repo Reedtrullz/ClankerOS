@@ -29051,6 +29051,11 @@ def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, 
     for run in state["worktree_runs"]:
         evidence_path = Path(run.evidence_path)
         add(f"coder run {run.id} review", Path("runs") / run.source_run_id / "review.md", source="coder_run")
+        add(
+            "approved_coder_worktree_run_summary",
+            evidence_path / "summary.md",
+            source="coder_run",
+        )
         for label, path in [
             ("run json", evidence_path / "run.json"),
             ("diff", evidence_path / "diff.patch"),
@@ -47656,6 +47661,12 @@ def _handle_post(
             )
             coder_run = run_result.run
             change_summary = coder_worktree_change_summary(root, coder_run)
+            try:
+                coder_run_payload = json.loads(
+                    (root / coder_run.evidence_path / "run.json").read_text(encoding="utf-8")
+                )
+            except (OSError, json.JSONDecodeError):
+                coder_run_payload = {}
             message = (
                 f"run_coder_worktree: already_recorded {coder_run.id}"
                 if run_result.already_recorded
@@ -47677,6 +47688,26 @@ def _handle_post(
                 "return_to_after_command": location,
                 "command_exit_code": coder_run.command_exit_code,
                 "verification_exit_code": coder_run.verification_exit_code,
+                "source_coder_worktree_approval_decision": coder_run_payload.get(
+                    "source_coder_worktree_approval_decision",
+                    "missing",
+                ),
+                "source_coder_worktree_approval_decision_md": coder_run_payload.get(
+                    "source_coder_worktree_approval_decision_md",
+                    "missing",
+                ),
+                "source_approval_decision_sha256": coder_run_payload.get(
+                    "source_approval_decision_sha256",
+                    "missing",
+                ),
+                "source_approval_decision_md_sha256": coder_run_payload.get(
+                    "source_approval_decision_md_sha256",
+                    "missing",
+                ),
+                "source_coder_worktree_approval_decision_markdown_consumed": coder_run_payload.get(
+                    "source_coder_worktree_approval_decision_markdown_consumed"
+                )
+                is True,
                 "changed_files": coder_run.changed_files,
                 "changed_files_count": change_summary["changed_files_count"],
                 "outside_allowed_files": coder_run.outside_allowed_files,

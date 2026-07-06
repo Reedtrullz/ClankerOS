@@ -1,5 +1,52 @@
 # Status
 
+## 2026-07-06 Successor Goal Approved Worktree Run Daily Resume
+
+- Completed the selected slice for successor Goal approved worktree runs from
+  `/today` and `/resume`.
+- `run-coder-worktree` now requires a readable approved
+  `coder_worktree_approval_decision.json` and
+  `coder_worktree_approval_decision.md` before launching the isolated local
+  worktree command. The decision payload must match the approval id,
+  delegation id, approved status, request artifact, and Markdown-proof flag.
+- The approved run writes the consumed approval-decision JSON and Markdown
+  paths, hashes, and `source_coder_worktree_approval_decision_markdown_consumed:
+  true` into `coder_worktree/run.json`, `coder_worktree/summary.md`, copied
+  `coder_worktree/approval_decision.json` /
+  `coder_worktree/approval_decision.md` evidence files, CLI output, browser
+  action-result output, and static dashboard rows.
+- Existing completed runs are reused only when their run evidence matches the
+  current approval-decision JSON/Markdown paths and hashes; legacy completed
+  runs without that proof are not treated as already-recorded for this path.
+- Running the approved-worktree action from
+  `/resume#resume-workbench-action-form` preserves that return surface for the
+  embedded `Open review` form. `/today`, `/resume`, and the successor Goal
+  page all move the primary action to `Open review`, while
+  `completed-goal-provenance.md` remains visible as durable history.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal worktree reviews from `/today` and `/resume` should consume
+  approved worktree run evidence as proof, keep provenance history visible,
+  and move the primary action to `Create commit request`.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_approval_and_run_capture_bounded_evidence -q --tb=short`
+    failed before the CLI/run evidence exposed
+    `source_coder_worktree_approval_decision`.
+  - `python3 -m compileall -q agent_os/coder_worktree_execution.py agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_approval_and_run_capture_bounded_evidence -q --tb=short`:
+    1 passed in 2.58s after adding approval-decision proof to run evidence and
+    CLI output.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 76.27s after adding browser result proof, successor
+    `/today`/`/resume` Open review coverage, and Goal artifact-reader coverage
+    for `approved_coder_worktree_run_summary`.
+- Non-claim: this slice runs only the existing confirmed, approval-gated local
+  worktree command and local verifier inside an isolated git worktree. It does
+  not commit, push, create PRs, deploy, call providers, use app-side network
+  actions, or mutate external systems. Local browser/test proof is not CI,
+  deploy, or live production proof.
+
 ## 2026-07-06 Successor Goal Worktree Approval Decision Daily Resume
 
 - Completed the selected slice for successor Goal worktree approval decisions

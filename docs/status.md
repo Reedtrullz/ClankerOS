@@ -4,6 +4,13 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Successor Goal approved worktree runs from `/today` and `/resume` now consume
+  `coder_worktree_approval_decision.md` as first-class proof. The run evidence
+  records decision JSON/Markdown paths and hashes in `run.json`, `summary.md`,
+  copied approval-decision evidence, CLI output, browser result output, and
+  dashboard rows. `/today`, `/resume`, and the successor Goal page now advance
+  to `Open review` while retaining completed-Goal provenance history and
+  preserving the original daily return surface.
 - Next-day self-hosting preflight is now first-class:
   `python3 -m agent_os.cli self-hosting-check` verifies local fetch, saved
   resume, current-`main` CI proof, and the browser Goal next action before

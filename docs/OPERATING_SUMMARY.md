@@ -220,6 +220,16 @@ Core layers for the bootstrap:
   `/today`, `/resume`, and the successor Goal page advance to
   `Run approved worktree` while retaining `completed-goal-provenance.md` as
   durable history.
+  When the successor approved worktree run is then launched from either daily
+  surface, the run consumes the current `coder_worktree_approval_decision.md`
+  as proof, records approval-decision JSON and Markdown hashes in
+  `coder_worktree/run.json` and `summary.md`, copies the approval-decision
+  artifacts into the run evidence directory, and exposes those fields in CLI,
+  dashboard, and browser result output. The approved-run summary becomes the
+  active workspace artifact, the original daily return surface is preserved
+  for the embedded `Open review` form, and `/today`, `/resume`, and the
+  successor Goal page advance to `Open review` while retaining
+  `completed-goal-provenance.md` as durable history.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only

@@ -12076,12 +12076,50 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert "#today-current-action'>/today#today-current-action</a>" in run_worktree_result.body
     assert "status</dt><dd>completed" in run_worktree_result.body
     assert "changed_files_within_allowed_files</dt><dd>true" in run_worktree_result.body
+    assert (
+        "source_coder_worktree_approval_decision_md</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in run_worktree_result.body
+    )
+    assert (
+        "source_coder_worktree_approval_decision_markdown_consumed</dt><dd>true"
+        in run_worktree_result.body
+    )
+    assert "source_approval_decision_sha256</dt><dd>" in run_worktree_result.body
+    assert "source_approval_decision_md_sha256</dt><dd>" in run_worktree_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Open review"
+        in run_worktree_result.body
+    )
+    assert "id='action-result-next-step-form'" in run_worktree_result.body
+    assert "action='/actions/review-run'" in run_worktree_result.body
     assert "evidence_path</dt><dd><a href='/artifacts?path=.clanker/delegations/" in run_worktree_result.body
     coder_worktree_summary = sorted(
         (tmp_path / ".clanker" / "delegations" / delegation.id / "runs").glob(
             "*/coder_worktree/summary.md"
         )
     )[-1]
+    coder_worktree_run_json = coder_worktree_summary.with_name("run.json")
+    coder_worktree_run_payload = json.loads(coder_worktree_run_json.read_text(encoding="utf-8"))
+    assert coder_worktree_run_payload["source_coder_worktree_approval_decision"] == str(
+        approval_decision_md.with_suffix(".json").relative_to(tmp_path)
+    )
+    assert coder_worktree_run_payload["source_coder_worktree_approval_decision_md"] == str(
+        approval_decision_md.relative_to(tmp_path)
+    )
+    assert coder_worktree_run_payload["source_approval_decision_sha256"] == hashlib.sha256(
+        approval_decision_md.with_suffix(".json").read_bytes()
+    ).hexdigest()
+    assert coder_worktree_run_payload["source_approval_decision_md_sha256"] == hashlib.sha256(
+        approval_decision_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert (
+        coder_worktree_run_payload["source_coder_worktree_approval_decision_markdown_consumed"]
+        is True
+    )
+    assert (
+        f"- source_coder_worktree_approval_decision_md: {approval_decision_md.relative_to(tmp_path)}"
+        in coder_worktree_summary.read_text(encoding="utf-8")
+    )
     run_worktree_workspace = json.loads(
         (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
     )
@@ -14235,6 +14273,208 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert "goal_artifact_reader_selected_source</dt><dd>worktree_approval" in successor_goal_after_decision.body
     assert "recommended_action</dt><dd>Run approved worktree" in successor_goal_after_decision.body
     assert "completed-goal-provenance.md" in successor_goal_after_decision.body
+
+    successor_worktree_command = "python3 scripts/change_noop.py"
+    successor_verify_command = "python3 scripts/noop.py"
+    next_goal_run_worktree_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/run-coder-worktree",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "command": [successor_worktree_command],
+            "verify": ["yes"],
+            "verify_command": [successor_verify_command],
+            "return_to": ["/resume#resume-workbench-action-form"],
+        },
+    )
+    assert next_goal_run_worktree_confirmation.status == 409
+    assert "Confirm run-coder-worktree" in next_goal_run_worktree_confirmation.body
+    assert (
+        "action_confirmation_label</dt><dd>Run Approved Worktree"
+        in next_goal_run_worktree_confirmation.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_run_worktree_confirmation.body
+    )
+
+    next_goal_run_worktree_result = render_local_app_route(
+        tmp_path,
+        "/actions/run-coder-worktree",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "command": [successor_worktree_command],
+            "verify": ["yes"],
+            "verify_command": [successor_verify_command],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_run_worktree_result.status == 200
+    assert "run_coder_worktree: completed" in next_goal_run_worktree_result.body
+    assert (
+        "action_result_command_label</dt><dd>Run Approved Worktree"
+        in next_goal_run_worktree_result.body
+    )
+    assert (
+        "source_coder_worktree_approval_decision</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in next_goal_run_worktree_result.body
+    )
+    assert (
+        "source_coder_worktree_approval_decision_md</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in next_goal_run_worktree_result.body
+    )
+    assert (
+        "source_coder_worktree_approval_decision_markdown_consumed</dt><dd>true"
+        in next_goal_run_worktree_result.body
+    )
+    assert "source_approval_decision_sha256</dt><dd>" in next_goal_run_worktree_result.body
+    assert "source_approval_decision_md_sha256</dt><dd>" in next_goal_run_worktree_result.body
+    assert "status</dt><dd>completed" in next_goal_run_worktree_result.body
+    assert "changed_files_within_allowed_files</dt><dd>true" in next_goal_run_worktree_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Open review"
+        in next_goal_run_worktree_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_run_worktree_result.body
+    assert "action='/actions/review-run'" in next_goal_run_worktree_result.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_run_worktree_result.body
+    )
+
+    next_coder_worktree_summary = sorted(
+        (tmp_path / ".clanker" / "delegations" / next_goal_delegation.id / "runs").glob(
+            "*/coder_worktree/summary.md"
+        )
+    )[-1]
+    next_coder_worktree_run_json = next_coder_worktree_summary.with_name("run.json")
+    next_coder_worktree_run_payload = json.loads(
+        next_coder_worktree_run_json.read_text(encoding="utf-8")
+    )
+    assert next_coder_worktree_run_payload["kind"] == "approved_coder_worktree_run"
+    assert next_coder_worktree_run_payload["status"] == "completed"
+    assert next_coder_worktree_run_payload["source_coder_worktree_approval_decision"] == str(
+        next_approval_decision_json.relative_to(tmp_path)
+    )
+    assert next_coder_worktree_run_payload["source_coder_worktree_approval_decision_md"] == str(
+        next_approval_decision_relative
+    )
+    assert next_coder_worktree_run_payload["source_approval_decision_sha256"] == hashlib.sha256(
+        next_approval_decision_json.read_bytes()
+    ).hexdigest()
+    assert next_coder_worktree_run_payload["source_approval_decision_md_sha256"] == hashlib.sha256(
+        next_approval_decision_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert (
+        next_coder_worktree_run_payload[
+            "source_coder_worktree_approval_decision_markdown_consumed"
+        ]
+        is True
+    )
+    assert next_coder_worktree_run_payload["commit_created"] is False
+    assert next_coder_worktree_run_payload["push_created"] is False
+    assert next_coder_worktree_run_payload["deploy_created"] is False
+    assert next_coder_worktree_run_payload["provider_calls_taken_by_clankeros"] == 0
+    assert next_coder_worktree_run_payload["network_actions_taken"] == 0
+    assert next_coder_worktree_run_payload["external_mutations_taken"] == 0
+    next_coder_worktree_summary_text = next_coder_worktree_summary.read_text(encoding="utf-8")
+    assert (
+        f"- source_coder_worktree_approval_decision_md: {next_approval_decision_relative}"
+        in next_coder_worktree_summary_text
+    )
+    assert (
+        "- source_coder_worktree_approval_decision_markdown_consumed: true"
+        in next_coder_worktree_summary_text
+    )
+    next_goal_run_worktree_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_run_worktree_workspace["open_goal"] == next_goal_id
+    assert next_goal_run_worktree_workspace["updated_by"] == "run-coder-worktree"
+    assert next_goal_run_worktree_workspace["last_viewed_artifact"] == str(
+        next_coder_worktree_summary.relative_to(tmp_path)
+    )
+    assert (
+        next_goal_run_worktree_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_run_worktree_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_worktree_run = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_worktree_run.status == 200
+    assert "Today Completed Goal Provenance" not in today_after_next_goal_worktree_run.body
+    assert (
+        "today_command_primary_action</dt><dd>Open review"
+        in today_after_next_goal_worktree_run.body
+    )
+    assert "action='/actions/review-run'" in today_after_next_goal_worktree_run.body
+    next_coder_runs = list_coder_worktree_runs(tmp_path, delegation_id=next_goal_delegation.id)
+    assert len(next_coder_runs) == 1
+    next_coder_run = next_coder_runs[0]
+    assert (
+        f"name='run_id' value='{next_coder_run.id}'"
+        in today_after_next_goal_worktree_run.body
+    )
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_next_goal_worktree_run.body
+    )
+    assert (
+        f"<a href='/artifacts?path={next_coder_worktree_summary.relative_to(tmp_path)}'>"
+        in today_after_next_goal_worktree_run.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_worktree_run.body
+
+    resume_after_next_goal_worktree_run = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_worktree_run.status == 200
+    assert "Resume Completed Goal Provenance" not in resume_after_next_goal_worktree_run.body
+    assert (
+        "resume_return_brief_next_action</dt><dd>Open review"
+        in resume_after_next_goal_worktree_run.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Open review"
+        in resume_after_next_goal_worktree_run.body
+    )
+    assert "action='/actions/review-run'" in resume_after_next_goal_worktree_run.body
+    assert (
+        f"name='run_id' value='{next_coder_run.id}'"
+        in resume_after_next_goal_worktree_run.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in resume_after_next_goal_worktree_run.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_coder_worktree_summary.relative_to(tmp_path)}'>"
+        in resume_after_next_goal_worktree_run.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_worktree_run.body
+
+    successor_goal_after_worktree_run = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_worktree_run.status == 200
+    assert (
+        "completed_goal_provenance_history_status</dt><dd>available"
+        in successor_goal_after_worktree_run.body
+    )
+    assert (
+        "goal_artifact_reader_selected_artifact</dt><dd>approved_coder_worktree_run_summary"
+        in successor_goal_after_worktree_run.body
+    )
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_coder_worktree_summary.relative_to(tmp_path)}"
+        in successor_goal_after_worktree_run.body
+    )
+    assert "recommended_action</dt><dd>Open review" in successor_goal_after_worktree_run.body
+    assert "completed-goal-provenance.md" in successor_goal_after_worktree_run.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
@@ -18418,7 +18658,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "Goal Next action: Create commit request - Demo the ClankerOS local operator app"
     ) in goal.body
     assert (
-        f"href='/goals/{result.goal_id}#goal-artifacts'>Goal Artifacts: 26/26 available - "
+        f"href='/goals/{result.goal_id}#goal-artifacts'>Goal Artifacts: 27/27 available - "
         "Demo the ClankerOS local operator app"
     ) in goal.body
     assert (
@@ -18453,7 +18693,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in goal.body
     assert (
         "palette_goal_section_command: Artifacts "
-        "label=Goal Artifacts: 26/26 available - "
+        "label=Goal Artifacts: 27/27 available - "
         "Demo the ClankerOS local operator app with fixture-backed state "
         f"surface=<a href='/goals/{result.goal_id}#goal-artifacts'>"
         "goal-artifacts</a>"
@@ -19006,9 +19246,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in goal.body
     )
     assert "goal_review_evidence_items</dt><dd>" in goal.body
-    assert "goal_review_artifact_records</dt><dd>26" in goal.body
+    assert "goal_review_artifact_records</dt><dd>27" in goal.body
     assert "goal_review_proof_items</dt><dd>" in goal.body
-    assert "goal_review_available_artifacts</dt><dd>26" in goal.body
+    assert "goal_review_available_artifacts</dt><dd>27" in goal.body
     assert "goal_review_missing_artifacts</dt><dd>0" in goal.body
     assert "goal_review_latest_artifact</dt><dd>CI snapshot proof demo-goal-ci" in goal.body
     assert "goal_review_latest_artifact_kind</dt><dd>json" in goal.body
@@ -20916,19 +21156,19 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-artifact-list='true'" in goal.body
     assert "<a href='#goal-artifact-command-bar'>Artifact command</a>" in goal.body
     assert "Goal artifact command evidence" in goal.body
-    assert "Detailed artifact list (26)" in goal.body
+    assert "Detailed artifact list (27)" in goal.body
     assert f"goal_artifact_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_artifact_command_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_artifact_command_status</dt><dd>available" in goal.body
-    assert "goal_artifact_command_items</dt><dd>26" in goal.body
-    assert "goal_artifact_command_records</dt><dd>26" in goal.body
-    assert "goal_artifact_command_available_records</dt><dd>26" in goal.body
+    assert "goal_artifact_command_items</dt><dd>27" in goal.body
+    assert "goal_artifact_command_records</dt><dd>27" in goal.body
+    assert "goal_artifact_command_available_records</dt><dd>27" in goal.body
     assert "goal_artifact_command_missing_records</dt><dd>0" in goal.body
-    assert "goal_artifact_command_markdown_artifacts</dt><dd>7" in goal.body
+    assert "goal_artifact_command_markdown_artifacts</dt><dd>8" in goal.body
     assert "goal_artifact_command_json_artifacts</dt><dd>13" in goal.body
     assert "goal_artifact_command_patch_artifacts</dt><dd>1" in goal.body
     assert "goal_artifact_command_text_artifacts</dt><dd>5" in goal.body
-    assert "goal_artifact_command_sources</dt><dd>ci_snapshot_evidence:1, coder_prep:3, coder_run:10, delegation:1, delegation_metadata:4, worktree_approval:4, worktree_plan:3" in goal.body
+    assert "goal_artifact_command_sources</dt><dd>ci_snapshot_evidence:1, coder_prep:3, coder_run:11, delegation:1, delegation_metadata:4, worktree_approval:4, worktree_plan:3" in goal.body
     assert "goal_artifact_command_latest_artifact</dt><dd>CI snapshot proof demo-goal-ci" in goal.body
     assert "goal_artifact_command_latest_kind</dt><dd>json" in goal.body
     assert "goal_artifact_command_latest_source</dt><dd>ci_snapshot_evidence" in goal.body
@@ -20977,7 +21217,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-artifact-filter-memory='true'" in goal.body
     assert "data-goal-artifact-filter-view-status='true'>View: default</span>" in goal.body
     assert "data-goal-artifact-filter-reset='true'>Reset filter</button>" in goal.body
-    assert "data-goal-artifact-filter-status='true'>Showing 26 of 26 artifacts.</p>" in goal.body
+    assert "data-goal-artifact-filter-status='true'>Showing 27 of 27 artifacts.</p>" in goal.body
     assert "data-goal-artifact-filter-empty='true' hidden" in goal.body
     assert "data-goal-artifact-filter-evidence='true'" in goal.body
     assert "Goal Artifact Reader" in goal.body
@@ -21004,13 +21244,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-artifact-reader-previews='true'" in goal.body
     assert (
         goal.body.count("<article class='goal-artifact-preview' data-goal-artifact-preview='true'")
-        == 26
+        == 27
     )
     assert f"goal_artifact_reader_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_artifact_reader_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_artifact_reader_status</dt><dd>available" in goal.body
-    assert "goal_artifact_reader_total_records</dt><dd>26" in goal.body
-    assert "goal_artifact_reader_preview_records</dt><dd>26" in goal.body
+    assert "goal_artifact_reader_total_records</dt><dd>27" in goal.body
+    assert "goal_artifact_reader_preview_records</dt><dd>27" in goal.body
     assert "goal_artifact_reader_selected_artifact</dt><dd>CI snapshot proof demo-goal-ci" in goal.body
     assert f"goal_artifact_reader_selected_path</dt><dd>{ci_evidence_relative}" in goal.body
     assert "review.md" in goal.body
@@ -21065,12 +21305,12 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_artifact_filter_scope</dt><dd>browser_local_rendered_artifacts" in goal.body
     assert f"goal_artifact_filter_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_artifact_filter_project</dt><dd>{result.project_id}" in goal.body
-    assert "goal_artifact_filter_total_records</dt><dd>26" in goal.body
-    assert "goal_artifact_filter_markdown_artifacts</dt><dd>7" in goal.body
+    assert "goal_artifact_filter_total_records</dt><dd>27" in goal.body
+    assert "goal_artifact_filter_markdown_artifacts</dt><dd>8" in goal.body
     assert "goal_artifact_filter_json_artifacts</dt><dd>13" in goal.body
     assert "goal_artifact_filter_patch_artifacts</dt><dd>1" in goal.body
     assert "goal_artifact_filter_text_artifacts</dt><dd>5" in goal.body
-    assert "goal_artifact_filter_sources</dt><dd>ci_snapshot_evidence=1, coder_prep=3, coder_run=10, delegation=1, delegation_metadata=4, worktree_approval=4, worktree_plan=3" in goal.body
+    assert "goal_artifact_filter_sources</dt><dd>ci_snapshot_evidence=1, coder_prep=3, coder_run=11, delegation=1, delegation_metadata=4, worktree_approval=4, worktree_plan=3" in goal.body
     assert "goal_artifact_filter_source_count</dt><dd>7" in goal.body
     assert "goal_artifact_filter_source</dt><dd>data-goal-artifact-item" in goal.body
     assert "goal_artifact_filter_persistence</dt><dd>browser_local_view_memory" in goal.body
@@ -27512,6 +27752,11 @@ def test_coder_worktree_approval_and_run_capture_bounded_evidence(
     assert "coder_worktree_run: completed" in run_output
     assert f"approval_id: {approval_id}" in run_output
     assert "changed_files_within_allowed_files: true" in run_output
+    assert "source_coder_worktree_approval_decision: .clanker/delegations/" in run_output
+    assert "source_coder_worktree_approval_decision_md: .clanker/delegations/" in run_output
+    assert "source_coder_worktree_approval_decision_markdown_consumed: true" in run_output
+    assert "source_approval_decision_sha256: " in run_output
+    assert "source_approval_decision_md_sha256: " in run_output
     assert "commit_created: false" in run_output
     assert "push_created: false" in run_output
     assert "provider_calls_taken_by_clankeros: 0" in run_output
@@ -27531,6 +27776,19 @@ def test_coder_worktree_approval_and_run_capture_bounded_evidence(
     assert run_payload["status"] == "completed"
     assert run_payload["approval_status"] == "approved"
     assert run_payload["source_delegation_run_id"] == source_run_id
+    assert run_payload["source_coder_worktree_approval_decision"] == str(
+        decision_artifact.relative_to(tmp_path)
+    )
+    assert run_payload["source_coder_worktree_approval_decision_md"] == str(
+        decision_artifact.with_suffix(".md").relative_to(tmp_path)
+    )
+    assert run_payload["source_approval_decision_sha256"] == hashlib.sha256(
+        decision_artifact.read_bytes()
+    ).hexdigest()
+    assert run_payload["source_approval_decision_md_sha256"] == hashlib.sha256(
+        decision_artifact.with_suffix(".md").read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert run_payload["source_coder_worktree_approval_decision_markdown_consumed"] is True
     assert run_payload["command_exit_code"] == 0
     assert run_payload["verification_exit_code"] == 0
     assert run_payload["commit_created"] is False
@@ -27553,7 +27811,13 @@ def test_coder_worktree_approval_and_run_capture_bounded_evidence(
     assert bounded["outside_allowed_files"] == []
     assert json.loads((evidence_dir / "approval.json").read_text(encoding="utf-8"))["id"] == approval_id
     assert json.loads((evidence_dir / "source_plan.json").read_text(encoding="utf-8"))["kind"] == "coder_worktree_run_plan"
-    assert "review_coder_worktree_run" in (evidence_dir / "summary.md").read_text(encoding="utf-8")
+    run_summary_text = (evidence_dir / "summary.md").read_text(encoding="utf-8")
+    assert (
+        f"- source_coder_worktree_approval_decision_md: {decision_artifact.with_suffix('.md').relative_to(tmp_path)}"
+        in run_summary_text
+    )
+    assert "- source_coder_worktree_approval_decision_markdown_consumed: true" in run_summary_text
+    assert "review_coder_worktree_run" in run_summary_text
     assert subprocess.run(
         ["git", "status", "--short"],
         cwd=repo_path,

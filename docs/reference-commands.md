@@ -297,15 +297,27 @@ that worktree, optionally runs the registered default verifier or
 .clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/changed_files.json
 .clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/bounded_file_validation.json
 .clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/approval.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/approval_decision.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/approval_decision.md
 .clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/source_plan.json
 .clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/summary.md
 ```
 
+The run consumes the current `coder_worktree_approval_decision.md` as proof and
+records `source_coder_worktree_approval_decision`,
+`source_coder_worktree_approval_decision_md`,
+`source_approval_decision_sha256`,
+`source_approval_decision_md_sha256`, and
+`source_coder_worktree_approval_decision_markdown_consumed=true` in
+`run.json`, `summary.md`, CLI output, browser result output, and dashboard
+readback.
+
 Changed files must be a subset of `allowed_files`; outside files mark the run
 `blocked` with `failure_class=bounded_file_violation`. Command or verification
 failures mark the run `failed`. Completed approval/plan pairs are not rerun
-unless `--rerun` is provided. The command does not commit, push, deploy, call
-providers, or intentionally use the network.
+unless `--rerun` is provided, and legacy completed runs without matching
+approval-decision proof are not reused. The command does not commit, push,
+deploy, call providers, or intentionally use the network.
 
 `coder-commit-request <coder_worktree_run_id> --requested-by <id> --message
 <commit_message> --note <note>` is the next gate after a successful coder
