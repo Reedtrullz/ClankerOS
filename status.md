@@ -1,5 +1,59 @@
 # Status
 
+## 2026-07-06 Successor Goal Worktree Plan Daily Resume
+
+- Completed the selected slice for successor Goal worktree-plan creation from
+  `/today` and `/resume`.
+- A confirmed browser `coder-worktree-plan` action now returns an explicit
+  operator-facing result payload with `source_coder_prep_md`,
+  `source_coder_prep_markdown_consumed: true`, the source prep hash, generated
+  `coder_worktree_plan.json` / `coder_worktree_plan.md` artifact links,
+  approval-gate state, proposed-but-not-created worktree details, bounded
+  allowed files, and zero-effect safety counters.
+- The generated `coder_worktree_plan.md` consumes the current `coder_prep.md`
+  as proof, records the prep path and hash, and remains an approval-gated
+  local plan artifact. It does not create a worktree, create an approval
+  request, edit source files, run commands, approve work, call providers, or
+  use the network.
+- Running the worktree-plan action from
+  `/resume#resume-workbench-action-form` preserves that return surface for the
+  embedded `Request worktree approval` form. An idempotent rerun from
+  `/today#today-current-action` reports `already_recorded: true`, keeps the
+  same plan artifact and prep hash, and stores the Today return surface
+  without changing the durable plan payload.
+- `/today`, `/resume`, and the successor Goal page all move the primary action
+  to `Request worktree approval` after confirmed worktree-plan creation, while
+  `completed-goal-provenance.md` remains visible as durable provenance history
+  rather than a transient completed-Goal panel.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal worktree approval request from `/today` and `/resume` should
+  consume `coder_worktree_plan.md` as proof, keep provenance history visible,
+  and move the primary action to `Approve worktree`.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the explicit result payload because the worktree-plan result
+    page did not expose `source_coder_prep_markdown_consumed: true`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 79.71s after adding the explicit result payload, prep hash
+    checks, persisted zero-effect gates, and Today idempotence coverage.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace --tb=short`:
+    1 passed in 6.13s.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_runs_delegation_from_browser_action --tb=short`:
+    1 passed in 6.13s.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal worktree
+    approval-request slice and refreshed `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this slice creates only local worktree-plan artifacts after an
+  existing confirmed local browser action. It does not create an approval
+  request, approve execution, create a worktree, run commands, edit files,
+  commit, push, create PRs, deploy, call providers, use app-side network
+  actions, or mutate external systems. Local browser/test proof is not CI,
+  deploy, or live production proof.
+
 ## 2026-07-06 Successor Goal Coder Prep Daily Resume
 
 - Completed the selected slice for successor Goal coder-prep from `/today`

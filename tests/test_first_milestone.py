@@ -1,3 +1,4 @@
+import hashlib
 import html
 import json
 import sqlite3
@@ -13509,6 +13510,267 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert "goal_artifact_reader_selected_source</dt><dd>coder_prep" in successor_goal_after_prep.body
     assert "recommended_action</dt><dd>Create worktree plan" in successor_goal_after_prep.body
     assert "completed-goal-provenance.md" in successor_goal_after_prep.body
+
+    next_goal_plan_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-plan",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "return_to": ["/resume#resume-workbench-action-form"],
+        },
+    )
+    assert next_goal_plan_confirmation.status == 409
+    assert "Confirm worktree plan" in next_goal_plan_confirmation.body
+    assert "action_confirmation_label</dt><dd>Create worktree plan" in next_goal_plan_confirmation.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_plan_confirmation.body
+    )
+
+    next_goal_plan_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-plan",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_plan_result.status == 200
+    assert "coder_worktree_plan:" in next_goal_plan_result.body
+    assert (
+        "action_result_command_label</dt><dd>Create worktree plan"
+        in next_goal_plan_result.body
+    )
+    assert (
+        "source_coder_prep_md</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in next_goal_plan_result.body
+    )
+    assert (
+        "source_coder_prep_markdown_consumed</dt><dd>true"
+        in next_goal_plan_result.body
+    )
+    assert "source_coder_prep_md_sha256</dt><dd>" in next_goal_plan_result.body
+    assert "approval_gate</dt><dd>operator_approval_required" in next_goal_plan_result.body
+    assert "approval_request_created</dt><dd>false" in next_goal_plan_result.body
+    assert "proposed_worktree_status</dt><dd>not_created" in next_goal_plan_result.body
+    assert "proposed_worktree_created</dt><dd>false" in next_goal_plan_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Request worktree approval"
+        in next_goal_plan_result.body
+    )
+    assert (
+        "action_result_next_step_primary_surface</dt><dd>"
+        "<a href='#action-result-next-step-form'>Request worktree approval</a>"
+        in next_goal_plan_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_plan_result.body
+    assert "action='/actions/coder-worktree-approval'" in next_goal_plan_result.body
+    assert (
+        f"name='delegation_id' value='{next_goal_delegation.id}'"
+        in next_goal_plan_result.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_plan_result.body
+    )
+    assert (
+        f"name='return_to' value='/goals/{next_goal_id}#goal-action-dock-form'"
+        not in next_goal_plan_result.body
+    )
+    assert (
+        "action_continuation_next_action</dt><dd>Request worktree approval"
+        in next_goal_plan_result.body
+    )
+    assert "worktrees_created</dt><dd>0" in next_goal_plan_result.body
+    assert "approval_requests_created</dt><dd>0" in next_goal_plan_result.body
+    assert "source_edits_taken</dt><dd>0" in next_goal_plan_result.body
+    assert "commands_rerun</dt><dd>0" in next_goal_plan_result.body
+    assert "provider_calls_taken_by_clankeros</dt><dd>0" in next_goal_plan_result.body
+    assert "network_actions_taken</dt><dd>0" in next_goal_plan_result.body
+    assert "external_mutations_taken</dt><dd>0" in next_goal_plan_result.body
+
+    next_coder_worktree_plan_md = next_coder_prep_md.with_name("coder_worktree_plan.md")
+    next_coder_worktree_plan_json = next_coder_worktree_plan_md.with_suffix(".json")
+    assert next_coder_worktree_plan_md.exists()
+    assert next_coder_worktree_plan_json.exists()
+    next_coder_worktree_plan_relative = next_coder_worktree_plan_md.relative_to(tmp_path)
+    next_coder_worktree_plan_payload = json.loads(
+        next_coder_worktree_plan_json.read_text(encoding="utf-8")
+    )
+    assert (
+        next_coder_worktree_plan_payload["source"]["coder_prep_md"]
+        == str(next_coder_prep_relative)
+    )
+    assert next_coder_worktree_plan_payload["source"]["coder_prep_md_sha256"] == hashlib.sha256(
+        next_coder_prep_text.encode("utf-8")
+    ).hexdigest()
+    assert next_coder_worktree_plan_payload["source_coder_prep_markdown_consumed"] is True
+    assert (
+        next_coder_prep_text[:160]
+        in next_coder_worktree_plan_payload["source_coder_prep_markdown_excerpt"]
+    )
+    assert (
+        next_coder_worktree_plan_payload["approval_gate"]["status"]
+        == "operator_approval_required"
+    )
+    assert (
+        next_coder_worktree_plan_payload["approval_gate"]["approval_request_created"]
+        is False
+    )
+    assert next_coder_worktree_plan_payload["proposed_worktree"]["status"] == "not_created"
+    assert next_coder_worktree_plan_payload["proposed_worktree"]["worktree_created"] is False
+    assert next_coder_worktree_plan_payload["dispatch_ready"] is False
+    assert next_coder_worktree_plan_payload["future_run_plan"]["commands_to_run_now"] == []
+    assert next_coder_worktree_plan_payload["safety"]["worktrees_created"] == 0
+    assert next_coder_worktree_plan_payload["safety"]["approval_requests_created"] == 0
+    assert next_coder_worktree_plan_payload["safety"]["provider_calls_taken_by_clankeros"] == 0
+    assert next_coder_worktree_plan_payload["safety"]["network_actions_taken"] == 0
+    assert next_coder_worktree_plan_payload["safety"]["external_mutations_taken"] == 0
+    next_coder_worktree_plan_text = next_coder_worktree_plan_md.read_text(encoding="utf-8")
+    assert f"- source_coder_prep_md: {next_coder_prep_relative}" in next_coder_worktree_plan_text
+    assert "- status: not_created" in next_coder_worktree_plan_text
+    assert "- approval_request_created: false" in next_coder_worktree_plan_text
+    assert "- Coder worktree planning does not create a git worktree." in next_coder_worktree_plan_text
+    next_goal_plan_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_plan_workspace["open_goal"] == next_goal_id
+    assert next_goal_plan_workspace["updated_by"] == "coder-worktree-plan"
+    assert next_goal_plan_workspace["last_viewed_artifact"] == str(
+        next_coder_worktree_plan_relative
+    )
+    assert (
+        next_goal_plan_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_plan_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_plan = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_plan.status == 200
+    assert "Today Completed Goal Provenance" not in today_after_next_goal_plan.body
+    assert "Today Completed Goal Handoff" not in today_after_next_goal_plan.body
+    assert "today_command_primary_action</dt><dd>Request worktree approval" in today_after_next_goal_plan.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Request worktree approval</a>"
+        in today_after_next_goal_plan.body
+    )
+    assert "today_command_reason</dt><dd>coder_worktree_plan_available" in today_after_next_goal_plan.body
+    assert "action='/actions/coder-worktree-approval'" in today_after_next_goal_plan.body
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_next_goal_plan.body
+    )
+    assert (
+        f"<a href='/artifacts?path={next_coder_worktree_plan_relative}'>"
+        in today_after_next_goal_plan.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_plan.body
+
+    next_goal_plan_today_rerun = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-plan",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_plan_today_rerun.status == 200
+    assert "coder_worktree_plan:" in next_goal_plan_today_rerun.body
+    assert "already_recorded</dt><dd>true" in next_goal_plan_today_rerun.body
+    assert (
+        "source_coder_prep_md</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in next_goal_plan_today_rerun.body
+    )
+    assert "source_coder_prep_md_sha256</dt><dd>" in next_goal_plan_today_rerun.body
+    assert (
+        "source_coder_prep_markdown_consumed</dt><dd>true"
+        in next_goal_plan_today_rerun.body
+    )
+    assert (
+        "action_result_next_step_next_action</dt><dd>Request worktree approval"
+        in next_goal_plan_today_rerun.body
+    )
+    assert "action='/actions/coder-worktree-approval'" in next_goal_plan_today_rerun.body
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in next_goal_plan_today_rerun.body
+    )
+    assert (
+        f"name='return_to' value='/goals/{next_goal_id}#goal-action-dock-form'"
+        not in next_goal_plan_today_rerun.body
+    )
+    assert (
+        json.loads(next_coder_worktree_plan_json.read_text(encoding="utf-8"))
+        == next_coder_worktree_plan_payload
+    )
+    next_goal_plan_today_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_plan_today_workspace["open_goal"] == next_goal_id
+    assert next_goal_plan_today_workspace["updated_by"] == "coder-worktree-plan"
+    assert next_goal_plan_today_workspace["last_viewed_artifact"] == str(
+        next_coder_worktree_plan_relative
+    )
+    assert next_goal_plan_today_workspace["resume_surface"] == "/today#today-current-action"
+    assert next_goal_plan_today_workspace["completed_goal_handoff_source_goal"] == ""
+
+    resume_after_next_goal_plan = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_plan.status == 200
+    assert "Resume Completed Goal Provenance" not in resume_after_next_goal_plan.body
+    assert "Resume Completed Goal Handoff" not in resume_after_next_goal_plan.body
+    assert (
+        "resume_return_brief_next_action</dt><dd>Request worktree approval"
+        in resume_after_next_goal_plan.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Request worktree approval"
+        in resume_after_next_goal_plan.body
+    )
+    assert (
+        "resume_workbench_primary_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Request worktree approval</a>"
+        in resume_after_next_goal_plan.body
+    )
+    assert "action='/actions/coder-worktree-approval'" in resume_after_next_goal_plan.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in resume_after_next_goal_plan.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_coder_worktree_plan_relative}'>"
+        in resume_after_next_goal_plan.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_plan.body
+
+    successor_goal_after_plan = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_plan.status == 200
+    assert "completed_goal_provenance_history_status</dt><dd>available" in successor_goal_after_plan.body
+    assert (
+        "Artifact recorded: coder_worktree_run_plan_markdown."
+        in successor_goal_after_plan.body
+    )
+    assert (
+        "goal_artifact_reader_selected_artifact</dt><dd>coder_worktree_run_plan_markdown"
+        in successor_goal_after_plan.body
+    )
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_coder_worktree_plan_relative}"
+        in successor_goal_after_plan.body
+    )
+    assert "goal_artifact_reader_selected_source</dt><dd>worktree_plan" in successor_goal_after_plan.body
+    assert "recommended_action</dt><dd>Request worktree approval" in successor_goal_after_plan.body
+    assert "completed-goal-provenance.md" in successor_goal_after_plan.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
