@@ -12717,6 +12717,9 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         approved_publication.decision_artifact_path
     ).with_suffix(".md")
     assert publication_decision_md.exists()
+    publication_decision_md_sha = hashlib.sha256(
+        publication_decision_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
     publication_approval_workspace = json.loads(
         (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
     )
@@ -15447,6 +15450,9 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         tmp_path / Path(next_goal_approved_publication.decision_artifact_path).with_suffix(".md")
     )
     assert next_goal_publication_decision_md.exists()
+    next_goal_publication_decision_md_sha = hashlib.sha256(
+        next_goal_publication_decision_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
     next_goal_publication_decision_payload = json.loads(
         next_goal_publication_decision_md.with_suffix(".json").read_text(
             encoding="utf-8"
@@ -15576,6 +15582,176 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         in successor_goal_after_publication_approval.body
     )
     assert "completed-goal-provenance.md" in successor_goal_after_publication_approval.body
+
+    next_goal_publication_handoff_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-publication-handoff",
+        method="POST",
+        form={
+            "run_id": [next_coder_run.id],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_publication_handoff_result.status == 200
+    assert "coder_publication_handoff:" in next_goal_publication_handoff_result.body
+    assert (
+        "action_result_command_label</dt><dd>Prepare publication handoff"
+        in next_goal_publication_handoff_result.body
+    )
+    assert (
+        "source_coder_publication_decision_md</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_publication_decision_md.relative_to(tmp_path)}'>"
+        in next_goal_publication_handoff_result.body
+    )
+    assert (
+        f"source_publication_decision_md_sha256</dt><dd>{next_goal_publication_decision_md_sha}"
+        in next_goal_publication_handoff_result.body
+    )
+    assert (
+        "source_coder_publication_decision_markdown_consumed</dt><dd>true"
+        in next_goal_publication_handoff_result.body
+    )
+    assert "push_created</dt><dd>false" in next_goal_publication_handoff_result.body
+    assert "pr_created</dt><dd>false" in next_goal_publication_handoff_result.body
+    assert "network_actions_taken</dt><dd>0" in next_goal_publication_handoff_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Manual publish outside ClankerOS"
+        in next_goal_publication_handoff_result.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_publication_handoff_result.body
+    )
+
+    next_goal_ready_publication = next(
+        item
+        for item in list_coder_publications(
+            tmp_path,
+            status="ready_for_operator",
+            limit=20,
+        )
+        if item.run_id == next_coder_run.id
+    )
+    next_goal_publication_handoff_md = (
+        tmp_path / Path(next_goal_ready_publication.handoff_artifact_path).with_suffix(".md")
+    )
+    assert next_goal_publication_handoff_md.exists()
+    assert (next_goal_publication_handoff_md.parent / "pr_body.md").exists()
+    next_goal_handoff_payload = json.loads(
+        next_goal_publication_handoff_md.with_suffix(".json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert next_goal_handoff_payload["source_coder_publication_decision_md"] == str(
+        next_goal_publication_decision_md.relative_to(tmp_path)
+    )
+    assert (
+        next_goal_handoff_payload["source_publication_decision_md_sha256"]
+        == next_goal_publication_decision_md_sha
+    )
+    assert (
+        next_goal_handoff_payload[
+            "source_coder_publication_decision_markdown_consumed"
+        ]
+        is True
+    )
+    next_goal_publication_handoff_text = next_goal_publication_handoff_md.read_text(
+        encoding="utf-8"
+    )
+    assert (
+        f"- source_coder_publication_decision_md: {next_goal_publication_decision_md.relative_to(tmp_path)}"
+        in next_goal_publication_handoff_text
+    )
+    assert (
+        "- source_coder_publication_decision_markdown_consumed: true"
+        in next_goal_publication_handoff_text
+    )
+
+    next_goal_publication_handoff_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert next_goal_publication_handoff_workspace["open_goal"] == next_goal_id
+    assert (
+        next_goal_publication_handoff_workspace["updated_by"]
+        == "coder-publication-handoff"
+    )
+    assert next_goal_publication_handoff_workspace["last_viewed_artifact"] == str(
+        next_goal_publication_handoff_md.relative_to(tmp_path)
+    )
+    assert (
+        next_goal_publication_handoff_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+
+    today_after_next_goal_publication_handoff = render_local_app_route(
+        tmp_path,
+        "/today",
+    )
+    assert today_after_next_goal_publication_handoff.status == 200
+    assert (
+        "today_command_primary_action</dt><dd>Manual publish outside ClankerOS"
+        in today_after_next_goal_publication_handoff.body
+    )
+    assert "Manual Publish Boundary" in today_after_next_goal_publication_handoff.body
+    assert "Publication Handoff Commands" in today_after_next_goal_publication_handoff.body
+    assert (
+        f"source_coder_publication_decision_md: <a href='/artifacts?path={next_goal_publication_decision_md.relative_to(tmp_path)}'>"
+        in today_after_next_goal_publication_handoff.body
+    )
+    assert (
+        f"source_publication_decision_md_sha256: {next_goal_publication_decision_md_sha}"
+        in today_after_next_goal_publication_handoff.body
+    )
+    assert (
+        "source_coder_publication_decision_markdown_consumed: true"
+        in today_after_next_goal_publication_handoff.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_publication_handoff.body
+
+    resume_after_next_goal_publication_handoff = render_local_app_route(
+        tmp_path,
+        "/resume",
+    )
+    assert resume_after_next_goal_publication_handoff.status == 200
+    assert (
+        "resume_return_brief_next_action</dt><dd>Manual publish outside ClankerOS"
+        in resume_after_next_goal_publication_handoff.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Manual publish outside ClankerOS"
+        in resume_after_next_goal_publication_handoff.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_publication_handoff_md.relative_to(tmp_path)}'>"
+        in resume_after_next_goal_publication_handoff.body
+    )
+    assert "Manual Publish Boundary" in resume_after_next_goal_publication_handoff.body
+    assert (
+        f"source_publication_decision_md_sha256: {next_goal_publication_decision_md_sha}"
+        in resume_after_next_goal_publication_handoff.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_publication_handoff.body
+
+    successor_goal_after_publication_handoff = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_publication_handoff.status == 200
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_goal_publication_handoff_md.relative_to(tmp_path)}"
+        in successor_goal_after_publication_handoff.body
+    )
+    assert (
+        "recommended_action</dt><dd>Manual publish outside ClankerOS"
+        in successor_goal_after_publication_handoff.body
+    )
+    assert "Manual Publish Boundary" in successor_goal_after_publication_handoff.body
+    assert "completed-goal-provenance.md" in successor_goal_after_publication_handoff.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
@@ -27570,6 +27746,9 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         approved_publication.decision_artifact_path
     ).with_suffix(".md")
     assert publication_decision_md.exists()
+    publication_decision_md_sha = hashlib.sha256(
+        publication_decision_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
     publication_decision_workspace = json.loads(
         (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
     )
@@ -27617,6 +27796,19 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     )
     assert publication_handoff.status == 200
     assert (
+        "source_coder_publication_decision_md</dt><dd>"
+        f"<a href='/artifacts?path={publication_decision_md.relative_to(tmp_path)}'>"
+        in publication_handoff.body
+    )
+    assert (
+        f"source_publication_decision_md_sha256</dt><dd>{publication_decision_md_sha}"
+        in publication_handoff.body
+    )
+    assert (
+        "source_coder_publication_decision_markdown_consumed</dt><dd>true"
+        in publication_handoff.body
+    )
+    assert (
         f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
         in publication_handoff.body
     )
@@ -27645,6 +27837,12 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "recommended_action</dt><dd>Manual publish outside ClankerOS" in manual_publish_goal.body
     assert "Manual Publish Boundary" in manual_publish_goal.body
     assert "Publication Handoff Commands" in manual_publish_goal.body
+    assert (
+        f"source_coder_publication_decision_md: <a href='/artifacts?path={publication_decision_md.relative_to(tmp_path)}'>"
+        in manual_publish_goal.body
+    )
+    assert f"source_publication_decision_md_sha256: {publication_decision_md_sha}" in manual_publish_goal.body
+    assert "source_coder_publication_decision_markdown_consumed: true" in manual_publish_goal.body
     assert "manual_boundary: outside_clankeros" in manual_publish_goal.body
     assert "copy_only: true" in manual_publish_goal.body
     assert "Goal Completion Readiness" in manual_publish_goal.body
@@ -29710,7 +29908,11 @@ def test_coder_commit_request_alias_writes_coder_commit_artifacts_and_is_idempot
     assert decision_payload["staged_files"] == []
     assert decision_payload["commit_created"] is False
     assert decision_payload["pr_created"] is False
-    decision_markdown = decision_artifact.with_suffix(".md").read_text(encoding="utf-8")
+    decision_markdown_path = decision_artifact.with_suffix(".md")
+    decision_markdown = decision_markdown_path.read_text(encoding="utf-8")
+    decision_markdown_sha = hashlib.sha256(
+        decision_markdown.encode("utf-8")
+    ).hexdigest()
     assert f"- source_coder_commit_request: {request_artifact.relative_to(tmp_path)}" in decision_markdown
     assert f"- source_coder_commit_request_md: {request_markdown.relative_to(tmp_path)}" in decision_markdown
     assert "- source_coder_commit_request_markdown_consumed: true" in decision_markdown
@@ -30124,7 +30326,11 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert decision_payload["push_created"] is False
     assert decision_payload["pr_created"] is False
     assert decision_payload["network_actions_taken"] == 0
-    decision_markdown = decision_artifact.with_suffix(".md").read_text(encoding="utf-8")
+    decision_markdown_path = decision_artifact.with_suffix(".md")
+    decision_markdown = decision_markdown_path.read_text(encoding="utf-8")
+    decision_markdown_sha = hashlib.sha256(
+        decision_markdown.encode("utf-8")
+    ).hexdigest()
     assert f"- source_coder_publication_request_md: {request_markdown.relative_to(tmp_path)}" in decision_markdown
     assert f"- source_publication_request_md_sha256: {request_markdown_sha}" in decision_markdown
     assert "- source_coder_publication_request_markdown_consumed: true" in decision_markdown
@@ -30155,6 +30361,11 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert f"commit: {commit_sha}" in handoff_output
     assert f"branch: {branch_name}" in handoff_output
     assert f"worktree_path: {worktree_path}" in handoff_output
+    assert f"source_coder_publication_decision: {decision_artifact.relative_to(tmp_path)}" in handoff_output
+    assert f"source_coder_publication_decision_md: {decision_markdown_path.relative_to(tmp_path)}" in handoff_output
+    assert f"source_publication_decision_sha256: {hashlib.sha256(decision_artifact.read_bytes()).hexdigest()}" in handoff_output
+    assert f"source_publication_decision_md_sha256: {decision_markdown_sha}" in handoff_output
+    assert "source_coder_publication_decision_markdown_consumed: true" in handoff_output
     assert "push_created: false" in handoff_output
     assert "pr_created: false" in handoff_output
     handoff_artifact = tmp_path / next(
@@ -30177,6 +30388,17 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
         handoff_payload["suggested_draft_pr_command"]
         == f"gh pr create --draft --base main --head {branch_name} --title \"Implement bounded change from approved worktree run\" --body-file {handoff_payload['pr_body_path']}"
     )
+    assert handoff_payload["source_coder_publication_decision"] == str(
+        decision_artifact.relative_to(tmp_path)
+    )
+    assert handoff_payload["source_coder_publication_decision_md"] == str(
+        decision_markdown_path.relative_to(tmp_path)
+    )
+    assert handoff_payload["source_publication_decision_sha256"] == hashlib.sha256(
+        decision_artifact.read_bytes()
+    ).hexdigest()
+    assert handoff_payload["source_publication_decision_md_sha256"] == decision_markdown_sha
+    assert handoff_payload["source_coder_publication_decision_markdown_consumed"] is True
     assert handoff_payload["pr_body_path"].endswith("coder_publication/pr_body.md")
     assert handoff_payload["handoff_body_path"] == handoff_payload["pr_body_path"]
     assert handoff_payload["push_created"] is False
@@ -30189,12 +30411,20 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     handoff_markdown = handoff_artifact.with_suffix(".md").read_text(encoding="utf-8")
     assert "verification_status: passed" in handoff_markdown
     assert "bounded_file_validation_status: passed" in handoff_markdown
+    assert f"source_coder_publication_decision_md: {decision_markdown_path.relative_to(tmp_path)}" in handoff_markdown
+    assert f"source_publication_decision_md_sha256: {decision_markdown_sha}" in handoff_markdown
+    assert "source_coder_publication_decision_markdown_consumed: true" in handoff_markdown
     assert "pr_body_path:" in handoff_markdown
+    pr_body_text = Path(handoff_payload["pr_body_path"]).read_text(encoding="utf-8")
+    assert f"- publication_decision_md: {decision_markdown_path.relative_to(tmp_path)}" in pr_body_text
+    assert f"- publication_decision_md_sha256: {decision_markdown_sha}" in pr_body_text
+    assert "- publication_decision_markdown_consumed: true" in pr_body_text
     first_handoff_text = handoff_artifact.read_text(encoding="utf-8")
 
     assert main(["--root", str(tmp_path), "coder-publication-handoff", run_id]) == 0
     repeat_handoff_output = capsys.readouterr().out
     assert "coder_publication_handoff: already_ready" in repeat_handoff_output
+    assert "source_coder_publication_decision_markdown_consumed: true" in repeat_handoff_output
     assert handoff_artifact.read_text(encoding="utf-8") == first_handoff_text
 
     assert main(["--root", str(tmp_path), "review", run_id]) == 0
@@ -30214,6 +30444,9 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert f"source_coder_publication_request_md: {request_markdown.relative_to(tmp_path)}" in review
     assert f"source_publication_request_md_sha256: {request_markdown_sha}" in review
     assert "source_coder_publication_request_markdown_consumed: true" in review
+    assert f"source_coder_publication_decision_md: {decision_markdown_path.relative_to(tmp_path)}" in review
+    assert f"source_publication_decision_md_sha256: {decision_markdown_sha}" in review
+    assert "source_coder_publication_decision_markdown_consumed: true" in review
     assert f"suggested_push_command: git push origin {branch_name}" in review
     assert "suggested_draft_pr_command: gh pr create --draft --base main" in review
 
@@ -30228,6 +30461,9 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert f"source_publication_request_md={request_markdown.relative_to(tmp_path)}" in dashboard
     assert f"source_publication_request_md_sha256={request_markdown_sha}" in dashboard
     assert "source_publication_request_markdown_consumed=true" in dashboard
+    assert f"source_publication_decision_md={decision_markdown_path.relative_to(tmp_path)}" in dashboard
+    assert f"source_publication_decision_md_sha256={decision_markdown_sha}" in dashboard
+    assert "source_publication_decision_markdown_consumed=true" in dashboard
     assert f"suggested_push_command=git push origin {branch_name}" in dashboard
     assert "suggested_draft_pr_command=gh pr create --draft --base main" in dashboard
 
@@ -30235,6 +30471,9 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     inbox_output = capsys.readouterr().out
     assert "coder_publication_requests: 0" in inbox_output
     assert "coder_publication_handoffs: 1" in inbox_output
+    assert f"source_publication_decision_md={decision_markdown_path.relative_to(tmp_path)}" in inbox_output
+    assert f"source_publication_decision_md_sha256={decision_markdown_sha}" in inbox_output
+    assert "source_publication_decision_markdown_consumed=true" in inbox_output
     assert f"suggested_push_command=git push origin {branch_name}" in inbox_output
     assert "suggested_draft_pr_command=gh pr create --draft --base main" in inbox_output
     assert "pr_body_path=" in inbox_output
@@ -30675,6 +30914,58 @@ def test_coder_publication_handoff_blocks_without_approval_and_source_drift(
     request_drift_output = capsys.readouterr().out
     assert "coder_publication_handoff_failed: source_request_hash_mismatch" in request_drift_output
     assert request_drift_publication_id in request_drift_output
+
+    decision_markdown_drift_root = tmp_path / "decision-markdown-drift"
+    decision_markdown_drift_root.mkdir()
+    (
+        _source_run_id,
+        _delegation_id,
+        _approval_id,
+        decision_markdown_drift_run_id,
+        decision_markdown_drift_evidence_dir,
+        _worktree_path,
+        _repo_path,
+        _commit_sha,
+        _parent_sha,
+        _branch_name,
+    ) = _commit_completed_coder_worktree(decision_markdown_drift_root, capsys)
+    decision_markdown_drift_publication_id = _request_and_approve_coder_publication(
+        decision_markdown_drift_root,
+        capsys,
+        decision_markdown_drift_run_id,
+    )
+    decision_markdown_artifact = (
+        decision_markdown_drift_evidence_dir
+        / "coder_publication"
+        / "publication_decision.md"
+    )
+    decision_markdown_artifact.write_text(
+        decision_markdown_artifact.read_text(encoding="utf-8").replace(
+            f"- publication_request_id: {decision_markdown_drift_publication_id}",
+            "- publication_request_id: tampered_publication_decision",
+        ),
+        encoding="utf-8",
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(decision_markdown_drift_root),
+                "coder-publication-handoff",
+                decision_markdown_drift_run_id,
+            ]
+        )
+        == 1
+    )
+    decision_markdown_drift_output = capsys.readouterr().out
+    assert (
+        "coder_publication_handoff_failed: publication decision markdown proof does not match approval"
+        in decision_markdown_drift_output
+    )
+    incidents = Storage(
+        decision_markdown_drift_root / ".agent" / "state.db"
+    ).list_recent_incidents(limit=5)
+    assert incidents[0].failure_class == "source_decision_hash_mismatch"
 
     request_markdown_drift_root = tmp_path / "request-markdown-drift"
     request_markdown_drift_root.mkdir()

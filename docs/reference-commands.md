@@ -439,8 +439,13 @@ paths and hashes plus
 create a PR, deploy, call providers, or use the network.
 
 `coder-publication-handoff <coder_worktree_run_id>` requires an approved
-publication request, revalidates the request JSON and Markdown hashes, commit
-artifact hash, and commit SHA, then writes local suggested commands only:
+publication request, loads the matching
+`coder_publication/publication_decision.json` and
+`coder_publication/publication_decision.md` proof pair, verifies the decision
+matches the publication request id and coder worktree run, requires the
+decision to carry the upstream publication-request Markdown proof, revalidates
+the request JSON and Markdown hashes, commit artifact hash, and commit SHA,
+then writes local suggested commands only:
 
 ```text
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_handoff.json
@@ -448,10 +453,12 @@ artifact hash, and commit SHA, then writes local suggested commands only:
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/pr_body.md
 ```
 
-The handoff includes `git push <remote> <branch>` and a draft `gh pr create`
-command with a body-file path. It does not execute either command. Manual
-operator execution remains required for push or PR creation, and deploy remains
-out of scope.
+The handoff records the consumed publication decision JSON/Markdown paths and
+hashes plus `source_coder_publication_decision_markdown_consumed: true`, then
+includes `git push <remote> <branch>` and a draft `gh pr create` command with
+a body-file path. It does not execute either command. Manual operator
+execution remains required for push or PR creation, and deploy remains out of
+scope.
 `record-delegation-result` remains the manual ingestion path for
 operator-supplied output.
 

@@ -2474,7 +2474,10 @@ def main(argv: list[str] | None = None) -> int:
                 f"suggested_push_command={handoff_payload.get('suggested_push_command', 'unavailable')} "
                 f"suggested_draft_pr_command={handoff_payload.get('suggested_draft_pr_command', 'unavailable')} "
                 f"pr_body_path={handoff_payload.get('pr_body_path', 'unavailable')} "
-                f"handoff_body_path={handoff_payload.get('handoff_body_path', 'unavailable')}"
+                f"handoff_body_path={handoff_payload.get('handoff_body_path', 'unavailable')} "
+                f"source_publication_decision_md={handoff_payload.get('source_coder_publication_decision_md', 'missing')} "
+                f"source_publication_decision_md_sha256={handoff_payload.get('source_publication_decision_md_sha256', 'missing')} "
+                f"source_publication_decision_markdown_consumed={str(handoff_payload.get('source_coder_publication_decision_markdown_consumed') is True).lower()}"
             )
         print("network_actions_taken: 0")
         print("external_mutations_taken: 0")

@@ -318,10 +318,10 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Make successor Goal publication handoffs from `/today` and `/resume` consume `coder_publication/publication_decision.md` as proof, keep provenance history visible, and move the primary action to `Manual publish outside ClankerOS`.
+- focus: Make successor Goal manual publish completion from `/today` and `/resume` consume `coder_publication/publication_handoff.md` as proof, keep provenance history visible, and move the primary action to completed Goal evidence plus next-Goal creation.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-07-06T08:19:23.189671+00:00
+- created_at: 2026-07-06T08:37:51.205283+00:00
 
 ## Simplicity Guardrail
 
@@ -329,7 +329,7 @@
 - reason: selected only actionable item with score 10 and complexity 4; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
 - selected_score: 10
 - selected_complexity: 4
-- selected_focus: Make successor Goal publication handoffs from `/today` and `/resume` consume `coder_publication/publication_decision.md` as proof, keep provenance history visible, and move the primary action to `Manual publish outside ClankerOS`.
+- selected_focus: Make successor Goal manual publish completion from `/today` and `/resume` consume `coder_publication/publication_handoff.md` as proof, keep provenance history visible, and move the primary action to completed Goal evidence plus next-Goal creation.
 
 ## Expansion Operator Approval Schema Decision
 

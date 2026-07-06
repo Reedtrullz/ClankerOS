@@ -48452,15 +48452,63 @@ def _handle_post(
             )
         elif action == "coder-publication-handoff":
             run_id = _required(form, "run_id")
-            result = create_coder_publication_handoff(root, storage, run_id)
-            message = f"coder_publication_handoff: {result.status}"
+            handoff_result = create_coder_publication_handoff(root, storage, run_id)
+            handoff_payload = load_coder_publication_handoff_payload(
+                root,
+                handoff_result.publication,
+            )
+            result = {
+                "publication": handoff_result.publication,
+                "status": handoff_result.status,
+                "artifact_path": handoff_result.artifact_path,
+                "already_ready": handoff_result.already_ready,
+                "source_coder_publication_decision": handoff_payload.get(
+                    "source_coder_publication_decision",
+                    handoff_result.publication.decision_artifact_path or "missing",
+                ),
+                "source_coder_publication_decision_md": handoff_payload.get(
+                    "source_coder_publication_decision_md",
+                    "missing",
+                ),
+                "source_publication_decision_sha256": handoff_payload.get(
+                    "source_publication_decision_sha256",
+                    "missing",
+                ),
+                "source_publication_decision_md_sha256": handoff_payload.get(
+                    "source_publication_decision_md_sha256",
+                    "missing",
+                ),
+                "source_coder_publication_decision_markdown_consumed": handoff_payload.get(
+                    "source_coder_publication_decision_markdown_consumed"
+                )
+                is True,
+                "suggested_push_command": handoff_payload.get(
+                    "suggested_push_command",
+                    "missing",
+                ),
+                "suggested_draft_pr_command": handoff_payload.get(
+                    "suggested_draft_pr_command",
+                    "missing",
+                ),
+                "pr_body_path": handoff_payload.get("pr_body_path", "missing"),
+                "push_created": handoff_payload.get("push_created") is True,
+                "pr_created": handoff_payload.get("pr_created") is True,
+                "deploy_created": handoff_payload.get("deploy_created") is True,
+                "network_actions_taken": int(
+                    handoff_payload.get("network_actions_taken") or 0
+                ),
+                "external_mutations_taken": int(
+                    handoff_payload.get("external_mutations_taken") or 0
+                ),
+            }
+            message = f"coder_publication_handoff: {handoff_result.status}"
             run_location = f"/runs/{quote(run_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or run_location
             _remember_delegation_workspace(
                 root,
                 storage,
-                result.publication.delegation_id,
-                artifact_path=Path(result.artifact_path).with_suffix(".md"),
+                handoff_result.publication.delegation_id,
+                artifact_path=Path(handoff_result.artifact_path).with_suffix(".md"),
                 updated_by="coder-publication-handoff",
                 resume_surface=location,
             )
@@ -50408,11 +50456,21 @@ def _publication_handoff_commands_panel(root: Path, publication: Any) -> str:
     suggested_pr = payload.get("suggested_draft_pr_command", "unavailable")
     pr_body_path = payload.get("pr_body_path", "unavailable")
     handoff_body_path = payload.get("handoff_body_path", pr_body_path)
+    source_decision = payload.get(
+        "source_coder_publication_decision",
+        getattr(publication, "decision_artifact_path", "missing") or "missing",
+    )
+    source_decision_md = payload.get("source_coder_publication_decision_md", "missing")
     return _list_section(
         "Publication Handoff Commands",
         [
             "handoff_status: ready_for_operator",
             f"handoff_artifact: {_artifact_link(publication.handoff_artifact_path)}",
+            f"source_coder_publication_decision: {_artifact_link(str(source_decision))}",
+            f"source_coder_publication_decision_md: {_artifact_link(str(source_decision_md))}",
+            f"source_publication_decision_sha256: {_e(str(payload.get('source_publication_decision_sha256', 'missing')))}",
+            f"source_publication_decision_md_sha256: {_e(str(payload.get('source_publication_decision_md_sha256', 'missing')))}",
+            f"source_coder_publication_decision_markdown_consumed: {_e(str(payload.get('source_coder_publication_decision_markdown_consumed') is True).lower())}",
             f"suggested_push_command: {_e(suggested_push)}",
             f"suggested_draft_pr_command: {_e(suggested_pr)}",
             f"pr_body_path: {_artifact_link(str(pr_body_path)) if pr_body_path != 'unavailable' else 'unavailable'}",
@@ -61847,6 +61905,11 @@ def _publication_line(root: Path, item: Any) -> str:
     handoff = item.handoff_artifact_path if item.status == "ready_for_operator" else "none"
     request_payload = _publication_request_payload_for_display(root, item)
     decision_payload = _publication_decision_payload_for_display(root, item)
+    handoff_payload = (
+        load_coder_publication_handoff_payload(root, item)
+        if item.status == "ready_for_operator"
+        else {}
+    )
     source_commit = str(
         request_payload.get("source_coder_commit", item.source_commit_artifact_path)
     )
@@ -61873,6 +61936,16 @@ def _publication_line(root: Path, item: Any) -> str:
         decision_payload.get("source_coder_publication_request_markdown_consumed")
         is True
     ).lower()
+    source_publication_decision_md = str(
+        handoff_payload.get("source_coder_publication_decision_md", "missing")
+    )
+    source_publication_decision_md_sha = str(
+        handoff_payload.get("source_publication_decision_md_sha256", "missing")
+    )
+    source_publication_decision_markdown_consumed = str(
+        handoff_payload.get("source_coder_publication_decision_markdown_consumed")
+        is True
+    ).lower()
     return (
         f"{item.id}: status={item.status} run={item.run_id} project={item.project_id} "
         f"commit={item.commit_sha} request={_artifact_link(item.request_artifact_path)} "
@@ -61884,6 +61957,9 @@ def _publication_line(root: Path, item: Any) -> str:
         f"source_publication_request_md={_artifact_link(source_publication_request_md)} "
         f"source_publication_request_md_sha256={_e(source_publication_request_md_sha)} "
         f"source_publication_request_markdown_consumed={_e(source_publication_request_markdown_consumed)} "
+        f"source_publication_decision_md={_artifact_link(source_publication_decision_md)} "
+        f"source_publication_decision_md_sha256={_e(source_publication_decision_md_sha)} "
+        f"source_publication_decision_markdown_consumed={_e(source_publication_decision_markdown_consumed)} "
         f"handoff={_artifact_link(handoff)} "
         "push_created=false pr_created=false deploy_created=false"
     )

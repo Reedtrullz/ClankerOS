@@ -296,6 +296,18 @@ Core layers for the bootstrap:
   for the embedded `Create publication handoff` form, and `/today`, `/resume`,
   and the successor Goal page advance to `Create publication handoff` while
   retaining `completed-goal-provenance.md` as durable history.
+  When the successor publication handoff is then prepared from either daily
+  surface, `coder-publication-handoff` consumes
+  `coder_publication/publication_decision.md` as proof before writing the
+  local handoff and PR-body artifacts. The handoff artifacts, PR body, and
+  browser result expose the publication decision JSON/Markdown paths and
+  hashes plus `source_coder_publication_decision_markdown_consumed: true`,
+  while keeping `push_created`, `pr_created`, and `deploy_created` false and
+  external effect counters at zero. The publication handoff Markdown becomes
+  the active workspace artifact, the original daily return surface is
+  preserved for the manual publish boundary, and `/today`, `/resume`, and the
+  successor Goal page advance to `Manual publish outside ClankerOS` while
+  retaining `completed-goal-provenance.md` as durable history.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only
@@ -1998,10 +2010,13 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   decision without pushing or creating a PR. The decision artifacts record the
   source publication request JSON/Markdown paths and hashes plus
   `source_coder_publication_request_markdown_consumed: true`.
-  `coder-publication-handoff` requires the approved request, revalidates the
-  request JSON and Markdown hashes plus commit artifact hashes, and writes
+  `coder-publication-handoff` requires the approved request, consumes the
+  matching `coder_publication/publication_decision.json/.md` pair, revalidates
+  the request JSON and Markdown hashes plus commit artifact hashes, and writes
   `publication_handoff.json`, `publication_handoff.md`, and `pr_body.md` with
-  suggested push and draft-PR commands only. It does not execute those commands,
+  the source publication decision JSON/Markdown paths and hashes plus
+  `source_coder_publication_decision_markdown_consumed: true` and suggested
+  push and draft-PR commands only. It does not execute those commands,
   run `git fetch`, contact GitHub, deploy, call providers, use the network, or
   mutate external systems. Run review, delegation-result, inbox, dashboard, and
   local app run-detail output surface coder commit requests, approvals, local

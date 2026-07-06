@@ -1,5 +1,56 @@
 # Status
 
+## 2026-07-06 Successor Goal Publication Handoff Daily Resume
+
+- Completed the selected slice for successor Goal publication handoffs from
+  `/today` and `/resume`.
+- `coder-publication-handoff` now consumes
+  `coder_publication/publication_decision.md` as first-class proof before
+  writing local publication handoff and PR-body artifacts. The backend
+  validates the matching `publication_decision.json` / `.md` pair, requires
+  the decision to match the publication id and coder worktree run, requires
+  the upstream publication-request Markdown proof, and rejects tampered
+  decision Markdown before handoff creation.
+- The generated `coder_publication/publication_handoff.json` / `.md` artifacts
+  and `pr_body.md` now record the consumed publication decision JSON path/hash,
+  publication decision Markdown path/hash, and
+  `source_coder_publication_decision_markdown_consumed: true`. CLI handoff
+  output, CLI inbox rows, static dashboard handoff rows, review output,
+  compact browser inbox rows, action result pages, manual publish boundary
+  panels, Goal pages, `/today`, and `/resume` expose the same proof fields.
+- Running publication handoff from `/resume#resume-workbench-action-form`
+  preserves that return surface for the manual publish boundary. `/today`,
+  `/resume`, and the successor Goal page all move the primary action to
+  `Manual publish outside ClankerOS`, while
+  `completed-goal-provenance.md` remains visible as durable history and the
+  publication handoff Markdown becomes the active workspace artifact.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal manual publish completion from `/today` and `/resume` should
+  consume `coder_publication/publication_handoff.md` as proof, keep provenance
+  history visible, and move the primary action to completed Goal evidence plus
+  next-Goal creation.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/coder_publication.py agent_os/local_app.py agent_os/cli.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_publication_request_approval_and_handoff_are_local_only -q --tb=short`:
+    1 passed in 4.06s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_publication_handoff_blocks_without_approval_and_source_drift -q --tb=short`:
+    1 passed in 23.56s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 40.14s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 125.66s.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal manual
+    publish completion proof slice and refreshed `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this slice writes only local publication-handoff and PR-body
+  proof after existing confirmed local browser or CLI actions. It does not
+  execute the suggested push or PR commands, deploy, call providers, use
+  app-side network actions, mutate external systems, or mark the Goal
+  completed. Local browser/test proof is not CI, deploy, or live production
+  proof.
+
 ## 2026-07-06 Successor Goal Publication Approval Daily Resume
 
 - Completed the selected slice for successor Goal publication approvals from

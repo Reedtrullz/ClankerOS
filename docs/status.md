@@ -4,6 +4,21 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Successor Goal publication handoffs from `/today` and `/resume` now consume
+  `coder_publication/publication_decision.md` as first-class proof before the
+  app writes local handoff and PR-body artifacts. The handoff artifacts,
+  `pr_body.md`, CLI handoff output, CLI inbox rows, dashboard handoff rows,
+  review rows, compact browser inbox rows, action result pages, manual publish
+  boundary panels, Goal pages, `/today`, and `/resume` expose the publication
+  decision JSON path/hash, publication decision Markdown path/hash, and
+  `source_coder_publication_decision_markdown_consumed: true`, while keeping
+  push, PR, deploy, provider, network, and external mutation counters false or
+  zero. `/today`, `/resume`, and the successor Goal page now advance to
+  `Manual publish outside ClankerOS` while retaining completed-Goal provenance
+  history and preserving the original daily return surface. Focused local
+  proof: compile plus the backend publication regression, handoff tamper/drift
+  regression, Goal action-card regression, and long daily browser-flow
+  regression.
 - Successor Goal publication approvals from `/today` and `/resume` now consume
   `coder_publication/publication_request.md` as first-class proof before the
   app writes a local publication decision. The decision artifacts,
