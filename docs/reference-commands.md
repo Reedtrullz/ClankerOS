@@ -346,7 +346,13 @@ different commit message creates a separate request. It does not stage files,
 create a commit, push, create a PR, deploy, call providers, or use the network.
 
 `approve-coder-commit <commit_request_id> --decided-by <id> --note <note>`
-marks that dedicated request approved and writes:
+marks that dedicated request approved only after reading the modern
+`coder_commit_request.json` and `coder_commit_request.md` pair. The request
+must match the approval id and coder worktree run, and the request JSON must
+carry the upstream review-Markdown proof from the previous gate. The decision
+records `source_coder_commit_request`, `source_coder_commit_request_md`,
+request JSON/Markdown hashes, and
+`source_coder_commit_request_markdown_consumed: true`, then writes:
 
 ```text
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/coder_commit_decision.json
@@ -354,7 +360,8 @@ marks that dedicated request approved and writes:
 ```
 
 The approval decision does not stage files, create a commit, push, create a
-PR, deploy, call providers, or use the network.
+PR, deploy, call providers, or use the network. It only creates local decision
+artifacts and moves the operator workflow to the local commit gate.
 
 `commit-coder-worktree <coder_worktree_run_id> --message <commit_message>` is
 the only command in the coder worktree path that stages files and creates a

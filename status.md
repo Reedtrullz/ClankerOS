@@ -1,5 +1,48 @@
 # Status
 
+## 2026-07-06 Successor Goal Commit Approval Daily Resume
+
+- Completed the selected slice for successor Goal commit approvals from
+  `/today` and `/resume`.
+- `approve-coder-commit` now consumes
+  `coder_commit/coder_commit_request.md` as first-class proof before writing
+  the local approval decision. The backend validates the modern request JSON
+  and Markdown pair, requires the request to match the approval id and coder
+  worktree run, and rejects request payloads missing the upstream review
+  Markdown proof.
+- The generated `coder_worktree_commit_approval_decision.json` / `.md` and
+  modern `coder_commit/coder_commit_decision.json` / `.md` artifacts now record
+  the consumed request JSON path/hash, request Markdown path/hash, and
+  `source_coder_commit_request_markdown_consumed: true`. CLI output, static
+  dashboard rows, the Goal approval form, and browser action results expose the
+  same proof fields.
+- Running commit approval from `/resume#resume-workbench-action-form`
+  preserves that return surface for the embedded `Commit approved worktree`
+  form. `/today`, `/resume`, and the successor Goal page all move the primary
+  action to `Commit approved worktree`, while
+  `completed-goal-provenance.md` remains visible as durable history.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal approved local commits from `/today` and `/resume` should
+  consume `coder_commit/coder_commit_decision.md` as proof, keep provenance
+  history visible, and move the primary action to `Create publication request`.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/coder_worktree_execution.py agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_commit_promotion_requires_review_and_is_idempotent -q --tb=short`:
+    1 passed in 15.26s after adding request-Markdown consumption assertions.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 96.35s after extending the successor Goal flow through commit
+    approval and verifying `/today`, `/resume`, and the Goal page advance to
+    `Commit approved worktree`.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal approved
+    local-commit proof slice and refreshed `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+- Non-claim: this slice writes only local commit-approval decision proof after
+  existing confirmed local browser or CLI actions. It does not stage files,
+  create a commit, push, create PRs, deploy, call providers, use app-side
+  network actions, or mutate external systems. Local browser/test proof is not
+  CI, deploy, or live production proof.
+
 ## 2026-07-06 Successor Goal Commit Request Daily Resume
 
 - Completed the selected slice for successor Goal commit requests from

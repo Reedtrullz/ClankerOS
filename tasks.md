@@ -130,9 +130,13 @@
   consume `runs/<source_run_id>/review.md` as proof, keep provenance history
   visible, and move the primary action to `Approve commit`.
   <!-- score=10 complexity=4 -->
-- [ ] Make successor Goal commit approvals from `/today` and `/resume`
+- [x] Make successor Goal commit approvals from `/today` and `/resume`
   consume `coder_commit/coder_commit_request.md` as proof, keep provenance
   history visible, and move the primary action to `Commit approved worktree`.
+  <!-- score=10 complexity=4 -->
+- [ ] Make successor Goal approved local commits from `/today` and `/resume`
+  consume `coder_commit/coder_commit_decision.md` as proof, keep provenance
+  history visible, and move the primary action to `Create publication request`.
   <!-- score=10 complexity=4 -->
 - [x] Extend the static dashboard with incident summaries once incidents exist.
 - [x] Add a compact incident resolution path after more failure modes exist.

@@ -249,6 +249,18 @@ Core layers for the bootstrap:
   and `/today`, `/resume`, and the successor Goal page advance to
   `Approve commit` while retaining `completed-goal-provenance.md` as durable
   history.
+  When the successor commit approval is then decided from either daily surface,
+  the approval decision consumes
+  `coder_commit/coder_commit_request.md` as proof, including the commit-request
+  JSON path/hash, Markdown path/hash, and
+  `source_coder_commit_request_markdown_consumed: true`. The decision
+  artifacts and browser result expose the same request proof while keeping
+  `commit_created`, `push_created`, `pr_created`, and `deploy_created` false.
+  The commit-decision Markdown becomes the active workspace artifact, the
+  original daily return surface is preserved for the embedded
+  `Commit approved worktree` form, and `/today`, `/resume`, and the successor
+  Goal page advance to `Commit approved worktree` while retaining
+  `completed-goal-provenance.md` as durable history.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only

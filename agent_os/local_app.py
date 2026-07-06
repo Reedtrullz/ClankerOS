@@ -23774,6 +23774,7 @@ def _goal_next_action_form(
         )
     if next_action.action == "Approve commit":
         return _goal_approve_commit_form(
+            state["root"],
             state,
             return_to_override=return_to_override,
         )
@@ -24382,6 +24383,7 @@ def _goal_review_run_form(
 
 
 def _goal_approve_commit_form(
+    root: Path,
     state: dict[str, Any],
     *,
     return_to_override: str | None = None,
@@ -24390,6 +24392,12 @@ def _goal_approve_commit_form(
     if approval is None:
         return "<p class='muted'>approve_commit_form_status: unavailable_until_pending_commit_approval_exists</p>"
     return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
+    request_path = (
+        Path(approval.source_run_evidence_path)
+        / "coder_commit"
+        / "coder_commit_request.json"
+    )
+    request_md_path = request_path.with_suffix(".md")
     return "".join(
         [
             "<h3>Approve Commit</h3>",
@@ -24398,6 +24406,23 @@ def _goal_approve_commit_form(
                 [
                     ("commit_approval_id", approval.id),
                     ("run_id", approval.run_id),
+                    ("source_coder_commit_request", _artifact_link(str(request_path))),
+                    (
+                        "source_coder_commit_request_sha256",
+                        _sha256_for_display(root / request_path),
+                    ),
+                    (
+                        "source_coder_commit_request_md",
+                        _artifact_link(str(request_md_path)),
+                    ),
+                    (
+                        "source_commit_request_md_sha256",
+                        _sha256_for_display(root / request_md_path),
+                    ),
+                    (
+                        "source_coder_commit_request_markdown_consumed",
+                        str((root / request_md_path).exists()).lower(),
+                    ),
                     (
                         "return_to_after_commit_approval",
                         SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
@@ -48023,22 +48048,67 @@ def _handle_post(
             )
         elif action == "approve-coder-commit":
             approval_id = _required(form, "approval_id")
-            result = approve_coder_worktree_commit(
+            commit_decision = approve_coder_worktree_commit(
                 root,
                 storage,
                 approval_id,
                 decided_by=_one(form, "decided_by") or "operator",
                 note=_one(form, "note") or "Approved from local app.",
             )
-            message = f"approved_coder_commit: {result.approval.id}"
-            run_location = f"/runs/{quote(result.approval.run_id)}"
+            decision_payload: dict[str, Any] = {}
+            decision_path = (
+                root
+                / commit_decision.approval.source_run_evidence_path
+                / "coder_commit"
+                / "coder_commit_decision.json"
+            )
+            try:
+                decision_payload = json.loads(decision_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                decision_payload = {}
+            result = {
+                "approval": commit_decision.approval,
+                "already_approved": commit_decision.already_approved,
+                "source_coder_commit_request": decision_payload.get(
+                    "source_coder_commit_request",
+                    "missing",
+                ),
+                "source_coder_commit_request_md": decision_payload.get(
+                    "source_coder_commit_request_md",
+                    "missing",
+                ),
+                "source_commit_request_sha256": decision_payload.get(
+                    "source_commit_request_sha256",
+                    decision_payload.get("source_request_sha256", "missing"),
+                ),
+                "source_commit_request_md_sha256": decision_payload.get(
+                    "source_commit_request_md_sha256",
+                    "missing",
+                ),
+                "source_coder_commit_request_markdown_consumed": decision_payload.get(
+                    "source_coder_commit_request_markdown_consumed"
+                )
+                is True,
+                "commit_created": decision_payload.get("commit_created") is True,
+                "push_created": decision_payload.get("push_created") is True,
+                "pr_created": decision_payload.get("pr_created") is True,
+                "deploy_created": decision_payload.get("deploy_created") is True,
+                "network_actions_taken": int(
+                    decision_payload.get("network_actions_taken") or 0
+                ),
+                "external_mutations_taken": int(
+                    decision_payload.get("external_mutations_taken") or 0
+                ),
+            }
+            message = f"approved_coder_commit: {commit_decision.approval.id}"
+            run_location = f"/runs/{quote(commit_decision.approval.run_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or run_location
             _remember_delegation_workspace(
                 root,
                 storage,
-                result.approval.delegation_id,
+                commit_decision.approval.delegation_id,
                 artifact_path=(
-                    Path(result.approval.source_run_evidence_path)
+                    Path(commit_decision.approval.source_run_evidence_path)
                     / "coder_commit"
                     / "coder_commit_decision.md"
                 ),

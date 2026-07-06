@@ -4,6 +4,17 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Successor Goal commit approvals from `/today` and `/resume` now consume
+  `coder_commit/coder_commit_request.md` as first-class proof before the app
+  offers `Commit approved worktree`. The decision artifacts, CLI/dashboard
+  rows, Goal form, and browser result expose the request JSON path/hash,
+  request Markdown path/hash, and
+  `source_coder_commit_request_markdown_consumed: true`, while keeping local
+  commit, push, PR, and deploy counters false. `/today`, `/resume`, and the
+  successor Goal page now advance to `Commit approved worktree` while
+  retaining completed-Goal provenance history and preserving the original
+  daily return surface. Focused local proof: compile plus the backend
+  commit-approval regression and long daily browser-flow regression.
 - Successor Goal commit requests from `/today` and `/resume` now consume
   `runs/<source_run_id>/review.md` as first-class proof before the app offers
   `Approve commit`. The request artifacts, CLI/dashboard rows, Goal form, and

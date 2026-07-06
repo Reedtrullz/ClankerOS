@@ -945,6 +945,7 @@ def approve_coder_worktree_commit(
     decided_at = utc_now()
     decision_path = root / (approval.decision_artifact_path or "")
     coder_commit_dir = _coder_commit_dir(root, approval)
+    request_proof = _load_commit_request_proof(root, approval)
     payload = {
         "kind": COMMIT_APPROVAL_DECISION_KIND,
         "schema_version": 1,
@@ -955,6 +956,20 @@ def approve_coder_worktree_commit(
         "source_coder_worktree_run": approval.source_run_evidence_path,
         "source_coder_worktree_run_sha256": approval.source_coder_worktree_run_sha256,
         "source_diff_sha256": approval.source_diff_sha256,
+        "source_coder_commit_request": request_proof["source_coder_commit_request"],
+        "source_coder_commit_request_md": request_proof[
+            "source_coder_commit_request_md"
+        ],
+        "source_commit_request_sha256": request_proof[
+            "source_commit_request_sha256"
+        ],
+        "source_commit_request_md_sha256": request_proof[
+            "source_commit_request_md_sha256"
+        ],
+        "source_coder_commit_request_markdown_consumed": True,
+        "source_coder_commit_request_markdown_excerpt": request_proof[
+            "markdown_excerpt"
+        ],
         "status": "approved",
         "decided_by": decided_by,
         "note": note,
@@ -984,9 +999,21 @@ def approve_coder_worktree_commit(
         "coder_worktree_run_id": approval.run_id,
         "delegation_id": approval.delegation_id,
         "project_id": approval.project_id,
-        "source_request_sha256": _sha256_path(
-            coder_commit_dir / "coder_commit_request.json"
-        ),
+        "source_coder_commit_request": request_proof["source_coder_commit_request"],
+        "source_coder_commit_request_md": request_proof[
+            "source_coder_commit_request_md"
+        ],
+        "source_request_sha256": request_proof["source_commit_request_sha256"],
+        "source_commit_request_sha256": request_proof[
+            "source_commit_request_sha256"
+        ],
+        "source_commit_request_md_sha256": request_proof[
+            "source_commit_request_md_sha256"
+        ],
+        "source_coder_commit_request_markdown_consumed": True,
+        "source_coder_commit_request_markdown_excerpt": request_proof[
+            "markdown_excerpt"
+        ],
         "status": "approved",
         "decided_by": decided_by,
         "note": note,
@@ -1833,9 +1860,14 @@ def render_coder_commit_decision_cli_lines(
     root: Path,
     result: CoderWorktreeCommitDecisionResult,
 ) -> list[str]:
+    root = root.resolve()
     approval = result.approval
     prefix = "already_approved " if result.already_approved else ""
-    artifact = _coder_commit_dir(root.resolve(), approval) / "coder_commit_decision.json"
+    artifact = _coder_commit_dir(root, approval) / "coder_commit_decision.json"
+    try:
+        payload = json.loads(artifact.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        payload = {}
     return [
         f"approved_coder_commit: {prefix}{approval.id}",
         f"commit_request_id: {approval.id}",
@@ -1844,7 +1876,17 @@ def render_coder_commit_decision_cli_lines(
         f"delegation_id: {approval.delegation_id}",
         f"project_id: {approval.project_id}",
         f"status: {approval.status}",
-        f"artifact: {artifact.relative_to(root.resolve())}",
+        "source_coder_commit_request: "
+        f"{payload.get('source_coder_commit_request', 'missing')}",
+        "source_coder_commit_request_md: "
+        f"{payload.get('source_coder_commit_request_md', 'missing')}",
+        "source_commit_request_sha256: "
+        f"{payload.get('source_commit_request_sha256', payload.get('source_request_sha256', 'missing'))}",
+        "source_commit_request_md_sha256: "
+        f"{payload.get('source_commit_request_md_sha256', 'missing')}",
+        "source_coder_commit_request_markdown_consumed: "
+        f"{_bool(payload.get('source_coder_commit_request_markdown_consumed') is True)}",
+        f"artifact: {artifact.relative_to(root)}",
         "staged_files: none",
         "commit_created: false",
         "push_created: false",
@@ -1950,11 +1992,16 @@ def render_coder_worktree_commit_dashboard_lines(root: Path) -> list[str]:
     lines: list[str] = []
     for approval in list_coder_worktree_commit_approvals(root, limit=10):
         request = _coder_commit_dir(root.resolve(), approval) / "coder_commit_request.json"
+        decision = _coder_commit_dir(root.resolve(), approval) / "coder_commit_decision.json"
         local_commit = _coder_commit_dir(root.resolve(), approval) / "commit.json"
         try:
             request_payload = json.loads(request.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             request_payload = {}
+        try:
+            decision_payload = json.loads(decision.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            decision_payload = {}
         lines.append(
             f"- {approval.id}: delegation={approval.delegation_id} project={approval.project_id} "
             f"run={approval.run_id} status={approval.status} "
@@ -1977,6 +2024,12 @@ def render_coder_worktree_commit_dashboard_lines(root: Path) -> list[str]:
             f"{request_payload.get('source_coder_worktree_run_summary_sha256', 'missing')} "
             "source_run_summary_consumed="
             f"{_bool(request_payload.get('source_coder_worktree_run_summary_consumed') is True)} "
+            "source_commit_request_md="
+            f"{decision_payload.get('source_coder_commit_request_md', 'missing')} "
+            "source_commit_request_md_sha256="
+            f"{decision_payload.get('source_commit_request_md_sha256', 'missing')} "
+            "source_commit_request_markdown_consumed="
+            f"{_bool(decision_payload.get('source_coder_commit_request_markdown_consumed') is True)} "
             f"local_commit={local_commit.relative_to(root.resolve())} "
             f"evidence={approval.commit_artifact_path}"
         )
@@ -3151,6 +3204,40 @@ def _backfill_commit_request_review_markdown_proof(
     )
 
 
+def _load_commit_request_proof(
+    root: Path,
+    approval: CoderWorktreeCommitApprovalRecord,
+) -> dict[str, Any]:
+    request_path = _coder_commit_dir(root, approval) / "coder_commit_request.json"
+    request_markdown_path = request_path.with_suffix(".md")
+    try:
+        payload = json.loads(request_path.read_text(encoding="utf-8"))
+        markdown_text = request_markdown_path.read_text(encoding="utf-8")
+    except (OSError, json.JSONDecodeError) as error:
+        raise CoderWorktreeCommitError("coder commit request is not readable") from error
+    if payload.get("kind") != CODER_COMMIT_REQUEST_KIND:
+        raise CoderWorktreeCommitError("coder commit request has unexpected kind")
+    if payload.get("commit_request_id") != approval.id:
+        raise CoderWorktreeCommitError("coder commit request does not match approval")
+    if payload.get("coder_worktree_run_id") != approval.run_id:
+        raise CoderWorktreeCommitError("coder commit request does not match run")
+    if payload.get("source_review_markdown_consumed") is not True:
+        raise CoderWorktreeCommitError("coder commit request is missing review markdown proof")
+    if f"- commit_request_id: {approval.id}" not in markdown_text:
+        raise CoderWorktreeCommitError("coder commit request markdown does not match approval")
+    return {
+        "payload": payload,
+        "markdown_text": markdown_text,
+        "markdown_excerpt": markdown_text[:2000],
+        "source_coder_commit_request": str(request_path.relative_to(root)),
+        "source_coder_commit_request_md": str(request_markdown_path.relative_to(root)),
+        "source_commit_request_sha256": _sha256_path(request_path),
+        "source_commit_request_md_sha256": hashlib.sha256(
+            markdown_text.encode("utf-8")
+        ).hexdigest(),
+    }
+
+
 def _record_coder_worktree_incident(
     storage: Storage,
     *,
@@ -3924,6 +4011,13 @@ def _render_commit_approval_decision_markdown(payload: dict[str, Any]) -> str:
             f"- commit_approval_id: {payload['commit_approval_id']}",
             f"- run_id: {payload['run_id']}",
             f"- status: {payload['status']}",
+            f"- source_coder_commit_request: {payload['source_coder_commit_request']}",
+            f"- source_coder_commit_request_md: {payload['source_coder_commit_request_md']}",
+            f"- source_commit_request_sha256: {payload['source_commit_request_sha256']}",
+            "- source_commit_request_md_sha256: "
+            f"{payload['source_commit_request_md_sha256']}",
+            "- source_coder_commit_request_markdown_consumed: "
+            f"{_bool(payload['source_coder_commit_request_markdown_consumed'] is True)}",
             f"- decided_by: {payload['decided_by']}",
             "",
             "## Non-Claims",
@@ -3983,6 +4077,13 @@ def _render_coder_commit_decision_markdown(payload: dict[str, Any]) -> str:
             f"- commit_request_id: {payload['commit_request_id']}",
             f"- coder_worktree_run_id: {payload['coder_worktree_run_id']}",
             f"- status: {payload['status']}",
+            f"- source_coder_commit_request: {payload['source_coder_commit_request']}",
+            f"- source_coder_commit_request_md: {payload['source_coder_commit_request_md']}",
+            f"- source_commit_request_sha256: {payload['source_commit_request_sha256']}",
+            "- source_commit_request_md_sha256: "
+            f"{payload['source_commit_request_md_sha256']}",
+            "- source_coder_commit_request_markdown_consumed: "
+            f"{_bool(payload['source_coder_commit_request_markdown_consumed'] is True)}",
             f"- decided_by: {payload['decided_by']}",
             "",
             "## Non-Claims",

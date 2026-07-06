@@ -318,10 +318,10 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Make successor Goal commit approvals from `/today` and `/resume` consume `coder_commit/coder_commit_request.md` as proof, keep provenance history visible, and move the primary action to `Commit approved worktree`.
+- focus: Make successor Goal approved local commits from `/today` and `/resume` consume `coder_commit/coder_commit_decision.md` as proof, keep provenance history visible, and move the primary action to `Create publication request`.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-07-06T07:08:04.622024+00:00
+- created_at: 2026-07-06T07:19:04.732928+00:00
 
 ## Simplicity Guardrail
 
@@ -329,7 +329,7 @@
 - reason: selected only actionable item with score 10 and complexity 4; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
 - selected_score: 10
 - selected_complexity: 4
-- selected_focus: Make successor Goal commit approvals from `/today` and `/resume` consume `coder_commit/coder_commit_request.md` as proof, keep provenance history visible, and move the primary action to `Commit approved worktree`.
+- selected_focus: Make successor Goal approved local commits from `/today` and `/resume` consume `coder_commit/coder_commit_decision.md` as proof, keep provenance history visible, and move the primary action to `Create publication request`.
 
 ## Expansion Operator Approval Schema Decision
 
