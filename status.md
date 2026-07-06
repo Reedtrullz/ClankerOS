@@ -1,5 +1,60 @@
 # Status
 
+## 2026-07-06 Post-Publication-Handoff Today Manual Publish Boundary
+
+- Completed the selected slice for post-publication-handoff `/today` manual
+  publish boundary continuation.
+- `/today` now embeds the lead Goal's `Manual publish outside ClankerOS`
+  boundary as the same-page primary action after a local publication handoff is
+  ready. The panel shows the copy-only publication handoff commands, records
+  explicit local/non-network/manual-boundary evidence, and threads
+  `return_to=/today#today-current-action` into the `complete-goal` confirmation
+  form.
+- Confirmed `complete-goal` submissions now honor a safe local `return_to`
+  value, so a completion launched from the daily cockpit records only local
+  Goal completion and saves `resume_surface=/today#today-current-action`
+  instead of returning the operator to the Goal detail page.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, confirmed local scout run, Today-local coder-prep
+  creation, Today-local worktree-plan creation, Today-local approval request
+  creation, Today-local approval decision confirmation, Today-local approved
+  worktree run confirmation with a bounded file change, Today-local Open
+  review confirmation, Today-local Create commit request confirmation,
+  Today-local Approve commit confirmation, Today-local Commit approved
+  worktree confirmation, Today-local Create publication request confirmation,
+  Today-local Approve publication confirmation, Today-local Create publication
+  handoff confirmation, Today-local manual publish boundary confirmation,
+  copy-only push/PR command visibility, local Goal completion, and workspace
+  resume persistence.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-completion `/today` and `/resume` should expose completed Goal evidence
+  plus a clear next-Goal/start-new-work action without losing the saved daily
+  resume proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered
+    manual-publish completion form did not include
+    `return_to=/today#today-current-action`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 40.51s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 25.55s.
+  - `python3 -m agent_os.cli iterate`: selected the post-completion
+    `/today` and `/resume` completed Goal evidence slice and wrote
+    `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this Today manual-publish boundary slice records only local Goal
+  completion and workspace resume state after the operator says manual
+  publication happened outside ClankerOS. It does not push, deploy, create PRs,
+  call providers, use app-side network actions, or mutate external systems
+  from ClankerOS.
+
 ## 2026-07-06 Post-Publication-Approval Today Publication Handoff
 
 - Completed the selected slice for post-publication-approval `/today`

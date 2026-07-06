@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_865d28e17303
+- Packet ID: iteration_5fcfbd0ba94c
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Make post-publication-handoff `/today` expose `Manual publish outside ClankerOS` as the primary same-page first-run action with copy-only commands, local completion confirmation, and finish-today resume proof.
+Advance the Agent System north-star goal by completing: Make post-completion `/today` and `/resume` expose completed Goal evidence plus a clear next-Goal/start-new-work action without losing the saved daily resume proof.
 
 ## Definition Of Done
 

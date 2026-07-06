@@ -81,10 +81,13 @@
 - [x] Make post-publication-approval `/today` expose
   `Create publication handoff` as the primary same-page first-run action with
   confirmation and finish-today resume proof. <!-- score=10 complexity=4 -->
-- [ ] Make post-publication-handoff `/today` expose
+- [x] Make post-publication-handoff `/today` expose
   `Manual publish outside ClankerOS` as the primary same-page first-run action
   with copy-only commands, local completion confirmation, and finish-today
   resume proof. <!-- score=10 complexity=4 -->
+- [ ] Make post-completion `/today` and `/resume` expose completed Goal
+  evidence plus a clear next-Goal/start-new-work action without losing the
+  saved daily resume proof. <!-- score=10 complexity=4 -->
 - [x] Extend the static dashboard with incident summaries once incidents exist.
 - [x] Add a compact incident resolution path after more failure modes exist.
 - [x] Add queue-health checks for repeated blocked or failed work.

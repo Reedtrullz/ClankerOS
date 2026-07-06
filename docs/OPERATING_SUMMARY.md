@@ -142,6 +142,11 @@ Core layers for the bootstrap:
   artifacts with suggested manual commands, preserve
   `return_to=/today#today-current-action`, and save the workspace resume
   surface back to the daily cockpit before the manual publish boundary.
+  Manual publish boundary actions launched from the post-publication-handoff
+  Today current-action panel show copy-only push/PR commands for use outside
+  ClankerOS, preserve `return_to=/today#today-current-action`, and let the
+  operator confirm only local Goal completion while saving the completed
+  Goal's resume surface back to the daily cockpit.
   Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only

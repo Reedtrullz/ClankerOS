@@ -12658,6 +12658,75 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert "Publication Handoff Commands" in today_after_publication_handoff.body
     assert "manual_boundary: outside_clankeros" in today_after_publication_handoff.body
     assert "copy_only: true" in today_after_publication_handoff.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Manual publish outside ClankerOS</a>"
+    ) in today_after_publication_handoff.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Manual publish outside ClankerOS</a>"
+    ) in today_after_publication_handoff.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_publication_handoff.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_publication_handoff.body
+    assert "suggested_push_command: git push origin" in today_after_publication_handoff.body
+    assert "suggested_draft_pr_command: gh pr create --draft" in today_after_publication_handoff.body
+    assert "action='/actions/complete-goal'" in today_after_publication_handoff.body
+    assert f"name='goal_id' value='{created_goal_id}'" in today_after_publication_handoff.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_publication_handoff.body
+    assert (
+        "return_to_after_manual_publish</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_publication_handoff.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_publication_handoff.body
+
+    complete_goal_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/complete-goal",
+        method="POST",
+        form={
+            "goal_id": [created_goal_id],
+            "completed_by": ["operator"],
+            "note": ["Manual publication finished outside ClankerOS from Today"],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert complete_goal_confirmation.status == 409
+    assert "Confirm complete-goal" in complete_goal_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in complete_goal_confirmation.body
+
+    complete_goal_result = render_local_app_route(
+        tmp_path,
+        "/actions/complete-goal",
+        method="POST",
+        form={
+            "goal_id": [created_goal_id],
+            "completed_by": ["operator"],
+            "note": ["Manual publication finished outside ClankerOS from Today"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert complete_goal_result.status == 200
+    assert "goal_completed:" in complete_goal_result.body
+    assert "action_result_command_label</dt><dd>Complete Goal" in complete_goal_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=goal_completed%3A%20"
+    ) in complete_goal_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in complete_goal_result.body
+    complete_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert complete_workspace["open_project"] == "first-target"
+    assert complete_workspace["open_goal"] == created_goal_id
+    assert complete_workspace["last_viewed_artifact"] == str(
+        publication_handoff_md.relative_to(tmp_path)
+    )
+    assert complete_workspace["resume_surface"] == "/today#today-current-action"
+    assert complete_workspace["updated_by"] == "complete-goal"
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:

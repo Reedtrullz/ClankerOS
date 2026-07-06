@@ -22950,7 +22950,11 @@ def _goal_next_action_form(
             return_to_override=return_to_override,
         )
     if next_action.action == "Manual publish outside ClankerOS":
-        return _goal_manual_publish_panel(state["root"], state)
+        return _goal_manual_publish_panel(
+            state["root"],
+            state,
+            return_to_override=return_to_override,
+        )
     return ""
 
 
@@ -23643,10 +23647,16 @@ def _goal_publication_handoff_form(
     )
 
 
-def _goal_manual_publish_panel(root: Path, state: dict[str, Any]) -> str:
+def _goal_manual_publish_panel(
+    root: Path,
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     publication = _goal_ready_publication(state)
     if publication is None:
         return "<p class='muted'>manual_publish_status: unavailable_until_publication_handoff_ready</p>"
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Manual Publish Boundary</h3>",
@@ -23654,9 +23664,26 @@ def _goal_manual_publish_panel(root: Path, state: dict[str, Any]) -> str:
             _publication_handoff_commands_panel(root, publication),
             "<h3>Complete Goal</h3>",
             "<p class='muted'>After the operator has finished the manual push/PR work outside ClankerOS, this confirmed local action marks the Goal completed. It does not push, create a PR, deploy, call a provider, or use the network.</p>",
+            _kv(
+                [
+                    ("publication_id", publication.id),
+                    ("publication_status", publication.status),
+                    (
+                        "return_to_after_manual_publish",
+                        SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
+                    ),
+                    ("manual_publish_boundary", "outside_clankeros"),
+                    ("manual_publish_copy_only", "true"),
+                    ("manual_publish_push_created", "false"),
+                    ("manual_publish_pr_created", "false"),
+                    ("manual_publish_deploy_created", "false"),
+                    ("manual_publish_network_actions_taken", "0"),
+                    ("manual_publish_external_effects_created", "false"),
+                ]
+            ),
             _input_form(
                 "complete-goal",
-                {"goal_id": state["goal"].id},
+                {"goal_id": state["goal"].id, "return_to": return_to},
                 {
                     "completed_by": "operator",
                     "note": "Manual publication finished outside ClankerOS.",
@@ -46099,7 +46126,8 @@ def _handle_post(
         elif action == "complete-goal":
             result = _complete_goal_from_form(root, storage, form)
             message = f"goal_completed: {result['goal_id']}"
-            location = f"/goals/{quote(result['goal_id'])}"
+            goal_location = f"/goals/{quote(result['goal_id'])}"
+            location = _safe_local_return_path(_one(form, "return_to")) or goal_location
             handoff_artifact_path = result.get("handoff_artifact_path")
             _write_workspace_state(
                 root,
@@ -46115,7 +46143,7 @@ def _handle_post(
                             else None
                         ),
                     ),
-                    "resume_surface": f"/goals/{quote(result['goal_id'])}",
+                    "resume_surface": location,
                     "updated_by": "complete-goal",
                 },
             )
