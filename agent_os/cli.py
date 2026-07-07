@@ -539,11 +539,13 @@ from agent_os.local_app import (
     DEFAULT_HOST as LOCAL_APP_DEFAULT_HOST,
     DEFAULT_PORT as LOCAL_APP_DEFAULT_PORT,
     run_demo_app_scenario,
+    serve_local_app,
+    validate_bind_host,
+)
+from agent_os.local_app_smoke import (
     run_local_app_demo_smoke_test,
     run_local_app_golden_path_smoke_test,
     run_local_app_smoke_test,
-    serve_local_app,
-    validate_bind_host,
 )
 from agent_os.memory_entries import (
     MemoryEntryError,
