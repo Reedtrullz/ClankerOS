@@ -124,6 +124,24 @@ The recorder infers the run id and URL from `databaseId`/`url`, then refuses
 pending runs, failed runs, malformed JSON, branch mismatches when `headBranch`
 is present, and commit mismatches.
 
+After recording proof, use the proof surface command to distinguish the live
+proof state from repository-visible snapshots:
+
+```bash
+python3 -m agent_os.cli proof-surface \
+  --project clankeros \
+  --remote origin \
+  --branch main
+```
+
+`live_proof_state=current_main_same_sha` means the latest recorded full
+workflow success matches the current checkout and `main`. A committed
+`docs/dashboard.md` is still a dashboard snapshot, not a live GitHub query.
+Generated local readbacks such as `docs/dashboard.md`,
+`docs/self-hosting-check.md`, `docs/next-iteration.md`, and
+`.clanker/ci-snapshots/**` are local evidence until intentionally committed;
+they do not create a new merge claim just by existing.
+
 The scoped fast-smoke proof path looks like:
 
 ```bash

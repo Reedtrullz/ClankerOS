@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from agent_os.proof_surface import build_proof_surface_state
 from agent_os.storage import utc_now
 
 
@@ -36,6 +37,12 @@ def run_next_day_self_hosting_check(
     resume_check = _saved_resume_check(root, goal_context)
     next_action_check = _browser_next_action_check(root, goal_context)
     main_proof_check = _current_main_proof_check(root, goal_context, remote=remote, branch=branch)
+    proof_surface = build_proof_surface_state(
+        root,
+        project_id=str(goal_context.get("project_id") or "clankeros"),
+        remote=remote,
+        branch=branch,
+    )
 
     checks = {
         "local_fetch": fetch_check,
@@ -64,6 +71,7 @@ def run_next_day_self_hosting_check(
         "branch": branch,
         "fetch_mode": fetch_mode,
         "checks": checks,
+        "proof_surface": proof_surface.to_dict(),
         "attention_checks": attention,
         "artifacts": {
             "json": _relative(root, json_path),
@@ -122,6 +130,16 @@ def render_self_hosting_check_cli_lines(result: SelfHostingCheckResult) -> list[
     for name, check in payload["checks"].items():
         lines.append(f"{name}: {check['status']}")
         lines.append(f"{name}_reason: {check['reason']}")
+    proof_surface = payload.get("proof_surface", {})
+    if isinstance(proof_surface, dict):
+        lines.extend(
+            [
+                f"proof_surface_live_proof_state: {proof_surface.get('live_proof_state', 'unknown')}",
+                f"proof_surface_committed_dashboard_state: {proof_surface.get('committed_dashboard_state', 'unknown')}",
+                f"proof_surface_generated_readback_state: {proof_surface.get('generated_readback_state', 'unknown')}",
+                f"proof_surface_merge_claim: {proof_surface.get('merge_claim', 'unknown')}",
+            ]
+        )
     lines.extend(
         [
             f"attention_checks: {','.join(payload['attention_checks']) or 'none'}",
@@ -373,6 +391,9 @@ def _render_markdown(payload: dict[str, Any]) -> str:
     next_action = checks["browser_next_action"]
     resume = checks["saved_resume"]
     proof = checks["current_main_proof"]
+    proof_surface = payload.get("proof_surface", {})
+    if not isinstance(proof_surface, dict):
+        proof_surface = {}
     return (
         "# Next-Day Self-Hosting Check\n\n"
         f"- Status: `{payload['status']}`\n"
@@ -396,6 +417,15 @@ def _render_markdown(payload: dict[str, Any]) -> str:
         f"- Remote main commit: `{proof['remote_main_commit']}`\n"
         f"- CI proof: `{proof['ci_current_proof']}`\n"
         f"- CI match source: `{proof['ci_current_match_source']}`\n\n"
+        "## Proof Surface\n\n"
+        f"- Live proof state: `{proof_surface.get('live_proof_state', 'unknown')}`\n"
+        f"- Committed dashboard state: `{proof_surface.get('committed_dashboard_state', 'unknown')}`\n"
+        f"- Generated readback state: `{proof_surface.get('generated_readback_state', 'unknown')}`\n"
+        f"- Merge claim: `{proof_surface.get('merge_claim', 'unknown')}`\n"
+        f"- Dashboard snapshot commit: `{proof_surface.get('dashboard_snapshot_commit', 'unknown')}`\n"
+        f"- Latest CI run id: `{proof_surface.get('latest_ci_run_id', 'unknown')}`\n"
+        f"- Latest CI scope: `{proof_surface.get('latest_ci_scope', 'unknown')}`\n"
+        f"- Non-claim: `{proof_surface.get('non_claim', 'unknown')}`\n\n"
         "## Safety\n\n"
         f"- Network actions taken: `{payload['safety']['network_actions_taken']}`\n"
         f"- External mutations taken: `{payload['safety']['external_mutations_taken']}`\n"

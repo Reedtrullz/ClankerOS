@@ -558,6 +558,10 @@ from agent_os.playbooks import (
     promote_successful_run_playbooks,
     render_playbook_line,
 )
+from agent_os.proof_surface import (
+    build_proof_surface_state,
+    render_proof_surface_cli_lines,
+)
 from agent_os.planning import (
     PlanningError,
     create_contract_for_goal,
@@ -775,6 +779,13 @@ def build_parser() -> argparse.ArgumentParser:
         "app-golden-path-smoke-test",
         help="Run the fresh-user project/goal/action/proof/finish/resume smoke.",
     )
+    proof_surface = subparsers.add_parser(
+        "proof-surface",
+        help="Report live proof, committed dashboard snapshot, and local readback state.",
+    )
+    proof_surface.add_argument("--project", default="clankeros")
+    proof_surface.add_argument("--remote", default="origin")
+    proof_surface.add_argument("--branch", default="main")
     subparsers.add_parser("dashboard", help="Write the static dashboard.")
     subparsers.add_parser("iterate", help="Write the next iteration packet from repo queues.")
     self_hosting_check = subparsers.add_parser(
@@ -2333,6 +2344,17 @@ def main(argv: list[str] | None = None) -> int:
         print("network_actions_taken: 0")
         print("external_mutations_taken: 0")
         return 0 if result["status"] == "passed" else 1
+
+    if args.command == "proof-surface":
+        state = build_proof_surface_state(
+            root,
+            project_id=args.project,
+            remote=args.remote,
+            branch=args.branch,
+        )
+        for line in render_proof_surface_cli_lines(state):
+            print(line)
+        return 0
 
     if args.command == "dashboard":
         dashboard_path = generate_static_dashboard(root)
