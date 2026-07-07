@@ -170,6 +170,12 @@ confirmation requirement, and zero provider/network/external-effect counters.
   Saved resume surfaces still win; otherwise populated sessions route the
   Resume card to the current Goal action, while first-run sessions keep the
   resume hub fallback.
+  Secondary proof and operator machinery is grouped under a closed
+  `More Today Evidence` block after the first viewport, preserving DOM evidence
+  fields, hashes, counters, forms, and non-claims without making the first scan
+  compete with report-only readbacks. The sections described below remain
+  available inside that evidence block unless explicitly named as part of the
+  visible command center.
   When the current Goal action has a confirmed browser form, that form is
   rendered visibly as `#today-current-action` before command evidence, while
   the same confirmation route remains responsible for local writes.
@@ -272,9 +278,9 @@ confirmation requirement, and zero provider/network/external-effect counters.
   external systems.
 - `/resume` - read-only return-to-work surface for the saved
   `.clanker/app/workspace.json` state and this browser's local route memory.
-  It opens with a primary return link, a `Resume Today Brief`,
-  `Browser Resume`, and `Resume Operator Workbench` before shared route/focus
-  diagnostics or command readback. The brief keeps Continue, Proof, Blockers,
+  It opens with a primary return link and a `Resume Today Brief`; lower proof
+  and return machinery is grouped under a closed `More Resume Evidence` block
+  after the first viewport. The brief keeps Continue, Proof, Blockers,
   Artifact, and Finish Today visible in one strip, using the current Goal's CI
   handoff and proof recorder when a Goal exists and first-run proof fallbacks
   before one exists. `Browser Resume` reads
@@ -399,8 +405,12 @@ confirmation requirement, and zero provider/network/external-effect counters.
   commit messages, publication request/approval, and manual `complete-goal`
   notes; successful confirmed actions clear only the submitted draft key.
 - `/goals/<goal_id>` - goal-centered workbench that is content-first: the Goal
-  summary, large Current Phase banner, jump bar, action dock, and progress meter
-  appear before shared route/focus diagnostics. The summary is now title-first:
+  summary, large Current Phase banner, action dock, action prep, daily loop,
+  and return brief appear before shared route/focus diagnostics. Deeper proof
+  maps, long inventories, secondary rails, and historical readbacks are grouped
+  under a closed `More Goal Evidence` block after the first viewport while
+  keeping existing `data-*` markers, hashes, counters, links, forms, and
+  non-claims in the DOM. The summary is now title-first:
   the H1 and browser title use the human Goal title/intent, while the Goal id
   stays visible as metadata alongside project, status, phase, and local refresh
   evidence. Shared navigation mirrors that identity: breadcrumbs, Route

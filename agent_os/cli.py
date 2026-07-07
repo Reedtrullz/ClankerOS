@@ -539,11 +539,13 @@ from agent_os.local_app import (
     DEFAULT_HOST as LOCAL_APP_DEFAULT_HOST,
     DEFAULT_PORT as LOCAL_APP_DEFAULT_PORT,
     run_demo_app_scenario,
+    serve_local_app,
+    validate_bind_host,
+)
+from agent_os.local_app_smoke import (
     run_local_app_demo_smoke_test,
     run_local_app_golden_path_smoke_test,
     run_local_app_smoke_test,
-    serve_local_app,
-    validate_bind_host,
 )
 from agent_os.memory_entries import (
     MemoryEntryError,
@@ -557,6 +559,18 @@ from agent_os.playbooks import (
     DEFAULT_MIN_SUCCESSES,
     promote_successful_run_playbooks,
     render_playbook_line,
+)
+from agent_os.proof_surface import (
+    build_proof_surface_state,
+    render_proof_surface_cli_lines,
+)
+from agent_os.artifact_hygiene import (
+    render_artifact_hygiene_cli_lines,
+    write_artifact_hygiene_report,
+)
+from agent_os.hosted_dashboard_export import (
+    render_hosted_dashboard_export_cli_lines,
+    write_hosted_dashboard_export,
 )
 from agent_os.planning import (
     PlanningError,
@@ -774,6 +788,21 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "app-golden-path-smoke-test",
         help="Run the fresh-user project/goal/action/proof/finish/resume smoke.",
+    )
+    proof_surface = subparsers.add_parser(
+        "proof-surface",
+        help="Report live proof, committed dashboard snapshot, and local readback state.",
+    )
+    proof_surface.add_argument("--project", default="clankeros")
+    proof_surface.add_argument("--remote", default="origin")
+    proof_surface.add_argument("--branch", default="main")
+    subparsers.add_parser(
+        "artifact-hygiene",
+        help="Write a report-only artifact hygiene classification.",
+    )
+    subparsers.add_parser(
+        "hosted-dashboard-export",
+        help="Write a static local read-only dashboard export.",
     )
     subparsers.add_parser("dashboard", help="Write the static dashboard.")
     subparsers.add_parser("iterate", help="Write the next iteration packet from repo queues.")
@@ -2333,6 +2362,29 @@ def main(argv: list[str] | None = None) -> int:
         print("network_actions_taken: 0")
         print("external_mutations_taken: 0")
         return 0 if result["status"] == "passed" else 1
+
+    if args.command == "proof-surface":
+        state = build_proof_surface_state(
+            root,
+            project_id=args.project,
+            remote=args.remote,
+            branch=args.branch,
+        )
+        for line in render_proof_surface_cli_lines(state):
+            print(line)
+        return 0
+
+    if args.command == "artifact-hygiene":
+        report = write_artifact_hygiene_report(root)
+        for line in render_artifact_hygiene_cli_lines(report):
+            print(line)
+        return 0
+
+    if args.command == "hosted-dashboard-export":
+        result = write_hosted_dashboard_export(root)
+        for line in render_hosted_dashboard_export_cli_lines(result):
+            print(line)
+        return 0
 
     if args.command == "dashboard":
         dashboard_path = generate_static_dashboard(root)

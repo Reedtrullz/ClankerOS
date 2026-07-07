@@ -389,6 +389,14 @@ from agent_os.learning_distillation import (
 from agent_os.memory_entries import render_memory_entry_line
 from agent_os.skill_entries import render_skill_line
 from agent_os.playbooks import render_playbook_line
+from agent_os.proof_surface import (
+    build_proof_surface_state,
+    render_proof_surface_dashboard_lines,
+)
+from agent_os.artifact_hygiene import render_artifact_hygiene_dashboard_lines
+from agent_os.hosted_dashboard_export import (
+    render_hosted_dashboard_export_dashboard_lines,
+)
 from agent_os.profile_routing import format_profile_line, format_routing_decision_line
 from agent_os.queue_health import (
     DEFAULT_BLOCKED_THRESHOLD,
@@ -2110,6 +2118,11 @@ def generate_static_dashboard(root: Path) -> Path:
         line for line in coder_publication_request_lines if "status=pending_operator_approval" in line
     ]
     self_hosting_check_lines = _self_hosting_check_dashboard_lines(root)
+    proof_surface_lines = render_proof_surface_dashboard_lines(
+        build_proof_surface_state(root)
+    )
+    artifact_hygiene_lines = render_artifact_hygiene_dashboard_lines(root)
+    hosted_dashboard_export_lines = render_hosted_dashboard_export_dashboard_lines(root)
 
     lines = [
         "# Agent System Dashboard",
@@ -2120,6 +2133,17 @@ def generate_static_dashboard(root: Path) -> Path:
         "",
     ]
     lines.extend(self_hosting_check_lines)
+    lines.extend(
+        [
+            "",
+            "### Proof Surface",
+            "",
+        ]
+    )
+    lines.extend(proof_surface_lines)
+    lines.extend([""])
+    lines.extend(artifact_hygiene_lines)
+    lines.extend(hosted_dashboard_export_lines)
     lines.extend(
         [
             "",
