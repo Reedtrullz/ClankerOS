@@ -52,6 +52,7 @@ GENERATED_LOCAL_PREFIXES = (
     ".clanker/app/",
     ".clanker/demo/",
     ".clanker/artifact-hygiene/",
+    ".clanker/hosted-dashboard-export/",
     ".clanker/local-app/",
     ".clanker/smoke/",
     "runs/run_",

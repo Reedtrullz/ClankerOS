@@ -56,6 +56,9 @@ def test_artifact_hygiene_reports_categories_without_cleanup(
     generated = tmp_path / "runs" / "run_001" / "output.txt"
     generated.parent.mkdir(parents=True)
     generated.write_text("local run\n", encoding="utf-8")
+    export = tmp_path / ".clanker" / "hosted-dashboard-export" / "index.html"
+    export.parent.mkdir(parents=True)
+    export.write_text("<!doctype html>\n", encoding="utf-8")
     unknown = tmp_path / "scratch.txt"
     unknown.write_text("review me\n", encoding="utf-8")
 
@@ -65,7 +68,7 @@ def test_artifact_hygiene_reports_categories_without_cleanup(
     assert "tracked_intentional: 1" in output
     assert "ignored_runtime_state: 1" in output
     assert "unpromoted_proof: 1" in output
-    assert "generated_local_artifact: 1" in output
+    assert "generated_local_artifact: 2" in output
     assert "visible_evidence_candidate: 1" in output
     assert "unknown_needs_operator_review: 1" in output
     assert "deleted: 0" in output
@@ -81,11 +84,11 @@ def test_artifact_hygiene_reports_categories_without_cleanup(
     assert payload["counts"]["tracked_intentional"] == 1
     assert payload["counts"]["ignored_runtime_state"] == 1
     assert payload["counts"]["unpromoted_proof"] == 1
-    assert payload["counts"]["generated_local_artifact"] == 1
+    assert payload["counts"]["generated_local_artifact"] == 2
     assert payload["counts"]["visible_evidence_candidate"] == 1
     assert payload["counts"]["unknown_needs_operator_review"] == 1
     assert (tmp_path / ".gitignore").read_text(encoding="utf-8") == original_gitignore
-    for path in [ignored, unpromoted, visible, generated, unknown]:
+    for path in [ignored, unpromoted, visible, generated, export, unknown]:
         assert path.exists()
 
 
