@@ -568,6 +568,10 @@ from agent_os.artifact_hygiene import (
     render_artifact_hygiene_cli_lines,
     write_artifact_hygiene_report,
 )
+from agent_os.hosted_dashboard_export import (
+    render_hosted_dashboard_export_cli_lines,
+    write_hosted_dashboard_export,
+)
 from agent_os.planning import (
     PlanningError,
     create_contract_for_goal,
@@ -795,6 +799,10 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "artifact-hygiene",
         help="Write a report-only artifact hygiene classification.",
+    )
+    subparsers.add_parser(
+        "hosted-dashboard-export",
+        help="Write a static local read-only dashboard export.",
     )
     subparsers.add_parser("dashboard", help="Write the static dashboard.")
     subparsers.add_parser("iterate", help="Write the next iteration packet from repo queues.")
@@ -2369,6 +2377,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "artifact-hygiene":
         report = write_artifact_hygiene_report(root)
         for line in render_artifact_hygiene_cli_lines(report):
+            print(line)
+        return 0
+
+    if args.command == "hosted-dashboard-export":
+        result = write_hosted_dashboard_export(root)
+        for line in render_hosted_dashboard_export_cli_lines(result):
             print(line)
         return 0
 
