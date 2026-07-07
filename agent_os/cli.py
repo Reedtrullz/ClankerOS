@@ -564,6 +564,10 @@ from agent_os.proof_surface import (
     build_proof_surface_state,
     render_proof_surface_cli_lines,
 )
+from agent_os.artifact_hygiene import (
+    render_artifact_hygiene_cli_lines,
+    write_artifact_hygiene_report,
+)
 from agent_os.planning import (
     PlanningError,
     create_contract_for_goal,
@@ -788,6 +792,10 @@ def build_parser() -> argparse.ArgumentParser:
     proof_surface.add_argument("--project", default="clankeros")
     proof_surface.add_argument("--remote", default="origin")
     proof_surface.add_argument("--branch", default="main")
+    subparsers.add_parser(
+        "artifact-hygiene",
+        help="Write a report-only artifact hygiene classification.",
+    )
     subparsers.add_parser("dashboard", help="Write the static dashboard.")
     subparsers.add_parser("iterate", help="Write the next iteration packet from repo queues.")
     self_hosting_check = subparsers.add_parser(
@@ -2355,6 +2363,12 @@ def main(argv: list[str] | None = None) -> int:
             branch=args.branch,
         )
         for line in render_proof_surface_cli_lines(state):
+            print(line)
+        return 0
+
+    if args.command == "artifact-hygiene":
+        report = write_artifact_hygiene_report(root)
+        for line in render_artifact_hygiene_cli_lines(report):
             print(line)
         return 0
 
