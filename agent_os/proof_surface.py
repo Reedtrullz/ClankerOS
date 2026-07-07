@@ -238,7 +238,7 @@ def _git_status(root: Path, *paths: str) -> str:
     )
     if result.returncode != 0:
         return ""
-    return result.stdout.strip()
+    return result.stdout.rstrip()
 
 
 def _status_paths(status_text: str) -> list[str]:
