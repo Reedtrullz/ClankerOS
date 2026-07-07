@@ -110,7 +110,219 @@ Core layers for the bootstrap:
   the resume hub fallback. When the lead Goal's current action has a confirmed browser form,
   the command center renders it visibly as `#today-current-action` before
   command evidence, so the daily cockpit can be used without opening a
-  collapsed details panel. Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
+  collapsed details panel. Approved worktree runs launched from that Today
+  current-action form keep the confirmed command, verifier, and bounded-file
+  checks intact while returning the action result and workspace resume surface
+  to `/today#today-current-action`. Review actions launched after those runs
+  from the same Today current-action form also write the local review artifact,
+  preserve `return_to=/today#today-current-action`, and save the workspace
+  resume surface back to the daily cockpit before the commit-request gate.
+  Commit requests launched from the post-review Today current-action form
+  create the pending local commit approval artifact, preserve
+  `return_to=/today#today-current-action`, and save the workspace resume
+  surface back to the daily cockpit before the commit-approval gate. Commit
+  approvals launched from the post-commit-request Today current-action form
+  record the local approval decision, preserve
+  `return_to=/today#today-current-action`, and save the workspace resume
+  surface back to the daily cockpit before the local commit gate. Local commit
+  actions launched from the post-commit-approval Today current-action form
+  create the gated commit only inside the isolated coder worktree, preserve
+  `return_to=/today#today-current-action`, and save the workspace resume
+  surface back to the daily cockpit before the publication-request gate.
+  Publication requests launched from the post-local-commit Today current-action
+  form create only the pending local publication approval artifact, preserve
+  `return_to=/today#today-current-action`, and save the workspace resume
+  surface back to the daily cockpit before the publication-approval gate.
+  Publication approvals launched from the post-publication-request Today
+  current-action form record only the local approval decision, preserve
+  `return_to=/today#today-current-action`, and save the workspace resume
+  surface back to the daily cockpit before the publication-handoff gate.
+  Publication handoffs launched from the post-publication-approval Today
+  current-action form write only local publication handoff and PR-body
+  artifacts with suggested manual commands, preserve
+  `return_to=/today#today-current-action`, and save the workspace resume
+  surface back to the daily cockpit before the manual publish boundary.
+  Manual publish boundary actions launched from the post-publication-handoff
+  Today current-action panel show copy-only push/PR commands for use outside
+  ClankerOS, expose the consumed `publication_handoff.json` /
+  `publication_handoff.md` proof pair and hashes, preserve
+  `return_to=/today#today-current-action`, and let the operator confirm only
+  local Goal completion after `complete-goal` validates that handoff Markdown.
+  The completion action writes Goal-scoped `completion.json` / `completion.md`
+  evidence, keeps push/PR/deploy/provider/network/external-effect counters at
+  zero, and saves the completed Goal's resume surface back to the daily
+  cockpit.
+  After local Goal completion, `/today` and `/resume` render a read-only
+  completed Goal handoff that links the completed evidence, latest artifact,
+  Goal CI handoff, saved daily resume surface, and the current project's
+  `Start Goal For This Project` surface without changing the saved resume
+  proof or creating external effects. The same handoff now also embeds the
+  existing confirmed local `create-goal` form in place, so the operator can
+  start the next Goal directly from `/today` or `/resume`. Confirmed
+  next-Goal creation carries the completed Goal id, prior artifact, and saved
+  daily resume surface into `.clanker/app/workspace.json` as provenance while
+  moving the active resume target to the new Goal's current action. It still
+  requires the normal confirmation page and does not push, create PRs, deploy,
+  call providers, use app-side network actions, or create external effects.
+  Once that successor Goal exists, `/today` and `/resume` keep the successor
+  Goal's current action as the primary continuation: `/today` points Do Now at
+  `#today-current-action`, `/resume` opens the same action in
+  `#resume-workbench-action-form`, and both routes render a read-only
+  completed-Goal provenance panel that links the completed source Goal,
+  previous resume surface, and carried artifact without reopening the old
+  next-Goal creation gate or writing on GET.
+  When the successor Goal's first confirmed browser action creates a scout
+  delegation, the app promotes that transient provenance into
+  `.clanker/projects/<project>/goals/<goal_id>/completed-goal-provenance.md`,
+  clears the workspace `completed_goal_handoff_*` fields, registers the
+  provenance markdown in the successor Goal artifact reader and timeline, and
+  keeps `/today` and `/resume` focused on the successor Goal's next action.
+  When that successor context pack is generated from either daily surface, the
+  generated `context_pack.md` becomes the newest Goal artifact on `/today`,
+  `/resume`, and the successor Goal page; the completed-Goal provenance
+  markdown remains visible only as durable history, and the primary action
+  advances to `Run delegation` without reopening the transient handoff panels.
+  When the successor delegation is then run from `/today` or `/resume`, the
+  existing local adapter path consumes an evidence copy of that context pack,
+  writes `implementation_handoff.json` and `implementation_handoff.md`, saves
+  the Markdown handoff as the active workspace artifact, keeps the original
+  daily return surface on the embedded result-page continuation form, and
+  advances `/today`, `/resume`, and the successor Goal page to `Run coder
+  prep` while retaining `completed-goal-provenance.md` as durable history.
+  When successor coder-prep is then run from either daily surface, the browser
+  result payload exposes the consumed `implementation_handoff.md`, generated
+  `coder_prep.json` and `coder_prep.md`, bounded files, and zero-effect
+  counters; the generated `coder_prep.md` becomes the active workspace
+  artifact, the original daily return surface is preserved for the embedded
+  `Create worktree plan` form, and `/today`, `/resume`, and the successor
+  Goal page advance to `Create worktree plan` while retaining
+  `completed-goal-provenance.md` as durable history.
+  When the successor worktree plan is then created from either daily surface,
+  the browser result payload exposes the consumed `coder_prep.md`, generated
+  `coder_worktree_plan.json` and `coder_worktree_plan.md`, the source prep
+  hash, approval-gate state, proposed-but-not-created worktree details, and
+  zero-effect counters. The generated worktree-plan Markdown becomes the
+  active workspace artifact, the original daily return surface is preserved
+  for the embedded `Request worktree approval` form, and `/today`, `/resume`,
+  and the successor Goal page advance to `Request worktree approval` while
+  retaining `completed-goal-provenance.md` as durable history.
+  When the successor worktree approval request is then created from either
+  daily surface, the browser result payload exposes the consumed
+  `coder_worktree_plan.md`, plan JSON and Markdown hashes, generated
+  `coder_worktree_approval_request.json` and Markdown artifacts, pending
+  approval state, and zero-effect counters. The approval-request Markdown
+  becomes the active workspace artifact, the original daily return surface is
+  preserved for the embedded `Approve worktree` form, and `/today`,
+  `/resume`, and the successor Goal page advance to `Approve worktree` while
+  retaining `completed-goal-provenance.md` as durable history.
+  When the successor worktree approval is then decided from either daily
+  surface, the browser result payload exposes the consumed
+  `coder_worktree_approval_request.md`, approval-request JSON and Markdown
+  hashes, generated `coder_worktree_approval_decision.json` and Markdown
+  artifacts, approved state, and zero-effect counters. The approval-decision
+  Markdown becomes the active workspace artifact, the original daily return
+  surface is preserved for the embedded `Run approved worktree` form, and
+  `/today`, `/resume`, and the successor Goal page advance to
+  `Run approved worktree` while retaining `completed-goal-provenance.md` as
+  durable history.
+  When the successor approved worktree run is then launched from either daily
+  surface, the run consumes the current `coder_worktree_approval_decision.md`
+  as proof, records approval-decision JSON and Markdown hashes in
+  `coder_worktree/run.json` and `summary.md`, copies the approval-decision
+  artifacts into the run evidence directory, and exposes those fields in CLI,
+  dashboard, and browser result output. The approved-run summary becomes the
+  active workspace artifact, the original daily return surface is preserved
+  for the embedded `Open review` form, and `/today`, `/resume`, and the
+  successor Goal page advance to `Open review` while retaining
+  `completed-goal-provenance.md` as durable history.
+  When the successor worktree review is then opened from either daily surface,
+  the review consumes the approved worktree run evidence as proof, including
+  the run JSON hash, run summary Markdown path and hash, and diff hash. The
+  review artifact becomes the active workspace artifact, the original daily
+  return surface is preserved for the embedded `Create commit request` form,
+  and `/today`, `/resume`, and the successor Goal page advance to
+  `Create commit request` while retaining `completed-goal-provenance.md` as
+  durable history.
+  When the successor commit request is then created from either daily surface,
+  the request consumes `runs/<source_run_id>/review.md` as proof, including
+  the review Markdown path, hash, and
+  `source_review_markdown_consumed: true`, while preserving the prior run
+  summary and diff proof. The commit-request artifacts and browser result
+  expose the same review proof plus source delegation run provenance. The
+  commit-request Markdown becomes the active workspace artifact, the original
+  daily return surface is preserved for the embedded `Approve commit` form,
+  and `/today`, `/resume`, and the successor Goal page advance to
+  `Approve commit` while retaining `completed-goal-provenance.md` as durable
+  history.
+  When the successor commit approval is then decided from either daily surface,
+  the approval decision consumes
+  `coder_commit/coder_commit_request.md` as proof, including the commit-request
+  JSON path/hash, Markdown path/hash, and
+  `source_coder_commit_request_markdown_consumed: true`. The decision
+  artifacts and browser result expose the same request proof while keeping
+  `commit_created`, `push_created`, `pr_created`, and `deploy_created` false.
+  The commit-decision Markdown becomes the active workspace artifact, the
+  original daily return surface is preserved for the embedded
+  `Commit approved worktree` form, and `/today`, `/resume`, and the successor
+  Goal page advance to `Commit approved worktree` while retaining
+  `completed-goal-provenance.md` as durable history.
+  When the successor approved local commit is then created from either daily
+  surface, `commit-coder-worktree` consumes
+  `coder_commit/coder_commit_decision.md` as proof before staging reviewed
+  allowed files. The local commit artifacts and browser result expose the
+  decision JSON/Markdown paths and hashes plus
+  `source_coder_commit_decision_markdown_consumed: true`, while keeping
+  `push_created`, `pr_created`, and `deploy_created` false and external
+  effect counters at zero. The local commit Markdown becomes the active
+  workspace artifact, the original daily return surface is preserved for the
+  embedded `Create publication request` form, and `/today`, `/resume`, and the
+  successor Goal page advance to `Create publication request` while retaining
+  `completed-goal-provenance.md` as durable history.
+  When the successor publication request is then created from either daily
+  surface, `coder-publication-request` consumes `coder_commit/commit.md` as
+  proof before writing the local publication approval request. The publication
+  request artifacts and browser result expose the local commit JSON/Markdown
+  paths and hashes plus `source_coder_commit_markdown_consumed: true`, while
+  keeping `push_created`, `pr_created`, and `deploy_created` false and
+  external effect counters at zero. The publication request Markdown becomes
+  the active workspace artifact, the original daily return surface is
+  preserved for the embedded `Approve publication` form, and `/today`,
+  `/resume`, and the successor Goal page advance to `Approve publication`
+  while retaining `completed-goal-provenance.md` as durable history.
+  When the successor publication approval is then decided from either daily
+  surface, `approve-coder-publication` consumes
+  `coder_publication/publication_request.md` as proof before writing the local
+  publication decision. The decision artifacts and browser result expose the
+  publication request JSON/Markdown paths and hashes plus
+  `source_coder_publication_request_markdown_consumed: true`, while keeping
+  `push_created`, `pr_created`, and `deploy_created` false and external
+  effect counters at zero. The publication decision Markdown becomes the
+  active workspace artifact, the original daily return surface is preserved
+  for the embedded `Create publication handoff` form, and `/today`, `/resume`,
+  and the successor Goal page advance to `Create publication handoff` while
+  retaining `completed-goal-provenance.md` as durable history.
+  When the successor publication handoff is then prepared from either daily
+  surface, `coder-publication-handoff` consumes
+  `coder_publication/publication_decision.md` as proof before writing the
+  local handoff and PR-body artifacts. The handoff artifacts, PR body, and
+  browser result expose the publication decision JSON/Markdown paths and
+  hashes plus `source_coder_publication_decision_markdown_consumed: true`,
+  while keeping `push_created`, `pr_created`, and `deploy_created` false and
+  external effect counters at zero. The publication handoff Markdown becomes
+  the active workspace artifact, the original daily return surface is
+  preserved for the manual publish boundary, and `/today`, `/resume`, and the
+  successor Goal page advance to `Manual publish outside ClankerOS` while
+  retaining `completed-goal-provenance.md` as durable history.
+  When the successor manual publish boundary is then completed from either
+  daily surface, `complete-goal` consumes
+  `coder_publication/publication_handoff.md` as proof, validates the handoff
+  JSON/Markdown pair and upstream publication-decision proof, rejects tampered
+  handoff Markdown before changing Goal status, writes
+  `completion.json` / `completion.md` under the Goal, keeps the publication
+  handoff Markdown as the saved active artifact, and moves `/today` and
+  `/resume` to completed Goal evidence plus same-page next-Goal creation while
+  retaining `completed-goal-provenance.md` as durable history.
+  Confirmed `save-goal-note`, `pause-goal`, and `Finish Today`
   workspace save forms are also collapsed by default and open from their
   visible command cards or direct hash links. A read-only
   `Today Live State` panel follows with five-second local
@@ -1311,8 +1523,9 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   boundary before the dense workflow state. The page then shows the same
   upstream and downstream workflow posture as a `Run Workflow State` readback,
   plus a `Run Review Gate` readback that mirrors the backend requirement that
-  `runs/<source_run_id>/review.md` exists and mentions the coder worktree run
-  id before `coder-commit-request` is offered. A read-only `Run Evidence Map`
+  `runs/<source_run_id>/review.md` exists and consumes the matching coder
+  worktree run JSON, summary Markdown, and diff hashes before
+  `coder-commit-request` is offered. A read-only `Run Evidence Map`
   then turns review, diff, changed files, bounded validation, logs, and
   verification output into visible cards backed only by bounded artifact
   viewer links before the full evidence list. Once publication handoff is
@@ -1674,14 +1887,18 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   creates or refreshes the same deterministic fixture while preserving the CLI
   commands as fallbacks. `app-demo-smoke-test`
   creates the fixture-backed demo state and renders the stateful demo,
-  dogfooding, goal, search, workspace, memory, skills, profiles, project,
-  delegation, scoped workflow, run, approvals, inbox,
-  actions, and health routes with expected snippet checks while preserving the
-  same zero provider/network/external-mutation counters. The checked-in GitHub
-  Actions workflow now runs a separate 10-minute `smoke` job for compile,
-  local CLI smoke, route-marker app smoke, fixture-backed app-demo smoke,
-  demo, dashboard, iterate, focused local-app/CI-handoff pytest, and
-  whitespace checks before a dependent 45-minute `full-suite` job spends time
+	  dogfooding, goal, search, workspace, memory, skills, profiles, project,
+	  delegation, scoped workflow, run, approvals, inbox,
+	  actions, and health routes with expected snippet checks while preserving the
+	  same zero provider/network/external-mutation counters.
+	  `app-golden-path-smoke-test` starts from a fresh local root and proves
+	  create project, create Goal, do the next action, check
+	  `implementation_handoff.md` proof, finish today, and resume tomorrow. The
+	  checked-in GitHub Actions workflow now runs a separate 10-minute `smoke`
+	  job for compile, local CLI smoke, route-marker app smoke, fixture-backed
+	  app-demo smoke, fresh-user golden-path smoke, demo, dashboard, iterate,
+	  focused local-app/CI-handoff pytest, and
+	  whitespace checks before a dependent 45-minute `full-suite` job spends time
   on `python -m pytest -q --durations=25 --durations-min=1.0`, keeping
   slow-test evidence in GitHub logs instead of requiring an immediate local
   full-suite rerun.
@@ -1787,24 +2004,37 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   dedicated `coder_commit/coder_commit_request.json/.md` request without
   staging or committing. `approve-coder-commit` records the operator decision
   in `coder_commit/coder_commit_decision.json/.md` without staging or
-  committing. `commit-coder-worktree` re-checks source hashes, branch/HEAD,
-  changed files, outside files, commit message, and verifier state before
-  staging only reviewed allowed files and creating one local git commit in the
-  isolated worktree branch. It records `coder_commit/commit.json`,
-  `pre_commit_status.txt`, `post_commit_status.txt`, `committed_diff.patch`,
-  `committed_files.json`, and a committed local effect that can feed
-  `github-handoff <effect_id>`. It never pushes, creates a PR, deploys, calls
-  providers, or mutates external systems. A committed coder worktree run can
+  committing. `commit-coder-worktree` consumes
+  `coder_commit/coder_commit_decision.json/.md` as approval proof, then
+  re-checks source hashes, branch/HEAD, changed files, outside files, commit
+  message, and verifier state before staging only reviewed allowed files and
+  creating one local git commit in the isolated worktree branch. It records
+  the consumed decision JSON/Markdown paths and hashes in
+  `coder_commit/commit.json/.md`, plus `pre_commit_status.txt`,
+  `post_commit_status.txt`, `committed_diff.patch`, `committed_files.json`,
+  and a committed local effect that can feed `github-handoff <effect_id>`. It
+  never pushes, creates a PR, deploys, calls providers, or mutates external
+  systems. A committed coder worktree run can
   then enter `coder-publication-request <coder_worktree_run_id>`, which
-  validates the local commit artifact, commit SHA, safe worktree, safe remote
-  and target branch names, committed-file bounds, zero push/PR/deploy
-  counters, and a non-empty operator note before writing
-  `coder_publication/publication_request.json/.md`.
-  `approve-coder-publication` writes the local decision without pushing or
-  creating a PR. `coder-publication-handoff` requires the approved request,
-  revalidates the request artifact hash and commit artifact hash, and writes
+  consumes `coder_commit/commit.json/.md` as proof, validates the local commit
+  Markdown matches the coder worktree run and commit SHA, checks safe worktree,
+  safe remote and target branch names, committed-file bounds, zero
+  push/PR/deploy counters, and a non-empty operator note before writing
+  `coder_publication/publication_request.json/.md`. The request artifacts
+  retain the consumed local commit JSON/Markdown paths and hashes plus
+  `source_coder_commit_markdown_consumed: true`.
+  `approve-coder-publication` consumes the matching
+  `coder_publication/publication_request.json/.md` pair and writes the local
+  decision without pushing or creating a PR. The decision artifacts record the
+  source publication request JSON/Markdown paths and hashes plus
+  `source_coder_publication_request_markdown_consumed: true`.
+  `coder-publication-handoff` requires the approved request, consumes the
+  matching `coder_publication/publication_decision.json/.md` pair, revalidates
+  the request JSON and Markdown hashes plus commit artifact hashes, and writes
   `publication_handoff.json`, `publication_handoff.md`, and `pr_body.md` with
-  suggested push and draft-PR commands only. It does not execute those commands,
+  the source publication decision JSON/Markdown paths and hashes plus
+  `source_coder_publication_decision_markdown_consumed: true` and suggested
+  push and draft-PR commands only. It does not execute those commands,
   run `git fetch`, contact GitHub, deploy, call providers, use the network, or
   mutate external systems. Run review, delegation-result, inbox, dashboard, and
   local app run-detail output surface coder commit requests, approvals, local

@@ -38,6 +38,7 @@ from agent_os.coder_worktree_execution import (
     approve_coder_worktree,
     approve_coder_worktree_commit,
     coder_worktree_change_summary,
+    coder_worktree_run_review_proof,
     commit_coder_worktree,
     get_coder_worktree_run,
     list_coder_worktree_approvals,
@@ -58,6 +59,7 @@ from agent_os.ci_snapshot_evidence import (
 from agent_os.context_pack import ContextPackError, generate_context_pack
 from agent_os.delegation_runner import (
     DelegationRunError,
+    configure_profile_adapter,
     run_delegation,
 )
 from agent_os.engine import AgentSystem
@@ -69,6 +71,7 @@ from agent_os.planning import (
     create_goal_lifecycle,
     refresh_goal_planning_artifacts,
 )
+from agent_os.profile_routing import ensure_default_profiles
 from agent_os.project_registry import register_project
 from agent_os.run_review import write_run_review
 from agent_os.storage import Storage, utc_now
@@ -1405,6 +1408,390 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
     }
 
 
+def run_local_app_golden_path_smoke_test(root: Path) -> dict[str, Any]:
+    root = root.resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    AgentSystem(root).initialize()
+    storage = Storage(root / ".agent" / "state.db")
+    storage.initialize()
+    ensure_default_profiles(storage)
+
+    project_name = "golden-path"
+    target_repo = root / ".clanker" / "app" / "golden-path-target"
+    _initialize_local_app_golden_path_repo(target_repo)
+    adapter_path = _write_local_app_golden_path_scout_adapter(root)
+    configure_profile_adapter(
+        storage,
+        "scout",
+        adapter_type="shell",
+        command=f"{shlex.quote(sys.executable)} {shlex.quote(str(adapter_path))}",
+        input_mode="json_file",
+        output_mode="json",
+        timeout_seconds=30,
+        working_directory="system_root",
+    )
+
+    checks: list[dict[str, Any]] = []
+
+    def record(
+        name: str,
+        response: LocalAppResponse,
+        *,
+        expected_status: int = 200,
+        snippets: list[str] | None = None,
+    ) -> None:
+        expected_snippets = snippets or []
+        missing = [snippet for snippet in expected_snippets if snippet not in response.body]
+        checks.append(
+            {
+                "name": name,
+                "status": response.status,
+                "expected_status": expected_status,
+                "expected_snippets": expected_snippets,
+                "missing_snippets": missing,
+                "passed": response.status == expected_status and not missing,
+            }
+        )
+
+    record(
+        "open-home",
+        render_local_app_route(root, "/"),
+        snippets=["ClankerOS Local Operator"],
+    )
+    record(
+        "open-today-first-run",
+        render_local_app_route(root, "/today"),
+        snippets=["Today Command Center", "First Run Guide"],
+    )
+
+    register_form = {
+        "name": [project_name],
+        "path": [str(target_repo)],
+        "test_command": ["python3 -m pytest -q"],
+        "allowed_write_roots": [str(target_repo)],
+    }
+    record(
+        "confirm-create-project",
+        render_local_app_route(
+            root,
+            "/actions/register-project",
+            method="POST",
+            form=register_form,
+        ),
+        expected_status=409,
+        snippets=["action_confirmation_label</dt><dd>First project setup"],
+    )
+    record(
+        "create-project",
+        render_local_app_route(
+            root,
+            "/actions/register-project",
+            method="POST",
+            form={**register_form, "confirm": ["yes"]},
+        ),
+        snippets=["Project setup complete", "Create first goal"],
+    )
+
+    goal_prompt = "Create a fresh-user golden path proof."
+    create_goal_form = {
+        "project_id": [project_name],
+        "prompt": [goal_prompt],
+        "created_by_profile": ["planner"],
+    }
+    record(
+        "confirm-create-goal",
+        render_local_app_route(
+            root,
+            "/actions/create-goal",
+            method="POST",
+            form=create_goal_form,
+        ),
+        expected_status=409,
+        snippets=["action_confirmation_label</dt><dd>First Goal setup"],
+    )
+    record(
+        "create-goal",
+        render_local_app_route(
+            root,
+            "/actions/create-goal",
+            method="POST",
+            form={**create_goal_form, "confirm": ["yes"]},
+        ),
+        snippets=["goal_created:", "Create scout delegation"],
+    )
+
+    goal = storage.latest_goal_for_project(project_name)
+    goal_id = goal.id if goal is not None else ""
+    tasks = storage.list_tasks(goal_id) if goal_id else []
+    first_task = tasks[0] if tasks else None
+    record(
+        "open-today-create-action",
+        render_local_app_route(root, "/today"),
+        snippets=[
+            "today_command_primary_action</dt><dd>Create scout delegation",
+            "action='/actions/delegate'",
+        ],
+    )
+
+    delegation_id = ""
+    if first_task is not None:
+        delegate_form = {
+            "goal_id": [goal_id],
+            "task_id": [first_task.id],
+            "profile": ["scout"],
+            "title": ["Golden path scout"],
+            "requested_by": ["operator"],
+            "return_to": ["/today#today-current-action"],
+        }
+        record(
+            "confirm-next-action",
+            render_local_app_route(
+                root,
+                "/actions/delegate",
+                method="POST",
+                form=delegate_form,
+            ),
+            expected_status=409,
+            snippets=["Confirm scout delegation"],
+        )
+        record(
+            "do-next-action",
+            render_local_app_route(
+                root,
+                "/actions/delegate",
+                method="POST",
+                form={**delegate_form, "confirm": ["yes"]},
+            ),
+            snippets=["Scout delegation created", "Generate context pack"],
+        )
+        delegations = storage.list_subagent_delegations(goal_id)
+        delegation_id = delegations[0].id if delegations else ""
+
+    if delegation_id:
+        context_form = {
+            "delegation_id": [delegation_id],
+            "return_to": ["/today#today-current-action"],
+        }
+        record(
+            "confirm-context-pack",
+            render_local_app_route(
+                root,
+                "/actions/context-pack",
+                method="POST",
+                form=context_form,
+            ),
+            expected_status=409,
+            snippets=["Confirm context pack"],
+        )
+        record(
+            "create-context-pack",
+            render_local_app_route(
+                root,
+                "/actions/context-pack",
+                method="POST",
+                form={**context_form, "confirm": ["yes"]},
+            ),
+            snippets=["Context pack ready", "Run delegation"],
+        )
+        run_form = {
+            "delegation_id": [delegation_id],
+            "operator_id": ["operator"],
+            "return_to": ["/today#today-current-action"],
+        }
+        record(
+            "confirm-proof-run",
+            render_local_app_route(
+                root,
+                "/actions/run-delegation",
+                method="POST",
+                form=run_form,
+            ),
+            expected_status=409,
+            snippets=["Confirm scout run"],
+        )
+        record(
+            "run-proof",
+            render_local_app_route(
+                root,
+                "/actions/run-delegation",
+                method="POST",
+                form={**run_form, "confirm": ["yes"]},
+            ),
+            snippets=["Scout run finished", "implementation_handoff.md"],
+        )
+
+    completed_delegation = (
+        storage.get_subagent_delegation(delegation_id) if delegation_id else None
+    )
+    run_metadata = (
+        load_delegation_result_metadata(completed_delegation)
+        if completed_delegation is not None
+        else {}
+    )
+    proof_path_value = str(run_metadata.get("implementation_handoff_md") or "")
+    proof_path = root / proof_path_value if proof_path_value else None
+    proof_exists = bool(proof_path and proof_path.exists())
+    if proof_path_value:
+        record(
+            "check-proof-artifact",
+            render_local_app_route(
+                root,
+                f"/artifacts?path={quote(proof_path_value, safe='/.')}",
+            ),
+            snippets=["artifact_type", "implementation_handoff.md"],
+        )
+    else:
+        checks.append(
+            {
+                "name": "check-proof-artifact",
+                "status": "missing",
+                "expected_status": 200,
+                "expected_snippets": ["implementation_handoff.md"],
+                "missing_snippets": ["implementation_handoff.md"],
+                "passed": False,
+            }
+        )
+
+    finish_form = {
+        "open_project": [project_name],
+        "open_goal": [goal_id],
+        "filters": [f"goal:{goal_id}"],
+        "expanded_panels": ["today,current-action,proof,resume"],
+        "last_viewed_artifact": [proof_path_value],
+        "resume_surface": ["/today#today-current-action"],
+        "updated_by": ["golden-path-smoke"],
+        "return_to": ["/resume"],
+    }
+    record(
+        "confirm-finish-today",
+        render_local_app_route(
+            root,
+            "/actions/save-workspace",
+            method="POST",
+            form=finish_form,
+        ),
+        expected_status=409,
+        snippets=["action_confirmation_label</dt><dd>Save return point"],
+    )
+    record(
+        "finish-today",
+        render_local_app_route(
+            root,
+            "/actions/save-workspace",
+            method="POST",
+            form={**finish_form, "confirm": ["yes"]},
+        ),
+        snippets=["workspace_saved: .clanker/app/workspace.json", "Resume Tomorrow"],
+    )
+    record(
+        "resume-tomorrow",
+        render_local_app_route(root, "/resume"),
+        snippets=["Resume Workspace", "Run coder prep", "implementation_handoff.md"],
+    )
+
+    workspace = _load_workspace_state(root)
+    workspace_ok = (
+        workspace.get("open_project") == project_name
+        and workspace.get("open_goal") == goal_id
+        and workspace.get("resume_surface") == "/today#today-current-action"
+        and workspace.get("last_viewed_artifact") == proof_path_value
+    )
+    ok = all(item["passed"] for item in checks) and proof_exists and workspace_ok
+    return {
+        "status": "passed" if ok else "failed",
+        "project_id": project_name,
+        "goal_id": goal_id,
+        "delegation_id": delegation_id,
+        "proof_artifact": proof_path_value,
+        "proof_exists": proof_exists,
+        "workspace_resume_surface": workspace.get("resume_surface", ""),
+        "workspace_last_viewed_artifact": workspace.get("last_viewed_artifact", ""),
+        "workspace_ok": workspace_ok,
+        "checks": checks,
+        "provider_calls_taken_by_clankeros": 0,
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
+        "non_claims": NO_EXTERNAL_EFFECT_CLAIMS,
+    }
+
+
+def _initialize_local_app_golden_path_repo(repo_path: Path) -> None:
+    repo_path.mkdir(parents=True, exist_ok=True)
+    if not (repo_path / ".git").exists():
+        subprocess.run(["git", "init"], cwd=repo_path, check=True, capture_output=True)
+        subprocess.run(
+            ["git", "config", "user.email", "clankeros@example.invalid"],
+            cwd=repo_path,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.name", "ClankerOS Smoke"],
+            cwd=repo_path,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "config", "commit.gpgsign", "false"],
+            cwd=repo_path,
+            check=True,
+            capture_output=True,
+        )
+    readme = repo_path / "README.md"
+    if not readme.exists():
+        readme.write_text("# Golden Path Target\n", encoding="utf-8")
+    head = subprocess.run(
+        ["git", "rev-parse", "--verify", "HEAD"],
+        cwd=repo_path,
+        check=False,
+        capture_output=True,
+    )
+    if head.returncode != 0:
+        subprocess.run(["git", "add", "README.md"], cwd=repo_path, check=True)
+        subprocess.run(
+            ["git", "commit", "-m", "initial golden path target"],
+            cwd=repo_path,
+            check=True,
+            capture_output=True,
+        )
+
+
+def _write_local_app_golden_path_scout_adapter(root: Path) -> Path:
+    adapter_path = root / ".clanker" / "app" / "golden-path-fake-scout.py"
+    adapter_path.parent.mkdir(parents=True, exist_ok=True)
+    adapter_path.write_text(
+        "\n".join(
+            [
+                "import json",
+                "import sys",
+                "from pathlib import Path",
+                "",
+                "input_path = Path(sys.argv[1])",
+                "payload = json.loads(input_path.read_text(encoding='utf-8'))",
+                "evidence_dir = Path(payload['evidence_dir'])",
+                "(evidence_dir / 'golden-path-scout-seen.txt').write_text(",
+                "    payload['delegation']['id'],",
+                "    encoding='utf-8',",
+                ")",
+                "print(json.dumps({",
+                "  'result_summary': 'Fresh-user golden path proof found the next implementation seam.',",
+                "  'structured_output': {",
+                "    'files': ['agent_os/local_app.py', 'agent_os/cli.py'],",
+                "    'findings': ['Today exposes the next action and proof handoff.'],",
+                "    'relevant_files': ['agent_os/local_app.py', 'agent_os/cli.py'],",
+                "    'options': [",
+                "      {'label': 'Continue with coder prep', 'files': ['agent_os/local_app.py']}",
+                "    ]",
+                "  }",
+                "}))",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return adapter_path
+
+
 def run_demo_app_scenario(root: Path) -> DemoScenarioResult:
     root = root.resolve()
     system = AgentSystem(root)
@@ -1584,6 +1971,7 @@ def run_demo_app_scenario(root: Path) -> DemoScenarioResult:
         command="python3 scripts/change_demo.py",
         verify=True,
     ).run
+    review_proof = coder_worktree_run_review_proof(root, coder_run)
     review_path = root / "runs" / run_id / "review.md"
     review_path.parent.mkdir(parents=True, exist_ok=True)
     review_path.write_text(
@@ -1595,6 +1983,17 @@ def run_demo_app_scenario(root: Path) -> DemoScenarioResult:
                 f"- coder_worktree_run_id: {coder_run.id}",
                 "- review_status: fixture_reviewed",
                 "- changed_files_within_allowed_files: true",
+                f"- source_coder_worktree_run: {review_proof['source_coder_worktree_run']}",
+                f"- source_coder_worktree_run_json: {review_proof['source_coder_worktree_run_json']}",
+                "- source_coder_worktree_run_sha256: "
+                f"{review_proof['source_coder_worktree_run_sha256']}",
+                "- source_coder_worktree_run_summary: "
+                f"{review_proof['source_coder_worktree_run_summary']}",
+                "- source_coder_worktree_run_summary_sha256: "
+                f"{review_proof['source_coder_worktree_run_summary_sha256']}",
+                "- source_coder_worktree_run_summary_consumed: true",
+                f"- source_diff: {review_proof['source_diff']}",
+                f"- source_diff_sha256: {review_proof['source_diff_sha256']}",
                 "- non_claim: fixture review does not commit, push, deploy, call providers, or use the network.",
                 "",
             ]
@@ -2974,6 +3373,26 @@ def _today_page(root: Path) -> str:
         "</details>",
         "</section>",
         _today_command_center(root, storage, lead_goal),
+        _completed_goal_handoff_provenance_panel(
+            root,
+            storage,
+            prefix="today",
+            title="Today Completed Goal Provenance",
+        ),
+        _completed_goal_handoff_panel(
+            root,
+            storage,
+            lead_goal=lead_goal,
+            prefix="today",
+            title="Today Completed Goal Handoff",
+        ),
+        _goal_provenance_history_panel(
+            root,
+            storage,
+            goal_id=lead_goal_id,
+            prefix="today",
+            title="Today Goal Provenance History",
+        ),
         _today_live_state(
             root,
             storage,
@@ -2990,6 +3409,7 @@ def _today_page(root: Path) -> str:
         _today_decision_queue(root, storage, lead_goal),
         _today_workflow_map(root, storage, lead_goal),
         _today_ci_handoff(root, lead_goal),
+        _today_self_hosting_check(root),
         _today_goal_queue(
             root,
             storage,
@@ -2998,6 +3418,7 @@ def _today_page(root: Path) -> str:
             completed=completed,
             lead_goal=lead_goal,
         ),
+        _today_stale_goal_hygiene(rows, lead_goal=lead_goal),
         _home_start_here(root, storage, lead_goal, first_run_same_page=True),
         _home_day_plan(root, storage, lead_goal, first_run_same_page=True),
         _home_attention_brief(root, storage, lead_goal),
@@ -3011,6 +3432,1107 @@ def _today_page(root: Path) -> str:
         sections.append(_first_run_panel(root, storage))
     sections.append(_non_claim_banner())
     return "".join(sections)
+
+
+def _completed_goal_handoff_state(
+    root: Path,
+    storage: Storage,
+    *,
+    lead_goal: sqlite3.Row | None,
+) -> tuple[dict[str, Any] | None, str, dict[str, str]]:
+    workspace = _load_workspace_state(root)
+    if _workspace_has_active_completed_goal_successor(root, storage, workspace):
+        return None, "completed_goal_handoff_provenance", workspace
+    candidates: list[tuple[str, str]] = []
+    saved_goal = str(workspace.get("open_goal") or "").strip()
+    if saved_goal:
+        candidates.append(("saved_workspace_goal", saved_goal))
+    if lead_goal is not None:
+        candidates.append(("lead_goal", str(lead_goal["id"])))
+    for source, goal_id in candidates:
+        if not goal_id:
+            continue
+        state = _goal_state(root, storage, goal_id)
+        goal = state.get("goal")
+        if goal is not None and goal.status != "completed":
+            return None, "active_goal_in_progress", workspace
+    for row in _goal_rows(storage, limit=25):
+        if _goal_bucket(row) == "completed":
+            candidates.append(("completed_goal_queue", str(row["id"])))
+
+    seen: set[str] = set()
+    for source, goal_id in candidates:
+        if not goal_id or goal_id in seen:
+            continue
+        seen.add(goal_id)
+        state = _goal_state(root, storage, goal_id)
+        goal = state.get("goal")
+        if goal is not None and goal.status == "completed":
+            return state, source, workspace
+    return None, "none", workspace
+
+
+def _workspace_has_active_completed_goal_successor(
+    root: Path,
+    storage: Storage,
+    workspace: dict[str, str],
+) -> bool:
+    source_goal_id = str(workspace.get("completed_goal_handoff_source_goal") or "").strip()
+    current_goal_id = str(workspace.get("open_goal") or "").strip()
+    if not source_goal_id or not current_goal_id or source_goal_id == current_goal_id:
+        return False
+    source_state = _goal_state(root, storage, source_goal_id)
+    current_state = _goal_state(root, storage, current_goal_id)
+    source_goal = source_state.get("goal")
+    current_goal = current_state.get("goal")
+    if source_goal is None or current_goal is None:
+        return False
+    return source_goal.status == "completed" and current_goal.status != "completed"
+
+
+def _completed_goal_provenance_path(project_id: str, goal_id: str) -> Path:
+    return _goal_file_path(project_id, goal_id, "completed-goal-provenance.md")
+
+
+def _goal_completion_proof_for_display(
+    root: Path,
+    goal: Any,
+) -> dict[str, str]:
+    completion_json = _goal_file_path(goal.project_id, goal.id, "completion.json")
+    completion_md = completion_json.with_suffix(".md")
+    record = {
+        "source_goal_completion_evidence": completion_json.as_posix(),
+        "source_goal_completion_evidence_md": completion_md.as_posix(),
+        "source_goal_completion_evidence_sha256": "missing",
+        "source_goal_completion_evidence_md_sha256": "missing",
+        "source_goal_completion_markdown_consumed": "false",
+        "prior_manual_boundary_artifact": "missing",
+        "prior_manual_boundary_artifact_sha256": "missing",
+        "source_coder_publication_handoff_md": "missing",
+        "source_publication_handoff_md_sha256": "missing",
+        "source_coder_publication_handoff_markdown_consumed": "false",
+    }
+    json_path = root / completion_json
+    md_path = root / completion_md
+    if json_path.exists():
+        record["source_goal_completion_evidence_sha256"] = hashlib.sha256(
+            json_path.read_bytes()
+        ).hexdigest()
+        try:
+            payload = json.loads(json_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            payload = {}
+        handoff_md = str(payload.get("source_coder_publication_handoff_md") or "")
+        if handoff_md:
+            record["prior_manual_boundary_artifact"] = handoff_md
+            record["source_coder_publication_handoff_md"] = handoff_md
+        handoff_md_sha = str(payload.get("source_publication_handoff_md_sha256") or "")
+        if handoff_md_sha:
+            record["prior_manual_boundary_artifact_sha256"] = handoff_md_sha
+            record["source_publication_handoff_md_sha256"] = handoff_md_sha
+        record["source_coder_publication_handoff_markdown_consumed"] = str(
+            payload.get("source_coder_publication_handoff_markdown_consumed") is True
+        ).lower()
+    if md_path.exists():
+        record["source_goal_completion_evidence_md_sha256"] = hashlib.sha256(
+            md_path.read_bytes()
+        ).hexdigest()
+        record["source_goal_completion_markdown_consumed"] = "true"
+    return record
+
+
+def _goal_completion_proof_rows(
+    proof: dict[str, str],
+    *,
+    prefix: str,
+) -> list[tuple[str, str | SafeHtml]]:
+    def proof_artifact(path: str) -> str | SafeHtml:
+        value = str(path or "missing")
+        if value in {"missing", "none"}:
+            return value
+        return _artifact_link(value)
+
+    return [
+        (
+            f"{prefix}_source_goal_completion_evidence",
+            proof_artifact(proof["source_goal_completion_evidence"]),
+        ),
+        (
+            f"{prefix}_source_goal_completion_evidence_md",
+            proof_artifact(proof["source_goal_completion_evidence_md"]),
+        ),
+        (
+            f"{prefix}_source_goal_completion_evidence_sha256",
+            proof["source_goal_completion_evidence_sha256"],
+        ),
+        (
+            f"{prefix}_source_goal_completion_evidence_md_sha256",
+            proof["source_goal_completion_evidence_md_sha256"],
+        ),
+        (
+            f"{prefix}_source_goal_completion_markdown_consumed",
+            proof["source_goal_completion_markdown_consumed"],
+        ),
+        (
+            f"{prefix}_prior_manual_boundary_artifact",
+            proof_artifact(proof["prior_manual_boundary_artifact"]),
+        ),
+        (
+            f"{prefix}_prior_manual_boundary_artifact_sha256",
+            proof["prior_manual_boundary_artifact_sha256"],
+        ),
+        (
+            f"{prefix}_source_coder_publication_handoff_md",
+            proof_artifact(proof["source_coder_publication_handoff_md"]),
+        ),
+        (
+            f"{prefix}_source_publication_handoff_md_sha256",
+            proof["source_publication_handoff_md_sha256"],
+        ),
+        (
+            f"{prefix}_source_coder_publication_handoff_markdown_consumed",
+            proof["source_coder_publication_handoff_markdown_consumed"],
+        ),
+    ]
+
+
+def _completed_goal_workspace_proof(
+    root: Path,
+    source_goal: Any,
+    workspace: dict[str, str],
+) -> dict[str, str]:
+    proof = _goal_completion_proof_for_display(root, source_goal)
+    workspace_keys = {
+        "source_goal_completion_evidence": "completed_goal_handoff_completion_evidence",
+        "source_goal_completion_evidence_md": "completed_goal_handoff_completion_evidence_md",
+        "source_goal_completion_evidence_sha256": "completed_goal_handoff_completion_evidence_sha256",
+        "source_goal_completion_evidence_md_sha256": "completed_goal_handoff_completion_evidence_md_sha256",
+        "source_goal_completion_markdown_consumed": "completed_goal_handoff_completion_markdown_consumed",
+        "prior_manual_boundary_artifact": "completed_goal_handoff_prior_manual_boundary_artifact",
+        "prior_manual_boundary_artifact_sha256": "completed_goal_handoff_prior_manual_boundary_artifact_sha256",
+        "source_coder_publication_handoff_md": "completed_goal_handoff_source_coder_publication_handoff_md",
+        "source_publication_handoff_md_sha256": "completed_goal_handoff_source_publication_handoff_md_sha256",
+        "source_coder_publication_handoff_markdown_consumed": "completed_goal_handoff_source_coder_publication_handoff_markdown_consumed",
+    }
+    for proof_key, workspace_key in workspace_keys.items():
+        value = str(workspace.get(workspace_key) or "").strip()
+        if value:
+            proof[proof_key] = value
+    return proof
+
+
+def _completed_goal_handoff_panel(
+    root: Path,
+    storage: Storage,
+    *,
+    lead_goal: sqlite3.Row | None,
+    prefix: str,
+    title: str,
+) -> str:
+    state, source, workspace = _completed_goal_handoff_state(
+        root,
+        storage,
+        lead_goal=lead_goal,
+    )
+    if state is None:
+        return ""
+    goal = state["goal"]
+    goal_id = str(goal.id)
+    project_id = str(workspace.get("open_project") or goal.project_id or "").strip()
+    latest_artifact = str(workspace.get("last_viewed_artifact") or "").strip()
+    if not latest_artifact:
+        latest_artifact = _goal_latest_artifact_path(root, state)
+    publication = _goal_ready_publication(state)
+    completion_proof = _publication_handoff_completion_proof_for_display(
+        root,
+        publication,
+    )
+    completion_evidence_json = _goal_file_path(
+        goal.project_id,
+        goal.id,
+        "completion.json",
+    )
+    completion_evidence_md = completion_evidence_json.with_suffix(".md")
+    completion_goal_proof = _goal_completion_proof_for_display(root, goal)
+    completion_evidence_value: str | SafeHtml = (
+        SafeHtml(_artifact_link(str(completion_evidence_md)))
+        if (root / completion_evidence_md).exists()
+        else "none"
+    )
+    saved_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
+    saved_resume_value: str | SafeHtml = (
+        SafeHtml(f"<a href='{_e(saved_resume_surface)}'>{_e(saved_resume_surface)}</a>")
+        if saved_resume_surface
+        else "none"
+    )
+    goal_surface = SafeHtml(
+        f"<a href='/goals/{quote(goal_id)}'>{_e(_compact_label(goal.title or goal.description or goal_id, 72))}</a>"
+    )
+    project_surface: str | SafeHtml = (
+        SafeHtml(f"<a href='/projects/{quote(project_id)}'>{_e(project_id)}</a>")
+        if project_id
+        else "none"
+    )
+    evidence_href = f"/goals/{quote(goal_id)}#goal-completion-readiness"
+    timeline_href = f"/goals/{quote(goal_id)}#goal-timeline"
+    ci_href = f"/goals/{quote(goal_id)}#goal-ci-handoff"
+    next_work_href = (
+        f"/projects/{quote(project_id)}#start-goal-for-this-project"
+        if project_id
+        else "/goals#goal-start-another"
+    )
+    next_work_label = (
+        "Start Goal For This Project" if project_id else "Start Another Goal"
+    )
+    artifact_value = _artifact_link(latest_artifact) if latest_artifact else "none"
+    completed_at = getattr(goal, "completed_at", None) or "unknown"
+    section_id = f"{prefix}-completed-goal-handoff"
+    next_goal_form_id = f"{prefix}-completed-goal-next-goal-form"
+    data_attr = f"data-{prefix}-completed-goal-handoff"
+    next_goal_form = ""
+    next_goal_form_surface: str | SafeHtml = "none"
+    next_goal_form_available = bool(project_id)
+    if project_id:
+        next_goal_form_surface = SafeHtml(
+            f"<a href='#{_e(next_goal_form_id)}'>Create next Goal here</a>"
+        )
+        next_goal_form = "".join(
+            [
+                (
+                    f"<section id='{_e(next_goal_form_id)}' "
+                    "class='completed-goal-next-goal-form' "
+                    f"data-completed-goal-next-goal-form='{_e(prefix)}'>"
+                ),
+                "<h3>Create next Goal here</h3>",
+                "<p class='muted'>Start the next local Goal from this completed Goal handoff. Confirmation is required before ClankerOS creates any new local records.</p>",
+                _input_form(
+                    "create-goal",
+                    {
+                        "project_id": project_id,
+                        "completed_goal_id": goal_id,
+                        "completed_goal_artifact": latest_artifact,
+                        "completed_goal_completion_evidence": completion_goal_proof[
+                            "source_goal_completion_evidence"
+                        ],
+                        "completed_goal_completion_evidence_md": completion_goal_proof[
+                            "source_goal_completion_evidence_md"
+                        ],
+                        "completed_goal_completion_evidence_sha256": completion_goal_proof[
+                            "source_goal_completion_evidence_sha256"
+                        ],
+                        "completed_goal_completion_evidence_md_sha256": completion_goal_proof[
+                            "source_goal_completion_evidence_md_sha256"
+                        ],
+                        "completed_goal_completion_markdown_consumed": completion_goal_proof[
+                            "source_goal_completion_markdown_consumed"
+                        ],
+                        "completed_goal_prior_manual_boundary_artifact": completion_goal_proof[
+                            "prior_manual_boundary_artifact"
+                        ],
+                        "completed_goal_prior_manual_boundary_artifact_sha256": completion_goal_proof[
+                            "prior_manual_boundary_artifact_sha256"
+                        ],
+                        "completed_goal_source_coder_publication_handoff_md": completion_goal_proof[
+                            "source_coder_publication_handoff_md"
+                        ],
+                        "completed_goal_source_publication_handoff_md_sha256": completion_goal_proof[
+                            "source_publication_handoff_md_sha256"
+                        ],
+                        "completed_goal_source_coder_publication_handoff_markdown_consumed": completion_goal_proof[
+                            "source_coder_publication_handoff_markdown_consumed"
+                        ],
+                        "previous_resume_surface": saved_resume_surface,
+                        "return_to": saved_resume_surface or f"/{prefix}#{section_id}",
+                    },
+                    {
+                        "prompt": "Follow up after the completed Goal.",
+                        "created_by_profile": "planner",
+                    },
+                ),
+                "</section>",
+            ]
+        )
+    return "".join(
+        [
+            (
+                f"<section id='{_e(section_id)}' class='panel completed-goal-handoff' "
+                f"{data_attr}='true'>"
+            ),
+            f"<h2>{_e(title)}</h2>",
+            "<p class='muted'>Review the completed Goal evidence, keep the saved daily resume proof visible, and start the next Goal from the project workbench.</p>",
+            "<div class='today-ci-merge-grid completed-goal-handoff-grid' data-completed-goal-handoff-actions='true'>",
+            "<article class='today-ci-merge-card today-ci-merge-primary' data-completed-goal-card='evidence'>",
+            "<h3>Evidence</h3>",
+            "<strong>Completed Goal evidence</strong>",
+            f"<p>{_e(goal_id)}</p>",
+            f"<a class='today-ci-merge-action' href='{_e(evidence_href)}'>Completed Goal evidence</a>",
+            "</article>",
+            "<article class='today-ci-merge-card' data-completed-goal-card='resume'>",
+            "<h3>Resume Proof</h3>",
+            f"<strong>{_e(saved_resume_surface or 'none')}</strong>",
+            "<p>Saved workspace return point remains unchanged.</p>",
+            f"<a class='today-ci-merge-link' href='{_e(saved_resume_surface or '/resume')}'>Open saved resume</a>",
+            "</article>",
+            "<article class='today-ci-merge-card' data-completed-goal-card='next-work'>",
+            "<h3>Next Work</h3>",
+            "<strong>Start next Goal</strong>",
+            f"<p>{_e(project_id or 'Goal board')}</p>",
+            (
+                f"<a class='today-ci-merge-link' href='#{_e(next_goal_form_id)}'>"
+                "Create next Goal here</a>"
+                if next_goal_form_available
+                else f"<a class='today-ci-merge-link' href='{_e(next_work_href)}'>{_e(next_work_label)}</a>"
+            ),
+            "</article>",
+            "</div>",
+            next_goal_form,
+            "<details class='completed-goal-handoff-evidence' data-completed-goal-handoff-evidence='true'><summary>Completed Goal handoff evidence</summary>",
+            _kv(
+                [
+                    (f"{prefix}_completed_goal_status", "completed"),
+                    (f"{prefix}_completed_goal_source", source),
+                    (f"{prefix}_completed_goal_goal_id", goal_id),
+                    (f"{prefix}_completed_goal_goal", goal_surface),
+                    (f"{prefix}_completed_goal_project", project_surface),
+                    (f"{prefix}_completed_goal_completed_at", completed_at),
+                    (
+                        f"{prefix}_completed_goal_evidence_surface",
+                        SafeHtml(
+                            f"<a href='{_e(evidence_href)}'>Completed Goal evidence</a>"
+                        ),
+                    ),
+                    (
+                        f"{prefix}_completed_goal_timeline_surface",
+                        SafeHtml(f"<a href='{_e(timeline_href)}'>Goal timeline</a>"),
+                    ),
+                    (
+                        f"{prefix}_completed_goal_ci_surface",
+                        SafeHtml(f"<a href='{_e(ci_href)}'>Goal CI handoff</a>"),
+                    ),
+                    (f"{prefix}_completed_goal_latest_artifact", artifact_value),
+                    (f"{prefix}_completed_goal_completion_evidence", completion_evidence_value),
+                    *_goal_completion_proof_rows(
+                        completion_goal_proof,
+                        prefix=f"{prefix}_completed_goal",
+                    ),
+                    *_publication_handoff_completion_proof_rows(
+                        completion_proof,
+                        prefix=f"{prefix}_completed_goal",
+                    ),
+                    (f"{prefix}_completed_goal_next_work_action", "Start next Goal"),
+                    (
+                        f"{prefix}_completed_goal_next_work_surface",
+                        SafeHtml(
+                            f"<a href='{_e(next_work_href)}'>{_e(next_work_label)}</a>"
+                        ),
+                    ),
+                    (
+                        f"{prefix}_completed_goal_next_goal_form_available",
+                        str(next_goal_form_available).lower(),
+                    ),
+                    (f"{prefix}_completed_goal_next_goal_action", "create-goal"),
+                    (
+                        f"{prefix}_completed_goal_next_goal_form_surface",
+                        next_goal_form_surface,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_next_goal_confirmation_required",
+                        str(next_goal_form_available).lower(),
+                    ),
+                    (
+                        f"{prefix}_completed_goal_next_goal_carries_previous_evidence",
+                        str(bool(goal_id and latest_artifact and saved_resume_surface)).lower(),
+                    ),
+                    (f"{prefix}_completed_goal_saved_resume_surface", saved_resume_value),
+                    (
+                        f"{prefix}_completed_goal_saved_resume_preserved",
+                        str(bool(saved_resume_surface)).lower(),
+                    ),
+                    (f"{prefix}_completed_goal_write_on_get", "false"),
+                    (f"{prefix}_completed_goal_provider_calls_taken", "0"),
+                    (f"{prefix}_completed_goal_network_actions_taken", "0"),
+                    (f"{prefix}_completed_goal_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    f"{prefix}_completed_goal_evidence: <a href='{_e(evidence_href)}'>Completed Goal evidence</a>",
+                    f"{prefix}_completed_goal_resume: <a href='{_e(saved_resume_surface or '/resume')}'>{_e(saved_resume_surface or '/resume')}</a>",
+                    f"{prefix}_completed_goal_next_work: <a href='{_e(next_work_href)}'>{_e(next_work_label)}</a>",
+                    (
+                        f"{prefix}_completed_goal_next_goal_form: "
+                        f"<a href='#{_e(next_goal_form_id)}'>Create next Goal here</a>"
+                        if next_goal_form_available
+                        else f"{prefix}_completed_goal_next_goal_form: unavailable"
+                    ),
+                    f"{prefix}_completed_goal_artifact: {_artifact_link(latest_artifact) if latest_artifact else 'none'}",
+                    f"{prefix}_completed_goal_completion_evidence: {completion_evidence_value}",
+                    f"{prefix}_completed_goal_handoff_proof: {_e(completion_proof['source_coder_publication_handoff_md'])} consumed={_e(completion_proof['source_coder_publication_handoff_markdown_consumed'])}",
+                    f"{prefix}_completed_goal_safety: read-only handoff; confirmed create-goal form owns next Goal creation",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _completed_goal_handoff_provenance_panel(
+    root: Path,
+    storage: Storage,
+    *,
+    prefix: str,
+    title: str,
+) -> str:
+    workspace = _load_workspace_state(root)
+    source_goal_id = str(workspace.get("completed_goal_handoff_source_goal") or "").strip()
+    current_goal_id = str(workspace.get("open_goal") or "").strip()
+    if not source_goal_id or not current_goal_id or source_goal_id == current_goal_id:
+        return ""
+    source_state = _goal_state(root, storage, source_goal_id)
+    current_state = _goal_state(root, storage, current_goal_id)
+    source_goal = source_state.get("goal")
+    current_goal = current_state.get("goal")
+    if (
+        source_goal is None
+        or current_goal is None
+        or source_goal.status != "completed"
+        or current_goal.status == "completed"
+    ):
+        return ""
+
+    action = _goal_next_action(root, current_state)
+    form_available = bool(_goal_next_action_form(current_state, action))
+    if prefix == "today":
+        current_href = "#today-current-action" if form_available else action.href
+        current_label = action.action if form_available else action.href
+    elif prefix == "resume":
+        current_href = (
+            "#resume-workbench-action-form"
+            if form_available
+            else _goal_primary_action_href(
+                current_state,
+                action,
+                form_available=False,
+                absolute=True,
+            )
+        )
+        current_label = _goal_action_cta_label(action, form_available)
+    else:
+        current_href = _goal_primary_action_href(
+            current_state,
+            action,
+            form_available=form_available,
+            absolute=True,
+        )
+        current_label = _goal_action_cta_label(action, form_available)
+
+    previous_resume_surface = (
+        _safe_local_return_path(
+            workspace.get("completed_goal_handoff_previous_resume_surface")
+        )
+        or ""
+    )
+    previous_artifact = str(
+        workspace.get("completed_goal_handoff_previous_artifact") or ""
+    ).strip()
+    if not previous_artifact:
+        previous_artifact = _goal_latest_artifact_path(root, source_state)
+    completion_goal_proof = _completed_goal_workspace_proof(
+        root,
+        source_goal,
+        workspace,
+    )
+    saved_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
+    project_id = str(current_goal.project_id or workspace.get("open_project") or "").strip()
+    _source_href, source_label, source_label_source, source_surface = _goal_display_link(
+        root,
+        source_goal_id,
+    )
+    _current_href, current_goal_label, current_label_source, current_goal_surface = (
+        _goal_display_link(root, current_goal_id)
+    )
+    project_surface: str | SafeHtml = (
+        SafeHtml(f"<a href='/projects/{quote(project_id)}'>{_e(project_id)}</a>")
+        if project_id
+        else "none"
+    )
+    previous_resume_value: str | SafeHtml = (
+        SafeHtml(
+            f"<a href='{_e(previous_resume_surface)}'>{_e(previous_resume_surface)}</a>"
+        )
+        if previous_resume_surface
+        else "none"
+    )
+    previous_artifact_value: str | SafeHtml = (
+        SafeHtml(_artifact_link(previous_artifact)) if previous_artifact else "none"
+    )
+    completion_evidence_value: str | SafeHtml = _artifact_link(
+        completion_goal_proof["source_goal_completion_evidence_md"]
+    )
+    prior_manual_boundary_value: str | SafeHtml = _artifact_link(
+        completion_goal_proof["prior_manual_boundary_artifact"]
+    )
+    source_evidence_href = f"/goals/{quote(source_goal_id)}#goal-completion-readiness"
+    current_surface = SafeHtml(
+        f"<a href='{_e(current_href)}'>{_e(current_label)}</a>"
+    )
+    source_evidence_surface = SafeHtml(
+        f"<a href='{_e(source_evidence_href)}'>Completed Goal evidence</a>"
+    )
+    data_attr = f"data-{prefix}-completed-goal-provenance"
+    section_id = f"{prefix}-completed-goal-provenance"
+    return "".join(
+        [
+            (
+                f"<section id='{_e(section_id)}' "
+                "class='panel completed-goal-provenance' "
+                f"{data_attr}='true'>"
+            ),
+            f"<h2>{_e(title)}</h2>",
+            "<p class='muted'>The next Goal is now the primary continuation. This provenance keeps the completed Goal handoff source visible without reopening the old next-Goal creation gate.</p>",
+            "<div class='today-ci-merge-grid completed-goal-provenance-grid' data-completed-goal-provenance-actions='true'>",
+            "<article class='today-ci-merge-card today-ci-merge-primary' data-completed-goal-provenance-card='continue'>",
+            "<h3>Continue</h3>",
+            f"<strong>{_e(action.action)}</strong>",
+            f"<p>{_e(current_goal_label or current_goal_id)}</p>",
+            f"<a class='today-ci-merge-action' href='{_e(current_href)}'>{_e(current_label)}</a>",
+            "</article>",
+            "<article class='today-ci-merge-card' data-completed-goal-provenance-card='source'>",
+            "<h3>From</h3>",
+            f"<strong>{_e(source_label or source_goal_id)}</strong>",
+            "<p>Completed Goal handoff source.</p>",
+            f"<a class='today-ci-merge-link' href='{_e(source_evidence_href)}'>Completed Goal evidence</a>",
+            "</article>",
+            "<article class='today-ci-merge-card' data-completed-goal-provenance-card='proof'>",
+            "<h3>Proof</h3>",
+            "<strong>Completion evidence</strong>",
+            "<p>Completed Goal proof carried into this successor.</p>",
+            (
+                str(completion_evidence_value)
+                if isinstance(completion_evidence_value, SafeHtml)
+                else _e(completion_evidence_value)
+            ),
+            "</article>",
+            "</div>",
+            "<details class='completed-goal-provenance-evidence' data-completed-goal-provenance-evidence='true'><summary>Completed Goal provenance evidence</summary>",
+            _kv(
+                [
+                    (f"{prefix}_completed_goal_provenance_status", "available"),
+                    (
+                        f"{prefix}_completed_goal_provenance_source",
+                        "workspace_completed_goal_handoff",
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_source_goal_id",
+                        source_goal_id,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_source_goal_label",
+                        source_label or source_goal_id,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_source_goal_label_source",
+                        source_label_source,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_source_goal",
+                        source_surface,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_source_evidence",
+                        source_evidence_surface,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_current_goal_id",
+                        current_goal_id,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_current_goal_label",
+                        current_goal_label or current_goal_id,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_current_goal_label_source",
+                        current_label_source,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_current_goal",
+                        current_goal_surface,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_project",
+                        project_surface,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_current_action",
+                        action.action,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_current_surface",
+                        current_surface,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_action_form_available",
+                        str(form_available).lower(),
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_previous_resume_surface",
+                        previous_resume_value,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_previous_artifact",
+                        previous_artifact_value,
+                    ),
+                    *_goal_completion_proof_rows(
+                        completion_goal_proof,
+                        prefix=f"{prefix}_completed_goal_provenance",
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_completion_evidence",
+                        completion_evidence_value,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_prior_manual_boundary",
+                        prior_manual_boundary_value,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_saved_resume_surface",
+                        SafeHtml(
+                            f"<a href='{_e(saved_resume_surface)}'>{_e(saved_resume_surface)}</a>"
+                        )
+                        if saved_resume_surface
+                        else "none",
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_write_on_get",
+                        "false",
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_provider_calls_taken",
+                        "0",
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_network_actions_taken",
+                        "0",
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_external_effects_created",
+                        "false",
+                    ),
+                ]
+            ),
+            _ul(
+                [
+                    f"{prefix}_completed_goal_provenance_continue: <a href='{_e(current_href)}'>{_e(current_label)}</a>",
+                    f"{prefix}_completed_goal_provenance_source: <a href='{_e(source_evidence_href)}'>Completed Goal evidence</a>",
+                    (
+                        f"{prefix}_completed_goal_provenance_previous_resume: "
+                        f"<a href='{_e(previous_resume_surface)}'>{_e(previous_resume_surface)}</a>"
+                        if previous_resume_surface
+                        else f"{prefix}_completed_goal_provenance_previous_resume: none"
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_previous_artifact: "
+                        f"{_artifact_link(previous_artifact)}"
+                        if previous_artifact
+                        else f"{prefix}_completed_goal_provenance_previous_artifact: none"
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_completion_evidence: "
+                        f"{_artifact_link(completion_goal_proof['source_goal_completion_evidence_md'])}"
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_prior_manual_boundary: "
+                        f"{_artifact_link(completion_goal_proof['prior_manual_boundary_artifact'])}"
+                    ),
+                    f"{prefix}_completed_goal_provenance_safety: read-only provenance; current Goal action owns continuation",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _goal_provenance_history_panel(
+    root: Path,
+    storage: Storage,
+    *,
+    goal_id: str,
+    prefix: str,
+    title: str,
+) -> str:
+    goal_id = str(goal_id or "").strip()
+    if not goal_id or goal_id == "none":
+        return ""
+    state = _goal_state(root, storage, goal_id)
+    goal = state.get("goal")
+    if goal is None:
+        return ""
+    metadata = _goal_completed_provenance_metadata(root, state)
+    if metadata.get("status") != "available":
+        return ""
+
+    artifact_path = str(metadata.get("artifact_path") or "none").strip()
+    source_goal_id = str(metadata.get("source_goal_id") or "none").strip()
+    successor_goal_id = str(metadata.get("successor_goal_id") or goal_id).strip()
+    trigger_action = str(metadata.get("trigger_action") or "none").strip()
+    trigger_result_id = str(metadata.get("trigger_result_id") or "none").strip()
+    previous_resume_surface = str(
+        metadata.get("previous_resume_surface") or "none"
+    ).strip()
+    previous_artifact = str(metadata.get("previous_artifact") or "none").strip()
+    completion_evidence = str(
+        metadata.get("source_goal_completion_evidence") or "none"
+    ).strip()
+    completion_evidence_md = str(
+        metadata.get("source_goal_completion_evidence_md") or "none"
+    ).strip()
+    prior_manual_boundary = str(
+        metadata.get("prior_manual_boundary_artifact") or "none"
+    ).strip()
+
+    source_href = (
+        f"/goals/{quote(source_goal_id)}#goal-completion-readiness"
+        if source_goal_id and source_goal_id != "none"
+        else ""
+    )
+    successor_href = f"/goals/{quote(successor_goal_id or goal_id)}#goal-completed-provenance-history"
+    artifact_value: str | SafeHtml = (
+        _artifact_link(artifact_path) if artifact_path != "none" else "none"
+    )
+    source_value: str | SafeHtml = (
+        SafeHtml(f"<a href='{_e(source_href)}'>{_e(source_goal_id)}</a>")
+        if source_href
+        else "none"
+    )
+    successor_value: str | SafeHtml = SafeHtml(
+        f"<a href='{_e(successor_href)}'>{_e(successor_goal_id or goal_id)}</a>"
+    )
+    previous_resume_value: str | SafeHtml = (
+        SafeHtml(
+            f"<a href='{_e(previous_resume_surface)}'>{_e(previous_resume_surface)}</a>"
+        )
+        if previous_resume_surface != "none"
+        else "none"
+    )
+    previous_artifact_value: str | SafeHtml = (
+        _artifact_link(previous_artifact) if previous_artifact != "none" else "none"
+    )
+    completion_evidence_value: str | SafeHtml = (
+        _artifact_link(completion_evidence) if completion_evidence != "none" else "none"
+    )
+    completion_evidence_md_value: str | SafeHtml = (
+        _artifact_link(completion_evidence_md)
+        if completion_evidence_md != "none"
+        else "none"
+    )
+    prior_manual_boundary_value: str | SafeHtml = (
+        _artifact_link(prior_manual_boundary)
+        if prior_manual_boundary != "none"
+        else "none"
+    )
+    data_attr = f"data-{prefix}-goal-provenance-history"
+    section_id = f"{prefix}-goal-provenance-history"
+    return "".join(
+        [
+            (
+                f"<section id='{_e(section_id)}' "
+                "class='panel goal-provenance-history' "
+                f"{data_attr}='true'>"
+            ),
+            f"<h2>{_e(title)}</h2>",
+            "<p class='muted'>Durable history for the prior completed Goal; the current Goal stays in control of the next action.</p>",
+            "<div class='today-ci-merge-grid goal-provenance-history-grid' data-goal-provenance-history-actions='true'>",
+            "<article class='today-ci-merge-card today-ci-merge-primary' data-goal-provenance-history-card='successor'>",
+            "<h3>Current Goal</h3>",
+            f"<strong>{_e(successor_goal_id or goal_id)}</strong>",
+            "<p>Continuation Goal with provenance attached.</p>",
+            f"<a class='today-ci-merge-action' href='{_e(successor_href)}'>Open history</a>",
+            "</article>",
+            "<article class='today-ci-merge-card' data-goal-provenance-history-card='artifact'>",
+            "<h3>History Artifact</h3>",
+            f"<strong>{_e(artifact_path)}</strong>",
+            "<p>Completed Goal provenance retained as evidence.</p>",
+            str(artifact_value) if isinstance(artifact_value, SafeHtml) else _e(artifact_value),
+            "</article>",
+            "<article class='today-ci-merge-card' data-goal-provenance-history-card='source'>",
+            "<h3>Source Goal</h3>",
+            f"<strong>{_e(source_goal_id)}</strong>",
+            "<p>Prior completed Goal that created this continuation.</p>",
+            str(source_value) if isinstance(source_value, SafeHtml) else _e(source_value),
+            "</article>",
+            "</div>",
+            "<details class='goal-provenance-history-evidence' data-goal-provenance-history-evidence='true'><summary>Goal provenance history evidence</summary>",
+            _kv(
+                [
+                    (f"{prefix}_goal_provenance_history_status", metadata["status"]),
+                    (
+                        f"{prefix}_goal_provenance_history_source_goal",
+                        source_value,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_successor_goal",
+                        successor_value,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_trigger_action",
+                        trigger_action,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_trigger_result_id",
+                        trigger_result_id,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_artifact",
+                        artifact_value,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_previous_resume_surface",
+                        previous_resume_value,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_previous_artifact",
+                        previous_artifact_value,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_source_goal_completion_evidence",
+                        completion_evidence_value,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_source_goal_completion_evidence_md",
+                        completion_evidence_md_value,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_source_goal_completion_evidence_sha256",
+                        metadata.get("source_goal_completion_evidence_sha256", "none"),
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_source_goal_completion_evidence_md_sha256",
+                        metadata.get("source_goal_completion_evidence_md_sha256", "none"),
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_source_goal_completion_markdown_consumed",
+                        metadata.get("source_goal_completion_markdown_consumed", "none"),
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_prior_manual_boundary_artifact",
+                        prior_manual_boundary_value,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_prior_manual_boundary_artifact_sha256",
+                        metadata.get("prior_manual_boundary_artifact_sha256", "none"),
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_source_coder_publication_handoff_md",
+                        _artifact_link(
+                            metadata.get("source_coder_publication_handoff_md", "none")
+                        ),
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_source_publication_handoff_md_sha256",
+                        metadata.get("source_publication_handoff_md_sha256", "none"),
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_source_coder_publication_handoff_markdown_consumed",
+                        metadata.get(
+                            "source_coder_publication_handoff_markdown_consumed",
+                            "none",
+                        ),
+                    ),
+                    (f"{prefix}_goal_provenance_history_write_on_get", "false"),
+                    (
+                        f"{prefix}_goal_provenance_history_provider_calls_taken",
+                        "0",
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_network_actions_taken",
+                        "0",
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_external_effects_created",
+                        "false",
+                    ),
+                ]
+            ),
+            _ul(
+                [
+                    f"{prefix}_goal_provenance_history_artifact: {_artifact_link(artifact_path) if artifact_path != 'none' else 'none'}",
+                    f"{prefix}_goal_provenance_history_completion_evidence: {_artifact_link(completion_evidence_md) if completion_evidence_md != 'none' else 'none'}",
+                    f"{prefix}_goal_provenance_history_prior_manual_boundary: {_artifact_link(prior_manual_boundary) if prior_manual_boundary != 'none' else 'none'}",
+                    f"{prefix}_goal_provenance_history_successor: <a href='{_e(successor_href)}'>{_e(successor_goal_id or goal_id)}</a>",
+                    f"{prefix}_goal_provenance_history_safety: read-only history; active action remains on the current Goal",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
+def _today_self_hosting_check(root: Path) -> str:
+    from agent_os.self_hosting_check import (
+        load_latest_self_hosting_check,
+        self_hosting_check_command_template,
+    )
+
+    payload = load_latest_self_hosting_check(root)
+    command = self_hosting_check_command_template(root)
+    if payload is None:
+        status = "missing"
+        created_at = "never"
+        checks = {
+            "local_fetch": {"status": "missing", "reason": "check_not_run"},
+            "saved_resume": {"status": "missing", "reason": "check_not_run"},
+            "current_main_proof": {"status": "missing", "reason": "check_not_run"},
+            "browser_next_action": {"status": "missing", "reason": "check_not_run"},
+        }
+        report_href = "none"
+        evidence_href = "none"
+        safety = {
+            "network_actions_taken": 0,
+            "external_mutations_taken": 0,
+            "provider_calls_taken": 0,
+            "browser_write_on_get": False,
+            "browser_network_actions_taken": 0,
+        }
+    else:
+        status = str(payload.get("status", "unknown"))
+        created_at = str(payload.get("created_at", "unknown"))
+        checks = payload.get("checks", {}) if isinstance(payload.get("checks"), dict) else {}
+        artifacts = payload.get("artifacts", {}) if isinstance(payload.get("artifacts"), dict) else {}
+        report_path = str(artifacts.get("report", "docs/self-hosting-check.md"))
+        latest_json = str(artifacts.get("latest_json", ".clanker/self-hosting-checks/latest.json"))
+        report_href = f"/artifacts?path={quote(report_path)}"
+        evidence_href = f"/artifacts?path={quote(latest_json)}"
+        safety = payload.get("safety", {}) if isinstance(payload.get("safety"), dict) else {}
+
+    def check_status(name: str) -> str:
+        check = checks.get(name, {}) if isinstance(checks, dict) else {}
+        return str(check.get("status", "missing")) if isinstance(check, dict) else "missing"
+
+    def check_reason(name: str) -> str:
+        check = checks.get(name, {}) if isinstance(checks, dict) else {}
+        return str(check.get("reason", "missing")) if isinstance(check, dict) else "missing"
+
+    resume_check = checks.get("saved_resume", {}) if isinstance(checks, dict) else {}
+    action_check = checks.get("browser_next_action", {}) if isinstance(checks, dict) else {}
+    proof_check = checks.get("current_main_proof", {}) if isinstance(checks, dict) else {}
+    resume_surface = (
+        str(resume_check.get("resume_surface", "none"))
+        if isinstance(resume_check, dict)
+        else "none"
+    )
+    next_action = (
+        str(action_check.get("action", "none"))
+        if isinstance(action_check, dict)
+        else "none"
+    )
+    next_surface = (
+        str(action_check.get("surface", "none"))
+        if isinstance(action_check, dict)
+        else "none"
+    )
+    current_proof = (
+        str(proof_check.get("ci_current_proof", "none"))
+        if isinstance(proof_check, dict)
+        else "none"
+    )
+    proof_match_source = (
+        str(proof_check.get("ci_current_match_source", "none"))
+        if isinstance(proof_check, dict)
+        else "none"
+    )
+    report_link: str | SafeHtml = (
+        SafeHtml(f"<a href='{_e(report_href)}'>docs/self-hosting-check.md</a>")
+        if report_href != "none"
+        else "none"
+    )
+    evidence_link: str | SafeHtml = (
+        SafeHtml(f"<a href='{_e(evidence_href)}'>latest.json</a>")
+        if evidence_href != "none"
+        else "none"
+    )
+    resume_link: str | SafeHtml = (
+        SafeHtml(f"<a href='{_e(resume_surface)}'>{_e(resume_surface)}</a>")
+        if resume_surface.startswith("/")
+        else resume_surface
+    )
+    next_link: str | SafeHtml = (
+        SafeHtml(f"<a href='{_e(next_surface)}'>{_e(next_surface)}</a>")
+        if next_surface.startswith("/")
+        else next_surface
+    )
+    return "".join(
+        [
+            "<section id='today-self-hosting-check' class='panel today-self-hosting-check' data-today-self-hosting-check='true'>",
+            "<h2>Next-Day Self-Hosting Check</h2>",
+            "<p class='muted'>One terminal command verifies fetch, resume, main proof, and the browser next action before work resumes.</p>",
+            "<div class='today-ci-merge-grid' data-today-self-hosting-cards='true'>",
+            "<article class='today-ci-merge-card today-ci-merge-primary' data-today-self-hosting-card='status'>",
+            "<h3>Status</h3>",
+            f"<strong>{_e(status)}</strong>",
+            f"<p>Recorded: {_e(created_at)}</p>",
+            "</article>",
+            "<article class='today-ci-merge-card' data-today-self-hosting-card='command'>",
+            "<h3>Command</h3>",
+            f"<strong>{_e(command)}</strong>",
+            "<p>Run from the repository root before resuming tomorrow.</p>",
+            "</article>",
+            "<article class='today-ci-merge-card' data-today-self-hosting-card='next-action'>",
+            "<h3>Browser Next Action</h3>",
+            f"<strong>{_e(next_action)}</strong>",
+            f"<p>{next_link}</p>",
+            "</article>",
+            "</div>",
+            "<details class='today-self-hosting-evidence' data-today-self-hosting-evidence='true'><summary>Next-day self-hosting evidence</summary>",
+            _kv(
+                [
+                    ("today_self_hosting_check_status", status),
+                    ("today_self_hosting_check_created_at", created_at),
+                    ("today_self_hosting_check_command", command),
+                    ("today_self_hosting_check_report", report_link),
+                    ("today_self_hosting_check_evidence", evidence_link),
+                    ("today_self_hosting_check_local_fetch", check_status("local_fetch")),
+                    ("today_self_hosting_check_local_fetch_reason", check_reason("local_fetch")),
+                    ("today_self_hosting_check_saved_resume", check_status("saved_resume")),
+                    ("today_self_hosting_check_saved_resume_reason", check_reason("saved_resume")),
+                    ("today_self_hosting_check_resume_surface", resume_link),
+                    ("today_self_hosting_check_current_main_proof", check_status("current_main_proof")),
+                    ("today_self_hosting_check_current_main_reason", check_reason("current_main_proof")),
+                    ("today_self_hosting_check_ci_proof", current_proof),
+                    ("today_self_hosting_check_ci_match_source", proof_match_source),
+                    ("today_self_hosting_check_browser_next_action", check_status("browser_next_action")),
+                    ("today_self_hosting_check_browser_next_action_reason", check_reason("browser_next_action")),
+                    ("today_self_hosting_check_browser_action", next_action),
+                    ("today_self_hosting_check_browser_surface", next_link),
+                    (
+                        "today_self_hosting_check_network_actions_taken",
+                        str(safety.get("network_actions_taken", 0)),
+                    ),
+                    (
+                        "today_self_hosting_check_external_mutations_taken",
+                        str(safety.get("external_mutations_taken", 0)),
+                    ),
+                    (
+                        "today_self_hosting_check_provider_calls_taken",
+                        str(safety.get("provider_calls_taken", 0)),
+                    ),
+                    ("today_self_hosting_check_write_on_get", "false"),
+                    ("today_self_hosting_check_browser_network_actions_taken", "0"),
+                    ("today_self_hosting_check_external_effects_created", "false"),
+                ]
+            ),
+            _ul(
+                [
+                    "today_self_hosting_check_safety: browser reads latest local report only",
+                    "today_self_hosting_check_boundary: terminal command owns git fetch; app GET owns no writes",
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
 
 
 def _today_live_state(
@@ -3351,9 +4873,11 @@ def _project_ci_evidence_command_state(root: Path, project_id: str) -> dict[str,
             "latest_source": "none",
             "latest_status": "missing",
             "latest_scope": "none",
+            "latest_branch": "none",
             "latest_commit": "none",
             "latest_external_run_id": "none",
             "current_proof": "missing_current_commit_proof",
+            "current_match_source": "missing_record",
             "command_status": "no_project_scoped_records",
             "next_action": "Record Goal CI proof",
             "target_surface": "#record-goal-ci-proof",
@@ -3364,15 +4888,18 @@ def _project_ci_evidence_command_state(root: Path, project_id: str) -> dict[str,
     result = getattr(record, "result_json", {}) or {}
     latest_scope = str(result.get("evidence_scope", "unknown"))
     latest_status = str(getattr(record, "status", "unknown"))
+    latest_branch = str(getattr(record, "branch_name", "unknown"))
     latest_commit = str(getattr(record, "commit_sha", "unknown"))
 
-    branch_matches = str(getattr(record, "branch_name", "")) == branch
-    commit_matches = current_commit_known and _commit_refs_match(
-        latest_commit,
-        current_commit,
-        repo_state["commit"],
+    match = _ci_record_current_checkout_match(
+        project_root,
+        record_branch=latest_branch,
+        record_commit=latest_commit,
+        current_branch=branch,
+        full_commit=current_commit,
+        short_commit=repo_state["commit"],
     )
-    matches_current = branch_matches and commit_matches
+    matches_current = current_commit_known and bool(match["matches_current"])
     if not current_commit_known:
         current_proof = "current_commit_unknown"
         command_status = "project_records_available_current_commit_unknown"
@@ -3412,9 +4939,13 @@ def _project_ci_evidence_command_state(root: Path, project_id: str) -> dict[str,
         "latest_source": source_kind,
         "latest_status": latest_status,
         "latest_scope": latest_scope,
+        "latest_branch": latest_branch,
         "latest_commit": latest_commit,
         "latest_external_run_id": str(getattr(record, "external_run_id", "unknown")),
         "current_proof": current_proof,
+        "current_match_source": (
+            "current_commit_unknown" if not current_commit_known else str(match["source"])
+        ),
         "command_status": command_status,
         "next_action": next_action,
         "target_surface": target_surface,
@@ -4773,6 +6304,7 @@ def _today_workflow_map(
 
 
 def _today_ci_handoff(root: Path, lead_goal: sqlite3.Row | None) -> str:
+    handoff_root = root
     if lead_goal is None:
         state = _ci_evidence_command_state(root)
         latest_record = _latest_ci_evidence_record(root)
@@ -4790,6 +6322,7 @@ def _today_ci_handoff(root: Path, lead_goal: sqlite3.Row | None) -> str:
         storage = _storage(root)
         project = storage.get_registered_project(project_id)
         project_root = Path(project.root_path) if project else root
+        handoff_root = project_root
         state = _project_ci_evidence_command_state(root, project_id)
         latest_record = _latest_ci_evidence_record(root, project_id=project_id)
         repo = _repo_state(project_root)
@@ -4811,6 +6344,7 @@ def _today_ci_handoff(root: Path, lead_goal: sqlite3.Row | None) -> str:
     latest_source = state["latest_source"]
     latest_status = state["latest_status"]
     latest_scope = state["latest_scope"]
+    latest_branch = state.get("latest_branch", "none")
     latest_commit = state["latest_commit"]
     latest_run_id = state["latest_external_run_id"]
     merge_state = _ci_merge_readiness_state(
@@ -4848,15 +6382,17 @@ def _today_ci_handoff(root: Path, lead_goal: sqlite3.Row | None) -> str:
         )
         latest_evidence = _artifact_link(evidence_path)
         latest_recorded_by = str(getattr(record, "recorded_by", "unknown"))
-        branch_matches = str(getattr(record, "branch_name", "")) == state["branch"]
-        commit_matches = _commit_refs_match(
-            str(getattr(record, "commit_sha", "")),
-            state["current_commit"],
-            repo["commit"],
+        match = _ci_record_current_checkout_match(
+            handoff_root,
+            record_branch=str(getattr(record, "branch_name", "")),
+            record_commit=str(getattr(record, "commit_sha", "")),
+            current_branch=state["branch"],
+            full_commit=state["current_commit"],
+            short_commit=repo["commit"],
         )
-        branch_matches_current = str(branch_matches).lower()
-        commit_matches_current = str(commit_matches).lower()
-        matches_current = str(branch_matches and commit_matches).lower()
+        branch_matches_current = str(match["branch_matches"]).lower()
+        commit_matches_current = str(match["commit_matches"]).lower()
+        matches_current = str(match["matches_current"]).lower()
 
     branch_arg = shlex.quote(state["branch"])
     repo_arg = shlex.quote(repo_slug)
@@ -4908,11 +6444,16 @@ def _today_ci_handoff(root: Path, lead_goal: sqlite3.Row | None) -> str:
                     ("today_ci_handoff_latest_status", latest_status),
                     ("today_ci_handoff_latest_scope", latest_scope),
                     ("today_ci_handoff_latest_provider", latest_provider),
+                    ("today_ci_handoff_latest_branch", latest_branch),
                     ("today_ci_handoff_latest_commit", latest_commit),
                     ("today_ci_handoff_latest_run_id", latest_run_id),
                     ("today_ci_handoff_latest_url", latest_url),
                     ("today_ci_handoff_latest_evidence", latest_evidence),
                     ("today_ci_handoff_latest_recorded_by", latest_recorded_by),
+                    (
+                        "today_ci_handoff_current_match_source",
+                        state.get("current_match_source", "unknown"),
+                    ),
                     (
                         "today_ci_handoff_branch_matches_current",
                         branch_matches_current,
@@ -5105,6 +6646,71 @@ def _today_goal_queue(
                 ]
             ),
             _ul(item_lines),
+            "</section>",
+        ]
+    )
+
+
+def _today_stale_goal_hygiene(
+    rows: list[sqlite3.Row],
+    *,
+    lead_goal: sqlite3.Row | None,
+) -> str:
+    lead_goal_id = str(lead_goal["id"]) if lead_goal is not None else ""
+    candidates = _stale_goal_hygiene_candidates(rows, lead_goal_id=lead_goal_id)
+    active_count = sum(1 for row, _reason in candidates if _goal_bucket(row) == "active")
+    paused_count = sum(1 for row, _reason in candidates if _goal_bucket(row) == "paused")
+    completed_count = sum(1 for row, _reason in candidates if _goal_bucket(row) == "completed")
+    status = "attention_needed" if active_count or paused_count else "clear"
+    visible_candidates = candidates[:8]
+    lines = []
+    for row, reason in visible_candidates:
+        goal_id = str(row["id"])
+        bucket = _goal_bucket(row)
+        title = _compact_label(
+            str(row["title"] or row["description"] or goal_id),
+            84,
+        )
+        lines.append(
+            "today_stale_goal_hygiene_candidate: "
+            f"goal=<a href='/goals/{quote(goal_id)}'>{_e(title)}</a> "
+            f"status={_e(str(row['status']))} bucket={_e(bucket)} "
+            f"reason={_e(reason)} action={_goal_hygiene_action_surface(row)}"
+        )
+    overflow = len(candidates) - len(visible_candidates)
+    if overflow > 0:
+        lines.append(
+            f"today_stale_goal_hygiene_overflow: {overflow} more candidates on <a href='/goals#goal-stale-hygiene'>/goals#goal-stale-hygiene</a>"
+        )
+    if not lines:
+        lines.append("today_stale_goal_hygiene_clear: no stale demo or context-pack Goals detected")
+    return "".join(
+        [
+            "<section id='today-stale-goal-hygiene' class='panel goal-stale-hygiene today-stale-goal-hygiene' data-today-stale-goal-hygiene='true'><h2>Stale Goal Hygiene</h2>",
+            "<p class='muted'>Keeps old demo and context-pack Goals visible as evidence while steering Today toward the real daily-use Goal.</p>",
+            _kv(
+                [
+                    ("today_stale_goal_hygiene_status", status),
+                    ("today_stale_goal_hygiene_source", "demo_context_pack_goal_classifier"),
+                    ("today_stale_goal_hygiene_candidates", str(len(candidates))),
+                    ("today_stale_goal_hygiene_active_candidates", str(active_count)),
+                    ("today_stale_goal_hygiene_paused_candidates", str(paused_count)),
+                    ("today_stale_goal_hygiene_completed_candidates", str(completed_count)),
+                    ("today_stale_goal_hygiene_lead_goal_protected", lead_goal_id or "none"),
+                    (
+                        "today_stale_goal_hygiene_primary_surface",
+                        SafeHtml("<a href='/goals#goal-stale-hygiene'>/goals#goal-stale-hygiene</a>"),
+                    ),
+                    ("today_stale_goal_hygiene_pause_path", "existing_confirmed_pause_goal_action"),
+                    ("today_stale_goal_hygiene_complete_path", "goal_completion_readiness_when_publication_handoff_ready"),
+                    ("today_stale_goal_hygiene_archive_status", "not_supported_for_goals_evidence_retained"),
+                    ("today_stale_goal_hygiene_write_on_get", "false"),
+                    ("today_stale_goal_hygiene_provider_calls_taken", "0"),
+                    ("today_stale_goal_hygiene_network_actions_taken", "0"),
+                    ("today_stale_goal_hygiene_external_effects_created", "false"),
+                ]
+            ),
+            _ul(lines),
             "</section>",
         ]
     )
@@ -5499,6 +7105,102 @@ def _first_run_route_context(root: Path, current_path: str) -> dict[str, Any]:
     }
 
 
+def _operator_first_viewport_strip(
+    *,
+    prefix: str,
+    goal_label: str,
+    goal_surface: str | SafeHtml,
+    phase: str,
+    next_action: str,
+    next_surface: str | SafeHtml,
+    proof_status: str,
+    proof_surface: str | SafeHtml,
+    finish_status: str,
+    finish_surface: str | SafeHtml,
+    resume_status: str,
+    resume_surface: str | SafeHtml,
+) -> str:
+    def surface_html(surface: str | SafeHtml) -> str:
+        if isinstance(surface, SafeHtml):
+            return str(surface)
+        text = str(surface or "none")
+        return f"<span>{_e(text)}</span>"
+
+    cards = [
+        ("goal", "Goal", goal_label or "none", goal_surface),
+        ("phase", "Phase", phase or "none", phase or "none"),
+        ("next-action", "Next Action", next_action or "none", next_surface),
+        ("proof", "Proof", proof_status or "unknown", proof_surface),
+        ("finish", "Finish", finish_status or "unknown", finish_surface),
+        ("resume", "Resume", resume_status or "unknown", resume_surface),
+    ]
+    card_html = "".join(
+        [
+            (
+                "<article class='operator-first-viewport-card' "
+                f"data-{_e(prefix)}-first-viewport-card='{_e(key)}'>"
+                f"<h3>{_e(label)}</h3>"
+                f"<strong>{_e(str(value))}</strong>"
+                f"{surface_html(surface)}</article>"
+            )
+            for key, label, value, surface in cards
+        ]
+    )
+    rows: list[tuple[str, str | SafeHtml]] = [
+        (f"{prefix}_first_viewport_goal", goal_surface),
+        (f"{prefix}_first_viewport_goal_label", goal_label or "none"),
+        (f"{prefix}_first_viewport_phase", phase or "none"),
+        (f"{prefix}_first_viewport_next_action", next_action or "none"),
+        (f"{prefix}_first_viewport_next_surface", next_surface),
+        (f"{prefix}_first_viewport_proof_status", proof_status or "unknown"),
+        (f"{prefix}_first_viewport_proof_surface", proof_surface),
+        (f"{prefix}_first_viewport_finish_status", finish_status or "unknown"),
+        (f"{prefix}_first_viewport_finish_surface", finish_surface),
+        (f"{prefix}_first_viewport_resume_status", resume_status or "unknown"),
+        (f"{prefix}_first_viewport_resume_surface", resume_surface),
+        (f"{prefix}_first_viewport_write_on_get", "false"),
+        (f"{prefix}_first_viewport_provider_calls_taken", "0"),
+        (f"{prefix}_first_viewport_network_actions_taken", "0"),
+        (f"{prefix}_first_viewport_external_effects_created", "false"),
+    ]
+    return "".join(
+        [
+            (
+                "<section class='operator-first-viewport' "
+                "data-operator-first-viewport='true' "
+                f"data-operator-first-viewport-prefix='{_e(prefix)}' "
+                f"data-{_e(prefix)}-first-viewport='true'>"
+            ),
+            "<h2>Current Operator State</h2>",
+            "<div class='operator-first-viewport-grid'>",
+            card_html,
+            "</div>",
+            "<details class='operator-first-viewport-evidence' ",
+            f"data-{_e(prefix)}-first-viewport-evidence='true'>",
+            "<summary>First viewport evidence</summary>",
+            _kv(rows),
+            _ul(
+                [
+                    (
+                        f"{prefix}_first_viewport_order: "
+                        "Goal -> Phase -> Next Action -> Proof -> Finish -> Resume"
+                    ),
+                    (
+                        f"{prefix}_first_viewport_next: "
+                        f"{_e(next_action or 'none')}"
+                    ),
+                    (
+                        f"{prefix}_first_viewport_safety: read-only summary; "
+                        "confirmed forms own writes and local execution"
+                    ),
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
 def _resume_first_run_context(root: Path) -> dict[str, Any]:
     return _first_run_route_context(root, "/resume")
 
@@ -5767,6 +7469,7 @@ def _today_command_center(
     finish_form = ""
     pause_form = ""
     note_form = ""
+    action_return_surface: str | SafeHtml = "not_available"
     pause_available = "false"
     note_available = "false"
     pause_surface: str | SafeHtml = "not_available"
@@ -5775,6 +7478,8 @@ def _today_command_center(
     first_run_form_surface: str | SafeHtml = "not_applicable"
     finish_resume_surface = "not_available"
     finish_resume_reason = "finish_form_unavailable"
+    latest_artifact = ""
+    goal_label_value = "none"
     if lead_goal is None:
         first_run = _first_run_progress(root, storage)
         first_run_href, first_run_label = _today_first_run_target(first_run)
@@ -5782,6 +7487,7 @@ def _today_command_center(
         goal_surface: str | SafeHtml = "none"
         project_surface: str | SafeHtml = "none"
         phase = "First run"
+        goal_label_value = "First run"
         primary_action = str(first_run["next_action"])
         first_goal_id = str(first_run.get("goal_id") or "")
         primary_href = first_run_href or (
@@ -5808,7 +7514,16 @@ def _today_command_center(
         state = _goal_state(root, storage, goal_id)
         goal = state["goal"]
         next_action = _goal_next_action(root, state)
-        action_form = _goal_next_action_form(state, next_action)
+        today_action_return = "/today#today-current-action"
+        action_form = _goal_next_action_form(
+            state,
+            next_action,
+            return_to_override=today_action_return,
+        )
+        if action_form:
+            action_return_surface = SafeHtml(
+                f"<a href='{_e(today_action_return)}'>{_e(today_action_return)}</a>"
+            )
         pause_form = _goal_pause_form(state)
         note_form = _today_note_form(root, state)
         pause_available = "true" if pause_form else "false"
@@ -5826,8 +7541,9 @@ def _today_command_center(
         latest_artifact = _goal_latest_artifact_path(root, state)
         status = "goal_ready"
         label = str(lead_goal["title"] or lead_goal["description"] or goal_id)
+        goal_label_value = _compact_label(label, 72)
         goal_surface = SafeHtml(
-            f"<a href='/goals/{quote(goal_id)}'>{_e(_compact_label(label, 72))}</a>"
+            f"<a href='/goals/{quote(goal_id)}'>{_e(goal_label_value)}</a>"
         )
         project_surface = SafeHtml(
             f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a>"
@@ -5922,6 +7638,34 @@ def _today_command_center(
     )
     rail_finish_href = "#today-finish" if finish_form else target_href
     rail_finish_label = "Finish Today" if finish_form else target_label
+    if latest_artifact:
+        proof_status = "latest_artifact_available"
+        proof_surface: str | SafeHtml = SafeHtml(_artifact_link(latest_artifact))
+    elif ci_status != "missing":
+        proof_status = ci_status
+        proof_surface = SafeHtml("<a href='/verification'>Verification</a>")
+    elif lead_goal is None:
+        proof_status = "not_ready_until_goal_exists"
+        proof_surface = SafeHtml("<a href='#first-run-guide'>First Run Guide</a>")
+    else:
+        proof_status = "missing"
+        proof_surface = SafeHtml("<a href='/verification'>Verification</a>")
+    first_viewport = _operator_first_viewport_strip(
+        prefix="today",
+        goal_label=goal_label_value,
+        goal_surface=goal_surface,
+        phase=phase,
+        next_action=primary_action,
+        next_surface=target_surface,
+        proof_status=proof_status,
+        proof_surface=proof_surface,
+        finish_status=finish_status,
+        finish_surface=SafeHtml(
+            f"<a href='{_e(rail_finish_href)}'>{_e(rail_finish_label)}</a>"
+        ),
+        resume_status=str(readiness["status"]),
+        resume_surface=resume_card_surface,
+    )
     session_rail = _today_session_rail(
         status=status,
         phase=phase,
@@ -5974,6 +7718,7 @@ def _today_command_center(
         ("today_command_ci_surface", SafeHtml("<a href='/verification'>/verification</a>")),
         ("today_command_action_form_available", str(bool(action_form)).lower()),
         ("today_command_confirmation_required", str(bool(action_form)).lower()),
+        ("today_command_action_return_surface", action_return_surface),
         ("today_command_finish_status", finish_status),
         (
             "today_command_finish_resume_surface",
@@ -6042,6 +7787,7 @@ def _today_command_center(
         [
             "<section id='today-command-center' class='panel today-command-center' data-today-command-center='true'><h2>Today Command Center</h2>",
             "<p class='muted'>One daily cockpit for the lead goal, operator attention, saved resume state, and end-of-day handoff.</p>",
+            first_viewport,
             session_rail,
             cards,
             action_details,
@@ -7526,8 +9272,14 @@ def _home_verification_handoff(root: Path) -> str:
     else:
         source_kind, record = latest_record
         result = record.result_json if isinstance(record.result_json, dict) else {}
-        branch_matches = record.branch_name == repo["branch"]
-        commit_matches = _commit_refs_match(record.commit_sha, full_commit, repo["commit"])
+        match = _ci_record_current_checkout_match(
+            root,
+            record_branch=record.branch_name,
+            record_commit=record.commit_sha,
+            current_branch=repo["branch"],
+            full_commit=full_commit,
+            short_commit=repo["commit"],
+        )
         lines.extend(
             [
                 ("home_latest_ci_source", source_kind),
@@ -7541,11 +9293,18 @@ def _home_verification_handoff(root: Path) -> str:
                     SafeHtml(f"<a href='{_e(record.external_url)}'>{_e(record.external_url)}</a>"),
                 ),
                 ("home_latest_ci_record_source", "operator_supplied"),
-                ("home_latest_ci_branch_matches_current", str(branch_matches).lower()),
-                ("home_latest_ci_commit_matches_current", str(commit_matches).lower()),
+                ("home_latest_ci_current_match_source", str(match["source"])),
+                (
+                    "home_latest_ci_branch_matches_current",
+                    str(match["branch_matches"]).lower(),
+                ),
+                (
+                    "home_latest_ci_commit_matches_current",
+                    str(match["commit_matches"]).lower(),
+                ),
                 (
                     "home_latest_ci_matches_current_checkout",
-                    str(branch_matches and commit_matches).lower(),
+                    str(match["matches_current"]).lower(),
                 ),
                 ("home_latest_ci_network_actions_taken", str(result.get("network_actions_taken", "unknown"))),
                 (
@@ -9447,6 +11206,26 @@ def _resume_page(root: Path) -> str:
             "</details>",
             "</section>",
             _resume_today_brief(root, state, open_project, open_goal, filters, expanded, last_artifact),
+            _completed_goal_handoff_provenance_panel(
+                root,
+                _storage(root),
+                prefix="resume",
+                title="Resume Completed Goal Provenance",
+            ),
+            _completed_goal_handoff_panel(
+                root,
+                _storage(root),
+                lead_goal=None,
+                prefix="resume",
+                title="Resume Completed Goal Handoff",
+            ),
+            _goal_provenance_history_panel(
+                root,
+                _storage(root),
+                goal_id=open_goal,
+                prefix="resume",
+                title="Resume Goal Provenance History",
+            ),
             _browser_resume_section(),
             _resume_operator_workbench(root, state, open_project, open_goal, filters, expanded, last_artifact),
             _resume_command_bar(root, state, open_project, open_goal, filters, expanded, last_artifact),
@@ -9959,6 +11738,33 @@ def _resume_command_bar(
         artifact_value = SafeHtml(_artifact_link(last_artifact))
 
     target = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    proof_status = "none"
+    if last_artifact:
+        proof_status = (
+            "saved_artifact_available"
+            if readiness["last_artifact_exists"]
+            else "saved_artifact_missing"
+        )
+    proof_surface = (
+        artifact_value
+        if last_artifact
+        else SafeHtml("<a href='/artifacts'>Artifacts</a>")
+    )
+    finish_status = "ready_to_update" if readiness["ready"] else "needs_workspace_save"
+    first_viewport = _operator_first_viewport_strip(
+        prefix="resume",
+        goal_label=goal_label or selected_goal or "none",
+        goal_surface=goal_value,
+        phase=phase,
+        next_action=next_action,
+        next_surface=target,
+        proof_status=proof_status,
+        proof_surface=proof_surface,
+        finish_status=finish_status,
+        finish_surface=SafeHtml("<a href='/workspace#save-workspace'>Finish Today</a>"),
+        resume_status=status,
+        resume_surface=target,
+    )
     rows = [
         ("resume_command_status", status),
         ("resume_command_ready", "true" if readiness["ready"] else "false"),
@@ -10011,6 +11817,7 @@ def _resume_command_bar(
         [
             "<section id='resume-command-bar' class='panel resume-command-bar' data-resume-command-bar='true'><h2>Resume Command Bar</h2>",
             "<p class='muted'>A scan-first return-to-work summary for continuing the saved local operator context.</p>",
+            first_viewport,
             "<details class='resume-command-evidence' data-resume-command-evidence='true'><summary>Resume command evidence</summary>",
             _kv(rows),
             _ul(lines),
@@ -10134,7 +11941,11 @@ def _resume_operator_workbench(
             phase = _goal_current_phase(goal_state)
             next_action = action.action
             reason = action.reason
-            action_form = _goal_next_action_form(goal_state, action)
+            action_form = _goal_next_action_form(
+                goal_state,
+                action,
+                return_to_override="/resume#resume-workbench-action-form",
+            )
             form_available = bool(action_form)
             target_href = _goal_primary_action_href(
                 goal_state,
@@ -15669,6 +17480,19 @@ def _load_workspace_state(root: Path) -> dict[str, str]:
         "last_action_next_href",
         "last_action_status",
         "last_action_updated_at",
+        "completed_goal_handoff_source_goal",
+        "completed_goal_handoff_previous_resume_surface",
+        "completed_goal_handoff_previous_artifact",
+        "completed_goal_handoff_completion_evidence",
+        "completed_goal_handoff_completion_evidence_md",
+        "completed_goal_handoff_completion_evidence_sha256",
+        "completed_goal_handoff_completion_evidence_md_sha256",
+        "completed_goal_handoff_completion_markdown_consumed",
+        "completed_goal_handoff_prior_manual_boundary_artifact",
+        "completed_goal_handoff_prior_manual_boundary_artifact_sha256",
+        "completed_goal_handoff_source_coder_publication_handoff_md",
+        "completed_goal_handoff_source_publication_handoff_md_sha256",
+        "completed_goal_handoff_source_coder_publication_handoff_markdown_consumed",
     ]
     if not path.exists():
         return {key: "" for key in keys} | {"updated_by": "operator", "updated_at": "never"}
@@ -15697,6 +17521,51 @@ def _write_workspace_state(root: Path, state: dict[str, str]) -> dict[str, Any]:
         "last_action_next_href": state.get("last_action_next_href", "").strip(),
         "last_action_status": state.get("last_action_status", "").strip(),
         "last_action_updated_at": state.get("last_action_updated_at", "").strip(),
+        "completed_goal_handoff_source_goal": str(
+            state.get("completed_goal_handoff_source_goal") or ""
+        ).strip(),
+        "completed_goal_handoff_previous_resume_surface": _safe_local_return_path(
+            state.get("completed_goal_handoff_previous_resume_surface")
+        )
+        or "",
+        "completed_goal_handoff_previous_artifact": str(
+            state.get("completed_goal_handoff_previous_artifact") or ""
+        ).strip(),
+        "completed_goal_handoff_completion_evidence": str(
+            state.get("completed_goal_handoff_completion_evidence") or ""
+        ).strip(),
+        "completed_goal_handoff_completion_evidence_md": str(
+            state.get("completed_goal_handoff_completion_evidence_md") or ""
+        ).strip(),
+        "completed_goal_handoff_completion_evidence_sha256": str(
+            state.get("completed_goal_handoff_completion_evidence_sha256") or ""
+        ).strip(),
+        "completed_goal_handoff_completion_evidence_md_sha256": str(
+            state.get("completed_goal_handoff_completion_evidence_md_sha256") or ""
+        ).strip(),
+        "completed_goal_handoff_completion_markdown_consumed": str(
+            state.get("completed_goal_handoff_completion_markdown_consumed") or ""
+        ).strip(),
+        "completed_goal_handoff_prior_manual_boundary_artifact": str(
+            state.get("completed_goal_handoff_prior_manual_boundary_artifact") or ""
+        ).strip(),
+        "completed_goal_handoff_prior_manual_boundary_artifact_sha256": str(
+            state.get("completed_goal_handoff_prior_manual_boundary_artifact_sha256") or ""
+        ).strip(),
+        "completed_goal_handoff_source_coder_publication_handoff_md": str(
+            state.get("completed_goal_handoff_source_coder_publication_handoff_md")
+            or ""
+        ).strip(),
+        "completed_goal_handoff_source_publication_handoff_md_sha256": str(
+            state.get("completed_goal_handoff_source_publication_handoff_md_sha256")
+            or ""
+        ).strip(),
+        "completed_goal_handoff_source_coder_publication_handoff_markdown_consumed": str(
+            state.get(
+                "completed_goal_handoff_source_coder_publication_handoff_markdown_consumed"
+            )
+            or ""
+        ).strip(),
         "network_actions_taken": 0,
         "external_mutations_taken": 0,
     }
@@ -15743,6 +17612,7 @@ def _remember_delegation_workspace(
     artifact_path: str | Path | None,
     updated_by: str,
     resume_surface: str | None = None,
+    clear_completed_goal_handoff: bool = False,
 ) -> dict[str, Any] | None:
     delegation = storage.get_subagent_delegation(delegation_id)
     if delegation is None:
@@ -15751,18 +17621,179 @@ def _remember_delegation_workspace(
         goal = storage.get_goal(delegation.parent_goal_id)
     except KeyError:
         return None
+    workspace = {
+        **_load_workspace_state(root),
+        "open_project": goal.project_id,
+        "open_goal": goal.id,
+        "last_viewed_artifact": _repo_relative_artifact_path(root, artifact_path),
+        "resume_surface": _safe_local_return_path(resume_surface)
+        or f"/delegations/{quote(delegation_id)}",
+        "updated_by": updated_by,
+    }
+    if clear_completed_goal_handoff:
+        workspace.update(
+            {
+                "completed_goal_handoff_source_goal": "",
+                "completed_goal_handoff_previous_resume_surface": "",
+                "completed_goal_handoff_previous_artifact": "",
+                "completed_goal_handoff_completion_evidence": "",
+                "completed_goal_handoff_completion_evidence_md": "",
+                "completed_goal_handoff_completion_evidence_sha256": "",
+                "completed_goal_handoff_completion_evidence_md_sha256": "",
+                "completed_goal_handoff_completion_markdown_consumed": "",
+                "completed_goal_handoff_prior_manual_boundary_artifact": "",
+                "completed_goal_handoff_prior_manual_boundary_artifact_sha256": "",
+                "completed_goal_handoff_source_coder_publication_handoff_md": "",
+                "completed_goal_handoff_source_publication_handoff_md_sha256": "",
+                "completed_goal_handoff_source_coder_publication_handoff_markdown_consumed": "",
+            }
+        )
     return _write_workspace_state(
         root,
-        {
-            **_load_workspace_state(root),
-            "open_project": goal.project_id,
-            "open_goal": goal.id,
-            "last_viewed_artifact": _repo_relative_artifact_path(root, artifact_path),
-            "resume_surface": _safe_local_return_path(resume_surface)
-            or f"/delegations/{quote(delegation_id)}",
-            "updated_by": updated_by,
-        },
+        workspace,
     )
+
+
+def _promote_completed_goal_handoff_provenance(
+    root: Path,
+    storage: Storage,
+    *,
+    successor_goal_id: str,
+    trigger_action: str,
+    trigger_result_id: str,
+    trigger_artifact_path: str | Path | None,
+) -> dict[str, str] | None:
+    workspace = _load_workspace_state(root)
+    source_goal_id = str(workspace.get("completed_goal_handoff_source_goal") or "").strip()
+    workspace_goal_id = str(workspace.get("open_goal") or "").strip()
+    if (
+        not source_goal_id
+        or not successor_goal_id
+        or source_goal_id == successor_goal_id
+        or (workspace_goal_id and workspace_goal_id != successor_goal_id)
+    ):
+        return None
+    try:
+        source_goal = storage.get_goal(source_goal_id)
+        successor_goal = storage.get_goal(successor_goal_id)
+    except KeyError:
+        return None
+    if source_goal.status != "completed" or successor_goal.status == "completed":
+        return None
+
+    previous_resume_surface = (
+        _safe_local_return_path(
+            workspace.get("completed_goal_handoff_previous_resume_surface")
+        )
+        or ""
+    )
+    previous_artifact = _repo_relative_artifact_path(
+        root,
+        workspace.get("completed_goal_handoff_previous_artifact") or "",
+    )
+    completion_goal_proof = _completed_goal_workspace_proof(
+        root,
+        source_goal,
+        workspace,
+    )
+    trigger_artifact = _repo_relative_artifact_path(root, trigger_artifact_path)
+    relative_path = _completed_goal_provenance_path(
+        successor_goal.project_id,
+        successor_goal.id,
+    )
+    path = root / relative_path
+    if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        lines = [
+            "# Completed Goal Provenance",
+            "",
+            f"source_goal_id: {source_goal.id}",
+            f"successor_goal_id: {successor_goal.id}",
+            f"project_id: {successor_goal.project_id}",
+            f"trigger_action: {trigger_action}",
+            f"trigger_result_id: {trigger_result_id}",
+            f"trigger_artifact: {trigger_artifact}",
+            f"previous_resume_surface: {previous_resume_surface}",
+            f"previous_artifact: {previous_artifact}",
+            "source_goal_completion_evidence: "
+            f"{completion_goal_proof['source_goal_completion_evidence']}",
+            "source_goal_completion_evidence_md: "
+            f"{completion_goal_proof['source_goal_completion_evidence_md']}",
+            "source_goal_completion_evidence_sha256: "
+            f"{completion_goal_proof['source_goal_completion_evidence_sha256']}",
+            "source_goal_completion_evidence_md_sha256: "
+            f"{completion_goal_proof['source_goal_completion_evidence_md_sha256']}",
+            "source_goal_completion_markdown_consumed: "
+            f"{completion_goal_proof['source_goal_completion_markdown_consumed']}",
+            "prior_manual_boundary_artifact: "
+            f"{completion_goal_proof['prior_manual_boundary_artifact']}",
+            "prior_manual_boundary_artifact_sha256: "
+            f"{completion_goal_proof['prior_manual_boundary_artifact_sha256']}",
+            "source_coder_publication_handoff_md: "
+            f"{completion_goal_proof['source_coder_publication_handoff_md']}",
+            "source_publication_handoff_md_sha256: "
+            f"{completion_goal_proof['source_publication_handoff_md_sha256']}",
+            "source_coder_publication_handoff_markdown_consumed: "
+            f"{completion_goal_proof['source_coder_publication_handoff_markdown_consumed']}",
+            f"promoted_at: {utc_now()}",
+            "write_on_get: false",
+            "provider_calls_taken_by_clankeros: 0",
+            "network_actions_taken: 0",
+            "external_effects_created: false",
+            "",
+            "## Meaning",
+            "",
+            (
+                "The completed Goal handoff was promoted into this successor Goal "
+                "after the operator confirmed the first successor action."
+            ),
+            (
+                "The transient Today and Resume handoff panels can now clear while "
+                "this durable record preserves the source Goal, prior resume surface, "
+                "and prior artifact."
+            ),
+            "",
+        ]
+        path.write_text("\n".join(lines), encoding="utf-8")
+    return {
+        "artifact_path": relative_path.as_posix(),
+        "source_goal_id": source_goal.id,
+        "successor_goal_id": successor_goal.id,
+    }
+
+
+def _delegation_creation_artifact_path(delegation_id: str) -> Path:
+    return Path(".clanker") / "delegations" / f"{delegation_id}-created.json"
+
+
+def _write_delegation_creation_artifact(root: Path, delegation: Any) -> Path:
+    relative_path = _delegation_creation_artifact_path(delegation.id)
+    path = root / relative_path
+    if path.exists():
+        return relative_path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "artifact_kind": "delegation_creation",
+        "delegation_id": delegation.id,
+        "parent_goal_id": delegation.parent_goal_id,
+        "parent_task_id": delegation.parent_task_id,
+        "assigned_profile": delegation.assigned_profile,
+        "category": delegation.category,
+        "title": delegation.title,
+        "status": delegation.status,
+        "created_at": delegation.created_at,
+        "delegation_metadata_artifact": _repo_relative_artifact_path(
+            root,
+            delegation.result_artifact_path,
+        ),
+        "result_title": "Scout delegation created",
+        "write_on_get": False,
+        "provider_calls_taken_by_clankeros": 0,
+        "network_actions_taken": 0,
+        "external_effects_created": False,
+    }
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return relative_path
 
 
 def _workspace_path(root: Path) -> Path:
@@ -16254,6 +18285,7 @@ def _goals(root: Path) -> str:
                 paused=paused,
                 completed=completed,
             ),
+            _goal_stale_hygiene_panel(rows),
             _goal_creation_panel(storage, rows),
             _goal_board_filter(rows, active, paused, completed),
             _list_section(
@@ -16605,7 +18637,14 @@ def _goal_board_command_bar(
     paused: list[sqlite3.Row],
     completed: list[sqlite3.Row],
 ) -> str:
-    selected_row, source = _goal_board_selected_row(root, rows, active, paused, completed)
+    selected_row, source = _goal_board_selected_row(
+        root,
+        storage,
+        rows,
+        active,
+        paused,
+        completed,
+    )
     if selected_row is None:
         first_run = _first_run_progress(root, storage)
         lines = [
@@ -16752,22 +18791,51 @@ def _goal_board_command_bar(
 
 def _goal_board_selected_row(
     root: Path,
+    storage: Storage,
     rows: list[sqlite3.Row],
     active: list[sqlite3.Row],
     paused: list[sqlite3.Row],
     completed: list[sqlite3.Row],
 ) -> tuple[sqlite3.Row | None, str]:
     saved_goal = str(_load_workspace_state(root).get("open_goal") or "").strip()
+    saved_stale_row: sqlite3.Row | None = None
     if saved_goal:
         for row in rows:
             if str(row["id"]) == saved_goal:
+                if _stale_goal_hygiene_reason(row):
+                    saved_stale_row = row
+                    break
                 return row, "saved_goal"
+    real_goal, real_source = _dogfooding_real_goal_row(root, storage)
+    if real_goal is not None and not _stale_goal_hygiene_reason(real_goal):
+        if saved_stale_row is not None:
+            return real_goal, f"{real_source}_selector_hygiene"
+        if active and _stale_goal_hygiene_reason(active[0]):
+            return real_goal, f"{real_source}_selector_hygiene"
     if active:
-        return active[0], "active_goal"
+        if not _stale_goal_hygiene_reason(active[0]):
+            return active[0], "active_goal"
+        for row in active:
+            if not _stale_goal_hygiene_reason(row):
+                return row, "active_goal_selector_hygiene"
     if paused:
+        for row in paused:
+            if not _stale_goal_hygiene_reason(row):
+                return row, "paused_goal_selector_hygiene"
+        if saved_stale_row is not None:
+            return saved_stale_row, "saved_goal_stale_hygiene"
         return paused[0], "paused_goal"
     if completed:
+        for row in completed:
+            if not _stale_goal_hygiene_reason(row):
+                return row, "completed_goal_selector_hygiene"
+        if saved_stale_row is not None:
+            return saved_stale_row, "saved_goal_stale_hygiene"
         return completed[0], "completed_goal"
+    if saved_stale_row is not None:
+        return saved_stale_row, "saved_goal_stale_hygiene"
+    if active:
+        return active[0], "active_goal"
     return None, "first_run"
 
 
@@ -16780,7 +18848,14 @@ def _goal_board_workbench(
     paused: list[sqlite3.Row],
     completed: list[sqlite3.Row],
 ) -> str:
-    selected_row, source = _goal_board_selected_row(root, rows, active, paused, completed)
+    selected_row, source = _goal_board_selected_row(
+        root,
+        storage,
+        rows,
+        active,
+        paused,
+        completed,
+    )
     if selected_row is None:
         first_run = _first_run_progress(root, storage)
         current_step = str(first_run["current_step"])
@@ -17007,6 +19082,121 @@ def _goal_board_workbench(
     )
 
 
+def _goal_stale_hygiene_panel(rows: list[sqlite3.Row]) -> str:
+    candidates = _stale_goal_hygiene_candidates(rows)
+    active_count = sum(1 for row, _reason in candidates if _goal_bucket(row) == "active")
+    paused_count = sum(1 for row, _reason in candidates if _goal_bucket(row) == "paused")
+    completed_count = sum(1 for row, _reason in candidates if _goal_bucket(row) == "completed")
+    status = "attention_needed" if active_count or paused_count else "clear"
+    cards: list[str] = []
+    lines: list[str] = []
+    for row, reason in candidates[:12]:
+        goal_id = str(row["id"])
+        bucket = _goal_bucket(row)
+        title = _compact_label(
+            str(row["title"] or row["description"] or goal_id),
+            96,
+        )
+        action_surface = _goal_hygiene_action_surface(row)
+        mutation_path = "review_only"
+        action_html = (
+            f"<a class='goal-stale-hygiene-link' href='/goals/{quote(goal_id)}'>Review Goal</a>"
+        )
+        if bucket == "active":
+            mutation_path = "confirmed_pause_goal"
+            action_html = "".join(
+                [
+                    "<details class='goal-stale-hygiene-action' data-goal-stale-hygiene-pause='true'>",
+                    "<summary>Pause stale Goal</summary>",
+                    "<p class='muted'>Moves this local Goal out of the active lane while keeping its artifacts and evidence visible.</p>",
+                    _input_form(
+                        "pause-goal",
+                        {"goal_id": goal_id},
+                        {
+                            "paused_by": "operator",
+                            "note": "Pause stale demo/context-pack Goal from hygiene panel.",
+                        },
+                    ),
+                    "</details>",
+                ]
+            )
+        elif bucket == "paused":
+            mutation_path = "resume_on_goal_detail"
+            action_html = (
+                f"<a class='goal-stale-hygiene-link' href='/goals/{quote(goal_id)}#goal-next-action'>Resume on Goal page</a>"
+            )
+        elif bucket == "completed":
+            mutation_path = "completion_review_only"
+            action_html = (
+                f"<a class='goal-stale-hygiene-link' href='/goals/{quote(goal_id)}#goal-completion-readiness'>Review completion</a>"
+            )
+        cards.append(
+            "".join(
+                [
+                    "<article class='goal-stale-hygiene-card' data-goal-stale-hygiene-card='true' ",
+                    f"data-goal-stale-hygiene-bucket='{_e(bucket)}' ",
+                    f"data-goal-stale-hygiene-reason='{_e(reason)}'>",
+                    f"<span class='goal-stale-hygiene-kicker'>{_e(bucket)} / {_e(reason)}</span>",
+                    f"<h3><a href='/goals/{quote(goal_id)}'>{_e(title)}</a></h3>",
+                    f"<p>{_e(str(row['project_id'] or 'unknown'))} · status {_e(str(row['status']))}</p>",
+                    "<div class='goal-stale-hygiene-actions'>",
+                    f"<a class='goal-stale-hygiene-link' href='/goals/{quote(goal_id)}'>Review</a>",
+                    str(action_html),
+                    "</div>",
+                    "</article>",
+                ]
+            )
+        )
+        lines.append(
+            "goal_stale_hygiene_candidate: "
+            f"goal=<a href='/goals/{quote(goal_id)}'>{_e(title)}</a> "
+            f"status={_e(str(row['status']))} bucket={_e(bucket)} "
+            f"reason={_e(reason)} mutation_path={_e(mutation_path)} "
+            f"action={action_surface}"
+        )
+    overflow = len(candidates) - len(cards)
+    if overflow > 0:
+        lines.append(f"goal_stale_hygiene_overflow: {overflow} more stale candidates beyond first 12")
+    if not lines:
+        lines.append("goal_stale_hygiene_clear: no stale demo or context-pack Goals detected")
+    cards_html = (
+        "<div class='goal-stale-hygiene-grid' data-goal-stale-hygiene-cards='true'>"
+        + "".join(cards)
+        + "</div>"
+        if cards
+        else "<p class='muted'>No stale demo or context-pack Goals need attention.</p>"
+    )
+    return "".join(
+        [
+            "<section id='goal-stale-hygiene' class='panel goal-stale-hygiene' data-goal-stale-hygiene='true'><h2>Stale Goal Hygiene</h2>",
+            "<p class='muted'>Review old demo/context-pack Goals, pause active stale work, or inspect completion evidence without hiding any artifacts.</p>",
+            cards_html,
+            "<details class='goal-stale-hygiene-evidence' data-goal-stale-hygiene-evidence='true'><summary>Stale Goal hygiene evidence</summary>",
+            _kv(
+                [
+                    ("goal_stale_hygiene_status", status),
+                    ("goal_stale_hygiene_source", "demo_context_pack_goal_classifier"),
+                    ("goal_stale_hygiene_candidates", str(len(candidates))),
+                    ("goal_stale_hygiene_active_candidates", str(active_count)),
+                    ("goal_stale_hygiene_paused_candidates", str(paused_count)),
+                    ("goal_stale_hygiene_completed_candidates", str(completed_count)),
+                    ("goal_stale_hygiene_review_path", "open_goal_detail"),
+                    ("goal_stale_hygiene_pause_path", "existing_confirmed_pause_goal_action"),
+                    ("goal_stale_hygiene_complete_path", "goal_completion_readiness_when_publication_handoff_ready"),
+                    ("goal_stale_hygiene_archive_status", "not_supported_for_goals_evidence_retained"),
+                    ("goal_stale_hygiene_write_on_get", "false"),
+                    ("goal_stale_hygiene_provider_calls_taken", "0"),
+                    ("goal_stale_hygiene_network_actions_taken", "0"),
+                    ("goal_stale_hygiene_external_effects_created", "false"),
+                ]
+            ),
+            _ul(lines),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
 def _goal_board_action_href(goal_id: str, href: str, form_available: bool) -> str:
     if form_available:
         return f"/goals/{quote(goal_id)}#goal-action-dock-form"
@@ -17063,6 +19253,26 @@ def _goal_detail(root: Path, goal_id: str) -> str:
         summary_resume_status = "needs_finish_today"
     summary_finish_status = "saved" if saved_resume_matches_goal else "needs_save"
     summary_title, summary_intent, summary_title_source = _goal_summary_parts(goal)
+    first_viewport = _operator_first_viewport_strip(
+        prefix="goal",
+        goal_label=summary_title,
+        goal_surface=SafeHtml(
+            f"<a href='/goals/{quote(goal.id)}'>{_e(summary_title)}</a>"
+        ),
+        phase=phase,
+        next_action=next_action.action,
+        next_surface=SafeHtml(
+            f"<a href='{_e(summary_action_href)}'>{_e(summary_action_label)}</a>"
+        ),
+        proof_status=summary_ci_status,
+        proof_surface=SafeHtml("<a href='#goal-ci-handoff'>CI handoff</a>"),
+        finish_status=summary_finish_status,
+        finish_surface=SafeHtml("<a href='#goal-finish-today'>Finish Today</a>"),
+        resume_status=summary_resume_status,
+        resume_surface=SafeHtml(
+            f"<a href='{_e(summary_resume_href)}'>{_e(summary_resume_label)}</a>"
+        ),
+    )
     summary_rows: list[tuple[str, str | SafeHtml]] = [
         ("goal_id", goal.id),
         ("goal_intent", summary_intent),
@@ -17127,6 +19337,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             ),
             f"<h1 data-goal-summary-title='true'>{_e(summary_title)}</h1>",
             f"<p class='muted' data-goal-summary-id='true'>Goal {_e(goal.id)}</p>",
+            first_viewport,
             _goal_control_strip(root, state, phase, next_action),
             _goal_path_rail(root, state, next_action),
             _goal_milestone_checklist(root, state, phase, next_action),
@@ -20332,6 +22543,7 @@ def _goal_ci_handoff(root: Path, state: dict[str, Any]) -> str:
     latest_recorded_by = "none"
     branch_matches_current = "missing"
     commit_matches_current = "missing"
+    current_match_source = project_ci_state.get("current_match_source", "missing")
     matches_current = False
     if latest_record is not None:
         source_kind, record = latest_record
@@ -20348,11 +22560,18 @@ def _goal_ci_handoff(root: Path, state: dict[str, Any]) -> str:
             _artifact_link(_repo_relative_artifact_path(root, record.evidence_path))
         )
         latest_recorded_by = str(record.recorded_by)
-        branch_matches = record.branch_name == repo["branch"]
-        commit_matches = _commit_refs_match(record.commit_sha, full_commit, repo["commit"])
-        matches_current = branch_matches and commit_matches
-        branch_matches_current = str(branch_matches).lower()
-        commit_matches_current = str(commit_matches).lower()
+        match = _ci_record_current_checkout_match(
+            project_root,
+            record_branch=record.branch_name,
+            record_commit=record.commit_sha,
+            current_branch=repo["branch"],
+            full_commit=full_commit,
+            short_commit=repo["commit"],
+        )
+        matches_current = bool(match["matches_current"])
+        branch_matches_current = str(match["branch_matches"]).lower()
+        commit_matches_current = str(match["commit_matches"]).lower()
+        current_match_source = str(match["source"])
 
     if latest_record is None:
         handoff_status = "missing"
@@ -20479,6 +22698,7 @@ def _goal_ci_handoff(root: Path, state: dict[str, Any]) -> str:
                     ("goal_ci_handoff_latest_url", latest_url),
                     ("goal_ci_handoff_latest_evidence", latest_evidence),
                     ("goal_ci_handoff_latest_recorded_by", latest_recorded_by),
+                    ("goal_ci_handoff_current_match_source", current_match_source),
                     ("goal_ci_handoff_branch_matches_current", branch_matches_current),
                     ("goal_ci_handoff_commit_matches_current", commit_matches_current),
                     ("goal_ci_handoff_matches_current_checkout", str(matches_current).lower()),
@@ -21893,6 +24113,62 @@ def _goal_bucket(row: sqlite3.Row) -> str:
     return "active"
 
 
+def _goal_row_text(row: sqlite3.Row) -> str:
+    return " ".join(
+        str(row[key] or "")
+        for key in ("id", "project_id", "title", "description", "original_prompt")
+        if key in row.keys()
+    )
+
+
+def _stale_goal_hygiene_reason(row: sqlite3.Row) -> str:
+    project_id = str(row["project_id"] or "").strip().lower()
+    text = _goal_row_text(row).lower()
+    if project_id == "local-app-demo":
+        return "fixture_demo_goal"
+    if "demo the clankeros local operator app" in text or "fixture-backed" in text:
+        return "fixture_demo_goal"
+    context_pack_markers = {"context-pack", "context pack"}
+    if any(marker in text for marker in context_pack_markers) and (
+        "demo" in text or "scouting" in text or "before edits" in text
+    ):
+        return "context_pack_demo_goal"
+    return ""
+
+
+def _stale_goal_hygiene_candidates(
+    rows: list[sqlite3.Row],
+    *,
+    lead_goal_id: str = "",
+) -> list[tuple[sqlite3.Row, str]]:
+    candidates: list[tuple[sqlite3.Row, str]] = []
+    for row in rows:
+        goal_id = str(row["id"])
+        if lead_goal_id and goal_id == lead_goal_id:
+            continue
+        reason = _stale_goal_hygiene_reason(row)
+        if reason:
+            candidates.append((row, reason))
+    return candidates
+
+
+def _goal_hygiene_review_surface(row: sqlite3.Row) -> SafeHtml:
+    goal_id = str(row["id"])
+    return SafeHtml(f"<a href='/goals/{quote(goal_id)}'>{_e(goal_id)}</a>")
+
+
+def _goal_hygiene_action_surface(row: sqlite3.Row) -> SafeHtml:
+    goal_id = str(row["id"])
+    bucket = _goal_bucket(row)
+    if bucket == "active":
+        return SafeHtml(f"<a href='/goals/{quote(goal_id)}#goal-pause'>Pause Goal</a>")
+    if bucket == "paused":
+        return SafeHtml(f"<a href='/goals/{quote(goal_id)}#goal-next-action'>Resume Goal</a>")
+    if bucket == "completed":
+        return SafeHtml(f"<a href='/goals/{quote(goal_id)}#goal-completion-readiness'>Review completion</a>")
+    return _goal_hygiene_review_surface(row)
+
+
 def _goal_index_line(
     root: Path,
     storage: Storage,
@@ -22364,41 +24640,102 @@ def _goal_next_action(root: Path, state: dict[str, Any]) -> GoalNextAction:
     return GoalNextAction("Create scout delegation", f"/goals/{quote(goal.id)}", "goal_has_no_delegation_yet")
 
 
-def _goal_next_action_form(state: dict[str, Any], next_action: GoalNextAction) -> str:
+def _goal_next_action_form(
+    state: dict[str, Any],
+    next_action: GoalNextAction,
+    *,
+    return_to_override: str | None = None,
+) -> str:
     if next_action.action == "Create scout delegation":
-        return _goal_scout_delegation_form(state)
+        return _goal_scout_delegation_form(
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Resume paused goal":
         return _goal_resume_form(state)
     if next_action.action == "Generate context pack":
-        return _goal_context_pack_form(state)
+        return _goal_context_pack_form(
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Run delegation":
-        return _goal_run_delegation_handoff(state)
+        return _goal_run_delegation_handoff(
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Run coder prep":
-        return _goal_coder_prep_form(state)
+        return _goal_coder_prep_form(
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Create worktree plan":
-        return _goal_worktree_plan_form(state)
+        return _goal_worktree_plan_form(
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Request worktree approval":
-        return _goal_worktree_approval_form(state)
+        return _goal_worktree_approval_form(
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Approve worktree":
-        return _goal_approve_worktree_form(state)
+        return _goal_approve_worktree_form(
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Run approved worktree":
-        return _goal_run_worktree_handoff(state["root"], state)
+        return _goal_run_worktree_handoff(
+            state["root"],
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Create commit request":
-        return _goal_commit_request_form(state["root"], state)
+        return _goal_commit_request_form(
+            state["root"],
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Open review":
-        return _goal_review_run_form(state["root"], state)
+        return _goal_review_run_form(
+            state["root"],
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Approve commit":
-        return _goal_approve_commit_form(state)
+        return _goal_approve_commit_form(
+            state["root"],
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Commit approved worktree":
-        return _goal_commit_worktree_form(state)
+        return _goal_commit_worktree_form(
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Create publication request":
-        return _goal_publication_request_form(state)
+        return _goal_publication_request_form(
+            state["root"],
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Approve publication":
-        return _goal_approve_publication_form(state)
+        return _goal_approve_publication_form(
+            state["root"],
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Create publication handoff":
-        return _goal_publication_handoff_form(state)
+        return _goal_publication_handoff_form(
+            state["root"],
+            state,
+            return_to_override=return_to_override,
+        )
     if next_action.action == "Manual publish outside ClankerOS":
-        return _goal_manual_publish_panel(state["root"], state)
+        return _goal_manual_publish_panel(
+            state["root"],
+            state,
+            return_to_override=return_to_override,
+        )
     return ""
 
 
@@ -22744,11 +25081,15 @@ def _goal_action_dock_return_path(state: dict[str, Any]) -> str:
     return f"/goals/{quote(goal.id)}#goal-action-dock"
 
 
-def _goal_approve_worktree_form(state: dict[str, Any]) -> str:
+def _goal_approve_worktree_form(
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     approval = _goal_pending_worktree_approval(state)
     if approval is None:
         return "<p class='muted'>approve_worktree_form_status: unavailable_until_pending_worktree_approval_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Approve Worktree</h3>",
@@ -22765,7 +25106,12 @@ def _goal_approve_worktree_form(state: dict[str, Any]) -> str:
     )
 
 
-def _goal_run_worktree_handoff(root: Path, state: dict[str, Any]) -> str:
+def _goal_run_worktree_handoff(
+    root: Path,
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     approval = _goal_approved_worktree_approval(state)
     if approval is None:
         return "<p class='muted'>run_worktree_handoff_status: unavailable_until_worktree_approval_is_approved</p>"
@@ -22794,6 +25140,7 @@ def _goal_run_worktree_handoff(root: Path, state: dict[str, Any]) -> str:
     default_browser_command = ""
     run_surface = f"/workflow?delegation_id={quote(approval.delegation_id)}"
     expected_run_surface = f"/runs/<new_coder_worktree_run_id>"
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     plan_path = approval.source_plan_path or str(plan_payload.get("_path") or "missing")
     return "".join(
         [
@@ -22816,6 +25163,7 @@ def _goal_run_worktree_handoff(root: Path, state: dict[str, Any]) -> str:
                     ("expected_evidence_dir", f".clanker/delegations/{approval.delegation_id}/runs/<new_run_id>/coder_worktree/"),
                     ("return_to_workflow", SafeHtml(f"<a href='{_e(run_surface)}'>{_e(run_surface)}</a>")),
                     ("return_to_run_after_command", expected_run_surface),
+                    ("return_to_after_command", SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>")),
                     ("browser_execution_exposed", "confirmed_local_only"),
                     ("copy_only", "false"),
                     ("provider_calls_taken_by_clankeros", "0"),
@@ -22825,7 +25173,11 @@ def _goal_run_worktree_handoff(root: Path, state: dict[str, Any]) -> str:
             ),
             _input_form(
                 "run-coder-worktree",
-                {"delegation_id": approval.delegation_id, "verify": "yes"},
+                {
+                    "delegation_id": approval.delegation_id,
+                    "verify": "yes",
+                    "return_to": return_to,
+                },
                 {
                     "command": default_browser_command,
                     "verify_command": verifier,
@@ -22835,15 +25187,58 @@ def _goal_run_worktree_handoff(root: Path, state: dict[str, Any]) -> str:
     )
 
 
-def _goal_commit_request_form(root: Path, state: dict[str, Any]) -> str:
+def _goal_commit_request_form(
+    root: Path,
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     run = _goal_reviewed_completed_worktree_run(root, state)
     if run is None:
         return "<p class='muted'>commit_request_form_status: unavailable_until_reviewed_completed_run_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
+    review_gate = _run_review_gate_state(root, run)
     return "".join(
         [
             "<h3>Create Commit Request</h3>",
             "<p class='muted'>Creates a pending local commit approval request from the reviewed worktree evidence. It does not stage, commit, push, create a PR, deploy, call a provider, or use the network.</p>",
+            _kv(
+                [
+                    ("coder_worktree_run", run.id),
+                    ("source_run_id", run.source_run_id),
+                    (
+                        "source_review",
+                        _artifact_link(str(review_gate["review_path"]))
+                        if review_gate["exists"]
+                        else str(review_gate["review_path"]),
+                    ),
+                    (
+                        "source_review_sha256",
+                        _sha256_for_display(root / str(review_gate["review_path"]))
+                        if review_gate["exists"]
+                        else "missing",
+                    ),
+                    (
+                        "source_review_markdown_consumed",
+                        str(review_gate["commit_request_form_available"]).lower(),
+                    ),
+                    (
+                        "source_coder_worktree_run_summary",
+                        _artifact_link(
+                            str(review_gate["source_coder_worktree_run_summary"])
+                        ),
+                    ),
+                    (
+                        "source_coder_worktree_run_summary_consumed",
+                        str(review_gate["source_coder_worktree_run_summary_consumed"]).lower(),
+                    ),
+                    ("source_diff_sha256", str(review_gate["source_diff_sha256"])),
+                    (
+                        "return_to_after_commit_request",
+                        SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
+                    ),
+                ]
+            ),
             _input_form(
                 "coder-commit-request",
                 {"run_id": run.id, "return_to": return_to, "requested_by": "operator"},
@@ -22856,21 +25251,62 @@ def _goal_commit_request_form(root: Path, state: dict[str, Any]) -> str:
     )
 
 
-def _goal_review_run_form(root: Path, state: dict[str, Any]) -> str:
+def _goal_review_run_form(
+    root: Path,
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     run = _goal_unreviewed_completed_worktree_run(root, state)
     if run is None:
         return "<p class='muted'>review_run_form_status: unavailable_until_completed_unreviewed_run_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     review_path = Path("runs") / run.source_run_id / "review.md"
+    try:
+        review_proof = coder_worktree_run_review_proof(root, run)
+    except CoderWorktreeCommitError:
+        review_proof = {}
     return "".join(
         [
-            "<h3>Create Review</h3>",
+            "<h3>Open Review</h3>",
             "<p class='muted'>Writes the local human-readable review artifact required before a commit request. It does not approve commits, stage files, commit, push, create a PR, deploy, call a provider, or use the network.</p>",
             _kv(
                 [
                     ("coder_worktree_run", run.id),
                     ("source_run_id", run.source_run_id),
                     ("review_artifact", review_path.as_posix()),
+                    (
+                        "source_coder_worktree_run",
+                        _artifact_link(
+                            review_proof.get("source_coder_worktree_run", run.evidence_path)
+                        ),
+                    ),
+                    (
+                        "source_coder_worktree_run_summary",
+                        _artifact_link(
+                            review_proof.get(
+                                "source_coder_worktree_run_summary",
+                                str(Path(run.evidence_path) / "summary.md"),
+                            )
+                        ),
+                    ),
+                    (
+                        "source_coder_worktree_run_summary_consumed",
+                        str(
+                            review_proof.get(
+                                "source_coder_worktree_run_summary_consumed",
+                                False,
+                            )
+                        ).lower(),
+                    ),
+                    (
+                        "source_diff_sha256",
+                        str(review_proof.get("source_diff_sha256", "missing")),
+                    ),
+                    (
+                        "return_to_after_review",
+                        SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
+                    ),
                 ]
             ),
             _form("review-run", {"run_id": run.id, "return_to": return_to}),
@@ -22878,15 +25314,53 @@ def _goal_review_run_form(root: Path, state: dict[str, Any]) -> str:
     )
 
 
-def _goal_approve_commit_form(state: dict[str, Any]) -> str:
+def _goal_approve_commit_form(
+    root: Path,
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     approval = _goal_pending_commit_approval(state)
     if approval is None:
         return "<p class='muted'>approve_commit_form_status: unavailable_until_pending_commit_approval_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
+    request_path = (
+        Path(approval.source_run_evidence_path)
+        / "coder_commit"
+        / "coder_commit_request.json"
+    )
+    request_md_path = request_path.with_suffix(".md")
     return "".join(
         [
             "<h3>Approve Commit</h3>",
             "<p class='muted'>Records a local approval decision for the reviewed commit request. It does not stage, commit, push, create a PR, deploy, call a provider, or use the network.</p>",
+            _kv(
+                [
+                    ("commit_approval_id", approval.id),
+                    ("run_id", approval.run_id),
+                    ("source_coder_commit_request", _artifact_link(str(request_path))),
+                    (
+                        "source_coder_commit_request_sha256",
+                        _sha256_for_display(root / request_path),
+                    ),
+                    (
+                        "source_coder_commit_request_md",
+                        _artifact_link(str(request_md_path)),
+                    ),
+                    (
+                        "source_commit_request_md_sha256",
+                        _sha256_for_display(root / request_md_path),
+                    ),
+                    (
+                        "source_coder_commit_request_markdown_consumed",
+                        str((root / request_md_path).exists()).lower(),
+                    ),
+                    (
+                        "return_to_after_commit_approval",
+                        SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
+                    ),
+                ]
+            ),
             _input_form(
                 "approve-coder-commit",
                 {"approval_id": approval.id, "return_to": return_to},
@@ -22899,15 +25373,29 @@ def _goal_approve_commit_form(state: dict[str, Any]) -> str:
     )
 
 
-def _goal_commit_worktree_form(state: dict[str, Any]) -> str:
+def _goal_commit_worktree_form(
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     approval = _goal_approved_commit_approval(state)
     if approval is None:
         return "<p class='muted'>commit_worktree_form_status: unavailable_until_commit_approval_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Commit Approved Worktree</h3>",
             "<p class='muted'>Creates one local commit only inside the isolated coder worktree after the existing backend gate re-checks review, source hashes, branch/HEAD, changed files, bounded-file validation, and verifier state. It does not push, create a PR, deploy, call a provider, or use the network.</p>",
+            _kv(
+                [
+                    ("commit_approval_id", approval.id),
+                    ("run_id", approval.run_id),
+                    (
+                        "return_to_after_local_commit",
+                        SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
+                    ),
+                ]
+            ),
             _input_form(
                 "commit-coder-worktree",
                 {
@@ -22921,15 +25409,54 @@ def _goal_commit_worktree_form(state: dict[str, Any]) -> str:
     )
 
 
-def _goal_publication_request_form(state: dict[str, Any]) -> str:
+def _goal_publication_request_form(
+    root: Path,
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     approval = _goal_committed_worktree_approval(state)
     if approval is None:
         return "<p class='muted'>publication_request_form_status: unavailable_until_local_commit_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
+    commit_path = (
+        Path(approval.source_run_evidence_path)
+        / "coder_commit"
+        / "commit.json"
+    )
+    commit_md_path = commit_path.with_suffix(".md")
+    commit_markdown_ready = _commit_markdown_consumed_for_display(root / commit_md_path)
     return "".join(
         [
             "<h3>Create Publication Request</h3>",
             "<p class='muted'>Creates a pending local publication approval request from the isolated local commit. It does not push, create a PR, deploy, call a provider, or use the network.</p>",
+            _kv(
+                [
+                    ("commit_approval_id", approval.id),
+                    ("run_id", approval.run_id),
+                    ("source_coder_commit", _artifact_link(str(commit_path))),
+                    (
+                        "source_coder_commit_sha256",
+                        _sha256_for_display(root / commit_path),
+                    ),
+                    (
+                        "source_coder_commit_md",
+                        _artifact_link(str(commit_md_path)),
+                    ),
+                    (
+                        "source_commit_md_sha256",
+                        _sha256_for_display(root / commit_md_path),
+                    ),
+                    (
+                        "source_coder_commit_markdown_consumed",
+                        commit_markdown_ready,
+                    ),
+                    (
+                        "return_to_after_publication_request",
+                        SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
+                    ),
+                ]
+            ),
             _input_form(
                 "coder-publication-request",
                 {
@@ -22945,15 +25472,89 @@ def _goal_publication_request_form(state: dict[str, Any]) -> str:
     )
 
 
-def _goal_approve_publication_form(state: dict[str, Any]) -> str:
+def _goal_approve_publication_form(
+    root: Path,
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     publication = _goal_pending_publication(state)
     if publication is None:
         return "<p class='muted'>approve_publication_form_status: unavailable_until_pending_publication_approval_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
+    request_payload = _publication_request_payload_for_display(root, publication)
     return "".join(
         [
             "<h3>Approve Publication</h3>",
             "<p class='muted'>Records a local approval decision to prepare publication handoff artifacts. It does not push, create a PR, deploy, call a provider, or use the network.</p>",
+            _kv(
+                [
+                    ("publication_id", publication.id),
+                    ("run_id", publication.run_id),
+                    (
+                        "publication_request",
+                        _artifact_link(publication.request_artifact_path),
+                    ),
+                    (
+                        "publication_request_md",
+                        _artifact_link(
+                            str(Path(publication.request_artifact_path).with_suffix(".md"))
+                        ),
+                    ),
+                    (
+                        "publication_request_sha256",
+                        _sha256_for_display(root / publication.request_artifact_path),
+                    ),
+                    (
+                        "publication_request_md_sha256",
+                        _sha256_for_display(
+                            root
+                            / str(Path(publication.request_artifact_path).with_suffix(".md"))
+                        ),
+                    ),
+                    (
+                        "source_coder_commit",
+                        _artifact_link(
+                            str(
+                                request_payload.get(
+                                    "source_coder_commit",
+                                    publication.source_commit_artifact_path,
+                                )
+                            )
+                        ),
+                    ),
+                    (
+                        "source_coder_commit_md",
+                        _artifact_link(str(request_payload.get("source_coder_commit_md", "missing"))),
+                    ),
+                    (
+                        "source_commit_sha256",
+                        str(
+                            request_payload.get(
+                                "source_commit_sha256",
+                                publication.source_commit_artifact_sha256,
+                            )
+                        ),
+                    ),
+                    (
+                        "source_commit_md_sha256",
+                        str(request_payload.get("source_commit_md_sha256", "missing")),
+                    ),
+                    (
+                        "source_coder_commit_markdown_consumed",
+                        str(
+                            request_payload.get(
+                                "source_coder_commit_markdown_consumed"
+                            )
+                            is True
+                        ).lower(),
+                    ),
+                    (
+                        "return_to_after_publication_approval",
+                        SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
+                    ),
+                ]
+            ),
             _input_form(
                 "approve-coder-publication",
                 {"publication_id": publication.id, "return_to": return_to},
@@ -22966,15 +25567,31 @@ def _goal_approve_publication_form(state: dict[str, Any]) -> str:
     )
 
 
-def _goal_publication_handoff_form(state: dict[str, Any]) -> str:
+def _goal_publication_handoff_form(
+    root: Path,
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     publication = _goal_approved_publication(state)
     if publication is None:
         return "<p class='muted'>publication_handoff_form_status: unavailable_until_publication_approval_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Create Publication Handoff</h3>",
             "<p class='muted'>Writes local publication handoff and PR-body artifacts with suggested manual commands only. It does not push, create a PR, deploy, call a provider, or use the network.</p>",
+            _kv(
+                [
+                    ("publication_id", publication.id),
+                    ("run_id", publication.run_id),
+                    *_publication_decision_proof_rows(root, publication),
+                    (
+                        "return_to_after_publication_handoff",
+                        SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
+                    ),
+                ]
+            ),
             _form(
                 "coder-publication-handoff",
                 {"run_id": publication.run_id, "return_to": return_to},
@@ -22983,10 +25600,20 @@ def _goal_publication_handoff_form(state: dict[str, Any]) -> str:
     )
 
 
-def _goal_manual_publish_panel(root: Path, state: dict[str, Any]) -> str:
+def _goal_manual_publish_panel(
+    root: Path,
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     publication = _goal_ready_publication(state)
     if publication is None:
         return "<p class='muted'>manual_publish_status: unavailable_until_publication_handoff_ready</p>"
+    completion_proof = _publication_handoff_completion_proof_for_display(
+        root,
+        publication,
+    )
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Manual Publish Boundary</h3>",
@@ -22994,9 +25621,30 @@ def _goal_manual_publish_panel(root: Path, state: dict[str, Any]) -> str:
             _publication_handoff_commands_panel(root, publication),
             "<h3>Complete Goal</h3>",
             "<p class='muted'>After the operator has finished the manual push/PR work outside ClankerOS, this confirmed local action marks the Goal completed. It does not push, create a PR, deploy, call a provider, or use the network.</p>",
+            _kv(
+                [
+                    ("publication_id", publication.id),
+                    ("publication_status", publication.status),
+                    *_publication_handoff_completion_proof_rows(
+                        completion_proof,
+                        prefix="manual_publish",
+                    ),
+                    (
+                        "return_to_after_manual_publish",
+                        SafeHtml(f"<a href='{_e(return_to)}'>{_e(return_to)}</a>"),
+                    ),
+                    ("manual_publish_boundary", "outside_clankeros"),
+                    ("manual_publish_copy_only", "true"),
+                    ("manual_publish_push_created", "false"),
+                    ("manual_publish_pr_created", "false"),
+                    ("manual_publish_deploy_created", "false"),
+                    ("manual_publish_network_actions_taken", "0"),
+                    ("manual_publish_external_effects_created", "false"),
+                ]
+            ),
             _input_form(
                 "complete-goal",
-                {"goal_id": state["goal"].id},
+                {"goal_id": state["goal"].id, "return_to": return_to},
                 {
                     "completed_by": "operator",
                     "note": "Manual publication finished outside ClankerOS.",
@@ -23107,11 +25755,15 @@ def _goal_unreviewed_completed_worktree_run(root: Path, state: dict[str, Any]) -
     return None
 
 
-def _goal_coder_prep_form(state: dict[str, Any]) -> str:
+def _goal_coder_prep_form(
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     delegation = _goal_completed_delegation(state)
     if delegation is None:
         return "<p class='muted'>coder_prep_form_status: unavailable_until_delegation_completes</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Run Coder Prep</h3>",
@@ -23121,11 +25773,15 @@ def _goal_coder_prep_form(state: dict[str, Any]) -> str:
     )
 
 
-def _goal_worktree_plan_form(state: dict[str, Any]) -> str:
+def _goal_worktree_plan_form(
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     delegation_id = _goal_packet_delegation_id(state.get("prep_packets", []))
     if not delegation_id:
         return "<p class='muted'>coder_worktree_plan_form_status: unavailable_until_coder_prep_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Create Worktree Plan</h3>",
@@ -23138,11 +25794,15 @@ def _goal_worktree_plan_form(state: dict[str, Any]) -> str:
     )
 
 
-def _goal_worktree_approval_form(state: dict[str, Any]) -> str:
+def _goal_worktree_approval_form(
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     delegation_id = _goal_packet_delegation_id(state.get("worktree_plans", []))
     if not delegation_id:
         return "<p class='muted'>coder_worktree_approval_form_status: unavailable_until_worktree_plan_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Request Worktree Approval</h3>",
@@ -23175,14 +25835,18 @@ def _goal_packet_delegation_id(packets: list[dict[str, Any]]) -> str:
     return ""
 
 
-def _goal_scout_delegation_form(state: dict[str, Any]) -> str:
+def _goal_scout_delegation_form(
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     goal = state.get("goal")
     if goal is None:
         return ""
     task = _goal_delegation_target_task(state)
     if task is None:
         return "<p class='muted'>delegate_form_status: unavailable_until_planned_task_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Create Scout Delegation</h3>",
@@ -23212,11 +25876,15 @@ def _goal_delegation_target_task(state: dict[str, Any]) -> Any | None:
     return None
 
 
-def _goal_context_pack_form(state: dict[str, Any]) -> str:
+def _goal_context_pack_form(
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     delegation = _goal_context_pack_target_delegation(state)
     if delegation is None:
         return "<p class='muted'>context_pack_form_status: unavailable_until_delegation_exists</p>"
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     return "".join(
         [
             "<h3>Generate Context Pack</h3>",
@@ -23226,11 +25894,15 @@ def _goal_context_pack_form(state: dict[str, Any]) -> str:
     )
 
 
-def _goal_run_delegation_handoff(state: dict[str, Any]) -> str:
+def _goal_run_delegation_handoff(
+    state: dict[str, Any],
+    *,
+    return_to_override: str | None = None,
+) -> str:
     delegation = _goal_context_pack_target_delegation(state, require_missing=False)
     if delegation is None:
         return ""
-    return_to = _goal_action_dock_return_path(state)
+    return_to = _safe_local_return_path(return_to_override) or _goal_action_dock_return_path(state)
     command = f"python3 -m agent_os.cli run-delegation {delegation.id}"
     return "".join(
         [
@@ -23283,6 +25955,18 @@ def _delegation_has_context_pack(
         return True
     context_dir = root / ".clanker" / "delegations" / delegation.id / "context"
     return (context_dir / "context_pack.md").exists() or (context_dir / "context_pack.json").exists()
+
+
+def _delegation_context_pack_artifacts(
+    root: Path,
+    delegation: Any,
+) -> list[tuple[str, Path]]:
+    context_dir = Path(".clanker") / "delegations" / delegation.id / "context"
+    candidates = [
+        ("context pack json", context_dir / "context_pack.json"),
+        ("context pack markdown", context_dir / "context_pack.md"),
+    ]
+    return [(label, path) for label, path in candidates if (root / path).exists()]
 
 
 def _goal_overview(
@@ -23878,6 +26562,10 @@ def _goal_completion_readiness(
         + _count_status(state["publications"], "pending_operator_approval")
     )
     publication = _goal_ready_publication(state)
+    completion_proof = _publication_handoff_completion_proof_for_display(
+        root,
+        publication,
+    )
     total_gates = len(gates)
     done_gates = counts.get("done", 0)
     ready_for_completion = goal.status != "completed" and publication is not None
@@ -23943,7 +26631,7 @@ def _goal_completion_readiness(
         "</article>",
         "<article class='goal-completion-card' data-goal-completion-publish='true'>"
         "<h3>Publish</h3>"
-        f"<p>{'handoff ready' if publication is not None else 'manual boundary not ready'}</p>"
+        f"<p>{'handoff ready' if publication is not None else 'manual boundary not ready'} · proof { _e(completion_proof['proof_status']) }</p>"
         "<a class='goal-completion-link' href='#goal-ci-handoff'>CI handoff</a>"
         "</article>",
         "<article class='goal-completion-card' data-goal-completion-safety='true'>"
@@ -23970,6 +26658,10 @@ def _goal_completion_readiness(
                 (
                     "completion_readiness_publication_handoff_ready",
                     "true" if publication is not None else "false",
+                ),
+                *_publication_handoff_completion_proof_rows(
+                    completion_proof,
+                    prefix="completion_readiness",
                 ),
                 (
                     "completion_readiness_complete_goal_form_available",
@@ -24348,6 +27040,7 @@ def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
             _goal_timeline_command_bar(state, items),
             _goal_timeline_digest(root, state, items),
             _goal_timeline_lane_filter(goal.id, items),
+            _goal_completed_provenance_history(root, state),
             "<details class='goal-timeline-metadata' data-goal-timeline-metadata='true'><summary>Timeline metadata</summary>",
             _kv(
                 [
@@ -24363,6 +27056,156 @@ def _goal_timeline(root: Path, state: dict[str, Any]) -> str:
             "</section>",
         ]
     )
+
+
+def _goal_completed_provenance_history(root: Path, state: dict[str, Any]) -> str:
+    metadata = _goal_completed_provenance_metadata(root, state)
+    if metadata["status"] != "available":
+        return ""
+    artifact_path = metadata["artifact_path"]
+    artifact_surface = SafeHtml(
+        f"<a href='{_e(_artifact_href(root, artifact_path))}'>{_e(artifact_path)}</a>"
+    )
+    return "".join(
+        [
+            (
+                "<details id='goal-completed-provenance-history' "
+                "class='goal-completed-provenance-history' "
+                "data-goal-completed-provenance-history='true' open>"
+                "<summary>Completed Goal Provenance History</summary>"
+            ),
+            _kv(
+                [
+                    ("completed_goal_provenance_history_status", metadata["status"]),
+                    (
+                        "completed_goal_provenance_history_source_goal",
+                        metadata["source_goal_id"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_successor_goal",
+                        metadata["successor_goal_id"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_trigger_action",
+                        metadata["trigger_action"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_trigger_result_id",
+                        metadata["trigger_result_id"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_artifact",
+                        artifact_surface,
+                    ),
+                    (
+                        "completed_goal_provenance_history_previous_resume_surface",
+                        metadata["previous_resume_surface"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_previous_artifact",
+                        metadata["previous_artifact"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_source_goal_completion_evidence",
+                        _artifact_link(metadata["source_goal_completion_evidence"]),
+                    ),
+                    (
+                        "completed_goal_provenance_history_source_goal_completion_evidence_md",
+                        _artifact_link(metadata["source_goal_completion_evidence_md"]),
+                    ),
+                    (
+                        "completed_goal_provenance_history_source_goal_completion_evidence_sha256",
+                        metadata["source_goal_completion_evidence_sha256"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_source_goal_completion_evidence_md_sha256",
+                        metadata["source_goal_completion_evidence_md_sha256"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_source_goal_completion_markdown_consumed",
+                        metadata["source_goal_completion_markdown_consumed"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_prior_manual_boundary_artifact",
+                        _artifact_link(metadata["prior_manual_boundary_artifact"]),
+                    ),
+                    (
+                        "completed_goal_provenance_history_prior_manual_boundary_artifact_sha256",
+                        metadata["prior_manual_boundary_artifact_sha256"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_source_coder_publication_handoff_md",
+                        _artifact_link(metadata["source_coder_publication_handoff_md"]),
+                    ),
+                    (
+                        "completed_goal_provenance_history_source_publication_handoff_md_sha256",
+                        metadata["source_publication_handoff_md_sha256"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_source_coder_publication_handoff_markdown_consumed",
+                        metadata[
+                            "source_coder_publication_handoff_markdown_consumed"
+                        ],
+                    ),
+                    ("completed_goal_provenance_history_write_on_get", "false"),
+                    (
+                        "completed_goal_provenance_history_provider_calls_taken",
+                        "0",
+                    ),
+                    (
+                        "completed_goal_provenance_history_external_effects_created",
+                        "false",
+                    ),
+                ]
+            ),
+            "</details>",
+        ]
+    )
+
+
+def _goal_completed_provenance_metadata(
+    root: Path,
+    state: dict[str, Any],
+) -> dict[str, str]:
+    goal = state["goal"]
+    artifact_path = _completed_goal_provenance_path(goal.project_id, goal.id)
+    relative_path = artifact_path.as_posix()
+    path = root / artifact_path
+    metadata = {
+        "status": "missing",
+        "artifact_path": relative_path,
+        "source_goal_id": "none",
+        "successor_goal_id": goal.id,
+        "trigger_action": "none",
+        "trigger_result_id": "none",
+        "previous_resume_surface": "none",
+        "previous_artifact": "none",
+        "source_goal_completion_evidence": "none",
+        "source_goal_completion_evidence_md": "none",
+        "source_goal_completion_evidence_sha256": "none",
+        "source_goal_completion_evidence_md_sha256": "none",
+        "source_goal_completion_markdown_consumed": "none",
+        "prior_manual_boundary_artifact": "none",
+        "prior_manual_boundary_artifact_sha256": "none",
+        "source_coder_publication_handoff_md": "none",
+        "source_publication_handoff_md_sha256": "none",
+        "source_coder_publication_handoff_markdown_consumed": "none",
+    }
+    if not path.exists():
+        return metadata
+    metadata["status"] = "available"
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return metadata
+    for line in text.splitlines():
+        if ":" not in line or line.lstrip().startswith("#"):
+            continue
+        key, value = line.split(":", 1)
+        key = key.strip()
+        if key in metadata:
+            metadata[key] = value.strip() or "none"
+    return metadata
 
 
 def _goal_timeline_lane_filter(goal_id: str, items: list[dict[str, str]]) -> str:
@@ -24920,6 +27763,19 @@ def _goal_timeline_items(root: Path, state: dict[str, Any]) -> list[dict[str, st
         if delegation.completed_at:
             items.append({"at": delegation.completed_at, "message": f"Execution completed: delegation {delegation.id}.", "href": delegation_href})
         metadata = load_delegation_result_metadata(delegation)
+        context_pack_artifacts = _delegation_context_pack_artifacts(root, delegation)
+        if context_pack_artifacts and not metadata.get("context_pack_md"):
+            at = max(
+                _artifact_time(root, path.as_posix()) or goal.updated_at
+                for _label, path in context_pack_artifacts
+            )
+            items.append(
+                {
+                    "at": at,
+                    "message": f"Context pack built for {delegation.id}.",
+                    "href": delegation_href,
+                }
+            )
         for label, key in [
             ("Context pack built", "context_pack_md"),
             ("Implementation handoff created", "implementation_handoff_md"),
@@ -25031,6 +27887,8 @@ def _goal_timeline_items(root: Path, state: dict[str, Any]) -> list[dict[str, st
         )
     for row in state["events"]:
         items.append({"at": row["created_at"], "message": str(row["message"]), "href": f"/goals/{quote(goal.id)}"})
+    provenance_path = _completed_goal_provenance_path(goal.project_id, goal.id)
+    provenance_relative = provenance_path.as_posix()
     artifact_hrefs = {
         item.get("href", "")
         for item in items
@@ -25046,6 +27904,15 @@ def _goal_timeline_items(root: Path, state: dict[str, Any]) -> list[dict[str, st
                 "at": _artifact_time(root, record["path"]) or goal.updated_at,
                 "message": f"Artifact recorded: {record['label']}.",
                 "href": href,
+                "kind": "artifact",
+            }
+        )
+    if (root / provenance_path).exists():
+        items.append(
+            {
+                "at": _artifact_time(root, provenance_relative) or goal.updated_at,
+                "message": "Completed Goal provenance promoted.",
+                "href": _artifact_href(root, provenance_relative),
                 "kind": "artifact",
             }
         )
@@ -27294,6 +30161,25 @@ def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, 
             }
         )
 
+    provenance_path = _completed_goal_provenance_path(goal.project_id, goal.id)
+    if (root / provenance_path).exists():
+        add(
+            "completed Goal provenance",
+            provenance_path,
+            source="completed_goal_provenance",
+        )
+    completion_path = _goal_file_path(goal.project_id, goal.id, "completion.json")
+    if (root / completion_path).exists():
+        add(
+            "goal completion evidence",
+            completion_path,
+            source="goal_completion",
+        )
+        add(
+            "goal completion evidence markdown",
+            completion_path.with_suffix(".md"),
+            source="goal_completion",
+        )
     for task in state["tasks"]:
         for artifact in task.artifacts:
             add(f"task {task.id}", artifact, source="task")
@@ -27310,7 +30196,16 @@ def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, 
         add(f"recommendation {recommendation['id']}", recommendation["evidence_path"], source="recommendation")
     for delegation in state["delegations"]:
         metadata = load_delegation_result_metadata(delegation)
+        creation_artifact_path = _delegation_creation_artifact_path(delegation.id)
+        if (root / creation_artifact_path).exists():
+            add(
+                f"delegation {delegation.id} created",
+                creation_artifact_path,
+                source="delegation",
+            )
         add(f"delegation {delegation.id} result", delegation.result_artifact_path, source="delegation")
+        for label, path in _delegation_context_pack_artifacts(root, delegation):
+            add(label, path, source="context_pack")
         for key in [
             "context_pack_json",
             "context_pack_md",
@@ -27323,9 +30218,42 @@ def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, 
         _add_packet_artifacts(add, packet, source="coder_prep")
     for packet in state["worktree_plans"]:
         _add_packet_artifacts(add, packet, source="worktree_plan")
+    for approval in state["worktree_approvals"]:
+        request_path = Path(approval.request_artifact_path)
+        decision_path = (
+            Path(approval.decision_artifact_path)
+            if approval.decision_artifact_path
+            else None
+        )
+        add(
+            "coder_worktree_execution_approval_request_json",
+            request_path,
+            source="worktree_approval",
+        )
+        add(
+            "coder_worktree_execution_approval_request_markdown",
+            request_path.with_suffix(".md"),
+            source="worktree_approval",
+        )
+        if decision_path is not None:
+            add(
+                "coder_worktree_execution_approval_decision_json",
+                decision_path,
+                source="worktree_approval",
+            )
+            add(
+                "coder_worktree_execution_approval_decision_markdown",
+                decision_path.with_suffix(".md"),
+                source="worktree_approval",
+            )
     for run in state["worktree_runs"]:
         evidence_path = Path(run.evidence_path)
         add(f"coder run {run.id} review", Path("runs") / run.source_run_id / "review.md", source="coder_run")
+        add(
+            "approved_coder_worktree_run_summary",
+            evidence_path / "summary.md",
+            source="coder_run",
+        )
         for label, path in [
             ("run json", evidence_path / "run.json"),
             ("diff", evidence_path / "diff.patch"),
@@ -27345,6 +30273,16 @@ def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, 
             ("commit_artifact", approval.commit_artifact_path),
         ]:
             add(label, path, source="commit")
+            if path:
+                add(f"{label}_markdown", Path(path).with_suffix(".md"), source="commit")
+        coder_commit_dir = Path(approval.source_run_evidence_path) / "coder_commit"
+        for label, path in [
+            ("coder_commit_request", coder_commit_dir / "coder_commit_request.json"),
+            ("coder_commit_decision", coder_commit_dir / "coder_commit_decision.json"),
+            ("coder_local_commit", coder_commit_dir / "commit.json"),
+        ]:
+            add(label, path, source="commit")
+            add(f"{label}_markdown", path.with_suffix(".md"), source="commit")
     for publication in state["publications"]:
         for label, path in [
             ("publication_request", publication.request_artifact_path),
@@ -27352,6 +30290,8 @@ def _goal_artifact_records(root: Path, state: dict[str, Any]) -> list[dict[str, 
             ("publication_handoff", publication.handoff_artifact_path),
         ]:
             add(label, path, source="publication")
+            if path:
+                add(f"{label}_markdown", Path(path).with_suffix(".md"), source="publication")
     for source, record in _goal_project_ci_evidence_records(root, goal.project_id):
         add(
             _goal_ci_evidence_record_label(source, record),
@@ -27370,17 +30310,22 @@ def _goal_latest_artifact_record(root: Path, state: dict[str, Any]) -> dict[str,
     ]
     if not existing:
         return None
+    focus_records = [
+        record
+        for record in existing
+        if str(record.get("source") or "") != "completed_goal_provenance"
+    ]
     return max(
-        existing,
+        focus_records or existing,
         key=lambda record: _goal_artifact_record_sort_key(root, record),
     )
 
 
-def _goal_artifact_record_sort_key(root: Path, record: dict[str, str]) -> tuple[str, int, str, str]:
+def _goal_artifact_record_sort_key(root: Path, record: dict[str, str]) -> tuple[int, str, str, str]:
     timestamp = _artifact_time(root, record.get("path", "")) or ""
     return (
-        timestamp,
         _goal_artifact_record_rank(record),
+        timestamp,
         str(record.get("label") or ""),
         str(record.get("path") or ""),
     )
@@ -27396,12 +30341,16 @@ def _goal_artifact_record_rank(record: dict[str, str]) -> int:
         "incident": 30,
         "recommendation": 35,
         "delegation": 40,
+        "completed_goal_provenance": 45,
+        "context_pack": 50,
         "delegation_metadata": 50,
         "coder_prep": 60,
         "worktree_plan": 70,
+        "worktree_approval": 75,
         "coder_run": 80,
         "commit": 110,
         "publication": 120,
+        "goal_completion": 125,
         "ci_deploy_evidence": 130,
         "ci_snapshot_evidence": 135,
     }
@@ -28166,6 +31115,7 @@ def _goal_verification_evidence(root: Path, state: dict[str, Any]) -> str:
                 branch_matches=False,
                 commit_matches=False,
                 matches_current=False,
+                current_match_source="missing_record",
             )
             + _collapsible_list_section(
                 "Goal Verification Evidence",
@@ -28179,9 +31129,18 @@ def _goal_verification_evidence(root: Path, state: dict[str, Any]) -> str:
         )
 
     source_kind, record = latest_record
-    branch_matches = record.branch_name == repo["branch"]
-    commit_matches = _commit_refs_match(record.commit_sha, full_commit, repo["commit"])
-    matches_current = branch_matches and commit_matches
+    match = _ci_record_current_checkout_match(
+        project_root,
+        record_branch=record.branch_name,
+        record_commit=record.commit_sha,
+        current_branch=repo["branch"],
+        full_commit=full_commit,
+        short_commit=repo["commit"],
+    )
+    branch_matches = bool(match["branch_matches"])
+    commit_matches = bool(match["commit_matches"])
+    matches_current = bool(match["matches_current"])
+    current_match_source = str(match["source"])
     result = record.result_json if isinstance(record.result_json, dict) else {}
     lines.extend(
         [
@@ -28198,6 +31157,7 @@ def _goal_verification_evidence(root: Path, state: dict[str, Any]) -> str:
             f"goal_ci_branch_matches_current: {str(branch_matches).lower()}",
             f"goal_ci_commit_matches_current: {str(commit_matches).lower()}",
             f"goal_ci_matches_current_checkout: {str(matches_current).lower()}",
+            f"goal_ci_current_match_source: {_e(current_match_source)}",
             "goal_ci_record_source: operator_supplied",
             f"goal_ci_network_actions_taken: {_e(result.get('network_actions_taken', 'unknown'))}",
             f"goal_ci_external_mutations_taken: {_e(result.get('external_mutations_taken', 'unknown'))}",
@@ -28215,6 +31175,7 @@ def _goal_verification_evidence(root: Path, state: dict[str, Any]) -> str:
             branch_matches=branch_matches,
             commit_matches=commit_matches,
             matches_current=matches_current,
+            current_match_source=current_match_source,
         )
         + _collapsible_list_section(
             "Goal Verification Evidence",
@@ -28239,6 +31200,7 @@ def _goal_verification_command_bar(
     branch_matches: bool,
     commit_matches: bool,
     matches_current: bool,
+    current_match_source: str,
 ) -> str:
     result_json = getattr(record, "result_json", {}) if record is not None else {}
     result = result_json if isinstance(result_json, dict) else {}
@@ -28350,6 +31312,7 @@ def _goal_verification_command_bar(
                     ("goal_verification_command_branch_matches_current", str(branch_matches).lower()),
                     ("goal_verification_command_commit_matches_current", str(commit_matches).lower()),
                     ("goal_verification_command_matches_current_checkout", str(matches_current).lower()),
+                    ("goal_verification_command_current_match_source", current_match_source),
                     ("goal_verification_command_latest_run_id", latest_run_id),
                     ("goal_verification_command_latest_url", latest_url_html),
                     (
@@ -28441,6 +31404,60 @@ def _commit_refs_match(record_commit: str, full_commit: str, short_commit: str) 
         if record == candidate or candidate.startswith(record) or record.startswith(candidate):
             return True
     return False
+
+
+def _ci_record_current_checkout_match(
+    root: Path,
+    *,
+    record_branch: str,
+    record_commit: str,
+    current_branch: str,
+    full_commit: str,
+    short_commit: str,
+) -> dict[str, Any]:
+    branch = record_branch.strip()
+    current = current_branch.strip()
+    commit_matches = _commit_refs_match(record_commit, full_commit, short_commit)
+    branch_matches = bool(branch and current and current != "unknown" and branch == current)
+    if not commit_matches:
+        return {
+            "branch_matches": branch_matches,
+            "commit_matches": False,
+            "matches_current": False,
+            "source": "commit_mismatch",
+        }
+    if branch_matches:
+        return {
+            "branch_matches": True,
+            "commit_matches": True,
+            "matches_current": True,
+            "source": "branch_and_commit",
+        }
+    if branch == "main":
+        for source, ref_name in (
+            ("main_same_commit_local_main", "refs/heads/main"),
+            ("main_same_commit_origin_main", "refs/remotes/origin/main"),
+        ):
+            ref_commit = _git(root, ["rev-parse", "--verify", ref_name])
+            if ref_commit and _commit_refs_match(ref_commit, full_commit, short_commit):
+                return {
+                    "branch_matches": False,
+                    "commit_matches": True,
+                    "matches_current": True,
+                    "source": source,
+                }
+        return {
+            "branch_matches": False,
+            "commit_matches": True,
+            "matches_current": False,
+            "source": "main_record_without_matching_local_main_ref",
+        }
+    return {
+        "branch_matches": branch_matches,
+        "commit_matches": True,
+        "matches_current": False,
+        "source": "branch_mismatch",
+    }
 
 
 def _goal_operator_note_lines(root: Path, state: dict[str, Any]) -> list[str]:
@@ -31693,6 +34710,10 @@ def _verification_page(root: Path) -> str:
             "configured" if "app-demo-smoke-test" in workflow_text else "missing",
         ),
         (
+            "fresh_user_golden_path_smoke",
+            "configured" if "app-golden-path-smoke-test" in workflow_text else "missing",
+        ),
+        (
             "full_suite_job",
             "configured" if "full-suite:" in workflow_text else "missing",
         ),
@@ -31709,10 +34730,11 @@ def _verification_page(root: Path) -> str:
     ]
     workflow_status = _verification_workflow_status(workflow_lines)
     workflow_step_lines = [
-        "Fast smoke job: compile source/tests, route-marker app-smoke-test, fixture-backed app-demo-smoke-test, demo-app-scenario, app --help, dashboard, iterate, git diff --check",
+        "Fast smoke job: compile source/tests, route-marker app-smoke-test, fixture-backed app-demo-smoke-test, fresh-user app-golden-path-smoke-test, demo-app-scenario, app --help, dashboard, iterate, git diff --check",
         "Compile source and tests: python -m compileall -q agent_os tests",
-        "Run local CLI smoke checks: app-smoke-test, app-demo-smoke-test, demo-app-scenario, app --help, dashboard, iterate",
+        "Run local CLI smoke checks: app-smoke-test, app-demo-smoke-test, app-golden-path-smoke-test, demo-app-scenario, app --help, dashboard, iterate",
         "Fixture-backed app demo smoke: creates local demo state and renders demo, dogfooding, selected project, delegation, workflow, run, approvals, inbox, actions, and health pages",
+        "Fresh-user app golden path smoke: creates project, creates goal, performs next action, checks proof, finishes today, and resumes tomorrow",
         "Check whitespace: git diff --check",
         "Full suite job: waits for fast smoke verification before spending time on pytest",
         "Run full test suite: python -m pytest -q",
@@ -31726,8 +34748,11 @@ def _verification_page(root: Path) -> str:
         "python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health",
         "python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario",
         "python3 -m pytest tests/test_first_milestone.py -q -k local_app_cli_commands_and_bind_safety",
+        "python3 -m pytest tests/test_first_milestone.py -q -k local_app_fresh_user_no_docs_golden_path_smoke",
+        "python3 -m pytest tests/test_first_milestone.py -q -k operator_first_viewports_show_goal_phase_action_proof_finish_resume",
         "python3 -m agent_os.cli app-smoke-test",
         "python3 -m agent_os.cli app-demo-smoke-test",
+        "python3 -m agent_os.cli app-golden-path-smoke-test",
         "git diff --check",
     ]
     return "".join(
@@ -31787,6 +34812,7 @@ def _verification_workflow_status(workflow_lines: list[tuple[str, str]]) -> str:
         "fast_smoke_job": "configured",
         "route_marker_app_smoke": "configured",
         "fixture_backed_app_demo_smoke": "configured",
+        "fresh_user_golden_path_smoke": "configured",
         "full_suite_job": "configured",
         "full_suite_depends_on_smoke": "configured",
     }
@@ -31851,10 +34877,12 @@ def _ci_evidence_command_state(root: Path) -> dict[str, str]:
             "latest_source": "none",
             "latest_status": "missing",
             "latest_scope": "none",
+            "latest_branch": "none",
             "latest_commit": "none",
             "latest_external_run_id": "none",
             "latest_target": "#record-ci-snapshot-json",
             "current_proof": "missing_current_commit_proof",
+            "current_match_source": "missing_record",
             "command_status": "no_records",
             "next_action": "Paste GitHub Actions JSON",
             "target_surface": "#record-ci-snapshot-json",
@@ -31865,38 +34893,49 @@ def _ci_evidence_command_state(root: Path) -> dict[str, str]:
     result = getattr(record, "result_json", {}) or {}
     latest_scope = str(result.get("evidence_scope", "unknown"))
     latest_status = str(getattr(record, "status", "unknown"))
+    latest_branch = str(getattr(record, "branch_name", "unknown"))
     latest_commit = str(getattr(record, "commit_sha", "unknown"))
     if source_kind == "direct_public_snapshot":
         latest_target = "#recent-direct-snapshot-ci-evidence"
     else:
         latest_target = "#recent-ci-evidence"
+    commit_matches = current_commit_known and _commit_refs_match(
+        latest_commit,
+        current_commit,
+        repo_state["commit"],
+    )
 
     if not current_commit_known:
         current_proof = "current_commit_unknown"
+        current_match_source = "current_commit_unknown"
         command_status = "records_available_current_commit_unknown"
         next_action = "Confirm checkout then record CI proof"
         target_surface = "#record-ci-snapshot-json"
         reason = "current_checkout_commit_unknown"
-    elif latest_commit != current_commit:
+    elif not commit_matches:
         current_proof = "stale_or_different_commit"
+        current_match_source = "commit_mismatch"
         command_status = "latest_record_for_different_commit"
         next_action = "Record current commit CI proof"
         target_surface = "#record-ci-snapshot-json"
         reason = "latest_record_commit_does_not_match_current_checkout"
     elif latest_status == "success" and latest_scope == "workflow_run":
         current_proof = "current_workflow_run_success"
+        current_match_source = "commit_only_global"
         command_status = "current_full_ci_recorded"
         next_action = "Review latest CI evidence"
         target_surface = latest_target
         reason = "current_commit_has_workflow_run_success"
     elif latest_status == "success" and latest_scope.startswith("workflow_job:"):
         current_proof = "current_job_scope_only"
+        current_match_source = "commit_only_global"
         command_status = "current_fast_smoke_recorded"
         next_action = "Record full-suite CI proof"
         target_surface = "#record-ci-snapshot-json"
         reason = "latest_record_is_job_scoped_early_proof"
     else:
         current_proof = "current_ci_record_not_full_success"
+        current_match_source = "commit_only_global"
         command_status = "current_ci_record_needs_review"
         next_action = "Review and refresh CI evidence"
         target_surface = "#record-ci-snapshot-json"
@@ -31908,10 +34947,12 @@ def _ci_evidence_command_state(root: Path) -> dict[str, str]:
         "latest_source": source_kind,
         "latest_status": latest_status,
         "latest_scope": latest_scope,
+        "latest_branch": latest_branch,
         "latest_commit": latest_commit,
         "latest_external_run_id": str(getattr(record, "external_run_id", "unknown")),
         "latest_target": latest_target,
         "current_proof": current_proof,
+        "current_match_source": current_match_source,
         "command_status": command_status,
         "next_action": next_action,
         "target_surface": target_surface,
@@ -32969,8 +36010,13 @@ def _ci_merge_readiness_map(
                     ("ci_merge_readiness_latest_source", state["latest_source"]),
                     ("ci_merge_readiness_latest_status", latest_status),
                     ("ci_merge_readiness_latest_scope", latest_scope),
+                    ("ci_merge_readiness_latest_branch", state["latest_branch"]),
                     ("ci_merge_readiness_latest_commit", state["latest_commit"]),
                     ("ci_merge_readiness_latest_run_id", state["latest_external_run_id"]),
+                    (
+                        "ci_merge_readiness_current_match_source",
+                        state["current_match_source"],
+                    ),
                     ("ci_merge_readiness_latest_label", latest_label),
                     (
                         "ci_merge_readiness_primary_surface",
@@ -33098,7 +36144,9 @@ def _ci_proof_workbench(root: Path) -> str:
                     ("ci_proof_workbench_latest_source", state["latest_source"]),
                     ("ci_proof_workbench_latest_status", state["latest_status"]),
                     ("ci_proof_workbench_latest_scope", state["latest_scope"]),
+                    ("ci_proof_workbench_latest_branch", state["latest_branch"]),
                     ("ci_proof_workbench_latest_run_id", state["latest_external_run_id"]),
+                    ("ci_proof_workbench_current_match_source", state["current_match_source"]),
                     ("ci_proof_workbench_next_action", state["next_action"]),
                     (
                         "ci_proof_workbench_status_command_template",
@@ -33239,8 +36287,10 @@ def _ci_evidence_command_bar(
                     ("ci_evidence_command_latest_source", state["latest_source"]),
                     ("ci_evidence_command_latest_status", state["latest_status"]),
                     ("ci_evidence_command_latest_scope", state["latest_scope"]),
+                    ("ci_evidence_command_latest_branch", state["latest_branch"]),
                     ("ci_evidence_command_latest_commit", state["latest_commit"]),
                     ("ci_evidence_command_latest_run_id", state["latest_external_run_id"]),
+                    ("ci_evidence_command_current_match_source", state["current_match_source"]),
                     ("ci_evidence_command_next_action", state["next_action"]),
                     (
                         "ci_evidence_command_target_surface",
@@ -33489,6 +36539,11 @@ def _dogfooding_real_goal_row(
         return None, "no_real_goal"
 
     def lead(candidates: list[sqlite3.Row]) -> sqlite3.Row:
+        non_stale = [
+            row for row in candidates if not _stale_goal_hygiene_reason(row)
+        ]
+        if non_stale:
+            candidates = non_stale
         active = [row for row in candidates if _goal_bucket(row) == "active"]
         paused = [row for row in candidates if _goal_bucket(row) == "paused"]
         completed = [row for row in candidates if _goal_bucket(row) == "completed"]
@@ -40735,17 +43790,39 @@ def _run_workbench_action_form(
             "Create the local publication approval request from this committed run. It does "
             "not push, create a PR, deploy, call providers, or use the network."
         )
-        form = _input_form(
-            action_name,
-            hidden_fields(
-                {
-                    "run_id": coder_run.id,
-                    "requested_by": "operator",
-                    "remote": "origin",
-                    "target_branch": "main",
-                }
-            ),
-            {"note": "Request publication handoff"},
+        commit_path = Path(committed.source_run_evidence_path) / "coder_commit" / "commit.json"
+        commit_md_path = commit_path.with_suffix(".md")
+        form = (
+            _kv(
+                [
+                    ("source_coder_commit", _artifact_link(str(commit_path))),
+                    (
+                        "source_coder_commit_sha256",
+                        _sha256_for_display(root / commit_path),
+                    ),
+                    ("source_coder_commit_md", _artifact_link(str(commit_md_path))),
+                    (
+                        "source_commit_md_sha256",
+                        _sha256_for_display(root / commit_md_path),
+                    ),
+                    (
+                        "source_coder_commit_markdown_consumed",
+                        _commit_markdown_consumed_for_display(root / commit_md_path),
+                    ),
+                ]
+            )
+            + _input_form(
+                action_name,
+                hidden_fields(
+                    {
+                        "run_id": coder_run.id,
+                        "requested_by": "operator",
+                        "remote": "origin",
+                        "target_branch": "main",
+                    }
+                ),
+                {"note": "Request publication handoff"},
+            )
         )
     elif target_href == "#publication-handoff-action":
         approved_publication = next(
@@ -40762,9 +43839,12 @@ def _run_workbench_action_form(
             "Write local publication handoff and PR-body artifacts with suggested manual "
             "commands only. It does not push, create a PR, deploy, call providers, or use the network."
         )
-        form = _form(
-            action_name,
-            hidden_fields({"run_id": coder_run.id}),
+        form = (
+            _kv(_publication_decision_proof_rows(root, approved_publication))
+            + _form(
+                action_name,
+                hidden_fields({"run_id": coder_run.id}),
+            )
         )
     else:
         return result
@@ -41634,9 +44714,30 @@ def _run_review_gate(root: Path, coder_run: Any) -> str:
         ("review_path", _artifact_link(state["review_path"]) if state["exists"] else state["review_path"]),
         ("review_file_exists", str(state["exists"]).lower()),
         ("review_mentions_run", str(state["mentions_run"]).lower()),
+        ("review_consumes_run_evidence", str(state["consumes_run_evidence"]).lower()),
+        (
+            "source_coder_worktree_run",
+            _artifact_link(str(state["source_coder_worktree_run"])),
+        ),
+        (
+            "source_coder_worktree_run_summary",
+            _artifact_link(str(state["source_coder_worktree_run_summary"])),
+        ),
+        (
+            "source_coder_worktree_run_summary_sha256",
+            str(state["source_coder_worktree_run_summary_sha256"]),
+        ),
+        (
+            "source_coder_worktree_run_summary_consumed",
+            str(state["source_coder_worktree_run_summary_consumed"]).lower(),
+        ),
+        ("source_diff_sha256", str(state["source_diff_sha256"])),
         ("commit_request_form_available", str(state["commit_request_form_available"]).lower()),
         ("blocked_reason", state["blocked_reason"]),
-        ("backend_rule", "review.md must mention the coder worktree run id before coder-commit-request"),
+        (
+            "backend_rule",
+            "review.md must consume matching coder worktree run evidence before coder-commit-request",
+        ),
         ("network_actions_taken", "0"),
         ("external_mutations_taken", "0"),
     ]
@@ -41656,6 +44757,7 @@ def _run_evidence_map(root: Path, coder_run: Any) -> str:
     review_path = Path(str(review_gate["review_path"]))
     artifacts = {
         "run_json": evidence_path / "run.json",
+        "summary": evidence_path / "summary.md",
         "review": review_path,
         "diff": evidence_path / "diff.patch",
         "changed_files": evidence_path / "changed_files.json",
@@ -41716,7 +44818,7 @@ def _run_evidence_map(root: Path, coder_run: Any) -> str:
             "Review",
             str(review_gate["status"]),
             (
-                "Review mentions this run and unlocks commit request."
+                "Review consumes this run evidence and unlocks commit request."
                 if review_gate["commit_request_form_available"]
                 else str(review_gate["blocked_reason"])
             ),
@@ -41799,6 +44901,22 @@ def _run_evidence_map(root: Path, coder_run: Any) -> str:
                         str(review_gate["mentions_run"]).lower(),
                     ),
                     (
+                        "run_evidence_map_review_consumes_run_evidence",
+                        str(review_gate["consumes_run_evidence"]).lower(),
+                    ),
+                    (
+                        "run_evidence_map_source_coder_worktree_run_summary",
+                        _artifact_link(str(review_gate["source_coder_worktree_run_summary"])),
+                    ),
+                    (
+                        "run_evidence_map_source_coder_worktree_run_summary_sha256",
+                        str(review_gate["source_coder_worktree_run_summary_sha256"]),
+                    ),
+                    (
+                        "run_evidence_map_source_diff_sha256",
+                        str(review_gate["source_diff_sha256"]),
+                    ),
+                    (
                         "run_evidence_map_commit_request_form_available",
                         str(review_gate["commit_request_form_available"]).lower(),
                     ),
@@ -41861,23 +44979,63 @@ def _run_review_gate_state(root: Path, coder_run: Any) -> dict[str, Any]:
     absolute_review_path = root / review_path
     exists = absolute_review_path.is_file()
     mentions_run = False
+    consumes_run_evidence = False
+    proof: dict[str, Any] = {}
+    proof_error = "none"
+    try:
+        proof = coder_worktree_run_review_proof(root, coder_run)
+    except CoderWorktreeCommitError as error:
+        proof_error = str(error)
     if exists:
         try:
-            mentions_run = coder_run.id in absolute_review_path.read_text(encoding="utf-8")
+            review_text = absolute_review_path.read_text(encoding="utf-8")
         except OSError:
+            review_text = ""
             mentions_run = False
-    commit_request_form_available = (
-        coder_run.status == "completed" and exists and mentions_run
-    )
+        else:
+            mentions_run = coder_run.id in review_text
+            consumes_run_evidence = bool(
+                proof
+                and all(
+                    fragment in review_text
+                    for fragment in [
+                        coder_run.id,
+                        f"source_coder_worktree_run: {proof['source_coder_worktree_run']}",
+                        f"source_coder_worktree_run_json: {proof['source_coder_worktree_run_json']}",
+                        (
+                            "source_coder_worktree_run_sha256: "
+                            f"{proof['source_coder_worktree_run_sha256']}"
+                        ),
+                        (
+                            "source_coder_worktree_run_summary: "
+                            f"{proof['source_coder_worktree_run_summary']}"
+                        ),
+                        (
+                            "source_coder_worktree_run_summary_sha256: "
+                            f"{proof['source_coder_worktree_run_summary_sha256']}"
+                        ),
+                        "source_coder_worktree_run_summary_consumed: true",
+                        f"source_diff: {proof['source_diff']}",
+                        f"source_diff_sha256: {proof['source_diff_sha256']}",
+                    ]
+                )
+            )
+    commit_request_form_available = coder_run.status == "completed" and exists and consumes_run_evidence
     if commit_request_form_available:
         status = "reviewed"
         blocked_reason = "none"
     elif not exists:
         status = "missing"
         blocked_reason = "review_artifact_missing"
+    elif proof_error != "none":
+        status = "proof_missing"
+        blocked_reason = "run_evidence_not_readable"
     elif not mentions_run:
         status = "stale_or_unmatched"
         blocked_reason = "review_artifact_does_not_mention_run"
+    elif not consumes_run_evidence:
+        status = "stale_or_unmatched"
+        blocked_reason = "review_artifact_does_not_match_run_evidence"
     else:
         status = "not_ready"
         blocked_reason = f"coder_worktree_status_{coder_run.status}"
@@ -41885,6 +45043,19 @@ def _run_review_gate_state(root: Path, coder_run: Any) -> dict[str, Any]:
         "review_path": review_path.as_posix(),
         "exists": exists,
         "mentions_run": mentions_run,
+        "consumes_run_evidence": consumes_run_evidence,
+        "source_coder_worktree_run": proof.get("source_coder_worktree_run", coder_run.evidence_path),
+        "source_coder_worktree_run_summary": proof.get(
+            "source_coder_worktree_run_summary",
+            str(Path(coder_run.evidence_path) / "summary.md"),
+        ),
+        "source_coder_worktree_run_summary_sha256": proof.get(
+            "source_coder_worktree_run_summary_sha256",
+            "missing",
+        ),
+        "source_coder_worktree_run_summary_consumed": consumes_run_evidence,
+        "source_diff_sha256": proof.get("source_diff_sha256", "missing"),
+        "proof_error": proof_error,
         "status": status,
         "blocked_reason": blocked_reason,
         "commit_request_form_available": commit_request_form_available,
@@ -45249,11 +48420,40 @@ def _handle_post(
                 created_by_profile=_one(form, "created_by_profile") or "planner",
             )
             message = f"goal_created: {lifecycle.goal.id}"
-            location = f"/goals/{quote(lifecycle.goal.id)}"
+            location = (
+                _safe_local_return_path(_one(form, "return_to"))
+                or f"/goals/{quote(lifecycle.goal.id)}"
+            )
             resume_surface, _resume_label, _form_available = _workspace_goal_action_resume_target(
                 root,
                 lifecycle.goal.id,
             )
+            completed_goal_id = (_one(form, "completed_goal_id") or "").strip()
+            completed_goal_artifact = (
+                _one(form, "completed_goal_artifact") or ""
+            ).strip()
+            previous_resume_surface = _safe_local_return_path(
+                _one(form, "previous_resume_surface")
+            )
+            completed_goal_proof: dict[str, str] = {}
+            if completed_goal_id:
+                try:
+                    completed_goal = storage.get_goal(completed_goal_id)
+                except KeyError:
+                    completed_goal = None
+                if completed_goal is not None:
+                    completed_goal_proof = _goal_completion_proof_for_display(
+                        root,
+                        completed_goal,
+                    )
+
+            def completed_goal_field(form_key: str, proof_key: str) -> str:
+                return (
+                    _one(form, form_key)
+                    or completed_goal_proof.get(proof_key)
+                    or ""
+                ).strip()
+
             _write_workspace_state(
                 root,
                 {
@@ -45263,6 +48463,49 @@ def _handle_post(
                     "last_viewed_artifact": str(lifecycle.goal_artifact_path.relative_to(root)),
                     "resume_surface": resume_surface or f"/goals/{quote(lifecycle.goal.id)}",
                     "updated_by": "create-goal",
+                    "completed_goal_handoff_source_goal": completed_goal_id,
+                    "completed_goal_handoff_previous_resume_surface": previous_resume_surface,
+                    "completed_goal_handoff_previous_artifact": completed_goal_artifact,
+                    "completed_goal_handoff_completion_evidence": completed_goal_field(
+                        "completed_goal_completion_evidence",
+                        "source_goal_completion_evidence",
+                    ),
+                    "completed_goal_handoff_completion_evidence_md": completed_goal_field(
+                        "completed_goal_completion_evidence_md",
+                        "source_goal_completion_evidence_md",
+                    ),
+                    "completed_goal_handoff_completion_evidence_sha256": completed_goal_field(
+                        "completed_goal_completion_evidence_sha256",
+                        "source_goal_completion_evidence_sha256",
+                    ),
+                    "completed_goal_handoff_completion_evidence_md_sha256": completed_goal_field(
+                        "completed_goal_completion_evidence_md_sha256",
+                        "source_goal_completion_evidence_md_sha256",
+                    ),
+                    "completed_goal_handoff_completion_markdown_consumed": completed_goal_field(
+                        "completed_goal_completion_markdown_consumed",
+                        "source_goal_completion_markdown_consumed",
+                    ),
+                    "completed_goal_handoff_prior_manual_boundary_artifact": completed_goal_field(
+                        "completed_goal_prior_manual_boundary_artifact",
+                        "prior_manual_boundary_artifact",
+                    ),
+                    "completed_goal_handoff_prior_manual_boundary_artifact_sha256": completed_goal_field(
+                        "completed_goal_prior_manual_boundary_artifact_sha256",
+                        "prior_manual_boundary_artifact_sha256",
+                    ),
+                    "completed_goal_handoff_source_coder_publication_handoff_md": completed_goal_field(
+                        "completed_goal_source_coder_publication_handoff_md",
+                        "source_coder_publication_handoff_md",
+                    ),
+                    "completed_goal_handoff_source_publication_handoff_md_sha256": completed_goal_field(
+                        "completed_goal_source_publication_handoff_md_sha256",
+                        "source_publication_handoff_md_sha256",
+                    ),
+                    "completed_goal_handoff_source_coder_publication_handoff_markdown_consumed": completed_goal_field(
+                        "completed_goal_source_coder_publication_handoff_markdown_consumed",
+                        "source_coder_publication_handoff_markdown_consumed",
+                    ),
                 },
             )
             result = lifecycle
@@ -45271,13 +48514,28 @@ def _handle_post(
             message = f"subagent_delegation: {result.id}"
             delegation_location = f"/delegations/{quote(result.id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or delegation_location
+            delegation_creation_artifact = _write_delegation_creation_artifact(root, result)
+            completed_goal_provenance = _promote_completed_goal_handoff_provenance(
+                root,
+                storage,
+                successor_goal_id=result.parent_goal_id,
+                trigger_action="delegate",
+                trigger_result_id=result.id,
+                trigger_artifact_path=delegation_creation_artifact,
+            )
+            if completed_goal_provenance is not None:
+                message = (
+                    f"{message}; completed_goal_provenance_promoted: "
+                    f"{completed_goal_provenance['artifact_path']}"
+                )
             _remember_delegation_workspace(
                 root,
                 storage,
                 result.id,
-                artifact_path=result.result_artifact_path,
+                artifact_path=delegation_creation_artifact,
                 updated_by="delegate",
                 resume_surface=location,
+                clear_completed_goal_handoff=completed_goal_provenance is not None,
             )
         elif action == "pause-goal":
             result = _pause_goal_from_form(storage, form)
@@ -45318,7 +48576,8 @@ def _handle_post(
         elif action == "complete-goal":
             result = _complete_goal_from_form(root, storage, form)
             message = f"goal_completed: {result['goal_id']}"
-            location = f"/goals/{quote(result['goal_id'])}"
+            goal_location = f"/goals/{quote(result['goal_id'])}"
+            location = _safe_local_return_path(_one(form, "return_to")) or goal_location
             handoff_artifact_path = result.get("handoff_artifact_path")
             _write_workspace_state(
                 root,
@@ -45334,7 +48593,7 @@ def _handle_post(
                             else None
                         ),
                     ),
-                    "resume_surface": f"/goals/{quote(result['goal_id'])}",
+                    "resume_surface": location,
                     "updated_by": "complete-goal",
                 },
             )
@@ -45465,13 +48724,23 @@ def _handle_post(
             )
             delegation_location = f"/delegations/{quote(delegation_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or delegation_location
+            completed_delegation = storage.get_subagent_delegation(delegation_id)
+            run_metadata = (
+                load_delegation_result_metadata(completed_delegation)
+                if completed_delegation is not None
+                else {}
+            )
+            workspace_artifact_path = (
+                run_metadata.get("implementation_handoff_md")
+                or run_metadata.get("implementation_handoff_json")
+                or run_result.result_artifact_path
+                or (run_result.evidence_dir / "summary.md")
+            )
             _remember_delegation_workspace(
                 root,
                 storage,
                 delegation_id,
-                artifact_path=(
-                    run_result.result_artifact_path or (run_result.evidence_dir / "summary.md")
-                ),
+                artifact_path=workspace_artifact_path,
                 updated_by="run-delegation",
                 resume_surface=location,
             )
@@ -45486,6 +48755,10 @@ def _handle_post(
                 "parsed_output_path": run_result.parsed_output_path,
                 "evidence_dir": run_result.evidence_dir,
                 "result_artifact_path": run_result.result_artifact_path,
+                "context_pack_json": run_metadata.get("context_pack_json"),
+                "context_pack_md": run_metadata.get("context_pack_md"),
+                "implementation_handoff_json": run_metadata.get("implementation_handoff_json"),
+                "implementation_handoff_md": run_metadata.get("implementation_handoff_md"),
                 "incident_id": run_result.incident_id,
                 "memory_proposal_id": run_result.memory_proposal_id,
                 "next_recommended_action": run_result.next_recommended_action,
@@ -45504,64 +48777,197 @@ def _handle_post(
             result = summary
         elif action == "coder-prep":
             delegation_id = _required(form, "delegation_id")
-            result = prepare_coder_from_handoff(root, storage, delegation_id)
-            message = f"coder_prep: {result.prep_id}"
+            prep_result = prepare_coder_from_handoff(root, storage, delegation_id)
+            message = f"coder_prep: {prep_result.prep_id}"
             delegation_location = f"/delegations/{quote(delegation_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or delegation_location
             _remember_delegation_workspace(
                 root,
                 storage,
                 delegation_id,
-                artifact_path=result.markdown_path or result.artifact_path,
+                artifact_path=prep_result.markdown_path or prep_result.artifact_path,
                 updated_by="coder-prep",
                 resume_surface=location,
             )
+            result = {
+                "prep_id": prep_result.prep_id,
+                "delegation_id": prep_result.delegation_id,
+                "project_id": prep_result.project_id,
+                "artifact_path": prep_result.artifact_path,
+                "markdown_path": prep_result.markdown_path,
+                "source_handoff_md": prep_result.source_handoff_md,
+                "source_handoff_markdown_consumed": True,
+                "allowed_files": prep_result.allowed_files,
+                "already_recorded": prep_result.already_recorded,
+                "task_rows_created": 0,
+                "runs_created": 0,
+                "routing_decisions_created": 0,
+                "worktrees_created": 0,
+                "effects_created": 0,
+                "approval_requests_created": 0,
+                "source_edits_taken": 0,
+                "commands_rerun": 0,
+                "provider_calls_taken_by_clankeros": 0,
+                "network_actions_taken": 0,
+                "external_mutations_taken": 0,
+            }
         elif action == "coder-prep-from-handoff":
             handoff_md = _required(form, "handoff_md")
-            result = prepare_coder_from_handoff_markdown(root, storage, handoff_md)
-            message = f"coder_prep: {result.prep_id}"
-            location = f"/delegations/{quote(result.delegation_id)}"
+            prep_result = prepare_coder_from_handoff_markdown(root, storage, handoff_md)
+            message = f"coder_prep: {prep_result.prep_id}"
+            location = f"/delegations/{quote(prep_result.delegation_id)}"
             _remember_delegation_workspace(
                 root,
                 storage,
-                result.delegation_id,
-                artifact_path=result.markdown_path or result.artifact_path,
+                prep_result.delegation_id,
+                artifact_path=prep_result.markdown_path or prep_result.artifact_path,
                 updated_by="coder-prep-from-handoff",
             )
+            result = {
+                "prep_id": prep_result.prep_id,
+                "delegation_id": prep_result.delegation_id,
+                "project_id": prep_result.project_id,
+                "artifact_path": prep_result.artifact_path,
+                "markdown_path": prep_result.markdown_path,
+                "source_handoff_md": prep_result.source_handoff_md,
+                "source_handoff_markdown_consumed": True,
+                "allowed_files": prep_result.allowed_files,
+                "already_recorded": prep_result.already_recorded,
+                "task_rows_created": 0,
+                "runs_created": 0,
+                "routing_decisions_created": 0,
+                "worktrees_created": 0,
+                "effects_created": 0,
+                "approval_requests_created": 0,
+                "source_edits_taken": 0,
+                "commands_rerun": 0,
+                "provider_calls_taken_by_clankeros": 0,
+                "network_actions_taken": 0,
+                "external_mutations_taken": 0,
+            }
         elif action == "coder-worktree-plan":
             delegation_id = _required(form, "delegation_id")
-            result = prepare_worktree_plan_from_coder_prep(root, storage, delegation_id)
-            message = f"coder_worktree_plan: {result.plan_id}"
+            plan_result = prepare_worktree_plan_from_coder_prep(root, storage, delegation_id)
+            message = f"coder_worktree_plan: {plan_result.plan_id}"
             delegation_location = f"/delegations/{quote(delegation_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or delegation_location
             _remember_delegation_workspace(
                 root,
                 storage,
                 delegation_id,
-                artifact_path=result.markdown_path or result.artifact_path,
+                artifact_path=plan_result.markdown_path or plan_result.artifact_path,
                 updated_by="coder-worktree-plan",
                 resume_surface=location,
             )
+            try:
+                plan_payload = json.loads(plan_result.artifact_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                plan_payload = {}
+            source = plan_payload.get("source") if isinstance(plan_payload.get("source"), dict) else {}
+            approval_gate = (
+                plan_payload.get("approval_gate")
+                if isinstance(plan_payload.get("approval_gate"), dict)
+                else {}
+            )
+            proposed_worktree = (
+                plan_payload.get("proposed_worktree")
+                if isinstance(plan_payload.get("proposed_worktree"), dict)
+                else {}
+            )
+            result = {
+                "plan_id": plan_result.plan_id,
+                "delegation_id": plan_result.delegation_id,
+                "project_id": plan_result.project_id,
+                "artifact_path": plan_result.artifact_path,
+                "markdown_path": plan_result.markdown_path,
+                "source_coder_prep_md": plan_result.source_coder_prep_md,
+                "source_coder_prep_md_sha256": source.get("coder_prep_md_sha256", "unknown"),
+                "source_coder_prep_markdown_consumed": True,
+                "allowed_files": plan_result.allowed_files,
+                "approval_gate": approval_gate.get("status", "operator_approval_required"),
+                "approval_request_created": approval_gate.get("approval_request_created", False),
+                "proposed_worktree_status": proposed_worktree.get("status", "not_created"),
+                "proposed_worktree_created": proposed_worktree.get("worktree_created", False),
+                "branch_name_suggestion": proposed_worktree.get("branch_name_suggestion", "none"),
+                "worktree_path_suggestion": proposed_worktree.get("path_suggestion", "none"),
+                "dispatch_ready": False,
+                "already_recorded": plan_result.already_recorded,
+                "worktree_created": 0,
+                "task_rows_created": 0,
+                "runs_created": 0,
+                "routing_decisions_created": 0,
+                "worktrees_created": 0,
+                "effects_created": 0,
+                "approval_requests_created": 0,
+                "source_edits_taken": 0,
+                "commands_rerun": 0,
+                "provider_calls_taken_by_clankeros": 0,
+                "network_actions_taken": 0,
+                "external_mutations_taken": 0,
+            }
         elif action == "coder-worktree-approval":
             delegation_id = _required(form, "delegation_id")
-            result = request_coder_worktree_approval(
+            approval_result = request_coder_worktree_approval(
                 root,
                 storage,
                 delegation_id,
                 requested_by=_one(form, "requested_by") or "operator",
                 note=_one(form, "note") or "Requested from local app.",
             )
-            message = f"coder_worktree_approval: {result.approval.id}"
+            approval = approval_result.approval
+            message = f"coder_worktree_approval: {approval.id}"
             delegation_location = f"/delegations/{quote(delegation_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or delegation_location
+            request_artifact_path = root / approval.request_artifact_path
+            request_markdown_path = request_artifact_path.with_suffix(".md")
             _remember_delegation_workspace(
                 root,
                 storage,
                 delegation_id,
-                artifact_path=Path(result.approval.request_artifact_path).with_suffix(".md"),
+                artifact_path=request_markdown_path,
                 updated_by="coder-worktree-approval",
                 resume_surface=location,
             )
+            try:
+                request_payload = json.loads(request_artifact_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                request_payload = {}
+            source_plan_md = str(
+                request_payload.get("source_coder_worktree_plan_md")
+                or Path(approval.source_plan_path).with_suffix(".md")
+            )
+            plan_markdown_consumed = (
+                request_payload.get("source_coder_worktree_plan_markdown_consumed") is True
+            )
+            source_plan_md_sha256 = str(request_payload.get("source_plan_md_sha256") or "missing")
+            result = {
+                "approval_id": approval.id,
+                "delegation_id": approval.delegation_id,
+                "project_id": approval.project_id,
+                "status": approval.status,
+                "artifact_path": request_artifact_path,
+                "markdown_path": request_markdown_path,
+                "source_coder_worktree_plan": approval.source_plan_path,
+                "source_coder_worktree_plan_md": source_plan_md,
+                "source_coder_worktree_plan_markdown_consumed": plan_markdown_consumed,
+                "source_plan_sha256": approval.source_plan_sha256,
+                "source_plan_md_sha256": source_plan_md_sha256,
+                "source_coder_prep_md_sha256": approval.source_coder_prep_md_sha256,
+                "allowed_files": request_payload.get("allowed_files", []),
+                "already_recorded": approval_result.already_recorded,
+                "worktrees_created": request_payload.get("worktrees_created", 0),
+                "source_edits_taken": request_payload.get("source_edits_taken", 0),
+                "commands_run": request_payload.get("commands_run", 0),
+                "commit_created": request_payload.get("commit_created", False),
+                "push_created": request_payload.get("push_created", False),
+                "deploy_created": request_payload.get("deploy_created", False),
+                "provider_calls_taken_by_clankeros": request_payload.get(
+                    "provider_calls_taken_by_clankeros",
+                    0,
+                ),
+                "network_actions_taken": request_payload.get("network_actions_taken", 0),
+                "external_mutations_taken": request_payload.get("external_mutations_taken", 0),
+            }
         elif action == "approve-coder-worktree":
             approval_id = _required(form, "approval_id")
             result = approve_coder_worktree(
@@ -45573,17 +48979,70 @@ def _handle_post(
             )
             message = f"approved_coder_worktree: {result.approval.id}"
             location = _safe_local_return_path(_one(form, "return_to")) or "/"
+            approval = result.approval
+            decision_artifact_path = (
+                root / approval.decision_artifact_path
+                if approval.decision_artifact_path
+                else root / ""
+            )
+            decision_markdown_path = decision_artifact_path.with_suffix(".md")
             _remember_delegation_workspace(
                 root,
                 storage,
-                result.approval.delegation_id,
-                artifact_path=(
-                    Path(result.approval.decision_artifact_path).with_suffix(".md")
-                    if result.approval.decision_artifact_path
-                    else None
-                ),
+                approval.delegation_id,
+                artifact_path=decision_markdown_path if approval.decision_artifact_path else None,
                 updated_by="approve-coder-worktree",
+                resume_surface=location,
             )
+            try:
+                decision_payload = json.loads(decision_artifact_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                decision_payload = {}
+            source_request = str(
+                decision_payload.get("source_coder_worktree_approval_request")
+                or approval.request_artifact_path
+            )
+            source_request_md = str(
+                decision_payload.get("source_coder_worktree_approval_request_md")
+                or Path(approval.request_artifact_path).with_suffix(".md")
+            )
+            result = {
+                "approval_id": approval.id,
+                "delegation_id": approval.delegation_id,
+                "project_id": approval.project_id,
+                "status": approval.status,
+                "artifact_path": decision_artifact_path,
+                "markdown_path": decision_markdown_path,
+                "source_coder_worktree_plan": approval.source_plan_path,
+                "source_plan_sha256": approval.source_plan_sha256,
+                "source_coder_worktree_approval_request": source_request,
+                "source_coder_worktree_approval_request_md": source_request_md,
+                "source_coder_worktree_approval_request_markdown_consumed": decision_payload.get(
+                    "source_coder_worktree_approval_request_markdown_consumed"
+                )
+                is True,
+                "source_approval_request_sha256": decision_payload.get(
+                    "source_approval_request_sha256",
+                    "missing",
+                ),
+                "source_approval_request_md_sha256": decision_payload.get(
+                    "source_approval_request_md_sha256",
+                    "missing",
+                ),
+                "already_approved": result.already_approved,
+                "worktrees_created": decision_payload.get("worktrees_created", 0),
+                "source_edits_taken": decision_payload.get("source_edits_taken", 0),
+                "commands_run": decision_payload.get("commands_run", 0),
+                "commit_created": decision_payload.get("commit_created", False),
+                "push_created": decision_payload.get("push_created", False),
+                "deploy_created": decision_payload.get("deploy_created", False),
+                "provider_calls_taken_by_clankeros": decision_payload.get(
+                    "provider_calls_taken_by_clankeros",
+                    0,
+                ),
+                "network_actions_taken": decision_payload.get("network_actions_taken", 0),
+                "external_mutations_taken": decision_payload.get("external_mutations_taken", 0),
+            }
         elif action == "run-coder-worktree":
             delegation_id = _required(form, "delegation_id")
             run_result = run_approved_coder_worktree(
@@ -45597,12 +49056,19 @@ def _handle_post(
             )
             coder_run = run_result.run
             change_summary = coder_worktree_change_summary(root, coder_run)
+            try:
+                coder_run_payload = json.loads(
+                    (root / coder_run.evidence_path / "run.json").read_text(encoding="utf-8")
+                )
+            except (OSError, json.JSONDecodeError):
+                coder_run_payload = {}
             message = (
                 f"run_coder_worktree: already_recorded {coder_run.id}"
                 if run_result.already_recorded
                 else f"run_coder_worktree: {coder_run.status}"
             )
-            location = f"/runs/{quote(coder_run.id)}"
+            run_location = f"/runs/{quote(coder_run.id)}"
+            location = _safe_local_return_path(_one(form, "return_to")) or run_location
             result = {
                 "run_id": coder_run.id,
                 "delegation_id": coder_run.delegation_id,
@@ -45613,8 +49079,30 @@ def _handle_post(
                 "failure_class": coder_run.failure_class or "none",
                 "worktree_path": coder_run.worktree_path,
                 "branch_name": coder_run.branch_name,
+                "run_surface": run_location,
+                "return_to_after_command": location,
                 "command_exit_code": coder_run.command_exit_code,
                 "verification_exit_code": coder_run.verification_exit_code,
+                "source_coder_worktree_approval_decision": coder_run_payload.get(
+                    "source_coder_worktree_approval_decision",
+                    "missing",
+                ),
+                "source_coder_worktree_approval_decision_md": coder_run_payload.get(
+                    "source_coder_worktree_approval_decision_md",
+                    "missing",
+                ),
+                "source_approval_decision_sha256": coder_run_payload.get(
+                    "source_approval_decision_sha256",
+                    "missing",
+                ),
+                "source_approval_decision_md_sha256": coder_run_payload.get(
+                    "source_approval_decision_md_sha256",
+                    "missing",
+                ),
+                "source_coder_worktree_approval_decision_markdown_consumed": coder_run_payload.get(
+                    "source_coder_worktree_approval_decision_markdown_consumed"
+                )
+                is True,
                 "changed_files": coder_run.changed_files,
                 "changed_files_count": change_summary["changed_files_count"],
                 "outside_allowed_files": coder_run.outside_allowed_files,
@@ -45662,6 +49150,31 @@ def _handle_post(
                 "external_mutations_taken": 0,
             }
             if coder_run is not None:
+                review_proof = coder_worktree_run_review_proof(root, coder_run)
+                result.update(
+                    {
+                        "source_coder_worktree_run": review_proof[
+                            "source_coder_worktree_run"
+                        ],
+                        "source_coder_worktree_run_json": review_proof[
+                            "source_coder_worktree_run_json"
+                        ],
+                        "source_coder_worktree_run_sha256": review_proof[
+                            "source_coder_worktree_run_sha256"
+                        ],
+                        "source_coder_worktree_run_summary": review_proof[
+                            "source_coder_worktree_run_summary"
+                        ],
+                        "source_coder_worktree_run_summary_sha256": review_proof[
+                            "source_coder_worktree_run_summary_sha256"
+                        ],
+                        "source_coder_worktree_run_summary_consumed": review_proof[
+                            "source_coder_worktree_run_summary_consumed"
+                        ],
+                        "source_diff": review_proof["source_diff"],
+                        "source_diff_sha256": review_proof["source_diff_sha256"],
+                    }
+                )
                 run_location = f"/runs/{quote(requested_run_id)}"
                 location = _safe_local_return_path(_one(form, "return_to")) or run_location
                 _remember_delegation_workspace(
@@ -45674,7 +49187,7 @@ def _handle_post(
                 )
         elif action == "coder-commit-request":
             run_id = _required(form, "run_id")
-            result = request_coder_worktree_commit_approval(
+            commit_result = request_coder_worktree_commit_approval(
                 root,
                 storage,
                 run_id,
@@ -45682,68 +49195,216 @@ def _handle_post(
                 commit_message=_required(form, "message"),
                 note=_one(form, "note") or "Requested from local app.",
             )
-            message = f"coder_commit_request: {result.approval.id}"
+            request_payload: dict[str, Any] = {}
+            try:
+                request_payload = json.loads(
+                    (root / commit_result.approval.request_artifact_path).read_text(
+                        encoding="utf-8"
+                    )
+                )
+            except (OSError, json.JSONDecodeError):
+                request_payload = {}
+            result = {
+                "approval": commit_result.approval,
+                "already_recorded": commit_result.already_recorded,
+                "source_review": request_payload.get(
+                    "source_review",
+                    request_payload.get(
+                        "review_path",
+                        commit_result.approval.review_path,
+                    ),
+                ),
+                "source_review_sha256": request_payload.get(
+                    "source_review_sha256",
+                    "missing",
+                ),
+                "source_review_markdown_consumed": request_payload.get(
+                    "source_review_markdown_consumed"
+                )
+                is True,
+                "source_coder_worktree_run_summary": request_payload.get(
+                    "source_coder_worktree_run_summary",
+                    "missing",
+                ),
+                "source_coder_worktree_run_summary_sha256": request_payload.get(
+                    "source_coder_worktree_run_summary_sha256",
+                    "missing",
+                ),
+                "source_coder_worktree_run_summary_consumed": request_payload.get(
+                    "source_coder_worktree_run_summary_consumed"
+                )
+                is True,
+                "source_diff": request_payload.get("source_diff", "missing"),
+                "source_diff_sha256": request_payload.get(
+                    "source_diff_sha256",
+                    "missing",
+                ),
+            }
+            message = f"coder_commit_request: {commit_result.approval.id}"
             run_location = f"/runs/{quote(run_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or run_location
             _remember_delegation_workspace(
                 root,
                 storage,
-                result.approval.delegation_id,
-                artifact_path=Path(result.approval.request_artifact_path).with_suffix(".md"),
+                commit_result.approval.delegation_id,
+                artifact_path=Path(commit_result.approval.request_artifact_path).with_suffix(".md"),
                 updated_by="coder-commit-request",
                 resume_surface=location,
             )
         elif action == "approve-coder-commit":
             approval_id = _required(form, "approval_id")
-            result = approve_coder_worktree_commit(
+            commit_decision = approve_coder_worktree_commit(
                 root,
                 storage,
                 approval_id,
                 decided_by=_one(form, "decided_by") or "operator",
                 note=_one(form, "note") or "Approved from local app.",
             )
-            message = f"approved_coder_commit: {result.approval.id}"
-            run_location = f"/runs/{quote(result.approval.run_id)}"
+            decision_payload: dict[str, Any] = {}
+            decision_path = (
+                root
+                / commit_decision.approval.source_run_evidence_path
+                / "coder_commit"
+                / "coder_commit_decision.json"
+            )
+            try:
+                decision_payload = json.loads(decision_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                decision_payload = {}
+            result = {
+                "approval": commit_decision.approval,
+                "already_approved": commit_decision.already_approved,
+                "source_coder_commit_request": decision_payload.get(
+                    "source_coder_commit_request",
+                    "missing",
+                ),
+                "source_coder_commit_request_md": decision_payload.get(
+                    "source_coder_commit_request_md",
+                    "missing",
+                ),
+                "source_commit_request_sha256": decision_payload.get(
+                    "source_commit_request_sha256",
+                    decision_payload.get("source_request_sha256", "missing"),
+                ),
+                "source_commit_request_md_sha256": decision_payload.get(
+                    "source_commit_request_md_sha256",
+                    "missing",
+                ),
+                "source_coder_commit_request_markdown_consumed": decision_payload.get(
+                    "source_coder_commit_request_markdown_consumed"
+                )
+                is True,
+                "commit_created": decision_payload.get("commit_created") is True,
+                "push_created": decision_payload.get("push_created") is True,
+                "pr_created": decision_payload.get("pr_created") is True,
+                "deploy_created": decision_payload.get("deploy_created") is True,
+                "network_actions_taken": int(
+                    decision_payload.get("network_actions_taken") or 0
+                ),
+                "external_mutations_taken": int(
+                    decision_payload.get("external_mutations_taken") or 0
+                ),
+            }
+            message = f"approved_coder_commit: {commit_decision.approval.id}"
+            run_location = f"/runs/{quote(commit_decision.approval.run_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or run_location
             _remember_delegation_workspace(
                 root,
                 storage,
-                result.approval.delegation_id,
+                commit_decision.approval.delegation_id,
                 artifact_path=(
-                    Path(result.approval.source_run_evidence_path)
+                    Path(commit_decision.approval.source_run_evidence_path)
                     / "coder_commit"
                     / "coder_commit_decision.md"
                 ),
                 updated_by="approve-coder-commit",
-                resume_surface=run_location,
+                resume_surface=location,
             )
         elif action == "commit-coder-worktree":
             run_id = _required(form, "run_id")
-            result = commit_coder_worktree(
+            commit_result = commit_coder_worktree(
                 root,
                 storage,
                 run_id,
                 message=_required(form, "message"),
                 committed_by=_one(form, "committed_by") or "operator",
             )
-            message = f"commit_coder_worktree: {result.status}"
+            commit_payload: dict[str, Any] = {}
+            commit_artifact_path = (
+                root / commit_result.alias_evidence_path
+                if commit_result.alias_evidence_path
+                else root / commit_result.evidence_path
+            )
+            try:
+                commit_payload = json.loads(
+                    commit_artifact_path.read_text(encoding="utf-8")
+                )
+            except (OSError, json.JSONDecodeError):
+                commit_payload = {}
+            result = {
+                "approval": commit_result.approval,
+                "status": commit_result.status,
+                "commit_sha": commit_result.commit_sha,
+                "parent_commit_sha": commit_result.parent_commit_sha,
+                "effect_id": commit_result.effect_id,
+                "evidence_path": commit_result.evidence_path,
+                "alias_evidence_path": commit_result.alias_evidence_path,
+                "source_coder_commit_decision": commit_payload.get(
+                    "source_coder_commit_decision",
+                    commit_result.source_coder_commit_decision or "missing",
+                ),
+                "source_coder_commit_decision_md": commit_payload.get(
+                    "source_coder_commit_decision_md",
+                    commit_result.source_coder_commit_decision_md or "missing",
+                ),
+                "source_commit_decision_sha256": commit_payload.get(
+                    "source_commit_decision_sha256",
+                    commit_result.source_commit_decision_sha256 or "missing",
+                ),
+                "source_commit_decision_md_sha256": commit_payload.get(
+                    "source_commit_decision_md_sha256",
+                    commit_result.source_commit_decision_md_sha256 or "missing",
+                ),
+                "source_coder_commit_decision_markdown_consumed": (
+                    commit_payload.get(
+                        "source_coder_commit_decision_markdown_consumed"
+                    )
+                    is True
+                    or commit_result.source_coder_commit_decision_markdown_consumed
+                ),
+                "bounded_file_validation": commit_payload.get(
+                    "bounded_file_validation",
+                    {},
+                ),
+                "commit_created": commit_payload.get("commit_created") is True,
+                "push_created": commit_payload.get("push_created") is True,
+                "pr_created": commit_payload.get("pr_created") is True,
+                "deploy_created": commit_payload.get("deploy_created") is True,
+                "network_actions_taken": int(
+                    commit_payload.get("network_actions_taken") or 0
+                ),
+                "external_mutations_taken": int(
+                    commit_payload.get("external_mutations_taken") or 0
+                ),
+            }
+            message = f"commit_coder_worktree: {commit_result.status}"
             run_location = f"/runs/{quote(run_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or run_location
             _remember_delegation_workspace(
                 root,
                 storage,
-                result.approval.delegation_id,
+                commit_result.approval.delegation_id,
                 artifact_path=(
-                    Path(result.alias_evidence_path).with_suffix(".md")
-                    if result.alias_evidence_path
-                    else Path(result.evidence_path).with_suffix(".md")
+                    Path(commit_result.alias_evidence_path).with_suffix(".md")
+                    if commit_result.alias_evidence_path
+                    else Path(commit_result.evidence_path).with_suffix(".md")
                 ),
                 updated_by="commit-coder-worktree",
                 resume_surface=location,
             )
         elif action == "coder-publication-request":
             run_id = _required(form, "run_id")
-            result = request_coder_publication(
+            publication_result = request_coder_publication(
                 root,
                 storage,
                 run_id,
@@ -45752,52 +49413,180 @@ def _handle_post(
                 target_branch=_one(form, "target_branch") or "main",
                 note=_required(form, "note"),
             )
-            message = f"coder_publication_request: {result.publication.id}"
+            request_payload: dict[str, Any] = {}
+            request_path = root / publication_result.publication.request_artifact_path
+            try:
+                request_payload = json.loads(request_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                request_payload = {}
+            result = {
+                "publication": publication_result.publication,
+                "already_recorded": publication_result.already_recorded,
+                "source_coder_commit": request_payload.get(
+                    "source_coder_commit",
+                    publication_result.publication.source_commit_artifact_path,
+                ),
+                "source_coder_commit_md": request_payload.get(
+                    "source_coder_commit_md",
+                    "missing",
+                ),
+                "source_commit_sha256": request_payload.get(
+                    "source_commit_sha256",
+                    publication_result.publication.source_commit_artifact_sha256,
+                ),
+                "source_commit_md_sha256": request_payload.get(
+                    "source_commit_md_sha256",
+                    "missing",
+                ),
+                "source_coder_commit_markdown_consumed": request_payload.get(
+                    "source_coder_commit_markdown_consumed"
+                )
+                is True,
+                "push_created": request_payload.get("push_created") is True,
+                "pr_created": request_payload.get("pr_created") is True,
+                "deploy_created": request_payload.get("deploy_created") is True,
+                "network_actions_taken": int(
+                    request_payload.get("network_actions_taken") or 0
+                ),
+                "external_mutations_taken": int(
+                    request_payload.get("external_mutations_taken") or 0
+                ),
+            }
+            message = f"coder_publication_request: {publication_result.publication.id}"
             run_location = f"/runs/{quote(run_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or run_location
             _remember_delegation_workspace(
                 root,
                 storage,
-                result.publication.delegation_id,
-                artifact_path=Path(result.publication.request_artifact_path).with_suffix(".md"),
+                publication_result.publication.delegation_id,
+                artifact_path=Path(publication_result.publication.request_artifact_path).with_suffix(".md"),
                 updated_by="coder-publication-request",
                 resume_surface=location,
             )
         elif action == "approve-coder-publication":
             publication_id = _required(form, "publication_id")
-            result = approve_coder_publication(
+            publication_decision = approve_coder_publication(
                 root,
                 storage,
                 publication_id,
                 decided_by=_one(form, "decided_by") or "operator",
                 note=_one(form, "note") or "Approved from local app.",
             )
-            message = f"approved_coder_publication: {result.publication.id}"
-            run_location = f"/runs/{quote(result.publication.run_id)}"
+            decision_payload: dict[str, Any] = {}
+            decision_path = (
+                root / (publication_decision.publication.decision_artifact_path or "")
+            )
+            try:
+                decision_payload = json.loads(decision_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                decision_payload = {}
+            result = {
+                "publication": publication_decision.publication,
+                "already_approved": publication_decision.already_approved,
+                "source_coder_publication_request": decision_payload.get(
+                    "source_coder_publication_request",
+                    publication_decision.publication.request_artifact_path,
+                ),
+                "source_coder_publication_request_md": decision_payload.get(
+                    "source_coder_publication_request_md",
+                    "missing",
+                ),
+                "source_publication_request_sha256": decision_payload.get(
+                    "source_publication_request_sha256",
+                    decision_payload.get("source_request_sha256", "missing"),
+                ),
+                "source_publication_request_md_sha256": decision_payload.get(
+                    "source_publication_request_md_sha256",
+                    "missing",
+                ),
+                "source_coder_publication_request_markdown_consumed": decision_payload.get(
+                    "source_coder_publication_request_markdown_consumed"
+                )
+                is True,
+                "push_created": decision_payload.get("push_created") is True,
+                "pr_created": decision_payload.get("pr_created") is True,
+                "deploy_created": decision_payload.get("deploy_created") is True,
+                "network_actions_taken": int(
+                    decision_payload.get("network_actions_taken") or 0
+                ),
+                "external_mutations_taken": int(
+                    decision_payload.get("external_mutations_taken") or 0
+                ),
+            }
+            message = f"approved_coder_publication: {publication_decision.publication.id}"
+            run_location = f"/runs/{quote(publication_decision.publication.run_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or run_location
             _remember_delegation_workspace(
                 root,
                 storage,
-                result.publication.delegation_id,
+                publication_decision.publication.delegation_id,
                 artifact_path=(
-                    Path(result.publication.decision_artifact_path).with_suffix(".md")
-                    if result.publication.decision_artifact_path
+                    Path(publication_decision.publication.decision_artifact_path).with_suffix(".md")
+                    if publication_decision.publication.decision_artifact_path
                     else None
                 ),
                 updated_by="approve-coder-publication",
-                resume_surface=run_location,
+                resume_surface=location,
             )
         elif action == "coder-publication-handoff":
             run_id = _required(form, "run_id")
-            result = create_coder_publication_handoff(root, storage, run_id)
-            message = f"coder_publication_handoff: {result.status}"
+            handoff_result = create_coder_publication_handoff(root, storage, run_id)
+            handoff_payload = load_coder_publication_handoff_payload(
+                root,
+                handoff_result.publication,
+            )
+            result = {
+                "publication": handoff_result.publication,
+                "status": handoff_result.status,
+                "artifact_path": handoff_result.artifact_path,
+                "already_ready": handoff_result.already_ready,
+                "source_coder_publication_decision": handoff_payload.get(
+                    "source_coder_publication_decision",
+                    handoff_result.publication.decision_artifact_path or "missing",
+                ),
+                "source_coder_publication_decision_md": handoff_payload.get(
+                    "source_coder_publication_decision_md",
+                    "missing",
+                ),
+                "source_publication_decision_sha256": handoff_payload.get(
+                    "source_publication_decision_sha256",
+                    "missing",
+                ),
+                "source_publication_decision_md_sha256": handoff_payload.get(
+                    "source_publication_decision_md_sha256",
+                    "missing",
+                ),
+                "source_coder_publication_decision_markdown_consumed": handoff_payload.get(
+                    "source_coder_publication_decision_markdown_consumed"
+                )
+                is True,
+                "suggested_push_command": handoff_payload.get(
+                    "suggested_push_command",
+                    "missing",
+                ),
+                "suggested_draft_pr_command": handoff_payload.get(
+                    "suggested_draft_pr_command",
+                    "missing",
+                ),
+                "pr_body_path": handoff_payload.get("pr_body_path", "missing"),
+                "push_created": handoff_payload.get("push_created") is True,
+                "pr_created": handoff_payload.get("pr_created") is True,
+                "deploy_created": handoff_payload.get("deploy_created") is True,
+                "network_actions_taken": int(
+                    handoff_payload.get("network_actions_taken") or 0
+                ),
+                "external_mutations_taken": int(
+                    handoff_payload.get("external_mutations_taken") or 0
+                ),
+            }
+            message = f"coder_publication_handoff: {handoff_result.status}"
             run_location = f"/runs/{quote(run_id)}"
             location = _safe_local_return_path(_one(form, "return_to")) or run_location
             _remember_delegation_workspace(
                 root,
                 storage,
-                result.publication.delegation_id,
-                artifact_path=Path(result.artifact_path).with_suffix(".md"),
+                handoff_result.publication.delegation_id,
+                artifact_path=Path(handoff_result.artifact_path).with_suffix(".md"),
                 updated_by="coder-publication-handoff",
                 resume_surface=location,
             )
@@ -45961,20 +49750,38 @@ def _complete_goal_from_form(
     ready_publication = _goal_ready_publication(state)
     if ready_publication is None:
         raise ValueError("complete-goal requires a ready publication handoff")
+    handoff_completion_proof = _publication_handoff_completion_proof(
+        root,
+        ready_publication,
+    )
     completed_by = (_one(form, "completed_by") or "operator").strip() or "operator"
     note = (_one(form, "note") or "").strip()
+    previous_status = goal.status
     storage.set_goal_status(goal.id, "completed")
+    completed_goal = storage.get_goal(goal.id)
+    completion_evidence = _write_goal_completion_evidence(
+        root,
+        goal=completed_goal,
+        previous_status=previous_status,
+        completed_by=completed_by,
+        note=note or "none",
+        publication=ready_publication,
+        handoff_completion_proof=handoff_completion_proof,
+    )
     return {
         "status": "goal_completed",
         "goal_id": goal.id,
         "project_id": goal.project_id,
-        "previous_status": goal.status,
+        "previous_status": previous_status,
         "new_status": "completed",
+        "completed_at": completed_goal.completed_at or "unknown",
         "completed_by": completed_by,
         "note": note or "none",
         "publication_id": ready_publication.id,
         "publication_status": ready_publication.status,
         "handoff_artifact_path": ready_publication.handoff_artifact_path,
+        **handoff_completion_proof,
+        **completion_evidence,
         "manual_publish_boundary": "outside_clankeros",
         "push_created": False,
         "pr_created": False,
@@ -45983,6 +49790,136 @@ def _complete_goal_from_form(
         "network_actions_taken": 0,
         "external_mutations_taken": 0,
     }
+
+
+def _write_goal_completion_evidence(
+    root: Path,
+    *,
+    goal: Any,
+    previous_status: str,
+    completed_by: str,
+    note: str,
+    publication: Any,
+    handoff_completion_proof: dict[str, str],
+) -> dict[str, str]:
+    completion_json = _goal_file_path(goal.project_id, goal.id, "completion.json")
+    completion_md = completion_json.with_suffix(".md")
+    payload = {
+        "kind": "goal_completion_evidence",
+        "schema_version": 1,
+        "goal_id": goal.id,
+        "project_id": goal.project_id,
+        "previous_status": previous_status,
+        "new_status": "completed",
+        "completed_at": goal.completed_at or utc_now(),
+        "completed_by": completed_by,
+        "note": note,
+        "publication_id": publication.id,
+        "publication_status": publication.status,
+        "manual_publish_boundary": "outside_clankeros",
+        "source": "complete-goal",
+        "source_coder_publication_handoff": handoff_completion_proof[
+            "source_coder_publication_handoff"
+        ],
+        "source_coder_publication_handoff_md": handoff_completion_proof[
+            "source_coder_publication_handoff_md"
+        ],
+        "source_publication_handoff_sha256": handoff_completion_proof[
+            "source_publication_handoff_sha256"
+        ],
+        "source_publication_handoff_md_sha256": handoff_completion_proof[
+            "source_publication_handoff_md_sha256"
+        ],
+        "source_coder_publication_handoff_markdown_consumed": True,
+        "publication_handoff_kind": handoff_completion_proof[
+            "publication_handoff_kind"
+        ],
+        "suggested_push_command": handoff_completion_proof["suggested_push_command"],
+        "suggested_draft_pr_command": handoff_completion_proof[
+            "suggested_draft_pr_command"
+        ],
+        "pr_body_path": handoff_completion_proof["pr_body_path"],
+        "handoff_body_path": handoff_completion_proof["handoff_body_path"],
+        "source_coder_publication_decision": handoff_completion_proof[
+            "source_coder_publication_decision"
+        ],
+        "source_coder_publication_decision_md": handoff_completion_proof[
+            "source_coder_publication_decision_md"
+        ],
+        "source_publication_decision_sha256": handoff_completion_proof[
+            "source_publication_decision_sha256"
+        ],
+        "source_publication_decision_md_sha256": handoff_completion_proof[
+            "source_publication_decision_md_sha256"
+        ],
+        "source_coder_publication_decision_markdown_consumed": (
+            handoff_completion_proof[
+                "source_coder_publication_decision_markdown_consumed"
+            ]
+            == "true"
+        ),
+        "push_created": False,
+        "pr_created": False,
+        "deploy_created": False,
+        "provider_calls_taken_by_clankeros": 0,
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
+        "non_claims": [
+            "Goal completion records local status only.",
+            "Goal completion did not push.",
+            "Goal completion did not create a PR.",
+            "Goal completion did not deploy.",
+            "Goal completion did not call providers or use the network.",
+            "Manual publication remains outside ClankerOS.",
+        ],
+    }
+    json_path = root / completion_json
+    md_path = root / completion_md
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    md_path.write_text(_render_goal_completion_markdown(payload), encoding="utf-8")
+    return {
+        "completion_evidence_path": completion_json.as_posix(),
+        "completion_evidence_md": completion_md.as_posix(),
+        "completion_evidence_sha256": hashlib.sha256(json_path.read_bytes()).hexdigest(),
+        "completion_evidence_md_sha256": hashlib.sha256(md_path.read_bytes()).hexdigest(),
+    }
+
+
+def _render_goal_completion_markdown(payload: dict[str, Any]) -> str:
+    return "\n".join(
+        [
+            "# Goal Completion Evidence",
+            "",
+            f"- goal_id: {payload['goal_id']}",
+            f"- project_id: {payload['project_id']}",
+            f"- previous_status: {payload['previous_status']}",
+            f"- new_status: {payload['new_status']}",
+            f"- completed_at: {payload['completed_at']}",
+            f"- completed_by: {payload['completed_by']}",
+            f"- publication_id: {payload['publication_id']}",
+            f"- publication_status: {payload['publication_status']}",
+            f"- manual_publish_boundary: {payload['manual_publish_boundary']}",
+            f"- source_coder_publication_handoff: {payload['source_coder_publication_handoff']}",
+            f"- source_coder_publication_handoff_md: {payload['source_coder_publication_handoff_md']}",
+            f"- source_publication_handoff_sha256: {payload['source_publication_handoff_sha256']}",
+            f"- source_publication_handoff_md_sha256: {payload['source_publication_handoff_md_sha256']}",
+            f"- source_coder_publication_handoff_markdown_consumed: {str(payload['source_coder_publication_handoff_markdown_consumed']).lower()}",
+            f"- suggested_push_command: {payload['suggested_push_command']}",
+            f"- suggested_draft_pr_command: {payload['suggested_draft_pr_command']}",
+            "",
+            "## Non-Claims",
+            "",
+            "- Goal completion did not push.",
+            "- Goal completion did not create a PR.",
+            "- Goal completion did not deploy, call providers, or use the network.",
+            "- Manual publication remains outside ClankerOS.",
+            "",
+        ]
+    )
 
 
 def _append_goal_operator_note(
@@ -46393,7 +50330,11 @@ def _action_result_next_step_context(
             return base
         phase = _goal_current_phase(state)
         next_action = _goal_next_action(root, state)
-        action_form = _goal_next_action_form(state, next_action)
+        action_form = _goal_next_action_form(
+            state,
+            next_action,
+            return_to_override=location,
+        )
         form_available = bool(action_form)
         primary_href = "#action-result-next-step-form" if form_available else next_action.href
         primary_label = next_action.action
@@ -47101,7 +51042,11 @@ def _action_result_continuation_section(root: Path, location: str, message: str)
 
     phase = _goal_current_phase(state)
     next_action = _goal_next_action(root, state)
-    action_form = _goal_next_action_form(state, next_action)
+    action_form = _goal_next_action_form(
+        state,
+        next_action,
+        return_to_override=location,
+    )
     return "".join(
         [
             "<section id='action-continuation' class='action-continuation' data-action-continuation='true'><h2>Action Continuation</h2>",
@@ -47227,7 +51172,7 @@ def _action_result_first_run_continuation(
                     ),
                     (
                         "action_continuation_today_target",
-                        SafeHtml(f"<a href='{_e(today_href)}'>/today</a>"),
+                        SafeHtml(f"<a href='{_e(today_href)}'>{_e(first_run_label)}</a>"),
                     ),
                     (
                         "action_continuation_next_page",
@@ -47253,6 +51198,7 @@ def _action_result_first_run_continuation(
                     f"action_continuation_now: {_e(str(progress['next_action']))}",
                     f"action_continuation_click: <a href='{_e(target_href)}'>{_e(target_label)}</a>",
                     f"action_continuation_home: <a href='{_e(home_href)}'>{_e(first_run_label)}</a>",
+                    f"action_continuation_today: <a href='{_e(today_href)}'>{_e(first_run_label)}</a>",
                     "action_continuation_safety: confirmed local first-run action only",
                 ]
             ),
@@ -47570,6 +51516,15 @@ def _flatten_action_result(
         return [(key, str(value).lower())]
     if value is None:
         return [(key, "none")]
+    if isinstance(value, str):
+        relative_value = _repo_relative_artifact_path(root, value)
+        if _goal_artifact_render_kind(relative_value) is not None:
+            try:
+                artifact_path = resolve_artifact_path(root, relative_value)
+            except ValueError:
+                artifact_path = None
+            if artifact_path is not None and artifact_path.exists():
+                return [(key, _artifact_link(relative_value))]
     if key.endswith("_path") or key.endswith("_artifact_path"):
         return [(key, _artifact_link(_repo_relative_artifact_path(root, str(value))))]
     return [(key, str(value))]
@@ -47644,10 +51599,30 @@ def _run_action_forms(root: Path, run_id: str) -> str:
             f"<p class='muted'>local_commit_recorded: {_e(committed[0].commit_sha or 'unknown')}</p>"
         )
     if committed and not publications:
+        commit_path = Path(committed[0].source_run_evidence_path) / "coder_commit" / "commit.json"
+        commit_md_path = commit_path.with_suffix(".md")
         sections.extend(
             [
                 "<h3>Publication Request Action</h3>",
                 "<p class='muted'>This writes a local publication approval request. It does not push, create a PR, deploy, call providers, or use the network.</p>",
+                _kv(
+                    [
+                        ("source_coder_commit", _artifact_link(str(commit_path))),
+                        (
+                            "source_coder_commit_sha256",
+                            _sha256_for_display(root / commit_path),
+                        ),
+                        ("source_coder_commit_md", _artifact_link(str(commit_md_path))),
+                        (
+                            "source_commit_md_sha256",
+                            _sha256_for_display(root / commit_md_path),
+                        ),
+                        (
+                            "source_coder_commit_markdown_consumed",
+                            _commit_markdown_consumed_for_display(root / commit_md_path),
+                        ),
+                    ]
+                ),
                 _input_form(
                     "coder-publication-request",
                     {
@@ -47693,6 +51668,7 @@ def _run_action_forms(root: Path, run_id: str) -> str:
             [
                 "<section id='publication-handoff-action'><h2>Publication Handoff Action</h2>",
                 "<p class='muted'>This writes local publication handoff and PR-body artifacts with suggested manual commands only. It does not push, create a PR, deploy, call providers, or use the network.</p>",
+                _kv(_publication_decision_proof_rows(root, approved_publication[0])),
                 _form("coder-publication-handoff", {"run_id": run_id}),
                 "</section>",
             ]
@@ -47702,15 +51678,34 @@ def _run_action_forms(root: Path, run_id: str) -> str:
 
 def _publication_handoff_commands_panel(root: Path, publication: Any) -> str:
     payload = load_coder_publication_handoff_payload(root, publication)
+    completion_proof = _publication_handoff_completion_proof_for_display(
+        root,
+        publication,
+    )
     suggested_push = payload.get("suggested_push_command", "unavailable")
     suggested_pr = payload.get("suggested_draft_pr_command", "unavailable")
     pr_body_path = payload.get("pr_body_path", "unavailable")
     handoff_body_path = payload.get("handoff_body_path", pr_body_path)
+    source_decision = payload.get(
+        "source_coder_publication_decision",
+        getattr(publication, "decision_artifact_path", "missing") or "missing",
+    )
+    source_decision_md = payload.get("source_coder_publication_decision_md", "missing")
     return _list_section(
         "Publication Handoff Commands",
         [
             "handoff_status: ready_for_operator",
             f"handoff_artifact: {_artifact_link(publication.handoff_artifact_path)}",
+            f"source_coder_publication_handoff: {_artifact_link(completion_proof['source_coder_publication_handoff'])}",
+            f"source_coder_publication_handoff_md: {_artifact_link(completion_proof['source_coder_publication_handoff_md'])}",
+            f"source_publication_handoff_sha256: {_e(completion_proof['source_publication_handoff_sha256'])}",
+            f"source_publication_handoff_md_sha256: {_e(completion_proof['source_publication_handoff_md_sha256'])}",
+            f"source_coder_publication_handoff_markdown_consumed: {_e(completion_proof['source_coder_publication_handoff_markdown_consumed'])}",
+            f"source_coder_publication_decision: {_artifact_link(str(source_decision))}",
+            f"source_coder_publication_decision_md: {_artifact_link(str(source_decision_md))}",
+            f"source_publication_decision_sha256: {_e(str(payload.get('source_publication_decision_sha256', 'missing')))}",
+            f"source_publication_decision_md_sha256: {_e(str(payload.get('source_publication_decision_md_sha256', 'missing')))}",
+            f"source_coder_publication_decision_markdown_consumed: {_e(str(payload.get('source_coder_publication_decision_markdown_consumed') is True).lower())}",
             f"suggested_push_command: {_e(suggested_push)}",
             f"suggested_draft_pr_command: {_e(suggested_pr)}",
             f"pr_body_path: {_artifact_link(str(pr_body_path)) if pr_body_path != 'unavailable' else 'unavailable'}",
@@ -47724,6 +51719,247 @@ def _publication_handoff_commands_panel(root: Path, publication: Any) -> str:
         ],
         anchor_id="publication-handoff-commands",
     )
+
+
+def _publication_handoff_completion_proof_for_display(
+    root: Path,
+    publication: Any | None,
+) -> dict[str, str]:
+    if publication is None:
+        return _publication_handoff_completion_proof_record(
+            proof_status="missing",
+            proof_error="publication_handoff_not_ready",
+        )
+    try:
+        return _publication_handoff_completion_proof(root, publication)
+    except ValueError as error:
+        return _publication_handoff_completion_proof_record(
+            proof_status="invalid",
+            proof_error=str(error),
+            source_coder_publication_handoff=_repo_relative_artifact_path(
+                root,
+                getattr(publication, "handoff_artifact_path", None),
+            ),
+            source_coder_publication_handoff_md=_repo_relative_artifact_path(
+                root,
+                Path(str(getattr(publication, "handoff_artifact_path", ""))).with_suffix(".md")
+                if getattr(publication, "handoff_artifact_path", None)
+                else None,
+            ),
+            source_publication_handoff_sha256=_sha256_for_display(
+                root / getattr(publication, "handoff_artifact_path", "")
+            )
+            if getattr(publication, "handoff_artifact_path", None)
+            else "missing",
+            source_publication_handoff_md_sha256=_sha256_for_display(
+                (root / getattr(publication, "handoff_artifact_path")).with_suffix(".md")
+            )
+            if getattr(publication, "handoff_artifact_path", None)
+            else "missing",
+        )
+
+
+def _publication_handoff_completion_proof(
+    root: Path,
+    publication: Any,
+) -> dict[str, str]:
+    handoff_path_value = getattr(publication, "handoff_artifact_path", None)
+    if not handoff_path_value:
+        raise ValueError("complete-goal requires publication handoff artifact proof")
+    handoff_json = root / handoff_path_value
+    handoff_md = handoff_json.with_suffix(".md")
+    if not handoff_json.exists():
+        raise ValueError("complete-goal requires readable publication_handoff.json proof")
+    if not handoff_md.exists():
+        raise ValueError("complete-goal requires readable publication_handoff.md proof")
+    payload = load_coder_publication_handoff_payload(root, publication)
+    if not payload:
+        raise ValueError("complete-goal requires readable publication handoff payload")
+    if payload.get("kind") != "coder_worktree_publication_handoff":
+        raise ValueError("publication handoff artifact has unexpected kind")
+    if payload.get("coder_worktree_run_id") != getattr(publication, "run_id", None):
+        raise ValueError("publication handoff artifact does not match run")
+    if payload.get("project_id") != getattr(publication, "project_id", None):
+        raise ValueError("publication handoff artifact does not match project")
+    if payload.get("commit_sha") != getattr(publication, "commit_sha", None):
+        raise ValueError("publication handoff artifact does not match commit")
+    if payload.get("source_coder_publication_decision_markdown_consumed") is not True:
+        raise ValueError("publication handoff artifact is missing decision markdown proof")
+    try:
+        markdown = handoff_md.read_text(encoding="utf-8")
+    except OSError as error:
+        raise ValueError("complete-goal requires readable publication_handoff.md proof") from error
+    required_markdown = [
+        f"- coder_worktree_run_id: {getattr(publication, 'run_id', '')}",
+        f"- commit_sha: {getattr(publication, 'commit_sha', '')}",
+        "- source_coder_publication_decision_markdown_consumed: true",
+        "- suggested_push_command:",
+        "- suggested_draft_pr_command:",
+    ]
+    if not all(item in markdown for item in required_markdown):
+        raise ValueError("publication handoff markdown proof does not match handoff payload")
+    return _publication_handoff_completion_proof_record(
+        proof_status="ready",
+        proof_error="none",
+        source_coder_publication_handoff=_repo_relative_artifact_path(root, handoff_json),
+        source_coder_publication_handoff_md=_repo_relative_artifact_path(root, handoff_md),
+        source_publication_handoff_sha256=hashlib.sha256(handoff_json.read_bytes()).hexdigest(),
+        source_publication_handoff_md_sha256=hashlib.sha256(
+            handoff_md.read_bytes()
+        ).hexdigest(),
+        source_coder_publication_handoff_markdown_consumed="true",
+        publication_handoff_kind=str(payload.get("kind") or "missing"),
+        suggested_push_command=str(payload.get("suggested_push_command") or "missing"),
+        suggested_draft_pr_command=str(
+            payload.get("suggested_draft_pr_command") or "missing"
+        ),
+        pr_body_path=str(payload.get("pr_body_path") or "missing"),
+        handoff_body_path=str(payload.get("handoff_body_path") or "missing"),
+        source_coder_publication_decision=str(
+            payload.get("source_coder_publication_decision") or "missing"
+        ),
+        source_coder_publication_decision_md=str(
+            payload.get("source_coder_publication_decision_md") or "missing"
+        ),
+        source_publication_decision_sha256=str(
+            payload.get("source_publication_decision_sha256") or "missing"
+        ),
+        source_publication_decision_md_sha256=str(
+            payload.get("source_publication_decision_md_sha256") or "missing"
+        ),
+        source_coder_publication_decision_markdown_consumed=str(
+            payload.get("source_coder_publication_decision_markdown_consumed") is True
+        ).lower(),
+    )
+
+
+def _publication_handoff_completion_proof_record(**overrides: str) -> dict[str, str]:
+    record = {
+        "proof_status": "missing",
+        "proof_error": "none",
+        "source_coder_publication_handoff": "missing",
+        "source_coder_publication_handoff_md": "missing",
+        "source_publication_handoff_sha256": "missing",
+        "source_publication_handoff_md_sha256": "missing",
+        "source_coder_publication_handoff_markdown_consumed": "false",
+        "publication_handoff_kind": "missing",
+        "suggested_push_command": "missing",
+        "suggested_draft_pr_command": "missing",
+        "pr_body_path": "missing",
+        "handoff_body_path": "missing",
+        "source_coder_publication_decision": "missing",
+        "source_coder_publication_decision_md": "missing",
+        "source_publication_decision_sha256": "missing",
+        "source_publication_decision_md_sha256": "missing",
+        "source_coder_publication_decision_markdown_consumed": "false",
+    }
+    record.update({key: str(value) for key, value in overrides.items()})
+    return record
+
+
+def _publication_handoff_completion_proof_rows(
+    proof: dict[str, str],
+    *,
+    prefix: str,
+) -> list[tuple[str, str | SafeHtml]]:
+    return [
+        (f"{prefix}_proof_status", proof["proof_status"]),
+        (f"{prefix}_proof_error", proof["proof_error"]),
+        (
+            f"{prefix}_source_coder_publication_handoff",
+            _artifact_link(proof["source_coder_publication_handoff"]),
+        ),
+        (
+            f"{prefix}_source_coder_publication_handoff_md",
+            _artifact_link(proof["source_coder_publication_handoff_md"]),
+        ),
+        (
+            f"{prefix}_source_publication_handoff_sha256",
+            proof["source_publication_handoff_sha256"],
+        ),
+        (
+            f"{prefix}_source_publication_handoff_md_sha256",
+            proof["source_publication_handoff_md_sha256"],
+        ),
+        (
+            f"{prefix}_source_coder_publication_handoff_markdown_consumed",
+            proof["source_coder_publication_handoff_markdown_consumed"],
+        ),
+    ]
+
+
+def _publication_request_payload_for_display(root: Path, publication: Any) -> dict[str, Any]:
+    request_artifact_path = getattr(publication, "request_artifact_path", "")
+    if not request_artifact_path:
+        return {}
+    try:
+        payload = json.loads((root / request_artifact_path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _publication_decision_payload_for_display(root: Path, publication: Any) -> dict[str, Any]:
+    decision_artifact_path = getattr(publication, "decision_artifact_path", "")
+    if not decision_artifact_path:
+        return {}
+    try:
+        payload = json.loads((root / decision_artifact_path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _publication_decision_proof_rows(
+    root: Path,
+    publication: Any,
+) -> list[tuple[str, str | SafeHtml]]:
+    decision_payload = _publication_decision_payload_for_display(root, publication)
+    decision_path = str(getattr(publication, "decision_artifact_path", "") or "missing")
+    decision_md_path = (
+        str(Path(decision_path).with_suffix(".md"))
+        if decision_path != "missing"
+        else "missing"
+    )
+    request_path = str(
+        decision_payload.get(
+            "source_coder_publication_request",
+            getattr(publication, "request_artifact_path", "missing"),
+        )
+    )
+    request_md_path = str(
+        decision_payload.get("source_coder_publication_request_md", "missing")
+    )
+    return [
+        ("publication_decision", _artifact_link(decision_path)),
+        ("publication_decision_md", _artifact_link(decision_md_path)),
+        ("publication_decision_sha256", _sha256_for_display(root / decision_path)),
+        ("publication_decision_md_sha256", _sha256_for_display(root / decision_md_path)),
+        ("source_coder_publication_request", _artifact_link(request_path)),
+        ("source_coder_publication_request_md", _artifact_link(request_md_path)),
+        (
+            "source_publication_request_sha256",
+            str(
+                decision_payload.get(
+                    "source_publication_request_sha256",
+                    decision_payload.get("source_request_sha256", "missing"),
+                )
+            ),
+        ),
+        (
+            "source_publication_request_md_sha256",
+            str(decision_payload.get("source_publication_request_md_sha256", "missing")),
+        ),
+        (
+            "source_coder_publication_request_markdown_consumed",
+            str(
+                decision_payload.get(
+                    "source_coder_publication_request_markdown_consumed"
+                )
+                is True
+            ).lower(),
+        ),
+    ]
 
 
 def _pending_approval_lines(root: Path) -> list[str]:
@@ -48063,6 +52299,26 @@ ACTION_FORM_COPY: dict[str, dict[str, str]] = {
         "confirm_button": "Approve worktree",
         "result_title": "Worktree approved",
         "result_body": "ClankerOS recorded the worktree approval and saved the next return point for bounded execution.",
+    },
+    "run-coder-worktree": {
+        "title": "Run Approved Worktree",
+        "body": "Run one safe local command in the approved isolated worktree and record bounded evidence.",
+        "button": "Run approved worktree",
+        "confirm_title": "Confirm run-coder-worktree",
+        "confirm_body": "Review the approved delegation, command, verifier, and return surface before ClankerOS runs the local worktree command.",
+        "confirm_button": "Run approved worktree",
+        "result_title": "Worktree run finished",
+        "result_body": "ClankerOS ran the approved local worktree command, recorded evidence, and saved the next return point.",
+    },
+    "review-run": {
+        "title": "Open review",
+        "body": "Write the local review artifact for the completed worktree run before requesting a commit.",
+        "button": "Open review",
+        "confirm_title": "Confirm review-run",
+        "confirm_body": "Review the completed worktree run and return surface before ClankerOS writes the local review artifact.",
+        "confirm_button": "Open review",
+        "result_title": "Review opened",
+        "result_body": "ClankerOS wrote the local review artifact and saved the next return point for the commit request gate.",
     },
     "coder-commit-request": {
         "title": "Create commit request",
@@ -52842,6 +57098,17 @@ def _html_page(
     .browser-resume-primary .browser-resume-link {{ background:var(--accent); color:#fff; }}
     .browser-resume-evidence summary {{ cursor:pointer; font-weight:700; }}
     .browser-resume-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .operator-first-viewport {{ border:1px solid var(--line); background:var(--surface); padding:10px; margin:10px 0 12px; }}
+    .operator-first-viewport h2 {{ margin:0 0 8px; font-size:14px; }}
+    .operator-first-viewport-grid {{ display:grid; grid-template-columns:minmax(180px, 1.25fr) repeat(5, minmax(120px, 1fr)); gap:8px; align-items:stretch; }}
+    .operator-first-viewport-card {{ min-width:0; border:1px solid var(--line); background:var(--panel); padding:8px 9px; display:grid; gap:5px; align-content:start; }}
+    .operator-first-viewport-card h3 {{ margin:0; color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .operator-first-viewport-card strong {{ margin:0; overflow-wrap:anywhere; }}
+    .operator-first-viewport-card a, .operator-first-viewport-card span {{ overflow-wrap:anywhere; }}
+    .operator-first-viewport-card[data-today-first-viewport-card='next-action'], .operator-first-viewport-card[data-resume-first-viewport-card='next-action'], .operator-first-viewport-card[data-goal-first-viewport-card='next-action'] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .operator-first-viewport-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .operator-first-viewport-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .operator-first-viewport-evidence:not([open]) > :not(summary) {{ display:none; }}
     .resume-return-brief {{ border-left:4px solid var(--accent); }}
     .resume-return-brief-grid {{ display:grid; grid-template-columns:minmax(230px, 1.2fr) repeat(4, minmax(150px, 1fr)); gap:10px; margin:12px 0; }}
     .resume-return-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; display:grid; gap:8px; align-content:start; }}
@@ -53206,6 +57473,20 @@ def _html_page(
     .goal-attention-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
     .goal-attention-evidence summary {{ cursor:pointer; font-weight:700; }}
     .goal-attention-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .goal-stale-hygiene {{ border-left:4px solid var(--warn); }}
+    .goal-stale-hygiene-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px; margin:12px 0; }}
+    .goal-stale-hygiene-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; display:grid; gap:8px; }}
+    .goal-stale-hygiene-card h3 {{ margin:0; font-size:16px; line-height:1.3; overflow-wrap:anywhere; }}
+    .goal-stale-hygiene-card p {{ margin:0; color:var(--muted); overflow-wrap:anywhere; }}
+    .goal-stale-hygiene-kicker {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .goal-stale-hygiene-actions {{ display:flex; flex-wrap:wrap; gap:7px; align-items:flex-start; }}
+    .goal-stale-hygiene-link, .goal-stale-hygiene-action summary {{ display:inline-flex; align-items:center; min-height:32px; max-width:100%; padding:6px 9px; border-radius:6px; border:1px solid var(--accent); color:var(--accent); background:var(--surface); text-decoration:none; overflow-wrap:anywhere; cursor:pointer; }}
+    .goal-stale-hygiene-action {{ min-width:0; max-width:100%; }}
+    .goal-stale-hygiene-action[open] {{ flex-basis:100%; border:1px solid var(--line); background:var(--panel); padding:8px; }}
+    .goal-stale-hygiene-action form {{ margin-top:8px; }}
+    .goal-stale-hygiene-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .goal-stale-hygiene-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .goal-stale-hygiene-evidence:not([open]) > :not(summary) {{ display:none; }}
     .goal-decision-queue, .today-decision-queue {{ border-left:4px solid var(--warn); }}
     .goal-decision-list {{ list-style:none; padding:0; margin:12px 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:10px; }}
     .goal-decision-row {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; display:grid; gap:8px; align-content:start; }}
@@ -54984,7 +59265,7 @@ def _html_page(
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
     @media (max-width: 860px) {{ #run-readiness-strip {{ scroll-margin-top:260px; }} .run-readiness-grid, .run-readiness-strip dl {{ grid-template-columns:1fr; }} }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-action-prep, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #profile-routing-plan, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-goal-continuation, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map, #artifact-view-memory, #verification-milestone-proof-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-action-prep-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-return-brief-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-loop-checklist-grid, .today-quick-capture-grid, .today-ci-merge-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-domain-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profile-plan-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-real-grid, .dogfooding-workbench-grid, .dogfooding-return-grid, .dogfooding-session-checklist-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .artifact-view-memory-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .verification-milestone-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-action-prep, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #profile-routing-plan, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-goal-continuation, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map, #artifact-view-memory, #verification-milestone-proof-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .operator-first-viewport-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-action-prep-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-return-brief-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-loop-checklist-grid, .today-quick-capture-grid, .today-ci-merge-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-domain-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profile-plan-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-real-grid, .dogfooding-workbench-grid, .dogfooding-return-grid, .dogfooding-session-checklist-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .artifact-view-memory-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .verification-milestone-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #ci-evidence-readiness-strip, #ci-merge-readiness-map {{ scroll-margin-top:260px; }} .ci-evidence-readiness-grid, .ci-merge-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #health-readiness-strip, #health-ci-boundary {{ scroll-margin-top:260px; }} .health-readiness-grid, .health-ci-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}
@@ -58239,6 +62520,23 @@ def _artifact_href(root: Path, path: str | Path | None) -> str:
     return f"/artifacts?path={quote(_repo_relative_artifact_path(root, path))}"
 
 
+def _sha256_for_display(path: Path) -> str:
+    try:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError:
+        return "missing"
+
+
+def _commit_markdown_consumed_for_display(path: Path) -> str:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return "false"
+    return str(
+        "- source_coder_commit_decision_markdown_consumed: true" in text
+    ).lower()
+
+
 def _row_exists(db_path: Path, table: str, row_id: str) -> bool:
     rows = _table_rows(db_path, f"select id from {table} where id = ? limit 1", (row_id,))
     return bool(rows)
@@ -59018,9 +63316,64 @@ def _commit_line(item: Any) -> str:
 
 def _publication_line(root: Path, item: Any) -> str:
     handoff = item.handoff_artifact_path if item.status == "ready_for_operator" else "none"
+    request_payload = _publication_request_payload_for_display(root, item)
+    decision_payload = _publication_decision_payload_for_display(root, item)
+    handoff_payload = (
+        load_coder_publication_handoff_payload(root, item)
+        if item.status == "ready_for_operator"
+        else {}
+    )
+    source_commit = str(
+        request_payload.get("source_coder_commit", item.source_commit_artifact_path)
+    )
+    source_commit_md = str(request_payload.get("source_coder_commit_md", "missing"))
+    source_commit_sha = str(
+        request_payload.get(
+            "source_commit_sha256",
+            item.source_commit_artifact_sha256,
+        )
+    )
+    source_commit_md_sha = str(
+        request_payload.get("source_commit_md_sha256", "missing")
+    )
+    source_commit_markdown_consumed = str(
+        request_payload.get("source_coder_commit_markdown_consumed") is True
+    ).lower()
+    source_publication_request_md = str(
+        decision_payload.get("source_coder_publication_request_md", "missing")
+    )
+    source_publication_request_md_sha = str(
+        decision_payload.get("source_publication_request_md_sha256", "missing")
+    )
+    source_publication_request_markdown_consumed = str(
+        decision_payload.get("source_coder_publication_request_markdown_consumed")
+        is True
+    ).lower()
+    source_publication_decision_md = str(
+        handoff_payload.get("source_coder_publication_decision_md", "missing")
+    )
+    source_publication_decision_md_sha = str(
+        handoff_payload.get("source_publication_decision_md_sha256", "missing")
+    )
+    source_publication_decision_markdown_consumed = str(
+        handoff_payload.get("source_coder_publication_decision_markdown_consumed")
+        is True
+    ).lower()
     return (
         f"{item.id}: status={item.status} run={item.run_id} project={item.project_id} "
-        f"commit={item.commit_sha} handoff={_artifact_link(handoff)} "
+        f"commit={item.commit_sha} request={_artifact_link(item.request_artifact_path)} "
+        f"source_commit={_artifact_link(source_commit)} "
+        f"source_commit_sha256={_e(source_commit_sha)} "
+        f"source_commit_md={_artifact_link(source_commit_md)} "
+        f"source_commit_md_sha256={_e(source_commit_md_sha)} "
+        f"source_commit_markdown_consumed={_e(source_commit_markdown_consumed)} "
+        f"source_publication_request_md={_artifact_link(source_publication_request_md)} "
+        f"source_publication_request_md_sha256={_e(source_publication_request_md_sha)} "
+        f"source_publication_request_markdown_consumed={_e(source_publication_request_markdown_consumed)} "
+        f"source_publication_decision_md={_artifact_link(source_publication_decision_md)} "
+        f"source_publication_decision_md_sha256={_e(source_publication_decision_md_sha)} "
+        f"source_publication_decision_markdown_consumed={_e(source_publication_decision_markdown_consumed)} "
+        f"handoff={_artifact_link(handoff)} "
         "push_created=false pr_created=false deploy_created=false"
     )
 

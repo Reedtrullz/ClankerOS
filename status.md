@@ -1,5 +1,1896 @@
 # Status
 
+## 2026-07-07 Commit Proof Alias, Completion Provenance, Golden Path, First Viewport
+
+- Fixed the commit-request alias/proof merge blocker by writing immutable
+  id-scoped `coder_commit/<approval_id>_coder_commit_request.json` / `.md`
+  artifacts while keeping the latest `coder_commit_request.json` alias for
+  compatibility. Commit approval proof lookup now prefers the id-scoped request
+  and still accepts legacy request artifacts when they match the approval/run
+  and consumed Markdown proof.
+- Completed the selected successor-Goal provenance slice. Next-Goal creation
+  now carries completed Goal `completion.json` / `completion.md` paths and
+  hashes into transient handoff state, `/today`, `/resume`, durable
+  `completed-goal-provenance.md`, and successor Goal provenance history while
+  keeping `publication_handoff.md` visible as the prior manual boundary
+  artifact.
+- Added `app-golden-path-smoke-test`, a deterministic fresh-user local app
+  smoke that initializes a tiny local git repo, creates the first project and
+  Goal through confirmed browser actions, performs the next action through
+  scout delegation/context-pack/run proof, opens `implementation_handoff.md`,
+  saves a complete finish-today workspace, and verifies `/resume` can continue
+  tomorrow. The checked-in GitHub fast smoke workflow now runs this command and
+  the focused golden-path/first-viewport pytest coverage before the full suite.
+- Simplified the first operator viewport on `/today`, `/resume`, and Goal pages
+  with a shared six-card strip: Goal, Phase, Next Action, Proof, Finish, Resume.
+  Existing evidence panels remain below the fold with provider, network,
+  external mutation, push, PR, and deploy non-claims intact.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os tests`: passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_commit_request_alias_writes_coder_commit_artifacts_and_is_idempotent -q --tb=short`:
+    1 passed in 2.52s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 108.15s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_fresh_user_no_docs_golden_path_smoke -q --tb=short`:
+    1 passed in 20.21s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_operator_first_viewports_show_goal_phase_action_proof_finish_resume -q --tb=short`:
+    1 passed in 27.23s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_github_actions_workflow_runs_automatic_verification tests/test_first_milestone.py::test_github_actions_smoke_uses_temp_root_and_expected_order tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    3 passed in 55.93s after the golden-path CI command was isolated onto
+    `CLANKEROS_GOLDEN_ROOT`.
+  - `python3 -m agent_os.cli --root "$(mktemp -d)" app-golden-path-smoke-test`
+    with cleanup trap: passed; all 17 checks matched, proof existed, workspace
+    resume surface was `/today#today-current-action`, provider/network/external
+    mutation counters stayed zero.
+  - `python3 -m agent_os.cli iterate`: refreshed `docs/next-iteration.md` and
+    selected the next CI-proof feedback slice.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this is local route/helper proof plus GitHub workflow wiring. It
+  has not yet produced a fresh GitHub Actions run result, deploy proof, live
+  proof, push, PR, provider call, or external mutation.
+
+## 2026-07-06 Successor Goal Manual Publish Completion Daily Resume
+
+- Completed the selected slice for successor Goal manual publish completion
+  from `/today` and `/resume`.
+- `complete-goal` now consumes
+  `coder_publication/publication_handoff.md` as first-class proof before
+  changing a Goal to `completed`. The browser action validates the matching
+  `publication_handoff.json` / `.md` pair, requires the handoff to match the
+  coder worktree run, project, and commit, requires the upstream publication
+  decision Markdown proof, and rejects tampered handoff Markdown before the
+  Goal status changes.
+- Confirmed completion writes Goal-scoped
+  `.clanker/projects/<project>/goals/<goal_id>/completion.json` and
+  `completion.md` evidence with the consumed handoff JSON path/hash, handoff
+  Markdown path/hash, and
+  `source_coder_publication_handoff_markdown_consumed: true`. The completion
+  action result, manual publish boundary, Goal completion readiness, Goal
+  artifact explorer, `/today` completed Goal handoff, and `/resume` completed
+  Goal handoff expose the same proof fields.
+- Running completion from `/today#today-current-action` preserves that return
+  surface, keeps the publication handoff Markdown as the saved active
+  artifact, and moves `/today` and `/resume` to completed Goal evidence plus
+  same-page next-Goal creation while retaining
+  `completed-goal-provenance.md` as durable history.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  completed Goal `completion.md` should become first-class in next-Goal
+  provenance after `/today` and `/resume` next-Goal creation, while keeping
+  the publication handoff visible as the prior manual boundary artifact.
+- Focused local proof so far:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 35.53s, including the new tampered
+    `publication_handoff.md` completion block.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 104.39s.
+- Non-claim: this slice records only local Goal completion proof after an
+  operator-confirmed manual publish boundary. It does not execute suggested
+  push or PR commands, deploy, call providers, use app-side network actions,
+  mutate external systems, or provide CI/deploy/live production proof.
+
+## 2026-07-06 Successor Goal Publication Handoff Daily Resume
+
+- Completed the selected slice for successor Goal publication handoffs from
+  `/today` and `/resume`.
+- `coder-publication-handoff` now consumes
+  `coder_publication/publication_decision.md` as first-class proof before
+  writing local publication handoff and PR-body artifacts. The backend
+  validates the matching `publication_decision.json` / `.md` pair, requires
+  the decision to match the publication id and coder worktree run, requires
+  the upstream publication-request Markdown proof, and rejects tampered
+  decision Markdown before handoff creation.
+- The generated `coder_publication/publication_handoff.json` / `.md` artifacts
+  and `pr_body.md` now record the consumed publication decision JSON path/hash,
+  publication decision Markdown path/hash, and
+  `source_coder_publication_decision_markdown_consumed: true`. CLI handoff
+  output, CLI inbox rows, static dashboard handoff rows, review output,
+  compact browser inbox rows, action result pages, manual publish boundary
+  panels, Goal pages, `/today`, and `/resume` expose the same proof fields.
+- Running publication handoff from `/resume#resume-workbench-action-form`
+  preserves that return surface for the manual publish boundary. `/today`,
+  `/resume`, and the successor Goal page all move the primary action to
+  `Manual publish outside ClankerOS`, while
+  `completed-goal-provenance.md` remains visible as durable history and the
+  publication handoff Markdown becomes the active workspace artifact.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal manual publish completion from `/today` and `/resume` should
+  consume `coder_publication/publication_handoff.md` as proof, keep provenance
+  history visible, and move the primary action to completed Goal evidence plus
+  next-Goal creation.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/coder_publication.py agent_os/local_app.py agent_os/cli.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_publication_request_approval_and_handoff_are_local_only -q --tb=short`:
+    1 passed in 4.06s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_publication_handoff_blocks_without_approval_and_source_drift -q --tb=short`:
+    1 passed in 23.56s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 40.14s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 125.66s.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal manual
+    publish completion proof slice and refreshed `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this slice writes only local publication-handoff and PR-body
+  proof after existing confirmed local browser or CLI actions. It does not
+  execute the suggested push or PR commands, deploy, call providers, use
+  app-side network actions, mutate external systems, or mark the Goal
+  completed. Local browser/test proof is not CI, deploy, or live production
+  proof.
+
+## 2026-07-06 Successor Goal Publication Approval Daily Resume
+
+- Completed the selected slice for successor Goal publication approvals from
+  `/today` and `/resume`.
+- `approve-coder-publication` now consumes
+  `coder_publication/publication_request.md` as first-class proof before
+  writing a local publication decision. The backend validates the matching
+  `publication_request.json` / `.md` pair, requires both artifacts to match
+  the publication id and coder worktree run, and rejects request payloads that
+  do not carry the upstream local-commit Markdown proof.
+- The generated `coder_publication/publication_decision.json` / `.md`
+  artifacts now record the consumed publication request JSON path/hash,
+  publication request Markdown path/hash, and
+  `source_coder_publication_request_markdown_consumed: true`. CLI output,
+  static dashboard rows, review output, compact approval/inbox rows, Goal
+  publication handoff forms, run-detail handoff forms, and browser action
+  results expose the same proof fields.
+- The publication handoff gate now revalidates both the approved publication
+  request JSON hash and publication request Markdown hash recorded in the
+  decision before writing local handoff artifacts.
+- Running publication approval from `/resume#resume-workbench-action-form`
+  preserves that return surface for the embedded `Create publication handoff`
+  form. `/today`, `/resume`, and the successor Goal page all move the primary
+  action to `Create publication handoff`, while
+  `completed-goal-provenance.md` remains visible as durable history and the
+  publication decision Markdown becomes the active workspace artifact.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal publication handoffs from `/today` and `/resume` should
+  consume `coder_publication/publication_decision.md` as proof, keep
+  provenance history visible, and move the primary action to
+  `Manual publish outside ClankerOS`.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/coder_publication.py agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_publication_request_approval_and_handoff_are_local_only -q --tb=short`:
+    1 passed in 15.86s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 35.68s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 102.15s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_publication_approval_blocks_tampered_request_markdown -q --tb=short`:
+    1 passed in 14.65s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_publication_handoff_blocks_without_approval_and_source_drift -q --tb=short`:
+    1 passed in 20.48s.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal
+    publication-handoff proof slice and refreshed `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this slice writes only local publication-approval decision proof
+  after existing confirmed local browser or CLI actions. It does not create a
+  publication handoff, push, create PRs, deploy, call providers, use app-side
+  network actions, or mutate external systems. Local browser/test proof is not
+  CI, deploy, or live production proof.
+
+## 2026-07-06 Successor Goal Publication Request Daily Resume
+
+- Completed the selected slice for successor Goal publication requests from
+  `/today` and `/resume`.
+- `coder-publication-request` now consumes `coder_commit/commit.md` as
+  first-class proof before writing a local publication approval request. The
+  backend validates the matching `commit.json` / `.md` pair, requires the
+  Markdown proof to match the coder worktree run and commit SHA, and rejects
+  local commit artifacts that do not carry the upstream commit-decision
+  Markdown proof.
+- The generated `coder_publication/publication_request.json` / `.md` artifacts
+  now record the consumed local commit JSON path/hash, local commit Markdown
+  path/hash, and `source_coder_commit_markdown_consumed: true`. CLI output,
+  static dashboard rows, review output, compact approval/inbox rows, Goal
+  publication forms, and browser action results expose the same proof fields.
+- Goal artifact registration now includes publication request/decision/handoff
+  Markdown sidecars, so the Goal page can select the publication request
+  Markdown as the newest readable evidence after the publication-request gate.
+- Running publication request from `/resume#resume-workbench-action-form`
+  preserves that return surface for the embedded `Approve publication` form.
+  `/today`, `/resume`, and the successor Goal page all move the primary action
+  to `Approve publication`, while `completed-goal-provenance.md` remains
+  visible as durable history.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal publication approvals from `/today` and `/resume` should
+  consume `coder_publication/publication_request.md` as proof, keep provenance
+  history visible, and move the primary action to `Create publication handoff`.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/coder_publication.py agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_publication_request_approval_and_handoff_are_local_only -q --tb=short`:
+    1 passed in 15.45s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 97.73s after adding publication Markdown sidecars to the Goal
+    artifact registry.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 35.59s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_publication_request_blocks_tampered_commit_artifact -q --tb=short`:
+    1 passed in 14.64s after updating the expected tamper boundary to the new
+    commit-Markdown mismatch check.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal
+    publication-approval proof slice and refreshed `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+- Non-claim: this slice writes only local publication-request proof after
+  existing confirmed local browser or CLI actions. It does not approve
+  publication, create a publication handoff, push, create PRs, deploy, call
+  providers, use app-side network actions, or mutate external systems. Local
+  browser/test proof is not CI, deploy, or live production proof.
+
+## 2026-07-06 Successor Goal Local Commit Daily Resume
+
+- Completed the selected slice for successor Goal approved local commits from
+  `/today` and `/resume`.
+- `commit-coder-worktree` now consumes
+  `coder_commit/coder_commit_decision.md` as first-class proof before staging
+  reviewed allowed files. The backend validates the modern decision JSON and
+  Markdown pair, requires the decision to match the commit approval and coder
+  worktree run, and rejects decision payloads missing the upstream request
+  Markdown proof.
+- The generated `coder_commit/commit.json` / `.md` artifacts now record the
+  consumed decision JSON path/hash, decision Markdown path/hash, and
+  `source_coder_commit_decision_markdown_consumed: true`. CLI output, static
+  dashboard rows, the Goal artifact reader, and browser action results expose
+  the same proof fields.
+- Goal artifact registration now includes modern coder commit request,
+  decision, and local commit JSON/Markdown sidecars, so the Goal page can
+  select the local commit Markdown as the newest readable evidence after the
+  local commit gate.
+- Running the local commit from `/resume#resume-workbench-action-form`
+  preserves that return surface for the embedded `Create publication request`
+  form. `/today`, `/resume`, and the successor Goal page all move the primary
+  action to `Create publication request`, while
+  `completed-goal-provenance.md` remains visible as durable history.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal publication requests from `/today` and `/resume` should
+  consume `coder_commit/commit.md` as proof, keep provenance history visible,
+  and move the primary action to `Approve publication`.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/coder_worktree_execution.py agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_commit_coder_worktree_creates_local_commit_effect_and_github_handoff -q --tb=short`:
+    1 passed in 13.89s before the artifact-reader fix, then 1 passed in 3.19s
+    after adding modern commit Markdown sidecars to the Goal artifact
+    registry.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 93.60s after extending the successor Goal flow through the
+    local commit and verifying `/today`, `/resume`, and the Goal page advance
+    to `Create publication request`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_commit_promotion_requires_review_and_is_idempotent -q --tb=short`:
+    1 passed in 3.61s.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal
+    publication-request proof slice and refreshed `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this slice creates only the existing approval-gated local commit
+  inside the isolated coder worktree after confirmed local browser or CLI
+  action. It does not push, create PRs, deploy, call providers, use app-side
+  network actions, mutate external systems, or merge the worktree branch back
+  into the source checkout. Local browser/test proof is not CI, deploy, or
+  live production proof.
+
+## 2026-07-06 Successor Goal Commit Approval Daily Resume
+
+- Completed the selected slice for successor Goal commit approvals from
+  `/today` and `/resume`.
+- `approve-coder-commit` now consumes
+  `coder_commit/coder_commit_request.md` as first-class proof before writing
+  the local approval decision. The backend validates the modern request JSON
+  and Markdown pair, requires the request to match the approval id and coder
+  worktree run, and rejects request payloads missing the upstream review
+  Markdown proof.
+- The generated `coder_worktree_commit_approval_decision.json` / `.md` and
+  modern `coder_commit/coder_commit_decision.json` / `.md` artifacts now record
+  the consumed request JSON path/hash, request Markdown path/hash, and
+  `source_coder_commit_request_markdown_consumed: true`. CLI output, static
+  dashboard rows, the Goal approval form, and browser action results expose the
+  same proof fields.
+- Running commit approval from `/resume#resume-workbench-action-form`
+  preserves that return surface for the embedded `Commit approved worktree`
+  form. `/today`, `/resume`, and the successor Goal page all move the primary
+  action to `Commit approved worktree`, while
+  `completed-goal-provenance.md` remains visible as durable history.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal approved local commits from `/today` and `/resume` should
+  consume `coder_commit/coder_commit_decision.md` as proof, keep provenance
+  history visible, and move the primary action to `Create publication request`.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/coder_worktree_execution.py agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_commit_promotion_requires_review_and_is_idempotent -q --tb=short`:
+    1 passed in 15.26s after adding request-Markdown consumption assertions.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 96.35s after extending the successor Goal flow through commit
+    approval and verifying `/today`, `/resume`, and the Goal page advance to
+    `Commit approved worktree`.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal approved
+    local-commit proof slice and refreshed `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+- Non-claim: this slice writes only local commit-approval decision proof after
+  existing confirmed local browser or CLI actions. It does not stage files,
+  create a commit, push, create PRs, deploy, call providers, use app-side
+  network actions, or mutate external systems. Local browser/test proof is not
+  CI, deploy, or live production proof.
+
+## 2026-07-06 Successor Goal Commit Request Daily Resume
+
+- Completed the selected slice for successor Goal commit requests from
+  `/today` and `/resume`.
+- A confirmed browser `coder-commit-request` action now returns explicit
+  operator-facing proof fields for the consumed review Markdown:
+  `source_review`, `source_review_sha256`,
+  `source_review_markdown_consumed: true`, carried run-summary proof,
+  `source_diff_sha256`, and the pending approval record.
+- The generated `coder_worktree_commit_approval_request.json` / `.md` and
+  modern `coder_commit/coder_commit_request.json` / `.md` artifacts now record
+  the source delegation run id, review path, review hash, and
+  `source_review_markdown_consumed: true`. CLI output and static dashboard
+  rows expose the same proof fields.
+- Idempotent reuse now checks the stored review Markdown proof. Pending legacy
+  request artifacts for the same run/diff/message are backfilled with the
+  current review path/hash and consumed flag before being returned as
+  `already_recorded`.
+- Running commit request from `/resume#resume-workbench-action-form` preserves
+  that return surface for the embedded `Approve commit` form. `/today`,
+  `/resume`, and the successor Goal page all move the primary action to
+  `Approve commit`, while `completed-goal-provenance.md` remains visible as
+  durable history.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal commit approvals from `/today` and `/resume` should consume
+  `coder_commit/coder_commit_request.md` as proof, keep provenance history
+  visible, and move the primary action to `Commit approved worktree`.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/coder_worktree_execution.py agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_commit_promotion_requires_review_and_is_idempotent -q --tb=short`:
+    1 passed in 4.61s after adding review-Markdown consumption and legacy
+    backfill assertions.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 98.90s after extending the successor Goal flow through
+    commit-request creation and verifying `/today`, `/resume`, and the Goal
+    page advance to `Approve commit`.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal commit
+    approval proof slice and refreshed `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+- Non-claim: this slice writes only local commit-request proof metadata after
+  existing confirmed local browser or CLI actions. It does not approve commits,
+  stage files, create a commit, push, create PRs, deploy, call providers, use
+  app-side network actions, or mutate external systems. Local browser/test
+  proof is not CI, deploy, or live production proof.
+
+## 2026-07-06 Successor Goal Worktree Review Daily Resume
+
+- Completed the selected slice for successor Goal worktree reviews from
+  `/today` and `/resume`.
+- A confirmed browser `review-run` action now returns explicit
+  operator-facing proof fields for the consumed approved worktree run evidence:
+  source run directory, `run.json` path/hash, `summary.md` path/hash,
+  `source_coder_worktree_run_summary_consumed: true`, and `diff.patch` hash.
+- The generated `runs/<source_run_id>/review.md` now records the same proof
+  fields in the Coder Worktree Run section. The backend commit-request gate
+  requires those matching fields before it offers or accepts
+  `coder-commit-request`; a review that merely mentions the coder worktree run
+  id is no longer enough.
+- The commit-request artifacts now retain the source review hash and consumed
+  run-summary proof in both the compatibility approval request and
+  `coder_commit/coder_commit_request.json` / `.md`. CLI output and static
+  dashboard rows expose the same review/run-summary proof fields.
+- Running review from `/resume#resume-workbench-action-form` preserves that
+  return surface for the embedded `Create commit request` form. `/today`,
+  `/resume`, and the successor Goal page all move the primary action to
+  `Create commit request`, while `completed-goal-provenance.md` remains
+  visible as durable history.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal commit requests from `/today` and `/resume` should consume
+  `runs/<source_run_id>/review.md` as proof, keep provenance history visible,
+  and move the primary action to `Approve commit`.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/coder_worktree_execution.py agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_commit_promotion_requires_review_and_is_idempotent -q --tb=short`:
+    1 passed in 15.00s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 88.90s after extending the successor Goal flow through
+    review-run and verifying `/today`, `/resume`, and the Goal page advance to
+    `Create commit request`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_approval_and_run_capture_bounded_evidence -q --tb=short`:
+    1 passed in 2.64s after adding review/dashboard proof assertions.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form -q --tb=short`:
+    1 passed in 6.35s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed in 56.06s after updating the demo fixture review to carry the
+    same run-summary and diff proof fields as real review artifacts.
+  - Consolidated focused run:
+    `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_commit_promotion_requires_review_and_is_idempotent tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface tests/test_first_milestone.py::test_coder_worktree_approval_and_run_capture_bounded_evidence tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    5 passed in 168.31s.
+- Non-claim: this slice writes only local review and commit-request proof
+  metadata after existing confirmed local browser or CLI actions. It does not
+  approve commits, stage files, create a commit, push, create PRs, deploy, call
+  providers, use app-side network actions, or mutate external systems. Local
+  browser/test proof is not CI, deploy, or live production proof.
+
+## 2026-07-06 Successor Goal Approved Worktree Run Daily Resume
+
+- Completed the selected slice for successor Goal approved worktree runs from
+  `/today` and `/resume`.
+- `run-coder-worktree` now requires a readable approved
+  `coder_worktree_approval_decision.json` and
+  `coder_worktree_approval_decision.md` before launching the isolated local
+  worktree command. The decision payload must match the approval id,
+  delegation id, approved status, request artifact, and Markdown-proof flag.
+- The approved run writes the consumed approval-decision JSON and Markdown
+  paths, hashes, and `source_coder_worktree_approval_decision_markdown_consumed:
+  true` into `coder_worktree/run.json`, `coder_worktree/summary.md`, copied
+  `coder_worktree/approval_decision.json` /
+  `coder_worktree/approval_decision.md` evidence files, CLI output, browser
+  action-result output, and static dashboard rows.
+- Existing completed runs are reused only when their run evidence matches the
+  current approval-decision JSON/Markdown paths and hashes; legacy completed
+  runs without that proof are not treated as already-recorded for this path.
+- Running the approved-worktree action from
+  `/resume#resume-workbench-action-form` preserves that return surface for the
+  embedded `Open review` form. `/today`, `/resume`, and the successor Goal
+  page all move the primary action to `Open review`, while
+  `completed-goal-provenance.md` remains visible as durable history.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal worktree reviews from `/today` and `/resume` should consume
+  approved worktree run evidence as proof, keep provenance history visible,
+  and move the primary action to `Create commit request`.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_approval_and_run_capture_bounded_evidence -q --tb=short`
+    failed before the CLI/run evidence exposed
+    `source_coder_worktree_approval_decision`.
+  - `python3 -m compileall -q agent_os/coder_worktree_execution.py agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_approval_and_run_capture_bounded_evidence -q --tb=short`:
+    1 passed in 2.58s after adding approval-decision proof to run evidence and
+    CLI output.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 76.27s after adding browser result proof, successor
+    `/today`/`/resume` Open review coverage, and Goal artifact-reader coverage
+    for `approved_coder_worktree_run_summary`.
+- Non-claim: this slice runs only the existing confirmed, approval-gated local
+  worktree command and local verifier inside an isolated git worktree. It does
+  not commit, push, create PRs, deploy, call providers, use app-side network
+  actions, or mutate external systems. Local browser/test proof is not CI,
+  deploy, or live production proof.
+
+## 2026-07-06 Successor Goal Worktree Approval Decision Daily Resume
+
+- Completed the selected slice for successor Goal worktree approval decisions
+  from `/today` and `/resume`.
+- A confirmed browser `approve-coder-worktree` action now returns an explicit
+  operator-facing result payload with
+  `source_coder_worktree_approval_request_md`,
+  `source_coder_worktree_approval_request_markdown_consumed: true`, the
+  approval-request JSON and Markdown hashes, generated
+  `coder_worktree_approval_decision.json` /
+  `coder_worktree_approval_decision.md` artifact links, approved state, and
+  zero-effect safety counters.
+- The generated `coder_worktree_approval_decision.md` consumes the current
+  `coder_worktree_approval_request.md` as proof, records the request path and
+  hash, and remains a local approval decision artifact. It does not create a
+  worktree, run commands, edit files, commit, push, deploy, call providers, or
+  use the network.
+- Running the approval-decision action from
+  `/resume#resume-workbench-action-form` preserves that return surface for the
+  embedded `Run approved worktree` form. An idempotent rerun from
+  `/today#today-current-action` reports `already_approved: true`, keeps the
+  same approval-decision artifact and request hashes, and stores the Today
+  return surface without changing the durable decision payload.
+- `/today`, `/resume`, and the successor Goal page all move the primary action
+  to `Run approved worktree` after confirmed approval decision, while
+  `completed-goal-provenance.md` remains visible as durable provenance history
+  rather than a transient completed-Goal panel.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal approved worktree runs from `/today` and `/resume` should
+  consume `coder_worktree_approval_decision.md` as proof, keep provenance
+  history visible, and move the primary action to `Open review`.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the explicit approval-decision result payload because the
+    browser result page did not expose
+    `source_coder_worktree_approval_request_md`.
+  - `python3 -m compileall -q agent_os/coder_worktree_execution.py agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 75.78s after adding approval-request Markdown consumption,
+    request JSON/Markdown hash checks, Goal artifact reader coverage, Today
+    idempotence coverage, and daily return-surface preservation for the
+    embedded `Run approved worktree` form.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_approval_and_run_capture_bounded_evidence -q --tb=short`:
+    1 passed in 2.48s before adding the CLI source-request assertions; the
+    strengthened CLI regression then passed in 13.69s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed in 53.91s.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal approved
+    worktree-run slice and refreshed `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this slice creates only local approval-decision artifacts after an
+  existing confirmed local browser action. It does not create or run a
+  worktree, run commands, edit files, commit, push, create PRs, deploy, call
+  providers, use app-side network actions, or mutate external systems. Local
+  browser/test proof is not CI, deploy, or live production proof.
+
+## 2026-07-06 Successor Goal Worktree Approval Request Daily Resume
+
+- Completed the selected slice for successor Goal worktree approval requests
+  from `/today` and `/resume`.
+- A confirmed browser `coder-worktree-approval` action now returns an explicit
+  operator-facing result payload with `source_coder_worktree_plan_md`,
+  `source_coder_worktree_plan_markdown_consumed: true`, the plan JSON and
+  Markdown hashes, generated `coder_worktree_approval_request.json` /
+  `coder_worktree_approval_request.md` artifact links, pending approval state,
+  bounded allowed files, and zero-effect safety counters.
+- The generated `coder_worktree_approval_request.md` consumes the current
+  `coder_worktree_plan.md` as proof, records the plan path and hash, and
+  remains a pending local approval request. It does not approve execution,
+  create a worktree, run commands, edit files, commit, push, deploy, call
+  providers, or use the network.
+- Running the approval-request action from
+  `/resume#resume-workbench-action-form` preserves that return surface for the
+  embedded `Approve worktree` form. An idempotent rerun from
+  `/today#today-current-action` reports `already_recorded: true`, keeps the
+  same approval-request artifact and plan hashes, and stores the Today return
+  surface without changing the durable request payload.
+- Follow-up sidecar review found that legacy/existing approval request
+  artifacts could be reused by plan JSON hash while the browser result implied
+  Markdown proof consumption. Reuse now requires matching
+  `source_coder_worktree_plan_md`,
+  `source_coder_worktree_plan_markdown_consumed: true`, and
+  `source_plan_md_sha256`; stale pending requests are superseded before a new
+  Markdown-backed request is created, and legacy approved requests no longer
+  default missing Markdown proof to true in browser output.
+- `/today`, `/resume`, and the successor Goal page all move the primary action
+  to `Approve worktree` after confirmed approval-request creation, while
+  `completed-goal-provenance.md` remains visible as durable provenance history
+  rather than a transient completed-Goal panel.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal worktree approval decisions from `/today` and `/resume`
+  should consume `coder_worktree_approval_request.md` as proof, keep
+  provenance history visible, and move the primary action to
+  `Run approved worktree`.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the explicit approval-request result payload because the
+    browser result page did not expose `source_coder_worktree_plan_md`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 69.74s after adding the approval-request proof payload,
+    request Markdown hash checks, Goal artifact reader coverage, and Today
+    idempotence coverage.
+  - Follow-up legacy-reuse regression:
+    `python3 -m pytest tests/test_first_milestone.py::test_coder_worktree_approval_and_run_capture_bounded_evidence -q --tb=short`:
+    1 passed in 2.59s after proving a stale pending approval request without
+    Markdown proof is superseded rather than reused as `already_recorded`.
+  - Follow-up browser-flow rerun:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 86.23s.
+  - GitHub run `28770095852` for commit
+    `60469676696b1e6b12426c2b91eb89f6f14bb573` failed in Fast smoke
+    verification because `test_local_app_demo_scenario_populates_fixture_state`
+    still expected the previous `22/22` Goal artifact inventory. The slice
+    intentionally made worktree approval request/decision JSON and Markdown
+    first-class artifacts, so the demo smoke expectation now asserts `26/26`
+    artifacts, `worktree_approval:4`, Markdown count `7`, and JSON count `13`.
+  - Follow-up CI-smoke regression:
+    `python3 -m pytest tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state -q --tb=short`:
+    1 passed in 66.98s.
+  - `python3 -m compileall -q agent_os/coder_worktree_execution.py agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace --tb=short`:
+    1 passed in 6.18s.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_runs_delegation_from_browser_action --tb=short`:
+    1 passed in 6.18s.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal worktree
+    approval-decision slice and refreshed `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this slice creates only local approval-request artifacts after an
+  existing confirmed local browser action. It does not approve execution,
+  create or run a worktree, run commands, edit files, commit, push, create
+  PRs, deploy, call providers, use app-side network actions, or mutate
+  external systems. Local browser/test proof is not CI, deploy, or live
+  production proof.
+
+## 2026-07-06 Successor Goal Worktree Plan Daily Resume
+
+- Completed the selected slice for successor Goal worktree-plan creation from
+  `/today` and `/resume`.
+- A confirmed browser `coder-worktree-plan` action now returns an explicit
+  operator-facing result payload with `source_coder_prep_md`,
+  `source_coder_prep_markdown_consumed: true`, the source prep hash, generated
+  `coder_worktree_plan.json` / `coder_worktree_plan.md` artifact links,
+  approval-gate state, proposed-but-not-created worktree details, bounded
+  allowed files, and zero-effect safety counters.
+- The generated `coder_worktree_plan.md` consumes the current `coder_prep.md`
+  as proof, records the prep path and hash, and remains an approval-gated
+  local plan artifact. It does not create a worktree, create an approval
+  request, edit source files, run commands, approve work, call providers, or
+  use the network.
+- Running the worktree-plan action from
+  `/resume#resume-workbench-action-form` preserves that return surface for the
+  embedded `Request worktree approval` form. An idempotent rerun from
+  `/today#today-current-action` reports `already_recorded: true`, keeps the
+  same plan artifact and prep hash, and stores the Today return surface
+  without changing the durable plan payload.
+- `/today`, `/resume`, and the successor Goal page all move the primary action
+  to `Request worktree approval` after confirmed worktree-plan creation, while
+  `completed-goal-provenance.md` remains visible as durable provenance history
+  rather than a transient completed-Goal panel.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal worktree approval request from `/today` and `/resume` should
+  consume `coder_worktree_plan.md` as proof, keep provenance history visible,
+  and move the primary action to `Approve worktree`.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the explicit result payload because the worktree-plan result
+    page did not expose `source_coder_prep_markdown_consumed: true`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 79.71s after adding the explicit result payload, prep hash
+    checks, persisted zero-effect gates, and Today idempotence coverage.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace --tb=short`:
+    1 passed in 6.13s.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_runs_delegation_from_browser_action --tb=short`:
+    1 passed in 6.13s.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal worktree
+    approval-request slice and refreshed `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this slice creates only local worktree-plan artifacts after an
+  existing confirmed local browser action. It does not create an approval
+  request, approve execution, create a worktree, run commands, edit files,
+  commit, push, create PRs, deploy, call providers, use app-side network
+  actions, or mutate external systems. Local browser/test proof is not CI,
+  deploy, or live production proof.
+
+## 2026-07-06 Successor Goal Coder Prep Daily Resume
+
+- Completed the selected slice for successor Goal coder-prep from `/today`
+  and `/resume`.
+- A confirmed browser `coder-prep` action now returns an explicit
+  operator-facing result payload with `source_handoff_md`,
+  `source_handoff_markdown_consumed: true`, generated `coder_prep.json` /
+  `coder_prep.md` artifact links, bounded allowed files, and zero-effect
+  safety counters for source edits, task/run/routing/effect/approval rows,
+  worktrees, commands, provider calls, network actions, and external
+  mutations.
+- The action-result "Action Continuation" details form now preserves the same
+  return surface as the main result-page next-step form. Running successor
+  coder-prep from `/resume#resume-workbench-action-form` keeps the embedded
+  `Create worktree plan` form pointed at that resume workbench instead of
+  falling back to the Goal action dock.
+- The generated `coder_prep.md` consumes the current
+  `implementation_handoff.md` as proof, records its source handoff path and
+  hash, and remains a bounded local plan artifact. It does not edit source
+  files, create a worktree, run commands, approve work, call providers, or use
+  the network.
+- `/today`, `/resume`, and the successor Goal page all move the primary action
+  to `Create worktree plan` after confirmed coder-prep, while
+  `completed-goal-provenance.md` remains visible as durable provenance history
+  rather than a transient completed-Goal panel.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal worktree-plan creation from `/today` and `/resume` should
+  consume `coder_prep.md` as proof, keep provenance history visible, and move
+  the primary action to `Request worktree approval`.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the explicit result payload because the coder-prep result
+    page did not expose `provider_calls_taken_by_clankeros: 0`.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 59.66s after the final continuation-form correction.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace --tb=short`:
+    1 passed in 6.03s.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_runs_delegation_from_browser_action --tb=short`:
+    1 passed in 6.03s.
+- Non-claim: this slice creates only local coder-prep artifacts after an
+  existing confirmed local browser action. It does not create a worktree plan,
+  request or approve execution, run commands, edit files, commit, push, create
+  PRs, deploy, call providers, use app-side network actions, or mutate
+  external systems.
+
+## 2026-07-06 Successor Goal Run Delegation Daily Resume
+
+- Completed the selected slice for successor Goal `Run delegation` from
+  `/today` and `/resume`.
+- A confirmed browser `run-delegation` now reloads the completed delegation
+  metadata, exposes the context-pack and implementation-handoff artifact paths
+  in the action result payload, and stores the human-readable
+  `implementation_handoff.md` as the workspace `last_viewed_artifact` when it
+  exists.
+- The action-result "next step" form now preserves the return surface that
+  launched the action. Running a successor delegation from
+  `/resume#resume-workbench-action-form` keeps the embedded `Run coder prep`
+  form pointed back to that same resume workbench instead of falling back to
+  the Goal action dock.
+- Existing repo-relative markdown/json/text result strings are linked as
+  artifact surfaces in action-result readbacks, so context-pack and
+  implementation-handoff proof paths are clickable even when they arrive as
+  metadata strings.
+- The Goal artifact selector now ranks actionable artifact types before
+  same-second timestamps. After a successful scout run, the successor Goal's
+  artifact reader selects `implementation_handoff.md` while the timeline keeps
+  the machine-readable `implementation_handoff.json` event.
+- `/today`, `/resume`, and the successor Goal page all move the primary action
+  to `Run coder prep` after the confirmed run, while
+  `completed-goal-provenance.md` remains visible as durable provenance history
+  rather than a transient completed-Goal panel.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal coder-prep from `/today` and `/resume` should consume
+  `implementation_handoff.md` as proof, keep provenance history visible, and
+  move the primary action to `Create worktree plan`.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface`:
+    1 passed in 70.54s after the final assertion alignment.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_runs_delegation_from_browser_action`:
+    1 passed in 6.01s.
+  - `python3 -m pytest -q tests/test_first_milestone.py::test_local_app_demo_scenario_populates_fixture_state`:
+    1 passed in 55.50s.
+- Non-claim: this slice runs only the existing confirmed local delegation
+  adapter path in tests and updates local browser/readback state. It does not
+  create coder-prep, worktree plans, commits, pushes, PRs, deploys, provider
+  calls, app-side network actions, or external mutations.
+
+## 2026-07-06 Successor Goal Context Pack Daily Resume
+
+- Completed the selected slice for successor Goal context-pack generation from
+  `/today` and `/resume`.
+- `/resume` now posts the embedded context-pack form back to
+  `/resume#resume-workbench-action-form`, matching `/today`'s
+  `#today-current-action` return behavior instead of falling back to the Goal
+  action dock.
+- After a confirmed context-pack POST for the successor Goal, the browser
+  workspace stays on the successor Goal, records `context-pack` as the updater,
+  stores the generated `.clanker/delegations/<delegation>/context/context_pack.md`
+  as `last_viewed_artifact`, preserves the resume surface, and keeps
+  `completed_goal_handoff_source_goal` cleared.
+- `/today` and `/resume` no longer render the transient completed-Goal
+  provenance or handoff panels after promotion. They instead expose a durable
+  Goal provenance history panel that links the retained
+  `completed-goal-provenance.md` while keeping `Run delegation` as the primary
+  successor Goal action.
+- The successor Goal page now records context-pack JSON and Markdown as
+  `context_pack` artifacts, selects the generated Markdown as newest evidence,
+  and adds a timeline entry when a context pack exists without older delegation
+  result metadata.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal `Run delegation` from `/today` and `/resume` should consume
+  the generated context pack as proof, keep provenance history visible, and
+  move the primary action to the next implementation handoff or coder-prep
+  step.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because `/resume` did not preserve
+    `return_to=/resume#resume-workbench-action-form` for the context-pack form.
+  - Second red run failed because `/resume` did not expose
+    `completed-goal-provenance.md` after context-pack generation.
+  - `python3 -m py_compile agent_os/local_app.py`: passed.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 148.24s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 57.55s.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal
+    `Run delegation` slice and refreshed `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+  - `git diff --check`: passed.
+  - GitHub Actions run `28765307934` failed on the pushed commit because the
+    fast smoke suite still expected delegate resume state to point at the older
+    delegation metadata artifact instead of the newer
+    `subagent_delegation_...-created.json` browser-focus artifact.
+  - After updating that smoke assertion, the exact CI smoke selection passed
+    locally: 15 passed, 512 deselected in 178.01s.
+- Non-claim: this slice performs only confirmed local context-pack writes and
+  local browser/readback updates. It does not run the delegation, create an
+  implementation handoff, create coder-prep, push, deploy, call providers, use
+  app-side network actions, or mutate external systems.
+
+## 2026-07-06 Successor Goal Provenance Promotion
+
+- Completed the selected slice for durable successor-Goal provenance history.
+- When the active successor Goal's first confirmed browser action is the scout
+  delegation, ClankerOS now writes
+  `.clanker/projects/<project>/goals/<successor_goal>/completed-goal-provenance.md`
+  with the completed source Goal, successor Goal, triggering delegation id,
+  prior `/today#today-current-action` resume surface, carried publication
+  handoff artifact, and zero provider/network/external-effect counters.
+- The delegate action result includes
+  `completed_goal_provenance_promoted: <artifact>` and writes a
+  `subagent_delegation_...-created.json` browser-focus artifact, so workspace
+  resume state stays on the successor Goal's newest confirmed action instead
+  of the old completed-Goal handoff.
+- After promotion, `.clanker/app/workspace.json` clears the transient
+  `completed_goal_handoff_*` fields. `/today` and `/resume` no longer reopen
+  either completed-Goal handoff panel; they keep the successor Goal's next
+  action (`Generate context pack`) as the primary same-page action.
+- The successor Goal page now exposes a `Completed Goal Provenance History`
+  block, records the provenance markdown in the normal artifact reader, and
+  adds timeline entries for both the recorded artifact and the promotion event.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  successor Goal context-pack generation from `/today` and `/resume` should
+  surface the generated context pack as newest evidence while keeping durable
+  completed-Goal provenance history.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the delegate action result did
+    not include `completed_goal_provenance_promoted:`.
+  - `python3 -m py_compile agent_os/local_app.py`: passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 51.07s.
+- Non-claim: this slice promotes only local browser-action provenance and
+  local artifacts after an already confirmed local delegate POST. It does not
+  run the delegation, generate a context pack, push, deploy, create PRs, call
+  providers, use app-side network actions, or mutate external systems.
+
+## 2026-07-06 Post-Next-Goal Today And Resume Provenance
+
+- Completed the selected slice for post-next-Goal creation `/today` and
+  `/resume` continuation.
+- After a confirmed next-Goal creation from a completed Goal handoff, `/today`
+  now keeps the successor Goal's current action as the primary continuation at
+  `#today-current-action` and `/resume` keeps the same action in
+  `#resume-workbench-action-form`.
+- Both routes now render read-only `Completed Goal Provenance` panels sourced
+  from `.clanker/app/workspace.json`
+  `completed_goal_handoff_source_goal`,
+  `completed_goal_handoff_previous_resume_surface`, and
+  `completed_goal_handoff_previous_artifact`. The panels link the completed
+  source Goal, previous daily resume surface, carried artifact, and current
+  successor Goal action.
+- The old completed-handoff next-Goal creation panel is suppressed once the
+  carried handoff has an active successor Goal, so the browser surfaces do not
+  keep presenting "create another Goal" as the continuation.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  once the successor Goal's first confirmed action produces its own evidence,
+  completed-Goal provenance should move into durable Goal history while
+  `/today` and `/resume` stay focused on the successor Goal's newest evidence
+  and action.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because `/today` did not render
+    `Today Completed Goal Provenance`.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 58.92s after the implementation cleanup.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 7.28s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 25.78s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    1 passed in 42.91s.
+  - `python3 -m agent_os.cli iterate`: selected the successor Goal history
+    and focused resume slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+- Non-claim: this slice is read-only on GET and adds no new action authority.
+  It does not create projects, create Goals, run work, push, deploy, create
+  PRs, call providers, use app-side network actions, or mutate external
+  systems from ClankerOS.
+
+## 2026-07-06 Post-Completion Same-Page Next Goal Creation
+
+- Completed the selected slice for post-completion `/today` and `/resume`
+  same-page next-Goal creation.
+- `/today` and `/resume` completed Goal handoffs now embed the existing
+  confirmed local `create-goal` form directly in the completed Goal handoff
+  panel. The form carries `completed_goal_id`, `completed_goal_artifact`,
+  `previous_resume_surface`, and a local `return_to` value so the operator can
+  start the next project Goal without leaving the completed handoff surface.
+- Confirmed `create-goal` submissions from the completed handoff preserve the
+  completed Goal provenance in `.clanker/app/workspace.json` via
+  `completed_goal_handoff_source_goal`,
+  `completed_goal_handoff_previous_resume_surface`, and
+  `completed_goal_handoff_previous_artifact`, while the active
+  `resume_surface` moves to the new Goal's current action.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-next-Goal creation `/today` and `/resume` should surface the new Goal's
+  current action as the primary continuation while keeping the carried
+  completed-Goal handoff source visible as provenance.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because `/today` did not render
+    `today_completed_goal_next_goal_form_available=true`.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 49.59s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 6.27s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 24.36s.
+- Non-claim: this slice creates a new Goal only after the existing confirmed
+  local `create-goal` POST path is submitted. Rendering `/today` or `/resume`
+  still writes nothing on GET and does not push, deploy, create PRs, call
+  providers, use app-side network actions, or mutate external systems.
+
+## 2026-07-06 Post-Completion Today And Resume Handoff
+
+- Completed the selected slice for post-completion `/today` and `/resume`
+  continuation.
+- `/today` now renders a read-only `Today Completed Goal Handoff` after the
+  saved or lead Goal is locally completed. The handoff links completed Goal
+  evidence, the Goal timeline, Goal CI handoff, the latest saved artifact, the
+  saved daily resume surface, and the current project's existing
+  `Start Goal For This Project` form.
+- `/resume` now renders the same completed Goal handoff as a return-to-work
+  bridge, so the operator can review the completed Goal evidence and start the
+  next Goal without losing the saved `/today#today-current-action` resume
+  proof.
+- The completed handoff is read-only on GET and reports zero provider calls,
+  network actions, and external effects. Next-Goal creation still belongs to
+  existing confirmed local forms.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-completion `/today` and `/resume` should offer same-page next-Goal
+  creation from the completed Goal handoff while carrying forward prior
+  evidence and preserving the saved daily resume proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because `/today` did not render
+    `Today Completed Goal Handoff`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 58.41s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 31.24s.
+- Non-claim: this slice does not create a new Goal, push, deploy, create PRs,
+  call providers, use app-side network actions, or mutate external systems
+  from ClankerOS. It exposes the existing project start-goal form as the next
+  action after completion.
+
+## 2026-07-06 Post-Publication-Handoff Today Manual Publish Boundary
+
+- Completed the selected slice for post-publication-handoff `/today` manual
+  publish boundary continuation.
+- `/today` now embeds the lead Goal's `Manual publish outside ClankerOS`
+  boundary as the same-page primary action after a local publication handoff is
+  ready. The panel shows the copy-only publication handoff commands, records
+  explicit local/non-network/manual-boundary evidence, and threads
+  `return_to=/today#today-current-action` into the `complete-goal` confirmation
+  form.
+- Confirmed `complete-goal` submissions now honor a safe local `return_to`
+  value, so a completion launched from the daily cockpit records only local
+  Goal completion and saves `resume_surface=/today#today-current-action`
+  instead of returning the operator to the Goal detail page.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, confirmed local scout run, Today-local coder-prep
+  creation, Today-local worktree-plan creation, Today-local approval request
+  creation, Today-local approval decision confirmation, Today-local approved
+  worktree run confirmation with a bounded file change, Today-local Open
+  review confirmation, Today-local Create commit request confirmation,
+  Today-local Approve commit confirmation, Today-local Commit approved
+  worktree confirmation, Today-local Create publication request confirmation,
+  Today-local Approve publication confirmation, Today-local Create publication
+  handoff confirmation, Today-local manual publish boundary confirmation,
+  copy-only push/PR command visibility, local Goal completion, and workspace
+  resume persistence.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-completion `/today` and `/resume` should expose completed Goal evidence
+  plus a clear next-Goal/start-new-work action without losing the saved daily
+  resume proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered
+    manual-publish completion form did not include
+    `return_to=/today#today-current-action`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 40.51s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 25.55s.
+  - `python3 -m agent_os.cli iterate`: selected the post-completion
+    `/today` and `/resume` completed Goal evidence slice and wrote
+    `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this Today manual-publish boundary slice records only local Goal
+  completion and workspace resume state after the operator says manual
+  publication happened outside ClankerOS. It does not push, deploy, create PRs,
+  call providers, use app-side network actions, or mutate external systems
+  from ClankerOS.
+
+## 2026-07-06 Post-Publication-Approval Today Publication Handoff
+
+- Completed the selected slice for post-publication-approval `/today`
+  publication-handoff continuation.
+- `/today` now embeds the lead Goal's `Create publication handoff` form with a
+  Today-local return target, so a confirmed publication handoff launched from
+  the daily cockpit writes the local publication handoff and PR-body artifacts
+  and saves `resume_surface=/today#today-current-action` instead of returning
+  the operator to the Goal action dock or run page.
+- The publication-handoff form now records the approved publication id, source
+  run id, and `return_to_after_publication_handoff` in form evidence, while
+  keeping the existing local handoff writer behind an explicit confirmation
+  screen.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, confirmed local scout run, Today-local coder-prep
+  creation, Today-local worktree-plan creation, Today-local approval request
+  creation, Today-local approval decision confirmation, Today-local approved
+  worktree run confirmation with a bounded file change, Today-local Open
+  review confirmation, Today-local Create commit request confirmation,
+  Today-local Approve commit confirmation, Today-local Commit approved
+  worktree confirmation, Today-local Create publication request confirmation,
+  Today-local Approve publication confirmation, Today-local Create publication
+  handoff confirmation, generated `publication_handoff.md` and `pr_body.md`,
+  workspace resume persistence, and the next visible Today action becoming
+  `Manual publish outside ClankerOS`.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-publication-handoff `/today` should expose
+  `Manual publish outside ClankerOS` as the primary same-page action with
+  copy-only commands, local completion confirmation, and finish-today resume
+  proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered
+    publication-handoff form still emitted the Goal action-dock `return_to`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 47.92s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 25.63s.
+  - `python3 -m agent_os.cli iterate`: selected the
+    post-publication-handoff `/today` Manual publish outside ClankerOS slice
+    and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this Today publication-handoff slice writes only local handoff
+  and PR-body artifacts plus workspace resume state. It does not push, deploy,
+  create PRs, call providers, use app-side network actions, or mutate external
+  systems from ClankerOS.
+
+## 2026-07-06 Post-Publication-Request Today Publication Approval
+
+- Completed the selected slice for post-publication-request `/today`
+  publication-approval continuation.
+- `/today` now embeds the lead Goal's `Approve publication` form with a
+  Today-local return target, so a confirmed publication approval launched from
+  the daily cockpit writes the local publication decision artifact and saves
+  `resume_surface=/today#today-current-action` instead of returning the
+  operator to the Goal action dock or run page.
+- The approve-publication form now records the pending publication id, source
+  run id, and `return_to_after_publication_approval` in form evidence, while
+  keeping the existing local publication approval decision writer behind an
+  explicit confirmation screen.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, confirmed local scout run, Today-local coder-prep
+  creation, Today-local worktree-plan creation, Today-local approval request
+  creation, Today-local approval decision confirmation, Today-local approved
+  worktree run confirmation with a bounded file change, Today-local Open
+  review confirmation, Today-local Create commit request confirmation,
+  Today-local Approve commit confirmation, Today-local Commit approved
+  worktree confirmation, Today-local Create publication request confirmation,
+  Today-local Approve publication confirmation, generated
+  `coder_publication/publication_decision.md`, workspace resume persistence,
+  and the next visible Today action becoming `Create publication handoff`.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-publication-approval `/today` should expose
+  `Create publication handoff` as the primary same-page first-run action with
+  confirmation and finish-today resume proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered
+    approve-publication form still emitted the Goal action-dock `return_to`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 45.97s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 52.22s.
+  - `python3 -m agent_os.cli iterate`: selected the
+    post-publication-approval `/today` Create publication handoff slice and
+    wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this Today publication-approval slice writes only a local
+  publication approval decision artifact and workspace resume state. It does
+  not create a publication handoff, push, deploy, create PRs, call providers,
+  use app-side network actions, or mutate external systems from ClankerOS.
+
+## 2026-07-06 Post-Local-Commit Today Publication Request
+
+- Completed the selected slice for post-local-commit `/today` publication
+  request continuation.
+- `/today` now embeds the lead Goal's `Create publication request` form with a
+  Today-local return target, so a confirmed publication request launched from
+  the daily cockpit writes the pending local publication approval artifact and
+  saves `resume_surface=/today#today-current-action` instead of returning the
+  operator to the Goal action dock or run page.
+- The publication-request form now records the committed local-worktree
+  approval id, source run id, and `return_to_after_publication_request` in form
+  evidence, while keeping the existing local publication request writer behind
+  an explicit confirmation screen.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, confirmed local scout run, Today-local coder-prep
+  creation, Today-local worktree-plan creation, Today-local approval request
+  creation, Today-local approval decision confirmation, Today-local approved
+  worktree run confirmation with a bounded file change, Today-local Open
+  review confirmation, Today-local Create commit request confirmation,
+  Today-local Approve commit confirmation, Today-local Commit approved
+  worktree confirmation, Today-local Create publication request confirmation,
+  generated `coder_publication/publication_request.md`, workspace resume
+  persistence, and the next visible Today action becoming
+  `Approve publication`.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-publication-request `/today` should expose `Approve publication` as the
+  primary same-page first-run action with confirmation and finish-today resume
+  proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered
+    publication-request form still emitted the Goal action-dock `return_to`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 46.30s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 43.11s.
+  - `python3 -m agent_os.cli iterate`: selected the post-publication-request
+    `/today` Approve publication slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this Today publication-request slice writes only a pending local
+  publication approval request artifact and workspace resume state. It does
+  not approve publication, push, deploy, create PRs, call providers, use
+  app-side network actions, or mutate external systems from ClankerOS.
+
+## 2026-07-06 Post-Commit-Approval Today Local Commit
+
+- Completed the selected slice for post-commit-approval `/today` local-commit
+  continuation.
+- `/today` now embeds the lead Goal's `Commit approved worktree` form with a
+  Today-local return target, so a confirmed local commit launched from the
+  daily cockpit creates the gated commit inside the isolated coder worktree,
+  writes the local commit artifact, and saves
+  `resume_surface=/today#today-current-action` instead of returning the
+  operator to the Goal action dock or run page.
+- The commit-approved-worktree form now records the approved commit approval
+  id, source run id, and `return_to_after_local_commit` in form evidence,
+  while keeping the existing local commit writer behind an explicit
+  confirmation screen and its backend review/source-hash/branch/changed-file/
+  verifier gates.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, confirmed local scout run, Today-local coder-prep
+  creation, Today-local worktree-plan creation, Today-local approval request
+  creation, Today-local approval decision confirmation, Today-local approved
+  worktree run confirmation with a bounded file change, Today-local Open
+  review confirmation, Today-local Create commit request confirmation,
+  Today-local Approve commit confirmation, Today-local Commit approved
+  worktree confirmation, generated `coder_commit/commit.md`, workspace resume
+  persistence, and the next visible Today action becoming
+  `Create publication request`.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-local-commit `/today` should expose `Create publication request` as the
+  primary same-page first-run action with confirmation and finish-today resume
+  proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered
+    commit-approved-worktree form still emitted the Goal action-dock
+    `return_to`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 44.67s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms -q --tb=short`:
+    1 passed in 27.50s.
+  - `python3 -m agent_os.cli iterate`: selected the post-local-commit
+    `/today` Create publication request slice and wrote
+    `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this Today local-commit slice creates one confirmed local commit
+  inside the isolated coder worktree only. It does not push, deploy, create
+  PRs, call providers, use app-side network actions, or mutate external
+  systems from ClankerOS.
+
+## 2026-07-06 Post-Commit-Request Today Commit Approval
+
+- Completed the selected slice for post-commit-request `/today` commit-approval
+  continuation.
+- `/today` now embeds the lead Goal's `Approve commit` form with a Today-local
+  return target, so a confirmed commit approval launched from the daily
+  cockpit writes the local commit approval decision artifact and saves
+  `resume_surface=/today#today-current-action` instead of returning the
+  operator to the Goal action dock or run page.
+- The approve-commit form now records the pending commit approval id, source
+  run id, and `return_to_after_commit_approval` in form evidence, while
+  keeping the existing local commit approval decision writer behind an
+  explicit confirmation screen.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, confirmed local scout run, Today-local coder-prep
+  creation, Today-local worktree-plan creation, Today-local approval request
+  creation, Today-local approval decision confirmation, Today-local approved
+  worktree run confirmation with a bounded file change, Today-local Open
+  review confirmation, Today-local Create commit request confirmation,
+  Today-local Approve commit confirmation, generated
+  `coder_commit_decision.md`, workspace resume persistence, and the next
+  visible Today action becoming `Commit approved worktree`.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-commit-approval `/today` should expose `Commit approved worktree` as the
+  primary same-page first-run action with confirmation and finish-today resume
+  proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered approve-commit
+    form still emitted the Goal action-dock `return_to`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 37.23s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form tests/test_first_milestone.py::test_goal_runs_approved_worktree_from_browser_action tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    4 passed in 61.11s.
+  - `python3 -m agent_os.cli iterate`: selected the post-commit-approval
+    `/today` Commit approved worktree slice and wrote
+    `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this Today commit-approval slice writes only a confirmed local
+  commit approval decision artifact and workspace resume state. It does not
+  stage files, create a local commit, push, deploy, create PRs, call providers,
+  use app-side network actions, or mutate external systems from ClankerOS.
+
+## 2026-07-06 Post-Review Today Commit Request
+
+- Completed the selected slice for post-review `/today` commit-request
+  continuation.
+- `/today` now embeds the lead Goal's `Create commit request` form with a
+  Today-local return target, so a confirmed commit request launched from the
+  daily cockpit writes the pending local commit approval artifact and saves
+  `resume_surface=/today#today-current-action` instead of returning the
+  operator to the Goal action dock or run page.
+- The commit-request form now records the reviewed coder worktree run and
+  `return_to_after_commit_request` in form evidence, while keeping the
+  existing local commit approval request writer behind an explicit
+  confirmation screen.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, confirmed local scout run, Today-local coder-prep
+  creation, Today-local worktree-plan creation, Today-local approval request
+  creation, Today-local approval decision confirmation, Today-local approved
+  worktree run confirmation with a bounded file change, Today-local Open
+  review confirmation, Today-local Create commit request confirmation,
+  generated `coder_commit_request.md`, workspace resume persistence, and the
+  next visible Today action becoming `Approve commit`.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-commit-request `/today` should expose `Approve commit` as the primary
+  same-page first-run action with confirmation and finish-today resume proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered
+    commit-request form still emitted the Goal action-dock `return_to`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 38.97s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form tests/test_first_milestone.py::test_goal_next_action_card_exposes_commit_publication_gate_forms tests/test_first_milestone.py::test_goal_runs_approved_worktree_from_browser_action tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    4 passed in 76.77s.
+  - `python3 -m agent_os.cli iterate`: selected the post-commit-request
+    `/today` Approve commit slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this Today commit-request slice writes only a confirmed local
+  commit approval request artifact and workspace resume state. It does not
+  approve a commit, stage files, commit, push, deploy, create PRs, call
+  providers, use app-side network actions, or mutate external systems from
+  ClankerOS.
+
+## 2026-07-06 Post-Worktree-Run Today Review
+
+- Completed the selected slice for post-worktree-run `/today` review
+  continuation.
+- `/today` now embeds the lead Goal's `Open review` form with a Today-local
+  return target, so a confirmed review launched from the daily cockpit writes
+  the local review artifact and saves `resume_surface=/today#today-current-action`
+  instead of returning the operator to the Goal action dock or run page.
+- The review form now exposes `Open Review` copy, records the completed coder
+  worktree run, source run, review artifact path, and `return_to_after_review`
+  in form evidence, and keeps the existing local review writer behind an
+  explicit confirmation screen.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, confirmed local scout run, Today-local coder-prep
+  creation, Today-local worktree-plan creation, Today-local approval request
+  creation, Today-local approval decision confirmation, Today-local approved
+  worktree run confirmation with a bounded file change, Today-local Open
+  review confirmation, generated `runs/<source_run_id>/review.md`, workspace
+  resume persistence, and the next visible Today action becoming
+  `Create commit request`.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-review `/today` should expose `Create commit request` as the primary
+  same-page first-run action with confirmation and finish-today resume proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered review form
+    still exposed the old `Create Review` surface and did not prove the
+    Today-local review return path.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 51.90s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_reviewed_commit_request_form tests/test_first_milestone.py::test_goal_runs_approved_worktree_from_browser_action tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    4 passed in 78.27s.
+  - `python3 -m agent_os.cli iterate`: selected the post-review `/today`
+    Create commit request slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this Today review slice writes only a confirmed local review
+  artifact and workspace resume state. It does not stage files, commit, push,
+  deploy, create PRs, call providers, use app-side network actions, or mutate
+  external systems from ClankerOS.
+
+## 2026-07-05 Post-Approval-Decision Today Worktree Run
+
+- Completed the selected slice for post-approval-decision `/today`
+  approved-worktree execution continuation.
+- `/today` now embeds the lead Goal's `Run approved worktree` form with a
+  Today-local return target, so a confirmed approved worktree command launched
+  from the daily cockpit saves `resume_surface=/today#today-current-action`
+  instead of making the newly created run page the browser return point.
+- The run form now exposes explicit `Run Approved Worktree` copy, preserves the
+  existing approved-plan, safe-command, verifier, and bounded-file checks, and
+  records both the actual run surface and the selected return surface in the
+  action result.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, confirmed local scout run, Today-local coder-prep
+  creation, Today-local worktree-plan creation, Today-local approval request
+  creation, Today-local approval decision confirmation, Today-local approved
+  worktree run confirmation, generated `coder_worktree/summary.md`, workspace
+  resume persistence, and the next visible Today action becoming `Open review`.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-worktree-run `/today` should expose `Open review` as the primary
+  same-page first-run action with confirmation and finish-today resume proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered approved
+    worktree form did not emit `return_to=/today#today-current-action`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 42.45s.
+  - Repeat focused run with pytest last-failed:
+    1 passed in 31.67s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_runs_approved_worktree_from_browser_action -q --tb=short`:
+    1 passed in 10.22s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms -q --tb=short`:
+    1 passed in 17.77s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 9.79s.
+  - `python3 -m agent_os.cli iterate`: selected the post-worktree-run
+    `/today` Open review slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+- Non-claim: this Today approved-worktree slice runs only an explicitly
+  confirmed, approved, safe local command in an isolated local worktree. It
+  does not commit, push, deploy, create PRs, call providers, or create external
+  mutations from ClankerOS.
+
+## 2026-07-05 Post-Approval-Request Today Worktree Decision
+
+- Completed the selected slice for post-approval-request `/today` worktree
+  approval decision continuation.
+- `/today` now embeds the lead Goal's `Approve worktree` form with a
+  Today-local return target, so a confirmed approval decision launched from
+  the daily cockpit saves `resume_surface=/today#today-current-action` instead
+  of returning the operator to the Goal action dock or falling back to a
+  delegation page.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, confirmed local scout run, Today-local coder-prep
+  creation, Today-local worktree-plan creation, Today-local approval request
+  creation, Today-local approval decision confirmation, generated
+  `coder_worktree_approval_decision.md`, workspace resume persistence, and the
+  next visible Today action becoming `Run approved worktree`.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-approval-decision `/today` should expose `Run approved worktree` as the
+  primary same-page first-run action with confirmation and finish-today resume
+  proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered approval
+    decision form still emitted the Goal action-dock `return_to`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 81.73s.
+  - `python3 -m compileall agent_os`: passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms -q --tb=short`:
+    1 passed in 13.91s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 7.17s.
+  - `python3 -m agent_os.cli iterate`: selected the post-approval-decision
+    `/today` run-approved-worktree slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+- CI note: GitHub Actions run `28753963765` for the previous pushed commit has
+  Fast smoke verification green; the Full pytest suite is still running at the
+  latest check.
+- Non-claim: this Today approval-decision slice performs only a confirmed
+  local approval decision artifact write. It does not create a worktree, run
+  coder commands, edit source files, call providers, use app-side network,
+  push, deploy, create PRs, or mutate external systems from ClankerOS.
+
+## 2026-07-05 Post-Worktree-Plan Today Approval Request
+
+- Completed the follow-on selected slice for post-worktree-plan `/today`
+  worktree approval request continuation.
+- `/today` now embeds the lead Goal's `Request worktree approval` form with a
+  Today-local return target, so a confirmed approval request launched from the
+  daily cockpit saves `resume_surface=/today#today-current-action` instead of
+  returning the operator to the Goal action dock.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, confirmed local scout run, Today-local coder-prep
+  creation, Today-local worktree-plan creation, Today-local approval request
+  confirmation, generated `coder_worktree_approval_request.md`, workspace
+  resume persistence, and the next visible Today action becoming
+  `Approve worktree`.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-approval-request `/today` should expose `Approve worktree` as the
+  primary same-page first-run action with confirmation and finish-today resume
+  proof. A read-only sidecar review also flagged that later decision path as a
+  separate resume-surface gap.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered approval
+    request form still emitted the Goal action-dock `return_to`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 37.54s.
+  - `python3 -m compileall agent_os`: passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms -q --tb=short`:
+    1 passed in 23.43s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 12.44s.
+  - `python3 -m agent_os.cli iterate`: selected the post-approval-request
+    `/today` worktree-approval decision slice and wrote
+    `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+- CI note: GitHub Actions run `28753550734` for the previous pushed commit has
+  Fast smoke verification green; the Full pytest suite is still running at the
+  latest check.
+- Non-claim: this Today approval-request slice performs only confirmed local
+  approval request artifact writes. It does not approve work, create a
+  worktree, run coder commands, call providers, use app-side network, push,
+  deploy, create PRs, or mutate external systems from ClankerOS.
+
+## 2026-07-05 Post-Coder-Prep Today Worktree Plan
+
+- Completed the selected next-iteration slice for post-coder-prep `/today`
+  worktree-plan continuation.
+- `/today` now embeds the lead Goal's `Create worktree plan` form with a
+  Today-local return target, so a confirmed worktree-plan packet launched from
+  the daily cockpit saves `resume_surface=/today#today-current-action` instead
+  of returning the operator to the Goal action dock.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, confirmed local scout run, Today-local coder-prep
+  creation, Today-local worktree-plan confirmation, generated
+  `coder_worktree_plan.md`, workspace resume persistence, and the next visible
+  Today action becoming `Request worktree approval`.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-worktree-plan `/today` should expose `Request worktree approval` as the
+  primary same-page first-run action with confirmation and finish-today resume
+  proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered worktree-plan
+    form still emitted the Goal action-dock `return_to`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 20.19s.
+  - `python3 -m compileall agent_os`: passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms -q --tb=short`:
+    1 passed in 15.23s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 7.57s.
+  - `python3 -m agent_os.cli iterate`: selected the post-worktree-plan
+    `/today` worktree-approval slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+- CI note: GitHub Actions run `28753550734` for the previous pushed commit has
+  Fast smoke verification green; the Full pytest suite is still running at the
+  latest check.
+- Non-claim: this Today worktree-plan slice performs only confirmed local
+  worktree-plan artifact writes. It does not request approval, approve work,
+  create a worktree, run coder commands, call providers, use app-side network,
+  push, deploy, create PRs, or mutate external systems from ClankerOS.
+
+## 2026-07-05 Post-Run Today Coder Prep
+
+- Completed the selected next-iteration slice for post-run `/today`
+  coder-prep continuation.
+- `/today` now embeds the lead Goal's `Run coder prep` form with a Today-local
+  return target, so a confirmed coder-prep packet launched from the daily
+  cockpit saves `resume_surface=/today#today-current-action` instead of
+  returning the operator to the Goal action dock.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, confirmed local scout run, Today-local coder-prep
+  confirmation, generated `coder_prep.md`, workspace resume persistence, and
+  the next visible Today action becoming `Create worktree plan`.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-coder-prep `/today` should expose `Create worktree plan` as the primary
+  same-page first-run action with confirmation and finish-today resume proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered coder-prep
+    form still emitted the Goal action-dock `return_to`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 16.44s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_next_action_card_exposes_post_delegation_forms -q --tb=short`:
+    1 passed in 23.33s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 13.59s.
+  - `python3 -m agent_os.cli iterate`: selected the post-coder-prep `/today`
+    worktree-plan slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+- CI note: GitHub Actions run `28753280079` for the previous pushed commit has
+  Fast smoke verification green; the Full pytest suite is still running at the
+  latest check.
+- Non-claim: this Today coder-prep slice performs only confirmed local
+  coder-prep artifact writes. It does not create a worktree, run coder commands,
+  call providers, use app-side network, push, deploy, create PRs, or mutate
+  external systems from ClankerOS.
+
+## 2026-07-05 Post-Context-Pack Today Run Delegation
+
+- Completed the selected next-iteration slice for post-context-pack `/today`
+  run-delegation continuation.
+- `/today` now embeds the lead Goal's `Run delegation` form with a Today-local
+  return target, so a confirmed scout run launched from the daily cockpit saves
+  `resume_surface=/today#today-current-action` instead of returning the
+  operator to the Goal action dock.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack generation, configured local fake scout adapter execution,
+  completed delegation evidence, workspace resume persistence, and the next
+  visible Today action becoming `Run coder prep`.
+- The shared fake scout adapter test helper now emits both file-relevance
+  fields and an `implementation_options.options` entry, so it remains compatible
+  with older file-mapping tests while supporting first-run implementation scout
+  delegations.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-run `/today` should expose `Run coder prep` as the primary same-page
+  first-run action with confirmation and finish-today resume proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered run-delegation
+    form still emitted the Goal action-dock `return_to`.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 32.09s.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_run_delegation_shell_adapter_completes_valid_scout_output -q --tb=short`:
+    1 passed in 1.06s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 6.04s.
+  - `python3 -m agent_os.cli iterate`: selected the post-run `/today`
+    coder-prep slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+- CI note: GitHub Actions run `28753091590` for the previous pushed commit has
+  Fast smoke verification green; the Full pytest suite is still running at the
+  latest check.
+- Non-claim: this Today run-delegation slice executes only a confirmed local
+  read-only adapter in the browser action path. It does not call model
+  providers, push, deploy, create PRs, or mutate external systems from
+  ClankerOS.
+
+## 2026-07-05 Post-Delegation Today Context Pack
+
+- Completed the selected next-iteration slice for post-delegation `/today`
+  context-pack generation.
+- `/today` now embeds the lead Goal's `Generate context pack` form with a
+  Today-local return target, so a confirmed context-pack write launched from
+  the daily cockpit saves `resume_surface=/today#today-current-action` instead
+  of sending the operator back to the Goal action dock.
+- Regression coverage now walks the first-run browser path through project
+  registration, Goal creation, Today-local scout delegation, Today-local
+  context-pack confirmation, generated `context_pack.md`, workspace resume
+  persistence, and the next visible Today action becoming `Run delegation`.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-context-pack `/today` should expose `Run delegation` as the primary
+  same-page first-run action with confirmation and finish-today resume proof.
+- Focused local proof:
+  - Red-first run:
+    `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`
+    failed before the implementation because the Today-rendered context-pack
+    form still emitted the Goal action-dock `return_to`.
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 10.15s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 7.92s.
+  - `python3 -m agent_os.cli iterate`: selected the post-context-pack `/today`
+    run-delegation slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+- CI note: GitHub Actions run `28752750164` for the previous pushed commit has
+  Fast smoke verification green; the Full pytest suite is still running at the
+  latest check.
+- Non-claim: this Today context-pack slice performs only confirmed local
+  context-pack writes. It does not run a delegation, call providers, use
+  app-side network, push, deploy, create PRs, or mutate external systems from
+  ClankerOS.
+
+## 2026-07-05 Post-Goal Today Scout Delegation
+
+- Completed the selected next-iteration slice for post-Goal `/today` scout
+  delegation.
+- `/today` now embeds the lead Goal's `Create scout delegation` form with a
+  Today-local return target, so a confirmed delegation launched from the daily
+  cockpit saves `resume_surface=/today#today-current-action` instead of
+  sending the operator back to the Goal action dock.
+- The Today command evidence now exposes
+  `today_command_action_return_surface`, separate from the Finish Today resume
+  target, so the operator can verify both where the immediate action returns
+  and what tomorrow's saved resume point will be.
+- Regression coverage proves the post-Goal `/today` state names
+  `Create scout delegation` as the primary action, renders the same-page
+  `#today-current-action` delegate form, requires confirmation, preserves the
+  Today return target through confirmation, and records the workspace resume
+  point after the confirmed local write.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-delegation `/today` should expose `Generate context pack` as the
+  primary same-page first-run action with confirmation and finish-today resume
+  proof.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 17.40s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 6.20s.
+  - `python3 -m agent_os.cli iterate`: selected the post-delegation `/today`
+    context-pack slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- CI note: GitHub Actions run `28752441277` for the previous push has Fast
+  smoke verification green; the Full pytest suite is still running at the
+  latest check.
+- Non-claim: this Today scout-delegation slice performs only confirmed local
+  writes. It does not start subagents, call providers, use app-side network,
+  push, deploy, create PRs, or mutate external systems from ClankerOS.
+
+## 2026-07-05 Browser-First Goal Creation
+
+- Completed the selected next-iteration slice for browser-first Goal creation
+  from first-run and `/today` surfaces.
+- The first-run action result continuation now labels the `/today` deep link as
+  `Create First Goal` instead of exposing the raw route, keeping the continuation
+  focused on the operator's next action.
+- Regression coverage now proves that `/today` exposes the `#first-run-create-goal`
+  anchor, the `/actions/create-goal` form, the saved project payload, draft
+  memory, and the action brief before creating the first Goal.
+- Reseeded `tasks.md#next` with the next browser-first product slice:
+  post-Goal `/today` should expose `Create scout delegation` as the primary
+  same-page first-run action with confirmation and finish-today resume proof.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/local_app.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_first_run_browser_actions_persist_resume_workspace -q --tb=short`:
+    1 passed in 22.85s.
+  - `python3 -m agent_os.cli iterate`: selected the post-Goal `/today`
+    scout-delegation slice and wrote `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- CI note: GitHub Actions run `28752080795` for the previous push has Fast
+  smoke verification green; the Full pytest suite is still running at the
+  latest check.
+- Sidecar review note: no blocking UX/test gap was found for this slice. The
+  residual risk is that no live browser/visual click-through of
+  `/today#first-run-create-goal` was run in this iteration.
+- Non-claim: this browser-first slice performs only confirmed local writes. It
+  does not call providers, push, deploy, create PRs, or mutate external systems
+  from ClankerOS.
+
+## 2026-07-05 Product-Aligned Iteration Selector
+
+- Hardened `python3 -m agent_os.cli iterate` so a live daily-use ClankerOS
+  product Goal demotes both literal report-only proof-ladder tails and
+  recursive generated downstream/result-effect tails.
+- If an active queue section contains only recursive/generated proof-ladder
+  tails, the selector now writes an explicit product-queue refresh fallback
+  instead of presenting the tail as actionable work.
+- Reseeded the next queue with the next browser-first product slice:
+  browser Goal creation from first-run and `/today` surfaces, so a new
+  operator can create the first ClankerOS Goal without using the CLI.
+- Regenerated `docs/next-iteration.md` and `docs/dashboard.md`; the current
+  packet now selects the browser-first Goal creation slice from `tasks.md#next`
+  and records the generated-tail demotion in the simplicity guardrail.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/iteration.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_iterate_demotes_report_only_tail_when_daily_use_goal_exists tests/test_first_milestone.py::test_iterate_falls_back_when_only_recursive_tail_remains_for_daily_use_goal tests/test_first_milestone.py::test_iterate_prefers_lower_complexity_when_scores_tie -q --tb=short`:
+    3 passed in 9.51s.
+  - `python3 -m agent_os.cli iterate`: selected browser-first Goal creation
+    from the first-run and `/today` surfaces and wrote
+    `docs/next-iteration.md`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md`.
+- CI note: GitHub Actions run `28751725135` for the previous
+  `Add next-day self-hosting check` push still had Fast smoke verification
+  green while the Full pytest suite job was in progress at the latest check.
+- Non-claim: this selector slice changes local planning and dashboard
+  visibility only. It does not create Goals from the browser yet, call
+  providers, push, deploy, create PRs, or mutate external systems from
+  ClankerOS.
+
+## 2026-07-05 Next-Day Self-Hosting Check
+
+- Added `python3 -m agent_os.cli self-hosting-check` as a one-command
+  next-day preflight for ClankerOS dogfooding.
+- The command runs a bounded `git fetch --prune origin main` by default,
+  verifies the saved workspace resume surface, checks locally recorded
+  current-`main` CI proof, derives the browser Goal next action, and writes
+  `.clanker/self-hosting-checks/latest.json` plus
+  `docs/self-hosting-check.md`.
+- `/today` and the static dashboard now expose the `Next-Day Self-Hosting
+  Check` state with the latest status, command, report/evidence links, saved
+  resume surface, current-main proof state, browser next action, and explicit
+  no-write/no-app network counters.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os/self_hosting_check.py agent_os/cli.py agent_os/local_app.py agent_os/dashboard.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_self_hosting_check_verifies_fetch_resume_main_proof_and_browser_next_action tests/test_first_milestone.py::test_local_app_treats_main_workflow_proof_as_current_on_same_commit_branch -q --tb=short`:
+    2 passed in 7.68s.
+  - `python3 -m agent_os.cli self-hosting-check`:
+    wrote `docs/self-hosting-check.md` and
+    `.clanker/self-hosting-checks/latest.json`; live status was
+    `attention_needed` because this follow-up branch is ahead of the recorded
+    `origin/main` proof, while local fetch, saved resume, and browser next
+    action were ready.
+  - Live `/today` render readback found the self-hosting panel, ready fetch,
+    ready saved resume, `attention_needed` current-main proof, ready browser
+    next action, and `today_self_hosting_check_write_on_get=false`.
+  - `python3 -m agent_os.cli dashboard`: passed and wrote
+    `docs/dashboard.md` with the `Next-Day Self-Hosting Check` section.
+  - `git diff --check`: passed.
+- Non-claim: the browser app does not run fetch, poll GitHub, call providers,
+  push, create PRs, deploy, or mutate external systems. The CLI preflight
+  performs the operator-requested git fetch and records it as one network
+  action with zero external mutations.
+
+## 2026-07-05 Post-Merge Self-Hosting Reset
+
+- Local git posture was reset after PR `#1` shipped: invalid duplicate ref
+  files with names such as `.git/refs/heads/main (1)` and
+  `.git/refs/remotes/origin/codex/goal-first-local-app (2)` were quarantined
+  under `.git/invalid-refs-backup/20260705-post-merge-self-hosting/`, not
+  deleted.
+- `git fetch origin main codex/goal-first-local-app` now succeeds, local
+  `main` fast-forwarded to merge commit
+  `a86f92996adc276831dcb5cb7b341bfc89c42ee3`, and the follow-up branch is
+  `codex/post-merge-self-hosting`.
+- The post-merge GitHub Actions workflow-run proof for `main` run
+  `28744414894` was recorded as local ClankerOS CI evidence
+  `ci_snapshot_evidence_afdf67ba9bcd` with `status_source=github_status_json`,
+  `evidence_scope=workflow_run`, `network_actions_taken=0`, and
+  `external_mutations_taken=0`.
+- A new real dogfooding Goal was created:
+  `goal_c96f52bf5137`, titled `Use ClankerOS from shipped main tomorrow...`.
+  Its artifacts live under
+  `.clanker/projects/clankeros/goals/goal_c96f52bf5137/`.
+- The durable workspace resume file now points at project `clankeros`, Goal
+  `goal_c96f52bf5137`, and exact resume surface
+  `/goals/goal_c96f52bf5137#goal-action-dock-form`.
+- The stale dogfood Goal `goal_1fa51c15f846` was paused through the existing
+  confirmed `pause-goal` local app action after the new continuation Goal was
+  created. The workspace was then re-saved to `goal_c96f52bf5137`, so
+  `/resume` still returns to the real post-merge self-hosting action.
+- Render readback confirmed `/`, `/today`, `/goals`,
+  `/goals/goal_c96f52bf5137`, and `/ci-evidence` include the new continuation
+  Goal and merge commit `a86f92996adc276831dcb5cb7b341bfc89c42ee3`; the stale
+  `goal_1fa51c15f846` demo/context-pack Goal no longer appears on those
+  primary surfaces after the reset.
+- `/today`, Goal CI handoff, Goal verification, Home, and `/ci-evidence`
+  evidence rows now treat an operator-supplied `main` workflow-run proof as
+  current from a non-`main` checkout when local `main` or `origin/main` points
+  at the same commit, while still showing the branch mismatch and match
+  source explicitly.
+- `/today` and `/goals` now expose first-class stale Goal hygiene for old
+  demo/context-pack Goals. The panels count active/paused/completed stale
+  candidates, keep evidence visible, link to review/resume/completion
+  readiness, and reuse the existing confirmation-gated `pause-goal` action for
+  active stale Goals. Goal board selection now protects the real ClankerOS
+  dogfooding Goal when saved workspace state points at stale demo/context-pack
+  work.
+- The iteration selector now parses multiline `tasks.md` item metadata and
+  demotes report-only proof-ladder tails behind daily-use product work when a
+  live ClankerOS product Goal exists, with the demotion reason recorded in the
+  iteration packet and SQLite row.
+- Local verification so far:
+  - `python3 -m compileall -q agent_os/local_app.py agent_os/iteration.py tests/test_first_milestone.py`:
+    passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_goal_surfaces_expose_stale_goal_hygiene_without_losing_real_focus tests/test_first_milestone.py::test_iterate_demotes_report_only_tail_when_daily_use_goal_exists tests/test_first_milestone.py::test_iterate_prefers_lower_complexity_when_scores_tie -q --tb=short`:
+    3 passed in 21.23s.
+- Remaining next slice: add a one-command next-day self-hosting check that
+  verifies local fetch, saved resume, current `main` proof, and browser next
+  action before work resumes.
+- Non-claim: this reset and hygiene slice record local ClankerOS state and
+  proof only. They do not deploy, call providers, push, create a PR, or mutate
+  external systems from the app.
+
 ## 2026-07-05 Browser Execution Trust Hardening
 
 - Approved coder worktree execution now parses operator-provided commands into

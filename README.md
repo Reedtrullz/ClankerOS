@@ -64,6 +64,7 @@ python3 -m agent_os.cli iterate
 python3 -m compileall -q agent_os tests
 python3 -m agent_os.cli app-smoke-test
 python3 -m agent_os.cli app-demo-smoke-test
+python3 -m agent_os.cli app-golden-path-smoke-test
 ```
 
 `app-smoke-test` renders the core local app routes without starting a browser
@@ -73,6 +74,9 @@ catch blank or wrong operator pages before the full pytest suite finishes.
 stateful goal cockpit, goal detail, demo, scoped workflow, project,
 delegation, run, approvals, inbox, actions, and health pages for their
 expected operator markers.
+`app-golden-path-smoke-test` starts from a fresh local root and proves the
+actual browser loop: create project, create goal, do the next action, generate
+proof, finish today, and resume tomorrow.
 
 Then read:
 

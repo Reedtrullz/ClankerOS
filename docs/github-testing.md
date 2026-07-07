@@ -36,12 +36,13 @@ The `Tests` workflow has two jobs:
 
 - `smoke` checks out the repo, sets up Python 3.10, installs `pytest`,
   compiles `agent_os` and `tests`, runs local CLI smoke checks against a
-  temporary ClankerOS root, runs the generic route smoke plus the
-  fixture-backed `app-demo-smoke-test`, including `/goals`,
+  temporary ClankerOS root, runs the generic route smoke, the fixture-backed
+  `app-demo-smoke-test`, and the fresh-user `app-golden-path-smoke-test`,
+  including `/goals`,
   `/goals/<goal_id>`, `/search`, `/workspace`, `/memory`, `/skills`, and
   `/profiles`, runs a focused pytest slice for the GitHub workflow, CI
-  snapshot handoff, local app route, artifact viewer, demo scenario, and
-  bind-safety tests, and checks whitespace with
+  snapshot handoff, local app route, artifact viewer, demo scenario, golden
+  path, first-viewport, and bind-safety tests, and checks whitespace with
   `git diff --check`.
 - `full-suite` depends on `smoke` and then runs the slow full suite with:
 
@@ -50,7 +51,9 @@ python -m pytest -q
 ```
 
 The temporary root keeps CI smoke commands such as `dashboard` and `iterate`
-from rewriting repository docs with runner-specific paths.
+from rewriting repository docs with runner-specific paths. The golden-path
+smoke uses its own temporary root so its fresh-user assertions are not polluted
+by the fixture-backed demo state.
 
 The focused pytest smoke is intentionally narrower than the full suite. It
 exists to catch high-signal local-app and CI-handoff regressions early, before
@@ -71,6 +74,7 @@ Before pushing, use focused checks that match the files you touched:
 python3 -m compileall -q agent_os tests
 python3 -m agent_os.cli app-smoke-test
 python3 -m agent_os.cli app-demo-smoke-test
+python3 -m agent_os.cli app-golden-path-smoke-test
 python3 -m pytest tests/test_first_milestone.py -q -k "github_actions or ci_snapshot or local_app"
 git diff --check
 ```

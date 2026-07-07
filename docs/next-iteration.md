@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_f712fec0c7f1
+- Packet ID: iteration_e497358fd265
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Surface changed-file and diff summaries in review and dashboard operator signals.
+Advance the Agent System north-star goal by completing: Promote the next GitHub fast-smoke/full-suite run back into the operator proof loop and fix any CI-only failures without broad local reruns.
 
 ## Definition Of Done
 
@@ -130,9 +130,9 @@ Advance the Agent System north-star goal by completing: Surface changed-file and
 ## Simplicity Guardrail
 
 - selection_policy: highest-score-then-lowest-complexity
-- selection_reason: selected highest score 10; complexity 4 recorded for audit
+- selection_reason: selected only actionable item with score 10 and complexity 3; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
 - selected_score: 10
-- selected_complexity: 4
+- selected_complexity: 3
 
 ## Guardrails And Non-Claims
 
@@ -143,7 +143,7 @@ Advance the Agent System north-star goal by completing: Surface changed-file and
 
 ## Current Posture
 
-- pending tasks: 29
+- pending tasks: 151
 - waiting approval: 0
 - blocked tasks: 0
 - failed tasks: 0

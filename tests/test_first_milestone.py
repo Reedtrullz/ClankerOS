@@ -1,3 +1,4 @@
+import hashlib
 import html
 import json
 import sqlite3
@@ -34,9 +35,13 @@ from agent_os.local_app import (
     resolve_artifact_path,
     run_demo_app_scenario,
     run_local_app_demo_smoke_test,
+    run_local_app_golden_path_smoke_test,
     validate_bind_host,
 )
-from agent_os.subagent_delegation import record_delegation_result
+from agent_os.subagent_delegation import (
+    load_delegation_result_metadata,
+    record_delegation_result,
+)
 from agent_os.storage import Storage, Task
 from agent_os.capability_activation_followup_result_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_task_result_effect_proposals import (
     IDEMPOTENCY_PREFIX as COUNT8_CAPABILITY_FOLLOWUP_RESULT_EFFECT_PREFIX,
@@ -2952,6 +2957,269 @@ def test_local_app_records_fast_smoke_ci_snapshot_evidence_from_pasted_gh_json(
     assert "evidence_scope=workflow_job:Fast smoke verification" in ci_evidence_after.body
 
 
+def test_local_app_treats_main_workflow_proof_as_current_on_same_commit_branch(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    AgentSystem(tmp_path).initialize()
+    _init_git_repo(tmp_path)
+    subprocess.run(["git", "branch", "-M", "main"], cwd=tmp_path, check=True)
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    subprocess.run(
+        ["git", "switch", "-c", "codex/post-merge-test"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "register-project",
+                "clankeros",
+                "--path",
+                str(tmp_path),
+                "--test-command",
+                "python3 -m pytest -q",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "goal",
+                "--project",
+                "clankeros",
+                "Continue from shipped main with local CI proof.",
+            ]
+        )
+        == 0
+    )
+    goal_output = capsys.readouterr().out
+    goal_id = next(
+        line.split(": ", 1)[1]
+        for line in goal_output.splitlines()
+        if line.startswith("goal_id: ")
+    )
+
+    ci_evidence_path = tmp_path / ".clanker" / "ci-snapshots" / "same-main.json"
+    ci_evidence_path.parent.mkdir(parents=True, exist_ok=True)
+    ci_evidence_path.write_text(
+        json.dumps(
+            {
+                "status": "success",
+                "status_source": "github_status_json",
+                "evidence_scope": "workflow_run",
+                "network_actions_taken": 0,
+                "external_mutations_taken": 0,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    Storage(tmp_path / ".agent" / "state.db").record_ci_snapshot_evidence(
+        project_id="clankeros",
+        branch_name="main",
+        commit_sha=commit,
+        provider="github-actions",
+        external_run_id="same-main",
+        external_url="https://github.com/Reedtrullz/ClankerOS/actions/runs/same-main",
+        status="success",
+        recorded_by="operator",
+        evidence_path=str(ci_evidence_path),
+        result_json={
+            "status_source": "github_status_json",
+            "evidence_scope": "workflow_run",
+            "network_actions_taken": 0,
+            "external_mutations_taken": 0,
+        },
+        idempotency_key="same-main",
+    )
+
+    today = render_local_app_route(tmp_path, "/today")
+    assert today.status == 200
+    assert "today_ci_handoff_branch</dt><dd>codex/post-merge-test" in today.body
+    assert "today_ci_handoff_latest_branch</dt><dd>main" in today.body
+    assert "today_ci_handoff_current_proof</dt><dd>current_workflow_run_success" in today.body
+    assert "today_ci_handoff_current_match_source</dt><dd>main_same_commit_local_main" in today.body
+    assert "today_ci_handoff_branch_matches_current</dt><dd>false" in today.body
+    assert "today_ci_handoff_commit_matches_current</dt><dd>true" in today.body
+    assert "today_ci_handoff_matches_current_checkout</dt><dd>true" in today.body
+    assert "today_ci_handoff_merge_readiness_status</dt><dd>merge_ready_from_local_full_suite_proof" in today.body
+    assert "today_ci_handoff_network_actions_taken</dt><dd>0" in today.body
+    assert "today_ci_handoff_external_effects_created</dt><dd>false" in today.body
+
+    goal = render_local_app_route(tmp_path, f"/goals/{goal_id}")
+    assert goal.status == 200
+    assert "goal_ci_handoff_current_match_source</dt><dd>main_same_commit_local_main" in goal.body
+    assert "goal_ci_handoff_matches_current_checkout</dt><dd>true" in goal.body
+    assert "goal_ci_handoff_merge_readiness_status</dt><dd>merge_ready_from_local_full_suite_proof" in goal.body
+    assert "goal_verification_command_current_match_source</dt><dd>main_same_commit_local_main" in goal.body
+    assert "goal_verification_command_matches_current_checkout</dt><dd>true" in goal.body
+    assert "goal_ci_current_match_source: main_same_commit_local_main" in goal.body
+
+
+def test_self_hosting_check_verifies_fetch_resume_main_proof_and_browser_next_action(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    AgentSystem(tmp_path).initialize()
+    _init_git_repo(tmp_path)
+    subprocess.run(["git", "branch", "-M", "main"], cwd=tmp_path, check=True)
+    origin_path = tmp_path / ".origin.git"
+    subprocess.run(["git", "init", "--bare", str(origin_path)], check=True, capture_output=True)
+    subprocess.run(["git", "remote", "add", "origin", str(origin_path)], cwd=tmp_path, check=True)
+    subprocess.run(
+        ["git", "push", "-u", "origin", "main"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    subprocess.run(
+        ["git", "switch", "-c", "codex/next-day-check"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.upsert_registered_project(
+        name="clankeros",
+        root_path=str(tmp_path),
+        default_test_command="python3 -m pytest -q",
+        allowed_write_roots=[str(tmp_path)],
+    )
+    goal_id = storage.create_goal(
+        "clankeros",
+        "Use ClankerOS from shipped main tomorrow.",
+        title="Use ClankerOS from shipped main tomorrow",
+    )
+    workspace_path = tmp_path / ".clanker" / "app" / "workspace.json"
+    workspace_path.parent.mkdir(parents=True, exist_ok=True)
+    workspace_path.write_text(
+        json.dumps(
+            {
+                "open_project": "clankeros",
+                "open_goal": goal_id,
+                "filters": "",
+                "expanded_panels": "",
+                "last_viewed_artifact": "",
+                "resume_surface": f"/goals/{goal_id}#goal-action-dock-form",
+                "updated_by": "operator",
+                "updated_at": "2026-07-05T00:00:00Z",
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    ci_evidence_path = tmp_path / ".clanker" / "ci-snapshots" / "next-day-main.json"
+    ci_evidence_path.parent.mkdir(parents=True, exist_ok=True)
+    ci_evidence_path.write_text(
+        json.dumps(
+            {
+                "status": "success",
+                "status_source": "github_status_json",
+                "evidence_scope": "workflow_run",
+                "network_actions_taken": 0,
+                "external_mutations_taken": 0,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    storage.record_ci_snapshot_evidence(
+        project_id="clankeros",
+        branch_name="main",
+        commit_sha=commit,
+        provider="github-actions",
+        external_run_id="next-day-main",
+        external_url="https://github.com/Reedtrullz/ClankerOS/actions/runs/next-day-main",
+        status="success",
+        recorded_by="operator",
+        evidence_path=str(ci_evidence_path),
+        result_json={
+            "status_source": "github_status_json",
+            "evidence_scope": "workflow_run",
+            "network_actions_taken": 0,
+            "external_mutations_taken": 0,
+        },
+        idempotency_key="next-day-main",
+    )
+
+    assert main(["--root", str(tmp_path), "self-hosting-check"]) == 0
+    output = capsys.readouterr().out
+    assert "self_hosting_check: ready" in output
+    assert "local_fetch: ready" in output
+    assert "saved_resume: ready" in output
+    assert "current_main_proof: ready" in output
+    assert "browser_next_action: ready" in output
+    assert "network_actions_taken: 1" in output
+    assert "external_mutations_taken: 0" in output
+
+    latest_path = tmp_path / ".clanker" / "self-hosting-checks" / "latest.json"
+    payload = json.loads(latest_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "ready"
+    assert payload["checks"]["local_fetch"]["reason"] == "fetch_completed"
+    assert payload["checks"]["saved_resume"]["resume_surface"] == (
+        f"/goals/{goal_id}#goal-action-dock-form"
+    )
+    assert payload["checks"]["current_main_proof"]["ci_current_proof"] == (
+        "current_workflow_run_success"
+    )
+    assert payload["checks"]["current_main_proof"]["head_matches_remote_main"] is True
+    assert payload["checks"]["browser_next_action"]["action"] == "Create scout delegation"
+    assert payload["checks"]["browser_next_action"]["surface"] == (
+        f"/goals/{goal_id}#goal-action-dock-form"
+    )
+    assert (tmp_path / "docs" / "self-hosting-check.md").exists()
+
+    today = render_local_app_route(tmp_path, "/today")
+    assert today.status == 200
+    assert "data-today-self-hosting-check='true'" in today.body
+    assert "today_self_hosting_check_status</dt><dd>ready" in today.body
+    assert "today_self_hosting_check_local_fetch</dt><dd>ready" in today.body
+    assert "today_self_hosting_check_saved_resume</dt><dd>ready" in today.body
+    assert "today_self_hosting_check_current_main_proof</dt><dd>ready" in today.body
+    assert "today_self_hosting_check_browser_next_action</dt><dd>ready" in today.body
+    assert "today_self_hosting_check_browser_action</dt><dd>Create scout delegation" in today.body
+    assert "today_self_hosting_check_resume_surface</dt><dd><a href='/goals/" in today.body
+    assert "today_self_hosting_check_network_actions_taken</dt><dd>1" in today.body
+    assert "today_self_hosting_check_write_on_get</dt><dd>false" in today.body
+    assert "today_self_hosting_check_browser_network_actions_taken</dt><dd>0" in today.body
+
+    dashboard_text = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
+    assert "### Next-Day Self-Hosting Check" in dashboard_text
+    assert "- status: ready" in dashboard_text
+    assert "- local_fetch: ready" in dashboard_text
+    assert "- saved_resume: ready" in dashboard_text
+    assert "- current_main_proof: ready" in dashboard_text
+    assert "- browser_next_action: ready" in dashboard_text
+    assert "- browser_action: Create scout delegation" in dashboard_text
+    assert "- report: docs/self-hosting-check.md" in dashboard_text
+    assert "- browser_write_on_get: false" in dashboard_text
+    assert "- browser_network_actions_taken: 0" in dashboard_text
+
+
 def test_local_app_rejects_pending_ci_snapshot_status_json_without_record(
     tmp_path: Path,
 ) -> None:
@@ -4485,10 +4753,12 @@ def test_github_actions_workflow_runs_automatic_verification() -> None:
         'python-version: "3.10"',
         "python -m compileall -q agent_os tests",
         "CLANKEROS_CI_ROOT: ${{ runner.temp }}/clankeros-ci-root",
+        "CLANKEROS_GOLDEN_ROOT: ${{ runner.temp }}/clankeros-golden-root",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" init",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-smoke-test",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" demo-app-scenario",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-demo-smoke-test",
+        "python -m agent_os.cli --root \"$CLANKEROS_GOLDEN_ROOT\" app-golden-path-smoke-test",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app --help",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" dashboard",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" iterate",
@@ -4502,6 +4772,8 @@ def test_github_actions_workflow_runs_automatic_verification() -> None:
         "github_actions_smoke_uses_temp_root_and_expected_order",
         "local_app_artifact_viewer_is_read_only_and_bounded",
         "local_app_demo_scenario_populates_fixture_state",
+        "local_app_fresh_user_no_docs_golden_path_smoke",
+        "operator_first_viewports_show_goal_phase_action_proof_finish_resume",
         "git diff --check",
         "python -m pytest -q",
         "--durations=25",
@@ -4519,10 +4791,12 @@ def test_github_actions_smoke_uses_temp_root_and_expected_order() -> None:
     ordered_markers = [
         "python -m compileall -q agent_os tests",
         "CLANKEROS_CI_ROOT: ${{ runner.temp }}/clankeros-ci-root",
+        "CLANKEROS_GOLDEN_ROOT: ${{ runner.temp }}/clankeros-golden-root",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" init",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-smoke-test",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" demo-app-scenario",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-demo-smoke-test",
+        "python -m agent_os.cli --root \"$CLANKEROS_GOLDEN_ROOT\" app-golden-path-smoke-test",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app --help",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" dashboard",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" iterate",
@@ -4554,6 +4828,8 @@ def test_github_actions_smoke_uses_temp_root_and_expected_order() -> None:
         "local_app_artifact_viewer_is_read_only_and_bounded",
         "local_app_demo_scenario_populates_fixture_state",
         "local_app_cli_commands_and_bind_safety",
+        "local_app_fresh_user_no_docs_golden_path_smoke",
+        "operator_first_viewports_show_goal_phase_action_proof_finish_resume",
     ]:
         assert expected_test in focused_pytest_line
 
@@ -4595,6 +4871,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
                 "      - name: Run local CLI smoke checks",
                 "        run: python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-smoke-test",
                 "        run: python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-demo-smoke-test",
+                "        run: python -m agent_os.cli --root \"$CLANKEROS_GOLDEN_ROOT\" app-golden-path-smoke-test",
                 "      - name: Check whitespace",
                 "        run: git diff --check",
                 "  full-suite:",
@@ -8580,6 +8857,11 @@ def test_local_app_routes_render_modern_workflow_and_health(
         "Create First Goal</a>"
     ) in registered_today.body
     assert "day_plan_next_surface: <a href='#first-run-create-goal'>Create First Goal</a>" in registered_today.body
+    assert "id='first-run-create-goal'" in registered_today.body
+    assert "action='/actions/create-goal'" in registered_today.body
+    assert "name='project_id' value='first-target'" in registered_today.body
+    assert "data-action-draft-action='create-goal'" in registered_today.body
+    assert "data-action-form-brief-action='create-goal'" in registered_today.body
     create_goal_result = render_local_app_route(
         tmp_path,
         "/actions/create-goal",
@@ -9330,7 +9612,16 @@ def test_local_app_routes_render_modern_workflow_and_health(
     delegated_workspace = json.loads(workspace_json.read_text(encoding="utf-8"))
     assert delegated_workspace["open_project"] == "first-target"
     assert delegated_workspace["open_goal"] == created_goal_id
-    assert delegated_workspace["last_viewed_artifact"] == str(
+    delegation_created_artifact = (
+        Path(".clanker") / "delegations" / f"{delegation.id}-created.json"
+    )
+    assert delegated_workspace["last_viewed_artifact"] == str(delegation_created_artifact)
+    delegation_created_payload = json.loads(
+        (tmp_path / delegation_created_artifact).read_text(encoding="utf-8")
+    )
+    assert delegation_created_payload["artifact_kind"] == "delegation_creation"
+    assert delegation_created_payload["delegation_id"] == delegation.id
+    assert delegation_created_payload["delegation_metadata_artifact"] == str(
         Path(delegation.result_artifact_path).relative_to(tmp_path)
     )
     assert delegated_workspace["resume_surface"] == goal_action_dock
@@ -9919,11 +10210,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "fast_smoke_job: configured" in verification.body
     assert "route_marker_app_smoke: configured" in verification.body
     assert "fixture_backed_app_demo_smoke: configured" in verification.body
+    assert "fresh_user_golden_path_smoke: configured" in verification.body
     assert "full_suite_job: configured" in verification.body
     assert "full_suite_depends_on_smoke: configured" in verification.body
     assert "Fast smoke verification can pass before the full suite finishes" in verification.body
     assert "fixture-backed app-demo-smoke-test" in verification.body
+    assert "fresh-user app-golden-path-smoke-test" in verification.body
     assert "Fixture-backed app demo smoke" in verification.body
+    assert "Fresh-user app golden path smoke" in verification.body
     assert "Run full test suite" in verification.body
     assert "python -m pytest -q" in verification.body
     assert "job_timeout_minutes: 45" in verification.body
@@ -9947,6 +10241,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Compact Local Checks" in verification.body
     assert "python3 -m agent_os.cli app-smoke-test" in verification.body
     assert "python3 -m agent_os.cli app-demo-smoke-test" in verification.body
+    assert "python3 -m agent_os.cli app-golden-path-smoke-test" in verification.body
     assert "CI proof requires a completed passing GitHub Actions run" in verification.body
     assert "app_network_actions_taken: 0" in verification.body
     assert "/ci-evidence" in verification.body
@@ -11065,13 +11360,16 @@ def test_local_app_runs_delegation_from_browser_action(
     assert completed_delegation is not None
     assert completed_delegation.status == "completed"
     assert completed_delegation.result_artifact_path
+    run_metadata = load_delegation_result_metadata(completed_delegation)
+    assert run_metadata["implementation_handoff_md"].endswith(
+        "/implementation_handoff.md"
+    )
+    assert "implementation_handoff_md</dt><dd><a href='/artifacts?path=.clanker/delegations/" in run_result.body
     run_workspace_path = tmp_path / ".clanker" / "app" / "workspace.json"
     run_workspace = json.loads(run_workspace_path.read_text(encoding="utf-8"))
     assert run_workspace["open_project"] == refreshed.get_goal(goal_id).project_id
     assert run_workspace["open_goal"] == goal_id
-    assert run_workspace["last_viewed_artifact"] == str(
-        Path(completed_delegation.result_artifact_path).relative_to(tmp_path)
-    )
+    assert run_workspace["last_viewed_artifact"] == run_metadata["implementation_handoff_md"]
     assert run_workspace["resume_surface"] == goal_action_dock
     assert run_workspace["updated_by"] == "run-delegation"
 
@@ -11146,6 +11444,4556 @@ def test_local_app_runs_delegation_from_browser_action(
     assert dogfooding_after_run.body.index("Dogfooding Real Goal Continuation") < dogfooding_after_run.body.index(
         "Dogfooding Operator Workbench"
     )
+
+
+def test_today_post_goal_scout_delegation_stays_on_daily_surface(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    AgentSystem(tmp_path).initialize()
+    target_repo = tmp_path / "clankeros"
+    _init_git_repo(target_repo)
+    (target_repo / "scripts").mkdir()
+    (target_repo / "scripts" / "noop.py").write_text("pass\n", encoding="utf-8")
+    (target_repo / "scripts" / "change_noop.py").write_text(
+        "from pathlib import Path\n"
+        "target = Path('scripts/noop.py')\n"
+        "marker = '# changed by approved worktree\\n'\n"
+        "text = target.read_text(encoding='utf-8')\n"
+        "if marker not in text:\n"
+        "    target.write_text(text.rstrip() + '\\n' + marker, encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    subprocess.run(
+        ["git", "add", "scripts/noop.py", "scripts/change_noop.py"],
+        cwd=target_repo,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "commit", "-m", "add no-op script"],
+        cwd=target_repo,
+        check=True,
+        capture_output=True,
+    )
+
+    register_result = render_local_app_route(
+        tmp_path,
+        "/actions/register-project",
+        method="POST",
+        form={
+            "name": ["first-target"],
+            "path": [str(target_repo)],
+            "test_command": ["python3 -m pytest -q"],
+            "allowed_write_roots": [str(target_repo)],
+            "confirm": ["yes"],
+        },
+    )
+    assert register_result.status == 200
+    create_goal_result = render_local_app_route(
+        tmp_path,
+        "/actions/create-goal",
+        method="POST",
+        form={
+            "project_id": ["first-target"],
+            "prompt": ["Create a browser-first first-run workflow"],
+            "created_by_profile": ["planner"],
+            "confirm": ["yes"],
+        },
+    )
+    assert create_goal_result.status == 200
+
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        created_goal_id = connection.execute(
+            """
+            select id from goals
+            where project_id = ?
+            order by created_at desc, id desc
+            limit 1
+            """,
+            ("first-target",),
+        ).fetchone()[0]
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    first_task = storage.list_tasks(created_goal_id)[0]
+
+    today = render_local_app_route(tmp_path, "/today")
+    assert today.status == 200
+    assert "today_command_status</dt><dd>goal_ready" in today.body
+    assert "today_command_primary_action</dt><dd>Create scout delegation" in today.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Create scout delegation</a>"
+    ) in today.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Create scout delegation</a>"
+    ) in today.body
+    assert "today_command_action_form_available</dt><dd>true" in today.body
+    assert "today_command_confirmation_required</dt><dd>true" in today.body
+    assert (
+        "today_command_action_return_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today.body
+    assert "today_command_finish_resume_reason</dt><dd>today_current_action_form_available" in today.body
+    assert "today_command_finish_form_available</dt><dd>true" in today.body
+    assert "today_command_finish_confirmation_required</dt><dd>true" in today.body
+    assert "id='today-current-action'" in today.body
+    assert "data-today-current-action='true'" in today.body
+    assert "action='/actions/delegate'" in today.body
+    assert f"name='goal_id' value='{created_goal_id}'" in today.body
+    assert f"name='task_id' value='{first_task.id}'" in today.body
+    assert "name='profile' value='scout'" in today.body
+    assert "name='return_to' value='/today#today-current-action'" in today.body
+    assert "name='resume_surface' value='/today#today-current-action'" in today.body
+    assert "name='updated_by' value='today-command-center'" in today.body
+
+    delegate_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/delegate",
+        method="POST",
+        form={
+            "goal_id": [created_goal_id],
+            "task_id": [first_task.id],
+            "profile": ["scout"],
+            "title": ["Scout from Today"],
+            "requested_by": ["operator"],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert delegate_confirmation.status == 409
+    assert "Confirm scout delegation" in delegate_confirmation.body
+    assert "action_confirmation_label</dt><dd>Create scout delegation" in delegate_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in delegate_confirmation.body
+
+    delegate_result = render_local_app_route(
+        tmp_path,
+        "/actions/delegate",
+        method="POST",
+        form={
+            "goal_id": [created_goal_id],
+            "task_id": [first_task.id],
+            "profile": ["scout"],
+            "title": ["Scout from Today"],
+            "requested_by": ["operator"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert delegate_result.status == 200
+    assert "Scout delegation created" in delegate_result.body
+    assert "action_result_command_label</dt><dd>Create scout delegation" in delegate_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=subagent_delegation%3A%20"
+    ) in delegate_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in delegate_result.body
+    delegated_workspace = json.loads((tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8"))
+    assert delegated_workspace["open_project"] == "first-target"
+    assert delegated_workspace["open_goal"] == created_goal_id
+    assert delegated_workspace["resume_surface"] == "/today#today-current-action"
+    assert delegated_workspace["updated_by"] == "delegate"
+    delegations = storage.list_subagent_delegations(created_goal_id)
+    assert len(delegations) == 1
+    delegation = delegations[0]
+
+    today_after_delegate = render_local_app_route(tmp_path, "/today")
+    assert today_after_delegate.status == 200
+    assert "today_command_status</dt><dd>goal_ready" in today_after_delegate.body
+    assert "today_command_primary_action</dt><dd>Generate context pack" in today_after_delegate.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Generate context pack</a>"
+    ) in today_after_delegate.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Generate context pack</a>"
+    ) in today_after_delegate.body
+    assert "today_command_reason</dt><dd>delegation=" in today_after_delegate.body
+    assert "context_pack_missing" in today_after_delegate.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_delegate.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_delegate.body
+    assert (
+        "today_command_action_return_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_delegate.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_delegate.body
+    assert "today_command_finish_resume_reason</dt><dd>today_current_action_form_available" in today_after_delegate.body
+    assert "id='today-current-action'" in today_after_delegate.body
+    assert "data-today-current-action='true'" in today_after_delegate.body
+    assert "data-today-current-action-form='true'" in today_after_delegate.body
+    assert "<h3>Generate Context Pack</h3>" in today_after_delegate.body
+    assert "action='/actions/context-pack'" in today_after_delegate.body
+    assert f"name='delegation_id' value='{delegation.id}'" in today_after_delegate.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_delegate.body
+    assert "name='resume_surface' value='/today#today-current-action'" in today_after_delegate.body
+    assert "name='updated_by' value='today-command-center'" in today_after_delegate.body
+
+    context_pack_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/context-pack",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert context_pack_confirmation.status == 409
+    assert "Confirm context pack" in context_pack_confirmation.body
+    assert "action_confirmation_label</dt><dd>Generate context pack" in context_pack_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in context_pack_confirmation.body
+
+    context_pack_result = render_local_app_route(
+        tmp_path,
+        "/actions/context-pack",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert context_pack_result.status == 200
+    assert "Context pack ready" in context_pack_result.body
+    assert "action_result_command_label</dt><dd>Generate context pack" in context_pack_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=context_pack%3A%20"
+    ) in context_pack_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in context_pack_result.body
+    context_pack_md = (
+        tmp_path
+        / ".clanker"
+        / "delegations"
+        / delegation.id
+        / "context"
+        / "context_pack.md"
+    )
+    assert context_pack_md.exists()
+    context_workspace = json.loads((tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8"))
+    assert context_workspace["open_project"] == "first-target"
+    assert context_workspace["open_goal"] == created_goal_id
+    assert context_workspace["last_viewed_artifact"] == str(context_pack_md.relative_to(tmp_path))
+    assert context_workspace["resume_surface"] == "/today#today-current-action"
+    assert context_workspace["updated_by"] == "context-pack"
+
+    today_after_context_pack = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Run delegation" in today_after_context_pack.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Run delegation</a>"
+    ) in today_after_context_pack.body
+    adapter_path = _write_fake_scout_adapter(tmp_path)
+    _configure_scout_adapter(tmp_path, capsys, adapter_path)
+
+    today_ready_to_run = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Run delegation" in today_ready_to_run.body
+    assert "today_command_action_form_available</dt><dd>true" in today_ready_to_run.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_ready_to_run.body
+    assert "Run Delegation" in today_ready_to_run.body
+    assert "action='/actions/run-delegation'" in today_ready_to_run.body
+    assert f"name='delegation_id' value='{delegation.id}'" in today_ready_to_run.body
+    assert "name='operator_id' value='operator'" in today_ready_to_run.body
+    assert "name='return_to' value='/today#today-current-action'" in today_ready_to_run.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_ready_to_run.body
+
+    run_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/run-delegation",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "operator_id": ["operator"],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert run_confirmation.status == 409
+    assert "Confirm scout run" in run_confirmation.body
+    assert "action_confirmation_label</dt><dd>Run scout delegation" in run_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in run_confirmation.body
+
+    run_result = render_local_app_route(
+        tmp_path,
+        "/actions/run-delegation",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "operator_id": ["operator"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert run_result.status == 200
+    assert "run_delegation:" in run_result.body
+    assert "Scout run finished" in run_result.body
+    assert "action_result_command_label</dt><dd>Run scout delegation" in run_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=run_delegation%3A%20"
+    ) in run_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in run_result.body
+    assert "status</dt><dd>completed" in run_result.body
+    assert "network_actions_taken</dt><dd>0" in run_result.body
+    assert "external_mutations_taken</dt><dd>0" in run_result.body
+    refreshed = Storage(tmp_path / ".agent" / "state.db")
+    completed_delegation = refreshed.get_subagent_delegation(delegation.id)
+    assert completed_delegation is not None
+    assert completed_delegation.status == "completed"
+    assert completed_delegation.result_artifact_path
+    run_metadata = load_delegation_result_metadata(completed_delegation)
+    assert run_metadata["implementation_handoff_md"].endswith(
+        "/implementation_handoff.md"
+    )
+    assert "implementation_handoff_md</dt><dd><a href='/artifacts?path=.clanker/delegations/" in run_result.body
+    run_workspace = json.loads((tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8"))
+    assert run_workspace["open_project"] == "first-target"
+    assert run_workspace["open_goal"] == created_goal_id
+    assert run_workspace["last_viewed_artifact"] == run_metadata["implementation_handoff_md"]
+    assert run_workspace["resume_surface"] == "/today#today-current-action"
+    assert run_workspace["updated_by"] == "run-delegation"
+
+    today_after_run = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Run coder prep" in today_after_run.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Run coder prep</a>"
+    ) in today_after_run.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Run coder prep</a>"
+    ) in today_after_run.body
+    assert "today_command_reason</dt><dd>implementation_handoff_or_result_available" in today_after_run.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_run.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_run.body
+    assert "Run Coder Prep" in today_after_run.body
+    assert "action='/actions/coder-prep'" in today_after_run.body
+    assert f"name='delegation_id' value='{delegation.id}'" in today_after_run.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_run.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_run.body
+
+    prep_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-prep",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert prep_confirmation.status == 409
+    assert "Confirm coder prep" in prep_confirmation.body
+    assert "action_confirmation_label</dt><dd>Prepare coder packet" in prep_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in prep_confirmation.body
+
+    prep_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-prep",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert prep_result.status == 200
+    assert "coder_prep:" in prep_result.body
+    assert "action_result_command_label</dt><dd>Prepare coder packet" in prep_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=coder_prep%3A%20"
+    ) in prep_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in prep_result.body
+    coder_prep_md = sorted(
+        (tmp_path / ".clanker" / "delegations" / delegation.id / "runs").glob(
+            "*/coder_prep/coder_prep.md"
+        )
+    )[-1]
+    prep_workspace = json.loads((tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8"))
+    assert prep_workspace["open_project"] == "first-target"
+    assert prep_workspace["open_goal"] == created_goal_id
+    assert prep_workspace["last_viewed_artifact"] == str(coder_prep_md.relative_to(tmp_path))
+    assert prep_workspace["resume_surface"] == "/today#today-current-action"
+    assert prep_workspace["updated_by"] == "coder-prep"
+
+    today_after_prep = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Create worktree plan" in today_after_prep.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Create worktree plan</a>"
+    ) in today_after_prep.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Create worktree plan</a>"
+    ) in today_after_prep.body
+    assert "today_command_reason</dt><dd>coder_prep_available" in today_after_prep.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_prep.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_prep.body
+    assert "Create Worktree Plan" in today_after_prep.body
+    assert "action='/actions/coder-worktree-plan'" in today_after_prep.body
+    assert f"name='delegation_id' value='{delegation.id}'" in today_after_prep.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_prep.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_prep.body
+
+    plan_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-plan",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert plan_confirmation.status == 409
+    assert "Confirm worktree plan" in plan_confirmation.body
+    assert "action_confirmation_label</dt><dd>Create worktree plan" in plan_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in plan_confirmation.body
+
+    plan_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-plan",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert plan_result.status == 200
+    assert "coder_worktree_plan:" in plan_result.body
+    assert "action_result_command_label</dt><dd>Create worktree plan" in plan_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=coder_worktree_plan%3A%20"
+    ) in plan_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in plan_result.body
+    coder_worktree_plan_md = coder_prep_md.with_name("coder_worktree_plan.md")
+    assert coder_worktree_plan_md.exists()
+    plan_workspace = json.loads((tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8"))
+    assert plan_workspace["open_project"] == "first-target"
+    assert plan_workspace["open_goal"] == created_goal_id
+    assert plan_workspace["last_viewed_artifact"] == str(
+        coder_worktree_plan_md.relative_to(tmp_path)
+    )
+    assert plan_workspace["resume_surface"] == "/today#today-current-action"
+    assert plan_workspace["updated_by"] == "coder-worktree-plan"
+
+    today_after_plan = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Request worktree approval" in today_after_plan.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Request worktree approval</a>"
+    ) in today_after_plan.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Request worktree approval</a>"
+    ) in today_after_plan.body
+    assert "today_command_reason</dt><dd>coder_worktree_plan_available" in today_after_plan.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_plan.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_plan.body
+    assert "Request Worktree Approval" in today_after_plan.body
+    assert "action='/actions/coder-worktree-approval'" in today_after_plan.body
+    assert f"name='delegation_id' value='{delegation.id}'" in today_after_plan.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_plan.body
+
+    approval_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-approval",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "requested_by": ["operator"],
+            "note": ["Approve bounded worktree execution from Today"],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert approval_confirmation.status == 409
+    assert "Confirm worktree approval request" in approval_confirmation.body
+    assert "action_confirmation_label</dt><dd>Request worktree approval" in approval_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in approval_confirmation.body
+
+    approval_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-approval",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "requested_by": ["operator"],
+            "note": ["Approve bounded worktree execution from Today"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert approval_result.status == 200
+    assert "coder_worktree_approval:" in approval_result.body
+    assert "action_result_command_label</dt><dd>Request worktree approval" in approval_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=coder_worktree_approval%3A%20"
+    ) in approval_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in approval_result.body
+    approval_request_json = coder_worktree_plan_md.with_name("coder_worktree_approval_request.json")
+    approval_request_md = coder_worktree_plan_md.with_name("coder_worktree_approval_request.md")
+    assert approval_request_json.exists()
+    assert approval_request_md.exists()
+    approval_request = json.loads(approval_request_json.read_text(encoding="utf-8"))
+    approval_id = approval_request["approval_id"]
+    approval_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert approval_workspace["open_project"] == "first-target"
+    assert approval_workspace["open_goal"] == created_goal_id
+    assert approval_workspace["last_viewed_artifact"] == str(
+        approval_request_md.relative_to(tmp_path)
+    )
+    assert approval_workspace["resume_surface"] == "/today#today-current-action"
+    assert approval_workspace["updated_by"] == "coder-worktree-approval"
+
+    today_after_approval_request = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Approve worktree" in today_after_approval_request.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Approve worktree</a>"
+    ) in today_after_approval_request.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Approve worktree</a>"
+    ) in today_after_approval_request.body
+    assert f"today_command_reason</dt><dd>approval={approval_id}" in today_after_approval_request.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_approval_request.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_approval_request.body
+    assert "Approve Worktree" in today_after_approval_request.body
+    assert "action='/actions/approve-coder-worktree'" in today_after_approval_request.body
+    assert f"name='approval_id' value='{approval_id}'" in today_after_approval_request.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_approval_request.body
+
+    approval_decision_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-worktree",
+        method="POST",
+        form={
+            "approval_id": [approval_id],
+            "decided_by": ["operator"],
+            "note": ["Approve bounded worktree execution from Today"],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert approval_decision_confirmation.status == 409
+    assert "Confirm worktree approval" in approval_decision_confirmation.body
+    assert "action_confirmation_label</dt><dd>Approve worktree" in approval_decision_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in approval_decision_confirmation.body
+
+    approval_decision = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-worktree",
+        method="POST",
+        form={
+            "approval_id": [approval_id],
+            "decided_by": ["operator"],
+            "note": ["Approve bounded worktree execution from Today"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert approval_decision.status == 200
+    assert "approved_coder_worktree:" in approval_decision.body
+    assert "action_result_command_label</dt><dd>Approve worktree" in approval_decision.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=approved_coder_worktree%3A%20"
+    ) in approval_decision.body
+    assert "#today-current-action'>/today#today-current-action</a>" in approval_decision.body
+    approval_decision_md = coder_worktree_plan_md.with_name("coder_worktree_approval_decision.md")
+    assert approval_decision_md.exists()
+    approval_decision_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert approval_decision_workspace["open_project"] == "first-target"
+    assert approval_decision_workspace["open_goal"] == created_goal_id
+    assert approval_decision_workspace["last_viewed_artifact"] == str(
+        approval_decision_md.relative_to(tmp_path)
+    )
+    assert approval_decision_workspace["resume_surface"] == "/today#today-current-action"
+    assert approval_decision_workspace["updated_by"] == "approve-coder-worktree"
+
+    today_after_approval_decision = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Run approved worktree" in today_after_approval_decision.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Run approved worktree</a>"
+    ) in today_after_approval_decision.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Run approved worktree</a>"
+    ) in today_after_approval_decision.body
+    assert f"today_command_reason</dt><dd>approval={approval_id}" in today_after_approval_decision.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_approval_decision.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_approval_decision.body
+    assert "Run Approved Worktree" in today_after_approval_decision.body
+    assert "action='/actions/run-coder-worktree'" in today_after_approval_decision.body
+    assert f"name='delegation_id' value='{delegation.id}'" in today_after_approval_decision.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_approval_decision.body
+    assert "return_to_after_command</dt><dd><a href='/today#today-current-action'>/today#today-current-action</a>" in today_after_approval_decision.body
+
+    worktree_command = "python3 scripts/change_noop.py"
+    verify_command = "python3 scripts/noop.py"
+    run_worktree_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/run-coder-worktree",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "command": [worktree_command],
+            "verify": ["yes"],
+            "verify_command": [verify_command],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert run_worktree_confirmation.status == 409
+    assert "Confirm run-coder-worktree" in run_worktree_confirmation.body
+    assert "action_confirmation_label</dt><dd>Run Approved Worktree" in run_worktree_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in run_worktree_confirmation.body
+
+    run_worktree_result = render_local_app_route(
+        tmp_path,
+        "/actions/run-coder-worktree",
+        method="POST",
+        form={
+            "delegation_id": [delegation.id],
+            "command": [worktree_command],
+            "verify": ["yes"],
+            "verify_command": [verify_command],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert run_worktree_result.status == 200
+    assert "run_coder_worktree: completed" in run_worktree_result.body
+    assert "action_result_command_label</dt><dd>Run Approved Worktree" in run_worktree_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=run_coder_worktree%3A%20completed"
+    ) in run_worktree_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in run_worktree_result.body
+    assert "status</dt><dd>completed" in run_worktree_result.body
+    assert "changed_files_within_allowed_files</dt><dd>true" in run_worktree_result.body
+    assert (
+        "source_coder_worktree_approval_decision_md</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in run_worktree_result.body
+    )
+    assert (
+        "source_coder_worktree_approval_decision_markdown_consumed</dt><dd>true"
+        in run_worktree_result.body
+    )
+    assert "source_approval_decision_sha256</dt><dd>" in run_worktree_result.body
+    assert "source_approval_decision_md_sha256</dt><dd>" in run_worktree_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Open review"
+        in run_worktree_result.body
+    )
+    assert "id='action-result-next-step-form'" in run_worktree_result.body
+    assert "action='/actions/review-run'" in run_worktree_result.body
+    assert "evidence_path</dt><dd><a href='/artifacts?path=.clanker/delegations/" in run_worktree_result.body
+    coder_worktree_summary = sorted(
+        (tmp_path / ".clanker" / "delegations" / delegation.id / "runs").glob(
+            "*/coder_worktree/summary.md"
+        )
+    )[-1]
+    coder_worktree_run_json = coder_worktree_summary.with_name("run.json")
+    coder_worktree_run_payload = json.loads(coder_worktree_run_json.read_text(encoding="utf-8"))
+    assert coder_worktree_run_payload["source_coder_worktree_approval_decision"] == str(
+        approval_decision_md.with_suffix(".json").relative_to(tmp_path)
+    )
+    assert coder_worktree_run_payload["source_coder_worktree_approval_decision_md"] == str(
+        approval_decision_md.relative_to(tmp_path)
+    )
+    assert coder_worktree_run_payload["source_approval_decision_sha256"] == hashlib.sha256(
+        approval_decision_md.with_suffix(".json").read_bytes()
+    ).hexdigest()
+    assert coder_worktree_run_payload["source_approval_decision_md_sha256"] == hashlib.sha256(
+        approval_decision_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert (
+        coder_worktree_run_payload["source_coder_worktree_approval_decision_markdown_consumed"]
+        is True
+    )
+    assert (
+        f"- source_coder_worktree_approval_decision_md: {approval_decision_md.relative_to(tmp_path)}"
+        in coder_worktree_summary.read_text(encoding="utf-8")
+    )
+    run_worktree_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert run_worktree_workspace["open_project"] == "first-target"
+    assert run_worktree_workspace["open_goal"] == created_goal_id
+    assert run_worktree_workspace["last_viewed_artifact"] == str(
+        coder_worktree_summary.relative_to(tmp_path)
+    )
+    assert run_worktree_workspace["resume_surface"] == "/today#today-current-action"
+    assert run_worktree_workspace["updated_by"] == "run-coder-worktree"
+
+    today_after_worktree_run = render_local_app_route(tmp_path, "/today")
+    coder_runs = list_coder_worktree_runs(tmp_path, delegation_id=delegation.id)
+    assert len(coder_runs) == 1
+    coder_run = coder_runs[0]
+    assert "today_command_primary_action</dt><dd>Open review" in today_after_worktree_run.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Open review</a>"
+    ) in today_after_worktree_run.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Open review</a>"
+    ) in today_after_worktree_run.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_worktree_run.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_worktree_run.body
+    assert "Open Review" in today_after_worktree_run.body
+    assert "action='/actions/review-run'" in today_after_worktree_run.body
+    assert f"name='run_id' value='{coder_run.id}'" in today_after_worktree_run.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_worktree_run.body
+    assert "return_to_after_review</dt><dd><a href='/today#today-current-action'>/today#today-current-action</a>" in today_after_worktree_run.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_worktree_run.body
+
+    review_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/review-run",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert review_confirmation.status == 409
+    assert "Confirm review-run" in review_confirmation.body
+    assert "action_confirmation_label</dt><dd>Open review" in review_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in review_confirmation.body
+
+    review_result = render_local_app_route(
+        tmp_path,
+        "/actions/review-run",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert review_result.status == 200
+    assert "run_review:" in review_result.body
+    assert "action_result_command_label</dt><dd>Open review" in review_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=run_review%3A%20"
+    ) in review_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in review_result.body
+    assert (
+        "source_coder_worktree_run_summary</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in review_result.body
+    )
+    assert (
+        "source_coder_worktree_run_summary_consumed</dt><dd>true"
+        in review_result.body
+    )
+    assert "source_coder_worktree_run_sha256</dt><dd>" in review_result.body
+    assert "source_diff_sha256</dt><dd>" in review_result.body
+    review_path = tmp_path / "runs" / coder_run.source_run_id / "review.md"
+    assert review_path.exists()
+    review_text = review_path.read_text(encoding="utf-8")
+    assert coder_run.id in review_text
+    assert (
+        f"source_coder_worktree_run_summary: {coder_worktree_summary.relative_to(tmp_path)}"
+        in review_text
+    )
+    assert "source_coder_worktree_run_summary_consumed: true" in review_text
+    assert (
+        f"source_coder_worktree_run_sha256: {hashlib.sha256(coder_worktree_run_json.read_bytes()).hexdigest()}"
+        in review_text
+    )
+    assert (
+        f"source_diff_sha256: {hashlib.sha256(coder_worktree_summary.with_name('diff.patch').read_bytes()).hexdigest()}"
+        in review_text
+    )
+    review_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert review_workspace["open_project"] == "first-target"
+    assert review_workspace["open_goal"] == created_goal_id
+    assert review_workspace["last_viewed_artifact"] == str(review_path.relative_to(tmp_path))
+    assert review_workspace["resume_surface"] == "/today#today-current-action"
+    assert review_workspace["updated_by"] == "review-run"
+
+    today_after_review = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Create commit request" in today_after_review.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Create commit request</a>"
+    ) in today_after_review.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Create commit request</a>"
+    ) in today_after_review.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_review.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_review.body
+    assert "Create Commit Request" in today_after_review.body
+    assert "action='/actions/coder-commit-request'" in today_after_review.body
+    assert f"name='run_id' value='{coder_run.id}'" in today_after_review.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_review.body
+    assert (
+        "return_to_after_commit_request</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_review.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_review.body
+
+    commit_message = "Implement bounded change from approved worktree run"
+    commit_request_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-commit-request",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "message": [commit_message],
+            "note": ["Request local commit after review from Today"],
+            "return_to": ["/today#today-current-action"],
+            "requested_by": ["operator"],
+        },
+    )
+    assert commit_request_confirmation.status == 409
+    assert "Confirm commit request" in commit_request_confirmation.body
+    assert "action_confirmation_label</dt><dd>Create commit request" in commit_request_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in commit_request_confirmation.body
+
+    commit_request_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-commit-request",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "message": [commit_message],
+            "note": ["Request local commit after review from Today"],
+            "return_to": ["/today#today-current-action"],
+            "requested_by": ["operator"],
+            "confirm": ["yes"],
+        },
+    )
+    assert commit_request_result.status == 200
+    assert "coder_commit_request:" in commit_request_result.body
+    assert "action_result_command_label</dt><dd>Create commit request" in commit_request_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=coder_commit_request%3A%20"
+    ) in commit_request_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in commit_request_result.body
+    commit_approval = next(
+        item
+        for item in list_coder_worktree_commit_approvals(
+            tmp_path,
+            status="pending_operator_approval",
+            limit=10,
+        )
+        if item.run_id == coder_run.id
+    )
+    commit_request_md = tmp_path / Path(commit_approval.request_artifact_path).with_suffix(".md")
+    assert commit_request_md.exists()
+    commit_request_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert commit_request_workspace["open_project"] == "first-target"
+    assert commit_request_workspace["open_goal"] == created_goal_id
+    assert commit_request_workspace["last_viewed_artifact"] == str(
+        commit_request_md.relative_to(tmp_path)
+    )
+    assert commit_request_workspace["resume_surface"] == "/today#today-current-action"
+    assert commit_request_workspace["updated_by"] == "coder-commit-request"
+
+    today_after_commit_request = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Approve commit" in today_after_commit_request.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Approve commit</a>"
+    ) in today_after_commit_request.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Approve commit</a>"
+    ) in today_after_commit_request.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_commit_request.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_commit_request.body
+    assert "Approve Commit" in today_after_commit_request.body
+    assert "action='/actions/approve-coder-commit'" in today_after_commit_request.body
+    assert f"name='approval_id' value='{commit_approval.id}'" in today_after_commit_request.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_commit_request.body
+    assert (
+        "return_to_after_commit_approval</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_commit_request.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_commit_request.body
+
+    commit_approval_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-commit",
+        method="POST",
+        form={
+            "approval_id": [commit_approval.id],
+            "decided_by": ["operator"],
+            "note": ["Approve local commit from Today"],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert commit_approval_confirmation.status == 409
+    assert "Confirm commit approval" in commit_approval_confirmation.body
+    assert "action_confirmation_label</dt><dd>Approve commit" in commit_approval_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in commit_approval_confirmation.body
+
+    commit_approval_result = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-commit",
+        method="POST",
+        form={
+            "approval_id": [commit_approval.id],
+            "decided_by": ["operator"],
+            "note": ["Approve local commit from Today"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert commit_approval_result.status == 200
+    assert "approved_coder_commit:" in commit_approval_result.body
+    assert "action_result_command_label</dt><dd>Approve commit" in commit_approval_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=approved_coder_commit%3A%20"
+    ) in commit_approval_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in commit_approval_result.body
+    commit_decision_md = (
+        tmp_path
+        / Path(commit_approval.source_run_evidence_path)
+        / "coder_commit"
+        / "coder_commit_decision.md"
+    )
+    assert commit_decision_md.exists()
+    commit_approval_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert commit_approval_workspace["open_project"] == "first-target"
+    assert commit_approval_workspace["open_goal"] == created_goal_id
+    assert commit_approval_workspace["last_viewed_artifact"] == str(
+        commit_decision_md.relative_to(tmp_path)
+    )
+    assert commit_approval_workspace["resume_surface"] == "/today#today-current-action"
+    assert commit_approval_workspace["updated_by"] == "approve-coder-commit"
+
+    today_after_commit_approval = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Commit approved worktree" in today_after_commit_approval.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Commit approved worktree</a>"
+    ) in today_after_commit_approval.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Commit approved worktree</a>"
+    ) in today_after_commit_approval.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_commit_approval.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_commit_approval.body
+    assert "Commit Approved Worktree" in today_after_commit_approval.body
+    assert "action='/actions/commit-coder-worktree'" in today_after_commit_approval.body
+    assert f"name='run_id' value='{coder_run.id}'" in today_after_commit_approval.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_commit_approval.body
+    assert (
+        "return_to_after_local_commit</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_commit_approval.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_commit_approval.body
+
+    local_commit_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/commit-coder-worktree",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "message": [commit_message],
+            "committed_by": ["operator"],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert local_commit_confirmation.status == 409
+    assert "Confirm local commit" in local_commit_confirmation.body
+    assert "action_confirmation_label</dt><dd>Commit approved worktree" in local_commit_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in local_commit_confirmation.body
+
+    local_commit_result = render_local_app_route(
+        tmp_path,
+        "/actions/commit-coder-worktree",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "message": [commit_message],
+            "committed_by": ["operator"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert local_commit_result.status == 200
+    assert "commit_coder_worktree: committed" in local_commit_result.body
+    assert "action_result_command_label</dt><dd>Commit approved worktree" in local_commit_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=commit_coder_worktree%3A%20committed"
+    ) in local_commit_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in local_commit_result.body
+    commit_decision_json = commit_decision_md.with_suffix(".json")
+    assert (
+        "source_coder_commit_decision</dt><dd>"
+        f"<a href='/artifacts?path={commit_decision_json.relative_to(tmp_path)}'>"
+        in local_commit_result.body
+    )
+    assert (
+        "source_coder_commit_decision_md</dt><dd>"
+        f"<a href='/artifacts?path={commit_decision_md.relative_to(tmp_path)}'>"
+        in local_commit_result.body
+    )
+    assert (
+        f"source_commit_decision_md_sha256</dt><dd>{hashlib.sha256(commit_decision_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in local_commit_result.body
+    )
+    assert (
+        "source_coder_commit_decision_markdown_consumed</dt><dd>true"
+        in local_commit_result.body
+    )
+    assert "commit_created</dt><dd>true" in local_commit_result.body
+    assert "push_created</dt><dd>false" in local_commit_result.body
+    assert "pr_created</dt><dd>false" in local_commit_result.body
+    assert "network_actions_taken</dt><dd>0" in local_commit_result.body
+    commit_md = tmp_path / Path(commit_approval.source_run_evidence_path) / "coder_commit" / "commit.md"
+    assert commit_md.exists()
+    commit_payload = json.loads(commit_md.with_suffix(".json").read_text(encoding="utf-8"))
+    assert commit_payload["source_coder_commit_decision"] == str(
+        commit_decision_json.relative_to(tmp_path)
+    )
+    assert commit_payload["source_coder_commit_decision_md"] == str(
+        commit_decision_md.relative_to(tmp_path)
+    )
+    assert commit_payload["source_commit_decision_md_sha256"] == hashlib.sha256(
+        commit_decision_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert commit_payload["source_coder_commit_decision_markdown_consumed"] is True
+    local_commit_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert local_commit_workspace["open_project"] == "first-target"
+    assert local_commit_workspace["open_goal"] == created_goal_id
+    assert local_commit_workspace["last_viewed_artifact"] == str(commit_md.relative_to(tmp_path))
+    assert local_commit_workspace["resume_surface"] == "/today#today-current-action"
+    assert local_commit_workspace["updated_by"] == "commit-coder-worktree"
+
+    today_after_local_commit = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Create publication request" in today_after_local_commit.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Create publication request</a>"
+    ) in today_after_local_commit.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Create publication request</a>"
+    ) in today_after_local_commit.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_local_commit.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_local_commit.body
+    assert "Create Publication Request" in today_after_local_commit.body
+    assert "action='/actions/coder-publication-request'" in today_after_local_commit.body
+    assert f"name='run_id' value='{coder_run.id}'" in today_after_local_commit.body
+    assert (
+        "source_coder_commit</dt><dd>"
+        f"<a href='/artifacts?path={commit_md.with_suffix('.json').relative_to(tmp_path)}'>"
+        in today_after_local_commit.body
+    )
+    assert (
+        "source_coder_commit_md</dt><dd>"
+        f"<a href='/artifacts?path={commit_md.relative_to(tmp_path)}'>"
+        in today_after_local_commit.body
+    )
+    assert (
+        f"source_commit_md_sha256</dt><dd>{hashlib.sha256(commit_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in today_after_local_commit.body
+    )
+    assert (
+        "source_coder_commit_markdown_consumed</dt><dd>true"
+        in today_after_local_commit.body
+    )
+    assert "name='return_to' value='/today#today-current-action'" in today_after_local_commit.body
+    assert (
+        "return_to_after_publication_request</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_local_commit.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_local_commit.body
+
+    publication_request_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-publication-request",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "remote": ["origin"],
+            "target_branch": ["main"],
+            "note": ["Request publication from Today"],
+            "return_to": ["/today#today-current-action"],
+            "requested_by": ["operator"],
+        },
+    )
+    assert publication_request_confirmation.status == 409
+    assert "Confirm publication request" in publication_request_confirmation.body
+    assert (
+        "action_confirmation_label</dt><dd>Create publication request"
+        in publication_request_confirmation.body
+    )
+    assert "name='return_to' value='/today#today-current-action'" in publication_request_confirmation.body
+
+    publication_request_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-publication-request",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "remote": ["origin"],
+            "target_branch": ["main"],
+            "note": ["Request publication from Today"],
+            "return_to": ["/today#today-current-action"],
+            "requested_by": ["operator"],
+            "confirm": ["yes"],
+        },
+    )
+    assert publication_request_result.status == 200
+    assert "coder_publication_request:" in publication_request_result.body
+    assert (
+        "action_result_command_label</dt><dd>Create publication request"
+        in publication_request_result.body
+    )
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=coder_publication_request%3A%20"
+    ) in publication_request_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in publication_request_result.body
+    assert (
+        "source_coder_commit</dt><dd>"
+        f"<a href='/artifacts?path={commit_md.with_suffix('.json').relative_to(tmp_path)}'>"
+        in publication_request_result.body
+    )
+    assert (
+        "source_coder_commit_md</dt><dd>"
+        f"<a href='/artifacts?path={commit_md.relative_to(tmp_path)}'>"
+        in publication_request_result.body
+    )
+    assert (
+        f"source_commit_md_sha256</dt><dd>{hashlib.sha256(commit_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in publication_request_result.body
+    )
+    assert (
+        "source_coder_commit_markdown_consumed</dt><dd>true"
+        in publication_request_result.body
+    )
+    assert "push_created</dt><dd>false" in publication_request_result.body
+    assert "pr_created</dt><dd>false" in publication_request_result.body
+    assert "network_actions_taken</dt><dd>0" in publication_request_result.body
+    publication = next(
+        item
+        for item in list_coder_publications(
+            tmp_path,
+            status="pending_operator_approval",
+            limit=10,
+        )
+        if item.run_id == coder_run.id
+    )
+    publication_request_md = tmp_path / Path(publication.request_artifact_path).with_suffix(".md")
+    assert publication_request_md.exists()
+    publication_request_payload = json.loads(
+        publication_request_md.with_suffix(".json").read_text(encoding="utf-8")
+    )
+    assert publication_request_payload["source_coder_commit"] == str(
+        commit_md.with_suffix(".json").relative_to(tmp_path)
+    )
+    assert publication_request_payload["source_coder_commit_md"] == str(
+        commit_md.relative_to(tmp_path)
+    )
+    assert publication_request_payload["source_commit_md_sha256"] == hashlib.sha256(
+        commit_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert publication_request_payload["source_coder_commit_markdown_consumed"] is True
+    publication_request_text = publication_request_md.read_text(encoding="utf-8")
+    assert f"- source_coder_commit_md: {commit_md.relative_to(tmp_path)}" in publication_request_text
+    assert "- source_coder_commit_markdown_consumed: true" in publication_request_text
+    publication_request_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert publication_request_workspace["open_project"] == "first-target"
+    assert publication_request_workspace["open_goal"] == created_goal_id
+    assert publication_request_workspace["last_viewed_artifact"] == str(
+        publication_request_md.relative_to(tmp_path)
+    )
+    assert publication_request_workspace["resume_surface"] == "/today#today-current-action"
+    assert publication_request_workspace["updated_by"] == "coder-publication-request"
+
+    today_after_publication_request = render_local_app_route(tmp_path, "/today")
+    assert "today_command_primary_action</dt><dd>Approve publication" in today_after_publication_request.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Approve publication</a>"
+    ) in today_after_publication_request.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Approve publication</a>"
+    ) in today_after_publication_request.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_publication_request.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_publication_request.body
+    assert "Approve Publication" in today_after_publication_request.body
+    assert "action='/actions/approve-coder-publication'" in today_after_publication_request.body
+    assert f"name='publication_id' value='{publication.id}'" in today_after_publication_request.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_publication_request.body
+    assert (
+        "return_to_after_publication_approval</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_publication_request.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_publication_request.body
+
+    publication_approval_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-publication",
+        method="POST",
+        form={
+            "publication_id": [publication.id],
+            "decided_by": ["operator"],
+            "note": ["Approve publication handoff from Today"],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert publication_approval_confirmation.status == 409
+    assert "Confirm publication approval" in publication_approval_confirmation.body
+    assert "action_confirmation_label</dt><dd>Approve publication" in publication_approval_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in publication_approval_confirmation.body
+
+    publication_approval_result = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-publication",
+        method="POST",
+        form={
+            "publication_id": [publication.id],
+            "decided_by": ["operator"],
+            "note": ["Approve publication handoff from Today"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert publication_approval_result.status == 200
+    assert "approved_coder_publication:" in publication_approval_result.body
+    assert "action_result_command_label</dt><dd>Approve publication" in publication_approval_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=approved_coder_publication%3A%20"
+    ) in publication_approval_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in publication_approval_result.body
+    approved_publication = next(
+        item
+        for item in list_coder_publications(
+            tmp_path,
+            status="approved",
+            limit=10,
+        )
+        if item.run_id == coder_run.id
+    )
+    publication_decision_md = tmp_path / Path(
+        approved_publication.decision_artifact_path
+    ).with_suffix(".md")
+    assert publication_decision_md.exists()
+    publication_decision_md_sha = hashlib.sha256(
+        publication_decision_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    publication_approval_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert publication_approval_workspace["open_project"] == "first-target"
+    assert publication_approval_workspace["open_goal"] == created_goal_id
+    assert publication_approval_workspace["last_viewed_artifact"] == str(
+        publication_decision_md.relative_to(tmp_path)
+    )
+    assert publication_approval_workspace["resume_surface"] == "/today#today-current-action"
+    assert publication_approval_workspace["updated_by"] == "approve-coder-publication"
+
+    today_after_publication_approval = render_local_app_route(tmp_path, "/today")
+    assert (
+        "today_command_primary_action</dt><dd>Create publication handoff"
+        in today_after_publication_approval.body
+    )
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Create publication handoff</a>"
+    ) in today_after_publication_approval.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Create publication handoff</a>"
+    ) in today_after_publication_approval.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_publication_approval.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_publication_approval.body
+    assert "Create Publication Handoff" in today_after_publication_approval.body
+    assert "action='/actions/coder-publication-handoff'" in today_after_publication_approval.body
+    assert f"name='run_id' value='{coder_run.id}'" in today_after_publication_approval.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_publication_approval.body
+    assert (
+        "return_to_after_publication_handoff</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_publication_approval.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_publication_approval.body
+
+    publication_handoff_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-publication-handoff",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert publication_handoff_confirmation.status == 409
+    assert "Confirm publication handoff" in publication_handoff_confirmation.body
+    assert (
+        "action_confirmation_label</dt><dd>Prepare publication handoff"
+        in publication_handoff_confirmation.body
+    )
+    assert "name='return_to' value='/today#today-current-action'" in publication_handoff_confirmation.body
+
+    publication_handoff_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-publication-handoff",
+        method="POST",
+        form={
+            "run_id": [coder_run.id],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert publication_handoff_result.status == 200
+    assert "coder_publication_handoff:" in publication_handoff_result.body
+    assert (
+        "action_result_command_label</dt><dd>Prepare publication handoff"
+        in publication_handoff_result.body
+    )
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=coder_publication_handoff%3A%20"
+    ) in publication_handoff_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in publication_handoff_result.body
+    ready_publication = next(
+        item
+        for item in list_coder_publications(
+            tmp_path,
+            status="ready_for_operator",
+            limit=10,
+        )
+        if item.run_id == coder_run.id
+    )
+    publication_handoff_md = tmp_path / Path(
+        ready_publication.handoff_artifact_path
+    ).with_suffix(".md")
+    assert publication_handoff_md.exists()
+    assert (publication_handoff_md.parent / "pr_body.md").exists()
+    publication_handoff_json_sha = hashlib.sha256(
+        (tmp_path / ready_publication.handoff_artifact_path).read_bytes()
+    ).hexdigest()
+    publication_handoff_md_sha = hashlib.sha256(
+        publication_handoff_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    publication_handoff_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert publication_handoff_workspace["open_project"] == "first-target"
+    assert publication_handoff_workspace["open_goal"] == created_goal_id
+    assert publication_handoff_workspace["last_viewed_artifact"] == str(
+        publication_handoff_md.relative_to(tmp_path)
+    )
+    assert publication_handoff_workspace["resume_surface"] == "/today#today-current-action"
+    assert publication_handoff_workspace["updated_by"] == "coder-publication-handoff"
+
+    today_after_publication_handoff = render_local_app_route(tmp_path, "/today")
+    assert (
+        "today_command_primary_action</dt><dd>Manual publish outside ClankerOS"
+        in today_after_publication_handoff.body
+    )
+    assert "Manual Publish Boundary" in today_after_publication_handoff.body
+    assert "Publication Handoff Commands" in today_after_publication_handoff.body
+    assert "manual_boundary: outside_clankeros" in today_after_publication_handoff.body
+    assert "copy_only: true" in today_after_publication_handoff.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Manual publish outside ClankerOS</a>"
+    ) in today_after_publication_handoff.body
+    assert (
+        "today_command_target_surface</dt><dd>"
+        "<a href='#today-current-action'>Manual publish outside ClankerOS</a>"
+    ) in today_after_publication_handoff.body
+    assert "today_command_action_form_available</dt><dd>true" in today_after_publication_handoff.body
+    assert "today_command_confirmation_required</dt><dd>true" in today_after_publication_handoff.body
+    assert "suggested_push_command: git push origin" in today_after_publication_handoff.body
+    assert "suggested_draft_pr_command: gh pr create --draft" in today_after_publication_handoff.body
+    assert (
+        f"source_coder_publication_handoff_md: <a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in today_after_publication_handoff.body
+    )
+    assert f"source_publication_handoff_md_sha256: {publication_handoff_md_sha}" in today_after_publication_handoff.body
+    assert "source_coder_publication_handoff_markdown_consumed: true" in today_after_publication_handoff.body
+    assert "action='/actions/complete-goal'" in today_after_publication_handoff.body
+    assert f"name='goal_id' value='{created_goal_id}'" in today_after_publication_handoff.body
+    assert "name='return_to' value='/today#today-current-action'" in today_after_publication_handoff.body
+    assert (
+        "return_to_after_manual_publish</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_publication_handoff.body
+    assert (
+        "today_command_finish_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_publication_handoff.body
+
+    complete_goal_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/complete-goal",
+        method="POST",
+        form={
+            "goal_id": [created_goal_id],
+            "completed_by": ["operator"],
+            "note": ["Manual publication finished outside ClankerOS from Today"],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert complete_goal_confirmation.status == 409
+    assert "Confirm complete-goal" in complete_goal_confirmation.body
+    assert "name='return_to' value='/today#today-current-action'" in complete_goal_confirmation.body
+
+    complete_goal_result = render_local_app_route(
+        tmp_path,
+        "/actions/complete-goal",
+        method="POST",
+        form={
+            "goal_id": [created_goal_id],
+            "completed_by": ["operator"],
+            "note": ["Manual publication finished outside ClankerOS from Today"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert complete_goal_result.status == 200
+    assert "goal_completed:" in complete_goal_result.body
+    assert "action_result_command_label</dt><dd>Complete Goal" in complete_goal_result.body
+    assert (
+        "source_coder_publication_handoff_md</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in complete_goal_result.body
+    )
+    assert (
+        f"source_publication_handoff_sha256</dt><dd>{publication_handoff_json_sha}"
+        in complete_goal_result.body
+    )
+    assert (
+        f"source_publication_handoff_md_sha256</dt><dd>{publication_handoff_md_sha}"
+        in complete_goal_result.body
+    )
+    assert (
+        "source_coder_publication_handoff_markdown_consumed</dt><dd>true"
+        in complete_goal_result.body
+    )
+    assert "completion_evidence_md</dt><dd>" in complete_goal_result.body
+    assert (
+        "action_result_command_next_surface</dt><dd>"
+        "<a href='/today?notice=goal_completed%3A%20"
+    ) in complete_goal_result.body
+    assert "#today-current-action'>/today#today-current-action</a>" in complete_goal_result.body
+    complete_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert complete_workspace["open_project"] == "first-target"
+    assert complete_workspace["open_goal"] == created_goal_id
+    assert complete_workspace["last_viewed_artifact"] == str(
+        publication_handoff_md.relative_to(tmp_path)
+    )
+    assert complete_workspace["resume_surface"] == "/today#today-current-action"
+    assert complete_workspace["updated_by"] == "complete-goal"
+    completion_json = tmp_path / ".clanker" / "projects" / "first-target" / "goals" / created_goal_id / "completion.json"
+    completion_md = completion_json.with_suffix(".md")
+    assert completion_json.exists()
+    assert completion_md.exists()
+    completion_json_relative = str(completion_json.relative_to(tmp_path))
+    completion_md_relative = str(completion_md.relative_to(tmp_path))
+    completion_json_sha = hashlib.sha256(completion_json.read_bytes()).hexdigest()
+    completion_md_sha = hashlib.sha256(completion_md.read_bytes()).hexdigest()
+    completion_payload = json.loads(completion_json.read_text(encoding="utf-8"))
+    assert completion_payload["source_coder_publication_handoff_md"] == str(
+        publication_handoff_md.relative_to(tmp_path)
+    )
+    assert completion_payload["source_publication_handoff_md_sha256"] == publication_handoff_md_sha
+    assert completion_payload["source_coder_publication_handoff_markdown_consumed"] is True
+
+    today_after_completion = render_local_app_route(tmp_path, "/today")
+    assert today_after_completion.status == 200
+    assert "Today Completed Goal Handoff" in today_after_completion.body
+    assert "data-today-completed-goal-handoff='true'" in today_after_completion.body
+    assert "today_completed_goal_status</dt><dd>completed" in today_after_completion.body
+    assert f"today_completed_goal_goal_id</dt><dd>{created_goal_id}" in today_after_completion.body
+    assert (
+        "today_completed_goal_evidence_surface</dt><dd>"
+        f"<a href='/goals/{created_goal_id}#goal-completion-readiness'>Completed Goal evidence</a>"
+    ) in today_after_completion.body
+    assert (
+        "today_completed_goal_latest_artifact</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+    ) in today_after_completion.body
+    assert (
+        "today_completed_goal_completion_evidence</dt><dd>"
+        f"<a href='/artifacts?path={completion_md.relative_to(tmp_path)}'>"
+        in today_after_completion.body
+    )
+    assert (
+        "today_completed_goal_source_goal_completion_evidence_md</dt><dd>"
+        f"<a href='/artifacts?path={completion_md_relative}'>"
+        in today_after_completion.body
+    )
+    assert (
+        f"today_completed_goal_source_goal_completion_evidence_sha256</dt><dd>{completion_json_sha}"
+        in today_after_completion.body
+    )
+    assert (
+        f"today_completed_goal_source_goal_completion_evidence_md_sha256</dt><dd>{completion_md_sha}"
+        in today_after_completion.body
+    )
+    assert (
+        "today_completed_goal_source_goal_completion_markdown_consumed</dt><dd>true"
+        in today_after_completion.body
+    )
+    assert (
+        "today_completed_goal_prior_manual_boundary_artifact</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in today_after_completion.body
+    )
+    assert (
+        "today_completed_goal_source_coder_publication_handoff_md</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in today_after_completion.body
+    )
+    assert (
+        f"today_completed_goal_source_publication_handoff_md_sha256</dt><dd>{publication_handoff_md_sha}"
+        in today_after_completion.body
+    )
+    assert (
+        "today_completed_goal_source_coder_publication_handoff_markdown_consumed</dt><dd>true"
+        in today_after_completion.body
+    )
+    assert "today_completed_goal_next_work_action</dt><dd>Start next Goal" in today_after_completion.body
+    assert (
+        "today_completed_goal_next_work_surface</dt><dd>"
+        "<a href='/projects/first-target#start-goal-for-this-project'>Start Goal For This Project</a>"
+    ) in today_after_completion.body
+    assert "today_completed_goal_next_goal_form_available</dt><dd>true" in today_after_completion.body
+    assert "today_completed_goal_next_goal_confirmation_required</dt><dd>true" in today_after_completion.body
+    assert "today_completed_goal_next_goal_action</dt><dd>create-goal" in today_after_completion.body
+    assert (
+        "today_completed_goal_next_goal_form_surface</dt><dd>"
+        "<a href='#today-completed-goal-next-goal-form'>Create next Goal here</a>"
+    ) in today_after_completion.body
+    assert "id='today-completed-goal-next-goal-form'" in today_after_completion.body
+    assert "data-completed-goal-next-goal-form='today'" in today_after_completion.body
+    assert "action='/actions/create-goal'" in today_after_completion.body
+    assert "name='project_id' value='first-target'" in today_after_completion.body
+    assert "name='completed_goal_id' value='" + created_goal_id + "'" in today_after_completion.body
+    assert f"name='completed_goal_completion_evidence' value='{completion_json_relative}'" in today_after_completion.body
+    assert f"name='completed_goal_completion_evidence_md' value='{completion_md_relative}'" in today_after_completion.body
+    assert f"name='completed_goal_completion_evidence_sha256' value='{completion_json_sha}'" in today_after_completion.body
+    assert f"name='completed_goal_completion_evidence_md_sha256' value='{completion_md_sha}'" in today_after_completion.body
+    assert "name='completed_goal_completion_markdown_consumed' value='true'" in today_after_completion.body
+    assert (
+        "name='completed_goal_prior_manual_boundary_artifact' value='"
+        + str(publication_handoff_md.relative_to(tmp_path))
+        + "'"
+        in today_after_completion.body
+    )
+    assert f"name='completed_goal_prior_manual_boundary_artifact_sha256' value='{publication_handoff_md_sha}'" in today_after_completion.body
+    assert (
+        "name='previous_resume_surface' value='/today#today-current-action'"
+        in today_after_completion.body
+    )
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_completion.body
+    )
+    assert "today_completed_goal_next_goal_carries_previous_evidence</dt><dd>true" in today_after_completion.body
+    assert (
+        "today_completed_goal_saved_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in today_after_completion.body
+    assert "today_completed_goal_saved_resume_preserved</dt><dd>true" in today_after_completion.body
+    assert "today_completed_goal_write_on_get</dt><dd>false" in today_after_completion.body
+    assert "today_completed_goal_external_effects_created</dt><dd>false" in today_after_completion.body
+
+    resume_after_completion = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_completion.status == 200
+    assert "Resume Completed Goal Handoff" in resume_after_completion.body
+    assert "data-resume-completed-goal-handoff='true'" in resume_after_completion.body
+    assert "resume_completed_goal_status</dt><dd>completed" in resume_after_completion.body
+    assert f"resume_completed_goal_goal_id</dt><dd>{created_goal_id}" in resume_after_completion.body
+    assert (
+        "resume_completed_goal_evidence_surface</dt><dd>"
+        f"<a href='/goals/{created_goal_id}#goal-completion-readiness'>Completed Goal evidence</a>"
+    ) in resume_after_completion.body
+    assert (
+        "resume_completed_goal_completion_evidence</dt><dd>"
+        f"<a href='/artifacts?path={completion_md.relative_to(tmp_path)}'>"
+        in resume_after_completion.body
+    )
+    assert (
+        "resume_completed_goal_source_goal_completion_evidence_md</dt><dd>"
+        f"<a href='/artifacts?path={completion_md_relative}'>"
+        in resume_after_completion.body
+    )
+    assert (
+        "resume_completed_goal_prior_manual_boundary_artifact</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in resume_after_completion.body
+    )
+    assert (
+        "resume_completed_goal_source_coder_publication_handoff_md</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in resume_after_completion.body
+    )
+    assert (
+        f"resume_completed_goal_source_publication_handoff_md_sha256</dt><dd>{publication_handoff_md_sha}"
+        in resume_after_completion.body
+    )
+    assert (
+        "resume_completed_goal_source_coder_publication_handoff_markdown_consumed</dt><dd>true"
+        in resume_after_completion.body
+    )
+    assert "resume_completed_goal_next_work_action</dt><dd>Start next Goal" in resume_after_completion.body
+    assert (
+        "resume_completed_goal_next_work_surface</dt><dd>"
+        "<a href='/projects/first-target#start-goal-for-this-project'>Start Goal For This Project</a>"
+    ) in resume_after_completion.body
+    assert "resume_completed_goal_next_goal_form_available</dt><dd>true" in resume_after_completion.body
+    assert "resume_completed_goal_next_goal_confirmation_required</dt><dd>true" in resume_after_completion.body
+    assert "resume_completed_goal_next_goal_action</dt><dd>create-goal" in resume_after_completion.body
+    assert (
+        "resume_completed_goal_next_goal_form_surface</dt><dd>"
+        "<a href='#resume-completed-goal-next-goal-form'>Create next Goal here</a>"
+    ) in resume_after_completion.body
+    assert "id='resume-completed-goal-next-goal-form'" in resume_after_completion.body
+    assert "data-completed-goal-next-goal-form='resume'" in resume_after_completion.body
+    assert "name='completed_goal_id' value='" + created_goal_id + "'" in resume_after_completion.body
+    assert (
+        "name='previous_resume_surface' value='/today#today-current-action'"
+        in resume_after_completion.body
+    )
+    assert (
+        "resume_completed_goal_saved_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in resume_after_completion.body
+    assert "resume_completed_goal_saved_resume_preserved</dt><dd>true" in resume_after_completion.body
+    assert "resume_completed_goal_write_on_get</dt><dd>false" in resume_after_completion.body
+    assert "resume_completed_goal_external_effects_created</dt><dd>false" in resume_after_completion.body
+
+    next_goal_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/create-goal",
+        method="POST",
+        form={
+            "project_id": ["first-target"],
+            "prompt": ["Follow up after the completed Today workflow."],
+            "created_by_profile": ["planner"],
+            "completed_goal_id": [created_goal_id],
+            "completed_goal_artifact": [str(publication_handoff_md.relative_to(tmp_path))],
+            "completed_goal_completion_evidence": [completion_json_relative],
+            "completed_goal_completion_evidence_md": [completion_md_relative],
+            "completed_goal_completion_evidence_sha256": [completion_json_sha],
+            "completed_goal_completion_evidence_md_sha256": [completion_md_sha],
+            "completed_goal_completion_markdown_consumed": ["true"],
+            "completed_goal_prior_manual_boundary_artifact": [str(publication_handoff_md.relative_to(tmp_path))],
+            "completed_goal_prior_manual_boundary_artifact_sha256": [publication_handoff_md_sha],
+            "completed_goal_source_coder_publication_handoff_md": [str(publication_handoff_md.relative_to(tmp_path))],
+            "completed_goal_source_publication_handoff_md_sha256": [publication_handoff_md_sha],
+            "completed_goal_source_coder_publication_handoff_markdown_consumed": ["true"],
+            "previous_resume_surface": ["/today#today-current-action"],
+            "return_to": ["/today#today-current-action"],
+        },
+    )
+    assert next_goal_confirmation.status == 409
+    assert "Confirm Goal setup" in next_goal_confirmation.body
+    assert "name='completed_goal_id' value='" + created_goal_id + "'" in next_goal_confirmation.body
+    assert (
+        "action_preflight_return_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+    ) in next_goal_confirmation.body
+    assert "completed_goal_id</dt><dd>" + created_goal_id in next_goal_confirmation.body
+    assert (
+        "completed_goal_completion_evidence_md</dt><dd>"
+        + completion_md_relative
+        in next_goal_confirmation.body
+    )
+    assert (
+        "completed_goal_prior_manual_boundary_artifact</dt><dd>"
+        + str(publication_handoff_md.relative_to(tmp_path))
+        in next_goal_confirmation.body
+    )
+    assert "previous_resume_surface</dt><dd>/today#today-current-action" in next_goal_confirmation.body
+
+    next_goal_result = render_local_app_route(
+        tmp_path,
+        "/actions/create-goal",
+        method="POST",
+        form={
+            "project_id": ["first-target"],
+            "prompt": ["Follow up after the completed Today workflow."],
+            "created_by_profile": ["planner"],
+            "completed_goal_id": [created_goal_id],
+            "completed_goal_artifact": [str(publication_handoff_md.relative_to(tmp_path))],
+            "completed_goal_completion_evidence": [completion_json_relative],
+            "completed_goal_completion_evidence_md": [completion_md_relative],
+            "completed_goal_completion_evidence_sha256": [completion_json_sha],
+            "completed_goal_completion_evidence_md_sha256": [completion_md_sha],
+            "completed_goal_completion_markdown_consumed": ["true"],
+            "completed_goal_prior_manual_boundary_artifact": [str(publication_handoff_md.relative_to(tmp_path))],
+            "completed_goal_prior_manual_boundary_artifact_sha256": [publication_handoff_md_sha],
+            "completed_goal_source_coder_publication_handoff_md": [str(publication_handoff_md.relative_to(tmp_path))],
+            "completed_goal_source_publication_handoff_md_sha256": [publication_handoff_md_sha],
+            "completed_goal_source_coder_publication_handoff_markdown_consumed": ["true"],
+            "previous_resume_surface": ["/today#today-current-action"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_result.status == 200
+    assert "goal_created:" in next_goal_result.body
+    assert "completed_goal_id</dt><dd>" + created_goal_id in next_goal_result.body
+    next_goal_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    next_goal_id = next_goal_workspace["open_goal"]
+    assert next_goal_id != created_goal_id
+    assert next_goal_workspace["open_project"] == "first-target"
+    assert next_goal_workspace["resume_surface"] == f"/goals/{next_goal_id}#goal-action-dock-form"
+    assert next_goal_workspace["completed_goal_handoff_source_goal"] == created_goal_id
+    assert next_goal_workspace["completed_goal_handoff_previous_resume_surface"] == "/today#today-current-action"
+    assert next_goal_workspace["completed_goal_handoff_previous_artifact"] == str(
+        publication_handoff_md.relative_to(tmp_path)
+    )
+    assert next_goal_workspace["completed_goal_handoff_completion_evidence"] == completion_json_relative
+    assert next_goal_workspace["completed_goal_handoff_completion_evidence_md"] == completion_md_relative
+    assert next_goal_workspace["completed_goal_handoff_completion_evidence_sha256"] == completion_json_sha
+    assert next_goal_workspace["completed_goal_handoff_completion_evidence_md_sha256"] == completion_md_sha
+    assert next_goal_workspace["completed_goal_handoff_completion_markdown_consumed"] == "true"
+    assert next_goal_workspace["completed_goal_handoff_prior_manual_boundary_artifact"] == str(
+        publication_handoff_md.relative_to(tmp_path)
+    )
+    assert next_goal_workspace["completed_goal_handoff_prior_manual_boundary_artifact_sha256"] == publication_handoff_md_sha
+    assert next_goal_workspace["completed_goal_handoff_source_coder_publication_handoff_md"] == str(
+        publication_handoff_md.relative_to(tmp_path)
+    )
+    assert next_goal_workspace["completed_goal_handoff_source_publication_handoff_md_sha256"] == publication_handoff_md_sha
+    assert (
+        next_goal_workspace[
+            "completed_goal_handoff_source_coder_publication_handoff_markdown_consumed"
+        ]
+        == "true"
+    )
+    assert next_goal_workspace["updated_by"] == "create-goal"
+
+    today_after_next_goal = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal.status == 200
+    assert f"today_command_goal</dt><dd><a href='/goals/{next_goal_id}'" in today_after_next_goal.body
+    assert "today_command_primary_action</dt><dd>Create scout delegation" in today_after_next_goal.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Create scout delegation</a>"
+    ) in today_after_next_goal.body
+    assert "data-today-current-action='true'" in today_after_next_goal.body
+    assert "Today Completed Goal Provenance" in today_after_next_goal.body
+    assert "data-today-completed-goal-provenance='true'" in today_after_next_goal.body
+    assert (
+        "today_completed_goal_provenance_source_goal_id</dt><dd>"
+        + created_goal_id
+        in today_after_next_goal.body
+    )
+    assert (
+        "today_completed_goal_provenance_current_goal_id</dt><dd>"
+        + next_goal_id
+        in today_after_next_goal.body
+    )
+    assert (
+        "today_completed_goal_provenance_current_action</dt><dd>Create scout delegation"
+        in today_after_next_goal.body
+    )
+    assert (
+        "today_completed_goal_provenance_current_surface</dt><dd>"
+        "<a href='#today-current-action'>Create scout delegation</a>"
+        in today_after_next_goal.body
+    )
+    assert (
+        "today_completed_goal_provenance_previous_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+        in today_after_next_goal.body
+    )
+    assert (
+        "today_completed_goal_provenance_previous_artifact</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in today_after_next_goal.body
+    )
+    assert (
+        "today_completed_goal_provenance_source_goal_completion_evidence_md</dt><dd>"
+        f"<a href='/artifacts?path={completion_md_relative}'>"
+        in today_after_next_goal.body
+    )
+    assert (
+        f"today_completed_goal_provenance_source_goal_completion_evidence_md_sha256</dt><dd>{completion_md_sha}"
+        in today_after_next_goal.body
+    )
+    assert (
+        "today_completed_goal_provenance_source_goal_completion_markdown_consumed</dt><dd>true"
+        in today_after_next_goal.body
+    )
+    assert (
+        "today_completed_goal_provenance_prior_manual_boundary_artifact</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in today_after_next_goal.body
+    )
+    assert "today_completed_goal_provenance_write_on_get</dt><dd>false" in today_after_next_goal.body
+    assert (
+        "today_completed_goal_next_goal_form_available</dt><dd>true"
+        not in today_after_next_goal.body
+    )
+
+    resume_after_next_goal = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal.status == 200
+    assert (
+        "resume_return_brief_goal_id</dt><dd>"
+        + next_goal_id
+        in resume_after_next_goal.body
+    )
+    assert "resume_return_brief_next_action</dt><dd>Create scout delegation" in resume_after_next_goal.body
+    assert "resume_workbench_next_action</dt><dd>Create scout delegation" in resume_after_next_goal.body
+    assert (
+        "resume_workbench_primary_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Create scout delegation</a>"
+        in resume_after_next_goal.body
+    )
+    assert "id='resume-workbench-action-form'" in resume_after_next_goal.body
+    assert "Resume Completed Goal Provenance" in resume_after_next_goal.body
+    assert "data-resume-completed-goal-provenance='true'" in resume_after_next_goal.body
+    assert (
+        "resume_completed_goal_provenance_source_goal_id</dt><dd>"
+        + created_goal_id
+        in resume_after_next_goal.body
+    )
+    assert (
+        "resume_completed_goal_provenance_current_goal_id</dt><dd>"
+        + next_goal_id
+        in resume_after_next_goal.body
+    )
+    assert (
+        "resume_completed_goal_provenance_current_action</dt><dd>Create scout delegation"
+        in resume_after_next_goal.body
+    )
+    assert (
+        "resume_completed_goal_provenance_current_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Create scout delegation</a>"
+        in resume_after_next_goal.body
+    )
+    assert (
+        "resume_completed_goal_provenance_previous_resume_surface</dt><dd>"
+        "<a href='/today#today-current-action'>/today#today-current-action</a>"
+        in resume_after_next_goal.body
+    )
+    assert (
+        "resume_completed_goal_provenance_previous_artifact</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in resume_after_next_goal.body
+    )
+    assert (
+        "resume_completed_goal_provenance_source_goal_completion_evidence_md</dt><dd>"
+        f"<a href='/artifacts?path={completion_md_relative}'>"
+        in resume_after_next_goal.body
+    )
+    assert (
+        "resume_completed_goal_provenance_prior_manual_boundary_artifact</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in resume_after_next_goal.body
+    )
+    assert "resume_completed_goal_provenance_write_on_get</dt><dd>false" in resume_after_next_goal.body
+    assert (
+        "resume_completed_goal_next_goal_form_available</dt><dd>true"
+        not in resume_after_next_goal.body
+    )
+
+    next_goal_task = Storage(tmp_path / ".agent" / "state.db").list_tasks(next_goal_id)[0]
+    next_goal_delegate_result = render_local_app_route(
+        tmp_path,
+        "/actions/delegate",
+        method="POST",
+        form={
+            "goal_id": [next_goal_id],
+            "task_id": [next_goal_task.id],
+            "profile": ["scout"],
+            "title": ["Scout successor from Today"],
+            "requested_by": ["operator"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_delegate_result.status == 200
+    assert "Scout delegation created" in next_goal_delegate_result.body
+    assert "completed_goal_provenance_promoted:" in next_goal_delegate_result.body
+    provenance_md = (
+        tmp_path
+        / ".clanker"
+        / "projects"
+        / "first-target"
+        / "goals"
+        / next_goal_id
+        / "completed-goal-provenance.md"
+    )
+    assert provenance_md.exists()
+    provenance_text = provenance_md.read_text(encoding="utf-8")
+    assert f"source_goal_id: {created_goal_id}" in provenance_text
+    assert f"successor_goal_id: {next_goal_id}" in provenance_text
+    assert "trigger_action: delegate" in provenance_text
+    assert "trigger_result_id: subagent_delegation_" in provenance_text
+    assert "previous_resume_surface: /today#today-current-action" in provenance_text
+    assert (
+        f"previous_artifact: {publication_handoff_md.relative_to(tmp_path)}"
+        in provenance_text
+    )
+    assert f"source_goal_completion_evidence: {completion_json_relative}" in provenance_text
+    assert f"source_goal_completion_evidence_md: {completion_md_relative}" in provenance_text
+    assert f"source_goal_completion_evidence_sha256: {completion_json_sha}" in provenance_text
+    assert f"source_goal_completion_evidence_md_sha256: {completion_md_sha}" in provenance_text
+    assert "source_goal_completion_markdown_consumed: true" in provenance_text
+    assert f"prior_manual_boundary_artifact: {publication_handoff_md.relative_to(tmp_path)}" in provenance_text
+    assert f"prior_manual_boundary_artifact_sha256: {publication_handoff_md_sha}" in provenance_text
+    assert f"source_coder_publication_handoff_md: {publication_handoff_md.relative_to(tmp_path)}" in provenance_text
+    assert f"source_publication_handoff_md_sha256: {publication_handoff_md_sha}" in provenance_text
+    assert "source_coder_publication_handoff_markdown_consumed: true" in provenance_text
+    assert "provider_calls_taken_by_clankeros: 0" in provenance_text
+    assert "external_effects_created: false" in provenance_text
+
+    next_goal_delegated_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_delegated_workspace["open_goal"] == next_goal_id
+    assert next_goal_delegated_workspace["updated_by"] == "delegate"
+    assert next_goal_delegated_workspace["completed_goal_handoff_source_goal"] == ""
+    assert next_goal_delegated_workspace["completed_goal_handoff_previous_resume_surface"] == ""
+    assert next_goal_delegated_workspace["completed_goal_handoff_previous_artifact"] == ""
+    assert next_goal_delegated_workspace["completed_goal_handoff_completion_evidence_md"] == ""
+    assert next_goal_delegated_workspace["completed_goal_handoff_prior_manual_boundary_artifact"] == ""
+    assert next_goal_delegated_workspace["completed_goal_handoff_source_coder_publication_handoff_md"] == ""
+    assert "subagent_delegation_" in next_goal_delegated_workspace["last_viewed_artifact"]
+    assert next_goal_delegated_workspace["last_viewed_artifact"].endswith(".json")
+
+    today_after_next_goal_delegate = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_delegate.status == 200
+    assert "Today Completed Goal Provenance" not in today_after_next_goal_delegate.body
+    assert "Today Completed Goal Handoff" not in today_after_next_goal_delegate.body
+    assert "today_command_primary_action</dt><dd>Generate context pack" in today_after_next_goal_delegate.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Generate context pack</a>"
+        in today_after_next_goal_delegate.body
+    )
+    assert "today_activity_digest_latest_artifact" in today_after_next_goal_delegate.body
+    assert "completed-goal-provenance.md" in today_after_next_goal_delegate.body
+
+    resume_after_next_goal_delegate = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_delegate.status == 200
+    assert "Resume Completed Goal Provenance" not in resume_after_next_goal_delegate.body
+    assert "Resume Completed Goal Handoff" not in resume_after_next_goal_delegate.body
+    assert "resume_return_brief_next_action</dt><dd>Generate context pack" in resume_after_next_goal_delegate.body
+    assert "resume_workbench_next_action</dt><dd>Generate context pack" in resume_after_next_goal_delegate.body
+    assert (
+        "resume_workbench_primary_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Generate context pack</a>"
+        in resume_after_next_goal_delegate.body
+    )
+    next_goal_delegation = Storage(
+        tmp_path / ".agent" / "state.db"
+    ).list_subagent_delegations(next_goal_id)[0]
+    assert "action='/actions/context-pack'" in today_after_next_goal_delegate.body
+    assert (
+        f"name='delegation_id' value='{next_goal_delegation.id}'"
+        in today_after_next_goal_delegate.body
+    )
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_next_goal_delegate.body
+    )
+    assert "action='/actions/context-pack'" in resume_after_next_goal_delegate.body
+    assert (
+        f"name='delegation_id' value='{next_goal_delegation.id}'"
+        in resume_after_next_goal_delegate.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in resume_after_next_goal_delegate.body
+    )
+
+    next_goal_context_pack_result = render_local_app_route(
+        tmp_path,
+        "/actions/context-pack",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_context_pack_result.status == 200
+    assert "Context pack ready" in next_goal_context_pack_result.body
+    assert "action_result_command_label</dt><dd>Generate context pack" in next_goal_context_pack_result.body
+    assert "#resume-workbench-action-form'>/resume#resume-workbench-action-form</a>" in next_goal_context_pack_result.body
+    next_context_pack_md = (
+        tmp_path
+        / ".clanker"
+        / "delegations"
+        / next_goal_delegation.id
+        / "context"
+        / "context_pack.md"
+    )
+    assert next_context_pack_md.exists()
+    next_context_pack_relative = next_context_pack_md.relative_to(tmp_path)
+    next_goal_context_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_context_workspace["open_goal"] == next_goal_id
+    assert next_goal_context_workspace["updated_by"] == "context-pack"
+    assert next_goal_context_workspace["last_viewed_artifact"] == str(
+        next_context_pack_relative
+    )
+    assert (
+        next_goal_context_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_context_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_context_pack = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_context_pack.status == 200
+    assert "Today Completed Goal Provenance" not in today_after_next_goal_context_pack.body
+    assert "Today Completed Goal Handoff" not in today_after_next_goal_context_pack.body
+    assert "today_command_primary_action</dt><dd>Run delegation" in today_after_next_goal_context_pack.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Run delegation</a>"
+        in today_after_next_goal_context_pack.body
+    )
+    assert "today_activity_digest_latest_artifact_label</dt><dd>Open context pack markdown" in today_after_next_goal_context_pack.body
+    assert (
+        "today_activity_digest_latest_artifact_raw_surface</dt><dd>"
+        f"<a href='/artifacts?path={next_context_pack_relative}'>"
+        in today_after_next_goal_context_pack.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_context_pack.body
+
+    resume_after_next_goal_context_pack = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_context_pack.status == 200
+    assert "Resume Completed Goal Provenance" not in resume_after_next_goal_context_pack.body
+    assert "Resume Completed Goal Handoff" not in resume_after_next_goal_context_pack.body
+    assert "resume_return_brief_next_action</dt><dd>Run delegation" in resume_after_next_goal_context_pack.body
+    assert "resume_workbench_next_action</dt><dd>Run delegation" in resume_after_next_goal_context_pack.body
+    assert (
+        "resume_workbench_primary_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Run delegation</a>"
+        in resume_after_next_goal_context_pack.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_context_pack_relative}'>"
+        in resume_after_next_goal_context_pack.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_context_pack.body
+
+    successor_goal_page = render_local_app_route(tmp_path, f"/goals/{next_goal_id}")
+    assert successor_goal_page.status == 200
+    assert "completed_goal_provenance_history_status</dt><dd>available" in successor_goal_page.body
+    assert f"completed_goal_provenance_history_source_goal</dt><dd>{created_goal_id}" in successor_goal_page.body
+    assert (
+        "completed_goal_provenance_history_source_goal_completion_evidence_md</dt><dd>"
+        f"<a href='/artifacts?path={completion_md_relative}'>"
+        in successor_goal_page.body
+    )
+    assert (
+        "completed_goal_provenance_history_prior_manual_boundary_artifact</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in successor_goal_page.body
+    )
+    assert (
+        "completed_goal_provenance_history_source_coder_publication_handoff_markdown_consumed</dt><dd>true"
+        in successor_goal_page.body
+    )
+    assert (
+        "completed_goal_provenance_history_artifact</dt><dd>"
+        f"<a href='/artifacts?path=.clanker/projects/first-target/goals/{next_goal_id}/completed-goal-provenance.md'>"
+        in successor_goal_page.body
+    )
+    assert "Artifact recorded: completed Goal provenance." in successor_goal_page.body
+    assert "Completed Goal provenance promoted." in successor_goal_page.body
+    assert "timeline_filter_artifact_events</dt><dd>" in successor_goal_page.body
+    assert "goal_artifact_reader" in successor_goal_page.body
+    assert "completed-goal-provenance.md" in successor_goal_page.body
+
+    successor_goal_after_context_pack = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_context_pack.status == 200
+    assert "completed_goal_provenance_history_status</dt><dd>available" in successor_goal_after_context_pack.body
+    assert "Artifact recorded: completed Goal provenance." in successor_goal_after_context_pack.body
+    assert f"Context pack built for {next_goal_delegation.id}." in successor_goal_after_context_pack.body
+    assert "Artifact recorded: context pack markdown." in successor_goal_after_context_pack.body
+    assert "Artifact recorded: context pack json." in successor_goal_after_context_pack.body
+    assert "goal_artifact_reader_selected_artifact</dt><dd>context pack markdown" in successor_goal_after_context_pack.body
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_context_pack_relative}"
+        in successor_goal_after_context_pack.body
+    )
+    assert "goal_artifact_reader_selected_source</dt><dd>context_pack" in successor_goal_after_context_pack.body
+    assert "recommended_action</dt><dd>Run delegation" in successor_goal_after_context_pack.body
+
+    assert "action='/actions/run-delegation'" in today_after_next_goal_context_pack.body
+    assert (
+        f"name='delegation_id' value='{next_goal_delegation.id}'"
+        in today_after_next_goal_context_pack.body
+    )
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_next_goal_context_pack.body
+    )
+    assert "action='/actions/run-delegation'" in resume_after_next_goal_context_pack.body
+    assert (
+        f"name='delegation_id' value='{next_goal_delegation.id}'"
+        in resume_after_next_goal_context_pack.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in resume_after_next_goal_context_pack.body
+    )
+
+    next_goal_run_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/run-delegation",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "operator_id": ["operator"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+        },
+    )
+    assert next_goal_run_confirmation.status == 409
+    assert "Confirm scout run" in next_goal_run_confirmation.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_run_confirmation.body
+    )
+
+    next_goal_run_result = render_local_app_route(
+        tmp_path,
+        "/actions/run-delegation",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "operator_id": ["operator"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_run_result.status == 200
+    assert "run_delegation:" in next_goal_run_result.body
+    assert "Scout run finished" in next_goal_run_result.body
+    assert "action_result_command_label</dt><dd>Run scout delegation" in next_goal_run_result.body
+    assert "#resume-workbench-action-form'>/resume#resume-workbench-action-form</a>" in next_goal_run_result.body
+    assert "action_result_next_step_next_action</dt><dd>Run coder prep" in next_goal_run_result.body
+    assert (
+        "action_result_next_step_primary_surface</dt><dd>"
+        "<a href='#action-result-next-step-form'>Run coder prep</a>"
+        in next_goal_run_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_run_result.body
+    assert "action='/actions/coder-prep'" in next_goal_run_result.body
+    assert (
+        f"name='delegation_id' value='{next_goal_delegation.id}'"
+        in next_goal_run_result.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_run_result.body
+    )
+    assert "context_pack_md</dt><dd><a href='/artifacts?path=.clanker/delegations/" in next_goal_run_result.body
+    assert (
+        "implementation_handoff_md</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in next_goal_run_result.body
+    )
+    assert "provider_calls_taken_by_clankeros</dt><dd>0" in next_goal_run_result.body
+    assert "network_actions_taken</dt><dd>0" in next_goal_run_result.body
+    assert "external_mutations_taken</dt><dd>0" in next_goal_run_result.body
+
+    refreshed_after_next_run = Storage(tmp_path / ".agent" / "state.db")
+    next_completed_delegation = refreshed_after_next_run.get_subagent_delegation(
+        next_goal_delegation.id
+    )
+    assert next_completed_delegation is not None
+    assert next_completed_delegation.status == "completed"
+    next_run_metadata = load_delegation_result_metadata(next_completed_delegation)
+    next_run_context_pack_relative = Path(next_run_metadata["context_pack_md"])
+    assert str(next_run_context_pack_relative).endswith("/evidence/context_pack.md")
+    assert (tmp_path / next_run_context_pack_relative).exists()
+    next_handoff_relative = Path(next_run_metadata["implementation_handoff_md"])
+    next_handoff_md = tmp_path / next_handoff_relative
+    assert next_handoff_md.exists()
+    next_handoff_text = next_handoff_md.read_text(encoding="utf-8")
+    assert f"- context_pack_md: {next_run_context_pack_relative}" in next_handoff_text
+    assert "- returned_files_in_inventory:" in next_handoff_text
+    next_goal_run_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_run_workspace["open_goal"] == next_goal_id
+    assert next_goal_run_workspace["updated_by"] == "run-delegation"
+    assert next_goal_run_workspace["last_viewed_artifact"] == str(next_handoff_relative)
+    assert (
+        next_goal_run_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_run_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_run = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_run.status == 200
+    assert "Today Completed Goal Provenance" not in today_after_next_goal_run.body
+    assert "Today Completed Goal Handoff" not in today_after_next_goal_run.body
+    assert "today_command_primary_action</dt><dd>Run coder prep" in today_after_next_goal_run.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Run coder prep</a>"
+        in today_after_next_goal_run.body
+    )
+    assert "today_command_reason</dt><dd>implementation_handoff_or_result_available" in today_after_next_goal_run.body
+    assert "action='/actions/coder-prep'" in today_after_next_goal_run.body
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_next_goal_run.body
+    )
+    assert "today_activity_digest_latest_artifact_label</dt><dd>Open implementation_handoff_md" in today_after_next_goal_run.body
+    assert (
+        f"<a href='/artifacts?path={next_handoff_relative}'>"
+        in today_after_next_goal_run.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_run.body
+
+    resume_after_next_goal_run = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_run.status == 200
+    assert "Resume Completed Goal Provenance" not in resume_after_next_goal_run.body
+    assert "Resume Completed Goal Handoff" not in resume_after_next_goal_run.body
+    assert "resume_return_brief_next_action</dt><dd>Run coder prep" in resume_after_next_goal_run.body
+    assert "resume_workbench_next_action</dt><dd>Run coder prep" in resume_after_next_goal_run.body
+    assert (
+        "resume_workbench_primary_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Run coder prep</a>"
+        in resume_after_next_goal_run.body
+    )
+    assert "action='/actions/coder-prep'" in resume_after_next_goal_run.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in resume_after_next_goal_run.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_handoff_relative}'>"
+        in resume_after_next_goal_run.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_run.body
+
+    successor_goal_after_run = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_run.status == 200
+    assert "completed_goal_provenance_history_status</dt><dd>available" in successor_goal_after_run.body
+    assert "Execution completed: delegation " in successor_goal_after_run.body
+    assert "Artifact recorded: implementation_handoff_json." in successor_goal_after_run.body
+    assert "goal_artifact_reader_selected_artifact</dt><dd>implementation_handoff_md" in successor_goal_after_run.body
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_handoff_relative}"
+        in successor_goal_after_run.body
+    )
+    assert "goal_artifact_reader_selected_source</dt><dd>delegation_metadata" in successor_goal_after_run.body
+    assert "recommended_action</dt><dd>Run coder prep" in successor_goal_after_run.body
+    assert "completed-goal-provenance.md" in successor_goal_after_run.body
+
+    next_goal_prep_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-prep",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "return_to": ["/resume#resume-workbench-action-form"],
+        },
+    )
+    assert next_goal_prep_confirmation.status == 409
+    assert "Confirm coder prep" in next_goal_prep_confirmation.body
+    assert "action_confirmation_label</dt><dd>Prepare coder packet" in next_goal_prep_confirmation.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_prep_confirmation.body
+    )
+
+    next_goal_prep_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-prep",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_prep_result.status == 200
+    assert "coder_prep:" in next_goal_prep_result.body
+    assert "action_result_command_label</dt><dd>Prepare coder packet" in next_goal_prep_result.body
+    assert (
+        "source_handoff_md</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in next_goal_prep_result.body
+    )
+    assert (
+        "action_result_next_step_next_action</dt><dd>Create worktree plan"
+        in next_goal_prep_result.body
+    )
+    assert (
+        "action_result_next_step_primary_surface</dt><dd>"
+        "<a href='#action-result-next-step-form'>Create worktree plan</a>"
+        in next_goal_prep_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_prep_result.body
+    assert "action='/actions/coder-worktree-plan'" in next_goal_prep_result.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_prep_result.body
+    )
+    assert (
+        f"name='return_to' value='/goals/{next_goal_id}#goal-action-dock-form'"
+        not in next_goal_prep_result.body
+    )
+    assert "action_continuation_next_action</dt><dd>Create worktree plan" in next_goal_prep_result.body
+    assert "provider_calls_taken_by_clankeros</dt><dd>0" in next_goal_prep_result.body
+    assert "network_actions_taken</dt><dd>0" in next_goal_prep_result.body
+    assert "external_mutations_taken</dt><dd>0" in next_goal_prep_result.body
+
+    next_coder_prep_md = sorted(
+        (tmp_path / ".clanker" / "delegations" / next_goal_delegation.id / "runs").glob(
+            "*/coder_prep/coder_prep.md"
+        )
+    )[-1]
+    next_coder_prep_json = next_coder_prep_md.with_suffix(".json")
+    assert next_coder_prep_md.exists()
+    assert next_coder_prep_json.exists()
+    next_coder_prep_relative = next_coder_prep_md.relative_to(tmp_path)
+    next_coder_prep_payload = json.loads(next_coder_prep_json.read_text(encoding="utf-8"))
+    assert next_coder_prep_payload["source"]["handoff_md"] == str(next_handoff_relative)
+    assert next_coder_prep_payload["source_handoff_markdown_consumed"] is True
+    assert next_coder_prep_payload["safety"]["provider_calls_taken_by_clankeros"] == 0
+    assert next_coder_prep_payload["safety"]["network_actions_taken"] == 0
+    assert next_coder_prep_payload["safety"]["external_mutations_taken"] == 0
+    next_coder_prep_text = next_coder_prep_md.read_text(encoding="utf-8")
+    assert f"- source_handoff_md: {next_handoff_relative}" in next_coder_prep_text
+    assert "- Coder prep does not edit source files." in next_coder_prep_text
+    next_goal_prep_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_prep_workspace["open_goal"] == next_goal_id
+    assert next_goal_prep_workspace["updated_by"] == "coder-prep"
+    assert next_goal_prep_workspace["last_viewed_artifact"] == str(next_coder_prep_relative)
+    assert (
+        next_goal_prep_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_prep_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_prep = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_prep.status == 200
+    assert "Today Completed Goal Provenance" not in today_after_next_goal_prep.body
+    assert "Today Completed Goal Handoff" not in today_after_next_goal_prep.body
+    assert "today_command_primary_action</dt><dd>Create worktree plan" in today_after_next_goal_prep.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Create worktree plan</a>"
+        in today_after_next_goal_prep.body
+    )
+    assert "today_command_reason</dt><dd>coder_prep_available" in today_after_next_goal_prep.body
+    assert "action='/actions/coder-worktree-plan'" in today_after_next_goal_prep.body
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_next_goal_prep.body
+    )
+    assert (
+        f"<a href='/artifacts?path={next_coder_prep_relative}'>"
+        in today_after_next_goal_prep.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_prep.body
+
+    resume_after_next_goal_prep = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_prep.status == 200
+    assert "Resume Completed Goal Provenance" not in resume_after_next_goal_prep.body
+    assert "Resume Completed Goal Handoff" not in resume_after_next_goal_prep.body
+    assert "resume_return_brief_next_action</dt><dd>Create worktree plan" in resume_after_next_goal_prep.body
+    assert "resume_workbench_next_action</dt><dd>Create worktree plan" in resume_after_next_goal_prep.body
+    assert (
+        "resume_workbench_primary_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Create worktree plan</a>"
+        in resume_after_next_goal_prep.body
+    )
+    assert "action='/actions/coder-worktree-plan'" in resume_after_next_goal_prep.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in resume_after_next_goal_prep.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_coder_prep_relative}'>"
+        in resume_after_next_goal_prep.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_prep.body
+
+    successor_goal_after_prep = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_prep.status == 200
+    assert "completed_goal_provenance_history_status</dt><dd>available" in successor_goal_after_prep.body
+    assert "Artifact recorded: coder_prep_plan_markdown." in successor_goal_after_prep.body
+    assert "goal_artifact_reader_selected_artifact</dt><dd>coder_prep_plan_markdown" in successor_goal_after_prep.body
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_coder_prep_relative}"
+        in successor_goal_after_prep.body
+    )
+    assert "goal_artifact_reader_selected_source</dt><dd>coder_prep" in successor_goal_after_prep.body
+    assert "recommended_action</dt><dd>Create worktree plan" in successor_goal_after_prep.body
+    assert "completed-goal-provenance.md" in successor_goal_after_prep.body
+
+    next_goal_plan_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-plan",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "return_to": ["/resume#resume-workbench-action-form"],
+        },
+    )
+    assert next_goal_plan_confirmation.status == 409
+    assert "Confirm worktree plan" in next_goal_plan_confirmation.body
+    assert "action_confirmation_label</dt><dd>Create worktree plan" in next_goal_plan_confirmation.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_plan_confirmation.body
+    )
+
+    next_goal_plan_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-plan",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_plan_result.status == 200
+    assert "coder_worktree_plan:" in next_goal_plan_result.body
+    assert (
+        "action_result_command_label</dt><dd>Create worktree plan"
+        in next_goal_plan_result.body
+    )
+    assert (
+        "source_coder_prep_md</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in next_goal_plan_result.body
+    )
+    assert (
+        "source_coder_prep_markdown_consumed</dt><dd>true"
+        in next_goal_plan_result.body
+    )
+    assert "source_coder_prep_md_sha256</dt><dd>" in next_goal_plan_result.body
+    assert "approval_gate</dt><dd>operator_approval_required" in next_goal_plan_result.body
+    assert "approval_request_created</dt><dd>false" in next_goal_plan_result.body
+    assert "proposed_worktree_status</dt><dd>not_created" in next_goal_plan_result.body
+    assert "proposed_worktree_created</dt><dd>false" in next_goal_plan_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Request worktree approval"
+        in next_goal_plan_result.body
+    )
+    assert (
+        "action_result_next_step_primary_surface</dt><dd>"
+        "<a href='#action-result-next-step-form'>Request worktree approval</a>"
+        in next_goal_plan_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_plan_result.body
+    assert "action='/actions/coder-worktree-approval'" in next_goal_plan_result.body
+    assert (
+        f"name='delegation_id' value='{next_goal_delegation.id}'"
+        in next_goal_plan_result.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_plan_result.body
+    )
+    assert (
+        f"name='return_to' value='/goals/{next_goal_id}#goal-action-dock-form'"
+        not in next_goal_plan_result.body
+    )
+    assert (
+        "action_continuation_next_action</dt><dd>Request worktree approval"
+        in next_goal_plan_result.body
+    )
+    assert "worktrees_created</dt><dd>0" in next_goal_plan_result.body
+    assert "approval_requests_created</dt><dd>0" in next_goal_plan_result.body
+    assert "source_edits_taken</dt><dd>0" in next_goal_plan_result.body
+    assert "commands_rerun</dt><dd>0" in next_goal_plan_result.body
+    assert "provider_calls_taken_by_clankeros</dt><dd>0" in next_goal_plan_result.body
+    assert "network_actions_taken</dt><dd>0" in next_goal_plan_result.body
+    assert "external_mutations_taken</dt><dd>0" in next_goal_plan_result.body
+
+    next_coder_worktree_plan_md = next_coder_prep_md.with_name("coder_worktree_plan.md")
+    next_coder_worktree_plan_json = next_coder_worktree_plan_md.with_suffix(".json")
+    assert next_coder_worktree_plan_md.exists()
+    assert next_coder_worktree_plan_json.exists()
+    next_coder_worktree_plan_relative = next_coder_worktree_plan_md.relative_to(tmp_path)
+    next_coder_worktree_plan_payload = json.loads(
+        next_coder_worktree_plan_json.read_text(encoding="utf-8")
+    )
+    assert (
+        next_coder_worktree_plan_payload["source"]["coder_prep_md"]
+        == str(next_coder_prep_relative)
+    )
+    assert next_coder_worktree_plan_payload["source"]["coder_prep_md_sha256"] == hashlib.sha256(
+        next_coder_prep_text.encode("utf-8")
+    ).hexdigest()
+    assert next_coder_worktree_plan_payload["source_coder_prep_markdown_consumed"] is True
+    assert (
+        next_coder_prep_text[:160]
+        in next_coder_worktree_plan_payload["source_coder_prep_markdown_excerpt"]
+    )
+    assert (
+        next_coder_worktree_plan_payload["approval_gate"]["status"]
+        == "operator_approval_required"
+    )
+    assert (
+        next_coder_worktree_plan_payload["approval_gate"]["approval_request_created"]
+        is False
+    )
+    assert next_coder_worktree_plan_payload["proposed_worktree"]["status"] == "not_created"
+    assert next_coder_worktree_plan_payload["proposed_worktree"]["worktree_created"] is False
+    assert next_coder_worktree_plan_payload["dispatch_ready"] is False
+    assert next_coder_worktree_plan_payload["future_run_plan"]["commands_to_run_now"] == []
+    assert next_coder_worktree_plan_payload["safety"]["worktrees_created"] == 0
+    assert next_coder_worktree_plan_payload["safety"]["approval_requests_created"] == 0
+    assert next_coder_worktree_plan_payload["safety"]["provider_calls_taken_by_clankeros"] == 0
+    assert next_coder_worktree_plan_payload["safety"]["network_actions_taken"] == 0
+    assert next_coder_worktree_plan_payload["safety"]["external_mutations_taken"] == 0
+    next_coder_worktree_plan_text = next_coder_worktree_plan_md.read_text(encoding="utf-8")
+    assert f"- source_coder_prep_md: {next_coder_prep_relative}" in next_coder_worktree_plan_text
+    assert "- status: not_created" in next_coder_worktree_plan_text
+    assert "- approval_request_created: false" in next_coder_worktree_plan_text
+    assert "- Coder worktree planning does not create a git worktree." in next_coder_worktree_plan_text
+    next_goal_plan_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_plan_workspace["open_goal"] == next_goal_id
+    assert next_goal_plan_workspace["updated_by"] == "coder-worktree-plan"
+    assert next_goal_plan_workspace["last_viewed_artifact"] == str(
+        next_coder_worktree_plan_relative
+    )
+    assert (
+        next_goal_plan_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_plan_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_plan = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_plan.status == 200
+    assert "Today Completed Goal Provenance" not in today_after_next_goal_plan.body
+    assert "Today Completed Goal Handoff" not in today_after_next_goal_plan.body
+    assert "today_command_primary_action</dt><dd>Request worktree approval" in today_after_next_goal_plan.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Request worktree approval</a>"
+        in today_after_next_goal_plan.body
+    )
+    assert "today_command_reason</dt><dd>coder_worktree_plan_available" in today_after_next_goal_plan.body
+    assert "action='/actions/coder-worktree-approval'" in today_after_next_goal_plan.body
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_next_goal_plan.body
+    )
+    assert (
+        f"<a href='/artifacts?path={next_coder_worktree_plan_relative}'>"
+        in today_after_next_goal_plan.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_plan.body
+
+    next_goal_plan_today_rerun = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-plan",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_plan_today_rerun.status == 200
+    assert "coder_worktree_plan:" in next_goal_plan_today_rerun.body
+    assert "already_recorded</dt><dd>true" in next_goal_plan_today_rerun.body
+    assert (
+        "source_coder_prep_md</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in next_goal_plan_today_rerun.body
+    )
+    assert "source_coder_prep_md_sha256</dt><dd>" in next_goal_plan_today_rerun.body
+    assert (
+        "source_coder_prep_markdown_consumed</dt><dd>true"
+        in next_goal_plan_today_rerun.body
+    )
+    assert (
+        "action_result_next_step_next_action</dt><dd>Request worktree approval"
+        in next_goal_plan_today_rerun.body
+    )
+    assert "action='/actions/coder-worktree-approval'" in next_goal_plan_today_rerun.body
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in next_goal_plan_today_rerun.body
+    )
+    assert (
+        f"name='return_to' value='/goals/{next_goal_id}#goal-action-dock-form'"
+        not in next_goal_plan_today_rerun.body
+    )
+    assert (
+        json.loads(next_coder_worktree_plan_json.read_text(encoding="utf-8"))
+        == next_coder_worktree_plan_payload
+    )
+    next_goal_plan_today_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_plan_today_workspace["open_goal"] == next_goal_id
+    assert next_goal_plan_today_workspace["updated_by"] == "coder-worktree-plan"
+    assert next_goal_plan_today_workspace["last_viewed_artifact"] == str(
+        next_coder_worktree_plan_relative
+    )
+    assert next_goal_plan_today_workspace["resume_surface"] == "/today#today-current-action"
+    assert next_goal_plan_today_workspace["completed_goal_handoff_source_goal"] == ""
+
+    resume_after_next_goal_plan = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_plan.status == 200
+    assert "Resume Completed Goal Provenance" not in resume_after_next_goal_plan.body
+    assert "Resume Completed Goal Handoff" not in resume_after_next_goal_plan.body
+    assert (
+        "resume_return_brief_next_action</dt><dd>Request worktree approval"
+        in resume_after_next_goal_plan.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Request worktree approval"
+        in resume_after_next_goal_plan.body
+    )
+    assert (
+        "resume_workbench_primary_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Request worktree approval</a>"
+        in resume_after_next_goal_plan.body
+    )
+    assert "action='/actions/coder-worktree-approval'" in resume_after_next_goal_plan.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in resume_after_next_goal_plan.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_coder_worktree_plan_relative}'>"
+        in resume_after_next_goal_plan.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_plan.body
+
+    successor_goal_after_plan = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_plan.status == 200
+    assert "completed_goal_provenance_history_status</dt><dd>available" in successor_goal_after_plan.body
+    assert (
+        "Artifact recorded: coder_worktree_run_plan_markdown."
+        in successor_goal_after_plan.body
+    )
+    assert (
+        "goal_artifact_reader_selected_artifact</dt><dd>coder_worktree_run_plan_markdown"
+        in successor_goal_after_plan.body
+    )
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_coder_worktree_plan_relative}"
+        in successor_goal_after_plan.body
+    )
+    assert "goal_artifact_reader_selected_source</dt><dd>worktree_plan" in successor_goal_after_plan.body
+    assert "recommended_action</dt><dd>Request worktree approval" in successor_goal_after_plan.body
+    assert "completed-goal-provenance.md" in successor_goal_after_plan.body
+
+    next_goal_approval_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-approval",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "requested_by": ["operator"],
+            "note": ["Request successor worktree approval from Resume"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+        },
+    )
+    assert next_goal_approval_confirmation.status == 409
+    assert "Confirm worktree approval request" in next_goal_approval_confirmation.body
+    assert (
+        "action_confirmation_label</dt><dd>Request worktree approval"
+        in next_goal_approval_confirmation.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_approval_confirmation.body
+    )
+
+    next_goal_approval_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-approval",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "requested_by": ["operator"],
+            "note": ["Request successor worktree approval from Resume"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_approval_result.status == 200
+    assert "coder_worktree_approval:" in next_goal_approval_result.body
+    assert (
+        "action_result_command_label</dt><dd>Request worktree approval"
+        in next_goal_approval_result.body
+    )
+    assert (
+        "source_coder_worktree_plan_md</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in next_goal_approval_result.body
+    )
+    assert (
+        "source_coder_worktree_plan_markdown_consumed</dt><dd>true"
+        in next_goal_approval_result.body
+    )
+    assert "source_plan_sha256</dt><dd>" in next_goal_approval_result.body
+    assert "source_plan_md_sha256</dt><dd>" in next_goal_approval_result.body
+    assert "status</dt><dd>pending_operator_approval" in next_goal_approval_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Approve worktree"
+        in next_goal_approval_result.body
+    )
+    assert (
+        "action_result_next_step_primary_surface</dt><dd>"
+        "<a href='#action-result-next-step-form'>Approve worktree</a>"
+        in next_goal_approval_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_approval_result.body
+    assert "action='/actions/approve-coder-worktree'" in next_goal_approval_result.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_approval_result.body
+    )
+    assert (
+        f"name='return_to' value='/goals/{next_goal_id}#goal-action-dock-form'"
+        not in next_goal_approval_result.body
+    )
+    assert (
+        "action_continuation_next_action</dt><dd>Approve worktree"
+        in next_goal_approval_result.body
+    )
+    assert "worktrees_created</dt><dd>0" in next_goal_approval_result.body
+    assert "source_edits_taken</dt><dd>0" in next_goal_approval_result.body
+    assert "commands_run</dt><dd>0" in next_goal_approval_result.body
+    assert "provider_calls_taken_by_clankeros</dt><dd>0" in next_goal_approval_result.body
+    assert "network_actions_taken</dt><dd>0" in next_goal_approval_result.body
+    assert "external_mutations_taken</dt><dd>0" in next_goal_approval_result.body
+
+    next_approval_request_json = next_coder_worktree_plan_md.with_name(
+        "coder_worktree_approval_request.json"
+    )
+    next_approval_request_md = next_coder_worktree_plan_md.with_name(
+        "coder_worktree_approval_request.md"
+    )
+    assert next_approval_request_json.exists()
+    assert next_approval_request_md.exists()
+    next_approval_request_relative = next_approval_request_md.relative_to(tmp_path)
+    next_approval_request_payload = json.loads(
+        next_approval_request_json.read_text(encoding="utf-8")
+    )
+    next_approval_id = next_approval_request_payload["approval_id"]
+    assert (
+        next_approval_request_payload["source_coder_worktree_plan"]
+        == str(next_coder_worktree_plan_json.relative_to(tmp_path))
+    )
+    assert (
+        next_approval_request_payload["source_coder_worktree_plan_md"]
+        == str(next_coder_worktree_plan_relative)
+    )
+    assert next_approval_request_payload["source_plan_sha256"] == hashlib.sha256(
+        next_coder_worktree_plan_json.read_bytes()
+    ).hexdigest()
+    assert next_approval_request_payload["source_plan_md_sha256"] == hashlib.sha256(
+        next_coder_worktree_plan_text.encode("utf-8")
+    ).hexdigest()
+    assert next_approval_request_payload["source_coder_worktree_plan_markdown_consumed"] is True
+    assert next_approval_request_payload["status"] == "pending_operator_approval"
+    assert next_approval_request_payload["worktrees_created"] == 0
+    assert next_approval_request_payload["source_edits_taken"] == 0
+    assert next_approval_request_payload["commands_run"] == 0
+    assert next_approval_request_payload["provider_calls_taken_by_clankeros"] == 0
+    assert next_approval_request_payload["network_actions_taken"] == 0
+    assert next_approval_request_payload["external_mutations_taken"] == 0
+    next_approval_request_text = next_approval_request_md.read_text(encoding="utf-8")
+    assert f"- source_coder_worktree_plan_md: {next_coder_worktree_plan_relative}" in next_approval_request_text
+    assert "- source_coder_worktree_plan_markdown_consumed: true" in next_approval_request_text
+    assert "- Coder worktree approval does not create a worktree." in next_approval_request_text
+    next_goal_approval_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_approval_workspace["open_goal"] == next_goal_id
+    assert next_goal_approval_workspace["updated_by"] == "coder-worktree-approval"
+    assert next_goal_approval_workspace["last_viewed_artifact"] == str(
+        next_approval_request_relative
+    )
+    assert (
+        next_goal_approval_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_approval_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_approval = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_approval.status == 200
+    assert "Today Completed Goal Provenance" not in today_after_next_goal_approval.body
+    assert "Today Completed Goal Handoff" not in today_after_next_goal_approval.body
+    assert "today_command_primary_action</dt><dd>Approve worktree" in today_after_next_goal_approval.body
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Approve worktree</a>"
+        in today_after_next_goal_approval.body
+    )
+    assert f"today_command_reason</dt><dd>approval={next_approval_id}" in today_after_next_goal_approval.body
+    assert "action='/actions/approve-coder-worktree'" in today_after_next_goal_approval.body
+    assert (
+        f"name='approval_id' value='{next_approval_id}'"
+        in today_after_next_goal_approval.body
+    )
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_next_goal_approval.body
+    )
+    assert (
+        f"<a href='/artifacts?path={next_approval_request_relative}'>"
+        in today_after_next_goal_approval.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_approval.body
+
+    next_goal_approval_today_rerun = render_local_app_route(
+        tmp_path,
+        "/actions/coder-worktree-approval",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "requested_by": ["operator"],
+            "note": ["Request successor worktree approval from Today"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_approval_today_rerun.status == 200
+    assert "coder_worktree_approval:" in next_goal_approval_today_rerun.body
+    assert "already_recorded</dt><dd>true" in next_goal_approval_today_rerun.body
+    assert (
+        "source_coder_worktree_plan_md</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in next_goal_approval_today_rerun.body
+    )
+    assert (
+        "source_coder_worktree_plan_markdown_consumed</dt><dd>true"
+        in next_goal_approval_today_rerun.body
+    )
+    assert (
+        "action_result_next_step_next_action</dt><dd>Approve worktree"
+        in next_goal_approval_today_rerun.body
+    )
+    assert "action='/actions/approve-coder-worktree'" in next_goal_approval_today_rerun.body
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in next_goal_approval_today_rerun.body
+    )
+    assert (
+        json.loads(next_approval_request_json.read_text(encoding="utf-8"))
+        == next_approval_request_payload
+    )
+
+    resume_after_next_goal_approval = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_approval.status == 200
+    assert "Resume Completed Goal Provenance" not in resume_after_next_goal_approval.body
+    assert "Resume Completed Goal Handoff" not in resume_after_next_goal_approval.body
+    assert (
+        "resume_return_brief_next_action</dt><dd>Approve worktree"
+        in resume_after_next_goal_approval.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Approve worktree"
+        in resume_after_next_goal_approval.body
+    )
+    assert (
+        "resume_workbench_primary_surface</dt><dd>"
+        "<a href='#resume-workbench-action-form'>Approve worktree</a>"
+        in resume_after_next_goal_approval.body
+    )
+    assert "action='/actions/approve-coder-worktree'" in resume_after_next_goal_approval.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in resume_after_next_goal_approval.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_approval_request_relative}'>"
+        in resume_after_next_goal_approval.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_approval.body
+
+    successor_goal_after_approval = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_approval.status == 200
+    assert "completed_goal_provenance_history_status</dt><dd>available" in successor_goal_after_approval.body
+    assert "Artifact recorded: coder_worktree_execution_approval_request_markdown." in successor_goal_after_approval.body
+    assert (
+        "goal_artifact_reader_selected_artifact</dt><dd>coder_worktree_execution_approval_request_markdown"
+        in successor_goal_after_approval.body
+    )
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_approval_request_relative}"
+        in successor_goal_after_approval.body
+    )
+    assert "goal_artifact_reader_selected_source</dt><dd>worktree_approval" in successor_goal_after_approval.body
+    assert "recommended_action</dt><dd>Approve worktree" in successor_goal_after_approval.body
+    assert "completed-goal-provenance.md" in successor_goal_after_approval.body
+
+    next_goal_approval_decision_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-worktree",
+        method="POST",
+        form={
+            "approval_id": [next_approval_id],
+            "decided_by": ["operator"],
+            "note": ["Approve successor worktree from Resume"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+        },
+    )
+    assert next_goal_approval_decision_confirmation.status == 409
+    assert "Confirm worktree approval" in next_goal_approval_decision_confirmation.body
+    assert (
+        "action_confirmation_label</dt><dd>Approve worktree"
+        in next_goal_approval_decision_confirmation.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_approval_decision_confirmation.body
+    )
+
+    next_goal_approval_decision = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-worktree",
+        method="POST",
+        form={
+            "approval_id": [next_approval_id],
+            "decided_by": ["operator"],
+            "note": ["Approve successor worktree from Resume"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_approval_decision.status == 200
+    assert "approved_coder_worktree:" in next_goal_approval_decision.body
+    assert "action_result_command_label</dt><dd>Approve worktree" in next_goal_approval_decision.body
+    assert (
+        "source_coder_worktree_approval_request_md</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in next_goal_approval_decision.body
+    )
+    assert (
+        "source_coder_worktree_approval_request_markdown_consumed</dt><dd>true"
+        in next_goal_approval_decision.body
+    )
+    assert "source_approval_request_sha256</dt><dd>" in next_goal_approval_decision.body
+    assert "source_approval_request_md_sha256</dt><dd>" in next_goal_approval_decision.body
+    assert "status</dt><dd>approved" in next_goal_approval_decision.body
+    assert "worktrees_created</dt><dd>0" in next_goal_approval_decision.body
+    assert "source_edits_taken</dt><dd>0" in next_goal_approval_decision.body
+    assert "commands_run</dt><dd>0" in next_goal_approval_decision.body
+    assert "provider_calls_taken_by_clankeros</dt><dd>0" in next_goal_approval_decision.body
+    assert "network_actions_taken</dt><dd>0" in next_goal_approval_decision.body
+    assert "external_mutations_taken</dt><dd>0" in next_goal_approval_decision.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Run approved worktree"
+        in next_goal_approval_decision.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_approval_decision.body
+    assert "action='/actions/run-coder-worktree'" in next_goal_approval_decision.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_approval_decision.body
+    )
+
+    next_approval_decision_json = next_approval_request_md.with_name(
+        "coder_worktree_approval_decision.json"
+    )
+    next_approval_decision_md = next_approval_request_md.with_name(
+        "coder_worktree_approval_decision.md"
+    )
+    assert next_approval_decision_json.exists()
+    assert next_approval_decision_md.exists()
+    next_approval_decision_relative = next_approval_decision_md.relative_to(tmp_path)
+    next_approval_decision_payload = json.loads(
+        next_approval_decision_json.read_text(encoding="utf-8")
+    )
+    assert (
+        next_approval_decision_payload["source_coder_worktree_approval_request"]
+        == str(next_approval_request_json.relative_to(tmp_path))
+    )
+    assert (
+        next_approval_decision_payload["source_coder_worktree_approval_request_md"]
+        == str(next_approval_request_relative)
+    )
+    assert next_approval_decision_payload["source_approval_request_sha256"] == hashlib.sha256(
+        next_approval_request_json.read_bytes()
+    ).hexdigest()
+    assert next_approval_decision_payload["source_approval_request_md_sha256"] == hashlib.sha256(
+        next_approval_request_text.encode("utf-8")
+    ).hexdigest()
+    assert (
+        next_approval_decision_payload[
+            "source_coder_worktree_approval_request_markdown_consumed"
+        ]
+        is True
+    )
+    assert next_approval_decision_payload["status"] == "approved"
+    assert next_approval_decision_payload["worktrees_created"] == 0
+    assert next_approval_decision_payload["source_edits_taken"] == 0
+    assert next_approval_decision_payload["commands_run"] == 0
+    assert next_approval_decision_payload["provider_calls_taken_by_clankeros"] == 0
+    assert next_approval_decision_payload["network_actions_taken"] == 0
+    assert next_approval_decision_payload["external_mutations_taken"] == 0
+    next_approval_decision_text = next_approval_decision_md.read_text(encoding="utf-8")
+    assert (
+        f"- source_coder_worktree_approval_request_md: {next_approval_request_relative}"
+        in next_approval_decision_text
+    )
+    assert (
+        "- source_coder_worktree_approval_request_markdown_consumed: true"
+        in next_approval_decision_text
+    )
+    assert "- Approving a coder worktree request does not create a worktree." in next_approval_decision_text
+    next_goal_decision_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_decision_workspace["open_goal"] == next_goal_id
+    assert next_goal_decision_workspace["updated_by"] == "approve-coder-worktree"
+    assert next_goal_decision_workspace["last_viewed_artifact"] == str(
+        next_approval_decision_relative
+    )
+    assert (
+        next_goal_decision_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_decision_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_decision = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_decision.status == 200
+    assert "Today Completed Goal Provenance" not in today_after_next_goal_decision.body
+    assert "today_command_primary_action</dt><dd>Run approved worktree" in today_after_next_goal_decision.body
+    assert "action='/actions/run-coder-worktree'" in today_after_next_goal_decision.body
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_next_goal_decision.body
+    )
+    assert (
+        f"<a href='/artifacts?path={next_approval_decision_relative}'>"
+        in today_after_next_goal_decision.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_decision.body
+
+    next_goal_approval_decision_today_rerun = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-worktree",
+        method="POST",
+        form={
+            "approval_id": [next_approval_id],
+            "decided_by": ["operator"],
+            "note": ["Approve successor worktree from Today"],
+            "return_to": ["/today#today-current-action"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_approval_decision_today_rerun.status == 200
+    assert "already_approved</dt><dd>true" in next_goal_approval_decision_today_rerun.body
+    assert (
+        "source_coder_worktree_approval_request_markdown_consumed</dt><dd>true"
+        in next_goal_approval_decision_today_rerun.body
+    )
+    assert (
+        "action_result_next_step_next_action</dt><dd>Run approved worktree"
+        in next_goal_approval_decision_today_rerun.body
+    )
+    assert "action='/actions/run-coder-worktree'" in next_goal_approval_decision_today_rerun.body
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in next_goal_approval_decision_today_rerun.body
+    )
+    assert (
+        json.loads(next_approval_decision_json.read_text(encoding="utf-8"))
+        == next_approval_decision_payload
+    )
+
+    resume_after_next_goal_decision = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_decision.status == 200
+    assert "Resume Completed Goal Provenance" not in resume_after_next_goal_decision.body
+    assert (
+        "resume_return_brief_next_action</dt><dd>Run approved worktree"
+        in resume_after_next_goal_decision.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Run approved worktree"
+        in resume_after_next_goal_decision.body
+    )
+    assert "action='/actions/run-coder-worktree'" in resume_after_next_goal_decision.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in resume_after_next_goal_decision.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_approval_decision_relative}'>"
+        in resume_after_next_goal_decision.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_decision.body
+
+    successor_goal_after_decision = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_decision.status == 200
+    assert "completed_goal_provenance_history_status</dt><dd>available" in successor_goal_after_decision.body
+    assert "Artifact recorded: coder_worktree_execution_approval_decision_markdown." in successor_goal_after_decision.body
+    assert (
+        "goal_artifact_reader_selected_artifact</dt><dd>coder_worktree_execution_approval_decision_markdown"
+        in successor_goal_after_decision.body
+    )
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_approval_decision_relative}"
+        in successor_goal_after_decision.body
+    )
+    assert "goal_artifact_reader_selected_source</dt><dd>worktree_approval" in successor_goal_after_decision.body
+    assert "recommended_action</dt><dd>Run approved worktree" in successor_goal_after_decision.body
+    assert "completed-goal-provenance.md" in successor_goal_after_decision.body
+
+    successor_worktree_command = "python3 scripts/change_noop.py"
+    successor_verify_command = "python3 scripts/noop.py"
+    next_goal_run_worktree_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/run-coder-worktree",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "command": [successor_worktree_command],
+            "verify": ["yes"],
+            "verify_command": [successor_verify_command],
+            "return_to": ["/resume#resume-workbench-action-form"],
+        },
+    )
+    assert next_goal_run_worktree_confirmation.status == 409
+    assert "Confirm run-coder-worktree" in next_goal_run_worktree_confirmation.body
+    assert (
+        "action_confirmation_label</dt><dd>Run Approved Worktree"
+        in next_goal_run_worktree_confirmation.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_run_worktree_confirmation.body
+    )
+
+    next_goal_run_worktree_result = render_local_app_route(
+        tmp_path,
+        "/actions/run-coder-worktree",
+        method="POST",
+        form={
+            "delegation_id": [next_goal_delegation.id],
+            "command": [successor_worktree_command],
+            "verify": ["yes"],
+            "verify_command": [successor_verify_command],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_run_worktree_result.status == 200
+    assert "run_coder_worktree: completed" in next_goal_run_worktree_result.body
+    assert (
+        "action_result_command_label</dt><dd>Run Approved Worktree"
+        in next_goal_run_worktree_result.body
+    )
+    assert (
+        "source_coder_worktree_approval_decision</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in next_goal_run_worktree_result.body
+    )
+    assert (
+        "source_coder_worktree_approval_decision_md</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in next_goal_run_worktree_result.body
+    )
+    assert (
+        "source_coder_worktree_approval_decision_markdown_consumed</dt><dd>true"
+        in next_goal_run_worktree_result.body
+    )
+    assert "source_approval_decision_sha256</dt><dd>" in next_goal_run_worktree_result.body
+    assert "source_approval_decision_md_sha256</dt><dd>" in next_goal_run_worktree_result.body
+    assert "status</dt><dd>completed" in next_goal_run_worktree_result.body
+    assert "changed_files_within_allowed_files</dt><dd>true" in next_goal_run_worktree_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Open review"
+        in next_goal_run_worktree_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_run_worktree_result.body
+    assert "action='/actions/review-run'" in next_goal_run_worktree_result.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_run_worktree_result.body
+    )
+
+    next_coder_worktree_summary = sorted(
+        (tmp_path / ".clanker" / "delegations" / next_goal_delegation.id / "runs").glob(
+            "*/coder_worktree/summary.md"
+        )
+    )[-1]
+    next_coder_worktree_run_json = next_coder_worktree_summary.with_name("run.json")
+    next_coder_worktree_run_payload = json.loads(
+        next_coder_worktree_run_json.read_text(encoding="utf-8")
+    )
+    assert next_coder_worktree_run_payload["kind"] == "approved_coder_worktree_run"
+    assert next_coder_worktree_run_payload["status"] == "completed"
+    assert next_coder_worktree_run_payload["source_coder_worktree_approval_decision"] == str(
+        next_approval_decision_json.relative_to(tmp_path)
+    )
+    assert next_coder_worktree_run_payload["source_coder_worktree_approval_decision_md"] == str(
+        next_approval_decision_relative
+    )
+    assert next_coder_worktree_run_payload["source_approval_decision_sha256"] == hashlib.sha256(
+        next_approval_decision_json.read_bytes()
+    ).hexdigest()
+    assert next_coder_worktree_run_payload["source_approval_decision_md_sha256"] == hashlib.sha256(
+        next_approval_decision_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert (
+        next_coder_worktree_run_payload[
+            "source_coder_worktree_approval_decision_markdown_consumed"
+        ]
+        is True
+    )
+    assert next_coder_worktree_run_payload["commit_created"] is False
+    assert next_coder_worktree_run_payload["push_created"] is False
+    assert next_coder_worktree_run_payload["deploy_created"] is False
+    assert next_coder_worktree_run_payload["provider_calls_taken_by_clankeros"] == 0
+    assert next_coder_worktree_run_payload["network_actions_taken"] == 0
+    assert next_coder_worktree_run_payload["external_mutations_taken"] == 0
+    next_coder_worktree_summary_text = next_coder_worktree_summary.read_text(encoding="utf-8")
+    assert (
+        f"- source_coder_worktree_approval_decision_md: {next_approval_decision_relative}"
+        in next_coder_worktree_summary_text
+    )
+    assert (
+        "- source_coder_worktree_approval_decision_markdown_consumed: true"
+        in next_coder_worktree_summary_text
+    )
+    next_goal_run_worktree_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_run_worktree_workspace["open_goal"] == next_goal_id
+    assert next_goal_run_worktree_workspace["updated_by"] == "run-coder-worktree"
+    assert next_goal_run_worktree_workspace["last_viewed_artifact"] == str(
+        next_coder_worktree_summary.relative_to(tmp_path)
+    )
+    assert (
+        next_goal_run_worktree_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_run_worktree_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_worktree_run = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_worktree_run.status == 200
+    assert "Today Completed Goal Provenance" not in today_after_next_goal_worktree_run.body
+    assert (
+        "today_command_primary_action</dt><dd>Open review"
+        in today_after_next_goal_worktree_run.body
+    )
+    assert "action='/actions/review-run'" in today_after_next_goal_worktree_run.body
+    next_coder_runs = list_coder_worktree_runs(tmp_path, delegation_id=next_goal_delegation.id)
+    assert len(next_coder_runs) == 1
+    next_coder_run = next_coder_runs[0]
+    assert (
+        f"name='run_id' value='{next_coder_run.id}'"
+        in today_after_next_goal_worktree_run.body
+    )
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_next_goal_worktree_run.body
+    )
+    assert (
+        f"<a href='/artifacts?path={next_coder_worktree_summary.relative_to(tmp_path)}'>"
+        in today_after_next_goal_worktree_run.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_worktree_run.body
+
+    resume_after_next_goal_worktree_run = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_worktree_run.status == 200
+    assert "Resume Completed Goal Provenance" not in resume_after_next_goal_worktree_run.body
+    assert (
+        "resume_return_brief_next_action</dt><dd>Open review"
+        in resume_after_next_goal_worktree_run.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Open review"
+        in resume_after_next_goal_worktree_run.body
+    )
+    assert "action='/actions/review-run'" in resume_after_next_goal_worktree_run.body
+    assert (
+        f"name='run_id' value='{next_coder_run.id}'"
+        in resume_after_next_goal_worktree_run.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in resume_after_next_goal_worktree_run.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_coder_worktree_summary.relative_to(tmp_path)}'>"
+        in resume_after_next_goal_worktree_run.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_worktree_run.body
+
+    successor_goal_after_worktree_run = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_worktree_run.status == 200
+    assert (
+        "completed_goal_provenance_history_status</dt><dd>available"
+        in successor_goal_after_worktree_run.body
+    )
+    assert (
+        "goal_artifact_reader_selected_artifact</dt><dd>approved_coder_worktree_run_summary"
+        in successor_goal_after_worktree_run.body
+    )
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_coder_worktree_summary.relative_to(tmp_path)}"
+        in successor_goal_after_worktree_run.body
+    )
+    assert "recommended_action</dt><dd>Open review" in successor_goal_after_worktree_run.body
+    assert "completed-goal-provenance.md" in successor_goal_after_worktree_run.body
+
+    next_goal_review_confirmation = render_local_app_route(
+        tmp_path,
+        "/actions/review-run",
+        method="POST",
+        form={
+            "run_id": [next_coder_run.id],
+            "return_to": ["/resume#resume-workbench-action-form"],
+        },
+    )
+    assert next_goal_review_confirmation.status == 409
+    assert "Confirm review-run" in next_goal_review_confirmation.body
+    assert "action_confirmation_label</dt><dd>Open review" in next_goal_review_confirmation.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_review_confirmation.body
+    )
+
+    next_goal_review_result = render_local_app_route(
+        tmp_path,
+        "/actions/review-run",
+        method="POST",
+        form={
+            "run_id": [next_coder_run.id],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_review_result.status == 200
+    assert "run_review:" in next_goal_review_result.body
+    assert (
+        "action_result_command_label</dt><dd>Open review"
+        in next_goal_review_result.body
+    )
+    assert (
+        "source_coder_worktree_run_summary</dt><dd><a href='/artifacts?path=.clanker/delegations/"
+        in next_goal_review_result.body
+    )
+    assert (
+        "source_coder_worktree_run_summary_consumed</dt><dd>true"
+        in next_goal_review_result.body
+    )
+    assert "source_coder_worktree_run_sha256</dt><dd>" in next_goal_review_result.body
+    assert "source_diff_sha256</dt><dd>" in next_goal_review_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Create commit request"
+        in next_goal_review_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_review_result.body
+    assert "action='/actions/coder-commit-request'" in next_goal_review_result.body
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_review_result.body
+    )
+
+    next_goal_review_path = tmp_path / "runs" / next_coder_run.source_run_id / "review.md"
+    assert next_goal_review_path.exists()
+    next_goal_review_text = next_goal_review_path.read_text(encoding="utf-8")
+    assert next_coder_run.id in next_goal_review_text
+    assert (
+        f"source_coder_worktree_run_summary: {next_coder_worktree_summary.relative_to(tmp_path)}"
+        in next_goal_review_text
+    )
+    assert "source_coder_worktree_run_summary_consumed: true" in next_goal_review_text
+    assert (
+        f"source_coder_worktree_run_sha256: {hashlib.sha256(next_coder_worktree_run_json.read_bytes()).hexdigest()}"
+        in next_goal_review_text
+    )
+    assert (
+        f"source_diff_sha256: {hashlib.sha256(next_coder_worktree_summary.with_name('diff.patch').read_bytes()).hexdigest()}"
+        in next_goal_review_text
+    )
+    next_goal_review_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_review_workspace["open_goal"] == next_goal_id
+    assert next_goal_review_workspace["updated_by"] == "review-run"
+    assert next_goal_review_workspace["last_viewed_artifact"] == str(
+        next_goal_review_path.relative_to(tmp_path)
+    )
+    assert (
+        next_goal_review_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_review_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_review = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_review.status == 200
+    assert "Today Completed Goal Provenance" not in today_after_next_goal_review.body
+    assert (
+        "today_command_primary_action</dt><dd>Create commit request"
+        in today_after_next_goal_review.body
+    )
+    assert "action='/actions/coder-commit-request'" in today_after_next_goal_review.body
+    assert (
+        f"name='run_id' value='{next_coder_run.id}'"
+        in today_after_next_goal_review.body
+    )
+    assert (
+        "name='return_to' value='/today#today-current-action'"
+        in today_after_next_goal_review.body
+    )
+    assert (
+        f"<a href='/artifacts?path={next_goal_review_path.relative_to(tmp_path)}'>"
+        in today_after_next_goal_review.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_review.body
+
+    resume_after_next_goal_review = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_review.status == 200
+    assert "Resume Completed Goal Provenance" not in resume_after_next_goal_review.body
+    assert (
+        "resume_return_brief_next_action</dt><dd>Create commit request"
+        in resume_after_next_goal_review.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Create commit request"
+        in resume_after_next_goal_review.body
+    )
+    assert "action='/actions/coder-commit-request'" in resume_after_next_goal_review.body
+    assert (
+        f"name='run_id' value='{next_coder_run.id}'"
+        in resume_after_next_goal_review.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in resume_after_next_goal_review.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_review_path.relative_to(tmp_path)}'>"
+        in resume_after_next_goal_review.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_review.body
+
+    successor_goal_after_review = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_review.status == 200
+    assert (
+        "completed_goal_provenance_history_status</dt><dd>available"
+        in successor_goal_after_review.body
+    )
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_goal_review_path.relative_to(tmp_path)}"
+        in successor_goal_after_review.body
+    )
+    assert "goal_artifact_reader_selected_source</dt><dd>coder_run" in successor_goal_after_review.body
+    assert "recommended_action</dt><dd>Create commit request" in successor_goal_after_review.body
+    assert "action='/actions/coder-commit-request'" in successor_goal_after_review.body
+    assert "completed-goal-provenance.md" in successor_goal_after_review.body
+
+    next_goal_commit_message = "Implement successor bounded change from approved worktree run"
+    next_goal_commit_request_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-commit-request",
+        method="POST",
+        form={
+            "run_id": [next_coder_run.id],
+            "message": [next_goal_commit_message],
+            "note": ["Successor commit request from resume"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_commit_request_result.status == 200
+    assert "coder_commit_request:" in next_goal_commit_request_result.body
+    assert (
+        "action_result_command_label</dt><dd>Create commit request"
+        in next_goal_commit_request_result.body
+    )
+    assert (
+        "source_review</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_review_path.relative_to(tmp_path)}'>"
+        in next_goal_commit_request_result.body
+    )
+    assert (
+        f"source_review_sha256</dt><dd>{hashlib.sha256(next_goal_review_path.read_bytes()).hexdigest()}"
+        in next_goal_commit_request_result.body
+    )
+    assert (
+        "source_review_markdown_consumed</dt><dd>true"
+        in next_goal_commit_request_result.body
+    )
+    assert (
+        "source_coder_worktree_run_summary_consumed</dt><dd>true"
+        in next_goal_commit_request_result.body
+    )
+    assert "source_diff_sha256</dt><dd>" in next_goal_commit_request_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Approve commit"
+        in next_goal_commit_request_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_commit_request_result.body
+    assert (
+        "action='/actions/approve-coder-commit'"
+        in next_goal_commit_request_result.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_commit_request_result.body
+    )
+
+    next_goal_commit_approvals = [
+        item
+        for item in list_coder_worktree_commit_approvals(
+            tmp_path,
+            status="pending_operator_approval",
+            limit=20,
+        )
+        if item.run_id == next_coder_run.id
+    ]
+    assert len(next_goal_commit_approvals) == 1
+    next_goal_commit_approval = next_goal_commit_approvals[0]
+    next_goal_commit_request_payload = json.loads(
+        (tmp_path / next_goal_commit_approval.request_artifact_path).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert next_goal_commit_request_payload["source_review"] == str(
+        next_goal_review_path.relative_to(tmp_path)
+    )
+    assert next_goal_commit_request_payload["source_review_sha256"] == hashlib.sha256(
+        next_goal_review_path.read_bytes()
+    ).hexdigest()
+    assert next_goal_commit_request_payload["source_review_markdown_consumed"] is True
+    assert (
+        next_goal_commit_request_payload["source_coder_worktree_run_summary_consumed"]
+        is True
+    )
+    assert next_goal_commit_request_payload["source_delegation_run_id"] == next_coder_run.source_run_id
+
+    next_goal_commit_request_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_commit_request_workspace["open_goal"] == next_goal_id
+    assert next_goal_commit_request_workspace["updated_by"] == "coder-commit-request"
+    assert (
+        next_goal_commit_request_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_commit_request_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_commit_request = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_commit_request.status == 200
+    assert (
+        "today_command_primary_action</dt><dd>Approve commit"
+        in today_after_next_goal_commit_request.body
+    )
+    assert "action='/actions/approve-coder-commit'" in today_after_next_goal_commit_request.body
+    assert (
+        f"name='approval_id' value='{next_goal_commit_approval.id}'"
+        in today_after_next_goal_commit_request.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_commit_request.body
+
+    resume_after_next_goal_commit_request = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_commit_request.status == 200
+    assert (
+        "resume_return_brief_next_action</dt><dd>Approve commit"
+        in resume_after_next_goal_commit_request.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Approve commit"
+        in resume_after_next_goal_commit_request.body
+    )
+    assert "action='/actions/approve-coder-commit'" in resume_after_next_goal_commit_request.body
+    assert (
+        f"name='approval_id' value='{next_goal_commit_approval.id}'"
+        in resume_after_next_goal_commit_request.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={Path(next_goal_commit_approval.request_artifact_path).with_suffix('.md')}'>"
+        in resume_after_next_goal_commit_request.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_commit_request.body
+
+    successor_goal_after_commit_request = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_commit_request.status == 200
+    assert (
+        "completed_goal_provenance_history_status</dt><dd>available"
+        in successor_goal_after_commit_request.body
+    )
+    assert "recommended_action</dt><dd>Approve commit" in successor_goal_after_commit_request.body
+    assert "action='/actions/approve-coder-commit'" in successor_goal_after_commit_request.body
+    assert "completed-goal-provenance.md" in successor_goal_after_commit_request.body
+
+    next_goal_commit_decision_result = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-commit",
+        method="POST",
+        form={
+            "approval_id": [next_goal_commit_approval.id],
+            "note": ["Approve successor local commit"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_commit_decision_result.status == 200
+    assert "approved_coder_commit:" in next_goal_commit_decision_result.body
+    assert (
+        "action_result_command_label</dt><dd>Approve commit"
+        in next_goal_commit_decision_result.body
+    )
+    next_goal_request_json = (
+        tmp_path
+        / next_goal_commit_approval.source_run_evidence_path
+        / "coder_commit"
+        / f"{next_goal_commit_approval.id}_coder_commit_request.json"
+    )
+    next_goal_request_md = next_goal_request_json.with_suffix(".md")
+    assert (
+        "source_coder_commit_request</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_request_json.relative_to(tmp_path)}'>"
+        in next_goal_commit_decision_result.body
+    )
+    assert (
+        "source_coder_commit_request_md</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_request_md.relative_to(tmp_path)}'>"
+        in next_goal_commit_decision_result.body
+    )
+    assert (
+        f"source_commit_request_md_sha256</dt><dd>{hashlib.sha256(next_goal_request_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in next_goal_commit_decision_result.body
+    )
+    assert (
+        "source_coder_commit_request_markdown_consumed</dt><dd>true"
+        in next_goal_commit_decision_result.body
+    )
+    assert "commit_created</dt><dd>false" in next_goal_commit_decision_result.body
+    assert "network_actions_taken</dt><dd>0" in next_goal_commit_decision_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Commit approved worktree"
+        in next_goal_commit_decision_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_commit_decision_result.body
+    assert (
+        "action='/actions/commit-coder-worktree'"
+        in next_goal_commit_decision_result.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_commit_decision_result.body
+    )
+
+    next_goal_decision_json = next_goal_request_json.with_name(
+        "coder_commit_decision.json"
+    )
+    next_goal_decision_payload = json.loads(
+        next_goal_decision_json.read_text(encoding="utf-8")
+    )
+    assert next_goal_decision_payload["source_coder_commit_request"] == str(
+        next_goal_request_json.relative_to(tmp_path)
+    )
+    assert next_goal_decision_payload["source_coder_commit_request_md"] == str(
+        next_goal_request_md.relative_to(tmp_path)
+    )
+    assert next_goal_decision_payload["source_commit_request_md_sha256"] == hashlib.sha256(
+        next_goal_request_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert (
+        next_goal_decision_payload["source_coder_commit_request_markdown_consumed"]
+        is True
+    )
+    assert next_goal_decision_payload["commit_created"] is False
+
+    next_goal_commit_decision_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_commit_decision_workspace["open_goal"] == next_goal_id
+    assert next_goal_commit_decision_workspace["updated_by"] == "approve-coder-commit"
+    assert (
+        next_goal_commit_decision_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_commit_decision_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_commit_decision = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_commit_decision.status == 200
+    assert (
+        "today_command_primary_action</dt><dd>Commit approved worktree"
+        in today_after_next_goal_commit_decision.body
+    )
+    assert "action='/actions/commit-coder-worktree'" in today_after_next_goal_commit_decision.body
+    assert "completed-goal-provenance.md" in today_after_next_goal_commit_decision.body
+
+    resume_after_next_goal_commit_decision = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_commit_decision.status == 200
+    assert (
+        "resume_return_brief_next_action</dt><dd>Commit approved worktree"
+        in resume_after_next_goal_commit_decision.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Commit approved worktree"
+        in resume_after_next_goal_commit_decision.body
+    )
+    assert "action='/actions/commit-coder-worktree'" in resume_after_next_goal_commit_decision.body
+    assert "completed-goal-provenance.md" in resume_after_next_goal_commit_decision.body
+
+    successor_goal_after_commit_decision = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_commit_decision.status == 200
+    assert (
+        "completed_goal_provenance_history_status</dt><dd>available"
+        in successor_goal_after_commit_decision.body
+    )
+    assert (
+        "recommended_action</dt><dd>Commit approved worktree"
+        in successor_goal_after_commit_decision.body
+    )
+    assert "action='/actions/commit-coder-worktree'" in successor_goal_after_commit_decision.body
+    assert "completed-goal-provenance.md" in successor_goal_after_commit_decision.body
+
+    next_goal_local_commit_result = render_local_app_route(
+        tmp_path,
+        "/actions/commit-coder-worktree",
+        method="POST",
+        form={
+            "run_id": [next_coder_run.id],
+            "message": [next_goal_commit_message],
+            "committed_by": ["operator"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_local_commit_result.status == 200
+    assert "commit_coder_worktree: committed" in next_goal_local_commit_result.body
+    assert (
+        "action_result_command_label</dt><dd>Commit approved worktree"
+        in next_goal_local_commit_result.body
+    )
+    next_goal_decision_md = next_goal_decision_json.with_suffix(".md")
+    assert (
+        "source_coder_commit_decision</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_decision_json.relative_to(tmp_path)}'>"
+        in next_goal_local_commit_result.body
+    )
+    assert (
+        "source_coder_commit_decision_md</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_decision_md.relative_to(tmp_path)}'>"
+        in next_goal_local_commit_result.body
+    )
+    assert (
+        f"source_commit_decision_md_sha256</dt><dd>{hashlib.sha256(next_goal_decision_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in next_goal_local_commit_result.body
+    )
+    assert (
+        "source_coder_commit_decision_markdown_consumed</dt><dd>true"
+        in next_goal_local_commit_result.body
+    )
+    assert "commit_created</dt><dd>true" in next_goal_local_commit_result.body
+    assert "push_created</dt><dd>false" in next_goal_local_commit_result.body
+    assert "pr_created</dt><dd>false" in next_goal_local_commit_result.body
+    assert "deploy_created</dt><dd>false" in next_goal_local_commit_result.body
+    assert "network_actions_taken</dt><dd>0" in next_goal_local_commit_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Create publication request"
+        in next_goal_local_commit_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_local_commit_result.body
+    assert (
+        "action='/actions/coder-publication-request'"
+        in next_goal_local_commit_result.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_local_commit_result.body
+    )
+
+    next_goal_commit_json = next_goal_decision_json.with_name("commit.json")
+    next_goal_commit_md = next_goal_commit_json.with_suffix(".md")
+    next_goal_commit_payload = json.loads(
+        next_goal_commit_json.read_text(encoding="utf-8")
+    )
+    assert next_goal_commit_payload["source_coder_commit_decision"] == str(
+        next_goal_decision_json.relative_to(tmp_path)
+    )
+    assert next_goal_commit_payload["source_coder_commit_decision_md"] == str(
+        next_goal_decision_md.relative_to(tmp_path)
+    )
+    assert next_goal_commit_payload["source_commit_decision_md_sha256"] == hashlib.sha256(
+        next_goal_decision_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert (
+        next_goal_commit_payload["source_coder_commit_decision_markdown_consumed"]
+        is True
+    )
+    assert next_goal_commit_payload["commit_created"] is True
+    assert next_goal_commit_payload["push_created"] is False
+    assert next_goal_commit_md.exists()
+
+    next_goal_local_commit_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
+    )
+    assert next_goal_local_commit_workspace["open_goal"] == next_goal_id
+    assert next_goal_local_commit_workspace["updated_by"] == "commit-coder-worktree"
+    assert next_goal_local_commit_workspace["last_viewed_artifact"] == str(
+        next_goal_commit_md.relative_to(tmp_path)
+    )
+    assert (
+        next_goal_local_commit_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert next_goal_local_commit_workspace["completed_goal_handoff_source_goal"] == ""
+
+    today_after_next_goal_local_commit = render_local_app_route(tmp_path, "/today")
+    assert today_after_next_goal_local_commit.status == 200
+    assert (
+        "today_command_primary_action</dt><dd>Create publication request"
+        in today_after_next_goal_local_commit.body
+    )
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Create publication request</a>"
+    ) in today_after_next_goal_local_commit.body
+    assert "action='/actions/coder-publication-request'" in today_after_next_goal_local_commit.body
+    assert f"name='run_id' value='{next_coder_run.id}'" in today_after_next_goal_local_commit.body
+    assert (
+        f"<a href='/artifacts?path={next_goal_commit_md.relative_to(tmp_path)}'>"
+        in today_after_next_goal_local_commit.body
+    )
+    assert (
+        f"source_commit_md_sha256</dt><dd>{hashlib.sha256(next_goal_commit_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in today_after_next_goal_local_commit.body
+    )
+    assert (
+        "source_coder_commit_markdown_consumed</dt><dd>true"
+        in today_after_next_goal_local_commit.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_local_commit.body
+
+    resume_after_next_goal_local_commit = render_local_app_route(tmp_path, "/resume")
+    assert resume_after_next_goal_local_commit.status == 200
+    assert (
+        "resume_return_brief_next_action</dt><dd>Create publication request"
+        in resume_after_next_goal_local_commit.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Create publication request"
+        in resume_after_next_goal_local_commit.body
+    )
+    assert "action='/actions/coder-publication-request'" in resume_after_next_goal_local_commit.body
+    assert f"name='run_id' value='{next_coder_run.id}'" in resume_after_next_goal_local_commit.body
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_commit_md.relative_to(tmp_path)}'>"
+        in resume_after_next_goal_local_commit.body
+    )
+    assert (
+        f"source_commit_md_sha256</dt><dd>{hashlib.sha256(next_goal_commit_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in resume_after_next_goal_local_commit.body
+    )
+    assert (
+        "source_coder_commit_markdown_consumed</dt><dd>true"
+        in resume_after_next_goal_local_commit.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_local_commit.body
+
+    successor_goal_after_local_commit = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_local_commit.status == 200
+    assert (
+        "completed_goal_provenance_history_status</dt><dd>available"
+        in successor_goal_after_local_commit.body
+    )
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_goal_commit_md.relative_to(tmp_path)}"
+        in successor_goal_after_local_commit.body
+    )
+    assert (
+        "recommended_action</dt><dd>Create publication request"
+        in successor_goal_after_local_commit.body
+    )
+    assert "action='/actions/coder-publication-request'" in successor_goal_after_local_commit.body
+    assert (
+        f"source_commit_md_sha256</dt><dd>{hashlib.sha256(next_goal_commit_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in successor_goal_after_local_commit.body
+    )
+    assert (
+        "source_coder_commit_markdown_consumed</dt><dd>true"
+        in successor_goal_after_local_commit.body
+    )
+    assert "completed-goal-provenance.md" in successor_goal_after_local_commit.body
+
+    next_goal_publication_request_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-publication-request",
+        method="POST",
+        form={
+            "run_id": [next_coder_run.id],
+            "remote": ["origin"],
+            "target_branch": ["main"],
+            "note": ["Request successor publication from Resume"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "requested_by": ["operator"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_publication_request_result.status == 200
+    assert "coder_publication_request:" in next_goal_publication_request_result.body
+    assert (
+        "action_result_command_label</dt><dd>Create publication request"
+        in next_goal_publication_request_result.body
+    )
+    assert (
+        "source_coder_commit</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_commit_json.relative_to(tmp_path)}'>"
+        in next_goal_publication_request_result.body
+    )
+    assert (
+        "source_coder_commit_md</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_commit_md.relative_to(tmp_path)}'>"
+        in next_goal_publication_request_result.body
+    )
+    assert (
+        f"source_commit_md_sha256</dt><dd>{hashlib.sha256(next_goal_commit_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in next_goal_publication_request_result.body
+    )
+    assert (
+        "source_coder_commit_markdown_consumed</dt><dd>true"
+        in next_goal_publication_request_result.body
+    )
+    assert "push_created</dt><dd>false" in next_goal_publication_request_result.body
+    assert "pr_created</dt><dd>false" in next_goal_publication_request_result.body
+    assert "network_actions_taken</dt><dd>0" in next_goal_publication_request_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Approve publication"
+        in next_goal_publication_request_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_publication_request_result.body
+    assert (
+        "action='/actions/approve-coder-publication'"
+        in next_goal_publication_request_result.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_publication_request_result.body
+    )
+
+    next_goal_publication = next(
+        item
+        for item in list_coder_publications(
+            tmp_path,
+            status="pending_operator_approval",
+            limit=20,
+        )
+        if item.run_id == next_coder_run.id
+    )
+    next_goal_publication_request_md = (
+        tmp_path / Path(next_goal_publication.request_artifact_path).with_suffix(".md")
+    )
+    assert next_goal_publication_request_md.exists()
+    next_goal_publication_payload = json.loads(
+        next_goal_publication_request_md.with_suffix(".json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert next_goal_publication_payload["source_coder_commit"] == str(
+        next_goal_commit_json.relative_to(tmp_path)
+    )
+    assert next_goal_publication_payload["source_coder_commit_md"] == str(
+        next_goal_commit_md.relative_to(tmp_path)
+    )
+    assert next_goal_publication_payload["source_commit_md_sha256"] == hashlib.sha256(
+        next_goal_commit_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert (
+        next_goal_publication_payload["source_coder_commit_markdown_consumed"]
+        is True
+    )
+    next_goal_publication_request_text = next_goal_publication_request_md.read_text(
+        encoding="utf-8"
+    )
+    assert (
+        f"- source_coder_commit_md: {next_goal_commit_md.relative_to(tmp_path)}"
+        in next_goal_publication_request_text
+    )
+    assert (
+        "- source_coder_commit_markdown_consumed: true"
+        in next_goal_publication_request_text
+    )
+    next_goal_publication_request_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert next_goal_publication_request_workspace["open_goal"] == next_goal_id
+    assert (
+        next_goal_publication_request_workspace["updated_by"]
+        == "coder-publication-request"
+    )
+    assert next_goal_publication_request_workspace["last_viewed_artifact"] == str(
+        next_goal_publication_request_md.relative_to(tmp_path)
+    )
+    assert (
+        next_goal_publication_request_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+    assert (
+        next_goal_publication_request_workspace["completed_goal_handoff_source_goal"]
+        == ""
+    )
+
+    today_after_next_goal_publication_request = render_local_app_route(
+        tmp_path,
+        "/today",
+    )
+    assert today_after_next_goal_publication_request.status == 200
+    assert (
+        "today_command_primary_action</dt><dd>Approve publication"
+        in today_after_next_goal_publication_request.body
+    )
+    assert (
+        "today_command_primary_surface</dt><dd>"
+        "<a href='#today-current-action'>Approve publication</a>"
+        in today_after_next_goal_publication_request.body
+    )
+    assert (
+        "action='/actions/approve-coder-publication'"
+        in today_after_next_goal_publication_request.body
+    )
+    assert (
+        f"name='publication_id' value='{next_goal_publication.id}'"
+        in today_after_next_goal_publication_request.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_publication_request.body
+
+    resume_after_next_goal_publication_request = render_local_app_route(
+        tmp_path,
+        "/resume",
+    )
+    assert resume_after_next_goal_publication_request.status == 200
+    assert (
+        "resume_return_brief_next_action</dt><dd>Approve publication"
+        in resume_after_next_goal_publication_request.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Approve publication"
+        in resume_after_next_goal_publication_request.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_publication_request_md.relative_to(tmp_path)}'>"
+        in resume_after_next_goal_publication_request.body
+    )
+    assert (
+        "action='/actions/approve-coder-publication'"
+        in resume_after_next_goal_publication_request.body
+    )
+    assert (
+        f"name='publication_id' value='{next_goal_publication.id}'"
+        in resume_after_next_goal_publication_request.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_publication_request.body
+
+    successor_goal_after_publication_request = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_publication_request.status == 200
+    assert (
+        "completed_goal_provenance_history_status</dt><dd>available"
+        in successor_goal_after_publication_request.body
+    )
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_goal_publication_request_md.relative_to(tmp_path)}"
+        in successor_goal_after_publication_request.body
+    )
+    assert (
+        "recommended_action</dt><dd>Approve publication"
+        in successor_goal_after_publication_request.body
+    )
+    assert (
+        "action='/actions/approve-coder-publication'"
+        in successor_goal_after_publication_request.body
+    )
+    assert "completed-goal-provenance.md" in successor_goal_after_publication_request.body
+
+    next_goal_publication_request_md_sha = hashlib.sha256(
+        next_goal_publication_request_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    next_goal_publication_approval_result = render_local_app_route(
+        tmp_path,
+        "/actions/approve-coder-publication",
+        method="POST",
+        form={
+            "publication_id": [next_goal_publication.id],
+            "note": ["Approve successor publication from Resume"],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "decided_by": ["operator"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_publication_approval_result.status == 200
+    assert "approved_coder_publication:" in next_goal_publication_approval_result.body
+    assert (
+        "action_result_command_label</dt><dd>Approve publication"
+        in next_goal_publication_approval_result.body
+    )
+    assert (
+        "source_coder_publication_request</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_publication_request_md.with_suffix('.json').relative_to(tmp_path)}'>"
+        in next_goal_publication_approval_result.body
+    )
+    assert (
+        "source_coder_publication_request_md</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_publication_request_md.relative_to(tmp_path)}'>"
+        in next_goal_publication_approval_result.body
+    )
+    assert (
+        f"source_publication_request_md_sha256</dt><dd>{next_goal_publication_request_md_sha}"
+        in next_goal_publication_approval_result.body
+    )
+    assert (
+        "source_coder_publication_request_markdown_consumed</dt><dd>true"
+        in next_goal_publication_approval_result.body
+    )
+    assert "push_created</dt><dd>false" in next_goal_publication_approval_result.body
+    assert "pr_created</dt><dd>false" in next_goal_publication_approval_result.body
+    assert "network_actions_taken</dt><dd>0" in next_goal_publication_approval_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Create publication handoff"
+        in next_goal_publication_approval_result.body
+    )
+    assert "id='action-result-next-step-form'" in next_goal_publication_approval_result.body
+    assert (
+        "action='/actions/coder-publication-handoff'"
+        in next_goal_publication_approval_result.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_publication_approval_result.body
+    )
+
+    next_goal_approved_publication = next(
+        item
+        for item in list_coder_publications(
+            tmp_path,
+            status="approved",
+            limit=20,
+        )
+        if item.run_id == next_coder_run.id
+    )
+    next_goal_publication_decision_md = (
+        tmp_path / Path(next_goal_approved_publication.decision_artifact_path).with_suffix(".md")
+    )
+    assert next_goal_publication_decision_md.exists()
+    next_goal_publication_decision_md_sha = hashlib.sha256(
+        next_goal_publication_decision_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    next_goal_publication_decision_payload = json.loads(
+        next_goal_publication_decision_md.with_suffix(".json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert next_goal_publication_decision_payload["source_coder_publication_request"] == str(
+        next_goal_publication_request_md.with_suffix(".json").relative_to(tmp_path)
+    )
+    assert next_goal_publication_decision_payload["source_coder_publication_request_md"] == str(
+        next_goal_publication_request_md.relative_to(tmp_path)
+    )
+    assert (
+        next_goal_publication_decision_payload["source_publication_request_md_sha256"]
+        == next_goal_publication_request_md_sha
+    )
+    assert (
+        next_goal_publication_decision_payload[
+            "source_coder_publication_request_markdown_consumed"
+        ]
+        is True
+    )
+    next_goal_publication_decision_text = (
+        next_goal_publication_decision_md.read_text(encoding="utf-8")
+    )
+    assert (
+        f"- source_coder_publication_request_md: {next_goal_publication_request_md.relative_to(tmp_path)}"
+        in next_goal_publication_decision_text
+    )
+    assert (
+        "- source_coder_publication_request_markdown_consumed: true"
+        in next_goal_publication_decision_text
+    )
+
+    next_goal_publication_approval_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert next_goal_publication_approval_workspace["open_goal"] == next_goal_id
+    assert (
+        next_goal_publication_approval_workspace["updated_by"]
+        == "approve-coder-publication"
+    )
+    assert next_goal_publication_approval_workspace["last_viewed_artifact"] == str(
+        next_goal_publication_decision_md.relative_to(tmp_path)
+    )
+    assert (
+        next_goal_publication_approval_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+
+    today_after_next_goal_publication_approval = render_local_app_route(
+        tmp_path,
+        "/today",
+    )
+    assert today_after_next_goal_publication_approval.status == 200
+    assert (
+        "today_command_primary_action</dt><dd>Create publication handoff"
+        in today_after_next_goal_publication_approval.body
+    )
+    assert (
+        "action='/actions/coder-publication-handoff'"
+        in today_after_next_goal_publication_approval.body
+    )
+    assert (
+        f"name='run_id' value='{next_coder_run.id}'"
+        in today_after_next_goal_publication_approval.body
+    )
+    assert (
+        f"source_publication_request_md_sha256</dt><dd>{next_goal_publication_request_md_sha}"
+        in today_after_next_goal_publication_approval.body
+    )
+    assert (
+        "source_coder_publication_request_markdown_consumed</dt><dd>true"
+        in today_after_next_goal_publication_approval.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_publication_approval.body
+
+    resume_after_next_goal_publication_approval = render_local_app_route(
+        tmp_path,
+        "/resume",
+    )
+    assert resume_after_next_goal_publication_approval.status == 200
+    assert (
+        "resume_return_brief_next_action</dt><dd>Create publication handoff"
+        in resume_after_next_goal_publication_approval.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Create publication handoff"
+        in resume_after_next_goal_publication_approval.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_publication_decision_md.relative_to(tmp_path)}'>"
+        in resume_after_next_goal_publication_approval.body
+    )
+    assert (
+        "action='/actions/coder-publication-handoff'"
+        in resume_after_next_goal_publication_approval.body
+    )
+    assert (
+        f"name='run_id' value='{next_coder_run.id}'"
+        in resume_after_next_goal_publication_approval.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_publication_approval.body
+
+    successor_goal_after_publication_approval = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_publication_approval.status == 200
+    assert (
+        "completed_goal_provenance_history_status</dt><dd>available"
+        in successor_goal_after_publication_approval.body
+    )
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_goal_publication_decision_md.relative_to(tmp_path)}"
+        in successor_goal_after_publication_approval.body
+    )
+    assert (
+        "recommended_action</dt><dd>Create publication handoff"
+        in successor_goal_after_publication_approval.body
+    )
+    assert (
+        "action='/actions/coder-publication-handoff'"
+        in successor_goal_after_publication_approval.body
+    )
+    assert "completed-goal-provenance.md" in successor_goal_after_publication_approval.body
+
+    next_goal_publication_handoff_result = render_local_app_route(
+        tmp_path,
+        "/actions/coder-publication-handoff",
+        method="POST",
+        form={
+            "run_id": [next_coder_run.id],
+            "return_to": ["/resume#resume-workbench-action-form"],
+            "confirm": ["yes"],
+        },
+    )
+    assert next_goal_publication_handoff_result.status == 200
+    assert "coder_publication_handoff:" in next_goal_publication_handoff_result.body
+    assert (
+        "action_result_command_label</dt><dd>Prepare publication handoff"
+        in next_goal_publication_handoff_result.body
+    )
+    assert (
+        "source_coder_publication_decision_md</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_publication_decision_md.relative_to(tmp_path)}'>"
+        in next_goal_publication_handoff_result.body
+    )
+    assert (
+        f"source_publication_decision_md_sha256</dt><dd>{next_goal_publication_decision_md_sha}"
+        in next_goal_publication_handoff_result.body
+    )
+    assert (
+        "source_coder_publication_decision_markdown_consumed</dt><dd>true"
+        in next_goal_publication_handoff_result.body
+    )
+    assert "push_created</dt><dd>false" in next_goal_publication_handoff_result.body
+    assert "pr_created</dt><dd>false" in next_goal_publication_handoff_result.body
+    assert "network_actions_taken</dt><dd>0" in next_goal_publication_handoff_result.body
+    assert (
+        "action_result_next_step_next_action</dt><dd>Manual publish outside ClankerOS"
+        in next_goal_publication_handoff_result.body
+    )
+    assert (
+        "name='return_to' value='/resume#resume-workbench-action-form'"
+        in next_goal_publication_handoff_result.body
+    )
+
+    next_goal_ready_publication = next(
+        item
+        for item in list_coder_publications(
+            tmp_path,
+            status="ready_for_operator",
+            limit=20,
+        )
+        if item.run_id == next_coder_run.id
+    )
+    next_goal_publication_handoff_md = (
+        tmp_path / Path(next_goal_ready_publication.handoff_artifact_path).with_suffix(".md")
+    )
+    assert next_goal_publication_handoff_md.exists()
+    assert (next_goal_publication_handoff_md.parent / "pr_body.md").exists()
+    next_goal_handoff_payload = json.loads(
+        next_goal_publication_handoff_md.with_suffix(".json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert next_goal_handoff_payload["source_coder_publication_decision_md"] == str(
+        next_goal_publication_decision_md.relative_to(tmp_path)
+    )
+    assert (
+        next_goal_handoff_payload["source_publication_decision_md_sha256"]
+        == next_goal_publication_decision_md_sha
+    )
+    assert (
+        next_goal_handoff_payload[
+            "source_coder_publication_decision_markdown_consumed"
+        ]
+        is True
+    )
+    next_goal_publication_handoff_text = next_goal_publication_handoff_md.read_text(
+        encoding="utf-8"
+    )
+    assert (
+        f"- source_coder_publication_decision_md: {next_goal_publication_decision_md.relative_to(tmp_path)}"
+        in next_goal_publication_handoff_text
+    )
+    assert (
+        "- source_coder_publication_decision_markdown_consumed: true"
+        in next_goal_publication_handoff_text
+    )
+
+    next_goal_publication_handoff_workspace = json.loads(
+        (tmp_path / ".clanker" / "app" / "workspace.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert next_goal_publication_handoff_workspace["open_goal"] == next_goal_id
+    assert (
+        next_goal_publication_handoff_workspace["updated_by"]
+        == "coder-publication-handoff"
+    )
+    assert next_goal_publication_handoff_workspace["last_viewed_artifact"] == str(
+        next_goal_publication_handoff_md.relative_to(tmp_path)
+    )
+    assert (
+        next_goal_publication_handoff_workspace["resume_surface"]
+        == "/resume#resume-workbench-action-form"
+    )
+
+    today_after_next_goal_publication_handoff = render_local_app_route(
+        tmp_path,
+        "/today",
+    )
+    assert today_after_next_goal_publication_handoff.status == 200
+    assert (
+        "today_command_primary_action</dt><dd>Manual publish outside ClankerOS"
+        in today_after_next_goal_publication_handoff.body
+    )
+    assert "Manual Publish Boundary" in today_after_next_goal_publication_handoff.body
+    assert "Publication Handoff Commands" in today_after_next_goal_publication_handoff.body
+    assert (
+        f"source_coder_publication_decision_md: <a href='/artifacts?path={next_goal_publication_decision_md.relative_to(tmp_path)}'>"
+        in today_after_next_goal_publication_handoff.body
+    )
+    assert (
+        f"source_publication_decision_md_sha256: {next_goal_publication_decision_md_sha}"
+        in today_after_next_goal_publication_handoff.body
+    )
+    assert (
+        "source_coder_publication_decision_markdown_consumed: true"
+        in today_after_next_goal_publication_handoff.body
+    )
+    assert "completed-goal-provenance.md" in today_after_next_goal_publication_handoff.body
+
+    resume_after_next_goal_publication_handoff = render_local_app_route(
+        tmp_path,
+        "/resume",
+    )
+    assert resume_after_next_goal_publication_handoff.status == 200
+    assert (
+        "resume_return_brief_next_action</dt><dd>Manual publish outside ClankerOS"
+        in resume_after_next_goal_publication_handoff.body
+    )
+    assert (
+        "resume_workbench_next_action</dt><dd>Manual publish outside ClankerOS"
+        in resume_after_next_goal_publication_handoff.body
+    )
+    assert (
+        "resume_workbench_last_artifact</dt><dd>"
+        f"<a href='/artifacts?path={next_goal_publication_handoff_md.relative_to(tmp_path)}'>"
+        in resume_after_next_goal_publication_handoff.body
+    )
+    assert "Manual Publish Boundary" in resume_after_next_goal_publication_handoff.body
+    assert (
+        f"source_publication_decision_md_sha256: {next_goal_publication_decision_md_sha}"
+        in resume_after_next_goal_publication_handoff.body
+    )
+    assert "completed-goal-provenance.md" in resume_after_next_goal_publication_handoff.body
+
+    successor_goal_after_publication_handoff = render_local_app_route(
+        tmp_path,
+        f"/goals/{next_goal_id}",
+    )
+    assert successor_goal_after_publication_handoff.status == 200
+    assert (
+        "goal_artifact_reader_selected_path</dt><dd>"
+        f"{next_goal_publication_handoff_md.relative_to(tmp_path)}"
+        in successor_goal_after_publication_handoff.body
+    )
+    assert (
+        "recommended_action</dt><dd>Manual publish outside ClankerOS"
+        in successor_goal_after_publication_handoff.body
+    )
+    assert "Manual Publish Boundary" in successor_goal_after_publication_handoff.body
+    assert "completed-goal-provenance.md" in successor_goal_after_publication_handoff.body
 
 
 def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> None:
@@ -11294,7 +16142,14 @@ def test_first_run_browser_actions_persist_resume_workspace(tmp_path: Path) -> N
         "action_continuation_home_target</dt><dd><a href='/#first-run-create-goal'>"
         "Create First Goal</a>"
     ) in register_result.body
-    assert "action_continuation_today_target</dt><dd><a href='/today#first-run-create-goal'>/today</a>" in register_result.body
+    assert (
+        "action_continuation_today_target</dt><dd><a href='/today#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in register_result.body
+    assert (
+        "action_continuation_today: <a href='/today#first-run-create-goal'>"
+        "Create First Goal</a>"
+    ) in register_result.body
     assert "action_continuation_project</dt><dd>clankeros" in register_result.body
     assert "action_continuation_saved_project</dt><dd>clankeros" in register_result.body
     assert "action_continuation_saved_goal</dt><dd>none" in register_result.body
@@ -15322,7 +20177,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
         "Goal Next action: Create commit request - Demo the ClankerOS local operator app"
     ) in goal.body
     assert (
-        f"href='/goals/{result.goal_id}#goal-artifacts'>Goal Artifacts: 22/22 available - "
+        f"href='/goals/{result.goal_id}#goal-artifacts'>Goal Artifacts: 27/27 available - "
         "Demo the ClankerOS local operator app"
     ) in goal.body
     assert (
@@ -15357,7 +20212,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     ) in goal.body
     assert (
         "palette_goal_section_command: Artifacts "
-        "label=Goal Artifacts: 22/22 available - "
+        "label=Goal Artifacts: 27/27 available - "
         "Demo the ClankerOS local operator app with fixture-backed state "
         f"surface=<a href='/goals/{result.goal_id}#goal-artifacts'>"
         "goal-artifacts</a>"
@@ -15910,9 +20765,9 @@ def test_local_app_demo_scenario_populates_fixture_state(
         in goal.body
     )
     assert "goal_review_evidence_items</dt><dd>" in goal.body
-    assert "goal_review_artifact_records</dt><dd>22" in goal.body
+    assert "goal_review_artifact_records</dt><dd>27" in goal.body
     assert "goal_review_proof_items</dt><dd>" in goal.body
-    assert "goal_review_available_artifacts</dt><dd>22" in goal.body
+    assert "goal_review_available_artifacts</dt><dd>27" in goal.body
     assert "goal_review_missing_artifacts</dt><dd>0" in goal.body
     assert "goal_review_latest_artifact</dt><dd>CI snapshot proof demo-goal-ci" in goal.body
     assert "goal_review_latest_artifact_kind</dt><dd>json" in goal.body
@@ -17820,19 +22675,19 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-artifact-list='true'" in goal.body
     assert "<a href='#goal-artifact-command-bar'>Artifact command</a>" in goal.body
     assert "Goal artifact command evidence" in goal.body
-    assert "Detailed artifact list (22)" in goal.body
+    assert "Detailed artifact list (27)" in goal.body
     assert f"goal_artifact_command_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_artifact_command_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_artifact_command_status</dt><dd>available" in goal.body
-    assert "goal_artifact_command_items</dt><dd>22" in goal.body
-    assert "goal_artifact_command_records</dt><dd>22" in goal.body
-    assert "goal_artifact_command_available_records</dt><dd>22" in goal.body
+    assert "goal_artifact_command_items</dt><dd>27" in goal.body
+    assert "goal_artifact_command_records</dt><dd>27" in goal.body
+    assert "goal_artifact_command_available_records</dt><dd>27" in goal.body
     assert "goal_artifact_command_missing_records</dt><dd>0" in goal.body
-    assert "goal_artifact_command_markdown_artifacts</dt><dd>5" in goal.body
-    assert "goal_artifact_command_json_artifacts</dt><dd>11" in goal.body
+    assert "goal_artifact_command_markdown_artifacts</dt><dd>8" in goal.body
+    assert "goal_artifact_command_json_artifacts</dt><dd>13" in goal.body
     assert "goal_artifact_command_patch_artifacts</dt><dd>1" in goal.body
     assert "goal_artifact_command_text_artifacts</dt><dd>5" in goal.body
-    assert "goal_artifact_command_sources</dt><dd>ci_snapshot_evidence:1, coder_prep:3, coder_run:10, delegation:1, delegation_metadata:4, worktree_plan:3" in goal.body
+    assert "goal_artifact_command_sources</dt><dd>ci_snapshot_evidence:1, coder_prep:3, coder_run:11, delegation:1, delegation_metadata:4, worktree_approval:4, worktree_plan:3" in goal.body
     assert "goal_artifact_command_latest_artifact</dt><dd>CI snapshot proof demo-goal-ci" in goal.body
     assert "goal_artifact_command_latest_kind</dt><dd>json" in goal.body
     assert "goal_artifact_command_latest_source</dt><dd>ci_snapshot_evidence" in goal.body
@@ -17881,7 +22736,7 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-artifact-filter-memory='true'" in goal.body
     assert "data-goal-artifact-filter-view-status='true'>View: default</span>" in goal.body
     assert "data-goal-artifact-filter-reset='true'>Reset filter</button>" in goal.body
-    assert "data-goal-artifact-filter-status='true'>Showing 22 of 22 artifacts.</p>" in goal.body
+    assert "data-goal-artifact-filter-status='true'>Showing 27 of 27 artifacts.</p>" in goal.body
     assert "data-goal-artifact-filter-empty='true' hidden" in goal.body
     assert "data-goal-artifact-filter-evidence='true'" in goal.body
     assert "Goal Artifact Reader" in goal.body
@@ -17908,13 +22763,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "data-goal-artifact-reader-previews='true'" in goal.body
     assert (
         goal.body.count("<article class='goal-artifact-preview' data-goal-artifact-preview='true'")
-        == 22
+        == 27
     )
     assert f"goal_artifact_reader_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_artifact_reader_project</dt><dd>{result.project_id}" in goal.body
     assert "goal_artifact_reader_status</dt><dd>available" in goal.body
-    assert "goal_artifact_reader_total_records</dt><dd>22" in goal.body
-    assert "goal_artifact_reader_preview_records</dt><dd>22" in goal.body
+    assert "goal_artifact_reader_total_records</dt><dd>27" in goal.body
+    assert "goal_artifact_reader_preview_records</dt><dd>27" in goal.body
     assert "goal_artifact_reader_selected_artifact</dt><dd>CI snapshot proof demo-goal-ci" in goal.body
     assert f"goal_artifact_reader_selected_path</dt><dd>{ci_evidence_relative}" in goal.body
     assert "review.md" in goal.body
@@ -17969,13 +22824,13 @@ def test_local_app_demo_scenario_populates_fixture_state(
     assert "goal_artifact_filter_scope</dt><dd>browser_local_rendered_artifacts" in goal.body
     assert f"goal_artifact_filter_goal</dt><dd>{result.goal_id}" in goal.body
     assert f"goal_artifact_filter_project</dt><dd>{result.project_id}" in goal.body
-    assert "goal_artifact_filter_total_records</dt><dd>22" in goal.body
-    assert "goal_artifact_filter_markdown_artifacts</dt><dd>5" in goal.body
-    assert "goal_artifact_filter_json_artifacts</dt><dd>11" in goal.body
+    assert "goal_artifact_filter_total_records</dt><dd>27" in goal.body
+    assert "goal_artifact_filter_markdown_artifacts</dt><dd>8" in goal.body
+    assert "goal_artifact_filter_json_artifacts</dt><dd>13" in goal.body
     assert "goal_artifact_filter_patch_artifacts</dt><dd>1" in goal.body
     assert "goal_artifact_filter_text_artifacts</dt><dd>5" in goal.body
-    assert "goal_artifact_filter_sources</dt><dd>ci_snapshot_evidence=1, coder_prep=3, coder_run=10, delegation=1, delegation_metadata=4, worktree_plan=3" in goal.body
-    assert "goal_artifact_filter_source_count</dt><dd>6" in goal.body
+    assert "goal_artifact_filter_sources</dt><dd>ci_snapshot_evidence=1, coder_prep=3, coder_run=11, delegation=1, delegation_metadata=4, worktree_approval=4, worktree_plan=3" in goal.body
+    assert "goal_artifact_filter_source_count</dt><dd>7" in goal.body
     assert "goal_artifact_filter_source</dt><dd>data-goal-artifact-item" in goal.body
     assert "goal_artifact_filter_persistence</dt><dd>browser_local_view_memory" in goal.body
     assert (
@@ -22664,7 +27519,7 @@ def test_goal_next_action_card_exposes_reviewed_commit_request_form(
     assert before_review.status == 200
     assert "recommended_action</dt><dd>Open review" in before_review.body
     assert "next_action_form_available</dt><dd>true" in before_review.body
-    assert "Create Review" in before_review.body
+    assert "Open Review" in before_review.body
     assert "action='/actions/review-run'" in before_review.body
     assert f"name='run_id' value='{run_id}'" in before_review.body
     assert f"coder_worktree_run</dt><dd>{run_id}" in before_review.body
@@ -22834,6 +27689,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "action='/actions/approve-coder-commit'" in pending_commit_goal.body
     assert f"name='approval_id' value='{commit_approval.id}'" in pending_commit_goal.body
     commit_goal_form = _goal_approve_commit_form(
+        tmp_path,
         {"goal": goal_record, "commit_approvals": [commit_approval]}
     )
     assert (
@@ -22980,6 +27836,7 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         if item.run_id == run_id
     )
     publication_request_goal_form = _goal_publication_request_form(
+        tmp_path,
         {"goal": goal_record, "commit_approvals": [committed_commit_approval]}
     )
     assert (
@@ -23051,7 +27908,26 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "Approve Publication" in pending_publication_goal.body
     assert "action='/actions/approve-coder-publication'" in pending_publication_goal.body
     assert f"name='publication_id' value='{publication.id}'" in pending_publication_goal.body
+    assert (
+        "publication_request_md</dt><dd>"
+        f"<a href='/artifacts?path={publication_request_md.relative_to(tmp_path)}'>"
+        in pending_publication_goal.body
+    )
+    assert (
+        "source_coder_commit_md</dt><dd>"
+        f"<a href='/artifacts?path={commit_md.relative_to(tmp_path)}'>"
+        in pending_publication_goal.body
+    )
+    assert (
+        f"source_commit_md_sha256</dt><dd>{hashlib.sha256(commit_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in pending_publication_goal.body
+    )
+    assert (
+        "source_coder_commit_markdown_consumed</dt><dd>true"
+        in pending_publication_goal.body
+    )
     publication_goal_form = _goal_approve_publication_form(
+        tmp_path,
         {"goal": goal_record, "publications": [publication]}
     )
     assert (
@@ -23082,6 +27958,19 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "data-action-result-form-draft-cleanup='true'" in approve_publication.body
     assert "data-action-result-form-draft-action='approve-coder-publication'" in approve_publication.body
     assert (
+        "source_coder_publication_request_md</dt><dd>"
+        f"<a href='/artifacts?path={publication_request_md.relative_to(tmp_path)}'>"
+        in approve_publication.body
+    )
+    assert (
+        f"source_publication_request_md_sha256</dt><dd>{hashlib.sha256(publication_request_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in approve_publication.body
+    )
+    assert (
+        "source_coder_publication_request_markdown_consumed</dt><dd>true"
+        in approve_publication.body
+    )
+    assert (
         f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
         in approve_publication.body
     )
@@ -23099,6 +27988,9 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         approved_publication.decision_artifact_path
     ).with_suffix(".md")
     assert publication_decision_md.exists()
+    publication_decision_md_sha = hashlib.sha256(
+        publication_decision_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
     publication_decision_workspace = json.loads(
         (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
     )
@@ -23114,7 +28006,17 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "Create Publication Handoff" in approved_publication_goal.body
     assert "action='/actions/coder-publication-handoff'" in approved_publication_goal.body
     assert f"name='run_id' value='{run_id}'" in approved_publication_goal.body
+    assert (
+        "source_coder_publication_request_md</dt><dd>"
+        f"<a href='/artifacts?path={publication_request_md.relative_to(tmp_path)}'>"
+        in approved_publication_goal.body
+    )
+    assert (
+        "source_coder_publication_request_markdown_consumed</dt><dd>true"
+        in approved_publication_goal.body
+    )
     publication_handoff_goal_form = _goal_publication_handoff_form(
+        tmp_path,
         {"goal": goal_record, "publications": [approved_publication]}
     )
     assert (
@@ -23136,6 +28038,19 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     )
     assert publication_handoff.status == 200
     assert (
+        "source_coder_publication_decision_md</dt><dd>"
+        f"<a href='/artifacts?path={publication_decision_md.relative_to(tmp_path)}'>"
+        in publication_handoff.body
+    )
+    assert (
+        f"source_publication_decision_md_sha256</dt><dd>{publication_decision_md_sha}"
+        in publication_handoff.body
+    )
+    assert (
+        "source_coder_publication_decision_markdown_consumed</dt><dd>true"
+        in publication_handoff.body
+    )
+    assert (
         f"action_result_next_step_next_page</dt><dd><a href='/goals/{goal_id}?notice="
         in publication_handoff.body
     )
@@ -23149,6 +28064,12 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
         ready_publication.handoff_artifact_path
     ).with_suffix(".md")
     assert publication_handoff_md.exists()
+    publication_handoff_json_sha = hashlib.sha256(
+        (tmp_path / ready_publication.handoff_artifact_path).read_bytes()
+    ).hexdigest()
+    publication_handoff_md_sha = hashlib.sha256(
+        publication_handoff_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
     publication_handoff_workspace = json.loads(
         (tmp_path / ".clanker" / "app" / "workspace.json").read_text(encoding="utf-8")
     )
@@ -23164,6 +28085,18 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "recommended_action</dt><dd>Manual publish outside ClankerOS" in manual_publish_goal.body
     assert "Manual Publish Boundary" in manual_publish_goal.body
     assert "Publication Handoff Commands" in manual_publish_goal.body
+    assert (
+        f"source_coder_publication_decision_md: <a href='/artifacts?path={publication_decision_md.relative_to(tmp_path)}'>"
+        in manual_publish_goal.body
+    )
+    assert f"source_publication_decision_md_sha256: {publication_decision_md_sha}" in manual_publish_goal.body
+    assert "source_coder_publication_decision_markdown_consumed: true" in manual_publish_goal.body
+    assert (
+        f"source_coder_publication_handoff_md: <a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in manual_publish_goal.body
+    )
+    assert f"source_publication_handoff_md_sha256: {publication_handoff_md_sha}" in manual_publish_goal.body
+    assert "source_coder_publication_handoff_markdown_consumed: true" in manual_publish_goal.body
     assert "manual_boundary: outside_clankeros" in manual_publish_goal.body
     assert "copy_only: true" in manual_publish_goal.body
     assert "Goal Completion Readiness" in manual_publish_goal.body
@@ -23171,6 +28104,20 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "completion_readiness_reason</dt><dd>publication_handoff_ready_manual_publish_boundary" in manual_publish_goal.body
     assert "completion_readiness_current_gate</dt><dd>manual_publish" in manual_publish_goal.body
     assert "completion_readiness_publication_handoff_ready</dt><dd>true" in manual_publish_goal.body
+    assert "completion_readiness_proof_status</dt><dd>ready" in manual_publish_goal.body
+    assert (
+        "completion_readiness_source_coder_publication_handoff_md</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in manual_publish_goal.body
+    )
+    assert (
+        f"completion_readiness_source_publication_handoff_md_sha256</dt><dd>{publication_handoff_md_sha}"
+        in manual_publish_goal.body
+    )
+    assert (
+        "completion_readiness_source_coder_publication_handoff_markdown_consumed</dt><dd>true"
+        in manual_publish_goal.body
+    )
     assert "completion_readiness_complete_goal_form_available</dt><dd>true" in manual_publish_goal.body
     assert "completion_readiness_next_action</dt><dd>Complete goal after manual publish" in manual_publish_goal.body
     assert "completion_readiness_target_surface</dt><dd><a href='#goal-complete-goal-action'>Complete Goal</a>" in manual_publish_goal.body
@@ -23270,6 +28217,34 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert complete_confirmation.status == 409
     assert "Confirm complete-goal" in complete_confirmation.body
 
+    original_publication_handoff_md = publication_handoff_md.read_text(encoding="utf-8")
+    publication_handoff_md.write_text(
+        original_publication_handoff_md.replace(
+            "- suggested_push_command:",
+            "- suggested_push_command_tampered:",
+            1,
+        ),
+        encoding="utf-8",
+    )
+    blocked_complete_response = render_local_app_route(
+        tmp_path,
+        "/actions/complete-goal",
+        method="POST",
+        form={
+            "goal_id": [goal_id],
+            "completed_by": ["operator"],
+            "note": ["Manual publication finished outside ClankerOS"],
+            "confirm": ["yes"],
+        },
+    )
+    assert blocked_complete_response.status == 400
+    assert (
+        "publication handoff markdown proof does not match handoff payload"
+        in blocked_complete_response.body
+    )
+    assert storage.get_goal(goal_id).status != "completed"
+    publication_handoff_md.write_text(original_publication_handoff_md, encoding="utf-8")
+
     complete_response = render_local_app_route(
         tmp_path,
         "/actions/complete-goal",
@@ -23283,6 +28258,25 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     )
     assert complete_response.status == 200
     assert "goal_completed:" in complete_response.body
+    assert (
+        "source_coder_publication_handoff_md</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in complete_response.body
+    )
+    assert f"source_publication_handoff_sha256</dt><dd>{publication_handoff_json_sha}" in complete_response.body
+    assert f"source_publication_handoff_md_sha256</dt><dd>{publication_handoff_md_sha}" in complete_response.body
+    assert "source_coder_publication_handoff_markdown_consumed</dt><dd>true" in complete_response.body
+    completion_json = tmp_path / ".clanker" / "projects" / "subject" / "goals" / goal_id / "completion.json"
+    completion_md = completion_json.with_suffix(".md")
+    assert completion_json.exists()
+    assert completion_md.exists()
+    completion_payload = json.loads(completion_json.read_text(encoding="utf-8"))
+    assert completion_payload["source_coder_publication_handoff_md"] == str(
+        publication_handoff_md.relative_to(tmp_path)
+    )
+    assert completion_payload["source_publication_handoff_sha256"] == publication_handoff_json_sha
+    assert completion_payload["source_publication_handoff_md_sha256"] == publication_handoff_md_sha
+    assert completion_payload["source_coder_publication_handoff_markdown_consumed"] is True
     assert "data-action-result-form-draft-cleanup='true'" in complete_response.body
     assert "data-action-result-form-draft-action='complete-goal'" in complete_response.body
     assert (
@@ -23308,6 +28302,8 @@ def test_goal_next_action_card_exposes_commit_publication_gate_forms(
     assert "recommended_action</dt><dd>Review completed goal evidence" in completed_goal.body
     assert "completion_readiness_status</dt><dd>completed" in completed_goal.body
     assert "completion_readiness_next_action</dt><dd>Review completed goal evidence" in completed_goal.body
+    assert "goal completion evidence markdown" in completed_goal.body
+    assert f"<a href='/artifacts?path={completion_md.relative_to(tmp_path)}'>" in completed_goal.body
 
     goals_after_completion = render_local_app_route(tmp_path, "/goals")
     assert goals_after_completion.status == 200
@@ -23392,6 +28388,104 @@ def test_today_and_home_prefer_clankeros_goal_over_demo_fixture(
     assert "profiles_workbench_resume_source</dt><dd>clankeros_project_goal" in profiles.body
     assert f"profiles_workbench_resume_goal</dt><dd>{clankeros_goal_id}" in profiles.body
     assert "profiles_workbench_resume_project</dt><dd>clankeros" in profiles.body
+
+
+def test_goal_surfaces_expose_stale_goal_hygiene_without_losing_real_focus(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    real_goal_id = storage.create_goal(
+        "clankeros",
+        "Use ClankerOS from shipped main tomorrow with the daily-use browser app.",
+    )
+    stale_context_goal_id = storage.create_goal(
+        "clankeros",
+        "Demo context-pack repo scouting before edits",
+    )
+    stale_demo_goal_id = storage.create_goal(
+        "local-app-demo",
+        "Demo the ClankerOS local operator app with fixture-backed state",
+    )
+    stale_paused_goal_id = storage.create_goal(
+        "clankeros",
+        "Demo context pack cleanup before edits",
+    )
+    storage.set_goal_status(stale_paused_goal_id, "paused")
+    workspace_path = tmp_path / ".clanker" / "app" / "workspace.json"
+    workspace_path.parent.mkdir(parents=True, exist_ok=True)
+    workspace_path.write_text(
+        json.dumps(
+            {
+                "open_project": "clankeros",
+                "open_goal": stale_context_goal_id,
+                "filters": "",
+                "expanded_panels": "",
+                "last_viewed_artifact": "",
+                "resume_surface": f"/goals/{stale_context_goal_id}",
+                "updated_by": "test-fixture",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    today = render_local_app_route(tmp_path, "/today")
+    assert today.status == 200
+    assert "today_lead_goal_source</dt><dd>clankeros_project_goal" in today.body
+    assert f"today_lead_goal</dt><dd>{real_goal_id}" in today.body
+    assert "data-today-stale-goal-hygiene='true'" in today.body
+    assert "today_stale_goal_hygiene_status</dt><dd>attention_needed" in today.body
+    assert "today_stale_goal_hygiene_candidates</dt><dd>3" in today.body
+    assert "today_stale_goal_hygiene_active_candidates</dt><dd>2" in today.body
+    assert "today_stale_goal_hygiene_paused_candidates</dt><dd>1" in today.body
+    assert f"today_stale_goal_hygiene_lead_goal_protected</dt><dd>{real_goal_id}" in today.body
+    assert (
+        "today_stale_goal_hygiene_primary_surface</dt><dd>"
+        "<a href='/goals#goal-stale-hygiene'>/goals#goal-stale-hygiene</a>"
+    ) in today.body
+    assert (
+        "today_stale_goal_hygiene_archive_status</dt><dd>"
+        "not_supported_for_goals_evidence_retained"
+    ) in today.body
+    assert "today_stale_goal_hygiene_write_on_get</dt><dd>false" in today.body
+    assert "today_stale_goal_hygiene_network_actions_taken</dt><dd>0" in today.body
+    assert "today_stale_goal_hygiene_external_effects_created</dt><dd>false" in today.body
+    assert stale_context_goal_id in today.body
+    assert stale_demo_goal_id in today.body
+    assert stale_paused_goal_id in today.body
+
+    goals = render_local_app_route(tmp_path, "/goals")
+    assert goals.status == 200
+    assert "goal_board_workbench_source</dt><dd>clankeros_project_goal_selector_hygiene" in goals.body
+    assert f"goal_board_workbench_selected_goal</dt><dd><a href='/goals/{real_goal_id}'" in goals.body
+    assert "goal_board_priority_source</dt><dd>clankeros_project_goal_selector_hygiene" in goals.body
+    assert f"goal_board_primary_goal</dt><dd><a href='/goals/{real_goal_id}'" in goals.body
+    assert "data-goal-stale-hygiene='true'" in goals.body
+    assert goals.body.count("data-goal-stale-hygiene-card='true'") == 3
+    assert "goal_stale_hygiene_status</dt><dd>attention_needed" in goals.body
+    assert "goal_stale_hygiene_candidates</dt><dd>3" in goals.body
+    assert "goal_stale_hygiene_active_candidates</dt><dd>2" in goals.body
+    assert "goal_stale_hygiene_paused_candidates</dt><dd>1" in goals.body
+    assert "goal_stale_hygiene_pause_path</dt><dd>existing_confirmed_pause_goal_action" in goals.body
+    assert (
+        "goal_stale_hygiene_complete_path</dt><dd>"
+        "goal_completion_readiness_when_publication_handoff_ready"
+    ) in goals.body
+    assert (
+        "goal_stale_hygiene_archive_status</dt><dd>"
+        "not_supported_for_goals_evidence_retained"
+    ) in goals.body
+    assert "goal_stale_hygiene_write_on_get</dt><dd>false" in goals.body
+    assert "goal_stale_hygiene_network_actions_taken</dt><dd>0" in goals.body
+    assert "goal_stale_hygiene_external_effects_created</dt><dd>false" in goals.body
+    assert "fixture_demo_goal" in goals.body
+    assert "context_pack_demo_goal" in goals.body
+    assert "mutation_path=confirmed_pause_goal" in goals.body
+    assert "mutation_path=resume_on_goal_detail" in goals.body
+    assert "Pause stale Goal" in goals.body
+    assert "action='/actions/pause-goal'" in goals.body
 
 
 def test_artifact_index_prefers_real_goal_artifacts_over_demo_noise(
@@ -23758,6 +28852,122 @@ def test_local_app_cli_commands_and_bind_safety(
     else:
         raise AssertionError("expected non-local bind to be rejected")
     validate_bind_host("0.0.0.0", allow_nonlocal_bind=True)
+
+
+def test_local_app_fresh_user_no_docs_golden_path_smoke(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    direct_root = tmp_path / "direct"
+    smoke = run_local_app_golden_path_smoke_test(direct_root)
+    assert smoke["status"] == "passed"
+    assert smoke["project_id"] == "golden-path"
+    assert smoke["goal_id"].startswith("goal_")
+    assert smoke["delegation_id"].startswith("subagent_delegation_")
+    assert smoke["proof_artifact"].endswith("/implementation_handoff.md")
+    assert (direct_root / smoke["proof_artifact"]).exists()
+    assert smoke["proof_exists"] is True
+    assert smoke["workspace_resume_surface"] == "/today#today-current-action"
+    assert smoke["workspace_ok"] is True
+    assert smoke["network_actions_taken"] == 0
+    assert smoke["external_mutations_taken"] == 0
+    assert [check["name"] for check in smoke["checks"]] == [
+        "open-home",
+        "open-today-first-run",
+        "confirm-create-project",
+        "create-project",
+        "confirm-create-goal",
+        "create-goal",
+        "open-today-create-action",
+        "confirm-next-action",
+        "do-next-action",
+        "confirm-context-pack",
+        "create-context-pack",
+        "confirm-proof-run",
+        "run-proof",
+        "check-proof-artifact",
+        "confirm-finish-today",
+        "finish-today",
+        "resume-tomorrow",
+    ]
+    assert all(check["passed"] for check in smoke["checks"])
+
+    cli_root = tmp_path / "cli"
+    assert main(["--root", str(cli_root), "app-golden-path-smoke-test"]) == 0
+    output = capsys.readouterr().out
+    assert "app_golden_path_smoke_test: passed" in output
+    assert "project_id: golden-path" in output
+    assert "goal_id: goal_" in output
+    assert "delegation_id: subagent_delegation_" in output
+    assert "proof_artifact: .clanker/delegations/" in output
+    assert "implementation_handoff.md" in output
+    assert "proof_exists: true" in output
+    assert "workspace_resume_surface: /today#today-current-action" in output
+    assert "workspace_ok: true" in output
+    assert "check resume-tomorrow: 200 expected_status=200 snippets=matched" in output
+    assert "snippets=missing" not in output
+    assert "network_actions_taken: 0" in output
+    assert "external_mutations_taken: 0" in output
+
+
+def test_operator_first_viewports_show_goal_phase_action_proof_finish_resume(
+    tmp_path: Path,
+) -> None:
+    smoke = run_local_app_golden_path_smoke_test(tmp_path)
+    assert smoke["status"] == "passed"
+
+    def assert_first_viewport(body: str, prefix: str, later_marker: str) -> None:
+        strip_marker = f"data-{prefix}-first-viewport='true'"
+        assert strip_marker in body
+        strip_start = body.index(strip_marker)
+        assert strip_start < body.index(later_marker)
+        for key, label in [
+            ("goal", "Goal"),
+            ("phase", "Phase"),
+            ("next-action", "Next Action"),
+            ("proof", "Proof"),
+            ("finish", "Finish"),
+            ("resume", "Resume"),
+        ]:
+            card_marker = f"data-{prefix}-first-viewport-card='{key}'"
+            assert card_marker in body[strip_start:]
+            card_start = body.index(card_marker, strip_start)
+            assert f"<h3>{label}</h3>" in body[card_start : card_start + 500]
+        assert (
+            f"{prefix}_first_viewport_order: "
+            "Goal -> Phase -> Next Action -> Proof -> Finish -> Resume"
+        ) in body
+        assert f"{prefix}_first_viewport_write_on_get</dt><dd>false" in body
+        assert f"{prefix}_first_viewport_network_actions_taken</dt><dd>0" in body
+        assert f"{prefix}_first_viewport_external_effects_created</dt><dd>false" in body
+
+    today = render_local_app_route(tmp_path, "/today")
+    assert today.status == 200
+    assert_first_viewport(today.body, "today", "data-today-command-actions='true'")
+    assert "today_first_viewport_goal</dt><dd><a href='/goals/" in today.body
+    assert "today_first_viewport_phase</dt><dd>Coder prep" in today.body
+    assert "today_first_viewport_next_action</dt><dd>Run coder prep" in today.body
+    assert "today_first_viewport_proof_status</dt><dd>latest_artifact_available" in today.body
+    assert "today_first_viewport_finish_status</dt><dd>ready" in today.body
+    assert "today_first_viewport_resume_status</dt><dd>ready" in today.body
+
+    resume = render_local_app_route(tmp_path, "/resume")
+    assert resume.status == 200
+    assert_first_viewport(resume.body, "resume", "data-resume-command-evidence='true'")
+    assert "resume_first_viewport_goal</dt><dd><a href='/goals/" in resume.body
+    assert "resume_first_viewport_phase</dt><dd>Coder prep" in resume.body
+    assert "resume_first_viewport_next_action</dt><dd>Run coder prep" in resume.body
+    assert "resume_first_viewport_proof_status</dt><dd>saved_artifact_available" in resume.body
+    assert "resume_first_viewport_finish_status</dt><dd>ready_to_update" in resume.body
+
+    goal = render_local_app_route(tmp_path, f"/goals/{smoke['goal_id']}")
+    assert goal.status == 200
+    assert_first_viewport(goal.body, "goal", "data-goal-control-strip='true'")
+    assert "goal_first_viewport_goal</dt><dd><a href='/goals/" in goal.body
+    assert "goal_first_viewport_phase</dt><dd>Coder prep" in goal.body
+    assert "goal_first_viewport_next_action</dt><dd>Run coder prep" in goal.body
+    assert "goal_first_viewport_finish_status</dt><dd>saved" in goal.body
+    assert "goal_first_viewport_resume_status</dt><dd>ready" in goal.body
 
 
 def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
@@ -24160,6 +29370,44 @@ def test_coder_worktree_approval_and_run_capture_bounded_evidence(
     assert "agent_os/delegation_runner.py" in request_payload["allowed_files"]
     assert (request_artifact.parent / "coder_worktree_approval_request.md").exists()
 
+    legacy_request_payload = dict(request_payload)
+    legacy_request_payload.pop("source_coder_worktree_plan_md", None)
+    legacy_request_payload.pop("source_plan_md_sha256", None)
+    legacy_request_payload.pop("source_coder_worktree_plan_markdown_consumed", None)
+    request_artifact.write_text(
+        json.dumps(legacy_request_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-worktree-approval",
+                delegation_id,
+                "--requested-by",
+                "operator",
+                "--note",
+                "Approve bounded worktree execution",
+            ]
+        )
+        == 0
+    )
+    duplicate_output = capsys.readouterr().out
+    assert "coder_worktree_approval: already_recorded" not in duplicate_output
+    replacement_approval_id = next(
+        line.split(": ", 1)[1]
+        for line in duplicate_output.splitlines()
+        if line.startswith("approval_id: ")
+    )
+    assert replacement_approval_id != approval_id
+    approval_id = replacement_approval_id
+    request_payload = json.loads(request_artifact.read_text(encoding="utf-8"))
+    assert request_payload["source_coder_worktree_plan_md"]
+    assert request_payload["source_plan_md_sha256"]
+    assert request_payload["source_coder_worktree_plan_markdown_consumed"] is True
+
     assert (
         main(
             [
@@ -24213,6 +29461,8 @@ def test_coder_worktree_approval_and_run_capture_bounded_evidence(
     decision_output = capsys.readouterr().out
     assert f"approved_coder_worktree: {approval_id}" in decision_output
     assert "status: approved" in decision_output
+    assert "source_coder_worktree_approval_request: .clanker/delegations/" in decision_output
+    assert "source_coder_worktree_approval_request_md: .clanker/delegations/" in decision_output
     assert "worktrees_created: 0" in decision_output
     decision_artifact = tmp_path / next(
         line.split(": ", 1)[1]
@@ -24222,6 +29472,25 @@ def test_coder_worktree_approval_and_run_capture_bounded_evidence(
     decision_payload = json.loads(decision_artifact.read_text(encoding="utf-8"))
     assert decision_payload["kind"] == "coder_worktree_execution_approval_decision"
     assert decision_payload["status"] == "approved"
+    assert decision_payload["source_coder_worktree_approval_request"] == str(
+        request_artifact.relative_to(tmp_path)
+    )
+    assert decision_payload["source_coder_worktree_approval_request_md"] == str(
+        request_artifact.with_suffix(".md").relative_to(tmp_path)
+    )
+    assert decision_payload["source_approval_request_sha256"] == hashlib.sha256(
+        request_artifact.read_bytes()
+    ).hexdigest()
+    assert decision_payload["source_approval_request_md_sha256"] == hashlib.sha256(
+        request_artifact.with_suffix(".md").read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert decision_payload["source_coder_worktree_approval_request_markdown_consumed"] is True
+    assert decision_payload["worktrees_created"] == 0
+    assert decision_payload["source_edits_taken"] == 0
+    assert decision_payload["commands_run"] == 0
+    assert decision_payload["provider_calls_taken_by_clankeros"] == 0
+    assert decision_payload["network_actions_taken"] == 0
+    assert decision_payload["external_mutations_taken"] == 0
 
     assert (
         main(
@@ -24259,6 +29528,11 @@ def test_coder_worktree_approval_and_run_capture_bounded_evidence(
     assert "coder_worktree_run: completed" in run_output
     assert f"approval_id: {approval_id}" in run_output
     assert "changed_files_within_allowed_files: true" in run_output
+    assert "source_coder_worktree_approval_decision: .clanker/delegations/" in run_output
+    assert "source_coder_worktree_approval_decision_md: .clanker/delegations/" in run_output
+    assert "source_coder_worktree_approval_decision_markdown_consumed: true" in run_output
+    assert "source_approval_decision_sha256: " in run_output
+    assert "source_approval_decision_md_sha256: " in run_output
     assert "commit_created: false" in run_output
     assert "push_created: false" in run_output
     assert "provider_calls_taken_by_clankeros: 0" in run_output
@@ -24278,6 +29552,19 @@ def test_coder_worktree_approval_and_run_capture_bounded_evidence(
     assert run_payload["status"] == "completed"
     assert run_payload["approval_status"] == "approved"
     assert run_payload["source_delegation_run_id"] == source_run_id
+    assert run_payload["source_coder_worktree_approval_decision"] == str(
+        decision_artifact.relative_to(tmp_path)
+    )
+    assert run_payload["source_coder_worktree_approval_decision_md"] == str(
+        decision_artifact.with_suffix(".md").relative_to(tmp_path)
+    )
+    assert run_payload["source_approval_decision_sha256"] == hashlib.sha256(
+        decision_artifact.read_bytes()
+    ).hexdigest()
+    assert run_payload["source_approval_decision_md_sha256"] == hashlib.sha256(
+        decision_artifact.with_suffix(".md").read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert run_payload["source_coder_worktree_approval_decision_markdown_consumed"] is True
     assert run_payload["command_exit_code"] == 0
     assert run_payload["verification_exit_code"] == 0
     assert run_payload["commit_created"] is False
@@ -24300,7 +29587,13 @@ def test_coder_worktree_approval_and_run_capture_bounded_evidence(
     assert bounded["outside_allowed_files"] == []
     assert json.loads((evidence_dir / "approval.json").read_text(encoding="utf-8"))["id"] == approval_id
     assert json.loads((evidence_dir / "source_plan.json").read_text(encoding="utf-8"))["kind"] == "coder_worktree_run_plan"
-    assert "review_coder_worktree_run" in (evidence_dir / "summary.md").read_text(encoding="utf-8")
+    run_summary_text = (evidence_dir / "summary.md").read_text(encoding="utf-8")
+    assert (
+        f"- source_coder_worktree_approval_decision_md: {decision_artifact.with_suffix('.md').relative_to(tmp_path)}"
+        in run_summary_text
+    )
+    assert "- source_coder_worktree_approval_decision_markdown_consumed: true" in run_summary_text
+    assert "review_coder_worktree_run" in run_summary_text
     assert subprocess.run(
         ["git", "status", "--short"],
         cwd=repo_path,
@@ -24330,7 +29623,29 @@ def test_coder_worktree_approval_and_run_capture_bounded_evidence(
     assert "changed_files_within_allowed_files: true" in review
     assert "changed_files_count: 1" in review
     assert "diff_summary: files:1,added:2,deleted:0" in review
-    assert "diff.patch" in review
+    assert f"source_coder_worktree_run: {evidence_dir.relative_to(tmp_path)}" in review
+    assert (
+        f"source_coder_worktree_run_json: {(evidence_dir / 'run.json').relative_to(tmp_path)}"
+        in review
+    )
+    assert (
+        f"source_coder_worktree_run_sha256: {hashlib.sha256((evidence_dir / 'run.json').read_bytes()).hexdigest()}"
+        in review
+    )
+    assert (
+        f"source_coder_worktree_run_summary: {(evidence_dir / 'summary.md').relative_to(tmp_path)}"
+        in review
+    )
+    assert (
+        f"source_coder_worktree_run_summary_sha256: {hashlib.sha256((evidence_dir / 'summary.md').read_bytes()).hexdigest()}"
+        in review
+    )
+    assert "source_coder_worktree_run_summary_consumed: true" in review
+    assert f"source_diff: {(evidence_dir / 'diff.patch').relative_to(tmp_path)}" in review
+    assert (
+        f"source_diff_sha256: {hashlib.sha256((evidence_dir / 'diff.patch').read_bytes()).hexdigest()}"
+        in review
+    )
 
     dashboard = generate_static_dashboard(tmp_path).read_text(encoding="utf-8")
     assert "### Coder Worktree Approvals" in dashboard
@@ -24341,6 +29656,8 @@ def test_coder_worktree_approval_and_run_capture_bounded_evidence(
     assert "changed_files=agent_os/delegation_runner.py" in dashboard
     assert "changed_files_count=1" in dashboard
     assert "diff_summary=files:1,added:2,deleted:0" in dashboard
+    assert f"source_run_summary={(evidence_dir / 'summary.md').relative_to(tmp_path)}" in dashboard
+    assert "source_run_summary_consumed_by_review=true" in dashboard
 
     assert main(["--root", str(tmp_path), "delegation-result", delegation_id]) == 0
     delegation_output = capsys.readouterr().out
@@ -24426,6 +29743,11 @@ def test_coder_worktree_commit_promotion_requires_review_and_is_idempotent(
     assert "coder_worktree_commit_approval: " in request_output
     assert f"run_id: {run_id}" in request_output
     assert "status: pending_operator_approval" in request_output
+    assert "source_coder_worktree_run_summary: .clanker/delegations/" in request_output
+    assert "source_coder_worktree_run_summary_consumed: true" in request_output
+    assert "source_review: runs/" in request_output
+    assert "source_review_sha256: " in request_output
+    assert "source_review_markdown_consumed: true" in request_output
     assert "commit_created: false" in request_output
     assert "push_created: false" in request_output
     assert "provider_calls_taken_by_clankeros: 0" in request_output
@@ -24446,8 +29768,59 @@ def test_coder_worktree_commit_promotion_requires_review_and_is_idempotent(
     assert request_payload["source_coder_worktree_run_sha256"]
     assert request_payload["source_diff_sha256"]
     assert request_payload["review_path"].endswith(f"runs/{source_run_id}/review.md")
+    review_path = tmp_path / "runs" / source_run_id / "review.md"
+    assert request_payload["source_review"] == str(review_path.relative_to(tmp_path))
+    assert request_payload["source_delegation_run_id"] == source_run_id
+    assert request_payload["source_coder_worktree_run"] == str(
+        evidence_dir.relative_to(tmp_path)
+    )
+    assert request_payload["source_coder_worktree_run_json"] == str(
+        (evidence_dir / "run.json").relative_to(tmp_path)
+    )
+    assert request_payload["source_coder_worktree_run_summary"] == str(
+        (evidence_dir / "summary.md").relative_to(tmp_path)
+    )
+    assert request_payload["source_coder_worktree_run_summary_sha256"] == hashlib.sha256(
+        (evidence_dir / "summary.md").read_bytes()
+    ).hexdigest()
+    assert request_payload["source_coder_worktree_run_summary_consumed"] is True
+    assert request_payload["source_diff"] == str(
+        (evidence_dir / "diff.patch").relative_to(tmp_path)
+    )
+    assert request_payload["source_review_sha256"] == hashlib.sha256(
+        review_path.read_bytes()
+    ).hexdigest()
+    assert request_payload["source_review_markdown_consumed"] is True
     assert "agent_os/delegation_runner.py" in request_payload["changed_files"]
-    assert (evidence_dir / "coder_worktree_commit_approval_request.md").exists()
+    request_markdown = (
+        evidence_dir / "coder_worktree_commit_approval_request.md"
+    ).read_text(encoding="utf-8")
+    assert f"- source_delegation_run_id: {source_run_id}" in request_markdown
+    assert f"- source_review: {review_path.relative_to(tmp_path)}" in request_markdown
+    assert "- source_review_markdown_consumed: true" in request_markdown
+    commit_request_alias = json.loads(
+        (evidence_dir / "coder_commit" / "coder_commit_request.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert commit_request_alias["source_delegation_run_id"] == source_run_id
+    assert commit_request_alias["source_review"] == str(review_path.relative_to(tmp_path))
+    assert commit_request_alias["source_review_sha256"] == request_payload["source_review_sha256"]
+    assert commit_request_alias["source_review_markdown_consumed"] is True
+    assert commit_request_alias["source_coder_worktree_run_summary"] == str(
+        (evidence_dir / "summary.md").relative_to(tmp_path)
+    )
+    assert commit_request_alias["source_coder_worktree_run_summary_consumed"] is True
+    commit_request_markdown = (
+        evidence_dir / "coder_commit" / "coder_commit_request.md"
+    ).read_text(encoding="utf-8")
+    assert f"- source_delegation_run_id: {source_run_id}" in commit_request_markdown
+    assert "- source_review_markdown_consumed: true" in commit_request_markdown
+
+    legacy_request_payload = dict(request_payload)
+    legacy_request_payload.pop("source_review", None)
+    legacy_request_payload.pop("source_review_markdown_consumed", None)
+    request_artifact.write_text(json.dumps(legacy_request_payload), encoding="utf-8")
 
     assert (
         main(
@@ -24466,6 +29839,12 @@ def test_coder_worktree_commit_promotion_requires_review_and_is_idempotent(
     )
     duplicate_output = capsys.readouterr().out
     assert f"coder_worktree_commit_approval: already_recorded {commit_approval_id}" in duplicate_output
+    assert "source_review_markdown_consumed: true" in duplicate_output
+    backfilled_request_payload = json.loads(request_artifact.read_text(encoding="utf-8"))
+    assert backfilled_request_payload["source_review"] == str(
+        review_path.relative_to(tmp_path)
+    )
+    assert backfilled_request_payload["source_review_markdown_consumed"] is True
 
     assert (
         main(
@@ -24909,6 +30288,8 @@ def test_coder_commit_request_alias_writes_coder_commit_artifacts_and_is_idempot
         if line.startswith("commit_request_id: ")
     )
     assert different_commit_request_id != commit_request_id
+    current_request_alias = json.loads(artifact.read_text(encoding="utf-8"))
+    assert current_request_alias["commit_request_id"] == different_commit_request_id
 
     assert (
         main(
@@ -24928,6 +30309,11 @@ def test_coder_commit_request_alias_writes_coder_commit_artifacts_and_is_idempot
     decision_output = capsys.readouterr().out
     assert f"approved_coder_commit: {commit_request_id}" in decision_output
     assert "status: approved" in decision_output
+    assert "source_coder_commit_request: .clanker/delegations/" in decision_output
+    assert "source_coder_commit_request_md: .clanker/delegations/" in decision_output
+    assert "source_commit_request_sha256: " in decision_output
+    assert "source_commit_request_md_sha256: " in decision_output
+    assert "source_coder_commit_request_markdown_consumed: true" in decision_output
     decision_artifact = tmp_path / next(
         line.split(": ", 1)[1]
         for line in decision_output.splitlines()
@@ -24936,10 +30322,44 @@ def test_coder_commit_request_alias_writes_coder_commit_artifacts_and_is_idempot
     assert decision_artifact == evidence_dir / "coder_commit" / "coder_commit_decision.json"
     decision_payload = json.loads(decision_artifact.read_text(encoding="utf-8"))
     assert decision_payload["kind"] == "coder_worktree_commit_approval_decision"
-    assert decision_payload["source_request_sha256"]
+    request_artifact = tmp_path / decision_payload["source_coder_commit_request"]
+    request_markdown = tmp_path / decision_payload["source_coder_commit_request_md"]
+    assert request_artifact.name == f"{commit_request_id}_coder_commit_request.json"
+    immutable_request_payload = json.loads(request_artifact.read_text(encoding="utf-8"))
+    assert immutable_request_payload["commit_request_id"] == commit_request_id
+    latest_request_payload = json.loads(
+        (evidence_dir / "coder_commit" / "coder_commit_request.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert latest_request_payload["commit_request_id"] == different_commit_request_id
+    assert decision_payload["source_coder_commit_request"] == str(
+        request_artifact.relative_to(tmp_path)
+    )
+    assert decision_payload["source_coder_commit_request_md"] == str(
+        request_markdown.relative_to(tmp_path)
+    )
+    assert decision_payload["source_request_sha256"] == hashlib.sha256(
+        request_artifact.read_bytes()
+    ).hexdigest()
+    assert decision_payload["source_commit_request_sha256"] == decision_payload[
+        "source_request_sha256"
+    ]
+    assert decision_payload["source_commit_request_md_sha256"] == hashlib.sha256(
+        request_markdown.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert decision_payload["source_coder_commit_request_markdown_consumed"] is True
     assert decision_payload["staged_files"] == []
     assert decision_payload["commit_created"] is False
     assert decision_payload["pr_created"] is False
+    decision_markdown_path = decision_artifact.with_suffix(".md")
+    decision_markdown = decision_markdown_path.read_text(encoding="utf-8")
+    decision_markdown_sha = hashlib.sha256(
+        decision_markdown.encode("utf-8")
+    ).hexdigest()
+    assert f"- source_coder_commit_request: {request_artifact.relative_to(tmp_path)}" in decision_markdown
+    assert f"- source_coder_commit_request_md: {request_markdown.relative_to(tmp_path)}" in decision_markdown
+    assert "- source_coder_commit_request_markdown_consumed: true" in decision_markdown
 
     assert (
         main(
@@ -24987,6 +30407,8 @@ def test_commit_coder_worktree_creates_local_commit_effect_and_github_handoff(
         run_id,
         commit_message=commit_message,
     )
+    commit_decision_json = evidence_dir / "coder_commit" / "coder_commit_decision.json"
+    commit_decision_md = commit_decision_json.with_suffix(".md")
 
     assert (
         main(
@@ -25031,6 +30453,23 @@ def test_commit_coder_worktree_creates_local_commit_effect_and_github_handoff(
     assert "commit_coder_worktree: committed" in commit_output
     assert f"commit_request_id: {commit_request_id}" in commit_output
     assert f"coder_worktree_run_id: {run_id}" in commit_output
+    assert (
+        f"source_coder_commit_decision: {commit_decision_json.relative_to(tmp_path)}"
+        in commit_output
+    )
+    assert (
+        f"source_coder_commit_decision_md: {commit_decision_md.relative_to(tmp_path)}"
+        in commit_output
+    )
+    assert (
+        f"source_commit_decision_sha256: {hashlib.sha256(commit_decision_json.read_bytes()).hexdigest()}"
+        in commit_output
+    )
+    assert (
+        f"source_commit_decision_md_sha256: {hashlib.sha256(commit_decision_md.read_text(encoding='utf-8').encode('utf-8')).hexdigest()}"
+        in commit_output
+    )
+    assert "source_coder_commit_decision_markdown_consumed: true" in commit_output
     assert "push_created: false" in commit_output
     assert "pr_created: false" in commit_output
     effect_id = next(
@@ -25086,11 +30525,27 @@ def test_commit_coder_worktree_creates_local_commit_effect_and_github_handoff(
     assert commit_payload["commit_sha"] == commit_sha
     assert commit_payload["parent_commit_sha"] == parent_sha
     assert commit_payload["commit_message"] == commit_message
+    assert commit_payload["source_coder_commit_decision"] == str(
+        commit_decision_json.relative_to(tmp_path)
+    )
+    assert commit_payload["source_coder_commit_decision_md"] == str(
+        commit_decision_md.relative_to(tmp_path)
+    )
+    assert commit_payload["source_commit_decision_sha256"] == hashlib.sha256(
+        commit_decision_json.read_bytes()
+    ).hexdigest()
+    assert commit_payload["source_commit_decision_md_sha256"] == hashlib.sha256(
+        commit_decision_md.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert commit_payload["source_coder_commit_decision_markdown_consumed"] is True
     assert commit_payload["committed_files"] == ["agent_os/delegation_runner.py"]
     assert commit_payload["next_recommended_action"] == "github_handoff"
     assert commit_payload["push_created"] is False
     assert commit_payload["pr_created"] is False
-    assert (commit_artifact.parent / "commit.md").exists()
+    commit_markdown = (commit_artifact.parent / "commit.md").read_text(encoding="utf-8")
+    assert f"- source_coder_commit_decision: {commit_decision_json.relative_to(tmp_path)}" in commit_markdown
+    assert f"- source_coder_commit_decision_md: {commit_decision_md.relative_to(tmp_path)}" in commit_markdown
+    assert "- source_coder_commit_decision_markdown_consumed: true" in commit_markdown
     assert (commit_artifact.parent / "pre_commit_status.txt").exists()
     assert (commit_artifact.parent / "post_commit_status.txt").exists()
     assert (commit_artifact.parent / "committed_diff.patch").exists()
@@ -25192,6 +30647,16 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert "coder_publication_request: " in request_output
     assert f"coder_worktree_run_id: {run_id}" in request_output
     assert "status: pending_operator_approval" in request_output
+    commit_artifact = evidence_dir / "coder_commit" / "commit.json"
+    commit_markdown = commit_artifact.with_suffix(".md")
+    commit_markdown_sha = hashlib.sha256(
+        commit_markdown.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert f"source_coder_commit: {commit_artifact.relative_to(tmp_path)}" in request_output
+    assert f"source_coder_commit_md: {commit_markdown.relative_to(tmp_path)}" in request_output
+    assert f"source_commit_sha256: {hashlib.sha256(commit_artifact.read_bytes()).hexdigest()}" in request_output
+    assert f"source_commit_md_sha256: {commit_markdown_sha}" in request_output
+    assert "source_coder_commit_markdown_consumed: true" in request_output
     assert "push_created: false" in request_output
     assert "pr_created: false" in request_output
     assert "network_actions_taken: 0" in request_output
@@ -25213,6 +30678,13 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert request_payload["parent_commit_sha"] == parent_sha
     assert request_payload["remote"] == "origin"
     assert request_payload["target_branch"] == "main"
+    assert request_payload["source_coder_commit"] == str(commit_artifact.relative_to(tmp_path))
+    assert request_payload["source_coder_commit_md"] == str(commit_markdown.relative_to(tmp_path))
+    assert request_payload["source_commit_sha256"] == hashlib.sha256(
+        commit_artifact.read_bytes()
+    ).hexdigest()
+    assert request_payload["source_commit_md_sha256"] == commit_markdown_sha
+    assert request_payload["source_coder_commit_markdown_consumed"] is True
     assert request_payload["committed_files"] == ["agent_os/delegation_runner.py"]
     assert request_payload["outside_allowed_files"] == []
     assert request_payload["push_created"] is False
@@ -25221,7 +30693,12 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert request_payload["provider_calls_taken_by_clankeros"] == 0
     assert request_payload["network_actions_taken"] == 0
     assert request_payload["external_mutations_taken"] == 0
-    assert (request_artifact.parent / "publication_request.md").exists()
+    request_markdown = request_artifact.parent / "publication_request.md"
+    assert request_markdown.exists()
+    request_markdown_text = request_markdown.read_text(encoding="utf-8")
+    assert f"- source_coder_commit_md: {commit_markdown.relative_to(tmp_path)}" in request_markdown_text
+    assert f"- source_commit_md_sha256: {commit_markdown_sha}" in request_markdown_text
+    assert "- source_coder_commit_markdown_consumed: true" in request_markdown_text
 
     assert (
         main(
@@ -25244,6 +30721,7 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     )
     duplicate_output = capsys.readouterr().out
     assert f"coder_publication_request: already_recorded {publication_request_id}" in duplicate_output
+    assert "source_coder_commit_markdown_consumed: true" in duplicate_output
 
     assert (
         main(
@@ -25262,6 +30740,14 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     )
     approval_output = capsys.readouterr().out
     assert f"approved_coder_publication: {publication_request_id}" in approval_output
+    request_markdown_sha = hashlib.sha256(
+        request_markdown.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    assert f"source_coder_publication_request: {request_artifact.relative_to(tmp_path)}" in approval_output
+    assert f"source_coder_publication_request_md: {request_markdown.relative_to(tmp_path)}" in approval_output
+    assert f"source_publication_request_sha256: {hashlib.sha256(request_artifact.read_bytes()).hexdigest()}" in approval_output
+    assert f"source_publication_request_md_sha256: {request_markdown_sha}" in approval_output
+    assert "source_coder_publication_request_markdown_consumed: true" in approval_output
     decision_artifact = tmp_path / next(
         line.split(": ", 1)[1]
         for line in approval_output.splitlines()
@@ -25270,9 +30756,28 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     decision_payload = json.loads(decision_artifact.read_text(encoding="utf-8"))
     assert decision_payload["kind"] == "coder_worktree_publication_approval_decision"
     assert decision_payload["source_request_sha256"]
+    assert decision_payload["source_coder_publication_request"] == str(
+        request_artifact.relative_to(tmp_path)
+    )
+    assert decision_payload["source_coder_publication_request_md"] == str(
+        request_markdown.relative_to(tmp_path)
+    )
+    assert decision_payload["source_publication_request_sha256"] == hashlib.sha256(
+        request_artifact.read_bytes()
+    ).hexdigest()
+    assert decision_payload["source_publication_request_md_sha256"] == request_markdown_sha
+    assert decision_payload["source_coder_publication_request_markdown_consumed"] is True
     assert decision_payload["push_created"] is False
     assert decision_payload["pr_created"] is False
     assert decision_payload["network_actions_taken"] == 0
+    decision_markdown_path = decision_artifact.with_suffix(".md")
+    decision_markdown = decision_markdown_path.read_text(encoding="utf-8")
+    decision_markdown_sha = hashlib.sha256(
+        decision_markdown.encode("utf-8")
+    ).hexdigest()
+    assert f"- source_coder_publication_request_md: {request_markdown.relative_to(tmp_path)}" in decision_markdown
+    assert f"- source_publication_request_md_sha256: {request_markdown_sha}" in decision_markdown
+    assert "- source_coder_publication_request_markdown_consumed: true" in decision_markdown
 
     assert (
         main(
@@ -25291,6 +30796,7 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     )
     repeat_approval_output = capsys.readouterr().out
     assert f"approved_coder_publication: already_approved {publication_request_id}" in repeat_approval_output
+    assert "source_coder_publication_request_markdown_consumed: true" in repeat_approval_output
 
     assert main(["--root", str(tmp_path), "coder-publication-handoff", run_id]) == 0
     handoff_output = capsys.readouterr().out
@@ -25299,6 +30805,11 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert f"commit: {commit_sha}" in handoff_output
     assert f"branch: {branch_name}" in handoff_output
     assert f"worktree_path: {worktree_path}" in handoff_output
+    assert f"source_coder_publication_decision: {decision_artifact.relative_to(tmp_path)}" in handoff_output
+    assert f"source_coder_publication_decision_md: {decision_markdown_path.relative_to(tmp_path)}" in handoff_output
+    assert f"source_publication_decision_sha256: {hashlib.sha256(decision_artifact.read_bytes()).hexdigest()}" in handoff_output
+    assert f"source_publication_decision_md_sha256: {decision_markdown_sha}" in handoff_output
+    assert "source_coder_publication_decision_markdown_consumed: true" in handoff_output
     assert "push_created: false" in handoff_output
     assert "pr_created: false" in handoff_output
     handoff_artifact = tmp_path / next(
@@ -25321,6 +30832,17 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
         handoff_payload["suggested_draft_pr_command"]
         == f"gh pr create --draft --base main --head {branch_name} --title \"Implement bounded change from approved worktree run\" --body-file {handoff_payload['pr_body_path']}"
     )
+    assert handoff_payload["source_coder_publication_decision"] == str(
+        decision_artifact.relative_to(tmp_path)
+    )
+    assert handoff_payload["source_coder_publication_decision_md"] == str(
+        decision_markdown_path.relative_to(tmp_path)
+    )
+    assert handoff_payload["source_publication_decision_sha256"] == hashlib.sha256(
+        decision_artifact.read_bytes()
+    ).hexdigest()
+    assert handoff_payload["source_publication_decision_md_sha256"] == decision_markdown_sha
+    assert handoff_payload["source_coder_publication_decision_markdown_consumed"] is True
     assert handoff_payload["pr_body_path"].endswith("coder_publication/pr_body.md")
     assert handoff_payload["handoff_body_path"] == handoff_payload["pr_body_path"]
     assert handoff_payload["push_created"] is False
@@ -25333,12 +30855,20 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     handoff_markdown = handoff_artifact.with_suffix(".md").read_text(encoding="utf-8")
     assert "verification_status: passed" in handoff_markdown
     assert "bounded_file_validation_status: passed" in handoff_markdown
+    assert f"source_coder_publication_decision_md: {decision_markdown_path.relative_to(tmp_path)}" in handoff_markdown
+    assert f"source_publication_decision_md_sha256: {decision_markdown_sha}" in handoff_markdown
+    assert "source_coder_publication_decision_markdown_consumed: true" in handoff_markdown
     assert "pr_body_path:" in handoff_markdown
+    pr_body_text = Path(handoff_payload["pr_body_path"]).read_text(encoding="utf-8")
+    assert f"- publication_decision_md: {decision_markdown_path.relative_to(tmp_path)}" in pr_body_text
+    assert f"- publication_decision_md_sha256: {decision_markdown_sha}" in pr_body_text
+    assert "- publication_decision_markdown_consumed: true" in pr_body_text
     first_handoff_text = handoff_artifact.read_text(encoding="utf-8")
 
     assert main(["--root", str(tmp_path), "coder-publication-handoff", run_id]) == 0
     repeat_handoff_output = capsys.readouterr().out
     assert "coder_publication_handoff: already_ready" in repeat_handoff_output
+    assert "source_coder_publication_decision_markdown_consumed: true" in repeat_handoff_output
     assert handoff_artifact.read_text(encoding="utf-8") == first_handoff_text
 
     assert main(["--root", str(tmp_path), "review", run_id]) == 0
@@ -25352,6 +30882,15 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert "## Coder Publication" in review
     assert publication_request_id in review
     assert "coder_publication_handoff" in review
+    assert f"source_coder_commit_md: {commit_markdown.relative_to(tmp_path)}" in review
+    assert f"source_commit_md_sha256: {commit_markdown_sha}" in review
+    assert "source_coder_commit_markdown_consumed: true" in review
+    assert f"source_coder_publication_request_md: {request_markdown.relative_to(tmp_path)}" in review
+    assert f"source_publication_request_md_sha256: {request_markdown_sha}" in review
+    assert "source_coder_publication_request_markdown_consumed: true" in review
+    assert f"source_coder_publication_decision_md: {decision_markdown_path.relative_to(tmp_path)}" in review
+    assert f"source_publication_decision_md_sha256: {decision_markdown_sha}" in review
+    assert "source_coder_publication_decision_markdown_consumed: true" in review
     assert f"suggested_push_command: git push origin {branch_name}" in review
     assert "suggested_draft_pr_command: gh pr create --draft --base main" in review
 
@@ -25360,6 +30899,15 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     assert "### Coder Publication Handoffs" in dashboard
     assert publication_request_id in dashboard
     assert commit_sha in dashboard
+    assert f"source_commit_md={commit_markdown.relative_to(tmp_path)}" in dashboard
+    assert f"source_commit_md_sha256={commit_markdown_sha}" in dashboard
+    assert "source_commit_markdown_consumed=true" in dashboard
+    assert f"source_publication_request_md={request_markdown.relative_to(tmp_path)}" in dashboard
+    assert f"source_publication_request_md_sha256={request_markdown_sha}" in dashboard
+    assert "source_publication_request_markdown_consumed=true" in dashboard
+    assert f"source_publication_decision_md={decision_markdown_path.relative_to(tmp_path)}" in dashboard
+    assert f"source_publication_decision_md_sha256={decision_markdown_sha}" in dashboard
+    assert "source_publication_decision_markdown_consumed=true" in dashboard
     assert f"suggested_push_command=git push origin {branch_name}" in dashboard
     assert "suggested_draft_pr_command=gh pr create --draft --base main" in dashboard
 
@@ -25367,6 +30915,9 @@ def test_coder_publication_request_approval_and_handoff_are_local_only(
     inbox_output = capsys.readouterr().out
     assert "coder_publication_requests: 0" in inbox_output
     assert "coder_publication_handoffs: 1" in inbox_output
+    assert f"source_publication_decision_md={decision_markdown_path.relative_to(tmp_path)}" in inbox_output
+    assert f"source_publication_decision_md_sha256={decision_markdown_sha}" in inbox_output
+    assert "source_publication_decision_markdown_consumed=true" in inbox_output
     assert f"suggested_push_command=git push origin {branch_name}" in inbox_output
     assert "suggested_draft_pr_command=gh pr create --draft --base main" in inbox_output
     assert "pr_body_path=" in inbox_output
@@ -25580,7 +31131,10 @@ def test_coder_publication_request_blocks_tampered_commit_artifact(
         == 1
     )
     bad_sha_output = capsys.readouterr().out
-    assert "coder_publication_request_failed: commit_sha_not_found" in bad_sha_output
+    assert (
+        "coder_publication_request_failed: local commit markdown proof does not match commit"
+        in bad_sha_output
+    )
 
     outside_payload = {
         **commit_payload,
@@ -25649,6 +31203,81 @@ def test_coder_publication_request_blocks_tampered_commit_artifact(
             "coder_publication_request_failed: publication_state_already_mutated"
             in mutated_output
         )
+
+
+def test_coder_publication_approval_blocks_tampered_request_markdown(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    (
+        _source_run_id,
+        _delegation_id,
+        _approval_id,
+        run_id,
+        evidence_dir,
+        _worktree_path,
+        _repo_path,
+        _commit_sha,
+        _parent_sha,
+        _branch_name,
+    ) = _commit_completed_coder_worktree(tmp_path, capsys)
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "coder-publication-request",
+                run_id,
+                "--requested-by",
+                "operator",
+                "--remote",
+                "origin",
+                "--target-branch",
+                "main",
+                "--note",
+                "Request publication handoff",
+            ]
+        )
+        == 0
+    )
+    request_output = capsys.readouterr().out
+    publication_request_id = next(
+        line.split(": ", 1)[1]
+        for line in request_output.splitlines()
+        if line.startswith("publication_request_id: ")
+    )
+    request_markdown = evidence_dir / "coder_publication" / "publication_request.md"
+    request_markdown.write_text(
+        request_markdown.read_text(encoding="utf-8").replace(
+            f"- publication_request_id: {publication_request_id}",
+            "- publication_request_id: tampered_publication_request",
+        ),
+        encoding="utf-8",
+    )
+
+    assert (
+        main(
+            [
+                "--root",
+                str(tmp_path),
+                "approve-coder-publication",
+                publication_request_id,
+                "--decided-by",
+                "operator",
+                "--note",
+                "should fail",
+            ]
+        )
+        == 1
+    )
+    approval_output = capsys.readouterr().out
+    assert (
+        "approve_coder_publication_failed: publication request markdown proof does not match approval"
+        in approval_output
+    )
+    incidents = Storage(tmp_path / ".agent" / "state.db").list_recent_incidents(limit=5)
+    assert incidents[0].failure_class == "source_request_hash_mismatch"
 
 
 def test_coder_publication_handoff_blocks_without_approval_and_source_drift(
@@ -25729,6 +31358,105 @@ def test_coder_publication_handoff_blocks_without_approval_and_source_drift(
     request_drift_output = capsys.readouterr().out
     assert "coder_publication_handoff_failed: source_request_hash_mismatch" in request_drift_output
     assert request_drift_publication_id in request_drift_output
+
+    decision_markdown_drift_root = tmp_path / "decision-markdown-drift"
+    decision_markdown_drift_root.mkdir()
+    (
+        _source_run_id,
+        _delegation_id,
+        _approval_id,
+        decision_markdown_drift_run_id,
+        decision_markdown_drift_evidence_dir,
+        _worktree_path,
+        _repo_path,
+        _commit_sha,
+        _parent_sha,
+        _branch_name,
+    ) = _commit_completed_coder_worktree(decision_markdown_drift_root, capsys)
+    decision_markdown_drift_publication_id = _request_and_approve_coder_publication(
+        decision_markdown_drift_root,
+        capsys,
+        decision_markdown_drift_run_id,
+    )
+    decision_markdown_artifact = (
+        decision_markdown_drift_evidence_dir
+        / "coder_publication"
+        / "publication_decision.md"
+    )
+    decision_markdown_artifact.write_text(
+        decision_markdown_artifact.read_text(encoding="utf-8").replace(
+            f"- publication_request_id: {decision_markdown_drift_publication_id}",
+            "- publication_request_id: tampered_publication_decision",
+        ),
+        encoding="utf-8",
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(decision_markdown_drift_root),
+                "coder-publication-handoff",
+                decision_markdown_drift_run_id,
+            ]
+        )
+        == 1
+    )
+    decision_markdown_drift_output = capsys.readouterr().out
+    assert (
+        "coder_publication_handoff_failed: publication decision markdown proof does not match approval"
+        in decision_markdown_drift_output
+    )
+    incidents = Storage(
+        decision_markdown_drift_root / ".agent" / "state.db"
+    ).list_recent_incidents(limit=5)
+    assert incidents[0].failure_class == "source_decision_hash_mismatch"
+
+    request_markdown_drift_root = tmp_path / "request-markdown-drift"
+    request_markdown_drift_root.mkdir()
+    (
+        _source_run_id,
+        _delegation_id,
+        _approval_id,
+        request_markdown_drift_run_id,
+        request_markdown_drift_evidence_dir,
+        _worktree_path,
+        _repo_path,
+        _commit_sha,
+        _parent_sha,
+        _branch_name,
+    ) = _commit_completed_coder_worktree(request_markdown_drift_root, capsys)
+    request_markdown_drift_publication_id = _request_and_approve_coder_publication(
+        request_markdown_drift_root,
+        capsys,
+        request_markdown_drift_run_id,
+    )
+    request_markdown_artifact = (
+        request_markdown_drift_evidence_dir
+        / "coder_publication"
+        / "publication_request.md"
+    )
+    request_markdown_artifact.write_text(
+        request_markdown_artifact.read_text(encoding="utf-8")
+        + "\n- tampered_after_approval: true\n",
+        encoding="utf-8",
+    )
+    assert (
+        main(
+            [
+                "--root",
+                str(request_markdown_drift_root),
+                "coder-publication-handoff",
+                request_markdown_drift_run_id,
+            ]
+        )
+        == 1
+    )
+    request_markdown_drift_output = capsys.readouterr().out
+    assert (
+        "coder_publication_handoff_failed: source_request_markdown_hash_mismatch"
+        in request_markdown_drift_output
+    )
+    assert request_markdown_drift_publication_id in request_markdown_drift_output
 
 
 def test_commit_coder_worktree_requires_approved_request_and_nonempty_message(
@@ -28154,7 +33882,8 @@ def _write_fake_scout_adapter(tmp_path: Path) -> Path:
                 "  'structured_output': {",
                 "    'files': ['agent_os/cli.py'],",
                 "    'findings': ['CLI command parser lives in agent_os/cli.py.'],",
-                "    'relevant_files': ['agent_os/cli.py']",
+                "    'relevant_files': ['agent_os/cli.py'],",
+                "    'options': [{'label': 'Inspect CLI parser', 'files': ['agent_os/cli.py']}]",
                 "  }",
                 "}))",
             ]
@@ -29023,6 +34752,132 @@ def test_iterate_prefers_lower_complexity_when_scores_tie(tmp_path: Path) -> Non
     assert row["selected_score"] == 10
     assert row["selected_complexity"] == 2
     assert "lower complexity" in row["selection_reason"]
+
+
+def test_iterate_demotes_report_only_tail_when_daily_use_goal_exists(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.create_goal(
+        "clankeros",
+        "Use ClankerOS from shipped main tomorrow with the daily-use browser app.",
+    )
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                "- [ ] Add an explicit stale Goal hygiene path for old demo/context-pack Goals:",
+                "  review, pause, complete, or archive them without hiding their evidence.",
+                "  <!-- score=10 complexity=3 -->",
+                "- [ ] Add report-only Hosted Dashboard Proof Checklist from latest Real-Cost-sourced Real Cost Tracking proof checklists. <!-- score=12 complexity=1 -->",
+                "",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "Add an explicit stale Goal hygiene path for old demo/context-pack Goals" in packet
+    assert "review, pause, complete, or archive them without hiding their evidence." in packet
+    assert "Hosted Dashboard Proof Checklist" not in packet
+    assert "- selected_score: 10" in packet
+    assert "- selected_complexity: 3" in packet
+    assert "demoted 1 report-only/generated proof-ladder tail(s)" in packet
+
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        connection.row_factory = sqlite3.Row
+        row = connection.execute(
+            """
+            select focus, selection_reason, selected_score, selected_complexity
+            from iteration_packets
+            order by created_at desc
+            limit 1
+            """
+        ).fetchone()
+
+    assert row is not None
+    assert row["focus"] == (
+        "Add an explicit stale Goal hygiene path for old demo/context-pack Goals: "
+        "review, pause, complete, or archive them without hiding their evidence."
+    )
+    assert row["selected_score"] == 10
+    assert row["selected_complexity"] == 3
+    assert "daily-use product Goal exists" in row["selection_reason"]
+
+
+def test_iterate_falls_back_when_only_recursive_tail_remains_for_daily_use_goal(
+    tmp_path: Path,
+) -> None:
+    system = AgentSystem(tmp_path)
+    system.initialize()
+    storage = Storage(tmp_path / ".agent" / "state.db")
+    storage.create_goal(
+        "clankeros",
+        "Use ClankerOS from shipped main tomorrow with the daily-use browser app.",
+    )
+    recursive_tail = (
+        "Add local downstream follow-up result task result effect task result "
+        "effect task result effect task result effect task result effect task "
+        "result effect task result effect task result effect task result "
+        "decision effect proposals from accepted blocked result effect task "
+        "result effect task result effect task result effect task result "
+        "effect task result effect task result effect task results."
+    )
+    (tmp_path / "tasks.md").write_text(
+        "\n".join(
+            [
+                "# Live Momentum Queues",
+                "",
+                "## next",
+                "",
+                f"- [ ] {recursive_tail} <!-- score=9 complexity=4 -->",
+                "",
+                "## blocked",
+                "",
+                "- [ ] Choose deployment target before hosted dashboard work.",
+                "",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert main(["--root", str(tmp_path), "iterate"]) == 0
+
+    packet = (tmp_path / "docs" / "next-iteration.md").read_text(encoding="utf-8")
+    assert "Refresh the daily-use product queue" in packet
+    assert recursive_tail not in packet
+    assert "only recursive/report-only proof-ladder tail(s) remained" in packet
+    assert "- Source: tasks.md#fallback" in packet
+
+    with sqlite3.connect(tmp_path / ".agent" / "state.db") as connection:
+        connection.row_factory = sqlite3.Row
+        row = connection.execute(
+            """
+            select focus, source_section, selection_reason,
+                   selected_score, selected_complexity
+            from iteration_packets
+            order by created_at desc
+            limit 1
+            """
+        ).fetchone()
+
+    assert row is not None
+    assert row["focus"] == (
+        "Refresh the daily-use product queue with the next browser-first ClankerOS task."
+    )
+    assert row["source_section"] == "fallback"
+    assert row["selected_score"] == 0
+    assert row["selected_complexity"] == 0
+    assert "daily-use product Goal exists" in row["selection_reason"]
 
 
 def test_dashboard_reports_simplicity_guardrail_for_iteration_selection(

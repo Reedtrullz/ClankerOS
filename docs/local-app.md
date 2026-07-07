@@ -1360,6 +1360,7 @@ instead of asking the operator to rerun the full suite locally.
 - focused local app pytest slices
 - `python3 -m agent_os.cli app-smoke-test`
 - `python3 -m agent_os.cli app-demo-smoke-test`
+- `python3 -m agent_os.cli app-golden-path-smoke-test`
 - `git diff --check`
 
 `app-smoke-test` is route-marker aware: it renders the core local app routes
@@ -1374,6 +1375,13 @@ workspace, memory, skills, profiles, selected project, delegation, scoped
 workflow, coder run, approvals, inbox, actions, and health pages, and checks
 state-specific snippets without starting a server or taking network/external
 actions. The GitHub fast smoke job runs it before the full suite.
+
+`app-golden-path-smoke-test` is the fresh-user companion. It creates a tiny
+local git project under a temporary ClankerOS root, creates the first Goal,
+executes the confirmed next-action path through scout delegation, context pack,
+and local proof run, opens the generated `implementation_handoff.md`, saves a
+complete finish-today workspace, and verifies `/resume` can pick up tomorrow
+without provider, network, deploy, push, or PR side effects.
 
 The page does not fetch GitHub status. The fast smoke job can prove route and
 CLI wiring before the full suite finishes, but a pushed commit is not CI proof

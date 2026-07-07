@@ -2,6 +2,11 @@
 
 ## now
 
+- [x] Reset the post-merge ClankerOS dogfood state to shipped `main`: local git
+  fetch works after invalid duplicate ref quarantine, post-merge `main` CI
+  proof is recorded, operator surfaces recognize same-commit `main` proof from
+  the follow-up branch, and the saved resume surface points at the real
+  continuation Goal. <!-- score=10 complexity=2 -->
 - [x] Implement Milestone 1 local closed loop.
 - [x] Verify the loop with automated tests and a CLI smoke run.
 - [x] Record the first learning/eval improvement.
@@ -20,6 +25,148 @@
 
 ## next
 
+- [x] Add an explicit stale Goal hygiene path for old demo/context-pack Goals:
+  review, pause, complete, or archive them without hiding their evidence.
+  <!-- score=10 complexity=3 -->
+- [x] Make the iteration selector deprioritize recursive report-only proof
+  ladder tails whenever a daily-use product Goal exists. <!-- score=10 complexity=3 -->
+- [x] Add a one-command next-day self-hosting check that verifies local fetch,
+  saved resume, current `main` proof, and the browser next action before work
+  resumes. <!-- score=9 complexity=3 -->
+- [x] Add browser-first Goal creation from the first-run and `/today` surfaces
+  so a new operator can create the first ClankerOS Goal without using the CLI.
+  <!-- score=10 complexity=5 -->
+- [x] Make post-Goal `/today` expose `Create scout delegation` as the primary
+  same-page first-run action with confirmation and finish-today resume proof.
+  <!-- score=10 complexity=4 -->
+- [x] Make post-delegation `/today` expose `Generate context pack` as the
+  primary same-page first-run action with confirmation and finish-today resume
+  proof. <!-- score=10 complexity=4 -->
+- [x] Make post-context-pack `/today` expose `Run delegation` as the primary
+  same-page first-run action with confirmation and finish-today resume proof.
+  <!-- score=10 complexity=4 -->
+- [x] Make post-run `/today` expose `Run coder prep` as the primary same-page
+  first-run action with confirmation and finish-today resume proof.
+  <!-- score=10 complexity=4 -->
+- [x] Make post-coder-prep `/today` expose `Create worktree plan` as the
+  primary same-page first-run action with confirmation and finish-today resume
+  proof. <!-- score=10 complexity=4 -->
+- [x] Make post-worktree-plan `/today` expose `Request worktree approval` as
+  the primary same-page first-run action with confirmation and finish-today
+  resume proof. <!-- score=10 complexity=4 -->
+- [x] Make post-approval-request `/today` expose `Approve worktree` as the
+  primary same-page first-run action with confirmation and finish-today resume
+  proof. <!-- score=10 complexity=4 -->
+- [x] Make post-approval-decision `/today` expose `Run approved worktree` as
+  the primary same-page first-run action with confirmation and finish-today
+  resume proof. <!-- score=10 complexity=5 -->
+- [x] Make post-worktree-run `/today` expose `Open review` as the primary
+  same-page first-run action with confirmation and finish-today resume proof.
+  <!-- score=10 complexity=4 -->
+- [x] Make post-review `/today` expose `Create commit request` as the primary
+  same-page first-run action with confirmation and finish-today resume proof.
+  <!-- score=10 complexity=4 -->
+- [x] Make post-commit-request `/today` expose `Approve commit` as the primary
+  same-page first-run action with confirmation and finish-today resume proof.
+  <!-- score=10 complexity=4 -->
+- [x] Make post-commit-approval `/today` expose `Commit approved worktree` as
+  the primary same-page first-run action with confirmation and finish-today
+  resume proof. <!-- score=10 complexity=4 -->
+- [x] Make post-local-commit `/today` expose `Create publication request` as
+  the primary same-page first-run action with confirmation and finish-today
+  resume proof. <!-- score=10 complexity=4 -->
+- [x] Make post-publication-request `/today` expose `Approve publication` as
+  the primary same-page first-run action with confirmation and finish-today
+  resume proof. <!-- score=10 complexity=4 -->
+- [x] Make post-publication-approval `/today` expose
+  `Create publication handoff` as the primary same-page first-run action with
+  confirmation and finish-today resume proof. <!-- score=10 complexity=4 -->
+- [x] Make post-publication-handoff `/today` expose
+  `Manual publish outside ClankerOS` as the primary same-page first-run action
+  with copy-only commands, local completion confirmation, and finish-today
+  resume proof. <!-- score=10 complexity=4 -->
+- [x] Make post-completion `/today` and `/resume` expose completed Goal
+  evidence plus a clear next-Goal/start-new-work action without losing the
+  saved daily resume proof. <!-- score=10 complexity=4 -->
+- [x] Make post-completion `/today` and `/resume` offer same-page next-Goal
+  creation from the completed Goal handoff while carrying forward prior
+  evidence and preserving the saved daily resume proof. <!-- score=10 complexity=5 -->
+- [x] Make post-next-Goal creation `/today` and `/resume` surface the new
+  Goal's current action as the primary continuation while keeping the carried
+  completed-Goal handoff source visible as provenance. <!-- score=10 complexity=4 -->
+- [x] Make the successor Goal's first confirmed action move completed-Goal
+  provenance into durable Goal history while keeping `/today` and `/resume`
+  focused on the successor Goal's newest evidence and action. <!-- score=10 complexity=4 -->
+- [x] Make successor Goal context-pack generation from `/today` and `/resume`
+  surface the generated context pack as newest evidence while retaining
+  completed-Goal provenance history and moving the primary action to
+  `Run delegation`. <!-- score=10 complexity=4 -->
+- [x] Make successor Goal `Run delegation` from `/today` and `/resume`
+  consume the generated context pack as proof, keep provenance history
+  visible, and move the primary action to the next implementation handoff or
+  coder-prep step. <!-- score=10 complexity=4 -->
+- [x] Make successor Goal coder-prep from `/today` and `/resume` consume
+  `implementation_handoff.md` as proof, keep provenance history visible, and
+  move the primary action to `Create worktree plan`. <!-- score=10 complexity=4 -->
+- [x] Make successor Goal worktree-plan creation from `/today` and `/resume`
+  consume `coder_prep.md` as proof, keep provenance history visible, and move
+  the primary action to `Request worktree approval`. <!-- score=10 complexity=4 -->
+- [x] Make successor Goal worktree approval request from `/today` and `/resume`
+  consume `coder_worktree_plan.md` as proof, keep provenance history visible,
+  and move the primary action to `Approve worktree`. <!-- score=10 complexity=4 -->
+- [x] Make successor Goal worktree approval decisions from `/today` and
+  `/resume` consume `coder_worktree_approval_request.md` as proof, keep
+  provenance history visible, and move the primary action to
+  `Run approved worktree`. <!-- score=10 complexity=4 -->
+- [x] Make successor Goal approved worktree runs from `/today` and `/resume`
+  consume `coder_worktree_approval_decision.md` as proof, keep provenance
+  history visible, and move the primary action to `Open review`.
+  <!-- score=10 complexity=4 -->
+- [x] Make successor Goal worktree reviews from `/today` and `/resume`
+  consume approved worktree run evidence as proof, keep provenance history
+  visible, and move the primary action to `Create commit request`.
+  <!-- score=10 complexity=4 -->
+- [x] Make successor Goal commit requests from `/today` and `/resume`
+  consume `runs/<source_run_id>/review.md` as proof, keep provenance history
+  visible, and move the primary action to `Approve commit`.
+  <!-- score=10 complexity=4 -->
+- [x] Make successor Goal commit approvals from `/today` and `/resume`
+  consume `coder_commit/coder_commit_request.md` as proof, keep provenance
+  history visible, and move the primary action to `Commit approved worktree`.
+  <!-- score=10 complexity=4 -->
+- [x] Make successor Goal approved local commits from `/today` and `/resume`
+  consume `coder_commit/coder_commit_decision.md` as proof, keep provenance
+  history visible, and move the primary action to `Create publication request`.
+  <!-- score=10 complexity=4 -->
+- [x] Make successor Goal publication requests from `/today` and `/resume`
+  consume `coder_commit/commit.md` as proof, keep provenance history visible,
+  and move the primary action to `Approve publication`.
+  <!-- score=10 complexity=4 -->
+- [x] Make successor Goal publication approvals from `/today` and `/resume`
+  consume `coder_publication/publication_request.md` as proof, keep provenance
+  history visible, and move the primary action to `Create publication handoff`.
+  <!-- score=10 complexity=4 -->
+- [x] Make successor Goal publication handoffs from `/today` and `/resume`
+  consume `coder_publication/publication_decision.md` as proof, keep provenance
+  history visible, and move the primary action to
+  `Manual publish outside ClankerOS`. <!-- score=10 complexity=4 -->
+- [x] Make successor Goal manual publish completion from `/today` and
+  `/resume` consume `coder_publication/publication_handoff.md` as proof, keep
+  provenance history visible, and move the primary action to completed Goal
+  evidence plus next-Goal creation. <!-- score=10 complexity=4 -->
+- [x] Make completed Goal `completion.md` first-class in next-Goal provenance
+  after `/today` and `/resume` next-Goal creation, while keeping the
+  publication handoff visible as the prior manual boundary artifact.
+  <!-- score=10 complexity=4 -->
+- [x] Add a deterministic fresh-user golden-path smoke that proves create
+  project, create goal, do the next action, check proof, finish today, and
+  resume tomorrow. <!-- score=10 complexity=4 -->
+- [x] Simplify the first operator viewport on Today, Resume, and Goal surfaces
+  to current Goal, current phase, one next action, proof status,
+  finish, and resume. <!-- score=10 complexity=3 -->
+- [ ] Promote the next GitHub fast-smoke/full-suite run back into the operator
+  proof loop and fix any CI-only failures without broad local reruns.
+  <!-- score=10 complexity=3 -->
 - [x] Extend the static dashboard with incident summaries once incidents exist.
 - [x] Add a compact incident resolution path after more failure modes exist.
 - [x] Add queue-health checks for repeated blocked or failed work.

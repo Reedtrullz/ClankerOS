@@ -19,6 +19,7 @@ python3 -m agent_os.cli demo-app-scenario
 python3 -m agent_os.cli demo
 python3 -m agent_os.cli app-smoke-test
 python3 -m agent_os.cli app-demo-smoke-test
+python3 -m agent_os.cli app-golden-path-smoke-test
 python3 -m agent_os.cli projects
 python3 -m agent_os.cli project-status <project>
 python3 -m agent_os.cli project-context <project>
@@ -41,7 +42,9 @@ pending approval state. `app-smoke-test`
 renders the core routes without starting a server. `app-demo-smoke-test`
 creates the demo fixture and renders stateful goal/demo/workflow/project/
 delegation/run/approval routes with expected snippet checks, still without
-starting a server or taking network/external actions. The app includes
+starting a server or taking network/external actions. `app-golden-path-smoke-test`
+starts from a fresh local root and verifies the project -> goal -> next action
+-> proof -> finish -> resume browser loop. The app includes
 `/goals` as the daily goal cockpit with confirmed local first-run
 `register-project` and `create-goal` forms, `/goals/<goal_id>` as the
 goal-centered workbench with phase, next action, timeline, evidence,
@@ -297,39 +300,62 @@ that worktree, optionally runs the registered default verifier or
 .clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/changed_files.json
 .clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/bounded_file_validation.json
 .clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/approval.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/approval_decision.json
+.clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/approval_decision.md
 .clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/source_plan.json
 .clanker/delegations/<delegation_id>/runs/<run_id>/coder_worktree/summary.md
 ```
 
+The run consumes the current `coder_worktree_approval_decision.md` as proof and
+records `source_coder_worktree_approval_decision`,
+`source_coder_worktree_approval_decision_md`,
+`source_approval_decision_sha256`,
+`source_approval_decision_md_sha256`, and
+`source_coder_worktree_approval_decision_markdown_consumed=true` in
+`run.json`, `summary.md`, CLI output, browser result output, and dashboard
+readback.
+
 Changed files must be a subset of `allowed_files`; outside files mark the run
 `blocked` with `failure_class=bounded_file_violation`. Command or verification
 failures mark the run `failed`. Completed approval/plan pairs are not rerun
-unless `--rerun` is provided. The command does not commit, push, deploy, call
-providers, or intentionally use the network.
+unless `--rerun` is provided, and legacy completed runs without matching
+approval-decision proof are not reused. The command does not commit, push,
+deploy, call providers, or intentionally use the network.
 
 `coder-commit-request <coder_worktree_run_id> --requested-by <id> --message
 <commit_message> --note <note>` is the next gate after a successful coder
-worktree run has been included in `review <coder_worktree_run_id>` or the
-source delegation run review. It refuses unreviewed, failed, blocked,
-outside-file, no-change, missing-worktree, unsafe-git-state, stale-source, or
-failed-verification runs unless the operator explicitly used
-`--allow-unverified` at request time. For eligible reviewed runs it records the
-current worktree HEAD, source `run.json` hash, `diff.patch` hash, changed-file
-list, review path, branch, and commit message, then writes both compatibility
-and modern request artifacts. The modern operator artifacts are:
+worktree run has been included in the source delegation run review. The review
+must consume matching run evidence: the coder worktree run directory, source
+`run.json`, source run hash, `summary.md`, summary hash, `diff.patch`, and
+diff hash. It refuses unreviewed, stale-review, failed, blocked, outside-file,
+no-change, missing-worktree, unsafe-git-state, stale-source, or
+failed-verification runs unless the operator explicitly used `--allow-unverified`
+at request time. For eligible reviewed runs it records the current worktree
+HEAD, source `run.json` hash, `summary.md` path/hash, `diff.patch` hash,
+changed-file list, review path/hash, `source_review_markdown_consumed: true`,
+source delegation run id, branch, and commit message, then writes both
+compatibility and modern request artifacts. The modern operator artifacts are:
 
 ```text
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/coder_commit_request.json
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/coder_commit_request.md
 ```
 
-The request is idempotent for the same run evidence, diff hash, and commit
-message unless `--force-new` is used. A different commit message creates a
-separate request. It does not stage files, create a commit, push, create a PR,
-deploy, call providers, or use the network.
+The request is idempotent for the same run evidence, diff hash, commit message,
+and matching review Markdown proof unless `--force-new` is used. Pending legacy
+request artifacts for the same run/diff/message are backfilled with the current
+review path/hash and `source_review_markdown_consumed: true` before reuse. A
+different commit message creates a separate request. It does not stage files,
+create a commit, push, create a PR, deploy, call providers, or use the network.
 
 `approve-coder-commit <commit_request_id> --decided-by <id> --note <note>`
-marks that dedicated request approved and writes:
+marks that dedicated request approved only after reading the modern
+`coder_commit_request.json` and `coder_commit_request.md` pair. The request
+must match the approval id and coder worktree run, and the request JSON must
+carry the upstream review-Markdown proof from the previous gate. The decision
+records `source_coder_commit_request`, `source_coder_commit_request_md`,
+request JSON/Markdown hashes, and
+`source_coder_commit_request_markdown_consumed: true`, then writes:
 
 ```text
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/coder_commit_decision.json
@@ -337,18 +363,22 @@ marks that dedicated request approved and writes:
 ```
 
 The approval decision does not stage files, create a commit, push, create a
-PR, deploy, call providers, or use the network.
+PR, deploy, call providers, or use the network. It only creates local decision
+artifacts and moves the operator workflow to the local commit gate.
 
 `commit-coder-worktree <coder_worktree_run_id> --message <commit_message>` is
 the only command in the coder worktree path that stages files and creates a
-local git commit. It requires an approved matching commit request, blocks if the
-source run hash changed, the worktree path is outside `.agent/worktrees`, the
-branch or HEAD moved, outside files appeared, files outside `allowed_files` are
-already staged, the changed file list differs, the commit message differs, or
-the verifier no longer passes. Use `--use-approved-message` only when the
-operator wants the message stored on the approved request. The command stages
-only reviewed allowed files, re-inspects the staged set before commit, and
-creates one commit in the isolated coder worktree branch. It writes:
+local git commit. It consumes
+`coder_commit/coder_commit_decision.json/.md` as approval proof first, then
+requires an approved matching commit request. It blocks if the decision proof
+is missing or mismatched, the source run hash changed, the worktree path is
+outside `.agent/worktrees`, the branch or HEAD moved, outside files appeared,
+files outside `allowed_files` are already staged, the changed file list
+differs, the commit message differs, or the verifier no longer passes. Use
+`--use-approved-message` only when the operator wants the message stored on
+the approved request. The command stages only reviewed allowed files,
+re-inspects the staged set before commit, and creates one commit in the
+isolated coder worktree branch. It writes:
 
 ```text
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_commit/commit.json
@@ -363,7 +393,11 @@ The local commit records a committed `local_git_commit` effect. Pass the
 printed `effect_id` to `github-handoff <effect_id>` to write local push and
 draft-PR instructions. The handoff still takes `network_actions_taken=0` and
 does not push, create a PR, deploy, call providers, or mutate external
-systems. Compatibility commands remain available as
+systems. `commit.json`, `commit.md`, CLI output, dashboard rows, and browser
+action results include the consumed decision JSON/Markdown paths and hashes
+plus `source_coder_commit_decision_markdown_consumed: true` so the local
+commit remains auditable from the approval decision. Compatibility commands
+remain available as
 `coder-worktree-commit-approval`, `approve-coder-worktree-commit`, and
 `promote-coder-worktree-commit`, but the shorter `coder-commit-request`,
 `approve-coder-commit`, and `commit-coder-worktree` names are the primary
@@ -372,33 +406,49 @@ operator flow.
 `coder-publication-request <coder_worktree_run_id> --requested-by <id>
 --remote origin --target-branch main --note <note>` is the next boundary after
 the isolated local coder worktree commit. It requires a valid
-`coder_commit/commit.json`, verifies the commit SHA exists in the isolated
-worktree, checks committed files remain inside `allowed_files`, validates safe
-remote and target branch names, requires a non-empty request note, and writes:
+`coder_commit/commit.json` plus matching `coder_commit/commit.md`, verifies
+the commit Markdown matches the coder worktree run and commit SHA, verifies
+the commit SHA exists in the isolated worktree, checks committed files remain
+inside `allowed_files`, validates safe remote and target branch names, requires
+a non-empty request note, and writes:
 
 ```text
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_request.json
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_request.md
 ```
 
-The request is idempotent for the same commit artifact hash, remote, and target
-branch unless `--force-new` is used. It does not push, create a PR, deploy,
-call providers, use the network, run `git fetch`, or contact GitHub.
+The request records the consumed local commit JSON/Markdown paths and hashes
+plus `source_coder_commit_markdown_consumed: true`. It is idempotent for the
+same commit artifact hash, remote, and target branch unless `--force-new` is
+used; idempotent reuse backfills missing commit Markdown proof fields into
+older request artifacts. It does not push, create a PR, deploy, call
+providers, use the network, run `git fetch`, or contact GitHub.
 
 `approve-coder-publication <publication_request_id> --decided-by <id> --note
-<note>` marks that request approved and writes:
+<note>` marks that request approved only after loading the matching
+`coder_publication/publication_request.json` and
+`coder_publication/publication_request.md` proof pair. It verifies both
+artifacts match the publication request id and coder worktree run, requires
+the request to carry the upstream local-commit Markdown proof, and writes:
 
 ```text
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_decision.json
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_decision.md
 ```
 
-The approval decision does not push, create a PR, deploy, call providers, or
-use the network.
+The approval decision records the consumed publication request JSON/Markdown
+paths and hashes plus
+`source_coder_publication_request_markdown_consumed: true`. It does not push,
+create a PR, deploy, call providers, or use the network.
 
 `coder-publication-handoff <coder_worktree_run_id>` requires an approved
-publication request, revalidates the request artifact hash, commit artifact
-hash, and commit SHA, then writes local suggested commands only:
+publication request, loads the matching
+`coder_publication/publication_decision.json` and
+`coder_publication/publication_decision.md` proof pair, verifies the decision
+matches the publication request id and coder worktree run, requires the
+decision to carry the upstream publication-request Markdown proof, revalidates
+the request JSON and Markdown hashes, commit artifact hash, and commit SHA,
+then writes local suggested commands only:
 
 ```text
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/publication_handoff.json
@@ -406,10 +456,28 @@ hash, and commit SHA, then writes local suggested commands only:
 .clanker/delegations/<delegation_id>/runs/<coder_worktree_run_id>/coder_publication/pr_body.md
 ```
 
-The handoff includes `git push <remote> <branch>` and a draft `gh pr create`
-command with a body-file path. It does not execute either command. Manual
-operator execution remains required for push or PR creation, and deploy remains
-out of scope.
+The handoff records the consumed publication decision JSON/Markdown paths and
+hashes plus `source_coder_publication_decision_markdown_consumed: true`, then
+includes `git push <remote> <branch>` and a draft `gh pr create` command with
+a body-file path. It does not execute either command. Manual operator
+execution remains required for push or PR creation, and deploy remains out of
+scope.
+
+The browser `complete-goal` action is available only after a ready publication
+handoff exists. It consumes and validates the matching
+`coder_publication/publication_handoff.json` /
+`coder_publication/publication_handoff.md` pair, records the handoff JSON and
+Markdown paths and hashes plus
+`source_coder_publication_handoff_markdown_consumed: true`, and writes:
+
+```text
+.clanker/projects/<project_id>/goals/<goal_id>/completion.json
+.clanker/projects/<project_id>/goals/<goal_id>/completion.md
+```
+
+Completion records local Goal status only. It does not run the suggested push
+or PR commands, create a PR, deploy, call providers, use the network, or create
+external effects.
 `record-delegation-result` remains the manual ingestion path for
 operator-supplied output.
 

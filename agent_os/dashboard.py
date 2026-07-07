@@ -395,6 +395,10 @@ from agent_os.queue_health import (
     DEFAULT_FAILED_THRESHOLD,
     render_queue_health_finding,
 )
+from agent_os.self_hosting_check import (
+    SELF_HOSTING_CHECK_COMMAND,
+    load_latest_self_hosting_check,
+)
 from agent_os.steering import render_steering_review_line
 from agent_os.storage import Storage
 from agent_os.subagent_delegation import (
@@ -2105,15 +2109,24 @@ def generate_static_dashboard(root: Path) -> Path:
     pending_coder_publication_lines = [
         line for line in coder_publication_request_lines if "status=pending_operator_approval" in line
     ]
+    self_hosting_check_lines = _self_hosting_check_dashboard_lines(root)
 
     lines = [
         "# Agent System Dashboard",
         "",
         "## Operator Cockpit",
         "",
-        "### Active Goals/Runs",
+        "### Next-Day Self-Hosting Check",
         "",
     ]
+    lines.extend(self_hosting_check_lines)
+    lines.extend(
+        [
+            "",
+            "### Active Goals/Runs",
+            "",
+        ]
+    )
     if active_runs:
         for run in active_runs:
             lines.append(
@@ -6411,6 +6424,63 @@ def generate_static_dashboard(root: Path) -> Path:
     lines.append("")
     dashboard_path.write_text("\n".join(lines), encoding="utf-8")
     return dashboard_path
+
+
+def _self_hosting_check_dashboard_lines(root: Path) -> list[str]:
+    payload = load_latest_self_hosting_check(root)
+    if payload is None:
+        return [
+            f"- command: {SELF_HOSTING_CHECK_COMMAND}",
+            "- status: missing",
+            "- next_action: run the self-hosting check before resuming work",
+            "- report: none",
+            "- evidence: none",
+            "- browser_write_on_get: false",
+            "- browser_network_actions_taken: 0",
+        ]
+
+    checks = payload.get("checks", {}) if isinstance(payload.get("checks"), dict) else {}
+    safety = payload.get("safety", {}) if isinstance(payload.get("safety"), dict) else {}
+    artifacts = payload.get("artifacts", {}) if isinstance(payload.get("artifacts"), dict) else {}
+
+    def check_status(name: str) -> str:
+        check = checks.get(name, {}) if isinstance(checks, dict) else {}
+        return str(check.get("status", "missing")) if isinstance(check, dict) else "missing"
+
+    browser_next_action = checks.get("browser_next_action", {})
+    saved_resume = checks.get("saved_resume", {})
+    current_main_proof = checks.get("current_main_proof", {})
+    return [
+        f"- command: {payload.get('command', SELF_HOSTING_CHECK_COMMAND)}",
+        f"- status: {payload.get('status', 'unknown')}",
+        f"- recorded_at: {payload.get('created_at', 'unknown')}",
+        f"- local_fetch: {check_status('local_fetch')}",
+        f"- saved_resume: {check_status('saved_resume')}",
+        f"- current_main_proof: {check_status('current_main_proof')}",
+        f"- browser_next_action: {check_status('browser_next_action')}",
+        (
+            "- resume_surface: "
+            f"{saved_resume.get('resume_surface', 'none') if isinstance(saved_resume, dict) else 'none'}"
+        ),
+        (
+            "- browser_action: "
+            f"{browser_next_action.get('action', 'none') if isinstance(browser_next_action, dict) else 'none'}"
+        ),
+        (
+            "- browser_surface: "
+            f"{browser_next_action.get('surface', 'none') if isinstance(browser_next_action, dict) else 'none'}"
+        ),
+        (
+            "- ci_current_proof: "
+            f"{current_main_proof.get('ci_current_proof', 'none') if isinstance(current_main_proof, dict) else 'none'}"
+        ),
+        f"- report: {artifacts.get('report', 'none')}",
+        f"- evidence: {artifacts.get('latest_json', 'none')}",
+        f"- network_actions_taken: {safety.get('network_actions_taken', 0)}",
+        f"- external_mutations_taken: {safety.get('external_mutations_taken', 0)}",
+        f"- browser_write_on_get: {str(safety.get('browser_write_on_get', False)).lower()}",
+        f"- browser_network_actions_taken: {safety.get('browser_network_actions_taken', 0)}",
+    ]
 
 
 def _effect_verification_status(

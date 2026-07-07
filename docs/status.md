@@ -4,6 +4,151 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Commit approval proof lookup now prefers immutable id-scoped
+  `coder_commit/<approval_id>_coder_commit_request.json` / `.md` artifacts
+  while preserving the latest alias for compatibility. Completed Goal
+  `completion.md` is now first-class successor Goal provenance from `/today`
+  and `/resume`, with `publication_handoff.md` retained as the prior manual
+  boundary artifact. `app-golden-path-smoke-test` proves the fresh-user browser
+  loop from project creation through proof, finish today, and resume tomorrow,
+  and GitHub fast smoke now runs it plus focused pytest coverage. `/today`,
+  `/resume`, and Goal pages now share a ruthless first-viewport strip for Goal,
+  Phase, Next Action, Proof, Finish, and Resume while keeping evidence and
+  non-claims below.
+- Successor Goal manual publish completion from `/today` and `/resume` now
+  consumes `coder_publication/publication_handoff.md` as first-class proof
+  before local Goal completion. The browser action validates the handoff JSON
+  and Markdown pair, rejects tampered handoff Markdown before status changes,
+  writes Goal-scoped `completion.json` / `completion.md`, and exposes handoff
+  proof paths/hashes plus
+  `source_coder_publication_handoff_markdown_consumed: true` in the action
+  result, manual publish boundary, Goal completion readiness, Goal artifact
+  explorer, `/today` completed Goal handoff, and `/resume` completed Goal
+  handoff. `/today` and `/resume` now move to completed Goal evidence plus
+  same-page next-Goal creation while keeping completed-Goal provenance visible
+  and push, PR, deploy, provider, network, and external mutation counters false
+  or zero. Focused local proof: compile plus the Goal action-card/manual
+  publish regression with a tampered-handoff completion block, and the long
+  daily browser-flow regression.
+- Successor Goal publication handoffs from `/today` and `/resume` now consume
+  `coder_publication/publication_decision.md` as first-class proof before the
+  app writes local handoff and PR-body artifacts. The handoff artifacts,
+  `pr_body.md`, CLI handoff output, CLI inbox rows, dashboard handoff rows,
+  review rows, compact browser inbox rows, action result pages, manual publish
+  boundary panels, Goal pages, `/today`, and `/resume` expose the publication
+  decision JSON path/hash, publication decision Markdown path/hash, and
+  `source_coder_publication_decision_markdown_consumed: true`, while keeping
+  push, PR, deploy, provider, network, and external mutation counters false or
+  zero. `/today`, `/resume`, and the successor Goal page now advance to
+  `Manual publish outside ClankerOS` while retaining completed-Goal provenance
+  history and preserving the original daily return surface. Focused local
+  proof: compile plus the backend publication regression, handoff tamper/drift
+  regression, Goal action-card regression, and long daily browser-flow
+  regression.
+- Successor Goal publication approvals from `/today` and `/resume` now consume
+  `coder_publication/publication_request.md` as first-class proof before the
+  app writes a local publication decision. The decision artifacts,
+  CLI/dashboard/review rows, compact approval/inbox rows, Goal and run-detail
+  publication handoff forms, and browser result expose the publication request
+  JSON path/hash, publication request Markdown path/hash, and
+  `source_coder_publication_request_markdown_consumed: true`, while keeping
+  push, PR, deploy, provider, network, and external mutation counters false or
+  zero. `/today`, `/resume`, and the successor Goal page now advance to
+  `Create publication handoff` while retaining completed-Goal provenance
+  history and preserving the original daily return surface. Focused local
+  proof: compile plus the backend publication regression, Goal action-card
+  regression, long daily browser-flow regression, approval tamper-boundary
+  regression, and handoff request-Markdown drift regression.
+- Successor Goal publication requests from `/today` and `/resume` now consume
+  `coder_commit/commit.md` as first-class proof before the app writes a local
+  publication approval request. The publication request artifacts,
+  CLI/dashboard/review rows, compact approval/inbox rows, Goal publication
+  forms, and browser result expose the local commit JSON path/hash, local
+  commit Markdown path/hash, and `source_coder_commit_markdown_consumed: true`,
+  while keeping push, PR, deploy, provider, network, and external mutation
+  counters false or zero. `/today`, `/resume`, and the successor Goal page now
+  advance to `Approve publication` while retaining completed-Goal provenance
+  history and preserving the original daily return surface. Focused local
+  proof: compile plus the backend publication regression, tamper-boundary
+  regression, Goal action-card regression, and long daily browser-flow
+  regression.
+- Successor Goal approved local commits from `/today` and `/resume` now
+  consume `coder_commit/coder_commit_decision.md` as first-class proof before
+  the app stages reviewed allowed files in the isolated coder worktree. The
+  local commit artifacts, CLI/dashboard rows, Goal artifact reader, and
+  browser result expose the decision JSON path/hash, decision Markdown
+  path/hash, and `source_coder_commit_decision_markdown_consumed: true`, while
+  keeping push, PR, deploy, provider, network, and external mutation counters
+  false or zero. `/today`, `/resume`, and the successor Goal page now advance
+  to `Create publication request` while retaining completed-Goal provenance
+  history and preserving the original daily return surface. Focused local
+  proof: compile plus the backend local-commit regression and long daily
+  browser-flow regression.
+- Successor Goal commit approvals from `/today` and `/resume` now consume
+  `coder_commit/coder_commit_request.md` as first-class proof before the app
+  offers `Commit approved worktree`. The decision artifacts, CLI/dashboard
+  rows, Goal form, and browser result expose the request JSON path/hash,
+  request Markdown path/hash, and
+  `source_coder_commit_request_markdown_consumed: true`, while keeping local
+  commit, push, PR, and deploy counters false. `/today`, `/resume`, and the
+  successor Goal page now advance to `Commit approved worktree` while
+  retaining completed-Goal provenance history and preserving the original
+  daily return surface. Focused local proof: compile plus the backend
+  commit-approval regression and long daily browser-flow regression.
+- Successor Goal commit requests from `/today` and `/resume` now consume
+  `runs/<source_run_id>/review.md` as first-class proof before the app offers
+  `Approve commit`. The request artifacts, CLI/dashboard rows, Goal form, and
+  browser result expose `source_review`, `source_review_sha256`,
+  `source_review_markdown_consumed: true`, carried run-summary proof, and
+  source delegation run provenance. Pending legacy request artifacts for the
+  same run/diff/message are backfilled with the current review proof before
+  idempotent reuse. `/today`, `/resume`, and the successor Goal page now
+  advance to `Approve commit` while retaining completed-Goal provenance
+  history and preserving the original daily return surface. Focused local
+  proof: compile plus the backend commit-request regression and long daily
+  browser-flow regression.
+- Successor Goal worktree reviews from `/today` and `/resume` now consume the
+  approved worktree run evidence as first-class proof before the app offers
+  `Create commit request`. The review artifact records the coder worktree run
+  directory, run JSON hash, run summary Markdown path and hash, and diff hash;
+  the backend commit request gate now requires that matching proof instead of
+  accepting a review that merely mentions the run id.
+- Successor Goal approved worktree runs from `/today` and `/resume` now consume
+  `coder_worktree_approval_decision.md` as first-class proof. The run evidence
+  records decision JSON/Markdown paths and hashes in `run.json`, `summary.md`,
+  copied approval-decision evidence, CLI output, browser result output, and
+  dashboard rows. `/today`, `/resume`, and the successor Goal page now advance
+  to `Open review` while retaining completed-Goal provenance history and
+  preserving the original daily return surface.
+- Next-day self-hosting preflight is now first-class:
+  `python3 -m agent_os.cli self-hosting-check` verifies local fetch, saved
+  resume, current-`main` CI proof, and the browser Goal next action before
+  work resumes. It writes `.clanker/self-hosting-checks/latest.json` and
+  `docs/self-hosting-check.md`; `/today` and the static dashboard read the
+  latest report without fetching, polling GitHub, calling providers, pushing,
+  creating PRs, or deploying. Focused local proof: compile, the self-hosting
+  regression plus adjacent same-commit CI proof regression (`2 passed`), live
+  `/today` readback, static dashboard generation, and diff check.
+- Stale Goal hygiene is now first-class on `/today` and `/goals`: old
+  demo/context-pack Goals are counted, reviewable, pausable through the
+  existing confirmation-gated local action, and preserved as evidence instead
+  of hidden. Goal board selection now skips stale saved workspace focus when a
+  real ClankerOS dogfooding Goal exists. The iteration selector also parses
+  multiline `tasks.md` metadata and demotes report-only proof-ladder tails
+  behind daily-use product work when a live ClankerOS product Goal exists.
+  Local proof: compile plus the focused stale-hygiene/selector regression set
+  (`3 passed`).
+- Post-merge self-hosting reset is now the current ClankerOS focus. Invalid
+  duplicate local git refs were quarantined so fetch works again, `main`
+  fast-forwarded to merge commit
+  `a86f92996adc276831dcb5cb7b341bfc89c42ee3`, GitHub Actions run
+  `28744414894` was recorded as local CI evidence
+  `ci_snapshot_evidence_afdf67ba9bcd`, and a real continuation Goal
+  `goal_c96f52bf5137` plus workspace resume surface
+  `/goals/goal_c96f52bf5137#goal-action-dock-form` now anchor `/today`,
+  `/goals`, `/resume`, and `/ci-evidence`. Operator surfaces now also explain
+  why the `main` CI proof counts from the follow-up branch when the commit is
+  identical.
 - Saved-Goal action result pages now include a visible `Continue Goal` panel
   inside `Action Result Next Step`, before the inline confirmed next-action
   form. After first Goal creation, the success page names `Create scout

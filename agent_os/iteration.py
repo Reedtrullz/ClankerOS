@@ -53,6 +53,36 @@ QUEUE_PRIORITY = ["now", "next", "improve", "recurring"]
 SKIPPED_SECTIONS = {"blocked"}
 SELECTION_POLICY = "highest-score-then-lowest-complexity"
 METADATA_PATTERN = re.compile(r"<!--\s*(.*?)\s*-->")
+DAILY_USE_PRODUCT_MARKERS = (
+    "daily-use",
+    "daily use",
+    "daily-usable",
+    "self-hosting",
+    "next-day",
+    "browser",
+    "operator experience",
+    "stale goal hygiene",
+    "goal hygiene",
+    "clankeros",
+)
+REPORT_ONLY_PROOF_LADDER_MARKERS = (
+    "proof checklist",
+    "proof ladder",
+    "proof reports",
+    "result effect",
+    "capability",
+    "sourced",
+    "decision ledger",
+)
+RECURSIVE_GENERATED_TAIL_MARKERS = (
+    "downstream follow-up",
+    "accepted blocked",
+    "followup result",
+    "follow-up result",
+)
+DAILY_USE_QUEUE_REFRESH_FALLBACK = (
+    "Refresh the daily-use product queue with the next browser-first ClankerOS task."
+)
 VERIFICATION_COMMANDS = [
     "python3 -m pytest -q",
     "python3 -m agent_os.cli sweep-stuck --timeout-seconds 1800",
@@ -216,26 +246,60 @@ def _select_next_queue_item(source_path: Path) -> QueueItem:
     current_section = ""
     candidates: dict[str, list[str]] = {}
     order = 0
+    pending_section = ""
+    pending_parts: list[str] = []
+
+    def flush_pending() -> None:
+        nonlocal order, pending_section, pending_parts
+        if not pending_parts:
+            return
+        if pending_section not in SKIPPED_SECTIONS:
+            candidates.setdefault(pending_section, []).append(
+                " ".join(part.strip() for part in pending_parts if part.strip())
+            )
+            order += 1
+        pending_section = ""
+        pending_parts = []
+
     for raw_line in source_path.read_text(encoding="utf-8").splitlines():
         line = raw_line.strip()
         if line.startswith("## "):
+            flush_pending()
             current_section = line.removeprefix("## ").strip().lower()
             candidates.setdefault(current_section, [])
             continue
-        if not line.startswith("- [ ] "):
+        if line.startswith("- [ ] "):
+            flush_pending()
+            pending_section = current_section
+            pending_parts = [line.removeprefix("- [ ] ").strip()]
             continue
-        if current_section in SKIPPED_SECTIONS:
+        if pending_parts and line and (raw_line.startswith(" ") or raw_line.startswith("\t")):
+            pending_parts.append(line)
             continue
-        candidates.setdefault(current_section, []).append(line.removeprefix("- [ ] ").strip())
-        order += 1
+        if line.startswith("- ["):
+            flush_pending()
+            continue
+        if not line:
+            continue
+        flush_pending()
+    flush_pending()
 
+    daily_use_product_goal_exists = _daily_use_product_goal_exists(source_path.parent)
     for section in QUEUE_PRIORITY:
         if candidates.get(section):
-            return _choose_queue_item(section, candidates[section])
+            return _choose_queue_item(
+                section,
+                candidates[section],
+                daily_use_product_goal_exists=daily_use_product_goal_exists,
+            )
 
     for section, items in candidates.items():
         if items:
-            return _choose_queue_item(section, items)
+            return _choose_queue_item(
+                section,
+                items,
+                daily_use_product_goal_exists=daily_use_product_goal_exists,
+            )
 
     return QueueItem(
         section="fallback",
@@ -304,14 +368,44 @@ def _render_packet(root: Path, packet: IterationPacket) -> str:
     )
 
 
-def _choose_queue_item(section: str, raw_items: list[str]) -> QueueItem:
+def _choose_queue_item(
+    section: str,
+    raw_items: list[str],
+    *,
+    daily_use_product_goal_exists: bool = False,
+) -> QueueItem:
     candidates = [
         _parse_queue_item(section=section, raw_text=raw_text, order=order)
         for order, raw_text in enumerate(raw_items)
     ]
-    max_score = max(candidate.score for candidate in candidates)
+    scored_candidates = candidates
+    demoted_tail_count = 0
+    if daily_use_product_goal_exists:
+        non_report_only = [
+            candidate
+            for candidate in candidates
+            if not _is_non_product_proof_ladder_tail(candidate.text)
+        ]
+        if non_report_only:
+            demoted_tail_count = len(candidates) - len(non_report_only)
+            scored_candidates = non_report_only
+        elif candidates:
+            return QueueItem(
+                section="fallback",
+                text=DAILY_USE_QUEUE_REFRESH_FALLBACK,
+                score=0,
+                complexity=0,
+                order=0,
+                selection_reason=(
+                    "selected product-queue refresh fallback because only "
+                    f"recursive/report-only proof-ladder tail(s) remained in "
+                    f"{section} and a daily-use product Goal exists"
+                ),
+            )
+
+    max_score = max(candidate.score for candidate in scored_candidates)
     score_matched = [
-        candidate for candidate in candidates if candidate.score == max_score
+        candidate for candidate in scored_candidates if candidate.score == max_score
     ]
     min_complexity = min(candidate.complexity for candidate in score_matched)
     complexity_matched = [
@@ -333,7 +427,7 @@ def _choose_queue_item(section: str, raw_items: list[str]) -> QueueItem:
             f"selected queue order among {len(score_matched)} candidates with "
             f"equal score {selected.score} and equal complexity {selected.complexity}"
         )
-    elif len(candidates) > 1:
+    elif len(scored_candidates) > 1:
         reason = (
             f"selected highest score {selected.score}; complexity "
             f"{selected.complexity} recorded for audit"
@@ -342,6 +436,11 @@ def _choose_queue_item(section: str, raw_items: list[str]) -> QueueItem:
         reason = (
             f"selected only actionable item with score {selected.score} "
             f"and complexity {selected.complexity}"
+        )
+    if demoted_tail_count:
+        reason = (
+            f"{reason}; demoted {demoted_tail_count} report-only/generated "
+            "proof-ladder tail(s) because a daily-use product Goal exists"
         )
 
     return QueueItem(
@@ -370,7 +469,7 @@ def _parse_queue_item(section: str, raw_text: str, order: int) -> QueueItem:
         score = _parse_int(metadata.get("score"), fallback=0)
         complexity = _parse_int(metadata.get("complexity"), fallback=0)
 
-    clean_text = METADATA_PATTERN.sub("", raw_text).strip()
+    clean_text = " ".join(METADATA_PATTERN.sub("", raw_text).split())
     return QueueItem(
         section=section,
         text=clean_text,
@@ -379,6 +478,69 @@ def _parse_queue_item(section: str, raw_text: str, order: int) -> QueueItem:
         order=order,
         selection_reason="",
     )
+
+
+def _is_report_only_proof_ladder_tail(text: str) -> bool:
+    normalized = text.lower()
+    return "report-only" in normalized and any(
+        marker in normalized for marker in REPORT_ONLY_PROOF_LADDER_MARKERS
+    )
+
+
+def _is_recursive_generated_proof_ladder_tail(text: str) -> bool:
+    normalized = text.lower()
+    repeated_generated_terms = sum(
+        normalized.count(marker)
+        for marker in (
+            "result effect",
+            "task result",
+            "effect task",
+            "effect proposals",
+        )
+    )
+    return repeated_generated_terms >= 3 and any(
+        marker in normalized for marker in RECURSIVE_GENERATED_TAIL_MARKERS
+    )
+
+
+def _is_non_product_proof_ladder_tail(text: str) -> bool:
+    return _is_report_only_proof_ladder_tail(
+        text
+    ) or _is_recursive_generated_proof_ladder_tail(text)
+
+
+def _daily_use_product_goal_exists(root: Path) -> bool:
+    db_path = root / ".agent" / "state.db"
+    if not db_path.exists():
+        return False
+    try:
+        with sqlite3.connect(db_path) as connection:
+            connection.row_factory = sqlite3.Row
+            rows = connection.execute(
+                """
+                select project_id, title, description, original_prompt, status
+                from goals
+                order by updated_at desc, created_at desc
+                limit 200
+                """
+            ).fetchall()
+    except sqlite3.Error:
+        return False
+    for row in rows:
+        status = str(row["status"] or "").lower()
+        if status in {"completed", "done", "closed"}:
+            continue
+        project_id = str(row["project_id"] or "").lower()
+        text = " ".join(
+            str(row[key] or "")
+            for key in ("title", "description", "original_prompt")
+            if key in row.keys()
+        ).lower()
+        if project_id == "clankeros" and any(
+            marker in text for marker in DAILY_USE_PRODUCT_MARKERS
+        ):
+            return True
+    return False
 
 
 def _parse_int(value: str | None, *, fallback: int) -> int:

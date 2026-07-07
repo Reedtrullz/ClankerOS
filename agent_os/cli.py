@@ -79,6 +79,10 @@ from agent_os.ci_snapshot_evidence import (
     record_ci_snapshot_evidence,
     record_ci_snapshot_evidence_from_gh_status_json,
 )
+from agent_os.self_hosting_check import (
+    render_self_hosting_check_cli_lines,
+    run_next_day_self_hosting_check,
+)
 from agent_os.context_pack import ContextPackError, generate_context_pack
 from agent_os.coder_prep import (
     CoderPrepError,
@@ -536,6 +540,7 @@ from agent_os.local_app import (
     DEFAULT_PORT as LOCAL_APP_DEFAULT_PORT,
     run_demo_app_scenario,
     run_local_app_demo_smoke_test,
+    run_local_app_golden_path_smoke_test,
     run_local_app_smoke_test,
     serve_local_app,
     validate_bind_host,
@@ -766,8 +771,25 @@ def build_parser() -> argparse.ArgumentParser:
         aliases=["demo-app-smoke-test"],
         help="Create the demo fixture and render stateful local app routes.",
     )
+    subparsers.add_parser(
+        "app-golden-path-smoke-test",
+        help="Run the fresh-user project/goal/action/proof/finish/resume smoke.",
+    )
     subparsers.add_parser("dashboard", help="Write the static dashboard.")
     subparsers.add_parser("iterate", help="Write the next iteration packet from repo queues.")
+    self_hosting_check = subparsers.add_parser(
+        "self-hosting-check",
+        aliases=["next-day-check"],
+        help="Run the next-day self-hosting preflight before resuming ClankerOS work.",
+    )
+    self_hosting_check.add_argument("--remote", default="origin")
+    self_hosting_check.add_argument("--branch", default="main")
+    self_hosting_check.add_argument(
+        "--fetch-mode",
+        choices=["update", "dry-run", "none"],
+        default="update",
+        help="Use update for the real check, dry-run for proof-only fetch, or none for diagnostics.",
+    )
     review = subparsers.add_parser("review", help="Write a human-first run review packet.")
     review.add_argument("run_id")
     steer = subparsers.add_parser("steer", help="Write a deterministic steering review.")
@@ -2289,6 +2311,29 @@ def main(argv: list[str] | None = None) -> int:
         print("external_mutations_taken: 0")
         return 0 if result["status"] == "passed" else 1
 
+    if args.command == "app-golden-path-smoke-test":
+        result = run_local_app_golden_path_smoke_test(root)
+        print(f"app_golden_path_smoke_test: {result['status']}")
+        print(f"project_id: {result['project_id']}")
+        print(f"goal_id: {result['goal_id']}")
+        print(f"delegation_id: {result['delegation_id']}")
+        print(f"proof_artifact: {result['proof_artifact']}")
+        print(f"proof_exists: {str(result['proof_exists']).lower()}")
+        print(f"workspace_resume_surface: {result['workspace_resume_surface']}")
+        print(f"workspace_ok: {str(result['workspace_ok']).lower()}")
+        for check in result["checks"]:
+            snippet_status = "matched" if not check["missing_snippets"] else "missing"
+            print(
+                f"check {check['name']}: {check['status']} "
+                f"expected_status={check['expected_status']} snippets={snippet_status}"
+            )
+            for missing in check["missing_snippets"]:
+                print(f"missing_snippet {check['name']}: {missing}")
+        print("provider_calls_taken_by_clankeros: 0")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
+        return 0 if result["status"] == "passed" else 1
+
     if args.command == "dashboard":
         dashboard_path = generate_static_dashboard(root)
         print(dashboard_path)
@@ -2301,6 +2346,18 @@ def main(argv: list[str] | None = None) -> int:
         print(f"section: {packet.source_section}")
         print(f"packet: {packet.packet_path}")
         return 0
+
+    if args.command in {"self-hosting-check", "next-day-check"}:
+        AgentSystem(root).initialize()
+        result = run_next_day_self_hosting_check(
+            root,
+            remote=args.remote,
+            branch=args.branch,
+            fetch_mode=args.fetch_mode,
+        )
+        for line in render_self_hosting_check_cli_lines(result):
+            print(line)
+        return 0 if result.status == "ready" else 1
 
     if args.command == "review":
         system = AgentSystem(root)
@@ -2445,7 +2502,10 @@ def main(argv: list[str] | None = None) -> int:
                 f"suggested_push_command={handoff_payload.get('suggested_push_command', 'unavailable')} "
                 f"suggested_draft_pr_command={handoff_payload.get('suggested_draft_pr_command', 'unavailable')} "
                 f"pr_body_path={handoff_payload.get('pr_body_path', 'unavailable')} "
-                f"handoff_body_path={handoff_payload.get('handoff_body_path', 'unavailable')}"
+                f"handoff_body_path={handoff_payload.get('handoff_body_path', 'unavailable')} "
+                f"source_publication_decision_md={handoff_payload.get('source_coder_publication_decision_md', 'missing')} "
+                f"source_publication_decision_md_sha256={handoff_payload.get('source_publication_decision_md_sha256', 'missing')} "
+                f"source_publication_decision_markdown_consumed={str(handoff_payload.get('source_coder_publication_decision_markdown_consumed') is True).lower()}"
             )
         print("network_actions_taken: 0")
         print("external_mutations_taken: 0")

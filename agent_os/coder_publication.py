@@ -98,6 +98,7 @@ def request_coder_publication(
     context = _load_commit_context(root, storage, run_id)
     _validate_commit_context(root, context)
     commit_artifact_sha = _sha256_path(context["commit_artifact_path"])
+    commit_markdown_sha = context["commit_markdown_sha256"]
     existing = (
         None
         if force_new
@@ -110,6 +111,20 @@ def request_coder_publication(
         )
     )
     if existing is not None:
+        if not _publication_request_commit_markdown_proof_matches(
+            root,
+            existing,
+            source_commit_md=str(context["commit_markdown_path"].relative_to(root)),
+            source_commit_md_sha256=commit_markdown_sha,
+        ):
+            _backfill_publication_request_commit_markdown_proof(
+                root,
+                existing,
+                context=context,
+                source_commit_artifact_sha256=commit_artifact_sha,
+                remote=remote,
+                target_branch=target_branch,
+            )
         return CoderPublicationRequestResult(publication=existing, already_recorded=True)
 
     publication_id = new_id("coder_publication_request")
@@ -169,7 +184,22 @@ def approve_coder_publication(
     publication = get_coder_publication(storage, publication_id)
     if publication is None:
         raise CoderPublicationError(f"publication request not found: {publication_id}")
+    request_context = _load_publication_request_context(root, publication)
+    _validate_publication_request_context(publication, request_context)
     if publication.status in {"approved", "ready_for_operator"}:
+        if not _publication_decision_request_markdown_proof_matches(
+            root,
+            publication,
+            source_request_md=str(
+                request_context["request_markdown_path"].relative_to(root)
+            ),
+            source_request_md_sha256=request_context["request_markdown_sha256"],
+        ):
+            _backfill_publication_decision_request_markdown_proof(
+                root,
+                publication,
+                request_context=request_context,
+            )
         return CoderPublicationDecisionResult(
             publication=publication,
             already_approved=True,
@@ -177,35 +207,15 @@ def approve_coder_publication(
     if publication.status != "pending_operator_approval":
         raise CoderPublicationError(f"publication approval is not pending: {publication.status}")
 
-    request_artifact = root / publication.request_artifact_path
-    if not request_artifact.exists():
-        raise CoderPublicationError("publication request artifact missing")
     decided_at = utc_now()
-    payload = {
-        "kind": PUBLICATION_DECISION_KIND,
-        "schema_version": 1,
-        "publication_request_id": publication.id,
-        "coder_worktree_run_id": publication.run_id,
-        "delegation_id": publication.delegation_id,
-        "project_id": publication.project_id,
-        "source_request_sha256": _sha256_path(request_artifact),
-        "status": "approved",
-        "decided_by": decided_by,
-        "note": note,
-        "decided_at": decided_at,
-        "push_created": False,
-        "pr_created": False,
-        "deploy_created": False,
-        "provider_calls_taken_by_clankeros": 0,
-        "network_actions_taken": 0,
-        "external_mutations_taken": 0,
-        "non_claims": [
-            "Approving publication does not push.",
-            "Approving publication does not create a PR.",
-            "Approving publication does not deploy.",
-            "Approving publication does not call providers or use the network.",
-        ],
-    }
+    payload = _publication_decision_payload(
+        publication,
+        root=root,
+        request_context=request_context,
+        decided_by=decided_by,
+        note=note,
+        decided_at=decided_at,
+    )
     decision_path = root / (publication.decision_artifact_path or "")
     _write_json(decision_path, payload)
     _write_text(decision_path.with_suffix(".md"), _render_publication_decision_markdown(payload))
@@ -241,7 +251,22 @@ def create_coder_publication_handoff(
         _block_publication(storage, publication.id, failure_class="source_hash_mismatch")
         raise CoderPublicationError(f"source_hash_mismatch: {publication.id}")
     _validate_approved_request_hash(root, storage, publication)
+    decision_context = _load_publication_decision_context(root, publication)
+    _validate_publication_decision_context(publication, decision_context)
     if publication.status == "ready_for_operator" and (root / publication.handoff_artifact_path).exists():
+        if not _publication_handoff_decision_markdown_proof_matches(
+            root,
+            publication,
+            source_decision_md=str(
+                decision_context["decision_markdown_path"].relative_to(root)
+            ),
+            source_decision_md_sha256=decision_context["decision_markdown_sha256"],
+        ):
+            _backfill_publication_handoff_decision_markdown_proof(
+                root,
+                publication,
+                decision_context=decision_context,
+            )
         return CoderPublicationHandoffResult(
             publication=publication,
             status="already_ready",
@@ -249,7 +274,12 @@ def create_coder_publication_handoff(
             already_ready=True,
         )
 
-    payload = _publication_handoff_payload(root, publication, context)
+    payload = _publication_handoff_payload(
+        root,
+        publication,
+        context,
+        decision_context=decision_context,
+    )
     handoff_path = root / publication.handoff_artifact_path
     _write_json(handoff_path, payload)
     _write_text(handoff_path.with_suffix(".md"), _render_publication_handoff_markdown(payload))
@@ -332,6 +362,7 @@ def render_coder_publication_request_cli_lines(
 ) -> list[str]:
     publication = result.publication
     prefix = "already_recorded " if result.already_recorded else ""
+    payload = _load_publication_request_payload(root, publication)
     return [
         f"coder_publication_request: {prefix}{publication.id}",
         f"publication_request_id: {publication.id}",
@@ -347,6 +378,11 @@ def render_coder_publication_request_cli_lines(
         f"remote: {publication.remote}",
         f"target_branch: {publication.target_branch}",
         f"artifact: {publication.request_artifact_path}",
+        f"source_coder_commit: {payload.get('source_coder_commit', publication.source_commit_artifact_path)}",
+        f"source_coder_commit_md: {payload.get('source_coder_commit_md', 'missing')}",
+        f"source_commit_sha256: {payload.get('source_commit_sha256', publication.source_commit_artifact_sha256)}",
+        f"source_commit_md_sha256: {payload.get('source_commit_md_sha256', 'missing')}",
+        f"source_coder_commit_markdown_consumed: {_bool(payload.get('source_coder_commit_markdown_consumed') is True)}",
         "push_created: false",
         "pr_created: false",
         "deploy_created: false",
@@ -362,6 +398,7 @@ def render_coder_publication_decision_cli_lines(
 ) -> list[str]:
     publication = result.publication
     prefix = "already_approved " if result.already_approved else ""
+    payload = _load_publication_decision_payload(root, publication)
     return [
         f"approved_coder_publication: {prefix}{publication.id}",
         f"publication_request_id: {publication.id}",
@@ -370,6 +407,11 @@ def render_coder_publication_decision_cli_lines(
         f"project_id: {publication.project_id}",
         f"status: {publication.status}",
         f"artifact: {publication.decision_artifact_path or 'none'}",
+        f"source_coder_publication_request: {payload.get('source_coder_publication_request', publication.request_artifact_path)}",
+        f"source_coder_publication_request_md: {payload.get('source_coder_publication_request_md', 'missing')}",
+        f"source_publication_request_sha256: {payload.get('source_publication_request_sha256', payload.get('source_request_sha256', 'missing'))}",
+        f"source_publication_request_md_sha256: {payload.get('source_publication_request_md_sha256', 'missing')}",
+        f"source_coder_publication_request_markdown_consumed: {_bool(payload.get('source_coder_publication_request_markdown_consumed') is True)}",
         "push_created: false",
         "pr_created: false",
         "deploy_created: false",
@@ -403,6 +445,11 @@ def render_coder_publication_handoff_cli_lines(
         f"pr_body_path: {payload['pr_body_path']}",
         f"handoff_body_path: {payload['handoff_body_path']}",
         f"artifact: {result.artifact_path}",
+        f"source_coder_publication_decision: {payload.get('source_coder_publication_decision', publication.decision_artifact_path or 'missing')}",
+        f"source_coder_publication_decision_md: {payload.get('source_coder_publication_decision_md', 'missing')}",
+        f"source_publication_decision_sha256: {payload.get('source_publication_decision_sha256', 'missing')}",
+        f"source_publication_decision_md_sha256: {payload.get('source_publication_decision_md_sha256', 'missing')}",
+        f"source_coder_publication_decision_markdown_consumed: {_bool(payload.get('source_coder_publication_decision_markdown_consumed') is True)}",
         "push_created: false",
         "pr_created: false",
         "deploy_created: false",
@@ -416,6 +463,8 @@ def render_coder_publication_handoff_cli_lines(
 def render_coder_publication_request_dashboard_lines(root: Path) -> list[str]:
     lines: list[str] = []
     for publication in list_coder_publications(root, limit=10):
+        payload = _load_publication_request_payload(root, publication)
+        decision_payload = _load_publication_decision_payload(root, publication)
         lines.append(
             f"- {publication.id}: delegation={publication.delegation_id} "
             f"project={publication.project_id} run={publication.run_id} "
@@ -423,6 +472,14 @@ def render_coder_publication_request_dashboard_lines(root: Path) -> list[str]:
             f"branch={publication.branch_name} remote={publication.remote} "
             f"target_branch={publication.target_branch} "
             f"request={publication.request_artifact_path} "
+            f"source_commit={payload.get('source_coder_commit', publication.source_commit_artifact_path)} "
+            f"source_commit_sha256={payload.get('source_commit_sha256', publication.source_commit_artifact_sha256)} "
+            f"source_commit_md={payload.get('source_coder_commit_md', 'missing')} "
+            f"source_commit_md_sha256={payload.get('source_commit_md_sha256', 'missing')} "
+            f"source_commit_markdown_consumed={_bool(payload.get('source_coder_commit_markdown_consumed') is True)} "
+            f"source_publication_request_md={decision_payload.get('source_coder_publication_request_md', 'missing')} "
+            f"source_publication_request_md_sha256={decision_payload.get('source_publication_request_md_sha256', 'missing')} "
+            f"source_publication_request_markdown_consumed={_bool(decision_payload.get('source_coder_publication_request_markdown_consumed') is True)} "
             "push_created=false pr_created=false deploy_created=false "
             "network_actions_taken=0 external_mutations_taken=0"
         )
@@ -443,6 +500,9 @@ def render_coder_publication_handoff_dashboard_lines(root: Path) -> list[str]:
             f"suggested_draft_pr_command={payload.get('suggested_draft_pr_command', 'unavailable')} "
             f"pr_body_path={payload.get('pr_body_path', 'unavailable')} "
             f"handoff_body_path={payload.get('handoff_body_path', 'unavailable')} "
+            f"source_publication_decision_md={payload.get('source_coder_publication_decision_md', 'missing')} "
+            f"source_publication_decision_md_sha256={payload.get('source_publication_decision_md_sha256', 'missing')} "
+            f"source_publication_decision_markdown_consumed={_bool(payload.get('source_coder_publication_decision_markdown_consumed') is True)} "
             "next_action=operator_may_manually_push_or_create_draft_pr "
             "push_created=false pr_created=false deploy_created=false"
         )
@@ -454,6 +514,8 @@ def render_coder_publication_review_lines(root: Path, delegation_id: str) -> lis
     for publication in list_coder_publications(root, delegation_id=delegation_id, limit=10):
         handoff_available = publication.status == "ready_for_operator"
         payload = load_coder_publication_handoff_payload(root, publication)
+        request_payload = _load_publication_request_payload(root, publication)
+        decision_payload = _load_publication_decision_payload(root, publication)
         lines.extend(
             [
                 f"- delegation={delegation_id} coder_publication_request={publication.request_artifact_path}",
@@ -467,12 +529,27 @@ def render_coder_publication_review_lines(root: Path, delegation_id: str) -> lis
                 f"  - branch_name: {publication.branch_name}",
                 f"  - remote: {publication.remote}",
                 f"  - target_branch: {publication.target_branch}",
+                f"  - source_coder_commit: {request_payload.get('source_coder_commit', publication.source_commit_artifact_path)}",
+                f"  - source_coder_commit_md: {request_payload.get('source_coder_commit_md', 'missing')}",
+                f"  - source_commit_sha256: {request_payload.get('source_commit_sha256', publication.source_commit_artifact_sha256)}",
+                f"  - source_commit_md_sha256: {request_payload.get('source_commit_md_sha256', 'missing')}",
+                f"  - source_coder_commit_markdown_consumed: {_bool(request_payload.get('source_coder_commit_markdown_consumed') is True)}",
+                f"  - source_coder_publication_request: {decision_payload.get('source_coder_publication_request', publication.request_artifact_path)}",
+                f"  - source_coder_publication_request_md: {decision_payload.get('source_coder_publication_request_md', 'missing')}",
+                f"  - source_publication_request_sha256: {decision_payload.get('source_publication_request_sha256', decision_payload.get('source_request_sha256', 'missing'))}",
+                f"  - source_publication_request_md_sha256: {decision_payload.get('source_publication_request_md_sha256', 'missing')}",
+                f"  - source_coder_publication_request_markdown_consumed: {_bool(decision_payload.get('source_coder_publication_request_markdown_consumed') is True)}",
                 f"  - handoff_available: {_bool(handoff_available)}",
                 f"  - coder_publication_handoff: {publication.handoff_artifact_path if handoff_available else 'none'}",
                 f"  - suggested_push_command: {payload.get('suggested_push_command', 'none') if handoff_available else 'none'}",
                 f"  - suggested_draft_pr_command: {payload.get('suggested_draft_pr_command', 'none') if handoff_available else 'none'}",
                 f"  - pr_body_path: {payload.get('pr_body_path', 'none') if handoff_available else 'none'}",
                 f"  - handoff_body_path: {payload.get('handoff_body_path', 'none') if handoff_available else 'none'}",
+                f"  - source_coder_publication_decision: {payload.get('source_coder_publication_decision', publication.decision_artifact_path or 'missing') if handoff_available else 'none'}",
+                f"  - source_coder_publication_decision_md: {payload.get('source_coder_publication_decision_md', 'missing') if handoff_available else 'none'}",
+                f"  - source_publication_decision_sha256: {payload.get('source_publication_decision_sha256', 'missing') if handoff_available else 'none'}",
+                f"  - source_publication_decision_md_sha256: {payload.get('source_publication_decision_md_sha256', 'missing') if handoff_available else 'none'}",
+                f"  - source_coder_publication_decision_markdown_consumed: {_bool(payload.get('source_coder_publication_decision_markdown_consumed') is True) if handoff_available else 'false'}",
                 "  - push_created: false",
                 "  - pr_created: false",
                 "  - deploy_created: false",
@@ -788,6 +865,301 @@ def _latest_publication_for_run(
     return _row_to_publication(row) if row is not None else None
 
 
+def _load_publication_request_payload(
+    root: Path,
+    publication: CoderPublicationRecord,
+) -> dict[str, Any]:
+    artifact = root.resolve() / publication.request_artifact_path
+    try:
+        payload = json.loads(artifact.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _load_publication_decision_payload(
+    root: Path,
+    publication: CoderPublicationRecord,
+) -> dict[str, Any]:
+    if not publication.decision_artifact_path:
+        return {}
+    artifact = root.resolve() / publication.decision_artifact_path
+    try:
+        payload = json.loads(artifact.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _load_publication_request_context(
+    root: Path,
+    publication: CoderPublicationRecord,
+) -> dict[str, Any]:
+    request_artifact_path = root.resolve() / publication.request_artifact_path
+    if not request_artifact_path.exists():
+        raise CoderPublicationError("publication request artifact missing")
+    request_markdown_path = request_artifact_path.with_suffix(".md")
+    if not request_markdown_path.exists():
+        raise CoderPublicationError("publication request markdown proof missing")
+    try:
+        request_payload = json.loads(request_artifact_path.read_text(encoding="utf-8"))
+        request_markdown_text = request_markdown_path.read_text(encoding="utf-8")
+    except json.JSONDecodeError as error:
+        raise CoderPublicationError("publication request artifact unreadable") from error
+    except OSError as error:
+        raise CoderPublicationError("publication request markdown proof unreadable") from error
+    if not isinstance(request_payload, dict):
+        raise CoderPublicationError("publication request artifact unreadable")
+    return {
+        "request_artifact_path": request_artifact_path,
+        "request_markdown_path": request_markdown_path,
+        "request_payload": request_payload,
+        "request_markdown_text": request_markdown_text,
+        "request_artifact_sha256": _sha256_path(request_artifact_path),
+        "request_markdown_sha256": hashlib.sha256(
+            request_markdown_text.encode("utf-8")
+        ).hexdigest(),
+    }
+
+
+def _validate_publication_request_context(
+    publication: CoderPublicationRecord,
+    context: dict[str, Any],
+) -> None:
+    payload = context["request_payload"]
+    if payload.get("kind") != PUBLICATION_REQUEST_KIND:
+        raise CoderPublicationError("publication request artifact has unexpected kind")
+    if payload.get("publication_request_id") != publication.id:
+        raise CoderPublicationError("publication request artifact does not match approval")
+    if payload.get("coder_worktree_run_id") != publication.run_id:
+        raise CoderPublicationError("publication request artifact does not match run")
+    markdown_text = str(context.get("request_markdown_text") or "")
+    if f"- publication_request_id: {publication.id}" not in markdown_text:
+        raise CoderPublicationError("publication request markdown proof does not match approval")
+    if f"- coder_worktree_run_id: {publication.run_id}" not in markdown_text:
+        raise CoderPublicationError("publication request markdown proof does not match run")
+    if payload.get("source_coder_commit_markdown_consumed") is not True:
+        raise CoderPublicationError("publication request artifact is missing commit markdown proof")
+    if "- source_coder_commit_markdown_consumed: true" not in markdown_text:
+        raise CoderPublicationError("publication request markdown proof is missing commit proof")
+
+
+def _load_publication_decision_context(
+    root: Path,
+    publication: CoderPublicationRecord,
+) -> dict[str, Any]:
+    if not publication.decision_artifact_path:
+        raise CoderPublicationError("publication decision artifact missing")
+    decision_artifact_path = root.resolve() / publication.decision_artifact_path
+    if not decision_artifact_path.exists():
+        raise CoderPublicationError("publication decision artifact missing")
+    decision_markdown_path = decision_artifact_path.with_suffix(".md")
+    if not decision_markdown_path.exists():
+        raise CoderPublicationError("publication decision markdown proof missing")
+    try:
+        decision_payload = json.loads(decision_artifact_path.read_text(encoding="utf-8"))
+        decision_markdown_text = decision_markdown_path.read_text(encoding="utf-8")
+    except json.JSONDecodeError as error:
+        raise CoderPublicationError("publication decision artifact unreadable") from error
+    except OSError as error:
+        raise CoderPublicationError("publication decision markdown proof unreadable") from error
+    if not isinstance(decision_payload, dict):
+        raise CoderPublicationError("publication decision artifact unreadable")
+    return {
+        "decision_artifact_path": decision_artifact_path,
+        "decision_markdown_path": decision_markdown_path,
+        "decision_payload": decision_payload,
+        "decision_markdown_text": decision_markdown_text,
+        "decision_artifact_sha256": _sha256_path(decision_artifact_path),
+        "decision_markdown_sha256": hashlib.sha256(
+            decision_markdown_text.encode("utf-8")
+        ).hexdigest(),
+    }
+
+
+def _validate_publication_decision_context(
+    publication: CoderPublicationRecord,
+    context: dict[str, Any],
+) -> None:
+    payload = context["decision_payload"]
+    if payload.get("kind") != PUBLICATION_DECISION_KIND:
+        raise CoderPublicationError("publication decision artifact has unexpected kind")
+    if payload.get("publication_request_id") != publication.id:
+        raise CoderPublicationError("publication decision artifact does not match approval")
+    if payload.get("coder_worktree_run_id") != publication.run_id:
+        raise CoderPublicationError("publication decision artifact does not match run")
+    if payload.get("status") != "approved":
+        raise CoderPublicationError("publication decision artifact is not approved")
+    if payload.get("source_coder_publication_request_markdown_consumed") is not True:
+        raise CoderPublicationError("publication decision artifact is missing request markdown proof")
+    if payload.get("push_created") is not False:
+        raise CoderPublicationError("publication_state_already_mutated")
+    if payload.get("pr_created") is not False:
+        raise CoderPublicationError("publication_state_already_mutated")
+    if payload.get("deploy_created") is not False:
+        raise CoderPublicationError("publication_state_already_mutated")
+    if int(payload.get("provider_calls_taken_by_clankeros") or 0) != 0:
+        raise CoderPublicationError("publication_state_already_mutated")
+    if int(payload.get("network_actions_taken") or 0) != 0:
+        raise CoderPublicationError("publication_state_already_mutated")
+    if int(payload.get("external_mutations_taken") or 0) != 0:
+        raise CoderPublicationError("publication_state_already_mutated")
+    markdown_text = str(context.get("decision_markdown_text") or "")
+    if f"- publication_request_id: {publication.id}" not in markdown_text:
+        raise CoderPublicationError("publication decision markdown proof does not match approval")
+    if "- status: approved" not in markdown_text:
+        raise CoderPublicationError("publication decision markdown proof is not approved")
+    if "- source_coder_publication_request_markdown_consumed: true" not in markdown_text:
+        raise CoderPublicationError("publication decision markdown proof is missing request proof")
+
+
+def _publication_request_commit_markdown_proof_matches(
+    root: Path,
+    publication: CoderPublicationRecord,
+    *,
+    source_commit_md: str,
+    source_commit_md_sha256: str,
+) -> bool:
+    payload = _load_publication_request_payload(root, publication)
+    return (
+        payload.get("source_coder_commit_md") == source_commit_md
+        and payload.get("source_commit_md_sha256") == source_commit_md_sha256
+        and payload.get("source_coder_commit_markdown_consumed") is True
+    )
+
+
+def _publication_decision_request_markdown_proof_matches(
+    root: Path,
+    publication: CoderPublicationRecord,
+    *,
+    source_request_md: str,
+    source_request_md_sha256: str,
+) -> bool:
+    payload = _load_publication_decision_payload(root, publication)
+    return (
+        payload.get("source_coder_publication_request_md") == source_request_md
+        and payload.get("source_publication_request_md_sha256")
+        == source_request_md_sha256
+        and payload.get("source_coder_publication_request_markdown_consumed")
+        is True
+    )
+
+
+def _backfill_publication_decision_request_markdown_proof(
+    root: Path,
+    publication: CoderPublicationRecord,
+    *,
+    request_context: dict[str, Any],
+) -> None:
+    if not publication.decision_artifact_path:
+        return
+    decision_path = root.resolve() / publication.decision_artifact_path
+    payload = _load_publication_decision_payload(root, publication)
+    if not payload:
+        payload = _publication_decision_payload(
+            publication,
+            root=root.resolve(),
+            request_context=request_context,
+            decided_by=publication.decided_by or "operator",
+            note=publication.decision_note or "Backfilled request Markdown proof.",
+            decided_at=publication.decided_at or utc_now(),
+        )
+    else:
+        payload.update(
+            _publication_decision_request_proof_fields(
+                request_context=request_context,
+                root=root.resolve(),
+            )
+        )
+    _write_json(decision_path, payload)
+    _write_text(decision_path.with_suffix(".md"), _render_publication_decision_markdown(payload))
+
+
+def _publication_handoff_decision_markdown_proof_matches(
+    root: Path,
+    publication: CoderPublicationRecord,
+    *,
+    source_decision_md: str,
+    source_decision_md_sha256: str,
+) -> bool:
+    payload = load_coder_publication_handoff_payload(root, publication)
+    return (
+        payload.get("source_coder_publication_decision_md") == source_decision_md
+        and payload.get("source_publication_decision_md_sha256")
+        == source_decision_md_sha256
+        and payload.get("source_coder_publication_decision_markdown_consumed")
+        is True
+    )
+
+
+def _backfill_publication_handoff_decision_markdown_proof(
+    root: Path,
+    publication: CoderPublicationRecord,
+    *,
+    decision_context: dict[str, Any],
+) -> None:
+    handoff_path = root.resolve() / publication.handoff_artifact_path
+    payload = load_coder_publication_handoff_payload(root, publication)
+    if not payload:
+        return
+    payload.update(
+        _publication_handoff_decision_proof_fields(
+            decision_context=decision_context,
+            root=root.resolve(),
+        )
+    )
+    _write_json(handoff_path, payload)
+    _write_text(handoff_path.with_suffix(".md"), _render_publication_handoff_markdown(payload))
+    body_path_text = str(payload.get("pr_body_path") or "")
+    if body_path_text:
+        body_path = Path(body_path_text)
+        _write_text(body_path, _render_publication_pr_body(payload))
+
+
+def _backfill_publication_request_commit_markdown_proof(
+    root: Path,
+    publication: CoderPublicationRecord,
+    *,
+    context: dict[str, Any],
+    source_commit_artifact_sha256: str,
+    remote: str,
+    target_branch: str,
+) -> None:
+    request_path = root.resolve() / publication.request_artifact_path
+    payload = _load_publication_request_payload(root, publication)
+    if not payload:
+        payload = _publication_request_payload(
+            root=root.resolve(),
+            publication_id=publication.id,
+            context=context,
+            source_commit_artifact_sha256=source_commit_artifact_sha256,
+            remote=remote,
+            target_branch=target_branch,
+            requested_by=publication.requested_by,
+            note=publication.request_note,
+            requested_at=publication.requested_at,
+        )
+    else:
+        payload.update(
+            {
+                "source_coder_commit": str(
+                    context["commit_artifact_path"].relative_to(root.resolve())
+                ),
+                "source_coder_commit_md": str(
+                    context["commit_markdown_path"].relative_to(root.resolve())
+                ),
+                "source_commit_sha256": source_commit_artifact_sha256,
+                "source_commit_md_sha256": context["commit_markdown_sha256"],
+                "source_coder_commit_markdown_consumed": True,
+                "source_coder_commit_markdown_excerpt": context[
+                    "commit_markdown_text"
+                ][:2000],
+            }
+        )
+    _write_json(request_path, payload)
+    _write_text(request_path.with_suffix(".md"), _render_publication_request_markdown(payload))
+
+
 def _latest_committed_approval_for_run(storage: Storage, run_id: str) -> sqlite3.Row | None:
     _ensure_coder_worktree_tables(storage)
     with _connect(storage) as connection:
@@ -816,15 +1188,26 @@ def _load_commit_context(root: Path, storage: Storage, run_id: str) -> dict[str,
     commit_artifact_path = evidence_dir / "coder_commit" / "commit.json"
     if not commit_artifact_path.exists():
         raise CoderPublicationError("local commit artifact missing")
+    commit_markdown_path = commit_artifact_path.with_suffix(".md")
+    if not commit_markdown_path.exists():
+        raise CoderPublicationError("local commit markdown proof missing")
     try:
         commit_payload = json.loads(commit_artifact_path.read_text(encoding="utf-8"))
+        commit_markdown_text = commit_markdown_path.read_text(encoding="utf-8")
     except json.JSONDecodeError as error:
         raise CoderPublicationError("local commit artifact unreadable") from error
+    except OSError as error:
+        raise CoderPublicationError("local commit markdown proof unreadable") from error
     return {
         "run": run,
         "commit_approval": approval_row,
         "evidence_dir": evidence_dir,
         "commit_artifact_path": commit_artifact_path,
+        "commit_markdown_path": commit_markdown_path,
+        "commit_markdown_text": commit_markdown_text,
+        "commit_markdown_sha256": hashlib.sha256(
+            commit_markdown_text.encode("utf-8")
+        ).hexdigest(),
         "commit_payload": commit_payload,
         "publication_dir": evidence_dir / "coder_publication",
     }
@@ -837,6 +1220,16 @@ def _validate_commit_context(root: Path, context: dict[str, Any]) -> None:
     commit_sha = str(payload.get("commit_sha") or "")
     if not commit_sha:
         raise CoderPublicationError("commit_sha_missing")
+    markdown_text = str(context.get("commit_markdown_text") or "")
+    run = context["run"]
+    if f"- coder_worktree_run_id: {run.id}" not in markdown_text:
+        raise CoderPublicationError("local commit markdown proof does not match run")
+    if f"- commit_sha: {commit_sha}" not in markdown_text:
+        raise CoderPublicationError("local commit markdown proof does not match commit")
+    if payload.get("source_coder_commit_decision_markdown_consumed") is not True:
+        raise CoderPublicationError("local commit artifact is missing decision markdown proof")
+    if "- source_coder_commit_decision_markdown_consumed: true" not in markdown_text:
+        raise CoderPublicationError("local commit markdown proof is missing decision proof")
     worktree_path = Path(str(payload.get("worktree_path") or ""))
     if not worktree_path.exists():
         raise CoderPublicationError("missing_worktree")
@@ -875,9 +1268,12 @@ def _validate_approved_request_hash(
     publication: CoderPublicationRecord,
 ) -> None:
     request_path = root / publication.request_artifact_path
+    request_markdown_path = request_path.with_suffix(".md")
     decision_path = root / (publication.decision_artifact_path or "")
     if not request_path.exists():
         raise CoderPublicationError("publication request artifact missing")
+    if not request_markdown_path.exists():
+        raise CoderPublicationError("publication request markdown proof missing")
     if not decision_path.exists():
         raise CoderPublicationError("publication decision artifact missing")
     try:
@@ -890,6 +1286,15 @@ def _validate_approved_request_hash(
     if _sha256_path(request_path) != approved_request_hash:
         _block_publication(storage, publication.id, failure_class="source_request_hash_mismatch")
         raise CoderPublicationError(f"source_request_hash_mismatch: {publication.id}")
+    approved_request_markdown_hash = str(
+        decision_payload.get("source_publication_request_md_sha256") or ""
+    )
+    if not approved_request_markdown_hash:
+        _block_publication(storage, publication.id, failure_class="source_request_hash_mismatch")
+        raise CoderPublicationError("approved_request_markdown_hash_missing")
+    if _sha256_path(request_markdown_path) != approved_request_markdown_hash:
+        _block_publication(storage, publication.id, failure_class="source_request_hash_mismatch")
+        raise CoderPublicationError(f"source_request_markdown_hash_mismatch: {publication.id}")
 
 
 def _publication_request_payload(
@@ -917,6 +1322,12 @@ def _publication_request_payload(
         "branch_name": payload["branch_name"],
         "commit_sha": payload["commit_sha"],
         "parent_commit_sha": payload["parent_commit_sha"],
+        "source_coder_commit": str(context["commit_artifact_path"].relative_to(root)),
+        "source_coder_commit_md": str(context["commit_markdown_path"].relative_to(root)),
+        "source_commit_sha256": source_commit_artifact_sha256,
+        "source_commit_md_sha256": context["commit_markdown_sha256"],
+        "source_coder_commit_markdown_consumed": True,
+        "source_coder_commit_markdown_excerpt": context["commit_markdown_text"][:2000],
         "commit_artifact": str(context["commit_artifact_path"].relative_to(root)),
         "commit_artifact_sha256": source_commit_artifact_sha256,
         "remote": remote,
@@ -946,10 +1357,105 @@ def _publication_request_payload(
     }
 
 
+def _publication_decision_request_proof_fields(
+    *,
+    request_context: dict[str, Any],
+    root: Path,
+) -> dict[str, Any]:
+    return {
+        "source_coder_publication_request": str(
+            request_context["request_artifact_path"].relative_to(root)
+        ),
+        "source_coder_publication_request_md": str(
+            request_context["request_markdown_path"].relative_to(root)
+        ),
+        "source_publication_request_sha256": request_context[
+            "request_artifact_sha256"
+        ],
+        "source_publication_request_md_sha256": request_context[
+            "request_markdown_sha256"
+        ],
+        "source_coder_publication_request_markdown_consumed": True,
+        "source_coder_publication_request_markdown_excerpt": request_context[
+            "request_markdown_text"
+        ][:2000],
+        "source_request_sha256": request_context["request_artifact_sha256"],
+    }
+
+
+def _publication_decision_payload(
+    publication: CoderPublicationRecord,
+    *,
+    root: Path,
+    request_context: dict[str, Any],
+    decided_by: str,
+    note: str,
+    decided_at: str,
+) -> dict[str, Any]:
+    payload = {
+        "kind": PUBLICATION_DECISION_KIND,
+        "schema_version": 1,
+        "publication_request_id": publication.id,
+        "coder_worktree_run_id": publication.run_id,
+        "delegation_id": publication.delegation_id,
+        "project_id": publication.project_id,
+        "status": "approved",
+        "decided_by": decided_by,
+        "note": note,
+        "decided_at": decided_at,
+        "push_created": False,
+        "pr_created": False,
+        "deploy_created": False,
+        "provider_calls_taken_by_clankeros": 0,
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
+        "non_claims": [
+            "Approving publication does not push.",
+            "Approving publication does not create a PR.",
+            "Approving publication does not deploy.",
+            "Approving publication does not call providers or use the network.",
+        ],
+    }
+    payload.update(
+        _publication_decision_request_proof_fields(
+            request_context=request_context,
+            root=root,
+        )
+    )
+    return payload
+
+
+def _publication_handoff_decision_proof_fields(
+    *,
+    decision_context: dict[str, Any],
+    root: Path,
+) -> dict[str, Any]:
+    return {
+        "source_coder_publication_decision": str(
+            decision_context["decision_artifact_path"].relative_to(root)
+        ),
+        "source_coder_publication_decision_md": str(
+            decision_context["decision_markdown_path"].relative_to(root)
+        ),
+        "source_publication_decision_sha256": decision_context[
+            "decision_artifact_sha256"
+        ],
+        "source_publication_decision_md_sha256": decision_context[
+            "decision_markdown_sha256"
+        ],
+        "source_coder_publication_decision_markdown_consumed": True,
+        "source_coder_publication_decision_markdown_excerpt": decision_context[
+            "decision_markdown_text"
+        ][:2000],
+    }
+
+
 def _publication_handoff_payload(
     root: Path,
     publication: CoderPublicationRecord,
     context: dict[str, Any],
+    *,
+    decision_context: dict[str, Any],
 ) -> dict[str, Any]:
     payload = context["commit_payload"]
     handoff_path = root / publication.handoff_artifact_path
@@ -960,7 +1466,7 @@ def _publication_handoff_payload(
         f"gh pr create --draft --base {publication.target_branch} "
         f"--head {publication.branch_name} --title \"{title}\" --body-file {body_path}"
     )
-    return {
+    handoff_payload = {
         "kind": PUBLICATION_HANDOFF_KIND,
         "schema_version": 1,
         "coder_worktree_run_id": publication.run_id,
@@ -1002,6 +1508,13 @@ def _publication_handoff_payload(
             "Suggested commands require separate manual operator execution.",
         ],
     }
+    handoff_payload.update(
+        _publication_handoff_decision_proof_fields(
+            decision_context=decision_context,
+            root=root,
+        )
+    )
+    return handoff_payload
 
 
 def _row_to_publication(row: sqlite3.Row) -> CoderPublicationRecord:
@@ -1061,6 +1574,9 @@ def _publication_failure_class_from_error(error_text: str) -> str:
     mapping = [
         ("coder worktree run not found", "missing_coder_worktree_run"),
         ("local commit artifact missing", "missing_local_commit"),
+        ("local commit markdown proof", "missing_local_commit"),
+        ("local commit artifact is missing decision markdown proof", "missing_local_commit"),
+        ("local commit markdown proof is missing decision proof", "missing_local_commit"),
         ("commit_sha_missing", "missing_commit_sha"),
         ("commit_sha_not_found", "commit_sha_not_found"),
         ("missing_worktree", "missing_worktree"),
@@ -1070,10 +1586,26 @@ def _publication_failure_class_from_error(error_text: str) -> str:
         ("unsafe_git_state", "unsafe_git_state"),
         ("source_hash_mismatch", "source_hash_mismatch"),
         ("source_request_hash_mismatch", "source_request_hash_mismatch"),
+        ("source_request_markdown_hash_mismatch", "source_request_hash_mismatch"),
         ("approved publication request is missing", "missing_publication_approval"),
         ("publication request is not approved", "publication_not_approved"),
         ("publication approval is not pending", "publication_not_pending"),
         ("publication_request_note_required", "publication_request_note_required"),
+        ("publication request markdown proof missing", "missing_publication_request_markdown_proof"),
+        ("publication request markdown proof unreadable", "missing_publication_request_markdown_proof"),
+        ("publication request markdown proof does not match", "source_request_hash_mismatch"),
+        ("publication request markdown proof is missing commit proof", "source_request_hash_mismatch"),
+        ("publication request artifact is missing commit markdown proof", "source_request_hash_mismatch"),
+        ("approved_request_markdown_hash_missing", "source_request_hash_mismatch"),
+        ("publication decision markdown proof missing", "missing_publication_decision_markdown_proof"),
+        ("publication decision markdown proof unreadable", "missing_publication_decision_markdown_proof"),
+        ("publication decision artifact has unexpected kind", "source_decision_hash_mismatch"),
+        ("publication decision artifact does not match", "source_decision_hash_mismatch"),
+        ("publication decision artifact is not approved", "source_decision_hash_mismatch"),
+        ("publication decision markdown proof does not match", "source_decision_hash_mismatch"),
+        ("publication decision markdown proof is not approved", "source_decision_hash_mismatch"),
+        ("publication decision markdown proof is missing request proof", "source_decision_hash_mismatch"),
+        ("publication decision artifact is missing request markdown proof", "source_decision_hash_mismatch"),
         ("outside_allowed_files_present", "outside_allowed_files_present"),
         ("publication_state_already_mutated", "publication_state_already_mutated"),
         ("publication request artifact missing", "evidence_write_failed"),
@@ -1103,6 +1635,9 @@ def _publication_failure_next_action(failure_class: str) -> str:
         "publication_not_pending",
         "source_hash_mismatch",
         "source_request_hash_mismatch",
+        "source_decision_hash_mismatch",
+        "missing_publication_request_markdown_proof",
+        "missing_publication_decision_markdown_proof",
     }:
         return "review_and_request_publication"
     return "inspect_publication_gate_failure"
@@ -1145,6 +1680,11 @@ def _render_publication_request_markdown(payload: dict[str, Any]) -> str:
             f"- branch: {payload['branch_name']}",
             f"- remote: {payload['remote']}",
             f"- target_branch: {payload['target_branch']}",
+            f"- source_coder_commit: {payload.get('source_coder_commit', payload.get('commit_artifact', 'missing'))}",
+            f"- source_coder_commit_md: {payload.get('source_coder_commit_md', 'missing')}",
+            f"- source_commit_sha256: {payload.get('source_commit_sha256', payload.get('commit_artifact_sha256', 'missing'))}",
+            f"- source_commit_md_sha256: {payload.get('source_commit_md_sha256', 'missing')}",
+            f"- source_coder_commit_markdown_consumed: {_bool(payload.get('source_coder_commit_markdown_consumed') is True)}",
             f"- committed_files: {','.join(payload['committed_files']) or 'none'}",
             "",
             "## Non-Claims",
@@ -1166,6 +1706,11 @@ def _render_publication_decision_markdown(payload: dict[str, Any]) -> str:
             f"- status: {payload['status']}",
             f"- decided_by: {payload['decided_by']}",
             f"- decided_at: {payload['decided_at']}",
+            f"- source_coder_publication_request: {payload.get('source_coder_publication_request', 'missing')}",
+            f"- source_coder_publication_request_md: {payload.get('source_coder_publication_request_md', 'missing')}",
+            f"- source_publication_request_sha256: {payload.get('source_publication_request_sha256', payload.get('source_request_sha256', 'missing'))}",
+            f"- source_publication_request_md_sha256: {payload.get('source_publication_request_md_sha256', 'missing')}",
+            f"- source_coder_publication_request_markdown_consumed: {_bool(payload.get('source_coder_publication_request_markdown_consumed') is True)}",
             "",
             "## Non-Claims",
             "",
@@ -1195,6 +1740,11 @@ def _render_publication_handoff_markdown(payload: dict[str, Any]) -> str:
             f"- verification_exit_code: {payload['verification_exit_code']}",
             f"- bounded_file_validation_status: {payload['bounded_file_validation']['status']}",
             f"- diff_path: {payload['diff_path']}",
+            f"- source_coder_publication_decision: {payload.get('source_coder_publication_decision', 'missing')}",
+            f"- source_coder_publication_decision_md: {payload.get('source_coder_publication_decision_md', 'missing')}",
+            f"- source_publication_decision_sha256: {payload.get('source_publication_decision_sha256', 'missing')}",
+            f"- source_publication_decision_md_sha256: {payload.get('source_publication_decision_md_sha256', 'missing')}",
+            f"- source_coder_publication_decision_markdown_consumed: {_bool(payload.get('source_coder_publication_decision_markdown_consumed') is True)}",
             f"- suggested_push_command: {payload['suggested_push_command']}",
             f"- suggested_draft_pr_command: {payload['suggested_draft_pr_command']}",
             f"- pr_body_path: {payload['pr_body_path']}",
@@ -1225,6 +1775,11 @@ def _render_publication_pr_body(payload: dict[str, Any]) -> str:
             f"- commit: {payload['commit_sha']}",
             f"- parent_commit: {payload['parent_commit_sha']}",
             f"- diff: {payload['diff_path']}",
+            f"- publication_decision: {payload.get('source_coder_publication_decision', 'missing')}",
+            f"- publication_decision_md: {payload.get('source_coder_publication_decision_md', 'missing')}",
+            f"- publication_decision_sha256: {payload.get('source_publication_decision_sha256', 'missing')}",
+            f"- publication_decision_md_sha256: {payload.get('source_publication_decision_md_sha256', 'missing')}",
+            f"- publication_decision_markdown_consumed: {_bool(payload.get('source_coder_publication_decision_markdown_consumed') is True)}",
             f"- committed_files: {','.join(payload['committed_files']) or 'none'}",
             "",
             "## Operator Checklist",
