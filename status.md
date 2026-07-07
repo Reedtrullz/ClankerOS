@@ -1,5 +1,55 @@
 # Status
 
+## 2026-07-07 Commit Proof Alias, Completion Provenance, Golden Path, First Viewport
+
+- Fixed the commit-request alias/proof merge blocker by writing immutable
+  id-scoped `coder_commit/<approval_id>_coder_commit_request.json` / `.md`
+  artifacts while keeping the latest `coder_commit_request.json` alias for
+  compatibility. Commit approval proof lookup now prefers the id-scoped request
+  and still accepts legacy request artifacts when they match the approval/run
+  and consumed Markdown proof.
+- Completed the selected successor-Goal provenance slice. Next-Goal creation
+  now carries completed Goal `completion.json` / `completion.md` paths and
+  hashes into transient handoff state, `/today`, `/resume`, durable
+  `completed-goal-provenance.md`, and successor Goal provenance history while
+  keeping `publication_handoff.md` visible as the prior manual boundary
+  artifact.
+- Added `app-golden-path-smoke-test`, a deterministic fresh-user local app
+  smoke that initializes a tiny local git repo, creates the first project and
+  Goal through confirmed browser actions, performs the next action through
+  scout delegation/context-pack/run proof, opens `implementation_handoff.md`,
+  saves a complete finish-today workspace, and verifies `/resume` can continue
+  tomorrow. The checked-in GitHub fast smoke workflow now runs this command and
+  the focused golden-path/first-viewport pytest coverage before the full suite.
+- Simplified the first operator viewport on `/today`, `/resume`, and Goal pages
+  with a shared six-card strip: Goal, Phase, Next Action, Proof, Finish, Resume.
+  Existing evidence panels remain below the fold with provider, network,
+  external mutation, push, PR, and deploy non-claims intact.
+- Focused local proof:
+  - `python3 -m compileall -q agent_os tests`: passed.
+  - `python3 -m pytest tests/test_first_milestone.py::test_coder_commit_request_alias_writes_coder_commit_artifacts_and_is_idempotent -q --tb=short`:
+    1 passed in 2.52s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_today_post_goal_scout_delegation_stays_on_daily_surface -q --tb=short`:
+    1 passed in 108.15s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_local_app_fresh_user_no_docs_golden_path_smoke -q --tb=short`:
+    1 passed in 20.21s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_operator_first_viewports_show_goal_phase_action_proof_finish_resume -q --tb=short`:
+    1 passed in 27.23s.
+  - `python3 -m pytest tests/test_first_milestone.py::test_github_actions_workflow_runs_automatic_verification tests/test_first_milestone.py::test_github_actions_smoke_uses_temp_root_and_expected_order tests/test_first_milestone.py::test_local_app_routes_render_modern_workflow_and_health -q --tb=short`:
+    3 passed in 55.93s after the golden-path CI command was isolated onto
+    `CLANKEROS_GOLDEN_ROOT`.
+  - `python3 -m agent_os.cli --root "$(mktemp -d)" app-golden-path-smoke-test`
+    with cleanup trap: passed; all 17 checks matched, proof existed, workspace
+    resume surface was `/today#today-current-action`, provider/network/external
+    mutation counters stayed zero.
+  - `python3 -m agent_os.cli iterate`: refreshed `docs/next-iteration.md` and
+    selected the next CI-proof feedback slice.
+  - `python3 -m agent_os.cli dashboard`: refreshed `docs/dashboard.md`.
+  - `git diff --check`: passed.
+- Non-claim: this is local route/helper proof plus GitHub workflow wiring. It
+  has not yet produced a fresh GitHub Actions run result, deploy proof, live
+  proof, push, PR, provider call, or external mutation.
+
 ## 2026-07-06 Successor Goal Manual Publish Completion Daily Resume
 
 - Completed the selected slice for successor Goal manual publish completion

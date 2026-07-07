@@ -540,6 +540,7 @@ from agent_os.local_app import (
     DEFAULT_PORT as LOCAL_APP_DEFAULT_PORT,
     run_demo_app_scenario,
     run_local_app_demo_smoke_test,
+    run_local_app_golden_path_smoke_test,
     run_local_app_smoke_test,
     serve_local_app,
     validate_bind_host,
@@ -769,6 +770,10 @@ def build_parser() -> argparse.ArgumentParser:
         "app-demo-smoke-test",
         aliases=["demo-app-smoke-test"],
         help="Create the demo fixture and render stateful local app routes.",
+    )
+    subparsers.add_parser(
+        "app-golden-path-smoke-test",
+        help="Run the fresh-user project/goal/action/proof/finish/resume smoke.",
     )
     subparsers.add_parser("dashboard", help="Write the static dashboard.")
     subparsers.add_parser("iterate", help="Write the next iteration packet from repo queues.")
@@ -2301,6 +2306,29 @@ def main(argv: list[str] | None = None) -> int:
             for missing in route["missing_snippets"]:
                 print(f"missing_snippet {route['route']}: {missing}")
         print("fixture_backed: true")
+        print("provider_calls_taken_by_clankeros: 0")
+        print("network_actions_taken: 0")
+        print("external_mutations_taken: 0")
+        return 0 if result["status"] == "passed" else 1
+
+    if args.command == "app-golden-path-smoke-test":
+        result = run_local_app_golden_path_smoke_test(root)
+        print(f"app_golden_path_smoke_test: {result['status']}")
+        print(f"project_id: {result['project_id']}")
+        print(f"goal_id: {result['goal_id']}")
+        print(f"delegation_id: {result['delegation_id']}")
+        print(f"proof_artifact: {result['proof_artifact']}")
+        print(f"proof_exists: {str(result['proof_exists']).lower()}")
+        print(f"workspace_resume_surface: {result['workspace_resume_surface']}")
+        print(f"workspace_ok: {str(result['workspace_ok']).lower()}")
+        for check in result["checks"]:
+            snippet_status = "matched" if not check["missing_snippets"] else "missing"
+            print(
+                f"check {check['name']}: {check['status']} "
+                f"expected_status={check['expected_status']} snippets={snippet_status}"
+            )
+            for missing in check["missing_snippets"]:
+                print(f"missing_snippet {check['name']}: {missing}")
         print("provider_calls_taken_by_clankeros: 0")
         print("network_actions_taken: 0")
         print("external_mutations_taken: 0")

@@ -318,18 +318,18 @@
 ## Iteration Loop
 
 - status: planned
-- focus: Make completed Goal `completion.md` first-class in next-Goal provenance after `/today` and `/resume` next-Goal creation, while keeping the publication handoff visible as the prior manual boundary artifact.
+- focus: Promote the next GitHub fast-smoke/full-suite run back into the operator proof loop and fix any CI-only failures without broad local reruns.
 - source: tasks.md#next
 - packet: docs/next-iteration.md
-- created_at: 2026-07-06T08:56:52.189526+00:00
+- created_at: 2026-07-07T11:34:14.200483+00:00
 
 ## Simplicity Guardrail
 
 - policy: highest-score-then-lowest-complexity
-- reason: selected only actionable item with score 10 and complexity 4; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
+- reason: selected only actionable item with score 10 and complexity 3; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
 - selected_score: 10
-- selected_complexity: 4
-- selected_focus: Make completed Goal `completion.md` first-class in next-Goal provenance after `/today` and `/resume` next-Goal creation, while keeping the publication handoff visible as the prior manual boundary artifact.
+- selected_complexity: 3
+- selected_focus: Promote the next GitHub fast-smoke/full-suite run back into the operator proof loop and fix any CI-only failures without broad local reruns.
 
 ## Expansion Operator Approval Schema Decision
 

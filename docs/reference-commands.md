@@ -19,6 +19,7 @@ python3 -m agent_os.cli demo-app-scenario
 python3 -m agent_os.cli demo
 python3 -m agent_os.cli app-smoke-test
 python3 -m agent_os.cli app-demo-smoke-test
+python3 -m agent_os.cli app-golden-path-smoke-test
 python3 -m agent_os.cli projects
 python3 -m agent_os.cli project-status <project>
 python3 -m agent_os.cli project-context <project>
@@ -41,7 +42,9 @@ pending approval state. `app-smoke-test`
 renders the core routes without starting a server. `app-demo-smoke-test`
 creates the demo fixture and renders stateful goal/demo/workflow/project/
 delegation/run/approval routes with expected snippet checks, still without
-starting a server or taking network/external actions. The app includes
+starting a server or taking network/external actions. `app-golden-path-smoke-test`
+starts from a fresh local root and verifies the project -> goal -> next action
+-> proof -> finish -> resume browser loop. The app includes
 `/goals` as the daily goal cockpit with confirmed local first-run
 `register-project` and `create-goal` forms, `/goals/<goal_id>` as the
 goal-centered workbench with phase, next action, timeline, evidence,

@@ -154,10 +154,19 @@
   `/resume` consume `coder_publication/publication_handoff.md` as proof, keep
   provenance history visible, and move the primary action to completed Goal
   evidence plus next-Goal creation. <!-- score=10 complexity=4 -->
-- [ ] Make completed Goal `completion.md` first-class in next-Goal provenance
+- [x] Make completed Goal `completion.md` first-class in next-Goal provenance
   after `/today` and `/resume` next-Goal creation, while keeping the
   publication handoff visible as the prior manual boundary artifact.
   <!-- score=10 complexity=4 -->
+- [x] Add a deterministic fresh-user golden-path smoke that proves create
+  project, create goal, do the next action, check proof, finish today, and
+  resume tomorrow. <!-- score=10 complexity=4 -->
+- [x] Simplify the first operator viewport on Today, Resume, and Goal surfaces
+  to current Goal, current phase, one next action, proof status,
+  finish, and resume. <!-- score=10 complexity=3 -->
+- [ ] Promote the next GitHub fast-smoke/full-suite run back into the operator
+  proof loop and fix any CI-only failures without broad local reruns.
+  <!-- score=10 complexity=3 -->
 - [x] Extend the static dashboard with incident summaries once incidents exist.
 - [x] Add a compact incident resolution path after more failure modes exist.
 - [x] Add queue-health checks for repeated blocked or failed work.

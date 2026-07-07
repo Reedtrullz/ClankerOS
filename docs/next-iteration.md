@@ -1,12 +1,12 @@
 # Next Iteration Packet
 
-- Packet ID: iteration_c86b3ed52732
+- Packet ID: iteration_e497358fd265
 - Status: planned
 - Source: tasks.md#next
 
 ## Objective
 
-Advance the Agent System north-star goal by completing: Make completed Goal `completion.md` first-class in next-Goal provenance after `/today` and `/resume` next-Goal creation, while keeping the publication handoff visible as the prior manual boundary artifact.
+Advance the Agent System north-star goal by completing: Promote the next GitHub fast-smoke/full-suite run back into the operator proof loop and fix any CI-only failures without broad local reruns.
 
 ## Definition Of Done
 
@@ -130,9 +130,9 @@ Advance the Agent System north-star goal by completing: Make completed Goal `com
 ## Simplicity Guardrail
 
 - selection_policy: highest-score-then-lowest-complexity
-- selection_reason: selected only actionable item with score 10 and complexity 4; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
+- selection_reason: selected only actionable item with score 10 and complexity 3; demoted 1 report-only/generated proof-ladder tail(s) because a daily-use product Goal exists
 - selected_score: 10
-- selected_complexity: 4
+- selected_complexity: 3
 
 ## Guardrails And Non-Claims
 

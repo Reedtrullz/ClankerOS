@@ -827,10 +827,11 @@ def request_coder_worktree_commit_approval(
 
     approval_id = new_id("coder_worktree_commit_approval")
     now = utc_now()
-    request_artifact = evidence["evidence_dir"] / "coder_worktree_commit_approval_request.json"
-    decision_artifact = evidence["evidence_dir"] / "coder_worktree_commit_approval_decision.json"
-    commit_artifact = evidence["evidence_dir"] / "coder_worktree_commit.json"
     coder_commit_dir = evidence["evidence_dir"] / "coder_commit"
+    request_artifact = coder_commit_dir / f"{approval_id}_commit_approval_request.json"
+    decision_artifact = coder_commit_dir / f"{approval_id}_commit_approval_decision.json"
+    commit_artifact = coder_commit_dir / f"{approval_id}_commit.json"
+    legacy_request_artifact = evidence["evidence_dir"] / "coder_worktree_commit_approval_request.json"
     payload = {
         "kind": COMMIT_APPROVAL_REQUEST_KIND,
         "schema_version": 1,
@@ -888,10 +889,21 @@ def request_coder_worktree_commit_approval(
         request_artifact.with_suffix(".md"),
         _render_commit_approval_request_markdown(payload),
     )
+    _write_json(legacy_request_artifact, payload)
+    _write_text(
+        legacy_request_artifact.with_suffix(".md"),
+        _render_commit_approval_request_markdown(payload),
+    )
     alias_payload = _coder_commit_request_payload(
         payload,
         evidence=evidence,
         run_payload=evidence["run_payload"],
+    )
+    request_alias_artifact = _coder_commit_request_path(coder_commit_dir, approval_id)
+    _write_json(request_alias_artifact, alias_payload)
+    _write_text(
+        request_alias_artifact.with_suffix(".md"),
+        _render_coder_commit_request_markdown(alias_payload),
     )
     _write_json(coder_commit_dir / "coder_commit_request.json", alias_payload)
     _write_text(
@@ -3294,6 +3306,12 @@ def _backfill_commit_request_review_markdown_proof(
         evidence=evidence,
         run_payload=run_payload,
     )
+    request_alias_artifact = _coder_commit_request_path(coder_commit_dir, approval.id)
+    _write_json(request_alias_artifact, alias_payload)
+    _write_text(
+        request_alias_artifact.with_suffix(".md"),
+        _render_coder_commit_request_markdown(alias_payload),
+    )
     _write_json(coder_commit_dir / "coder_commit_request.json", alias_payload)
     _write_text(
         coder_commit_dir / "coder_commit_request.md",
@@ -3305,23 +3323,51 @@ def _load_commit_request_proof(
     root: Path,
     approval: CoderWorktreeCommitApprovalRecord,
 ) -> dict[str, Any]:
-    request_path = _coder_commit_dir(root, approval) / "coder_commit_request.json"
-    request_markdown_path = request_path.with_suffix(".md")
-    try:
-        payload = json.loads(request_path.read_text(encoding="utf-8"))
-        markdown_text = request_markdown_path.read_text(encoding="utf-8")
-    except (OSError, json.JSONDecodeError) as error:
-        raise CoderWorktreeCommitError("coder commit request is not readable") from error
-    if payload.get("kind") != CODER_COMMIT_REQUEST_KIND:
-        raise CoderWorktreeCommitError("coder commit request has unexpected kind")
-    if payload.get("commit_request_id") != approval.id:
-        raise CoderWorktreeCommitError("coder commit request does not match approval")
-    if payload.get("coder_worktree_run_id") != approval.run_id:
-        raise CoderWorktreeCommitError("coder commit request does not match run")
+    coder_commit_dir = _coder_commit_dir(root, approval)
+    request_candidates = [
+        _coder_commit_request_path(coder_commit_dir, approval.id),
+        coder_commit_dir / "coder_commit_request.json",
+        root / approval.request_artifact_path,
+    ]
+    payload: dict[str, Any] | None = None
+    markdown_text = ""
+    request_path: Path | None = None
+    request_markdown_path: Path | None = None
+    last_error: Exception | None = None
+    for candidate in request_candidates:
+        candidate_markdown = candidate.with_suffix(".md")
+        try:
+            candidate_payload = json.loads(candidate.read_text(encoding="utf-8"))
+            candidate_markdown_text = candidate_markdown.read_text(encoding="utf-8")
+        except (OSError, json.JSONDecodeError) as error:
+            last_error = error
+            continue
+        kind = candidate_payload.get("kind")
+        if kind == CODER_COMMIT_REQUEST_KIND:
+            if candidate_payload.get("commit_request_id") != approval.id:
+                continue
+            if candidate_payload.get("coder_worktree_run_id") != approval.run_id:
+                continue
+            if f"- commit_request_id: {approval.id}" not in candidate_markdown_text:
+                continue
+        elif kind == COMMIT_APPROVAL_REQUEST_KIND:
+            if candidate_payload.get("commit_approval_id") != approval.id:
+                continue
+            if candidate_payload.get("run_id") != approval.run_id:
+                continue
+            if f"- commit_approval_id: {approval.id}" not in candidate_markdown_text:
+                continue
+        else:
+            continue
+        payload = candidate_payload
+        markdown_text = candidate_markdown_text
+        request_path = candidate
+        request_markdown_path = candidate_markdown
+        break
+    if payload is None or request_path is None or request_markdown_path is None:
+        raise CoderWorktreeCommitError("coder commit request is not readable") from last_error
     if payload.get("source_review_markdown_consumed") is not True:
         raise CoderWorktreeCommitError("coder commit request is missing review markdown proof")
-    if f"- commit_request_id: {approval.id}" not in markdown_text:
-        raise CoderWorktreeCommitError("coder commit request markdown does not match approval")
     return {
         "payload": payload,
         "markdown_text": markdown_text,
@@ -3586,6 +3632,10 @@ def _approval_to_payload(approval: CoderWorktreeApprovalRecord) -> dict[str, Any
 
 def _coder_commit_dir(root: Path, approval: CoderWorktreeCommitApprovalRecord) -> Path:
     return root / approval.source_run_evidence_path / "coder_commit"
+
+
+def _coder_commit_request_path(coder_commit_dir: Path, approval_id: str) -> Path:
+    return coder_commit_dir / f"{approval_id}_coder_commit_request.json"
 
 
 def _coder_commit_request_payload(

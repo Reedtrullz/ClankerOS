@@ -1887,14 +1887,18 @@ opens with a visible `Search Operator Workbench` before shared route/focus
   creates or refreshes the same deterministic fixture while preserving the CLI
   commands as fallbacks. `app-demo-smoke-test`
   creates the fixture-backed demo state and renders the stateful demo,
-  dogfooding, goal, search, workspace, memory, skills, profiles, project,
-  delegation, scoped workflow, run, approvals, inbox,
-  actions, and health routes with expected snippet checks while preserving the
-  same zero provider/network/external-mutation counters. The checked-in GitHub
-  Actions workflow now runs a separate 10-minute `smoke` job for compile,
-  local CLI smoke, route-marker app smoke, fixture-backed app-demo smoke,
-  demo, dashboard, iterate, focused local-app/CI-handoff pytest, and
-  whitespace checks before a dependent 45-minute `full-suite` job spends time
+	  dogfooding, goal, search, workspace, memory, skills, profiles, project,
+	  delegation, scoped workflow, run, approvals, inbox,
+	  actions, and health routes with expected snippet checks while preserving the
+	  same zero provider/network/external-mutation counters.
+	  `app-golden-path-smoke-test` starts from a fresh local root and proves
+	  create project, create Goal, do the next action, check
+	  `implementation_handoff.md` proof, finish today, and resume tomorrow. The
+	  checked-in GitHub Actions workflow now runs a separate 10-minute `smoke`
+	  job for compile, local CLI smoke, route-marker app smoke, fixture-backed
+	  app-demo smoke, fresh-user golden-path smoke, demo, dashboard, iterate,
+	  focused local-app/CI-handoff pytest, and
+	  whitespace checks before a dependent 45-minute `full-suite` job spends time
   on `python -m pytest -q --durations=25 --durations-min=1.0`, keeping
   slow-test evidence in GitHub logs instead of requiring an immediate local
   full-suite rerun.

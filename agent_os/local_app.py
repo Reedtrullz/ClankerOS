@@ -59,6 +59,7 @@ from agent_os.ci_snapshot_evidence import (
 from agent_os.context_pack import ContextPackError, generate_context_pack
 from agent_os.delegation_runner import (
     DelegationRunError,
+    configure_profile_adapter,
     run_delegation,
 )
 from agent_os.engine import AgentSystem
@@ -70,6 +71,7 @@ from agent_os.planning import (
     create_goal_lifecycle,
     refresh_goal_planning_artifacts,
 )
+from agent_os.profile_routing import ensure_default_profiles
 from agent_os.project_registry import register_project
 from agent_os.run_review import write_run_review
 from agent_os.storage import Storage, utc_now
@@ -1404,6 +1406,390 @@ def run_local_app_demo_smoke_test(root: Path) -> dict[str, Any]:
         "external_mutations_taken": 0,
         "non_claims": NO_EXTERNAL_EFFECT_CLAIMS,
     }
+
+
+def run_local_app_golden_path_smoke_test(root: Path) -> dict[str, Any]:
+    root = root.resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    AgentSystem(root).initialize()
+    storage = Storage(root / ".agent" / "state.db")
+    storage.initialize()
+    ensure_default_profiles(storage)
+
+    project_name = "golden-path"
+    target_repo = root / ".clanker" / "app" / "golden-path-target"
+    _initialize_local_app_golden_path_repo(target_repo)
+    adapter_path = _write_local_app_golden_path_scout_adapter(root)
+    configure_profile_adapter(
+        storage,
+        "scout",
+        adapter_type="shell",
+        command=f"{shlex.quote(sys.executable)} {shlex.quote(str(adapter_path))}",
+        input_mode="json_file",
+        output_mode="json",
+        timeout_seconds=30,
+        working_directory="system_root",
+    )
+
+    checks: list[dict[str, Any]] = []
+
+    def record(
+        name: str,
+        response: LocalAppResponse,
+        *,
+        expected_status: int = 200,
+        snippets: list[str] | None = None,
+    ) -> None:
+        expected_snippets = snippets or []
+        missing = [snippet for snippet in expected_snippets if snippet not in response.body]
+        checks.append(
+            {
+                "name": name,
+                "status": response.status,
+                "expected_status": expected_status,
+                "expected_snippets": expected_snippets,
+                "missing_snippets": missing,
+                "passed": response.status == expected_status and not missing,
+            }
+        )
+
+    record(
+        "open-home",
+        render_local_app_route(root, "/"),
+        snippets=["ClankerOS Local Operator"],
+    )
+    record(
+        "open-today-first-run",
+        render_local_app_route(root, "/today"),
+        snippets=["Today Command Center", "First Run Guide"],
+    )
+
+    register_form = {
+        "name": [project_name],
+        "path": [str(target_repo)],
+        "test_command": ["python3 -m pytest -q"],
+        "allowed_write_roots": [str(target_repo)],
+    }
+    record(
+        "confirm-create-project",
+        render_local_app_route(
+            root,
+            "/actions/register-project",
+            method="POST",
+            form=register_form,
+        ),
+        expected_status=409,
+        snippets=["action_confirmation_label</dt><dd>First project setup"],
+    )
+    record(
+        "create-project",
+        render_local_app_route(
+            root,
+            "/actions/register-project",
+            method="POST",
+            form={**register_form, "confirm": ["yes"]},
+        ),
+        snippets=["Project setup complete", "Create first goal"],
+    )
+
+    goal_prompt = "Create a fresh-user golden path proof."
+    create_goal_form = {
+        "project_id": [project_name],
+        "prompt": [goal_prompt],
+        "created_by_profile": ["planner"],
+    }
+    record(
+        "confirm-create-goal",
+        render_local_app_route(
+            root,
+            "/actions/create-goal",
+            method="POST",
+            form=create_goal_form,
+        ),
+        expected_status=409,
+        snippets=["action_confirmation_label</dt><dd>First Goal setup"],
+    )
+    record(
+        "create-goal",
+        render_local_app_route(
+            root,
+            "/actions/create-goal",
+            method="POST",
+            form={**create_goal_form, "confirm": ["yes"]},
+        ),
+        snippets=["goal_created:", "Create scout delegation"],
+    )
+
+    goal = storage.latest_goal_for_project(project_name)
+    goal_id = goal.id if goal is not None else ""
+    tasks = storage.list_tasks(goal_id) if goal_id else []
+    first_task = tasks[0] if tasks else None
+    record(
+        "open-today-create-action",
+        render_local_app_route(root, "/today"),
+        snippets=[
+            "today_command_primary_action</dt><dd>Create scout delegation",
+            "action='/actions/delegate'",
+        ],
+    )
+
+    delegation_id = ""
+    if first_task is not None:
+        delegate_form = {
+            "goal_id": [goal_id],
+            "task_id": [first_task.id],
+            "profile": ["scout"],
+            "title": ["Golden path scout"],
+            "requested_by": ["operator"],
+            "return_to": ["/today#today-current-action"],
+        }
+        record(
+            "confirm-next-action",
+            render_local_app_route(
+                root,
+                "/actions/delegate",
+                method="POST",
+                form=delegate_form,
+            ),
+            expected_status=409,
+            snippets=["Confirm scout delegation"],
+        )
+        record(
+            "do-next-action",
+            render_local_app_route(
+                root,
+                "/actions/delegate",
+                method="POST",
+                form={**delegate_form, "confirm": ["yes"]},
+            ),
+            snippets=["Scout delegation created", "Generate context pack"],
+        )
+        delegations = storage.list_subagent_delegations(goal_id)
+        delegation_id = delegations[0].id if delegations else ""
+
+    if delegation_id:
+        context_form = {
+            "delegation_id": [delegation_id],
+            "return_to": ["/today#today-current-action"],
+        }
+        record(
+            "confirm-context-pack",
+            render_local_app_route(
+                root,
+                "/actions/context-pack",
+                method="POST",
+                form=context_form,
+            ),
+            expected_status=409,
+            snippets=["Confirm context pack"],
+        )
+        record(
+            "create-context-pack",
+            render_local_app_route(
+                root,
+                "/actions/context-pack",
+                method="POST",
+                form={**context_form, "confirm": ["yes"]},
+            ),
+            snippets=["Context pack ready", "Run delegation"],
+        )
+        run_form = {
+            "delegation_id": [delegation_id],
+            "operator_id": ["operator"],
+            "return_to": ["/today#today-current-action"],
+        }
+        record(
+            "confirm-proof-run",
+            render_local_app_route(
+                root,
+                "/actions/run-delegation",
+                method="POST",
+                form=run_form,
+            ),
+            expected_status=409,
+            snippets=["Confirm scout run"],
+        )
+        record(
+            "run-proof",
+            render_local_app_route(
+                root,
+                "/actions/run-delegation",
+                method="POST",
+                form={**run_form, "confirm": ["yes"]},
+            ),
+            snippets=["Scout run finished", "implementation_handoff.md"],
+        )
+
+    completed_delegation = (
+        storage.get_subagent_delegation(delegation_id) if delegation_id else None
+    )
+    run_metadata = (
+        load_delegation_result_metadata(completed_delegation)
+        if completed_delegation is not None
+        else {}
+    )
+    proof_path_value = str(run_metadata.get("implementation_handoff_md") or "")
+    proof_path = root / proof_path_value if proof_path_value else None
+    proof_exists = bool(proof_path and proof_path.exists())
+    if proof_path_value:
+        record(
+            "check-proof-artifact",
+            render_local_app_route(
+                root,
+                f"/artifacts?path={quote(proof_path_value, safe='/.')}",
+            ),
+            snippets=["artifact_type", "implementation_handoff.md"],
+        )
+    else:
+        checks.append(
+            {
+                "name": "check-proof-artifact",
+                "status": "missing",
+                "expected_status": 200,
+                "expected_snippets": ["implementation_handoff.md"],
+                "missing_snippets": ["implementation_handoff.md"],
+                "passed": False,
+            }
+        )
+
+    finish_form = {
+        "open_project": [project_name],
+        "open_goal": [goal_id],
+        "filters": [f"goal:{goal_id}"],
+        "expanded_panels": ["today,current-action,proof,resume"],
+        "last_viewed_artifact": [proof_path_value],
+        "resume_surface": ["/today#today-current-action"],
+        "updated_by": ["golden-path-smoke"],
+        "return_to": ["/resume"],
+    }
+    record(
+        "confirm-finish-today",
+        render_local_app_route(
+            root,
+            "/actions/save-workspace",
+            method="POST",
+            form=finish_form,
+        ),
+        expected_status=409,
+        snippets=["action_confirmation_label</dt><dd>Save return point"],
+    )
+    record(
+        "finish-today",
+        render_local_app_route(
+            root,
+            "/actions/save-workspace",
+            method="POST",
+            form={**finish_form, "confirm": ["yes"]},
+        ),
+        snippets=["workspace_saved: .clanker/app/workspace.json", "Resume Tomorrow"],
+    )
+    record(
+        "resume-tomorrow",
+        render_local_app_route(root, "/resume"),
+        snippets=["Resume Workspace", "Run coder prep", "implementation_handoff.md"],
+    )
+
+    workspace = _load_workspace_state(root)
+    workspace_ok = (
+        workspace.get("open_project") == project_name
+        and workspace.get("open_goal") == goal_id
+        and workspace.get("resume_surface") == "/today#today-current-action"
+        and workspace.get("last_viewed_artifact") == proof_path_value
+    )
+    ok = all(item["passed"] for item in checks) and proof_exists and workspace_ok
+    return {
+        "status": "passed" if ok else "failed",
+        "project_id": project_name,
+        "goal_id": goal_id,
+        "delegation_id": delegation_id,
+        "proof_artifact": proof_path_value,
+        "proof_exists": proof_exists,
+        "workspace_resume_surface": workspace.get("resume_surface", ""),
+        "workspace_last_viewed_artifact": workspace.get("last_viewed_artifact", ""),
+        "workspace_ok": workspace_ok,
+        "checks": checks,
+        "provider_calls_taken_by_clankeros": 0,
+        "network_actions_taken": 0,
+        "external_mutations_taken": 0,
+        "non_claims": NO_EXTERNAL_EFFECT_CLAIMS,
+    }
+
+
+def _initialize_local_app_golden_path_repo(repo_path: Path) -> None:
+    repo_path.mkdir(parents=True, exist_ok=True)
+    if not (repo_path / ".git").exists():
+        subprocess.run(["git", "init"], cwd=repo_path, check=True, capture_output=True)
+        subprocess.run(
+            ["git", "config", "user.email", "clankeros@example.invalid"],
+            cwd=repo_path,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.name", "ClankerOS Smoke"],
+            cwd=repo_path,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "config", "commit.gpgsign", "false"],
+            cwd=repo_path,
+            check=True,
+            capture_output=True,
+        )
+    readme = repo_path / "README.md"
+    if not readme.exists():
+        readme.write_text("# Golden Path Target\n", encoding="utf-8")
+    head = subprocess.run(
+        ["git", "rev-parse", "--verify", "HEAD"],
+        cwd=repo_path,
+        check=False,
+        capture_output=True,
+    )
+    if head.returncode != 0:
+        subprocess.run(["git", "add", "README.md"], cwd=repo_path, check=True)
+        subprocess.run(
+            ["git", "commit", "-m", "initial golden path target"],
+            cwd=repo_path,
+            check=True,
+            capture_output=True,
+        )
+
+
+def _write_local_app_golden_path_scout_adapter(root: Path) -> Path:
+    adapter_path = root / ".clanker" / "app" / "golden-path-fake-scout.py"
+    adapter_path.parent.mkdir(parents=True, exist_ok=True)
+    adapter_path.write_text(
+        "\n".join(
+            [
+                "import json",
+                "import sys",
+                "from pathlib import Path",
+                "",
+                "input_path = Path(sys.argv[1])",
+                "payload = json.loads(input_path.read_text(encoding='utf-8'))",
+                "evidence_dir = Path(payload['evidence_dir'])",
+                "(evidence_dir / 'golden-path-scout-seen.txt').write_text(",
+                "    payload['delegation']['id'],",
+                "    encoding='utf-8',",
+                ")",
+                "print(json.dumps({",
+                "  'result_summary': 'Fresh-user golden path proof found the next implementation seam.',",
+                "  'structured_output': {",
+                "    'files': ['agent_os/local_app.py', 'agent_os/cli.py'],",
+                "    'findings': ['Today exposes the next action and proof handoff.'],",
+                "    'relevant_files': ['agent_os/local_app.py', 'agent_os/cli.py'],",
+                "    'options': [",
+                "      {'label': 'Continue with coder prep', 'files': ['agent_os/local_app.py']}",
+                "    ]",
+                "  }",
+                "}))",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return adapter_path
 
 
 def run_demo_app_scenario(root: Path) -> DemoScenarioResult:
@@ -3108,6 +3494,133 @@ def _completed_goal_provenance_path(project_id: str, goal_id: str) -> Path:
     return _goal_file_path(project_id, goal_id, "completed-goal-provenance.md")
 
 
+def _goal_completion_proof_for_display(
+    root: Path,
+    goal: Any,
+) -> dict[str, str]:
+    completion_json = _goal_file_path(goal.project_id, goal.id, "completion.json")
+    completion_md = completion_json.with_suffix(".md")
+    record = {
+        "source_goal_completion_evidence": completion_json.as_posix(),
+        "source_goal_completion_evidence_md": completion_md.as_posix(),
+        "source_goal_completion_evidence_sha256": "missing",
+        "source_goal_completion_evidence_md_sha256": "missing",
+        "source_goal_completion_markdown_consumed": "false",
+        "prior_manual_boundary_artifact": "missing",
+        "prior_manual_boundary_artifact_sha256": "missing",
+        "source_coder_publication_handoff_md": "missing",
+        "source_publication_handoff_md_sha256": "missing",
+        "source_coder_publication_handoff_markdown_consumed": "false",
+    }
+    json_path = root / completion_json
+    md_path = root / completion_md
+    if json_path.exists():
+        record["source_goal_completion_evidence_sha256"] = hashlib.sha256(
+            json_path.read_bytes()
+        ).hexdigest()
+        try:
+            payload = json.loads(json_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            payload = {}
+        handoff_md = str(payload.get("source_coder_publication_handoff_md") or "")
+        if handoff_md:
+            record["prior_manual_boundary_artifact"] = handoff_md
+            record["source_coder_publication_handoff_md"] = handoff_md
+        handoff_md_sha = str(payload.get("source_publication_handoff_md_sha256") or "")
+        if handoff_md_sha:
+            record["prior_manual_boundary_artifact_sha256"] = handoff_md_sha
+            record["source_publication_handoff_md_sha256"] = handoff_md_sha
+        record["source_coder_publication_handoff_markdown_consumed"] = str(
+            payload.get("source_coder_publication_handoff_markdown_consumed") is True
+        ).lower()
+    if md_path.exists():
+        record["source_goal_completion_evidence_md_sha256"] = hashlib.sha256(
+            md_path.read_bytes()
+        ).hexdigest()
+        record["source_goal_completion_markdown_consumed"] = "true"
+    return record
+
+
+def _goal_completion_proof_rows(
+    proof: dict[str, str],
+    *,
+    prefix: str,
+) -> list[tuple[str, str | SafeHtml]]:
+    def proof_artifact(path: str) -> str | SafeHtml:
+        value = str(path or "missing")
+        if value in {"missing", "none"}:
+            return value
+        return _artifact_link(value)
+
+    return [
+        (
+            f"{prefix}_source_goal_completion_evidence",
+            proof_artifact(proof["source_goal_completion_evidence"]),
+        ),
+        (
+            f"{prefix}_source_goal_completion_evidence_md",
+            proof_artifact(proof["source_goal_completion_evidence_md"]),
+        ),
+        (
+            f"{prefix}_source_goal_completion_evidence_sha256",
+            proof["source_goal_completion_evidence_sha256"],
+        ),
+        (
+            f"{prefix}_source_goal_completion_evidence_md_sha256",
+            proof["source_goal_completion_evidence_md_sha256"],
+        ),
+        (
+            f"{prefix}_source_goal_completion_markdown_consumed",
+            proof["source_goal_completion_markdown_consumed"],
+        ),
+        (
+            f"{prefix}_prior_manual_boundary_artifact",
+            proof_artifact(proof["prior_manual_boundary_artifact"]),
+        ),
+        (
+            f"{prefix}_prior_manual_boundary_artifact_sha256",
+            proof["prior_manual_boundary_artifact_sha256"],
+        ),
+        (
+            f"{prefix}_source_coder_publication_handoff_md",
+            proof_artifact(proof["source_coder_publication_handoff_md"]),
+        ),
+        (
+            f"{prefix}_source_publication_handoff_md_sha256",
+            proof["source_publication_handoff_md_sha256"],
+        ),
+        (
+            f"{prefix}_source_coder_publication_handoff_markdown_consumed",
+            proof["source_coder_publication_handoff_markdown_consumed"],
+        ),
+    ]
+
+
+def _completed_goal_workspace_proof(
+    root: Path,
+    source_goal: Any,
+    workspace: dict[str, str],
+) -> dict[str, str]:
+    proof = _goal_completion_proof_for_display(root, source_goal)
+    workspace_keys = {
+        "source_goal_completion_evidence": "completed_goal_handoff_completion_evidence",
+        "source_goal_completion_evidence_md": "completed_goal_handoff_completion_evidence_md",
+        "source_goal_completion_evidence_sha256": "completed_goal_handoff_completion_evidence_sha256",
+        "source_goal_completion_evidence_md_sha256": "completed_goal_handoff_completion_evidence_md_sha256",
+        "source_goal_completion_markdown_consumed": "completed_goal_handoff_completion_markdown_consumed",
+        "prior_manual_boundary_artifact": "completed_goal_handoff_prior_manual_boundary_artifact",
+        "prior_manual_boundary_artifact_sha256": "completed_goal_handoff_prior_manual_boundary_artifact_sha256",
+        "source_coder_publication_handoff_md": "completed_goal_handoff_source_coder_publication_handoff_md",
+        "source_publication_handoff_md_sha256": "completed_goal_handoff_source_publication_handoff_md_sha256",
+        "source_coder_publication_handoff_markdown_consumed": "completed_goal_handoff_source_coder_publication_handoff_markdown_consumed",
+    }
+    for proof_key, workspace_key in workspace_keys.items():
+        value = str(workspace.get(workspace_key) or "").strip()
+        if value:
+            proof[proof_key] = value
+    return proof
+
+
 def _completed_goal_handoff_panel(
     root: Path,
     storage: Storage,
@@ -3140,6 +3653,7 @@ def _completed_goal_handoff_panel(
         "completion.json",
     )
     completion_evidence_md = completion_evidence_json.with_suffix(".md")
+    completion_goal_proof = _goal_completion_proof_for_display(root, goal)
     completion_evidence_value: str | SafeHtml = (
         SafeHtml(_artifact_link(str(completion_evidence_md)))
         if (root / completion_evidence_md).exists()
@@ -3197,6 +3711,36 @@ def _completed_goal_handoff_panel(
                         "project_id": project_id,
                         "completed_goal_id": goal_id,
                         "completed_goal_artifact": latest_artifact,
+                        "completed_goal_completion_evidence": completion_goal_proof[
+                            "source_goal_completion_evidence"
+                        ],
+                        "completed_goal_completion_evidence_md": completion_goal_proof[
+                            "source_goal_completion_evidence_md"
+                        ],
+                        "completed_goal_completion_evidence_sha256": completion_goal_proof[
+                            "source_goal_completion_evidence_sha256"
+                        ],
+                        "completed_goal_completion_evidence_md_sha256": completion_goal_proof[
+                            "source_goal_completion_evidence_md_sha256"
+                        ],
+                        "completed_goal_completion_markdown_consumed": completion_goal_proof[
+                            "source_goal_completion_markdown_consumed"
+                        ],
+                        "completed_goal_prior_manual_boundary_artifact": completion_goal_proof[
+                            "prior_manual_boundary_artifact"
+                        ],
+                        "completed_goal_prior_manual_boundary_artifact_sha256": completion_goal_proof[
+                            "prior_manual_boundary_artifact_sha256"
+                        ],
+                        "completed_goal_source_coder_publication_handoff_md": completion_goal_proof[
+                            "source_coder_publication_handoff_md"
+                        ],
+                        "completed_goal_source_publication_handoff_md_sha256": completion_goal_proof[
+                            "source_publication_handoff_md_sha256"
+                        ],
+                        "completed_goal_source_coder_publication_handoff_markdown_consumed": completion_goal_proof[
+                            "source_coder_publication_handoff_markdown_consumed"
+                        ],
                         "previous_resume_surface": saved_resume_surface,
                         "return_to": saved_resume_surface or f"/{prefix}#{section_id}",
                     },
@@ -3267,6 +3811,10 @@ def _completed_goal_handoff_panel(
                     ),
                     (f"{prefix}_completed_goal_latest_artifact", artifact_value),
                     (f"{prefix}_completed_goal_completion_evidence", completion_evidence_value),
+                    *_goal_completion_proof_rows(
+                        completion_goal_proof,
+                        prefix=f"{prefix}_completed_goal",
+                    ),
                     *_publication_handoff_completion_proof_rows(
                         completion_proof,
                         prefix=f"{prefix}_completed_goal",
@@ -3390,6 +3938,11 @@ def _completed_goal_handoff_provenance_panel(
     ).strip()
     if not previous_artifact:
         previous_artifact = _goal_latest_artifact_path(root, source_state)
+    completion_goal_proof = _completed_goal_workspace_proof(
+        root,
+        source_goal,
+        workspace,
+    )
     saved_resume_surface = _safe_local_return_path(workspace.get("resume_surface")) or ""
     project_id = str(current_goal.project_id or workspace.get("open_project") or "").strip()
     _source_href, source_label, source_label_source, source_surface = _goal_display_link(
@@ -3413,6 +3966,12 @@ def _completed_goal_handoff_provenance_panel(
     )
     previous_artifact_value: str | SafeHtml = (
         SafeHtml(_artifact_link(previous_artifact)) if previous_artifact else "none"
+    )
+    completion_evidence_value: str | SafeHtml = _artifact_link(
+        completion_goal_proof["source_goal_completion_evidence_md"]
+    )
+    prior_manual_boundary_value: str | SafeHtml = _artifact_link(
+        completion_goal_proof["prior_manual_boundary_artifact"]
     )
     source_evidence_href = f"/goals/{quote(source_goal_id)}#goal-completion-readiness"
     current_surface = SafeHtml(
@@ -3446,13 +4005,13 @@ def _completed_goal_handoff_provenance_panel(
             f"<a class='today-ci-merge-link' href='{_e(source_evidence_href)}'>Completed Goal evidence</a>",
             "</article>",
             "<article class='today-ci-merge-card' data-completed-goal-provenance-card='proof'>",
-            "<h3>Prior Proof</h3>",
-            f"<strong>{_e(previous_resume_surface or 'none')}</strong>",
-            "<p>Previous resume point and artifact carried forward.</p>",
+            "<h3>Proof</h3>",
+            "<strong>Completion evidence</strong>",
+            "<p>Completed Goal proof carried into this successor.</p>",
             (
-                f"<a class='today-ci-merge-link' href='{_e(previous_resume_surface)}'>Open prior resume</a>"
-                if previous_resume_surface
-                else "<span class='muted'>No prior resume surface</span>"
+                str(completion_evidence_value)
+                if isinstance(completion_evidence_value, SafeHtml)
+                else _e(completion_evidence_value)
             ),
             "</article>",
             "</div>",
@@ -3524,6 +4083,18 @@ def _completed_goal_handoff_provenance_panel(
                         f"{prefix}_completed_goal_provenance_previous_artifact",
                         previous_artifact_value,
                     ),
+                    *_goal_completion_proof_rows(
+                        completion_goal_proof,
+                        prefix=f"{prefix}_completed_goal_provenance",
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_completion_evidence",
+                        completion_evidence_value,
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_prior_manual_boundary",
+                        prior_manual_boundary_value,
+                    ),
                     (
                         f"{prefix}_completed_goal_provenance_saved_resume_surface",
                         SafeHtml(
@@ -3566,6 +4137,14 @@ def _completed_goal_handoff_provenance_panel(
                         if previous_artifact
                         else f"{prefix}_completed_goal_provenance_previous_artifact: none"
                     ),
+                    (
+                        f"{prefix}_completed_goal_provenance_completion_evidence: "
+                        f"{_artifact_link(completion_goal_proof['source_goal_completion_evidence_md'])}"
+                    ),
+                    (
+                        f"{prefix}_completed_goal_provenance_prior_manual_boundary: "
+                        f"{_artifact_link(completion_goal_proof['prior_manual_boundary_artifact'])}"
+                    ),
                     f"{prefix}_completed_goal_provenance_safety: read-only provenance; current Goal action owns continuation",
                 ]
             ),
@@ -3603,6 +4182,15 @@ def _goal_provenance_history_panel(
         metadata.get("previous_resume_surface") or "none"
     ).strip()
     previous_artifact = str(metadata.get("previous_artifact") or "none").strip()
+    completion_evidence = str(
+        metadata.get("source_goal_completion_evidence") or "none"
+    ).strip()
+    completion_evidence_md = str(
+        metadata.get("source_goal_completion_evidence_md") or "none"
+    ).strip()
+    prior_manual_boundary = str(
+        metadata.get("prior_manual_boundary_artifact") or "none"
+    ).strip()
 
     source_href = (
         f"/goals/{quote(source_goal_id)}#goal-completion-readiness"
@@ -3630,6 +4218,19 @@ def _goal_provenance_history_panel(
     )
     previous_artifact_value: str | SafeHtml = (
         _artifact_link(previous_artifact) if previous_artifact != "none" else "none"
+    )
+    completion_evidence_value: str | SafeHtml = (
+        _artifact_link(completion_evidence) if completion_evidence != "none" else "none"
+    )
+    completion_evidence_md_value: str | SafeHtml = (
+        _artifact_link(completion_evidence_md)
+        if completion_evidence_md != "none"
+        else "none"
+    )
+    prior_manual_boundary_value: str | SafeHtml = (
+        _artifact_link(prior_manual_boundary)
+        if prior_manual_boundary != "none"
+        else "none"
     )
     data_attr = f"data-{prefix}-goal-provenance-history"
     section_id = f"{prefix}-goal-provenance-history"
@@ -3694,6 +4295,51 @@ def _goal_provenance_history_panel(
                         f"{prefix}_goal_provenance_history_previous_artifact",
                         previous_artifact_value,
                     ),
+                    (
+                        f"{prefix}_goal_provenance_history_source_goal_completion_evidence",
+                        completion_evidence_value,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_source_goal_completion_evidence_md",
+                        completion_evidence_md_value,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_source_goal_completion_evidence_sha256",
+                        metadata.get("source_goal_completion_evidence_sha256", "none"),
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_source_goal_completion_evidence_md_sha256",
+                        metadata.get("source_goal_completion_evidence_md_sha256", "none"),
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_source_goal_completion_markdown_consumed",
+                        metadata.get("source_goal_completion_markdown_consumed", "none"),
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_prior_manual_boundary_artifact",
+                        prior_manual_boundary_value,
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_prior_manual_boundary_artifact_sha256",
+                        metadata.get("prior_manual_boundary_artifact_sha256", "none"),
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_source_coder_publication_handoff_md",
+                        _artifact_link(
+                            metadata.get("source_coder_publication_handoff_md", "none")
+                        ),
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_source_publication_handoff_md_sha256",
+                        metadata.get("source_publication_handoff_md_sha256", "none"),
+                    ),
+                    (
+                        f"{prefix}_goal_provenance_history_source_coder_publication_handoff_markdown_consumed",
+                        metadata.get(
+                            "source_coder_publication_handoff_markdown_consumed",
+                            "none",
+                        ),
+                    ),
                     (f"{prefix}_goal_provenance_history_write_on_get", "false"),
                     (
                         f"{prefix}_goal_provenance_history_provider_calls_taken",
@@ -3712,6 +4358,8 @@ def _goal_provenance_history_panel(
             _ul(
                 [
                     f"{prefix}_goal_provenance_history_artifact: {_artifact_link(artifact_path) if artifact_path != 'none' else 'none'}",
+                    f"{prefix}_goal_provenance_history_completion_evidence: {_artifact_link(completion_evidence_md) if completion_evidence_md != 'none' else 'none'}",
+                    f"{prefix}_goal_provenance_history_prior_manual_boundary: {_artifact_link(prior_manual_boundary) if prior_manual_boundary != 'none' else 'none'}",
                     f"{prefix}_goal_provenance_history_successor: <a href='{_e(successor_href)}'>{_e(successor_goal_id or goal_id)}</a>",
                     f"{prefix}_goal_provenance_history_safety: read-only history; active action remains on the current Goal",
                 ]
@@ -6457,6 +7105,102 @@ def _first_run_route_context(root: Path, current_path: str) -> dict[str, Any]:
     }
 
 
+def _operator_first_viewport_strip(
+    *,
+    prefix: str,
+    goal_label: str,
+    goal_surface: str | SafeHtml,
+    phase: str,
+    next_action: str,
+    next_surface: str | SafeHtml,
+    proof_status: str,
+    proof_surface: str | SafeHtml,
+    finish_status: str,
+    finish_surface: str | SafeHtml,
+    resume_status: str,
+    resume_surface: str | SafeHtml,
+) -> str:
+    def surface_html(surface: str | SafeHtml) -> str:
+        if isinstance(surface, SafeHtml):
+            return str(surface)
+        text = str(surface or "none")
+        return f"<span>{_e(text)}</span>"
+
+    cards = [
+        ("goal", "Goal", goal_label or "none", goal_surface),
+        ("phase", "Phase", phase or "none", phase or "none"),
+        ("next-action", "Next Action", next_action or "none", next_surface),
+        ("proof", "Proof", proof_status or "unknown", proof_surface),
+        ("finish", "Finish", finish_status or "unknown", finish_surface),
+        ("resume", "Resume", resume_status or "unknown", resume_surface),
+    ]
+    card_html = "".join(
+        [
+            (
+                "<article class='operator-first-viewport-card' "
+                f"data-{_e(prefix)}-first-viewport-card='{_e(key)}'>"
+                f"<h3>{_e(label)}</h3>"
+                f"<strong>{_e(str(value))}</strong>"
+                f"{surface_html(surface)}</article>"
+            )
+            for key, label, value, surface in cards
+        ]
+    )
+    rows: list[tuple[str, str | SafeHtml]] = [
+        (f"{prefix}_first_viewport_goal", goal_surface),
+        (f"{prefix}_first_viewport_goal_label", goal_label or "none"),
+        (f"{prefix}_first_viewport_phase", phase or "none"),
+        (f"{prefix}_first_viewport_next_action", next_action or "none"),
+        (f"{prefix}_first_viewport_next_surface", next_surface),
+        (f"{prefix}_first_viewport_proof_status", proof_status or "unknown"),
+        (f"{prefix}_first_viewport_proof_surface", proof_surface),
+        (f"{prefix}_first_viewport_finish_status", finish_status or "unknown"),
+        (f"{prefix}_first_viewport_finish_surface", finish_surface),
+        (f"{prefix}_first_viewport_resume_status", resume_status or "unknown"),
+        (f"{prefix}_first_viewport_resume_surface", resume_surface),
+        (f"{prefix}_first_viewport_write_on_get", "false"),
+        (f"{prefix}_first_viewport_provider_calls_taken", "0"),
+        (f"{prefix}_first_viewport_network_actions_taken", "0"),
+        (f"{prefix}_first_viewport_external_effects_created", "false"),
+    ]
+    return "".join(
+        [
+            (
+                "<section class='operator-first-viewport' "
+                "data-operator-first-viewport='true' "
+                f"data-operator-first-viewport-prefix='{_e(prefix)}' "
+                f"data-{_e(prefix)}-first-viewport='true'>"
+            ),
+            "<h2>Current Operator State</h2>",
+            "<div class='operator-first-viewport-grid'>",
+            card_html,
+            "</div>",
+            "<details class='operator-first-viewport-evidence' ",
+            f"data-{_e(prefix)}-first-viewport-evidence='true'>",
+            "<summary>First viewport evidence</summary>",
+            _kv(rows),
+            _ul(
+                [
+                    (
+                        f"{prefix}_first_viewport_order: "
+                        "Goal -> Phase -> Next Action -> Proof -> Finish -> Resume"
+                    ),
+                    (
+                        f"{prefix}_first_viewport_next: "
+                        f"{_e(next_action or 'none')}"
+                    ),
+                    (
+                        f"{prefix}_first_viewport_safety: read-only summary; "
+                        "confirmed forms own writes and local execution"
+                    ),
+                ]
+            ),
+            "</details>",
+            "</section>",
+        ]
+    )
+
+
 def _resume_first_run_context(root: Path) -> dict[str, Any]:
     return _first_run_route_context(root, "/resume")
 
@@ -6734,6 +7478,8 @@ def _today_command_center(
     first_run_form_surface: str | SafeHtml = "not_applicable"
     finish_resume_surface = "not_available"
     finish_resume_reason = "finish_form_unavailable"
+    latest_artifact = ""
+    goal_label_value = "none"
     if lead_goal is None:
         first_run = _first_run_progress(root, storage)
         first_run_href, first_run_label = _today_first_run_target(first_run)
@@ -6741,6 +7487,7 @@ def _today_command_center(
         goal_surface: str | SafeHtml = "none"
         project_surface: str | SafeHtml = "none"
         phase = "First run"
+        goal_label_value = "First run"
         primary_action = str(first_run["next_action"])
         first_goal_id = str(first_run.get("goal_id") or "")
         primary_href = first_run_href or (
@@ -6794,8 +7541,9 @@ def _today_command_center(
         latest_artifact = _goal_latest_artifact_path(root, state)
         status = "goal_ready"
         label = str(lead_goal["title"] or lead_goal["description"] or goal_id)
+        goal_label_value = _compact_label(label, 72)
         goal_surface = SafeHtml(
-            f"<a href='/goals/{quote(goal_id)}'>{_e(_compact_label(label, 72))}</a>"
+            f"<a href='/goals/{quote(goal_id)}'>{_e(goal_label_value)}</a>"
         )
         project_surface = SafeHtml(
             f"<a href='/projects/{quote(goal.project_id)}'>{_e(goal.project_id)}</a>"
@@ -6890,6 +7638,34 @@ def _today_command_center(
     )
     rail_finish_href = "#today-finish" if finish_form else target_href
     rail_finish_label = "Finish Today" if finish_form else target_label
+    if latest_artifact:
+        proof_status = "latest_artifact_available"
+        proof_surface: str | SafeHtml = SafeHtml(_artifact_link(latest_artifact))
+    elif ci_status != "missing":
+        proof_status = ci_status
+        proof_surface = SafeHtml("<a href='/verification'>Verification</a>")
+    elif lead_goal is None:
+        proof_status = "not_ready_until_goal_exists"
+        proof_surface = SafeHtml("<a href='#first-run-guide'>First Run Guide</a>")
+    else:
+        proof_status = "missing"
+        proof_surface = SafeHtml("<a href='/verification'>Verification</a>")
+    first_viewport = _operator_first_viewport_strip(
+        prefix="today",
+        goal_label=goal_label_value,
+        goal_surface=goal_surface,
+        phase=phase,
+        next_action=primary_action,
+        next_surface=target_surface,
+        proof_status=proof_status,
+        proof_surface=proof_surface,
+        finish_status=finish_status,
+        finish_surface=SafeHtml(
+            f"<a href='{_e(rail_finish_href)}'>{_e(rail_finish_label)}</a>"
+        ),
+        resume_status=str(readiness["status"]),
+        resume_surface=resume_card_surface,
+    )
     session_rail = _today_session_rail(
         status=status,
         phase=phase,
@@ -7011,6 +7787,7 @@ def _today_command_center(
         [
             "<section id='today-command-center' class='panel today-command-center' data-today-command-center='true'><h2>Today Command Center</h2>",
             "<p class='muted'>One daily cockpit for the lead goal, operator attention, saved resume state, and end-of-day handoff.</p>",
+            first_viewport,
             session_rail,
             cards,
             action_details,
@@ -10961,6 +11738,33 @@ def _resume_command_bar(
         artifact_value = SafeHtml(_artifact_link(last_artifact))
 
     target = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
+    proof_status = "none"
+    if last_artifact:
+        proof_status = (
+            "saved_artifact_available"
+            if readiness["last_artifact_exists"]
+            else "saved_artifact_missing"
+        )
+    proof_surface = (
+        artifact_value
+        if last_artifact
+        else SafeHtml("<a href='/artifacts'>Artifacts</a>")
+    )
+    finish_status = "ready_to_update" if readiness["ready"] else "needs_workspace_save"
+    first_viewport = _operator_first_viewport_strip(
+        prefix="resume",
+        goal_label=goal_label or selected_goal or "none",
+        goal_surface=goal_value,
+        phase=phase,
+        next_action=next_action,
+        next_surface=target,
+        proof_status=proof_status,
+        proof_surface=proof_surface,
+        finish_status=finish_status,
+        finish_surface=SafeHtml("<a href='/workspace#save-workspace'>Finish Today</a>"),
+        resume_status=status,
+        resume_surface=target,
+    )
     rows = [
         ("resume_command_status", status),
         ("resume_command_ready", "true" if readiness["ready"] else "false"),
@@ -11013,6 +11817,7 @@ def _resume_command_bar(
         [
             "<section id='resume-command-bar' class='panel resume-command-bar' data-resume-command-bar='true'><h2>Resume Command Bar</h2>",
             "<p class='muted'>A scan-first return-to-work summary for continuing the saved local operator context.</p>",
+            first_viewport,
             "<details class='resume-command-evidence' data-resume-command-evidence='true'><summary>Resume command evidence</summary>",
             _kv(rows),
             _ul(lines),
@@ -16678,6 +17483,16 @@ def _load_workspace_state(root: Path) -> dict[str, str]:
         "completed_goal_handoff_source_goal",
         "completed_goal_handoff_previous_resume_surface",
         "completed_goal_handoff_previous_artifact",
+        "completed_goal_handoff_completion_evidence",
+        "completed_goal_handoff_completion_evidence_md",
+        "completed_goal_handoff_completion_evidence_sha256",
+        "completed_goal_handoff_completion_evidence_md_sha256",
+        "completed_goal_handoff_completion_markdown_consumed",
+        "completed_goal_handoff_prior_manual_boundary_artifact",
+        "completed_goal_handoff_prior_manual_boundary_artifact_sha256",
+        "completed_goal_handoff_source_coder_publication_handoff_md",
+        "completed_goal_handoff_source_publication_handoff_md_sha256",
+        "completed_goal_handoff_source_coder_publication_handoff_markdown_consumed",
     ]
     if not path.exists():
         return {key: "" for key in keys} | {"updated_by": "operator", "updated_at": "never"}
@@ -16715,6 +17530,41 @@ def _write_workspace_state(root: Path, state: dict[str, str]) -> dict[str, Any]:
         or "",
         "completed_goal_handoff_previous_artifact": str(
             state.get("completed_goal_handoff_previous_artifact") or ""
+        ).strip(),
+        "completed_goal_handoff_completion_evidence": str(
+            state.get("completed_goal_handoff_completion_evidence") or ""
+        ).strip(),
+        "completed_goal_handoff_completion_evidence_md": str(
+            state.get("completed_goal_handoff_completion_evidence_md") or ""
+        ).strip(),
+        "completed_goal_handoff_completion_evidence_sha256": str(
+            state.get("completed_goal_handoff_completion_evidence_sha256") or ""
+        ).strip(),
+        "completed_goal_handoff_completion_evidence_md_sha256": str(
+            state.get("completed_goal_handoff_completion_evidence_md_sha256") or ""
+        ).strip(),
+        "completed_goal_handoff_completion_markdown_consumed": str(
+            state.get("completed_goal_handoff_completion_markdown_consumed") or ""
+        ).strip(),
+        "completed_goal_handoff_prior_manual_boundary_artifact": str(
+            state.get("completed_goal_handoff_prior_manual_boundary_artifact") or ""
+        ).strip(),
+        "completed_goal_handoff_prior_manual_boundary_artifact_sha256": str(
+            state.get("completed_goal_handoff_prior_manual_boundary_artifact_sha256") or ""
+        ).strip(),
+        "completed_goal_handoff_source_coder_publication_handoff_md": str(
+            state.get("completed_goal_handoff_source_coder_publication_handoff_md")
+            or ""
+        ).strip(),
+        "completed_goal_handoff_source_publication_handoff_md_sha256": str(
+            state.get("completed_goal_handoff_source_publication_handoff_md_sha256")
+            or ""
+        ).strip(),
+        "completed_goal_handoff_source_coder_publication_handoff_markdown_consumed": str(
+            state.get(
+                "completed_goal_handoff_source_coder_publication_handoff_markdown_consumed"
+            )
+            or ""
         ).strip(),
         "network_actions_taken": 0,
         "external_mutations_taken": 0,
@@ -16786,6 +17636,16 @@ def _remember_delegation_workspace(
                 "completed_goal_handoff_source_goal": "",
                 "completed_goal_handoff_previous_resume_surface": "",
                 "completed_goal_handoff_previous_artifact": "",
+                "completed_goal_handoff_completion_evidence": "",
+                "completed_goal_handoff_completion_evidence_md": "",
+                "completed_goal_handoff_completion_evidence_sha256": "",
+                "completed_goal_handoff_completion_evidence_md_sha256": "",
+                "completed_goal_handoff_completion_markdown_consumed": "",
+                "completed_goal_handoff_prior_manual_boundary_artifact": "",
+                "completed_goal_handoff_prior_manual_boundary_artifact_sha256": "",
+                "completed_goal_handoff_source_coder_publication_handoff_md": "",
+                "completed_goal_handoff_source_publication_handoff_md_sha256": "",
+                "completed_goal_handoff_source_coder_publication_handoff_markdown_consumed": "",
             }
         )
     return _write_workspace_state(
@@ -16831,6 +17691,11 @@ def _promote_completed_goal_handoff_provenance(
         root,
         workspace.get("completed_goal_handoff_previous_artifact") or "",
     )
+    completion_goal_proof = _completed_goal_workspace_proof(
+        root,
+        source_goal,
+        workspace,
+    )
     trigger_artifact = _repo_relative_artifact_path(root, trigger_artifact_path)
     relative_path = _completed_goal_provenance_path(
         successor_goal.project_id,
@@ -16850,6 +17715,26 @@ def _promote_completed_goal_handoff_provenance(
             f"trigger_artifact: {trigger_artifact}",
             f"previous_resume_surface: {previous_resume_surface}",
             f"previous_artifact: {previous_artifact}",
+            "source_goal_completion_evidence: "
+            f"{completion_goal_proof['source_goal_completion_evidence']}",
+            "source_goal_completion_evidence_md: "
+            f"{completion_goal_proof['source_goal_completion_evidence_md']}",
+            "source_goal_completion_evidence_sha256: "
+            f"{completion_goal_proof['source_goal_completion_evidence_sha256']}",
+            "source_goal_completion_evidence_md_sha256: "
+            f"{completion_goal_proof['source_goal_completion_evidence_md_sha256']}",
+            "source_goal_completion_markdown_consumed: "
+            f"{completion_goal_proof['source_goal_completion_markdown_consumed']}",
+            "prior_manual_boundary_artifact: "
+            f"{completion_goal_proof['prior_manual_boundary_artifact']}",
+            "prior_manual_boundary_artifact_sha256: "
+            f"{completion_goal_proof['prior_manual_boundary_artifact_sha256']}",
+            "source_coder_publication_handoff_md: "
+            f"{completion_goal_proof['source_coder_publication_handoff_md']}",
+            "source_publication_handoff_md_sha256: "
+            f"{completion_goal_proof['source_publication_handoff_md_sha256']}",
+            "source_coder_publication_handoff_markdown_consumed: "
+            f"{completion_goal_proof['source_coder_publication_handoff_markdown_consumed']}",
             f"promoted_at: {utc_now()}",
             "write_on_get: false",
             "provider_calls_taken_by_clankeros: 0",
@@ -18368,6 +19253,26 @@ def _goal_detail(root: Path, goal_id: str) -> str:
         summary_resume_status = "needs_finish_today"
     summary_finish_status = "saved" if saved_resume_matches_goal else "needs_save"
     summary_title, summary_intent, summary_title_source = _goal_summary_parts(goal)
+    first_viewport = _operator_first_viewport_strip(
+        prefix="goal",
+        goal_label=summary_title,
+        goal_surface=SafeHtml(
+            f"<a href='/goals/{quote(goal.id)}'>{_e(summary_title)}</a>"
+        ),
+        phase=phase,
+        next_action=next_action.action,
+        next_surface=SafeHtml(
+            f"<a href='{_e(summary_action_href)}'>{_e(summary_action_label)}</a>"
+        ),
+        proof_status=summary_ci_status,
+        proof_surface=SafeHtml("<a href='#goal-ci-handoff'>CI handoff</a>"),
+        finish_status=summary_finish_status,
+        finish_surface=SafeHtml("<a href='#goal-finish-today'>Finish Today</a>"),
+        resume_status=summary_resume_status,
+        resume_surface=SafeHtml(
+            f"<a href='{_e(summary_resume_href)}'>{_e(summary_resume_label)}</a>"
+        ),
+    )
     summary_rows: list[tuple[str, str | SafeHtml]] = [
         ("goal_id", goal.id),
         ("goal_intent", summary_intent),
@@ -18432,6 +19337,7 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             ),
             f"<h1 data-goal-summary-title='true'>{_e(summary_title)}</h1>",
             f"<p class='muted' data-goal-summary-id='true'>Goal {_e(goal.id)}</p>",
+            first_viewport,
             _goal_control_strip(root, state, phase, next_action),
             _goal_path_rail(root, state, next_action),
             _goal_milestone_checklist(root, state, phase, next_action),
@@ -26199,6 +27105,48 @@ def _goal_completed_provenance_history(root: Path, state: dict[str, Any]) -> str
                         "completed_goal_provenance_history_previous_artifact",
                         metadata["previous_artifact"],
                     ),
+                    (
+                        "completed_goal_provenance_history_source_goal_completion_evidence",
+                        _artifact_link(metadata["source_goal_completion_evidence"]),
+                    ),
+                    (
+                        "completed_goal_provenance_history_source_goal_completion_evidence_md",
+                        _artifact_link(metadata["source_goal_completion_evidence_md"]),
+                    ),
+                    (
+                        "completed_goal_provenance_history_source_goal_completion_evidence_sha256",
+                        metadata["source_goal_completion_evidence_sha256"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_source_goal_completion_evidence_md_sha256",
+                        metadata["source_goal_completion_evidence_md_sha256"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_source_goal_completion_markdown_consumed",
+                        metadata["source_goal_completion_markdown_consumed"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_prior_manual_boundary_artifact",
+                        _artifact_link(metadata["prior_manual_boundary_artifact"]),
+                    ),
+                    (
+                        "completed_goal_provenance_history_prior_manual_boundary_artifact_sha256",
+                        metadata["prior_manual_boundary_artifact_sha256"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_source_coder_publication_handoff_md",
+                        _artifact_link(metadata["source_coder_publication_handoff_md"]),
+                    ),
+                    (
+                        "completed_goal_provenance_history_source_publication_handoff_md_sha256",
+                        metadata["source_publication_handoff_md_sha256"],
+                    ),
+                    (
+                        "completed_goal_provenance_history_source_coder_publication_handoff_markdown_consumed",
+                        metadata[
+                            "source_coder_publication_handoff_markdown_consumed"
+                        ],
+                    ),
                     ("completed_goal_provenance_history_write_on_get", "false"),
                     (
                         "completed_goal_provenance_history_provider_calls_taken",
@@ -26232,6 +27180,16 @@ def _goal_completed_provenance_metadata(
         "trigger_result_id": "none",
         "previous_resume_surface": "none",
         "previous_artifact": "none",
+        "source_goal_completion_evidence": "none",
+        "source_goal_completion_evidence_md": "none",
+        "source_goal_completion_evidence_sha256": "none",
+        "source_goal_completion_evidence_md_sha256": "none",
+        "source_goal_completion_markdown_consumed": "none",
+        "prior_manual_boundary_artifact": "none",
+        "prior_manual_boundary_artifact_sha256": "none",
+        "source_coder_publication_handoff_md": "none",
+        "source_publication_handoff_md_sha256": "none",
+        "source_coder_publication_handoff_markdown_consumed": "none",
     }
     if not path.exists():
         return metadata
@@ -33752,6 +34710,10 @@ def _verification_page(root: Path) -> str:
             "configured" if "app-demo-smoke-test" in workflow_text else "missing",
         ),
         (
+            "fresh_user_golden_path_smoke",
+            "configured" if "app-golden-path-smoke-test" in workflow_text else "missing",
+        ),
+        (
             "full_suite_job",
             "configured" if "full-suite:" in workflow_text else "missing",
         ),
@@ -33768,10 +34730,11 @@ def _verification_page(root: Path) -> str:
     ]
     workflow_status = _verification_workflow_status(workflow_lines)
     workflow_step_lines = [
-        "Fast smoke job: compile source/tests, route-marker app-smoke-test, fixture-backed app-demo-smoke-test, demo-app-scenario, app --help, dashboard, iterate, git diff --check",
+        "Fast smoke job: compile source/tests, route-marker app-smoke-test, fixture-backed app-demo-smoke-test, fresh-user app-golden-path-smoke-test, demo-app-scenario, app --help, dashboard, iterate, git diff --check",
         "Compile source and tests: python -m compileall -q agent_os tests",
-        "Run local CLI smoke checks: app-smoke-test, app-demo-smoke-test, demo-app-scenario, app --help, dashboard, iterate",
+        "Run local CLI smoke checks: app-smoke-test, app-demo-smoke-test, app-golden-path-smoke-test, demo-app-scenario, app --help, dashboard, iterate",
         "Fixture-backed app demo smoke: creates local demo state and renders demo, dogfooding, selected project, delegation, workflow, run, approvals, inbox, actions, and health pages",
+        "Fresh-user app golden path smoke: creates project, creates goal, performs next action, checks proof, finishes today, and resumes tomorrow",
         "Check whitespace: git diff --check",
         "Full suite job: waits for fast smoke verification before spending time on pytest",
         "Run full test suite: python -m pytest -q",
@@ -33785,8 +34748,11 @@ def _verification_page(root: Path) -> str:
         "python3 -m pytest tests/test_first_milestone.py -q -k local_app_routes_render_modern_workflow_and_health",
         "python3 -m pytest tests/test_first_milestone.py -q -k local_app_demo_scenario",
         "python3 -m pytest tests/test_first_milestone.py -q -k local_app_cli_commands_and_bind_safety",
+        "python3 -m pytest tests/test_first_milestone.py -q -k local_app_fresh_user_no_docs_golden_path_smoke",
+        "python3 -m pytest tests/test_first_milestone.py -q -k operator_first_viewports_show_goal_phase_action_proof_finish_resume",
         "python3 -m agent_os.cli app-smoke-test",
         "python3 -m agent_os.cli app-demo-smoke-test",
+        "python3 -m agent_os.cli app-golden-path-smoke-test",
         "git diff --check",
     ]
     return "".join(
@@ -33846,6 +34812,7 @@ def _verification_workflow_status(workflow_lines: list[tuple[str, str]]) -> str:
         "fast_smoke_job": "configured",
         "route_marker_app_smoke": "configured",
         "fixture_backed_app_demo_smoke": "configured",
+        "fresh_user_golden_path_smoke": "configured",
         "full_suite_job": "configured",
         "full_suite_depends_on_smoke": "configured",
     }
@@ -47468,6 +48435,25 @@ def _handle_post(
             previous_resume_surface = _safe_local_return_path(
                 _one(form, "previous_resume_surface")
             )
+            completed_goal_proof: dict[str, str] = {}
+            if completed_goal_id:
+                try:
+                    completed_goal = storage.get_goal(completed_goal_id)
+                except KeyError:
+                    completed_goal = None
+                if completed_goal is not None:
+                    completed_goal_proof = _goal_completion_proof_for_display(
+                        root,
+                        completed_goal,
+                    )
+
+            def completed_goal_field(form_key: str, proof_key: str) -> str:
+                return (
+                    _one(form, form_key)
+                    or completed_goal_proof.get(proof_key)
+                    or ""
+                ).strip()
+
             _write_workspace_state(
                 root,
                 {
@@ -47480,6 +48466,46 @@ def _handle_post(
                     "completed_goal_handoff_source_goal": completed_goal_id,
                     "completed_goal_handoff_previous_resume_surface": previous_resume_surface,
                     "completed_goal_handoff_previous_artifact": completed_goal_artifact,
+                    "completed_goal_handoff_completion_evidence": completed_goal_field(
+                        "completed_goal_completion_evidence",
+                        "source_goal_completion_evidence",
+                    ),
+                    "completed_goal_handoff_completion_evidence_md": completed_goal_field(
+                        "completed_goal_completion_evidence_md",
+                        "source_goal_completion_evidence_md",
+                    ),
+                    "completed_goal_handoff_completion_evidence_sha256": completed_goal_field(
+                        "completed_goal_completion_evidence_sha256",
+                        "source_goal_completion_evidence_sha256",
+                    ),
+                    "completed_goal_handoff_completion_evidence_md_sha256": completed_goal_field(
+                        "completed_goal_completion_evidence_md_sha256",
+                        "source_goal_completion_evidence_md_sha256",
+                    ),
+                    "completed_goal_handoff_completion_markdown_consumed": completed_goal_field(
+                        "completed_goal_completion_markdown_consumed",
+                        "source_goal_completion_markdown_consumed",
+                    ),
+                    "completed_goal_handoff_prior_manual_boundary_artifact": completed_goal_field(
+                        "completed_goal_prior_manual_boundary_artifact",
+                        "prior_manual_boundary_artifact",
+                    ),
+                    "completed_goal_handoff_prior_manual_boundary_artifact_sha256": completed_goal_field(
+                        "completed_goal_prior_manual_boundary_artifact_sha256",
+                        "prior_manual_boundary_artifact_sha256",
+                    ),
+                    "completed_goal_handoff_source_coder_publication_handoff_md": completed_goal_field(
+                        "completed_goal_source_coder_publication_handoff_md",
+                        "source_coder_publication_handoff_md",
+                    ),
+                    "completed_goal_handoff_source_publication_handoff_md_sha256": completed_goal_field(
+                        "completed_goal_source_publication_handoff_md_sha256",
+                        "source_publication_handoff_md_sha256",
+                    ),
+                    "completed_goal_handoff_source_coder_publication_handoff_markdown_consumed": completed_goal_field(
+                        "completed_goal_source_coder_publication_handoff_markdown_consumed",
+                        "source_coder_publication_handoff_markdown_consumed",
+                    ),
                 },
             )
             result = lifecycle
@@ -56072,6 +57098,17 @@ def _html_page(
     .browser-resume-primary .browser-resume-link {{ background:var(--accent); color:#fff; }}
     .browser-resume-evidence summary {{ cursor:pointer; font-weight:700; }}
     .browser-resume-evidence:not([open]) > :not(summary) {{ display:none; }}
+    .operator-first-viewport {{ border:1px solid var(--line); background:var(--surface); padding:10px; margin:10px 0 12px; }}
+    .operator-first-viewport h2 {{ margin:0 0 8px; font-size:14px; }}
+    .operator-first-viewport-grid {{ display:grid; grid-template-columns:minmax(180px, 1.25fr) repeat(5, minmax(120px, 1fr)); gap:8px; align-items:stretch; }}
+    .operator-first-viewport-card {{ min-width:0; border:1px solid var(--line); background:var(--panel); padding:8px 9px; display:grid; gap:5px; align-content:start; }}
+    .operator-first-viewport-card h3 {{ margin:0; color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; }}
+    .operator-first-viewport-card strong {{ margin:0; overflow-wrap:anywhere; }}
+    .operator-first-viewport-card a, .operator-first-viewport-card span {{ overflow-wrap:anywhere; }}
+    .operator-first-viewport-card[data-today-first-viewport-card='next-action'], .operator-first-viewport-card[data-resume-first-viewport-card='next-action'], .operator-first-viewport-card[data-goal-first-viewport-card='next-action'] {{ border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }}
+    .operator-first-viewport-evidence {{ margin-top:10px; border:1px solid var(--line); background:var(--panel); padding:10px; }}
+    .operator-first-viewport-evidence summary {{ cursor:pointer; font-weight:700; }}
+    .operator-first-viewport-evidence:not([open]) > :not(summary) {{ display:none; }}
     .resume-return-brief {{ border-left:4px solid var(--accent); }}
     .resume-return-brief-grid {{ display:grid; grid-template-columns:minmax(230px, 1.2fr) repeat(4, minmax(150px, 1fr)); gap:10px; margin:12px 0; }}
     .resume-return-card {{ min-width:0; border:1px solid var(--line); background:var(--surface); padding:12px; display:grid; gap:8px; align-content:start; }}
@@ -58228,7 +59265,7 @@ def _html_page(
     pre {{ overflow:auto; padding:14px; background:#0f1419; color:#eef4f8; border-radius:6px; font-size:13px; line-height:1.4; }}
     button {{ border:1px solid var(--accent); background:var(--accent); color:white; padding:7px 10px; border-radius:6px; margin:3px 0; cursor:pointer; }}
     @media (max-width: 860px) {{ #run-readiness-strip {{ scroll-margin-top:260px; }} .run-readiness-grid, .run-readiness-strip dl {{ grid-template-columns:1fr; }} }}
-    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-action-prep, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #profile-routing-plan, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-goal-continuation, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map, #artifact-view-memory, #verification-milestone-proof-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-action-prep-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-return-brief-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-loop-checklist-grid, .today-quick-capture-grid, .today-ci-merge-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-domain-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profile-plan-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-real-grid, .dogfooding-workbench-grid, .dogfooding-return-grid, .dogfooding-session-checklist-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .artifact-view-memory-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .verification-milestone-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
+    @media (max-width: 860px) {{ header {{ align-items:flex-start; flex-direction:column; }} header nav {{ width:100%; overflow-x:auto; padding-bottom:4px; }} .shell-nav {{ flex:0 1 auto; width:100%; }} main {{ padding:16px; }} body:has(.goal-action-dock) main {{ padding-bottom:16px; }} .operator-shell {{ grid-template-columns:1fr; }} .operator-main {{ order:1; }} .operator-side {{ order:2; }} .operator-side, .goal-jump-bar, .goal-action-dock {{ position:static; }} .goal-action-dock {{ max-height:none; overflow:visible; }} #today-decision-queue, #today-decision-filter, #goal-overview-command-bar, #goal-overview, #goal-risk-command-bar, #goal-risk, #goal-criteria-command-bar, #goal-completion-criteria, #goal-completion-readiness, #goal-complete-goal-action, #goal-control-strip, #goal-review-strip, #goal-path-rail, #goal-action-prep, #goal-progress-meter, #goal-progress-command-bar, #goal-progress, #goal-timeline-command-bar, #goal-timeline-digest, #goal-timeline, #goal-activity-command-bar, #goal-activity-log, #goal-decision-queue, #goal-decision-filter, #goal-first-run-rail, .goal-workflow-map, #goal-session-digest, #goal-ci-handoff, #goal-live-state, #goal-delegation-command-bar, #goal-delegations, #goal-run-command-bar, #goal-runs, #goal-approval-command-bar, #goal-approvals, #goal-incident-command-bar, #goal-incidents, #goal-evidence-command-bar, #goal-evidence, #goal-artifact-command-bar, #goal-artifacts, #goal-artifact-explorer, #goal-artifact-reader, #goal-memory-command-bar, #goal-memory, #goal-skills-command-bar, #goal-skills-used, #goal-git-command-bar, #goal-git-status, #goal-verification-command-bar, #goal-verification-evidence, #record-goal-ci-proof, #goal-resume-snapshot, #goal-resume-save-form, #goal-operator-notes-command-bar, #goal-operator-notes-browser, #goal-operator-notes, #goal-operator-note-form, #goal-remaining-work-command-bar, #goal-remaining-work, #profile-routing-plan, #run-continuation-strip, #run-workbench-action-form, #run-evidence-map, #delegation-run-continuation, #delegation-run-continuation-action-form, #workflow-workbench-action-form, #resume-workbench-action-form, #approval-workbench-action-form, #inbox-workbench-action-form, #action-notice, #action-notice-next-step-form, #action-notice-next-step-evidence, #action-notice-evidence, #action-confirmation-preflight, #action-confirmation-review, #action-confirm-local-action, #action-error-recovery, #action-error-details, #action-error-payload, #action-error-evidence, #action-result-command-bar, #action-result-next-step, #action-result-goal-continuation, #action-result-next-step-form, #action-resume-receipt, #action-result-details, #action-result-payload, #action-result-fields, #action-continuation, #action-result-workflow-map, #artifact-relationship-map, #artifact-view-memory, #verification-milestone-proof-map {{ scroll-margin-top:260px; }} dl {{ grid-template-columns:1fr; }} .timeline-event {{ grid-template-columns:auto 1fr; }} .timeline-kind, .timeline-target {{ justify-self:start; }} .operator-ribbon-grid, .operator-first-viewport-grid, .workspace-panel-restore-grid, .palette-focus-grid, .palette-quick-grid, .route-context-focus, .operator-focus-focus, .home-operator-board-grid, .goal-control-strip-grid, .goal-summary-grid, .goal-phase-grid, .goal-command-strip, .goal-next-action-focus-grid, .goal-action-dock-grid, .goal-action-prep-grid, .goal-review-strip-grid, .goal-progress-meter-grid, .goal-section-index-grid, .goal-workbench-grid, .goal-overview-grid, .goal-risk-grid, .goal-criteria-grid, .goal-progress-grid, .goal-completion-grid, .goal-resume-grid, .goal-operator-notes-grid, .goal-timeline-grid, .goal-activity-grid, .goal-first-run-grid, .goal-daily-loop-grid, .goal-return-grid, .goal-session-grid, .goal-continuation-grid, .goal-workflow-map-grid, .goal-ci-handoff-grid, .goal-live-state-grid, .goal-delegation-grid, .goal-run-grid, .goal-approval-grid, .goal-incident-grid, .goal-evidence-grid, .goal-artifact-grid, .goal-artifact-groups, .goal-memory-grid, .goal-skills-grid, .goal-git-grid, .goal-verification-grid, .goal-remaining-work-grid, .goal-board-workbench-grid, .browser-resume-grid, .resume-return-brief-grid, .resume-workbench-grid, .workspace-workbench-grid, .workspace-restore-grid, .today-command-grid, .today-session-rail-grid, .today-session-grid, .today-loop-checklist-grid, .today-quick-capture-grid, .today-ci-merge-grid, .today-workbench-grid, .today-activity-grid, .search-workbench-grid, .search-suggestions-grid, .search-domain-grid, .search-result-map-grid, .memory-workbench-grid, .memory-pinboard-grid, .skills-workbench-grid, .profiles-workbench-grid, .profile-plan-grid, .profiles-readiness-grid, .profiles-matrix-grid, .workflow-workbench-grid, .workflow-journey-grid, .workflow-live-grid, .workflow-finish-grid, .delegation-run-workbench-grid, .delegation-run-continuation-grid, .ci-proof-workbench-grid, .ci-json-assistant-grid, .dogfooding-real-grid, .dogfooding-workbench-grid, .dogfooding-return-grid, .dogfooding-session-checklist-grid, .demo-workbench-grid, .demo-walkthrough-grid, .project-index-workbench-grid, .project-workbench-grid, .project-goal-map-grid, .run-workbench-grid, .run-continuation-grid, .run-evidence-grid, .approval-workbench-grid, .approval-readiness-grid, .incident-workbench-grid, .inbox-workbench-grid, .inbox-triage-grid, .inbox-next-grid, .action-catalog-grid, .action-workbench-grid, .action-workflow-grid, .action-confirmation-grid, .action-notice-grid, .action-error-grid, .action-result-command-grid, .action-result-next-grid, .action-resume-receipt-grid, .artifact-workbench-grid, .artifact-format-grid, .artifact-relationship-grid, .artifact-view-memory-grid, .first-run-launchpad-grid, .first-run-next-grid, .first-run-action-ladder-grid, .verification-workbench-grid, .verification-proof-grid, .verification-milestone-grid, .health-workbench-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #ci-evidence-readiness-strip, #ci-merge-readiness-map {{ scroll-margin-top:260px; }} .ci-evidence-readiness-grid, .ci-merge-readiness-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #health-readiness-strip, #health-ci-boundary {{ scroll-margin-top:260px; }} .health-readiness-grid, .health-ci-grid {{ grid-template-columns:1fr; }} }}
     @media (max-width: 860px) {{ #workspace-view-memory {{ scroll-margin-top:260px; }} .workspace-view-memory-grid {{ grid-template-columns:1fr; }} }}

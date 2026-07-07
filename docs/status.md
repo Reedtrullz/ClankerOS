@@ -4,6 +4,17 @@ The canonical chronological implementation log is [`../status.md`](../status.md)
 
 Latest status focus:
 
+- Commit approval proof lookup now prefers immutable id-scoped
+  `coder_commit/<approval_id>_coder_commit_request.json` / `.md` artifacts
+  while preserving the latest alias for compatibility. Completed Goal
+  `completion.md` is now first-class successor Goal provenance from `/today`
+  and `/resume`, with `publication_handoff.md` retained as the prior manual
+  boundary artifact. `app-golden-path-smoke-test` proves the fresh-user browser
+  loop from project creation through proof, finish today, and resume tomorrow,
+  and GitHub fast smoke now runs it plus focused pytest coverage. `/today`,
+  `/resume`, and Goal pages now share a ruthless first-viewport strip for Goal,
+  Phase, Next Action, Proof, Finish, and Resume while keeping evidence and
+  non-claims below.
 - Successor Goal manual publish completion from `/today` and `/resume` now
   consumes `coder_publication/publication_handoff.md` as first-class proof
   before local Goal completion. The browser action validates the handoff JSON

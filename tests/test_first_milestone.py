@@ -35,6 +35,7 @@ from agent_os.local_app import (
     resolve_artifact_path,
     run_demo_app_scenario,
     run_local_app_demo_smoke_test,
+    run_local_app_golden_path_smoke_test,
     validate_bind_host,
 )
 from agent_os.subagent_delegation import (
@@ -4752,10 +4753,12 @@ def test_github_actions_workflow_runs_automatic_verification() -> None:
         'python-version: "3.10"',
         "python -m compileall -q agent_os tests",
         "CLANKEROS_CI_ROOT: ${{ runner.temp }}/clankeros-ci-root",
+        "CLANKEROS_GOLDEN_ROOT: ${{ runner.temp }}/clankeros-golden-root",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" init",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-smoke-test",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" demo-app-scenario",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-demo-smoke-test",
+        "python -m agent_os.cli --root \"$CLANKEROS_GOLDEN_ROOT\" app-golden-path-smoke-test",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app --help",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" dashboard",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" iterate",
@@ -4769,6 +4772,8 @@ def test_github_actions_workflow_runs_automatic_verification() -> None:
         "github_actions_smoke_uses_temp_root_and_expected_order",
         "local_app_artifact_viewer_is_read_only_and_bounded",
         "local_app_demo_scenario_populates_fixture_state",
+        "local_app_fresh_user_no_docs_golden_path_smoke",
+        "operator_first_viewports_show_goal_phase_action_proof_finish_resume",
         "git diff --check",
         "python -m pytest -q",
         "--durations=25",
@@ -4786,10 +4791,12 @@ def test_github_actions_smoke_uses_temp_root_and_expected_order() -> None:
     ordered_markers = [
         "python -m compileall -q agent_os tests",
         "CLANKEROS_CI_ROOT: ${{ runner.temp }}/clankeros-ci-root",
+        "CLANKEROS_GOLDEN_ROOT: ${{ runner.temp }}/clankeros-golden-root",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" init",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-smoke-test",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" demo-app-scenario",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-demo-smoke-test",
+        "python -m agent_os.cli --root \"$CLANKEROS_GOLDEN_ROOT\" app-golden-path-smoke-test",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app --help",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" dashboard",
         "python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" iterate",
@@ -4821,6 +4828,8 @@ def test_github_actions_smoke_uses_temp_root_and_expected_order() -> None:
         "local_app_artifact_viewer_is_read_only_and_bounded",
         "local_app_demo_scenario_populates_fixture_state",
         "local_app_cli_commands_and_bind_safety",
+        "local_app_fresh_user_no_docs_golden_path_smoke",
+        "operator_first_viewports_show_goal_phase_action_proof_finish_resume",
     ]:
         assert expected_test in focused_pytest_line
 
@@ -4862,6 +4871,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
                 "      - name: Run local CLI smoke checks",
                 "        run: python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-smoke-test",
                 "        run: python -m agent_os.cli --root \"$CLANKEROS_CI_ROOT\" app-demo-smoke-test",
+                "        run: python -m agent_os.cli --root \"$CLANKEROS_GOLDEN_ROOT\" app-golden-path-smoke-test",
                 "      - name: Check whitespace",
                 "        run: git diff --check",
                 "  full-suite:",
@@ -10200,11 +10210,14 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "fast_smoke_job: configured" in verification.body
     assert "route_marker_app_smoke: configured" in verification.body
     assert "fixture_backed_app_demo_smoke: configured" in verification.body
+    assert "fresh_user_golden_path_smoke: configured" in verification.body
     assert "full_suite_job: configured" in verification.body
     assert "full_suite_depends_on_smoke: configured" in verification.body
     assert "Fast smoke verification can pass before the full suite finishes" in verification.body
     assert "fixture-backed app-demo-smoke-test" in verification.body
+    assert "fresh-user app-golden-path-smoke-test" in verification.body
     assert "Fixture-backed app demo smoke" in verification.body
+    assert "Fresh-user app golden path smoke" in verification.body
     assert "Run full test suite" in verification.body
     assert "python -m pytest -q" in verification.body
     assert "job_timeout_minutes: 45" in verification.body
@@ -10228,6 +10241,7 @@ def test_local_app_routes_render_modern_workflow_and_health(
     assert "Compact Local Checks" in verification.body
     assert "python3 -m agent_os.cli app-smoke-test" in verification.body
     assert "python3 -m agent_os.cli app-demo-smoke-test" in verification.body
+    assert "python3 -m agent_os.cli app-golden-path-smoke-test" in verification.body
     assert "CI proof requires a completed passing GitHub Actions run" in verification.body
     assert "app_network_actions_taken: 0" in verification.body
     assert "/ci-evidence" in verification.body
@@ -12934,6 +12948,10 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     completion_md = completion_json.with_suffix(".md")
     assert completion_json.exists()
     assert completion_md.exists()
+    completion_json_relative = str(completion_json.relative_to(tmp_path))
+    completion_md_relative = str(completion_md.relative_to(tmp_path))
+    completion_json_sha = hashlib.sha256(completion_json.read_bytes()).hexdigest()
+    completion_md_sha = hashlib.sha256(completion_md.read_bytes()).hexdigest()
     completion_payload = json.loads(completion_json.read_text(encoding="utf-8"))
     assert completion_payload["source_coder_publication_handoff_md"] == str(
         publication_handoff_md.relative_to(tmp_path)
@@ -12958,6 +12976,28 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert (
         "today_completed_goal_completion_evidence</dt><dd>"
         f"<a href='/artifacts?path={completion_md.relative_to(tmp_path)}'>"
+        in today_after_completion.body
+    )
+    assert (
+        "today_completed_goal_source_goal_completion_evidence_md</dt><dd>"
+        f"<a href='/artifacts?path={completion_md_relative}'>"
+        in today_after_completion.body
+    )
+    assert (
+        f"today_completed_goal_source_goal_completion_evidence_sha256</dt><dd>{completion_json_sha}"
+        in today_after_completion.body
+    )
+    assert (
+        f"today_completed_goal_source_goal_completion_evidence_md_sha256</dt><dd>{completion_md_sha}"
+        in today_after_completion.body
+    )
+    assert (
+        "today_completed_goal_source_goal_completion_markdown_consumed</dt><dd>true"
+        in today_after_completion.body
+    )
+    assert (
+        "today_completed_goal_prior_manual_boundary_artifact</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
         in today_after_completion.body
     )
     assert (
@@ -12990,6 +13030,18 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert "action='/actions/create-goal'" in today_after_completion.body
     assert "name='project_id' value='first-target'" in today_after_completion.body
     assert "name='completed_goal_id' value='" + created_goal_id + "'" in today_after_completion.body
+    assert f"name='completed_goal_completion_evidence' value='{completion_json_relative}'" in today_after_completion.body
+    assert f"name='completed_goal_completion_evidence_md' value='{completion_md_relative}'" in today_after_completion.body
+    assert f"name='completed_goal_completion_evidence_sha256' value='{completion_json_sha}'" in today_after_completion.body
+    assert f"name='completed_goal_completion_evidence_md_sha256' value='{completion_md_sha}'" in today_after_completion.body
+    assert "name='completed_goal_completion_markdown_consumed' value='true'" in today_after_completion.body
+    assert (
+        "name='completed_goal_prior_manual_boundary_artifact' value='"
+        + str(publication_handoff_md.relative_to(tmp_path))
+        + "'"
+        in today_after_completion.body
+    )
+    assert f"name='completed_goal_prior_manual_boundary_artifact_sha256' value='{publication_handoff_md_sha}'" in today_after_completion.body
     assert (
         "name='previous_resume_surface' value='/today#today-current-action'"
         in today_after_completion.body
@@ -13020,6 +13072,16 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert (
         "resume_completed_goal_completion_evidence</dt><dd>"
         f"<a href='/artifacts?path={completion_md.relative_to(tmp_path)}'>"
+        in resume_after_completion.body
+    )
+    assert (
+        "resume_completed_goal_source_goal_completion_evidence_md</dt><dd>"
+        f"<a href='/artifacts?path={completion_md_relative}'>"
+        in resume_after_completion.body
+    )
+    assert (
+        "resume_completed_goal_prior_manual_boundary_artifact</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
         in resume_after_completion.body
     )
     assert (
@@ -13072,6 +13134,16 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
             "created_by_profile": ["planner"],
             "completed_goal_id": [created_goal_id],
             "completed_goal_artifact": [str(publication_handoff_md.relative_to(tmp_path))],
+            "completed_goal_completion_evidence": [completion_json_relative],
+            "completed_goal_completion_evidence_md": [completion_md_relative],
+            "completed_goal_completion_evidence_sha256": [completion_json_sha],
+            "completed_goal_completion_evidence_md_sha256": [completion_md_sha],
+            "completed_goal_completion_markdown_consumed": ["true"],
+            "completed_goal_prior_manual_boundary_artifact": [str(publication_handoff_md.relative_to(tmp_path))],
+            "completed_goal_prior_manual_boundary_artifact_sha256": [publication_handoff_md_sha],
+            "completed_goal_source_coder_publication_handoff_md": [str(publication_handoff_md.relative_to(tmp_path))],
+            "completed_goal_source_publication_handoff_md_sha256": [publication_handoff_md_sha],
+            "completed_goal_source_coder_publication_handoff_markdown_consumed": ["true"],
             "previous_resume_surface": ["/today#today-current-action"],
             "return_to": ["/today#today-current-action"],
         },
@@ -13084,6 +13156,16 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         "<a href='/today#today-current-action'>/today#today-current-action</a>"
     ) in next_goal_confirmation.body
     assert "completed_goal_id</dt><dd>" + created_goal_id in next_goal_confirmation.body
+    assert (
+        "completed_goal_completion_evidence_md</dt><dd>"
+        + completion_md_relative
+        in next_goal_confirmation.body
+    )
+    assert (
+        "completed_goal_prior_manual_boundary_artifact</dt><dd>"
+        + str(publication_handoff_md.relative_to(tmp_path))
+        in next_goal_confirmation.body
+    )
     assert "previous_resume_surface</dt><dd>/today#today-current-action" in next_goal_confirmation.body
 
     next_goal_result = render_local_app_route(
@@ -13096,6 +13178,16 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
             "created_by_profile": ["planner"],
             "completed_goal_id": [created_goal_id],
             "completed_goal_artifact": [str(publication_handoff_md.relative_to(tmp_path))],
+            "completed_goal_completion_evidence": [completion_json_relative],
+            "completed_goal_completion_evidence_md": [completion_md_relative],
+            "completed_goal_completion_evidence_sha256": [completion_json_sha],
+            "completed_goal_completion_evidence_md_sha256": [completion_md_sha],
+            "completed_goal_completion_markdown_consumed": ["true"],
+            "completed_goal_prior_manual_boundary_artifact": [str(publication_handoff_md.relative_to(tmp_path))],
+            "completed_goal_prior_manual_boundary_artifact_sha256": [publication_handoff_md_sha],
+            "completed_goal_source_coder_publication_handoff_md": [str(publication_handoff_md.relative_to(tmp_path))],
+            "completed_goal_source_publication_handoff_md_sha256": [publication_handoff_md_sha],
+            "completed_goal_source_coder_publication_handoff_markdown_consumed": ["true"],
             "previous_resume_surface": ["/today#today-current-action"],
             "return_to": ["/today#today-current-action"],
             "confirm": ["yes"],
@@ -13115,6 +13207,25 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert next_goal_workspace["completed_goal_handoff_previous_resume_surface"] == "/today#today-current-action"
     assert next_goal_workspace["completed_goal_handoff_previous_artifact"] == str(
         publication_handoff_md.relative_to(tmp_path)
+    )
+    assert next_goal_workspace["completed_goal_handoff_completion_evidence"] == completion_json_relative
+    assert next_goal_workspace["completed_goal_handoff_completion_evidence_md"] == completion_md_relative
+    assert next_goal_workspace["completed_goal_handoff_completion_evidence_sha256"] == completion_json_sha
+    assert next_goal_workspace["completed_goal_handoff_completion_evidence_md_sha256"] == completion_md_sha
+    assert next_goal_workspace["completed_goal_handoff_completion_markdown_consumed"] == "true"
+    assert next_goal_workspace["completed_goal_handoff_prior_manual_boundary_artifact"] == str(
+        publication_handoff_md.relative_to(tmp_path)
+    )
+    assert next_goal_workspace["completed_goal_handoff_prior_manual_boundary_artifact_sha256"] == publication_handoff_md_sha
+    assert next_goal_workspace["completed_goal_handoff_source_coder_publication_handoff_md"] == str(
+        publication_handoff_md.relative_to(tmp_path)
+    )
+    assert next_goal_workspace["completed_goal_handoff_source_publication_handoff_md_sha256"] == publication_handoff_md_sha
+    assert (
+        next_goal_workspace[
+            "completed_goal_handoff_source_coder_publication_handoff_markdown_consumed"
+        ]
+        == "true"
     )
     assert next_goal_workspace["updated_by"] == "create-goal"
 
@@ -13155,6 +13266,24 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     )
     assert (
         "today_completed_goal_provenance_previous_artifact</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in today_after_next_goal.body
+    )
+    assert (
+        "today_completed_goal_provenance_source_goal_completion_evidence_md</dt><dd>"
+        f"<a href='/artifacts?path={completion_md_relative}'>"
+        in today_after_next_goal.body
+    )
+    assert (
+        f"today_completed_goal_provenance_source_goal_completion_evidence_md_sha256</dt><dd>{completion_md_sha}"
+        in today_after_next_goal.body
+    )
+    assert (
+        "today_completed_goal_provenance_source_goal_completion_markdown_consumed</dt><dd>true"
+        in today_after_next_goal.body
+    )
+    assert (
+        "today_completed_goal_provenance_prior_manual_boundary_artifact</dt><dd>"
         f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
         in today_after_next_goal.body
     )
@@ -13210,6 +13339,16 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
         in resume_after_next_goal.body
     )
+    assert (
+        "resume_completed_goal_provenance_source_goal_completion_evidence_md</dt><dd>"
+        f"<a href='/artifacts?path={completion_md_relative}'>"
+        in resume_after_next_goal.body
+    )
+    assert (
+        "resume_completed_goal_provenance_prior_manual_boundary_artifact</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in resume_after_next_goal.body
+    )
     assert "resume_completed_goal_provenance_write_on_get</dt><dd>false" in resume_after_next_goal.body
     assert (
         "resume_completed_goal_next_goal_form_available</dt><dd>true"
@@ -13254,6 +13393,16 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         f"previous_artifact: {publication_handoff_md.relative_to(tmp_path)}"
         in provenance_text
     )
+    assert f"source_goal_completion_evidence: {completion_json_relative}" in provenance_text
+    assert f"source_goal_completion_evidence_md: {completion_md_relative}" in provenance_text
+    assert f"source_goal_completion_evidence_sha256: {completion_json_sha}" in provenance_text
+    assert f"source_goal_completion_evidence_md_sha256: {completion_md_sha}" in provenance_text
+    assert "source_goal_completion_markdown_consumed: true" in provenance_text
+    assert f"prior_manual_boundary_artifact: {publication_handoff_md.relative_to(tmp_path)}" in provenance_text
+    assert f"prior_manual_boundary_artifact_sha256: {publication_handoff_md_sha}" in provenance_text
+    assert f"source_coder_publication_handoff_md: {publication_handoff_md.relative_to(tmp_path)}" in provenance_text
+    assert f"source_publication_handoff_md_sha256: {publication_handoff_md_sha}" in provenance_text
+    assert "source_coder_publication_handoff_markdown_consumed: true" in provenance_text
     assert "provider_calls_taken_by_clankeros: 0" in provenance_text
     assert "external_effects_created: false" in provenance_text
 
@@ -13265,6 +13414,9 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert next_goal_delegated_workspace["completed_goal_handoff_source_goal"] == ""
     assert next_goal_delegated_workspace["completed_goal_handoff_previous_resume_surface"] == ""
     assert next_goal_delegated_workspace["completed_goal_handoff_previous_artifact"] == ""
+    assert next_goal_delegated_workspace["completed_goal_handoff_completion_evidence_md"] == ""
+    assert next_goal_delegated_workspace["completed_goal_handoff_prior_manual_boundary_artifact"] == ""
+    assert next_goal_delegated_workspace["completed_goal_handoff_source_coder_publication_handoff_md"] == ""
     assert "subagent_delegation_" in next_goal_delegated_workspace["last_viewed_artifact"]
     assert next_goal_delegated_workspace["last_viewed_artifact"].endswith(".json")
 
@@ -13392,6 +13544,20 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
     assert successor_goal_page.status == 200
     assert "completed_goal_provenance_history_status</dt><dd>available" in successor_goal_page.body
     assert f"completed_goal_provenance_history_source_goal</dt><dd>{created_goal_id}" in successor_goal_page.body
+    assert (
+        "completed_goal_provenance_history_source_goal_completion_evidence_md</dt><dd>"
+        f"<a href='/artifacts?path={completion_md_relative}'>"
+        in successor_goal_page.body
+    )
+    assert (
+        "completed_goal_provenance_history_prior_manual_boundary_artifact</dt><dd>"
+        f"<a href='/artifacts?path={publication_handoff_md.relative_to(tmp_path)}'>"
+        in successor_goal_page.body
+    )
+    assert (
+        "completed_goal_provenance_history_source_coder_publication_handoff_markdown_consumed</dt><dd>true"
+        in successor_goal_page.body
+    )
     assert (
         "completed_goal_provenance_history_artifact</dt><dd>"
         f"<a href='/artifacts?path=.clanker/projects/first-target/goals/{next_goal_id}/completed-goal-provenance.md'>"
@@ -14981,7 +15147,7 @@ def test_today_post_goal_scout_delegation_stays_on_daily_surface(
         tmp_path
         / next_goal_commit_approval.source_run_evidence_path
         / "coder_commit"
-        / "coder_commit_request.json"
+        / f"{next_goal_commit_approval.id}_coder_commit_request.json"
     )
     next_goal_request_md = next_goal_request_json.with_suffix(".md")
     assert (
@@ -28688,6 +28854,122 @@ def test_local_app_cli_commands_and_bind_safety(
     validate_bind_host("0.0.0.0", allow_nonlocal_bind=True)
 
 
+def test_local_app_fresh_user_no_docs_golden_path_smoke(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    direct_root = tmp_path / "direct"
+    smoke = run_local_app_golden_path_smoke_test(direct_root)
+    assert smoke["status"] == "passed"
+    assert smoke["project_id"] == "golden-path"
+    assert smoke["goal_id"].startswith("goal_")
+    assert smoke["delegation_id"].startswith("subagent_delegation_")
+    assert smoke["proof_artifact"].endswith("/implementation_handoff.md")
+    assert (direct_root / smoke["proof_artifact"]).exists()
+    assert smoke["proof_exists"] is True
+    assert smoke["workspace_resume_surface"] == "/today#today-current-action"
+    assert smoke["workspace_ok"] is True
+    assert smoke["network_actions_taken"] == 0
+    assert smoke["external_mutations_taken"] == 0
+    assert [check["name"] for check in smoke["checks"]] == [
+        "open-home",
+        "open-today-first-run",
+        "confirm-create-project",
+        "create-project",
+        "confirm-create-goal",
+        "create-goal",
+        "open-today-create-action",
+        "confirm-next-action",
+        "do-next-action",
+        "confirm-context-pack",
+        "create-context-pack",
+        "confirm-proof-run",
+        "run-proof",
+        "check-proof-artifact",
+        "confirm-finish-today",
+        "finish-today",
+        "resume-tomorrow",
+    ]
+    assert all(check["passed"] for check in smoke["checks"])
+
+    cli_root = tmp_path / "cli"
+    assert main(["--root", str(cli_root), "app-golden-path-smoke-test"]) == 0
+    output = capsys.readouterr().out
+    assert "app_golden_path_smoke_test: passed" in output
+    assert "project_id: golden-path" in output
+    assert "goal_id: goal_" in output
+    assert "delegation_id: subagent_delegation_" in output
+    assert "proof_artifact: .clanker/delegations/" in output
+    assert "implementation_handoff.md" in output
+    assert "proof_exists: true" in output
+    assert "workspace_resume_surface: /today#today-current-action" in output
+    assert "workspace_ok: true" in output
+    assert "check resume-tomorrow: 200 expected_status=200 snippets=matched" in output
+    assert "snippets=missing" not in output
+    assert "network_actions_taken: 0" in output
+    assert "external_mutations_taken: 0" in output
+
+
+def test_operator_first_viewports_show_goal_phase_action_proof_finish_resume(
+    tmp_path: Path,
+) -> None:
+    smoke = run_local_app_golden_path_smoke_test(tmp_path)
+    assert smoke["status"] == "passed"
+
+    def assert_first_viewport(body: str, prefix: str, later_marker: str) -> None:
+        strip_marker = f"data-{prefix}-first-viewport='true'"
+        assert strip_marker in body
+        strip_start = body.index(strip_marker)
+        assert strip_start < body.index(later_marker)
+        for key, label in [
+            ("goal", "Goal"),
+            ("phase", "Phase"),
+            ("next-action", "Next Action"),
+            ("proof", "Proof"),
+            ("finish", "Finish"),
+            ("resume", "Resume"),
+        ]:
+            card_marker = f"data-{prefix}-first-viewport-card='{key}'"
+            assert card_marker in body[strip_start:]
+            card_start = body.index(card_marker, strip_start)
+            assert f"<h3>{label}</h3>" in body[card_start : card_start + 500]
+        assert (
+            f"{prefix}_first_viewport_order: "
+            "Goal -> Phase -> Next Action -> Proof -> Finish -> Resume"
+        ) in body
+        assert f"{prefix}_first_viewport_write_on_get</dt><dd>false" in body
+        assert f"{prefix}_first_viewport_network_actions_taken</dt><dd>0" in body
+        assert f"{prefix}_first_viewport_external_effects_created</dt><dd>false" in body
+
+    today = render_local_app_route(tmp_path, "/today")
+    assert today.status == 200
+    assert_first_viewport(today.body, "today", "data-today-command-actions='true'")
+    assert "today_first_viewport_goal</dt><dd><a href='/goals/" in today.body
+    assert "today_first_viewport_phase</dt><dd>Coder prep" in today.body
+    assert "today_first_viewport_next_action</dt><dd>Run coder prep" in today.body
+    assert "today_first_viewport_proof_status</dt><dd>latest_artifact_available" in today.body
+    assert "today_first_viewport_finish_status</dt><dd>ready" in today.body
+    assert "today_first_viewport_resume_status</dt><dd>ready" in today.body
+
+    resume = render_local_app_route(tmp_path, "/resume")
+    assert resume.status == 200
+    assert_first_viewport(resume.body, "resume", "data-resume-command-evidence='true'")
+    assert "resume_first_viewport_goal</dt><dd><a href='/goals/" in resume.body
+    assert "resume_first_viewport_phase</dt><dd>Coder prep" in resume.body
+    assert "resume_first_viewport_next_action</dt><dd>Run coder prep" in resume.body
+    assert "resume_first_viewport_proof_status</dt><dd>saved_artifact_available" in resume.body
+    assert "resume_first_viewport_finish_status</dt><dd>ready_to_update" in resume.body
+
+    goal = render_local_app_route(tmp_path, f"/goals/{smoke['goal_id']}")
+    assert goal.status == 200
+    assert_first_viewport(goal.body, "goal", "data-goal-control-strip='true'")
+    assert "goal_first_viewport_goal</dt><dd><a href='/goals/" in goal.body
+    assert "goal_first_viewport_phase</dt><dd>Coder prep" in goal.body
+    assert "goal_first_viewport_next_action</dt><dd>Run coder prep" in goal.body
+    assert "goal_first_viewport_finish_status</dt><dd>saved" in goal.body
+    assert "goal_first_viewport_resume_status</dt><dd>ready" in goal.body
+
+
 def test_run_delegation_auto_generates_context_pack_for_fake_scout_adapter(
     tmp_path: Path,
     capsys,
@@ -30006,6 +30288,8 @@ def test_coder_commit_request_alias_writes_coder_commit_artifacts_and_is_idempot
         if line.startswith("commit_request_id: ")
     )
     assert different_commit_request_id != commit_request_id
+    current_request_alias = json.loads(artifact.read_text(encoding="utf-8"))
+    assert current_request_alias["commit_request_id"] == different_commit_request_id
 
     assert (
         main(
@@ -30038,8 +30322,17 @@ def test_coder_commit_request_alias_writes_coder_commit_artifacts_and_is_idempot
     assert decision_artifact == evidence_dir / "coder_commit" / "coder_commit_decision.json"
     decision_payload = json.loads(decision_artifact.read_text(encoding="utf-8"))
     assert decision_payload["kind"] == "coder_worktree_commit_approval_decision"
-    request_artifact = evidence_dir / "coder_commit" / "coder_commit_request.json"
-    request_markdown = request_artifact.with_suffix(".md")
+    request_artifact = tmp_path / decision_payload["source_coder_commit_request"]
+    request_markdown = tmp_path / decision_payload["source_coder_commit_request_md"]
+    assert request_artifact.name == f"{commit_request_id}_coder_commit_request.json"
+    immutable_request_payload = json.loads(request_artifact.read_text(encoding="utf-8"))
+    assert immutable_request_payload["commit_request_id"] == commit_request_id
+    latest_request_payload = json.loads(
+        (evidence_dir / "coder_commit" / "coder_commit_request.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert latest_request_payload["commit_request_id"] == different_commit_request_id
     assert decision_payload["source_coder_commit_request"] == str(
         request_artifact.relative_to(tmp_path)
     )
