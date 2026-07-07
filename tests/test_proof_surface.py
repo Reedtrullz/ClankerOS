@@ -78,6 +78,8 @@ def test_proof_surface_distinguishes_current_main_snapshot_and_local_readback(
     assert dirty.committed_dashboard_state == "modified_local_readback"
     assert dirty.generated_readback_state == "local_uncommitted_readback"
     assert dirty.merge_claim == "current_main_proof_valid"
+    assert "docs/dashboard.md" in dirty.generated_readback_paths
+    assert "ocs/dashboard.md" not in dirty.generated_readback_paths
 
 
 def test_proof_surface_avoids_merge_claim_for_branch_or_stale_proof(tmp_path: Path) -> None:
