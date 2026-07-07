@@ -2059,7 +2059,7 @@ def _today_page(root: Path) -> str:
     lead_goal, lead_goal_source = _operator_lead_goal(root, storage, active, paused, completed)
     lead_goal_id = str(lead_goal["id"]) if lead_goal is not None else "none"
     lead_project_id = str(lead_goal["project_id"] or "") if lead_goal is not None else "none"
-    sections = [
+    primary_sections = [
         "<section class='hero'><h1>Today</h1>",
         "<p>Daily command center for the current goal, attention queue, resume state, and finish-today handoff.</p>",
         "<details class='today-state-details' data-today-state-details='true'><summary>Today state evidence</summary>",
@@ -2081,6 +2081,8 @@ def _today_page(root: Path) -> str:
         "</details>",
         "</section>",
         _today_command_center(root, storage, lead_goal),
+    ]
+    secondary_sections = [
         _completed_goal_handoff_provenance_panel(
             root,
             storage,
@@ -2137,9 +2139,18 @@ def _today_page(root: Path) -> str:
         _home_incidents(storage),
     ]
     if not _first_run_progress(root, storage)["complete"]:
-        sections.append(_first_run_panel(root, storage))
-    sections.append(_non_claim_banner())
-    return "".join(sections)
+        secondary_sections.append(_first_run_panel(root, storage))
+    return "".join(
+        primary_sections
+        + [
+            _secondary_operator_details(
+                prefix="today",
+                summary="More Today Evidence",
+                sections=secondary_sections,
+            ),
+            _non_claim_banner(),
+        ]
+    )
 
 
 def _completed_goal_handoff_state(
@@ -5905,6 +5916,29 @@ def _operator_first_viewport_strip(
             ),
             "</details>",
             "</section>",
+        ]
+    )
+
+
+def _secondary_operator_details(
+    *,
+    prefix: str,
+    summary: str,
+    sections: list[str],
+) -> str:
+    body = "".join(section for section in sections if section)
+    if not body:
+        return ""
+    return "".join(
+        [
+            (
+                "<details class='secondary-operator-details "
+                f"{_e(prefix)}-secondary-operator-details' "
+                f"data-{_e(prefix)}-secondary-operator-details='true'>"
+            ),
+            f"<summary>{_e(summary)}</summary>",
+            body,
+            "</details>",
         ]
     )
 
@@ -9886,69 +9920,79 @@ def _resume_page(root: Path) -> str:
         next_href = f"/artifacts?path={quote(last_artifact)}"
         next_label = "Open saved artifact"
 
+    primary_sections = [
+        "<section class='hero'><h1>Resume Workspace</h1>",
+        "<p class='muted'>One local landing page for returning to the last saved ClankerOS operator context.</p>",
+        f"<p><a class='resume-hero-action' data-resume-hero-primary='true' href='{_e(next_href)}'>{_e(next_label)}</a></p>",
+        "<details class='resume-state-details' data-resume-state-details='true'><summary>Saved workspace state</summary>",
+        _kv(
+            [
+                ("resume_workspace_available", str(has_workspace).lower()),
+                ("resume_workspace_source", ".clanker/app/workspace.json"),
+                ("resume_updated_at", state.get("updated_at", "never")),
+                ("resume_filters", filters or "none"),
+                ("resume_expanded_panels", expanded or "none"),
+                (
+                    "resume_saved_surface",
+                    SafeHtml(f"<a href='{_e(resume_surface)}'>{_e(resume_surface)}</a>")
+                    if resume_surface
+                    else "none",
+                ),
+                ("resume_workspace_write_on_get", "false"),
+                ("resume_provider_calls_taken_by_clankeros", "0"),
+                ("resume_network_actions_taken", "0"),
+                ("resume_external_effects_created", "false"),
+            ]
+        ),
+        "</details>",
+        "</section>",
+        _resume_today_brief(root, state, open_project, open_goal, filters, expanded, last_artifact),
+    ]
+    secondary_sections = [
+        _completed_goal_handoff_provenance_panel(
+            root,
+            _storage(root),
+            prefix="resume",
+            title="Resume Completed Goal Provenance",
+        ),
+        _completed_goal_handoff_panel(
+            root,
+            _storage(root),
+            lead_goal=None,
+            prefix="resume",
+            title="Resume Completed Goal Handoff",
+        ),
+        _goal_provenance_history_panel(
+            root,
+            _storage(root),
+            goal_id=open_goal,
+            prefix="resume",
+            title="Resume Goal Provenance History",
+        ),
+        _browser_resume_section(),
+        _resume_operator_workbench(root, state, open_project, open_goal, filters, expanded, last_artifact),
+        _resume_command_bar(root, state, open_project, open_goal, filters, expanded, last_artifact),
+        _resume_readiness_section(root, state, open_project, open_goal, filters, expanded, last_artifact),
+        _resume_next_action_section(root, open_goal),
+        _resume_first_run_action_form_section(root, open_goal),
+        _resume_workflow_map_section(root, open_goal),
+        _list_section("Resume Targets", targets),
+        _list_section(
+            "Manage Resume State",
+            [
+                "workspace_surface: <a href='/workspace'>/workspace</a>",
+                "save_workspace_action: confirmed_local_only",
+                "raw_filesystem_browsing: false",
+            ],
+        ),
+    ]
     return "".join(
-        [
-            "<section class='hero'><h1>Resume Workspace</h1>",
-            "<p class='muted'>One local landing page for returning to the last saved ClankerOS operator context.</p>",
-            f"<p><a class='resume-hero-action' data-resume-hero-primary='true' href='{_e(next_href)}'>{_e(next_label)}</a></p>",
-            "<details class='resume-state-details' data-resume-state-details='true'><summary>Saved workspace state</summary>",
-            _kv(
-                [
-                    ("resume_workspace_available", str(has_workspace).lower()),
-                    ("resume_workspace_source", ".clanker/app/workspace.json"),
-                    ("resume_updated_at", state.get("updated_at", "never")),
-                    ("resume_filters", filters or "none"),
-                    ("resume_expanded_panels", expanded or "none"),
-                    (
-                        "resume_saved_surface",
-                        SafeHtml(f"<a href='{_e(resume_surface)}'>{_e(resume_surface)}</a>")
-                        if resume_surface
-                        else "none",
-                    ),
-                    ("resume_workspace_write_on_get", "false"),
-                    ("resume_provider_calls_taken_by_clankeros", "0"),
-                    ("resume_network_actions_taken", "0"),
-                    ("resume_external_effects_created", "false"),
-                ]
-            ),
-            "</details>",
-            "</section>",
-            _resume_today_brief(root, state, open_project, open_goal, filters, expanded, last_artifact),
-            _completed_goal_handoff_provenance_panel(
-                root,
-                _storage(root),
+        primary_sections
+        + [
+            _secondary_operator_details(
                 prefix="resume",
-                title="Resume Completed Goal Provenance",
-            ),
-            _completed_goal_handoff_panel(
-                root,
-                _storage(root),
-                lead_goal=None,
-                prefix="resume",
-                title="Resume Completed Goal Handoff",
-            ),
-            _goal_provenance_history_panel(
-                root,
-                _storage(root),
-                goal_id=open_goal,
-                prefix="resume",
-                title="Resume Goal Provenance History",
-            ),
-            _browser_resume_section(),
-            _resume_operator_workbench(root, state, open_project, open_goal, filters, expanded, last_artifact),
-            _resume_command_bar(root, state, open_project, open_goal, filters, expanded, last_artifact),
-            _resume_readiness_section(root, state, open_project, open_goal, filters, expanded, last_artifact),
-            _resume_next_action_section(root, open_goal),
-            _resume_first_run_action_form_section(root, open_goal),
-            _resume_workflow_map_section(root, open_goal),
-            _list_section("Resume Targets", targets),
-            _list_section(
-                "Manage Resume State",
-                [
-                    "workspace_surface: <a href='/workspace'>/workspace</a>",
-                    "save_workspace_action: confirmed_local_only",
-                    "raw_filesystem_browsing: false",
-                ],
+                summary="More Resume Evidence",
+                sections=secondary_sections,
             ),
             _non_claim_banner(),
         ]
@@ -10115,6 +10159,34 @@ def _resume_today_brief(
         artifact_label = "Open saved artifact"
         artifact_status = "available" if readiness["last_artifact_exists"] else "missing_file"
         artifact_surface = SafeHtml(_artifact_link(last_artifact))
+    target_surface = SafeHtml(f"<a href='{_e(primary_href)}'>{_e(primary_label)}</a>")
+    proof_status = "none"
+    if last_artifact:
+        proof_status = (
+            "saved_artifact_available"
+            if readiness["last_artifact_exists"]
+            else "saved_artifact_missing"
+        )
+    proof_surface = (
+        artifact_surface
+        if last_artifact
+        else SafeHtml("<a href='/artifacts'>Artifacts</a>")
+    )
+    finish_status = "ready_to_update" if readiness["ready"] else "needs_workspace_save"
+    first_viewport = _operator_first_viewport_strip(
+        prefix="resume",
+        goal_label=goal_label or selected_goal or "none",
+        goal_surface=goal_surface,
+        phase=phase,
+        next_action=next_action,
+        next_surface=target_surface,
+        proof_status=proof_status,
+        proof_surface=proof_surface,
+        finish_status=finish_status,
+        finish_surface=SafeHtml("<a href='/workspace#save-workspace'>Finish Today</a>"),
+        resume_status=mode,
+        resume_surface=target_surface,
+    )
 
     cards = [
         (
@@ -10239,6 +10311,7 @@ def _resume_today_brief(
         [
             "<section id='resume-return-brief' class='panel resume-return-brief' data-resume-return-brief='true'><h2>Resume Today Brief</h2>",
             "<p class='muted'>One compact return strip for the current action, proof, blockers, artifact, and next save point.</p>",
+            first_viewport,
             "<div class='resume-return-brief-grid' data-resume-return-brief-actions='true'>",
             card_html,
             "</div>",
@@ -10446,33 +10519,6 @@ def _resume_command_bar(
         artifact_value = SafeHtml(_artifact_link(last_artifact))
 
     target = SafeHtml(f"<a href='{_e(target_href)}'>{_e(target_label)}</a>")
-    proof_status = "none"
-    if last_artifact:
-        proof_status = (
-            "saved_artifact_available"
-            if readiness["last_artifact_exists"]
-            else "saved_artifact_missing"
-        )
-    proof_surface = (
-        artifact_value
-        if last_artifact
-        else SafeHtml("<a href='/artifacts'>Artifacts</a>")
-    )
-    finish_status = "ready_to_update" if readiness["ready"] else "needs_workspace_save"
-    first_viewport = _operator_first_viewport_strip(
-        prefix="resume",
-        goal_label=goal_label or selected_goal or "none",
-        goal_surface=goal_value,
-        phase=phase,
-        next_action=next_action,
-        next_surface=target,
-        proof_status=proof_status,
-        proof_surface=proof_surface,
-        finish_status=finish_status,
-        finish_surface=SafeHtml("<a href='/workspace#save-workspace'>Finish Today</a>"),
-        resume_status=status,
-        resume_surface=target,
-    )
     rows = [
         ("resume_command_status", status),
         ("resume_command_ready", "true" if readiness["ready"] else "false"),
@@ -10525,7 +10571,6 @@ def _resume_command_bar(
         [
             "<section id='resume-command-bar' class='panel resume-command-bar' data-resume-command-bar='true'><h2>Resume Command Bar</h2>",
             "<p class='muted'>A scan-first return-to-work summary for continuing the saved local operator context.</p>",
-            first_viewport,
             "<details class='resume-command-evidence' data-resume-command-evidence='true'><summary>Resume command evidence</summary>",
             _kv(rows),
             _ul(lines),
@@ -18080,45 +18125,51 @@ def _goal_detail(root: Path, goal_id: str) -> str:
             _goal_phase_banner(root, state, phase, next_action),
             _goal_action_dock(root, state, phase, next_action),
             _goal_action_prep(root, state, phase, next_action),
-            _goal_jump_bar(state, phase, next_action),
-            _goal_progress_meter(root, state, phase, next_action),
-            _goal_attention_digest(root, state, phase, next_action),
-            _goal_decision_queue(root, state, phase, next_action),
-            _goal_first_run_rail(root, state, next_action),
-            _goal_command_bar(root, state, phase, next_action),
-            _goal_operator_workbench(root, state, phase, next_action),
             _goal_daily_loop(root, state, phase, next_action),
             _goal_return_brief(root, state, phase, next_action),
-            _goal_session_digest(root, state, phase, next_action),
-            _goal_activity_pulse(root, state, phase, next_action),
-            _goal_continuation_rail(root, state, phase, next_action),
-            _goal_next_action_card(state, next_action),
-            _goal_next_recommendation_section(state, next_action),
-            _goal_workflow_map(root, state, next_action),
-            _goal_coder_handoff_digest(root, state, next_action),
-            _goal_ci_handoff(root, state),
-            _goal_live_state(root, state, phase, next_action),
-            _goal_section_index(goal.id, state, next_action),
-            _goal_resume_snapshot(root, state),
-            _goal_overview(state, phase, next_action),
-            _goal_risk_section(state),
-            _goal_completion_criteria(state),
-            _goal_completion_readiness(root, state, next_action),
-            _goal_progress(root, state, next_action),
-            _goal_timeline(root, state),
-            _goal_activity_log(root, state),
-            _goal_delegation_section(root, state),
-            _goal_run_section(root, state),
-            _goal_approval_section(root, state),
-            _goal_incident_section(root, state),
-            _goal_evidence_section(root, state),
-            _goal_artifact_section(root, state),
-            _goal_memory_section(root, state),
-            _goal_skill_section(root, state),
-            _goal_git_status(root, state),
-            _goal_verification_evidence(root, state),
-            _goal_operator_notes_section(root, state),
-            _goal_remaining_work_section(root, state, next_action),
+            _secondary_operator_details(
+                prefix="goal",
+                summary="More Goal Evidence",
+                sections=[
+                    _goal_jump_bar(state, phase, next_action),
+                    _goal_progress_meter(root, state, phase, next_action),
+                    _goal_attention_digest(root, state, phase, next_action),
+                    _goal_decision_queue(root, state, phase, next_action),
+                    _goal_first_run_rail(root, state, next_action),
+                    _goal_command_bar(root, state, phase, next_action),
+                    _goal_operator_workbench(root, state, phase, next_action),
+                    _goal_session_digest(root, state, phase, next_action),
+                    _goal_activity_pulse(root, state, phase, next_action),
+                    _goal_continuation_rail(root, state, phase, next_action),
+                    _goal_next_action_card(state, next_action),
+                    _goal_next_recommendation_section(state, next_action),
+                    _goal_workflow_map(root, state, next_action),
+                    _goal_coder_handoff_digest(root, state, next_action),
+                    _goal_ci_handoff(root, state),
+                    _goal_live_state(root, state, phase, next_action),
+                    _goal_section_index(goal.id, state, next_action),
+                    _goal_resume_snapshot(root, state),
+                    _goal_overview(state, phase, next_action),
+                    _goal_risk_section(state),
+                    _goal_completion_criteria(state),
+                    _goal_completion_readiness(root, state, next_action),
+                    _goal_progress(root, state, next_action),
+                    _goal_timeline(root, state),
+                    _goal_activity_log(root, state),
+                    _goal_delegation_section(root, state),
+                    _goal_run_section(root, state),
+                    _goal_approval_section(root, state),
+                    _goal_incident_section(root, state),
+                    _goal_evidence_section(root, state),
+                    _goal_artifact_section(root, state),
+                    _goal_memory_section(root, state),
+                    _goal_skill_section(root, state),
+                    _goal_git_status(root, state),
+                    _goal_verification_evidence(root, state),
+                    _goal_operator_notes_section(root, state),
+                    _goal_remaining_work_section(root, state, next_action),
+                ],
+            ),
             _non_claim_banner(),
         ]
     )
@@ -56246,6 +56297,9 @@ def _html_page(
     .goal-command-bar dl {{ grid-template-columns:minmax(180px, 240px) 1fr; }}
     .goal-command-bar ul {{ list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:8px; }}
     .goal-command-bar li {{ min-width:0; padding:8px 10px; border:1px solid var(--line); background:var(--surface); overflow-wrap:anywhere; }}
+    .secondary-operator-details {{ margin:14px 0; border:1px solid var(--line); background:var(--panel); padding:10px 12px; }}
+    .secondary-operator-details summary {{ cursor:pointer; font-weight:700; }}
+    .secondary-operator-details:not([open]) > :not(summary) {{ display:none; }}
     .goal-next-action {{ border-left:4px solid var(--ok); }}
     .goal-next-action, #goal-next-action-form, .goal-next-action-focus-button {{ scroll-margin-top:260px; }}
     .goal-next-action-focus {{ border:1px solid var(--line); background:var(--panel); padding:12px; margin:0 0 12px; }}
